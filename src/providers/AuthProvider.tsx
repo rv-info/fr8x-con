@@ -36,7 +36,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const fetchUserData = useCallback(async (uid: string, email: string | null, displayName: string | null, photoURL: string | null, emailVerified: boolean) => {
-    const isGod = uid === "mock-uid-godmode" || email === "support@fr8x.in";
     try {
       const userData = await getDocument<{
         role: UserRole;
@@ -51,10 +50,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName,
         photoURL,
         emailVerified,
-        role: isGod ? "godmode" : (userData?.role || "freight_forwarder"),
-        isGodMode: isGod ? true : (userData?.isGodMode || false),
+        role: userData?.role || "freight_forwarder",
+        isGodMode: userData?.isGodMode || false,
         companyId: userData?.companyId || null,
-        membershipTier: isGod ? "premium" : (userData?.membershipTier || "trial"),
+        membershipTier: userData?.membershipTier || "trial",
       };
 
       setState({
@@ -65,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error("Error fetching user data:", error);
+      // Still authenticate but with defaults if Firestore fails
       setState({
         isAuthenticated: true,
         isLoading: false,
@@ -74,10 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName,
           photoURL,
           emailVerified,
-          role: isGod ? "godmode" : "freight_forwarder",
-          isGodMode: isGod,
+          role: "freight_forwarder",
+          isGodMode: false,
           companyId: null,
-          membershipTier: isGod ? "premium" : "trial",
+          membershipTier: "trial",
         },
         error: null,
       });
