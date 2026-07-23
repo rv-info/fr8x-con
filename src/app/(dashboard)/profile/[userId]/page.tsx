@@ -12,7 +12,7 @@ import {
   Share2,
 } from "lucide-react";
 
-// Mock profile data
+// Profile data structure
 const mockProfile = {
   name: "Viewed User",
   company: "Logistics Corp",
@@ -51,13 +51,13 @@ const mockPosts = Array.from({ length: 5 }, (_, i) => ({
 }));
 
 export default function ViewProfilePage({ params }: { params: Promise<{ userId: string }> }) {
-  const resolvedParams = use(params);
+  const { userId } = use(params);
 
   return (
     <div className="min-h-screen bg-[var(--fr8x-bg)]">
       {/* Header */}
       <div className="fr8x-container py-3">
-        <h1 className="text-heading-md text-[var(--fr8x-jet)] font-semibold">view profile</h1>
+        <h1 className="text-heading-md text-[var(--fr8x-jet)] font-semibold">User Profile: {userId}</h1>
       </div>
 
       {/* 2-column layout */}
@@ -131,7 +131,7 @@ export default function ViewProfilePage({ params }: { params: Promise<{ userId: 
               {/* Interaction */}
               <div className="flex items-center gap-3 text-caption text-foreground-secondary mb-3 flex-wrap">
                 <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)]">
-                  <ThumbsUp className="h-3.5 w-3.5" /> Dislike [{post.likesCount}]
+                  <ThumbsUp className="h-3.5 w-3.5" /> Like [{post.likesCount}]
                 </button>
                 <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)]">
                   <ThumbsDown className="h-3.5 w-3.5" /> Dislike [{post.dislikesCount}]
@@ -149,9 +149,6 @@ export default function ViewProfilePage({ params }: { params: Promise<{ userId: 
 
               {/* Comments */}
               <div className="border-t border-border pt-2 space-y-2">
-                <p className="text-[10px] text-foreground-muted italic">
-                  COMMENTS Downs below from latest on top and users have options to like and dislike the comments
-                </p>
                 {post.comments.map((c) => (
                   <div key={c.id} className="flex items-start gap-2 pl-4">
                     <div className="w-5 h-5 rounded-full bg-[var(--fr8x-mist)] flex items-center justify-center text-[8px] font-medium shrink-0">
