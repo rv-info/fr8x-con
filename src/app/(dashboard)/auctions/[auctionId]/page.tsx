@@ -2,9 +2,8 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   ChevronLeft,
   Users,
@@ -13,12 +12,39 @@ import {
   Package,
   MapPin,
   ArrowRight,
-  Eye,
   Lock,
+  Loader2,
 } from "lucide-react";
 
 import { use } from "react";
-import { ROUTES } from "@/lib/utils/constants";
+import { ROUTES, COLLECTIONS } from "@/lib/utils/constants";
+import { getDocument } from "@/lib/firebase/firestore";
+
+type AuctionDetail = {
+  id: string;
+  referenceNumber: string;
+  title: string;
+  status: string;
+  shipmentDetails: {
+    origin: string;
+    destination: string;
+    originPort: string;
+    destinationPort: string;
+    mode: string;
+    incoTerms: string;
+    cargoReadyDate: string;
+    requiredDeliveryDate: string;
+  };
+  containerDetails: Array<{
+    containerSize: string;
+    numberOfContainers: number;
+    hazStatus: string;
+    grossWeight: number;
+  }>;
+  participantsCount: number;
+  bidsCount: number;
+  endDate: string;
+};
 
 export default function AuctionDetailPage({
   params,
@@ -26,6 +52,53 @@ export default function AuctionDetailPage({
   params: Promise<{ auctionId: string }>;
 }) {
   const { auctionId } = use(params);
+  const [auction, setAuction] = useState<AuctionDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAuction() {
+      setIsLoading(true);
+      try {
+        const data = await getDocument<AuctionDetail>(COLLECTIONS.AUCTIONS, auctionId);
+        setAuction(data);
+      } catch (err) {
+        console.error("Error fetching auction:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAuction();
+  }, [auctionId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-foreground-muted" />
+        <span className="text-body-sm text-foreground-muted">Loading auction...</span>
+      </div>
+    );
+  }
+
+  if (!auction) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-6">
+        <button
+          onClick={() => history.back()}
+          className="flex items-center gap-1 text-body-sm text-foreground-secondary hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Auctions
+        </button>
+        <div className="fr8x-card p-6 text-center">
+          <p className="text-body-sm text-foreground-secondary">Auction not found</p>
+          <p className="text-caption text-foreground-muted mt-1">This auction may have been removed or does not exist.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const shipment = auction.shipmentDetails || {};
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <button
@@ -41,30 +114,32 @@ export default function AuctionDetailPage({
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <span className="fr8x-badge-active">Active</span>
+              <span className={`fr8x-badge ${auction.status === "active" ? "fr8x-badge-active" : auction.status === "draft" ? "fr8x-badge-pending" : "fr8x-badge-info"}`}>
+                {auction.status}
+              </span>
               <span className="text-caption text-foreground-muted">
-                REF-{auctionId}
+                {auction.referenceNumber || auctionId}
               </span>
             </div>
             <h1 className="text-display-sm text-foreground">
-              FCL: Nhava Sheva → Rotterdam
+              {auction.title || "Untitled Auction"}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-body-sm text-foreground-secondary">
               <span className="flex items-center gap-1.5">
                 <Ship className="h-4 w-4" />
-                FCL • FOB
+                {shipment.mode?.toUpperCase() || "—"} • {shipment.incoTerms || "—"}
               </span>
               <span className="flex items-center gap-1.5">
                 <Package className="h-4 w-4" />
-                20ft × 5 • Non-Haz
+                {auction.containerDetails?.map(c => `${c.containerSize} × ${c.numberOfContainers}`).join(", ") || "—"}
               </span>
               <span className="flex items-center gap-1.5">
                 <Clock className="h-4 w-4" />
-                3 days remaining
+                Ends: {auction.endDate || "—"}
               </span>
               <span className="flex items-center gap-1.5">
                 <Users className="h-4 w-4" />
-                8 participants
+                {auction.participantsCount || 0} participants
               </span>
             </div>
           </div>
@@ -91,35 +166,35 @@ export default function AuctionDetailPage({
           <div className="grid grid-cols-2 gap-4 text-body-sm">
             <div>
               <p className="text-foreground-muted">Origin</p>
-              <p className="text-foreground font-medium">Mumbai, India</p>
+              <p className="text-foreground font-medium">{shipment.origin || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Destination</p>
-              <p className="text-foreground font-medium">Rotterdam, Netherlands</p>
+              <p className="text-foreground font-medium">{shipment.destination || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Origin Port</p>
-              <p className="text-foreground font-medium">INNSA</p>
+              <p className="text-foreground font-medium">{shipment.originPort || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Destination Port</p>
-              <p className="text-foreground font-medium">NLRTM</p>
+              <p className="text-foreground font-medium">{shipment.destinationPort || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Mode</p>
-              <p className="text-foreground font-medium">FCL</p>
+              <p className="text-foreground font-medium">{shipment.mode?.toUpperCase() || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Incoterms</p>
-              <p className="text-foreground font-medium">FOB</p>
+              <p className="text-foreground font-medium">{shipment.incoTerms || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Cargo Ready</p>
-              <p className="text-foreground font-medium">Jul 25, 2024</p>
+              <p className="text-foreground font-medium">{shipment.cargoReadyDate || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Required Delivery</p>
-              <p className="text-foreground font-medium">Aug 20, 2024</p>
+              <p className="text-foreground font-medium">{shipment.requiredDeliveryDate || "—"}</p>
             </div>
           </div>
         </div>
@@ -142,12 +217,24 @@ export default function AuctionDetailPage({
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>20ft Standard</td>
-                  <td>5</td>
-                  <td><span className="fr8x-badge-active">Non-Haz</span></td>
-                  <td>18,000 KG</td>
-                </tr>
+                {auction.containerDetails && auction.containerDetails.length > 0 ? (
+                  auction.containerDetails.map((c, i) => (
+                    <tr key={i}>
+                      <td>{c.containerSize}</td>
+                      <td>{c.numberOfContainers}</td>
+                      <td>
+                        <span className={c.hazStatus === "non_haz" ? "fr8x-badge-active" : "fr8x-badge-danger"}>
+                          {c.hazStatus === "non_haz" ? "Non-Haz" : "Hazardous"}
+                        </span>
+                      </td>
+                      <td>{c.grossWeight ? `${c.grossWeight.toLocaleString()} KG` : "—"}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="text-center text-foreground-muted">No container details</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -158,38 +245,13 @@ export default function AuctionDetailPage({
       <div className="fr8x-card p-6 space-y-4">
         <h2 className="text-heading-lg text-foreground">Bid Summary</h2>
         <p className="text-body-sm text-foreground-secondary">
-          Participant names are hidden. Only ranks and anonymized bid amounts are shown.
+          {auction.bidsCount ? `${auction.bidsCount} bids received` : "No bids received yet"}
         </p>
-        <div className="overflow-x-auto">
-          <table className="fr8x-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Participant</th>
-                <th>Freight</th>
-                <th>Local Charges</th>
-                <th>Total</th>
-                <th>Transit</th>
-                <th>Submissions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i}>
-                  <td>
-                    <span className="text-heading-md font-bold text-brand-600">#{i + 1}</span>
-                  </td>
-                  <td className="text-foreground-muted">Participant {String.fromCharCode(65 + i)}</td>
-                  <td className="tabular-nums">$1,{200 + i * 50}</td>
-                  <td className="tabular-nums">${300 + i * 25}</td>
-                  <td className="font-semibold tabular-nums">${1500 + i * 75}</td>
-                  <td>{18 + i * 2}d</td>
-                  <td>{3 + (i % 3)}/5</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {!auction.bidsCount && (
+          <p className="text-caption text-foreground-muted text-center py-4">
+            Bids will appear here once participants start bidding.
+          </p>
+        )}
       </div>
     </div>
   );
