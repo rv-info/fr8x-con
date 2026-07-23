@@ -1,28 +1,54 @@
-// FR8X-CON GodMode Companies Management — Spec Page 11
+// FR8X-CON GodMode Companies Management
 
 "use client";
 
-import { useState } from "react";
-import { Building2, Search, Filter, CheckCircle, ShieldAlert, Plus } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Building2, Search, CheckCircle, Plus, Loader2 } from "lucide-react";
+import { queryDocuments, limit } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
 
-const mockCompanies = Array.from({ length: 8 }, (_, i) => ({
-  id: `comp-${i + 1}`,
-  name: `Logistics Company ${String.fromCharCode(65 + i)}`,
-  country: ["India", "UAE", "Singapore", "China", "Netherlands"][i % 5],
-  region: ["Asia", "Middle East", "Southeast Asia", "East Asia", "Europe"][i % 5],
-  industry: ["Freight Forwarding", "NVOCC", "CHA", "Transporter"][i % 4],
-  memberCount: 5 + i * 3,
-  verified: i % 2 === 0,
-  status: "active",
-}));
+type CompanyAdmin = {
+  id: string;
+  name?: string;
+  country?: string;
+  region?: string;
+  industry?: string;
+  memberCount?: number;
+  verified?: boolean;
+  status?: string;
+  createdAt: { seconds: number; nanoseconds: number } | null;
+};
 
 export default function GodModeCompaniesPage() {
   const [search, setSearch] = useState("");
+  const [companies, setCompanies] = useState<CompanyAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = mockCompanies.filter((c) =>
-    (c.name?.toLowerCase() || "").includes(search.toLowerCase()) ||
-    (c.country?.toLowerCase() || "").includes(search.toLowerCase())
-  );
+  useEffect(() => {
+    async function fetchCompanies() {
+      setIsLoading(true);
+      try {
+        const data = await queryDocuments<CompanyAdmin>(COLLECTIONS.COMPANIES, [limit(50)]);
+        setCompanies(data);
+      } catch (err) {
+        console.error("Error fetching admin companies:", err);
+        setCompanies([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchCompanies();
+  }, []);
+
+  const filtered = useMemo(() => {
+    if (!search) return companies;
+    const q = search.toLowerCase();
+    return companies.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(q) ||
+        (c.country || "").toLowerCase().includes(q)
+    );
+  }, [companies, search]);
 
   return (
     <div className="space-y-6">
@@ -55,52 +81,65 @@ export default function GodModeCompaniesPage() {
 
       {/* Companies Table */}
       <div className="fr8x-card bg-white overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="fr8x-table">
-            <thead>
-              <tr>
-                <th>Company Name</th>
-                <th>Country / Region</th>
-                <th>Industry</th>
-                <th>Members</th>
-                <th>Verification</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((comp) => (
-                <tr key={comp.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
-                  <td className="font-semibold text-[var(--fr8x-jet)] flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
-                    {comp.name}
-                  </td>
-                  <td>{comp.country} ({comp.region})</td>
-                  <td>{comp.industry}</td>
-                  <td>{comp.memberCount} users</td>
-                  <td>
-                    {comp.verified ? (
-                      <span className="fr8x-badge-active flex items-center gap-1 w-fit">
-                        <CheckCircle className="h-3 w-3" /> Verified
-                      </span>
-                    ) : (
-                      <span className="fr8x-badge-pending w-fit">Unverified</span>
-                    )}
-                  </td>
-                  <td>
-                    <span className="fr8x-badge-active capitalize">{comp.status}</span>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-2 text-caption">
-                      <button className="text-[var(--fr8x-periwinkle)] hover:underline">Edit</button>
-                      <button className="text-danger hover:underline">Suspend</button>
-                    </div>
-                  </td>
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
+            <span className="text-[11px] text-foreground-muted">Loading companies...</span>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-body-sm text-foreground-secondary">
+              {companies.length === 0 ? "No registered companies in system" : "No matching companies found"}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="fr8x-table">
+              <thead>
+                <tr>
+                  <th>Company Name</th>
+                  <th>Country / Region</th>
+                  <th>Industry</th>
+                  <th>Members</th>
+                  <th>Verification</th>
+                  <th>Status</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((comp) => (
+                  <tr key={comp.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
+                    <td className="font-semibold text-[var(--fr8x-jet)] flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
+                      {comp.name || "Company"}
+                    </td>
+                    <td>{comp.country || "—"} {comp.region ? `(${comp.region})` : ""}</td>
+                    <td>{comp.industry || "—"}</td>
+                    <td>{comp.memberCount || 0} users</td>
+                    <td>
+                      {comp.verified ? (
+                        <span className="fr8x-badge-active flex items-center gap-1 w-fit">
+                          <CheckCircle className="h-3 w-3" /> Verified
+                        </span>
+                      ) : (
+                        <span className="fr8x-badge-pending w-fit">Unverified</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className="fr8x-badge-active capitalize">{comp.status || "active"}</span>
+                    </td>
+                    <td>
+                      <div className="flex items-center gap-2 text-caption">
+                        <button className="text-[var(--fr8x-periwinkle)] hover:underline">Edit</button>
+                        <button className="text-danger hover:underline">Suspend</button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
