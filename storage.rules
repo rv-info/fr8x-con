@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserData() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function isGodMode() {
+      return isAuthenticated() && getUserData().isGodMode == true;
+    }
+
+    // User profile images
+    match /users/{userId}/profile.jpg {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isGodMode();
+    }
+
+    // Auction documents/attachments (e.g. packing lists, commercial invoices)
+    match /auctions/{auctionId}/{fileName} {
+      allow read: if isAuthenticated();
+      // Only the auction creator or godmode can write
+      allow write: if isAuthenticated() && (
+        firestore.get(/databases/(default)/documents/auctions/$(auctionId)).data.creatorId == request.auth.uid ||
+        isGodMode()
+      );
+    }
+  }
+}
