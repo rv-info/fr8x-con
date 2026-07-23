@@ -40,10 +40,12 @@ export default function LoginPage() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : "Login failed. Please try again.";
-      if (message.includes("user-not-found") || message.includes("wrong-password")) {
+      if (message.includes("user-not-found") || message.includes("wrong-password") || message.includes("invalid-credential")) {
         setError("Invalid email or password.");
       } else if (message.includes("too-many-requests")) {
         setError("Too many attempts. Please try again later.");
+      } else if (message.includes("invalid-email")) {
+        setError("Please enter a valid email address.");
       } else {
         setError("Login failed. Please check your credentials.");
       }
@@ -78,15 +80,15 @@ export default function LoginPage() {
           {/* Email */}
           <div>
             <label htmlFor="login-email" className="fr8x-label block mb-1.5">
-              Email or Username
+              Email
             </label>
             <input
               id="login-email"
-              type="text"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="fr8x-input"
-              placeholder=""
+              placeholder="you@company.com"
               autoComplete="email"
               autoFocus
             />
@@ -127,12 +129,6 @@ export default function LoginPage() {
             {isSubmitting ? "Signing in..." : "Launch!"}
           </button>
         </form>
-
-        {/* Quick Demo Credentials */}
-        <div className="mt-5 p-3 rounded-lg bg-slate-50 border border-slate-200 text-caption text-foreground-secondary space-y-1">
-          <p className="font-semibold text-[var(--fr8x-jet)]">Demo Login Credentials:</p>
-          <p><span className="font-medium text-slate-700">Account:</span> <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">mgt@raivega.in</code> / <code className="bg-slate-200 px-1 py-0.5 rounded text-[11px] font-mono">QWERTY@123x</code></p>
-        </div>
 
         {/* Footer */}
         <div className="mt-5 flex items-center justify-between text-body-sm">
