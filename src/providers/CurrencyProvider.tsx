@@ -15,7 +15,6 @@ import {
 import type {
   CurrencyCode,
   ExchangeRate,
-  ICurrencyProvider,
 } from "@/lib/types/currency";
 import { CURRENCY_CACHE_TTL } from "@/lib/utils/constants";
 
