@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { Settings, Save } from "lucide-react";
+import { Save } from "lucide-react";
 
 export default function GodModeSettingsPage() {
   const [appName, setAppName] = useState("FR8X-CON");
@@ -43,7 +43,7 @@ export default function GodModeSettingsPage() {
           </div>
 
           <div>
-            <label className="fr8x-label block mb-1">Trail Membership Duration (Days)</label>
+            <label className="fr8x-label block mb-1">Trial Membership Duration (Days)</label>
             <input type="number" value={trialDays} onChange={(e) => setTrialDays(e.target.value)} className="fr8x-input" />
           </div>
         </div>
