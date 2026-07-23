@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   Plus,
@@ -10,11 +10,37 @@ import {
   Filter,
   Eye,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 
-import { ROUTES } from "@/lib/utils/constants";
+import { ROUTES, COLLECTIONS } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
+import { queryDocuments, orderBy, limit } from "@/lib/firebase/firestore";
 import type { AuctionStatus } from "@/lib/types/auction";
+
+type AuctionData = {
+  id: string;
+  referenceNumber: string;
+  title: string;
+  shipmentDetails: {
+    mode: string;
+    origin: string;
+    destination: string;
+  };
+  containerDetails: Array<{
+    containerSize: string;
+    numberOfContainers: number;
+  }>;
+  commodityDetails: Array<{
+    description: string;
+  }>;
+  status: AuctionStatus;
+  bidsCount: number;
+  participantsCount: number;
+  endDate: string;
+  creatorName: string;
+  createdAt: { seconds: number; nanoseconds: number } | null;
+};
 
 const AUCTION_TABS: { value: AuctionStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
@@ -24,45 +50,72 @@ const AUCTION_TABS: { value: AuctionStatus | "all"; label: string }[] = [
   { value: "awarded", label: "Awarded" },
 ];
 
-const MOCK_AUCTIONS = Array.from({ length: 12 }).map((_, i) => ({
-  id: `auction-${i + 1}`,
-  ref: `AUC-${2024000 + i + 1}`,
-  title: [
-    "Nhava Sheva → Rotterdam",
-    "Mundra → Hamburg",
-    "Chennai → Singapore",
-    "Kolkata → Colombo",
-    "Cochin → Felixstowe",
-    "Vizag → Antwerp",
-  ][i % 6],
-  shipmentType: ["FCL", "LCL", "FCL", "FCL", "LCL", "FCL"][i % 6],
-  containers: `${[20, 40, 20, 40, 20, 40][i % 6]}ft × ${(i % 5) + 2}`,
-  commodity: ["Non-Haz", "DG Class 3", "Non-Haz", "Reefer", "Non-Haz", "OOG"][i % 6],
-  status: (["active", "draft", "closed", "active", "awarded", "active"] as AuctionStatus[])[i % 6],
-  bids: 3 + (i % 5),
-  maxBids: 5,
-  timeLeft: `${(i % 4) + 1}d ${(i % 12) + 2}h`,
-  creator: ["Cogoport", "Global Lines", "FastShip", "OceanLink", "ClearFreight", "IndiaPort"][i % 6],
-  createdAt: "Jul " + (10 + i),
-}));
-
-const STATS = [
-  { label: "Total", value: "12", color: "text-[var(--fr8x-jet)]" },
-  { label: "Active", value: "4", color: "text-success" },
-  { label: "Drafts", value: "2", color: "text-warning" },
-  { label: "Closed", value: "3", color: "text-foreground-muted" },
-  { label: "Awarded", value: "3", color: "text-[var(--fr8x-periwinkle)]" },
-];
-
 export default function AuctionsPage() {
   const [activeTab, setActiveTab] = useState<AuctionStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [auctions, setAuctions] = useState<AuctionData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filtered = MOCK_AUCTIONS.filter((a) => {
-    if (activeTab !== "all" && a.status !== activeTab) return false;
-    if (searchQuery && !(a.title ?? "").toLowerCase().includes(searchQuery.toLowerCase()) && !a.ref.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-    return true;
-  });
+  // Fetch auctions from Firestore
+  useEffect(() => {
+    async function fetchAuctions() {
+      setIsLoading(true);
+      try {
+        const data = await queryDocuments<AuctionData>(COLLECTIONS.AUCTIONS, [
+          orderBy("createdAt", "desc"),
+          limit(50),
+        ]);
+        setAuctions(data);
+      } catch (err) {
+        console.error("Error fetching auctions:", err);
+        setAuctions([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAuctions();
+  }, []);
+
+  // Compute stats dynamically
+  const stats = useMemo(() => {
+    const total = auctions.length;
+    const active = auctions.filter(a => a.status === "active").length;
+    const drafts = auctions.filter(a => a.status === "draft").length;
+    const closed = auctions.filter(a => a.status === "closed").length;
+    const awarded = auctions.filter(a => a.status === "awarded").length;
+    return [
+      { label: "Total", value: String(total), color: "text-[var(--fr8x-jet)]" },
+      { label: "Active", value: String(active), color: "text-success" },
+      { label: "Drafts", value: String(drafts), color: "text-warning" },
+      { label: "Closed", value: String(closed), color: "text-foreground-muted" },
+      { label: "Awarded", value: String(awarded), color: "text-[var(--fr8x-periwinkle)]" },
+    ];
+  }, [auctions]);
+
+  const filtered = useMemo(() => {
+    return auctions.filter((a) => {
+      if (activeTab !== "all" && a.status !== activeTab) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = (a.title || "").toLowerCase().includes(q);
+        const matchRef = (a.referenceNumber || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchRef) return false;
+      }
+      return true;
+    });
+  }, [auctions, activeTab, searchQuery]);
+
+  // Helper to format container info
+  const formatContainers = (details: AuctionData["containerDetails"]) => {
+    if (!details || details.length === 0) return "—";
+    return details.map(d => `${d.containerSize} × ${d.numberOfContainers}`).join(", ");
+  };
+
+  // Helper to format commodity
+  const formatCommodity = (details: AuctionData["commodityDetails"]) => {
+    if (!details || details.length === 0) return "—";
+    return details.map(d => d.description).join(", ");
+  };
 
   return (
     <div className="space-y-3">
@@ -82,7 +135,7 @@ export default function AuctionsPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-5 gap-1.5">
-        {STATS.map((s) => (
+        {stats.map((s) => (
           <div key={s.label} className="fr8x-card p-1.5 flex flex-col items-center text-center">
             <span className={cn("text-base font-bold tabular-nums", s.color)}>{s.value}</span>
             <span className="text-[9px] text-foreground-secondary uppercase tracking-wide">{s.label}</span>
@@ -121,67 +174,77 @@ export default function AuctionsPage() {
         ))}
       </div>
 
-      {/* Auctions table — compact */}
+      {/* Auctions table */}
       <div className="fr8x-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="fr8x-table">
-            <thead>
-              <tr className="bg-[#FAFAF9]">
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Ref <ArrowUpDown className="h-2 w-2" /></button></th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Route <ArrowUpDown className="h-2 w-2" /></button></th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Type</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Containers</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Commodity</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Status</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Bids</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Time Left</th>
-                <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Creator</th>
-                <th className="px-2 py-0.5 text-left text-[9px] border-b border-border w-6"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((a) => (
-                <tr key={a.id} className="hover:bg-[var(--fr8x-mist)] border-b border-border last:border-0">
-                  <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.ref}</td>
-                  <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.title}</td>
-                  <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.shipmentType}</td>
-                  <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.containers}</td>
-                  <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.commodity}</td>
-                  <td className="px-2 py-0.5">
-                    <span className={cn(
-                      "fr8x-badge",
-                      a.status === "active" ? "fr8x-badge-active" :
-                      a.status === "draft" ? "fr8x-badge-pending" :
-                      a.status === "awarded" ? "fr8x-badge-info" :
-                      "fr8x-badge-danger"
-                    )}>
-                      {a.status}
-                    </span>
-                  </td>
-                  <td className="px-2 py-0.5 text-[10px] tabular-nums whitespace-nowrap">{a.bids}/{a.maxBids}</td>
-                  <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.status === "active" ? a.timeLeft : "—"}</td>
-                  <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.creator}</td>
-                  <td className="px-2 py-0.5">
-                    <Link href={ROUTES.AUCTION_DETAIL(a.id)} className="text-foreground-muted hover:text-[var(--fr8x-periwinkle)]">
-                      <Eye className="h-3 w-3" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex items-center justify-between px-3 py-2 border-t border-border">
-          <p className="text-caption text-foreground-muted">Showing {filtered.length} of {MOCK_AUCTIONS.length}</p>
-          <div className="flex items-center gap-0.5">
-            <button className="fr8x-btn-ghost px-2 py-1 text-caption">Prev</button>
-            <button className="px-2 py-1 text-caption bg-[var(--fr8x-periwinkle)] text-white rounded">1</button>
-            <button className="fr8x-btn-ghost px-2 py-1 text-caption">2</button>
-            <button className="fr8x-btn-ghost px-2 py-1 text-caption">Next</button>
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
+            <span className="text-[11px] text-foreground-muted">Loading auctions...</span>
           </div>
-        </div>
+        ) : filtered.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-[11px] text-foreground-secondary">
+              {auctions.length === 0 ? "No auctions created yet" : "No auctions match your filters"}
+            </p>
+            <p className="text-[10px] text-foreground-muted mt-1">
+              {auctions.length === 0 ? "Create your first reverse auction to get started!" : "Try adjusting your search or filters"}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="fr8x-table">
+                <thead>
+                  <tr className="bg-[#FAFAF9]">
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Ref <ArrowUpDown className="h-2 w-2" /></button></th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Route <ArrowUpDown className="h-2 w-2" /></button></th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Type</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Containers</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Commodity</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Status</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Bids</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Creator</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] border-b border-border w-6"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((a) => (
+                    <tr key={a.id} className="hover:bg-[var(--fr8x-mist)] border-b border-border last:border-0">
+                      <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.referenceNumber || "—"}</td>
+                      <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.title || "—"}</td>
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.shipmentDetails?.mode?.toUpperCase() || "—"}</td>
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{formatContainers(a.containerDetails)}</td>
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{formatCommodity(a.commodityDetails)}</td>
+                      <td className="px-2 py-0.5">
+                        <span className={cn(
+                          "fr8x-badge",
+                          a.status === "active" ? "fr8x-badge-active" :
+                          a.status === "draft" ? "fr8x-badge-pending" :
+                          a.status === "awarded" ? "fr8x-badge-info" :
+                          "fr8x-badge-danger"
+                        )}>
+                          {a.status}
+                        </span>
+                      </td>
+                      <td className="px-2 py-0.5 text-[10px] tabular-nums whitespace-nowrap">{a.bidsCount || 0}</td>
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.creatorName || "—"}</td>
+                      <td className="px-2 py-0.5">
+                        <Link href={ROUTES.AUCTION_DETAIL(a.id)} className="text-foreground-muted hover:text-[var(--fr8x-periwinkle)]">
+                          <Eye className="h-3 w-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-3 py-2 border-t border-border">
+              <p className="text-caption text-foreground-muted">Showing {filtered.length} of {auctions.length}</p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
