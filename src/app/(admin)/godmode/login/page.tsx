@@ -1,12 +1,11 @@
 // FR8X-CON GodMode Dedicated Admin Login Page — Spec Page 11
-// Separate login endpoint for GodMODE Administrator Access
 
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Shield, Lock, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Shield, ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithEmail } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
@@ -27,8 +26,8 @@ export default function GodModeLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailOrUser.trim()) {
-      setError("Please enter your GodMODE username or email.");
+    if (!emailOrUser.trim() || !password.trim()) {
+      setError("Please enter your admin email and password.");
       return;
     }
 
@@ -36,29 +35,11 @@ export default function GodModeLoginPage() {
     setIsSubmitting(true);
 
     try {
-      // Allow 'godmode' or 'support@fr8x.in' or email login for GodMODE admin
-      const email = emailOrUser.trim() === "godmode" ? "support@fr8x.in" : emailOrUser.trim();
-      const pwd = password || "QWERTY@123x";
-      await signInWithEmail(email, pwd);
+      await signInWithEmail(emailOrUser.trim(), password);
       router.push(ROUTES.GODMODE);
     } catch (err: unknown) {
       console.error("GodMode Login error:", err);
-      // Fallback mock login for GodMode admin in local dev
-      if (typeof window !== "undefined") {
-        const mockAdminUser = {
-          uid: "mock-uid-godmode",
-          email: "support@fr8x.in",
-          displayName: "Godmode Admin",
-          photoURL: null,
-          emailVerified: true,
-          role: "godmode",
-          isGodMode: true,
-          companyId: "comp-godmode",
-          membershipTier: "premium",
-        };
-        localStorage.setItem("fr8x_mock_user", JSON.stringify(mockAdminUser));
-        window.location.href = ROUTES.GODMODE;
-      }
+      setError("Authentication failed. Invalid admin credentials.");
     } finally {
       setIsSubmitting(false);
     }
@@ -98,13 +79,13 @@ export default function GodModeLoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-body-sm font-medium text-slate-300 mb-1.5">
-              Admin Username / Email
+              Admin Email
             </label>
             <input
-              type="text"
+              type="email"
               value={emailOrUser}
               onChange={(e) => setEmailOrUser(e.target.value)}
-              placeholder="godmode or support@fr8x.in"
+              placeholder="admin@company.com"
               className="w-full rounded-md border border-slate-600 bg-slate-800 px-3 py-2 text-body-sm text-white placeholder-slate-500 focus:border-[#56C5F0] focus:ring-1 focus:ring-[#56C5F0] focus:outline-none"
               autoFocus
             />
@@ -133,19 +114,13 @@ export default function GodModeLoginPage() {
           </button>
         </form>
 
-        {/* Quick Admin Access Hint */}
         <div className="pt-4 border-t border-slate-700/80 text-center">
-          <p className="text-caption text-slate-400">
-            Default credentials: <code className="text-[#56C5F0] font-mono">godmode</code> / <code className="text-[#56C5F0] font-mono">QWERTY@123x</code>
-          </p>
-          <div className="mt-3">
-            <Link
-              href={ROUTES.LOGIN}
-              className="text-caption text-slate-400 hover:text-white underline transition-colors"
-            >
-              Switch to General User Login
-            </Link>
-          </div>
+          <Link
+            href={ROUTES.LOGIN}
+            className="text-caption text-slate-400 hover:text-white underline transition-colors"
+          >
+            Switch to General User Login
+          </Link>
         </div>
       </div>
     </div>
