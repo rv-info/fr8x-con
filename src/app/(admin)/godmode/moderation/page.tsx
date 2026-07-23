@@ -1,24 +1,24 @@
-// FR8X-CON GodMode Moderation Queue — Spec Page 11
+// FR8X-CON GodMode Moderation Queue
 
 "use client";
 
 import { useState } from "react";
-import { Flag, Check, X, AlertTriangle } from "lucide-react";
+import { Flag, Check, X } from "lucide-react";
 
-const mockFlagged = Array.from({ length: 5 }, (_, i) => ({
-  id: `mod-${i + 1}`,
-  authorName: `User ${i + 1}`,
-  contentType: ["Post", "Comment", "Rate Entry", "Profile"][i % 4],
-  reason: ["Spam", "Misleading Information", "Copyright Infringement", "Harassment", "Fake Pricing"][i % 5],
-  flaggedBy: `User ${i + 10}`,
-  contentSnippet: `Reported content snippet #${i + 1}...`,
-  timestamp: `${i + 1}h ago`,
-}));
+type ModItem = {
+  id: string;
+  authorName: string;
+  contentType: string;
+  reason: string;
+  flaggedBy: string;
+  contentSnippet: string;
+  timestamp: string;
+};
 
 export default function GodModeModerationPage() {
-  const [items, setItems] = useState(mockFlagged);
+  const [items, setItems] = useState<ModItem[]>([]);
 
-  const handleAction = (id: string, action: "approve" | "remove") => {
+  const handleAction = (id: string, _action: "approve" | "remove") => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   };
 
