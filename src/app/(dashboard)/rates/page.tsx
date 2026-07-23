@@ -3,33 +3,48 @@
 
 "use client";
 
-import { useState } from "react";
-import { Plus, Download, Upload, Copy, Trash2, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { Download, Upload, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useAuth } from "@/providers/AuthProvider";
+import { COLLECTIONS } from "@/lib/utils/constants";
+import {
+  queryDocuments,
+  setDocument,
+  getDocRef,
+  orderBy,
+  limit,
+  serverTimestamp,
+} from "@/lib/firebase/firestore";
 
 type RateTab = "active" | "expired" | "all";
 
-const mockRates = Array.from({ length: 10 }, (_, i) => ({
-  id: `rate-${i + 1}`,
-  srq: `SRQ-${1000 + i}`,
-  rateProvider: ["Ocean Trans", "Global Freight", "Apex Logistics", "Speedy Cargo", "Marine Logistics"][i % 5],
-  carrier: ["Maersk", "MSC", "CMA CGM", "COSCO", "Hapag-Lloyd"][i % 5],
-  pol: ["INNSA", "INBOM", "SGSIN", "CNSHA", "NLRTM"][i % 5],
-  pod: ["NLRTM", "DEHAM", "AEJEA", "USNYC", "GBFLX"][i % 5],
-  fpod: ["NLRTM", "DEHAM", "AEJEA", "USNYC", "GBFLX"][i % 5],
-  commodity: "General",
-  contType: ["GEN", "HAZ", "OOG"][i % 3],
-  contSize: ["20'", "40'", "40' HC"][i % 3],
-  route: "Direct",
-  rate: 1200 + i * 150,
-  curr: "USD",
-  tt: `${14 + i} days`,
-  routing: "Direct",
-  remarks: "Valid until end of month",
-  status: i % 4 === 0 ? "expired" : "active",
-}));
+type RateData = {
+  id: string;
+  srq: string;
+  rateProvider: string;
+  carrier: string;
+  pol: string;
+  pod: string;
+  fpod: string;
+  commodity: string;
+  contType: string;
+  contSize: string;
+  route: string;
+  rate: number;
+  curr: string;
+  tt: string;
+  routing: string;
+  remarks: string;
+  status: string;
+  createdAt: { seconds: number; nanoseconds: number } | null;
+  createdBy: string;
+};
 
 export default function RateCenterPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<RateTab>("active");
+  const [rates, setRates] = useState<RateData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Form state (left sidebar)
   const [rateProvider, setRateProvider] = useState("");
@@ -48,13 +63,35 @@ export default function RateCenterPage() {
   const [transitType, setTransitType] = useState("SAVING");
   const [remarks, setRemarks] = useState("");
 
-  const filteredRates = mockRates.filter((r) => {
-    if (activeTab === "active") return r.status === "active";
-    if (activeTab === "expired") return r.status === "expired";
-    return true;
-  });
+  // Fetch rates from Firestore
+  useEffect(() => {
+    async function fetchRates() {
+      setIsLoading(true);
+      try {
+        const data = await queryDocuments<RateData>(COLLECTIONS.RATES, [
+          orderBy("createdAt", "desc"),
+          limit(50),
+        ]);
+        setRates(data);
+      } catch (err) {
+        console.error("Error fetching rates:", err);
+        setRates([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchRates();
+  }, []);
 
-  const handleClear = () => {
+  const filteredRates = useMemo(() => {
+    return rates.filter((r) => {
+      if (activeTab === "active") return r.status === "active";
+      if (activeTab === "expired") return r.status === "expired";
+      return true;
+    });
+  }, [rates, activeTab]);
+
+  const handleClear = useCallback(() => {
     setRateProvider("");
     setCarrierForwarderName("");
     setCarrier("");
@@ -70,7 +107,46 @@ export default function RateCenterPage() {
     setRoutingSD("S");
     setTransitType("SAVING");
     setRemarks("");
-  };
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    if (!user || !rateProvider || !pol || !pod) return;
+    try {
+      const docRef = getDocRef(COLLECTIONS.RATES);
+      await setDocument(COLLECTIONS.RATES, docRef.id, {
+        srq: `SRQ-${Date.now().toString().slice(-6)}`,
+        rateProvider,
+        carrierForwarderName,
+        carrier,
+        pol,
+        pod,
+        fpod,
+        commodity: "General",
+        contType,
+        contSize,
+        route,
+        rate: parseFloat(rate) || 0,
+        curr: "USD",
+        tt,
+        routing: routingSD === "S" ? "Single" : "Direct",
+        remarks,
+        validityDate,
+        transitType,
+        status: "active",
+        createdAt: serverTimestamp(),
+        createdBy: user.uid,
+      });
+      handleClear();
+      // Refresh rates
+      const data = await queryDocuments<RateData>(COLLECTIONS.RATES, [
+        orderBy("createdAt", "desc"),
+        limit(50),
+      ]);
+      setRates(data);
+    } catch (err) {
+      console.error("Error saving rate:", err);
+    }
+  }, [user, rateProvider, carrierForwarderName, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, handleClear]);
 
   return (
     <div className="min-h-screen bg-[var(--fr8x-bg)] py-6 w-full">
@@ -156,8 +232,8 @@ export default function RateCenterPage() {
               <div>
                 <label className="fr8x-label block mb-1">CONTAINER SIZE</label>
                 <select value={contSize} onChange={(e) => setContSize(e.target.value)} className="fr8x-input text-caption">
-                  <option value="20'">20'</option>
-                  <option value="40'">40'</option>
+                  <option value="20&apos;">20&apos;</option>
+                  <option value="40&apos;">40&apos;</option>
                   <option value="OT">OT</option>
                   <option value="RF">RF</option>
                   <option value="DG">DG</option>
@@ -221,7 +297,7 @@ export default function RateCenterPage() {
             {/* Actions */}
             <div className="pt-2 border-t border-border space-y-2">
               <div className="grid grid-cols-3 gap-2">
-                <button className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] py-1 text-caption">SAVE</button>
+                <button onClick={handleSave} className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] py-1 text-caption">SAVE</button>
                 <button className="fr8x-btn-secondary py-1 text-caption">UPDATE</button>
                 <button onClick={handleClear} className="fr8x-btn-ghost text-danger py-1 text-caption">CLEAR</button>
               </div>
@@ -232,62 +308,78 @@ export default function RateCenterPage() {
           {/* ═══ MAIN CONTENT: Rates Table ═══ */}
           <main className="flex-1 min-w-0 space-y-4">
             <div className="fr8x-card bg-white overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="fr8x-table fr8x-table-compact">
-                  <thead>
-                    <tr>
-                      <th className="w-8"><input type="checkbox" /></th>
-                      <th>SRQ</th>
-                      <th>RATE PROVIDER</th>
-                      <th>CARRIER</th>
-                      <th>POL</th>
-                      <th>POD</th>
-                      <th>FPOD</th>
-                      <th>COMM</th>
-                      <th>CONT TYPE</th>
-                      <th>CONT SIZE</th>
-                      <th>ROUT</th>
-                      <th>RATE</th>
-                      <th>CURR</th>
-                      <th>TT</th>
-                      <th>ROUTING</th>
-                      <th>REMARKS</th>
-                      <th className="w-48">ACTION</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredRates.map((r) => (
-                      <tr key={r.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
-                        <td><input type="checkbox" /></td>
-                        <td className="font-semibold text-[var(--fr8x-jet)]">{r.srq}</td>
-                        <td>{r.rateProvider}</td>
-                        <td>{r.carrier}</td>
-                        <td>{r.pol}</td>
-                        <td>{r.pod}</td>
-                        <td>{r.fpod}</td>
-                        <td>{r.commodity}</td>
-                        <td>{r.contType}</td>
-                        <td>{r.contSize}</td>
-                        <td>{r.route}</td>
-                        <td className="font-bold text-[var(--fr8x-jet)]">${r.rate}</td>
-                        <td>{r.curr}</td>
-                        <td>{r.tt}</td>
-                        <td>{r.routing}</td>
-                        <td className="truncate max-w-[120px]">{r.remarks}</td>
-                        <td>
-                          <div className="flex items-center gap-1.5 text-[10px]">
-                            <button className="text-[var(--fr8x-periwinkle)] hover:underline">COPY / DUPLICATE</button>
-                            <span className="text-foreground-muted">|</span>
-                            <button className="text-warning hover:underline">mark as expired</button>
-                            <span className="text-foreground-muted">|</span>
-                            <button className="text-danger hover:underline">delete</button>
-                          </div>
-                        </td>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2 py-8">
+                  <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
+                  <span className="text-[11px] text-foreground-muted">Loading rates...</span>
+                </div>
+              ) : filteredRates.length === 0 ? (
+                <div className="py-8 text-center">
+                  <p className="text-[11px] text-foreground-secondary">
+                    {rates.length === 0 ? "No rates entered yet" : "No rates match this filter"}
+                  </p>
+                  <p className="text-[10px] text-foreground-muted mt-1">
+                    Use the rate entry form to add your first rate.
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="fr8x-table fr8x-table-compact">
+                    <thead>
+                      <tr>
+                        <th className="w-8"><input type="checkbox" /></th>
+                        <th>SRQ</th>
+                        <th>RATE PROVIDER</th>
+                        <th>CARRIER</th>
+                        <th>POL</th>
+                        <th>POD</th>
+                        <th>FPOD</th>
+                        <th>COMM</th>
+                        <th>CONT TYPE</th>
+                        <th>CONT SIZE</th>
+                        <th>ROUT</th>
+                        <th>RATE</th>
+                        <th>CURR</th>
+                        <th>TT</th>
+                        <th>ROUTING</th>
+                        <th>REMARKS</th>
+                        <th className="w-48">ACTION</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredRates.map((r) => (
+                        <tr key={r.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
+                          <td><input type="checkbox" /></td>
+                          <td className="font-semibold text-[var(--fr8x-jet)]">{r.srq}</td>
+                          <td>{r.rateProvider}</td>
+                          <td>{r.carrier}</td>
+                          <td>{r.pol}</td>
+                          <td>{r.pod}</td>
+                          <td>{r.fpod}</td>
+                          <td>{r.commodity}</td>
+                          <td>{r.contType}</td>
+                          <td>{r.contSize}</td>
+                          <td>{r.route}</td>
+                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate}</td>
+                          <td>{r.curr}</td>
+                          <td>{r.tt}</td>
+                          <td>{r.routing}</td>
+                          <td className="truncate max-w-[120px]">{r.remarks}</td>
+                          <td>
+                            <div className="flex items-center gap-1.5 text-[10px]">
+                              <button className="text-[var(--fr8x-periwinkle)] hover:underline">COPY / DUPLICATE</button>
+                              <span className="text-foreground-muted">|</span>
+                              <button className="text-warning hover:underline">mark as expired</button>
+                              <span className="text-foreground-muted">|</span>
+                              <button className="text-danger hover:underline">delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
             {/* Pagination */}
