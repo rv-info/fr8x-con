@@ -1,9 +1,8 @@
 // FR8X-CON Published Job Details Popup — Spec Page 7
-// Detail Fields Table + Send Email Action
 
 "use client";
 
-import { X, Mail, Globe, MapPin, Building, Calendar, DollarSign, Briefcase } from "lucide-react";
+import { X, Mail, Globe } from "lucide-react";
 import type { JobPosting } from "@/lib/types/job";
 
 interface JobDetailsDialogProps {
