@@ -2,9 +2,21 @@
 
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Award, Star, Zap, TrendingUp, CheckCircle, Shield } from "lucide-react";
+import { Award, Zap, TrendingUp, CheckCircle, Shield, Loader2 } from "lucide-react";
 import { AWARD_LABELS, type AwardCategory } from "@/lib/types/award";
+import { queryDocuments, orderBy, limit } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
+
+type AwardData = {
+  id: string;
+  category: AwardCategory;
+  recipientName: string;
+  year: number;
+  quarter: number;
+  createdAt: { seconds: number; nanoseconds: number } | null;
+};
 
 const AWARD_ICONS: Record<AwardCategory, typeof Award> = {
   top_forwarder: Award,
@@ -14,15 +26,29 @@ const AWARD_ICONS: Record<AwardCategory, typeof Award> = {
   trusted_partner: Shield,
 };
 
-const MOCK_AWARDS = [
-  { id: "1", category: "top_forwarder" as AwardCategory, recipientName: "Global Logistics Ltd", year: 2024, quarter: 2 },
-  { id: "2", category: "fastest_response" as AwardCategory, recipientName: "Swift Freight Co", year: 2024, quarter: 2 },
-  { id: "3", category: "best_rates" as AwardCategory, recipientName: "Ocean Bridge Shipping", year: 2024, quarter: 2 },
-  { id: "4", category: "highest_acceptance" as AwardCategory, recipientName: "Reliable Cargo Services", year: 2024, quarter: 1 },
-  { id: "5", category: "trusted_partner" as AwardCategory, recipientName: "Prime Forwarding Inc", year: 2024, quarter: 1 },
-];
-
 export default function AwardsPage() {
+  const [awards, setAwards] = useState<AwardData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchAwards() {
+      setIsLoading(true);
+      try {
+        const data = await queryDocuments<AwardData>(COLLECTIONS.AWARDS, [
+          orderBy("createdAt", "desc"),
+          limit(20),
+        ]);
+        setAwards(data);
+      } catch (err) {
+        console.error("Error fetching awards:", err);
+        setAwards([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAwards();
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -49,7 +75,7 @@ export default function AwardsPage() {
               </div>
               <h3 className="text-heading-sm text-foreground">{AWARD_LABELS[category]}</h3>
               <p className="mt-1 text-caption text-foreground-muted">
-                Q2 2024
+                Recognized Quarterly
               </p>
             </motion.div>
           );
@@ -61,25 +87,39 @@ export default function AwardsPage() {
         <div className="px-6 py-4 border-b border-border">
           <h2 className="text-heading-lg text-foreground">Recent Awards</h2>
         </div>
-        <div className="divide-y divide-border">
-          {MOCK_AWARDS.map((award) => {
-            const Icon = AWARD_ICONS[award.category];
-            return (
-              <div key={award.id} className="px-6 py-4 flex items-center gap-4 hover:bg-background transition-colors">
-                <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
-                  <Icon className="h-5 w-5 text-brand-600" />
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-2 py-8">
+            <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
+            <span className="text-[11px] text-foreground-muted">Loading awards...</span>
+          </div>
+        ) : awards.length === 0 ? (
+          <div className="py-8 text-center">
+            <p className="text-body-sm text-foreground-secondary">No awards issued yet</p>
+            <p className="text-caption text-foreground-muted mt-1">Network awards will be highlighted here as members earn recognition.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-border">
+            {awards.map((award) => {
+              const Icon = AWARD_ICONS[award.category] || Award;
+              return (
+                <div key={award.id} className="px-6 py-4 flex items-center gap-4 hover:bg-background transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-brand-600" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-body-sm font-medium text-foreground">{award.recipientName}</p>
+                    <p className="text-caption text-foreground-secondary">{AWARD_LABELS[award.category] || award.category}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-body-sm text-foreground-secondary">
+                      {award.quarter ? `Q${award.quarter} ` : ""}{award.year || ""}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-body-sm font-medium text-foreground">{award.recipientName}</p>
-                  <p className="text-caption text-foreground-secondary">{AWARD_LABELS[award.category]}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-body-sm text-foreground-secondary">Q{award.quarter} {award.year}</p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
