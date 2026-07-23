@@ -38,7 +38,7 @@ export default function AuctionCreatePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, control, handleSubmit, watch, formState: { errors } } = useForm<AuctionCreateFormData>({
+  const { register, control, handleSubmit, watch } = useForm<AuctionCreateFormData>({
     resolver: zodResolver(auctionCreateSchema),
     defaultValues: {
       title: "",
@@ -103,13 +103,11 @@ export default function AuctionCreatePage() {
   const {
     fields: commodityFields,
     append: appendCommodity,
-    remove: removeCommodity,
   } = useFieldArray({ control, name: "commodityDetails" });
 
   const onSubmit = async (data: AuctionCreateFormData) => {
     setIsSubmitting(true);
     try {
-      // TODO: Submit to Firebase via Cloud Function
       console.log("Auction data:", data);
       router.push(ROUTES.AUCTIONS);
     } catch (error) {
@@ -148,6 +146,7 @@ export default function AuctionCreatePage() {
           return (
             <div key={step.id} className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setCurrentStep(step.id)}
                 className={cn(
                   "flex items-center gap-2 px-3 py-2 rounded-lg text-body-sm font-medium transition-all whitespace-nowrap",
