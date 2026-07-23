@@ -8,7 +8,6 @@ import {
   getDocs,
   setDoc,
   updateDoc,
-  deleteDoc,
   query,
   where,
   orderBy,
@@ -22,8 +21,6 @@ import {
   type DocumentData,
   type QueryConstraint,
   type DocumentReference,
-  type DocumentSnapshot,
-  type QuerySnapshot,
   type Unsubscribe,
   Timestamp,
 } from "firebase/firestore";
@@ -36,81 +33,6 @@ export async function getDocument<T extends DocumentData>(
   collectionName: string,
   docId: string
 ): Promise<(T & { id: string }) | null> {
-  // Mock login user and profile data fallback
-  if (docId === "mock-uid-godmode") {
-    if (collectionName === "users") {
-      return {
-        id: "mock-uid-godmode",
-        role: "godmode",
-        isGodMode: true,
-        companyId: null,
-        membershipTier: "premium",
-      } as unknown as (T & { id: string });
-    } else if (collectionName === "profiles") {
-      return {
-        id: "mock-uid-godmode",
-        userId: "mock-uid-godmode",
-        fullName: "Godmode Admin",
-        designation: "Platform Administrator",
-        location: "Global",
-        country: "India",
-        about: "System Admin account",
-        companyName: "FR8X-CON",
-        photoURL: null,
-        verifiedBadge: true,
-        followers: [],
-        following: [],
-        followersCount: 0,
-        followingCount: 0,
-        postsCount: 0,
-        awardsCount: 0,
-        currentAuctions: [],
-        completedAuctions: [],
-        blacklistStatus: "clean",
-        industryTags: [],
-        serviceTags: [],
-        workExperience: [],
-      } as unknown as (T & { id: string });
-    }
-  }
-
-  if (docId === "mock-uid-mgt") {
-    if (collectionName === "users") {
-      return {
-        id: "mock-uid-mgt",
-        role: "freight_forwarder",
-        isGodMode: false,
-        companyId: "mock-company-1",
-        membershipTier: "premium",
-      } as unknown as (T & { id: string });
-    } else if (collectionName === "profiles") {
-      return {
-        id: "mock-uid-mgt",
-        userId: "mock-uid-mgt",
-        fullName: "Management User",
-        designation: "Operations Manager",
-        location: "Mumbai",
-        country: "India",
-        about: "RaiVega Management account",
-        companyName: "RaiVega",
-        photoURL: null,
-        verifiedBadge: true,
-        followers: [],
-        following: [],
-        followersCount: 0,
-        followingCount: 0,
-        postsCount: 0,
-        awardsCount: 0,
-        currentAuctions: [],
-        completedAuctions: [],
-        blacklistStatus: "clean",
-        industryTags: ["Freight Forwarding", "FCL", "LCL"],
-        serviceTags: [],
-        workExperience: [],
-      } as unknown as (T & { id: string });
-    }
-  }
-
   try {
     const docRef = doc(firebaseDb, collectionName, docId);
     const docSnap = await getDoc(docRef);
@@ -129,13 +51,18 @@ export async function queryDocuments<T extends DocumentData>(
   collectionName: string,
   constraints: QueryConstraint[] = []
 ): Promise<(T & { id: string })[]> {
-  const collectionRef = collection(firebaseDb, collectionName);
-  const q = query(collectionRef, ...constraints);
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as (T & { id: string })[];
+  try {
+    const collectionRef = collection(firebaseDb, collectionName);
+    const q = query(collectionRef, ...constraints);
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as (T & { id: string })[];
+  } catch (error) {
+    console.error("Firestore queryDocuments error:", error);
+    return [];
+  }
 }
 
 /**
