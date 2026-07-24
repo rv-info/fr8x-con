@@ -135,12 +135,33 @@ export const FEED_SORT_OPTIONS = [
   { value: "my_posts", label: "My Posts" },
 ] as const;
 
-// Container sizes
+// Container & Equipment sizes (spec page 8 & multi-modal engine)
 export const CONTAINER_SIZES = [
-  { value: "20ft", label: "20' Standard" },
-  { value: "40ft", label: "40' Standard" },
-  { value: "40ft_hc", label: "40' High Cube" },
-  { value: "45ft", label: "45' High Cube" },
+  { value: "20ft", label: "20' Standard (20'DV)" },
+  { value: "40ft", label: "40' Standard (40'DV)" },
+  { value: "40ft_hc", label: "40' High Cube (40'HC)" },
+  { value: "45ft", label: "45' High Cube (45'HC)" },
+  { value: "open_top", label: "Open Top Container (OT)" },
+  { value: "flat_rack", label: "Flat Rack Container (FR)" },
+  { value: "platform", label: "Platform Container" },
+  { value: "reefer", label: "Reefer Container (RF)" },
+  { value: "tank_container", label: "Tank Container" },
+  { value: "iso_tank", label: "ISO Tank Container" },
+  { value: "special_equipment", label: "Special / Customized Equipment" },
+] as const;
+
+export const INCOTERMS_LIST = [
+  "EXW",
+  "FCA",
+  "FAS",
+  "FOB",
+  "CFR",
+  "CIF",
+  "CPT",
+  "CIP",
+  "DAP",
+  "DPU",
+  "DDP",
 ] as const;
 
 // Membership tiers (spec page 2 — Trail = 2 days)
