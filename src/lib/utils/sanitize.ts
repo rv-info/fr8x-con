@@ -51,7 +51,6 @@ export function sanitizeEmail(email: string): string {
  * Remove null bytes and control characters from input.
  */
 export function removeControlChars(str: string): string {
-  // eslint-disable-next-line no-control-regex
   return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
 }
 
