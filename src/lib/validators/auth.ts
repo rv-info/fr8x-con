@@ -42,15 +42,7 @@ export const registerSchema = z
     countryRegion: z
       .string()
       .min(1, "Country / Region is required"),
-    role: z.enum([
-      "nvocc",
-      "mlo",
-      "freight_forwarder",
-      "cha",
-      "transporter",
-    ], {
-      required_error: "Please select a role",
-    }),
+    role: z.string().min(1, "Please select a business vertical"),
     industryTags: z
       .array(z.string())
       .min(1, "Select at least one industry/service tag"),
