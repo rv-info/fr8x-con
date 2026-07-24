@@ -66,6 +66,21 @@ export async function queryDocuments<T extends DocumentData>(
 }
 
 /**
+ * Recursively remove undefined values from an object before passing to Firestore.
+ */
+function cleanUndefined<T>(obj: T): T {
+  if (obj === null || typeof obj !== "object") return obj;
+  if (Array.isArray(obj)) return obj.map(cleanUndefined) as unknown as T;
+  const cleaned: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj as Record<string, unknown>)) {
+    if (value !== undefined) {
+      cleaned[key] = cleanUndefined(value);
+    }
+  }
+  return cleaned as T;
+}
+
+/**
  * Create or set a document.
  */
 export async function setDocument<T extends DocumentData>(
@@ -75,10 +90,11 @@ export async function setDocument<T extends DocumentData>(
   merge: boolean = false
 ): Promise<void> {
   const docRef = doc(firebaseDb, collectionName, docId);
-  await setDoc(docRef, {
+  const payload = cleanUndefined({
     ...data,
     updatedAt: serverTimestamp(),
-  }, { merge });
+  });
+  await setDoc(docRef, payload, { merge });
 }
 
 /**
@@ -90,10 +106,11 @@ export async function updateDocument(
   data: Partial<DocumentData>
 ): Promise<void> {
   const docRef = doc(firebaseDb, collectionName, docId);
-  await updateDoc(docRef, {
+  const payload = cleanUndefined({
     ...data,
     updatedAt: serverTimestamp(),
   });
+  await updateDoc(docRef, payload);
 }
 
 /**
