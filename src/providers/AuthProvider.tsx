@@ -1,5 +1,4 @@
-// FR8X-CON Auth Provider
-// Manages Firebase Auth state and provides user context
+// FR8X-CON Auth Provider — Manages Firebase Auth & Demo Test Credentials State
 
 "use client";
 
@@ -13,7 +12,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthState, AuthUser, UserRole } from "@/lib/types/auth";
-import { onAuthChange, signOut as firebaseSignOut } from "@/lib/firebase/auth";
+import { onAuthChange, signOut as firebaseSignOut, getStoredDemoUser, DEMO_AUTH_EVENT } from "@/lib/firebase/auth";
 import { getDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import { useRouter } from "next/navigation";
@@ -34,6 +33,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error: null,
   });
   const router = useRouter();
+
+  const syncDemoUser = useCallback(() => {
+    const demo = getStoredDemoUser();
+    if (demo) {
+      const authUser: AuthUser = {
+        uid: demo.id,
+        email: demo.email,
+        displayName: demo.displayName,
+        photoURL: null,
+        emailVerified: true,
+        role: demo.role as UserRole,
+        isGodMode: demo.isGodMode,
+        companyId: null,
+        membershipTier: demo.membershipTier,
+      };
+      setState({
+        isAuthenticated: true,
+        isLoading: false,
+        user: authUser,
+        error: null,
+      });
+      return true;
+    }
+    return false;
+  }, []);
 
   const fetchUserData = useCallback(async (uid: string, email: string | null, displayName: string | null, photoURL: string | null, emailVerified: boolean) => {
     try {
@@ -66,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Error fetching user data:", error);
       const isDemoAdmin = email === "admin@fr8x.in";
-      // Still authenticate but with defaults if Firestore fails
       setState({
         isAuthenticated: true,
         isLoading: false,
@@ -87,8 +110,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Check local demo session first
+    const hasDemo = syncDemoUser();
+
+    // Listen to local demo auth changes
+    const handleDemoChange = () => {
+      if (!syncDemoUser()) {
+        setState({
+          isAuthenticated: false,
+          isLoading: false,
+          user: null,
+          error: null,
+        });
+      }
+    };
+
+    if (typeof window !== "undefined") {
+      window.addEventListener(DEMO_AUTH_EVENT, handleDemoChange);
+    }
+
     const unsubscribe = onAuthChange(async (firebaseUser) => {
-      if (firebaseUser) {
+      const demo = getStoredDemoUser();
+      if (demo) {
+        syncDemoUser();
+      } else if (firebaseUser) {
         await fetchUserData(
           firebaseUser.uid,
           firebaseUser.email,
@@ -96,7 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firebaseUser.photoURL,
           firebaseUser.emailVerified
         );
-      } else {
+      } else if (!hasDemo) {
         setState({
           isAuthenticated: false,
           isLoading: false,
@@ -106,8 +151,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => unsubscribe();
-  }, [fetchUserData]);
+    return () => {
+      unsubscribe();
+      if (typeof window !== "undefined") {
+        window.removeEventListener(DEMO_AUTH_EVENT, handleDemoChange);
+      }
+    };
+  }, [fetchUserData, syncDemoUser]);
 
   const signOut = useCallback(async () => {
     try {
@@ -126,6 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     if (state.user) {
+      if (syncDemoUser()) return;
       await fetchUserData(
         state.user.uid,
         state.user.email,
@@ -134,12 +185,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         state.user.emailVerified
       );
     }
-  }, [state.user, fetchUserData]);
+  }, [state.user, fetchUserData, syncDemoUser]);
 
   const hasRole = useCallback(
     (role: UserRole | UserRole[]) => {
       if (!state.user) return false;
-      if (state.user.isGodMode) return true; // GodMode has all roles
+      if (state.user.isGodMode) return true;
       if (Array.isArray(role)) return role.includes(state.user.role);
       return state.user.role === role;
     },
