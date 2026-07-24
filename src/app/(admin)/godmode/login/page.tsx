@@ -115,6 +115,20 @@ export default function GodModeLoginPage() {
             Launch GodMODE
             <ArrowRight className="h-4 w-4 ml-2 inline" />
           </Button>
+
+          {/* Quick Demo Credentials Fill */}
+          <div className="mt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setEmailOrUser("admin@fr8x.in");
+                setPassword("Admin@123456");
+              }}
+              className="text-caption text-slate-400 hover:text-white underline transition-colors"
+            >
+              Fill Demo Credentials (GODMODE Angle)
+            </button>
+          </div>
         </form>
 
         <div className="pt-4 border-t border-slate-700/80 text-center">
