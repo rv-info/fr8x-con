@@ -46,6 +46,11 @@ export const metadata: Metadata = {
     description:
       "Reverse auctions, live bidding, rate management & professional collaboration — all in one secure platform.",
   },
+  icons: {
+    icon: "/fr8x.png",
+    shortcut: "/fr8x.png",
+    apple: "/fr8x.png",
+  },
 };
 
 export const viewport: Viewport = {
