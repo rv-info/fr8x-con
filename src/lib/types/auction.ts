@@ -1,6 +1,6 @@
 // FR8X-CON Auction Types
 
-import type { AuditFields, Status } from "./common";
+import type { AuditFields } from "./common";
 
 export type AuctionStatus =
   | "draft"
