@@ -4,14 +4,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-// Public routes that don't require authentication
-const publicRoutes = ["/login", "/register", "/forgot-password"];
-
-// Admin-only routes
-const adminRoutes = ["/godmode"];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const host = request.headers.get("host");
+
+  // Handle GodMode domain routing (e.g. god.fr8x.in)
+  if (host === "god.fr8x.in" && pathname === "/") {
+    return NextResponse.rewrite(new URL("/godmode", request.url));
+  }
 
   // Add security headers
   const response = NextResponse.next();
@@ -19,9 +19,15 @@ export function middleware(request: NextRequest) {
   // CSRF protection: Verify origin for state-changing requests
   if (["POST", "PUT", "DELETE", "PATCH"].includes(request.method)) {
     const origin = request.headers.get("origin");
-    const host = request.headers.get("host");
-    if (origin && host && !origin.includes(host)) {
-      return new NextResponse("Forbidden", { status: 403 });
+    if (origin && host) {
+      try {
+        const originHost = new URL(origin).host;
+        if (originHost !== host) {
+          return new NextResponse("Forbidden", { status: 403 });
+        }
+      } catch {
+        return new NextResponse("Forbidden", { status: 403 });
+      }
     }
   }
 
