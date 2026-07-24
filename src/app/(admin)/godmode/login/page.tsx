@@ -2,13 +2,14 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shield, ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithEmail } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
+import { Button } from "@/components/ui/Button";
 
 export default function GodModeLoginPage() {
   const [emailOrUser, setEmailOrUser] = useState("");
@@ -19,10 +20,11 @@ export default function GodModeLoginPage() {
   const { isAuthenticated, user } = useAuth();
 
   // If already authenticated as GodMode admin, redirect directly to /godmode
-  if (isAuthenticated && user?.isGodMode) {
-    router.replace(ROUTES.GODMODE);
-    return null;
-  }
+  useEffect(() => {
+    if (isAuthenticated && user?.isGodMode) {
+      router.replace(ROUTES.GODMODE);
+    }
+  }, [isAuthenticated, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,14 +106,15 @@ export default function GodModeLoginPage() {
             />
           </div>
 
-          <button
+          <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-bold text-slate-900 transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] flex items-center justify-center gap-2 mt-4"
+            isLoading={isSubmitting}
+            loadingText="Authenticating..."
+            className="w-full rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-bold text-slate-900 transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-4"
           >
-            {isSubmitting ? "Authenticating..." : "Launch GodMODE"}
-            <ArrowRight className="h-4 w-4" />
-          </button>
+            Launch GodMODE
+            <ArrowRight className="h-4 w-4 ml-2 inline" />
+          </Button>
         </form>
 
         <div className="pt-4 border-t border-slate-700/80 text-center">
