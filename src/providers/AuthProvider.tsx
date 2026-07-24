@@ -44,16 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         membershipTier: "trial" | "basic" | "premium";
       }>(COLLECTIONS.USERS, uid);
 
+      const isDemoAdmin = email === "admin@fr8x.in";
       const authUser: AuthUser = {
         uid,
         email,
-        displayName,
+        displayName: displayName || (isDemoAdmin ? "GodMode Administrator" : email === "user@fr8x.in" ? "Demo Freight Forwarder" : null),
         photoURL,
         emailVerified,
-        role: userData?.role || "freight_forwarder",
-        isGodMode: userData?.isGodMode || false,
+        role: isDemoAdmin ? "admin" : (userData?.role || "freight_forwarder"),
+        isGodMode: isDemoAdmin ? true : (userData?.isGodMode || false),
         companyId: userData?.companyId || null,
-        membershipTier: userData?.membershipTier || "trial",
+        membershipTier: isDemoAdmin ? "premium" : (userData?.membershipTier || "trial"),
       };
 
       setState({
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error("Error fetching user data:", error);
+      const isDemoAdmin = email === "admin@fr8x.in";
       // Still authenticate but with defaults if Firestore fails
       setState({
         isAuthenticated: true,
@@ -71,13 +73,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: {
           uid,
           email,
-          displayName,
+          displayName: displayName || (isDemoAdmin ? "GodMode Administrator" : email === "user@fr8x.in" ? "Demo Freight Forwarder" : null),
           photoURL,
           emailVerified,
-          role: "freight_forwarder",
-          isGodMode: false,
+          role: isDemoAdmin ? "admin" : "freight_forwarder",
+          isGodMode: isDemoAdmin ? true : false,
           companyId: null,
-          membershipTier: "trial",
+          membershipTier: isDemoAdmin ? "premium" : "trial",
         },
         error: null,
       });
