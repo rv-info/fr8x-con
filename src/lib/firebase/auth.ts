@@ -65,10 +65,18 @@ export async function signInWithMicrosoft(): Promise<UserCredential> {
   return signInWithPopup(firebaseAuth, microsoftProvider);
 }
 
+import { sendCustomerPasswordResetEmail } from "@/lib/email/service";
+
 /**
- * Send password reset email.
+ * Send password reset email to customer from tech@fr8x.in.
  */
 export async function resetPassword(email: string): Promise<void> {
+  // Dispatch via online email service from tech@fr8x.in
+  try {
+    await sendCustomerPasswordResetEmail(email);
+  } catch (e) {
+    console.warn("Online email service dispatch error, falling back to Firebase Auth:", e);
+  }
   return sendPasswordResetEmail(firebaseAuth, email);
 }
 
