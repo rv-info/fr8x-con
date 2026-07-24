@@ -1,11 +1,12 @@
-// FR8X-CON GodMode System Settings & Online Email Service Setup — Spec Page 11
+// FR8X-CON GodMode System Settings, Domain Policy & Email Setup — Spec Page 11
 
 "use client";
 
 import { useState, useEffect } from "react";
-import { Save, Mail, Send, CheckCircle2, ShieldCheck, Key, Server, RefreshCw } from "lucide-react";
+import { Save, Mail, Send, CheckCircle2, ShieldCheck, Key, Server, RefreshCw, ShieldAlert, Plus, Trash2 } from "lucide-react";
 import { getGodModeEmailSettings, saveGodModeEmailSettings, type GodModeEmailSettings, type EmailServiceProvider } from "@/lib/utils/email-config";
 import { sendCustomerPasswordResetEmail, sendSubscriptionNotification } from "@/lib/email/service";
+import { DEFAULT_REGISTRATION_POLICY, type RegistrationPolicyConfig } from "@/lib/config/enterpriseRegistrationPolicy";
 
 export default function GodModeSettingsPage() {
   const [appName, setAppName] = useState("FR8X-CON");
@@ -13,6 +14,11 @@ export default function GodModeSettingsPage() {
   const [maxBids, setMaxBids] = useState("5");
   const [trialDays, setTrialDays] = useState("2");
   const [emailNotifications, setEmailNotifications] = useState(true);
+
+  // Enterprise Registration Policy State (GodMode Managed)
+  const [policyConfig, setPolicyConfig] = useState<RegistrationPolicyConfig>(DEFAULT_REGISTRATION_POLICY);
+  const [newBlockedDomain, setNewBlockedDomain] = useState("");
+  const [newWhitelistedDomain, setNewWhitelistedDomain] = useState("");
 
   // GOD Mode Email Services Setup
   const [emailSettings, setEmailSettings] = useState<GodModeEmailSettings>(getGodModeEmailSettings());
@@ -29,6 +35,44 @@ export default function GodModeSettingsPage() {
     saveGodModeEmailSettings(emailSettings);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
+  };
+
+  const addBlockedDomain = () => {
+    if (!newBlockedDomain.trim()) return;
+    const clean = newBlockedDomain.trim().toLowerCase().replace("@", "");
+    if (!policyConfig.blockedEmailDomains.includes(clean)) {
+      setPolicyConfig((prev) => ({
+        ...prev,
+        blockedEmailDomains: [...prev.blockedEmailDomains, clean],
+      }));
+    }
+    setNewBlockedDomain("");
+  };
+
+  const removeBlockedDomain = (domain: string) => {
+    setPolicyConfig((prev) => ({
+      ...prev,
+      blockedEmailDomains: prev.blockedEmailDomains.filter((d) => d !== domain),
+    }));
+  };
+
+  const addWhitelistedDomain = () => {
+    if (!newWhitelistedDomain.trim()) return;
+    const clean = newWhitelistedDomain.trim().toLowerCase().replace("@", "");
+    if (!policyConfig.whitelistedEmailDomains.includes(clean)) {
+      setPolicyConfig((prev) => ({
+        ...prev,
+        whitelistedEmailDomains: [...prev.whitelistedEmailDomains, clean],
+      }));
+    }
+    setNewWhitelistedDomain("");
+  };
+
+  const removeWhitelistedDomain = (domain: string) => {
+    setPolicyConfig((prev) => ({
+      ...prev,
+      whitelistedEmailDomains: prev.whitelistedEmailDomains.filter((d) => d !== domain),
+    }));
   };
 
   const handleTestResetEmail = async () => {
@@ -83,22 +127,123 @@ export default function GodModeSettingsPage() {
     <div className="space-y-6 max-w-4xl pb-12">
       <div>
         <div className="flex items-center gap-2">
-          <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)]">System Settings</h1>
+          <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)]">GodMode System Control Settings</h1>
           <span className="px-2.5 py-0.5 text-xs font-semibold bg-amber-100 text-amber-800 rounded-full flex items-center gap-1 border border-amber-300">
-            <ShieldCheck className="h-3.5 w-3.5 text-amber-600" /> GOD MODE SETUP ONLY
+            <ShieldCheck className="h-3.5 w-3.5 text-amber-600" /> GOD MODE SUPER ADMIN ONLY
           </span>
         </div>
         <p className="text-body-sm text-foreground-secondary mt-1">
-          Configure global platform parameters, online email service dispatchers, and support channels
+          Configure enterprise corporate domain policies, test credentials, and online email dispatchers
         </p>
       </div>
 
       {isSaved && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center gap-3 text-emerald-800 font-medium animate-fadeIn">
           <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          System settings & online email configuration updated successfully!
+          GodMode enterprise policy & email configuration updated successfully!
         </div>
       )}
+
+      {/* GODMODE EXCLUSIVE ENTERPRISE REGISTRATION DOMAIN POLICY */}
+      <div className="fr8x-card p-6 bg-white space-y-6 border-l-4 border-l-amber-500">
+        <div className="flex items-center justify-between border-b border-border pb-3">
+          <div>
+            <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-600" />
+              1. Enterprise Corporate Domain Policy Management (GodMode Exclusive)
+            </h2>
+            <p className="text-caption text-foreground-secondary mt-0.5">
+              Enforce strict corporate business email registration rules and manage blocked/whitelisted domain lists
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 cursor-pointer text-body-sm font-medium text-[var(--fr8x-jet)]">
+            <input
+              type="checkbox"
+              checked={policyConfig.strictCorporateEmailOnly}
+              onChange={(e) => setPolicyConfig({ ...policyConfig, strictCorporateEmailOnly: e.target.checked })}
+              className="h-4 w-4 text-[var(--fr8x-periwinkle)] rounded"
+            />
+            <span>Strict Corporate Email Policy (Reject Gmail, Yahoo, Outlook, Hotmail, disposable emails)</span>
+          </label>
+
+          {/* Blocked Domains Manager */}
+          <div className="space-y-2 pt-2">
+            <label className="fr8x-label block font-semibold text-[var(--fr8x-jet)]">
+              Blocked Public & Disposable Email Domains ({policyConfig.blockedEmailDomains.length})
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newBlockedDomain}
+                onChange={(e) => setNewBlockedDomain(e.target.value)}
+                placeholder="e.g. tempmail.com"
+                className="fr8x-input flex-1"
+              />
+              <button
+                type="button"
+                onClick={addBlockedDomain}
+                className="fr8x-btn-primary bg-amber-600 hover:bg-amber-700 flex items-center gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Blocked Domain
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 pt-2 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-border rounded">
+              {policyConfig.blockedEmailDomains.map((domain) => (
+                <span
+                  key={domain}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-mono font-medium border border-rose-200"
+                >
+                  @{domain}
+                  <button onClick={() => removeBlockedDomain(domain)} className="hover:text-rose-900">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Whitelisted Domains Manager */}
+          <div className="space-y-2 pt-2">
+            <label className="fr8x-label block font-semibold text-[var(--fr8x-jet)]">
+              Explicit Whitelisted Enterprise Domains ({policyConfig.whitelistedEmailDomains.length})
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newWhitelistedDomain}
+                onChange={(e) => setNewWhitelistedDomain(e.target.value)}
+                placeholder="e.g. partnercompany.com"
+                className="fr8x-input flex-1"
+              />
+              <button
+                type="button"
+                onClick={addWhitelistedDomain}
+                className="fr8x-btn-primary bg-emerald-600 hover:bg-emerald-700 flex items-center gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" /> Add Whitelist Domain
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5 pt-2 max-h-28 overflow-y-auto p-2 bg-slate-50 border border-border rounded">
+              {policyConfig.whitelistedEmailDomains.map((domain) => (
+                <span
+                  key={domain}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-mono font-medium border border-emerald-200"
+                >
+                  @{domain}
+                  <button onClick={() => removeWhitelistedDomain(domain)} className="hover:text-emerald-900">
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* GLOBAL CONFIGURATIONS CARD */}
       <div className="fr8x-card p-6 bg-white space-y-6">
@@ -148,7 +293,7 @@ export default function GodModeSettingsPage() {
           <div>
             <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
               <Mail className="h-5 w-5 text-[#56C5F0]" />
-              Online Email Service Setup (GOD Login Exclusive)
+              2. Online Email Service Setup (GOD Login Exclusive)
             </h2>
             <p className="text-caption text-foreground-secondary mt-0.5">
               Manage email dispatchers for customer password resets and support subscription channels
@@ -161,7 +306,7 @@ export default function GodModeSettingsPage() {
           <div className="flex items-center justify-between">
             <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
               <Key className="h-4 w-4 text-[#56C5F0]" />
-              1. Customer Password Reset Service
+              Customer Password Reset Service
             </h3>
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
               <input
@@ -207,7 +352,7 @@ export default function GodModeSettingsPage() {
           <div className="flex items-center justify-between">
             <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
               <Mail className="h-4 w-4 text-emerald-600" />
-              2. Support Email Subscription Option
+              Support Email Subscription Option
             </h3>
             <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
               <input
@@ -252,7 +397,7 @@ export default function GodModeSettingsPage() {
         <div className="p-4 bg-blue-50/50 border border-blue-100 rounded-lg space-y-4">
           <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
             <Server className="h-4 w-4 text-blue-600" />
-            3. Online Email Provider Setup
+            Online Email Provider Setup
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -290,54 +435,6 @@ export default function GodModeSettingsPage() {
               </div>
             </div>
           </div>
-
-          {emailSettings.emailServiceProvider === "smtp" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-              <div>
-                <label className="fr8x-label block mb-1 text-xs">SMTP Host</label>
-                <input
-                  type="text"
-                  value={emailSettings.smtpHost}
-                  onChange={(e) => setEmailSettings({ ...emailSettings, smtpHost: e.target.value })}
-                  className="fr8x-input bg-white text-sm"
-                  placeholder="smtp.gmail.com"
-                />
-              </div>
-              <div>
-                <label className="fr8x-label block mb-1 text-xs">SMTP Port</label>
-                <input
-                  type="text"
-                  value={emailSettings.smtpPort}
-                  onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: e.target.value })}
-                  className="fr8x-input bg-white text-sm"
-                  placeholder="587"
-                />
-              </div>
-              <div>
-                <label className="fr8x-label block mb-1 text-xs">SMTP Password</label>
-                <input
-                  type="password"
-                  value={emailSettings.smtpPass}
-                  onChange={(e) => setEmailSettings({ ...emailSettings, smtpPass: e.target.value })}
-                  className="fr8x-input bg-white text-sm"
-                  placeholder="••••••••"
-                />
-              </div>
-            </div>
-          )}
-
-          {emailSettings.emailServiceProvider === "custom_api" && (
-            <div>
-              <label className="fr8x-label block mb-1 text-xs">Custom API Endpoint URL</label>
-              <input
-                type="url"
-                value={emailSettings.customApiUrl}
-                onChange={(e) => setEmailSettings({ ...emailSettings, customApiUrl: e.target.value })}
-                className="fr8x-input bg-white text-sm font-mono"
-                placeholder="https://api.fr8x.in/v1/send-email"
-              />
-            </div>
-          )}
         </div>
 
         {testStatus && (
@@ -379,7 +476,7 @@ export default function GodModeSettingsPage() {
             onClick={handleSaveAll}
             className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] px-6 py-2.5 flex items-center gap-2 text-sm font-semibold"
           >
-            <Save className="h-4 w-4" /> Save Settings
+            <Save className="h-4 w-4" /> Save GodMode Settings
           </button>
         </div>
       </div>
