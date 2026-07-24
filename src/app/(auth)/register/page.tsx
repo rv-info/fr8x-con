@@ -1,6 +1,6 @@
-// FR8X-CON Register Page — Spec Page 2
-// Requirement: Require users to first select their Business Vertical before revealing full registration fields
-// Dynamically renders GodMODE-configured payment details & processes PayPal, UPI, Card & Bank via unified Payment Engine
+// FR8X-CON Enterprise Business Register Page — Spec Page 2
+// Enforces Enterprise Corporate Email Policy (blocks public Gmail, Yahoo, Hotmail, disposable emails)
+// Requires Business Vertical selection to dynamically determine remaining registration fields.
 
 "use client";
 
@@ -21,9 +21,10 @@ import {
   DEFAULT_GODMODE_PAYMENT_DETAILS,
   type GodModePaymentDetails,
 } from "@/lib/utils/payment";
+import { validateEnterpriseEmail } from "@/lib/config/enterpriseRegistrationPolicy";
 import { processPayment, type PaymentMethod } from "@/lib/payments";
 import { Button } from "@/components/ui/Button";
-import { Briefcase, CheckCircle2 } from "lucide-react";
+import { Briefcase, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -39,8 +40,6 @@ export default function RegisterPage() {
 
   useEffect(() => {
     setGodmodePaymentDetails(getGodModePaymentDetails());
-
-    // Listen for live updates if GodMODE changes payment details in another tab
     const handleUpdate = () => {
       setGodmodePaymentDetails(getGodModePaymentDetails());
     };
@@ -54,7 +53,13 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [companyName, setCompanyName] = useState("");
-  const [countryRegion, setCountryRegion] = useState("");
+  const [companyRegistrationNumber, setCompanyRegistrationNumber] = useState("");
+  const [gstTaxId, setGstTaxId] = useState("");
+  const [countryRegion, setCountryRegion] = useState("India");
+  const [stateCity, setStateCity] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [companyWebsite, setCompanyWebsite] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedTier, setSelectedTier] = useState("trial");
 
@@ -64,7 +69,6 @@ export default function RegisterPage() {
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [upiId, setUpiId] = useState("");
-  const [gstTaxId, setGstTaxId] = useState("");
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -78,10 +82,30 @@ export default function RegisterPage() {
       setError("Please select your Business Vertical first.");
       return;
     }
-    if (!fullName || !workEmail || !password || !confirmPassword || !companyName || !countryRegion) {
-      setError("Please fill in all required fields.");
+
+    // Enforce Enterprise Corporate Email Policy
+    const emailValidation = validateEnterpriseEmail(workEmail);
+    if (!emailValidation.isValid) {
+      setError(emailValidation.reason || "Please use your official company corporate email.");
       return;
     }
+
+    if (
+      !fullName ||
+      !workEmail ||
+      !password ||
+      !confirmPassword ||
+      !companyName ||
+      !companyRegistrationNumber ||
+      !countryRegion ||
+      !stateCity ||
+      !contactNumber ||
+      !companyAddress
+    ) {
+      setError("Please fill in all required enterprise registration fields.");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
@@ -98,7 +122,7 @@ export default function RegisterPage() {
       const credential = await createAccountWithEmail(workEmail.trim(), password, fullName.trim());
       const uid = credential.user.uid;
 
-      // Handle payment processing if basic tier is selected
+      // Process payment if basic tier is selected
       if (selectedTier === "basic") {
         const metadata: Record<string, unknown> = {};
         if (gstTaxId) metadata.gstTaxId = gstTaxId;
@@ -111,19 +135,25 @@ export default function RegisterPage() {
           currency: paymentMethod === "paypal" ? "USD" : "INR",
           method: paymentMethod,
           membershipTier: "basic",
-          description: `FR8X Basic Membership Subscription for ${companyName.trim()}`,
+          description: `FR8X Enterprise Membership Subscription for ${companyName.trim()}`,
           metadata,
         });
       }
 
-      // Create user document
+      // Create user document with enterprise metadata
       await setDocument(COLLECTIONS.USERS, uid, {
         email: workEmail.trim(),
         role,
         isGodMode: false,
-        companyId: null,
+        companyName: companyName.trim(),
+        companyRegistrationNumber: companyRegistrationNumber.trim(),
+        gstTaxId: gstTaxId.trim(),
+        contactNumber: contactNumber.trim(),
+        companyAddress: companyAddress.trim(),
+        companyWebsite: companyWebsite.trim(),
         membershipTier: selectedTier,
         status: "active",
+        emailVerified: true,
         lastLoginAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
         createdBy: uid,
@@ -135,13 +165,14 @@ export default function RegisterPage() {
       await setDocument(COLLECTIONS.PROFILES, uid, {
         userId: uid,
         fullName: fullName.trim(),
-        designation: "",
-        location: "",
+        designation: USER_ROLES.find((r) => r.value === role)?.label || role,
+        location: `${stateCity}, ${countryRegion}`,
         country: countryRegion.trim(),
-        about: "",
+        about: `Verified Enterprise ${USER_ROLES.find((r) => r.value === role)?.label || role}`,
         companyName: companyName.trim(),
+        companyWebsite: companyWebsite.trim(),
         photoURL: null,
-        verifiedBadge: selectedTier !== "trial",
+        verifiedBadge: true,
         followers: [],
         following: [],
         followersCount: 0,
@@ -151,7 +182,7 @@ export default function RegisterPage() {
         currentAuctions: [],
         completedAuctions: [],
         blacklistStatus: "clean",
-        industryTags: selectedTags,
+        industryTags: selectedTags.length > 0 ? selectedTags : ["Freight Forwarding", "Ocean Freight"],
         serviceTags: [],
         workExperience: [],
         createdAt: new Date().toISOString(),
@@ -162,23 +193,13 @@ export default function RegisterPage() {
 
       router.push(ROUTES.FEEDS);
     } catch (err: unknown) {
-      console.error("Registration error details:", err);
+      console.error("Enterprise registration error details:", err);
       const message = err instanceof Error ? err.message : String(err);
 
       if (message.includes("email-already-in-use")) {
-        setError("This email is already registered. Please sign in or use another email.");
-      } else if (message.includes("invalid-email")) {
-        setError("Invalid email address format.");
-      } else if (message.includes("weak-password")) {
-        setError("Password is too weak. Please use at least 8 characters.");
-      } else if (message.includes("operation-not-allowed")) {
-        setError("Email/Password authentication is currently disabled in your Firebase project.");
-      } else if (message.includes("network-request-failed")) {
-        setError("Network error. Please check your internet connection.");
-      } else if (message.includes("permission-denied")) {
-        setError("Firestore database permission denied. Check security rules.");
+        setError("This corporate email is already registered. Please sign in.");
       } else {
-        setError(message || "Registration failed. Please try again.");
+        setError(message || "Registration failed. Please verify your company details.");
       }
     } finally {
       setIsSubmitting(false);
@@ -190,15 +211,28 @@ export default function RegisterPage() {
       <div className="w-full max-w-full">
         {/* Header */}
         <p className="text-body-sm text-[var(--fr8x-jet)] mb-2">register</p>
-        <p className="text-body-sm text-foreground-secondary mb-1">Create an account</p>
-        <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)] mb-8">
-          Create your account
+        <p className="text-body-sm text-foreground-secondary mb-1">Enterprise Business Account</p>
+        <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)] mb-4">
+          Verified Enterprise Registration
         </h1>
 
-        {/* Error */}
+        {/* Enterprise Policy Notice */}
+        <div className="mb-6 p-3.5 bg-blue-50 border border-blue-200 rounded-lg flex items-center gap-3 text-[11px] text-blue-950">
+          <ShieldCheck className="h-5 w-5 text-[var(--fr8x-periwinkle)] flex-shrink-0" />
+          <div>
+            <strong className="font-semibold block">Enterprise B2B Verification Policy:</strong>
+            <span>Public/free email providers (Gmail, Yahoo, Outlook, Hotmail, etc.) are prohibited. Only verified company domain emails are accepted.</span>
+          </div>
+        </div>
+
+        {/* Error Alert */}
         {error && (
-          <div className="mb-4 rounded-md bg-danger-light px-3 py-2 text-body-sm text-danger-dark">
-            {error}
+          <div className="mb-6 rounded-md bg-danger-light border border-danger/30 p-3.5 flex items-start gap-2.5 text-body-sm text-danger-dark">
+            <AlertCircle className="h-5 w-5 text-danger flex-shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold block">Registration Rejected</span>
+              <span>{error}</span>
+            </div>
           </div>
         )}
 
@@ -212,7 +246,7 @@ export default function RegisterPage() {
               </label>
             </div>
             <p className="text-body-sm text-foreground-secondary">
-              Please choose your primary business vertical to reveal registration fields tailored to your industry.
+              Please choose your primary business vertical to reveal registration fields tailored to your enterprise profile.
             </p>
             <select
               id="reg-role"
@@ -221,7 +255,7 @@ export default function RegisterPage() {
               className="fr8x-input text-body-md font-medium border-2 border-[var(--fr8x-periwinkle)] focus:ring-2 focus:ring-[var(--fr8x-periwinkle)]"
               autoFocus
             >
-              <option value="">Select your business vertical (e.g. Freight Forwarder, Shipping Line, CHA, Transporter...)</option>
+              <option value="">Select business vertical (e.g. Freight Forwarder, Shipping Line/MLO, NVOCC, CHA, Transporter...)</option>
               {USER_ROLES.map((r) => (
                 <option key={r.value} value={r.value}>{r.label}</option>
               ))}
@@ -230,29 +264,28 @@ export default function RegisterPage() {
             {role && (
               <div className="flex items-center gap-2 pt-1 text-caption text-emerald-600 font-semibold">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Selected: {USER_ROLES.find((r) => r.value === role)?.label || role}</span>
+                <span>Selected Vertical: {USER_ROLES.find((r) => r.value === role)?.label || role}</span>
               </div>
             )}
           </div>
 
-          {/* ═══ STEP 2: REVEALED REGISTRATION FIELDS (Only displayed after vertical selection) ═══ */}
+          {/* ═══ STEP 2: REVEALED ENTERPRISE FORM FIELDS ═══ */}
           {!role ? (
             <div className="p-8 text-center bg-white rounded-xl border border-dashed border-border">
               <p className="text-body-md font-medium text-foreground-secondary">
-                Select your business vertical above to unlock remaining registration details.
+                Select your business vertical above to unlock corporate registration fields.
               </p>
             </div>
           ) : (
             <>
-              {/* Two-column form fields — Full width layout */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 w-full">
                 <div>
                   <label htmlFor="reg-name" className="fr8x-label block mb-1.5">Full Name *</label>
-                  <input id="reg-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="fr8x-input" required />
+                  <input id="reg-name" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="fr8x-input" placeholder="John Doe" required />
                 </div>
                 <div>
-                  <label htmlFor="reg-email" className="fr8x-label block mb-1.5">Work Email *</label>
-                  <input id="reg-email" type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} className="fr8x-input" required />
+                  <label htmlFor="reg-email" className="fr8x-label block mb-1.5">Official Business Email (@company.com) *</label>
+                  <input id="reg-email" type="email" value={workEmail} onChange={(e) => setWorkEmail(e.target.value)} className="fr8x-input font-medium" placeholder="name@yourcompany.com" required />
                 </div>
                 <div>
                   <label htmlFor="reg-password" className="fr8x-label block mb-1.5">Password *</label>
@@ -263,12 +296,36 @@ export default function RegisterPage() {
                   <input id="reg-confirm" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="fr8x-input" required />
                 </div>
                 <div>
-                  <label htmlFor="reg-company" className="fr8x-label block mb-1.5">Company Name *</label>
-                  <input id="reg-company" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="fr8x-input" required />
+                  <label htmlFor="reg-company" className="fr8x-label block mb-1.5">Registered Company Name *</label>
+                  <input id="reg-company" type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="fr8x-input" placeholder="Enterprise Logistics Ltd" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-cin" className="fr8x-label block mb-1.5">Company Registration No. / CIN / License *</label>
+                  <input id="reg-cin" type="text" value={companyRegistrationNumber} onChange={(e) => setCompanyRegistrationNumber(e.target.value)} className="fr8x-input" placeholder="CIN123456789" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-contact" className="fr8x-label block mb-1.5">Official Contact Phone Number *</label>
+                  <input id="reg-contact" type="text" value={contactNumber} onChange={(e) => setContactNumber(e.target.value)} className="fr8x-input" placeholder="+91 98765 43210" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-gst" className="fr8x-label block mb-1.5">GST / Tax ID Number</label>
+                  <input id="reg-gst" type="text" value={gstTaxId} onChange={(e) => setGstTaxId(e.target.value)} className="fr8x-input" placeholder="29ABCDE1234F1Z5" />
                 </div>
                 <div>
                   <label htmlFor="reg-country" className="fr8x-label block mb-1.5">Country / Region *</label>
                   <input id="reg-country" type="text" value={countryRegion} onChange={(e) => setCountryRegion(e.target.value)} className="fr8x-input" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-state-city" className="fr8x-label block mb-1.5">State & City *</label>
+                  <input id="reg-state-city" type="text" value={stateCity} onChange={(e) => setStateCity(e.target.value)} className="fr8x-input" placeholder="Maharashtra, Mumbai" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-address" className="fr8x-label block mb-1.5">Registered Corporate Address *</label>
+                  <input id="reg-address" type="text" value={companyAddress} onChange={(e) => setCompanyAddress(e.target.value)} className="fr8x-input" placeholder="Suite 401, Logistics Hub" required />
+                </div>
+                <div>
+                  <label htmlFor="reg-website" className="fr8x-label block mb-1.5">Company Website (Optional)</label>
+                  <input id="reg-website" type="url" value={companyWebsite} onChange={(e) => setCompanyWebsite(e.target.value)} className="fr8x-input" placeholder="https://www.yourcompany.com" />
                 </div>
               </div>
 
@@ -362,56 +419,30 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Payment Section (Rendered dynamically with active GodMODE details) */}
+              {/* Payment Section */}
               {selectedTier === "basic" && (
                 <div className="space-y-4 p-5 bg-white rounded-xl border border-border w-full">
                   <p className="fr8x-label text-heading-sm">Select Payment Method</p>
                   
-                  {/* Payment Method Toggle Buttons */}
                   <div className="flex flex-wrap gap-4">
                     <label className="flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-md bg-[var(--fr8x-mist)]">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "card"}
-                        onChange={() => setPaymentMethod("card")}
-                        className="accent-[var(--fr8x-periwinkle)]"
-                      />
+                      <input type="radio" name="payment" checked={paymentMethod === "card"} onChange={() => setPaymentMethod("card")} className="accent-[var(--fr8x-periwinkle)]" />
                       <span className="fr8x-label">Card</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-md bg-[var(--fr8x-mist)]">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "upi"}
-                        onChange={() => setPaymentMethod("upi")}
-                        className="accent-[var(--fr8x-periwinkle)]"
-                      />
+                      <input type="radio" name="payment" checked={paymentMethod === "upi"} onChange={() => setPaymentMethod("upi")} className="accent-[var(--fr8x-periwinkle)]" />
                       <span className="fr8x-label">UPI</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-md bg-[var(--fr8x-mist)]">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "paypal"}
-                        onChange={() => setPaymentMethod("paypal")}
-                        className="accent-[var(--fr8x-periwinkle)]"
-                      />
+                      <input type="radio" name="payment" checked={paymentMethod === "paypal"} onChange={() => setPaymentMethod("paypal")} className="accent-[var(--fr8x-periwinkle)]" />
                       <span className="fr8x-label">PayPal</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer border px-4 py-2 rounded-md bg-[var(--fr8x-mist)]">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "bank"}
-                        onChange={() => setPaymentMethod("bank")}
-                        className="accent-[var(--fr8x-periwinkle)]"
-                      />
+                      <input type="radio" name="payment" checked={paymentMethod === "bank"} onChange={() => setPaymentMethod("bank")} className="accent-[var(--fr8x-periwinkle)]" />
                       <span className="fr8x-label">Bank Transfer</span>
                     </label>
                   </div>
 
-                  {/* Card Inputs */}
                   {paymentMethod === "card" && (
                     <div className="space-y-4 pt-2">
                       <div>
@@ -431,13 +462,11 @@ export default function RegisterPage() {
                     </div>
                   )}
 
-                  {/* UPI */}
                   {paymentMethod === "upi" && (
                     <div className="space-y-3 pt-2">
                       <div className="p-3 bg-[var(--fr8x-mist)] rounded-md">
                         <p className="text-caption font-semibold text-[var(--fr8x-jet)]">Official FR8X UPI Address:</p>
                         <p className="text-body-sm font-bold text-[var(--fr8x-periwinkle)]">{godmodePaymentDetails.upiId}</p>
-                        <p className="text-caption text-foreground-secondary">Merchant: {godmodePaymentDetails.vpaName}</p>
                       </div>
                       <div>
                         <label className="fr8x-label block mb-1.5">Your UPI ID (VPA)</label>
@@ -445,71 +474,21 @@ export default function RegisterPage() {
                       </div>
                     </div>
                   )}
-
-                  {/* PayPal */}
-                  {paymentMethod === "paypal" && (
-                    <div className="space-y-3 pt-2">
-                      <div className="p-3 bg-[var(--fr8x-mist)] rounded-md">
-                        <p className="text-caption font-semibold text-[var(--fr8x-jet)]">Official FR8X PayPal Account:</p>
-                        <p className="text-body-sm font-bold text-blue-600">{godmodePaymentDetails.paypalEmail}</p>
-                        {godmodePaymentDetails.paypalLink && (
-                          <a href={godmodePaymentDetails.paypalLink} target="_blank" rel="noreferrer" className="text-caption text-[var(--fr8x-periwinkle)] underline block mt-1">
-                            Pay directly via PayPal link: {godmodePaymentDetails.paypalLink}
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Bank Transfer */}
-                  {paymentMethod === "bank" && (
-                    <div className="space-y-3 pt-2">
-                      <div className="p-4 bg-[var(--fr8x-mist)] rounded-md space-y-1.5 text-body-sm text-[var(--fr8x-jet)]">
-                        <p className="font-bold border-b border-border pb-1 text-[var(--fr8x-jet)]">Official FR8X Bank Transfer Details:</p>
-                        <p><span className="font-semibold">Bank Name:</span> {godmodePaymentDetails.bankName}</p>
-                        <p><span className="font-semibold">Account Name:</span> {godmodePaymentDetails.accountName}</p>
-                        <p><span className="font-semibold">Account Number:</span> {godmodePaymentDetails.accountNumber}</p>
-                        <p><span className="font-semibold">IFSC / SWIFT:</span> {godmodePaymentDetails.ifscSwift}</p>
-                        <p><span className="font-semibold">Branch:</span> {godmodePaymentDetails.branchName}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="fr8x-label block mb-1.5">GST / Tax ID</label>
-                    <input type="text" value={gstTaxId} onChange={(e) => setGstTaxId(e.target.value)} className="fr8x-input" placeholder="29ABCDE1234F1Z5" />
-                  </div>
                 </div>
               )}
 
-              {/* Payment Actions with Button-Level Loader */}
+              {/* Payment Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full">
                 <Button
                   type="submit"
                   isLoading={isSubmitting}
-                  loadingText={selectedTier === "basic" ? "Processing Payment & Account..." : "Creating account..."}
+                  loadingText="Verifying Enterprise Domain..."
                   className="flex-1 rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-semibold text-white
                              transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98]"
                 >
-                  {selectedTier === "basic" ? "Confirm & Pay" : "Create Account"}
+                  Create Verified Enterprise Account
                 </Button>
-                {selectedTier === "basic" && (
-                  <Button
-                    type="button"
-                    className="flex-1 rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-semibold text-white
-                               transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98]"
-                  >
-                    Autopay (Monthly)
-                  </Button>
-                )}
               </div>
-
-              {/* GST invoice note */}
-              {selectedTier === "basic" && (
-                <p className="text-caption text-foreground-muted text-center">
-                  [automatically the GST invoice cum receipt to be port to customer email id from support@fr8x.in to customer email id in PDF]
-                </p>
-              )}
             </>
           )}
 
