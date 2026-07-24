@@ -3,12 +3,13 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithEmail } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
+import { Button } from "@/components/ui/Button";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -19,10 +20,11 @@ export default function LoginPage() {
   const { isAuthenticated, isLoading } = useAuth();
 
   // Redirect if already authenticated
-  if (!isLoading && isAuthenticated) {
-    router.replace(ROUTES.FEEDS);
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace(ROUTES.FEEDS);
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,15 +121,15 @@ export default function LoginPage() {
           </div>
 
           {/* Launch Button */}
-          <button
+          <Button
             type="submit"
-            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            loadingText="Signing in..."
             className="w-full rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-semibold text-white
-                       transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98]
-                       disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                       transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-4"
           >
-            {isSubmitting ? "Signing in..." : "Launch!"}
-          </button>
+            Launch!
+          </Button>
         </form>
 
         {/* Footer */}
