@@ -1,6 +1,6 @@
 // FR8X-CON Rate Types
 
-import type { AuditFields, Status } from "./common";
+import type { AuditFields } from "./common";
 
 export type Rate = {
   id: string;
