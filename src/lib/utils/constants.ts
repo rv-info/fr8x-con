@@ -71,6 +71,7 @@ export const COLLECTIONS = {
   SETTINGS: "settings",
   JOBS: "jobs",
   JOB_APPLICATIONS: "jobApplications",
+  TRANSACTIONS: "transactions",
 } as const;
 
 // Bid constraints
@@ -94,13 +95,18 @@ export const INDUSTRY_TAGS = [
   "Multimodal",
 ] as const;
 
-// User Roles (spec page 2)
+// User Roles & Business Verticals (spec page 2 & 11)
 export const USER_ROLES = [
-  { value: "nvocc", label: "NVOCC" },
-  { value: "mlo", label: "MLO" },
   { value: "freight_forwarder", label: "Freight Forwarder" },
-  { value: "cha", label: "CHA" },
-  { value: "transporter", label: "Transporters" },
+  { value: "mlo", label: "Shipping Line / MLO" },
+  { value: "exporter", label: "Exporter" },
+  { value: "importer", label: "Importer" },
+  { value: "cha", label: "CHA (Custom House Agent)" },
+  { value: "customs_broker", label: "Customs Broker" },
+  { value: "transporter", label: "Transporter" },
+  { value: "warehouse", label: "Warehouse Operator" },
+  { value: "nvocc", label: "NVOCC" },
+  { value: "shipping_agent", label: "Shipping Agent" },
 ] as const;
 
 // Feed categories (spec page 3 — extended)
