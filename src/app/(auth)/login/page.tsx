@@ -130,6 +130,20 @@ export default function LoginPage() {
           >
             Launch!
           </Button>
+
+          {/* Quick Demo Credentials Fill */}
+          <div className="mt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setEmail("user@fr8x.in");
+                setPassword("User@123456");
+              }}
+              className="text-caption text-foreground-secondary hover:text-[var(--fr8x-jet)] underline transition-colors"
+            >
+              Fill Demo Credentials (User Angle)
+            </button>
+          </div>
         </form>
 
         {/* Footer */}
