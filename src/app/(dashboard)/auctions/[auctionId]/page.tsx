@@ -1,4 +1,4 @@
-// FR8X-CON Auction Detail Page (Poster View)
+// FR8X-CON Auction Detail Page (Poster View - Multi-Modal Engine)
 
 "use client";
 
@@ -14,11 +14,13 @@ import {
   ArrowRight,
   Lock,
   Loader2,
+  Info,
 } from "lucide-react";
 
 import { use } from "react";
 import { ROUTES, COLLECTIONS } from "@/lib/utils/constants";
 import { getDocument } from "@/lib/firebase/firestore";
+import { INCOTERMS_RULES, type IncotermCode } from "@/lib/utils/logisticsEngine";
 
 type AuctionDetail = {
   id: string;
@@ -34,11 +36,18 @@ type AuctionDetail = {
     incoTerms: string;
     cargoReadyDate: string;
     requiredDeliveryDate: string;
+    serviceType?: string;
   };
   containerDetails: Array<{
     containerSize: string;
     numberOfContainers: number;
     hazStatus: string;
+    grossWeight: number;
+    remarks?: string;
+  }>;
+  commodityDetails?: Array<{
+    description: string;
+    hsCode?: string;
     grossWeight: number;
   }>;
   participantsCount: number;
@@ -98,6 +107,7 @@ export default function AuctionDetailPage({
   }
 
   const shipment = auction.shipmentDetails || {};
+  const incoRule = INCOTERMS_RULES[shipment.incoTerms as IncotermCode] || INCOTERMS_RULES["FOB"];
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -120,14 +130,17 @@ export default function AuctionDetailPage({
               <span className="text-caption text-foreground-muted">
                 {auction.referenceNumber || auctionId}
               </span>
+              <span className="fr8x-badge fr8x-badge-info uppercase font-semibold">
+                {shipment.mode?.toUpperCase()}
+              </span>
             </div>
             <h1 className="text-display-sm text-foreground">
               {auction.title || "Untitled Auction"}
             </h1>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-body-sm text-foreground-secondary">
-              <span className="flex items-center gap-1.5">
-                <Ship className="h-4 w-4" />
-                {shipment.mode?.toUpperCase() || "—"} • {shipment.incoTerms || "—"}
+              <span className="flex items-center gap-1.5 font-medium">
+                <Ship className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
+                {shipment.mode?.toUpperCase() || "—"} • Incoterm: {shipment.incoTerms || "—"}
               </span>
               <span className="flex items-center gap-1.5">
                 <Package className="h-4 w-4" />
@@ -146,12 +159,26 @@ export default function AuctionDetailPage({
           <div className="flex items-center gap-2">
             <Link
               href={ROUTES.AUCTION_BID(auctionId)}
-              className="fr8x-btn-primary px-5 py-2.5 flex items-center gap-2"
+              className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] px-5 py-2.5 flex items-center gap-2"
             >
-              Place Bid
+              Enter Reverse Auction Bidding
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+        </div>
+      </div>
+
+      {/* Incoterms Cost Responsibilities Summary Banner */}
+      <div className="fr8x-card p-4 bg-[var(--fr8x-mist)] border border-[var(--fr8x-lavender)] flex items-start gap-3">
+        <Info className="h-5 w-5 text-[var(--fr8x-periwinkle)] flex-shrink-0 mt-0.5" />
+        <div className="text-[11px] space-y-1">
+          <span className="font-semibold text-[var(--fr8x-jet)] block">Incoterm Standard ({shipment.incoTerms}): {incoRule.name}</span>
+          <p className="text-foreground-secondary">
+            <strong>Seller Responsibility:</strong> {incoRule.sellerResponsibility.join(", ")}
+          </p>
+          <p className="text-foreground-secondary">
+            <strong>Buyer Responsibility:</strong> {incoRule.buyerResponsibility.join(", ")}
+          </p>
         </div>
       </div>
 
@@ -159,8 +186,8 @@ export default function AuctionDetailPage({
         {/* Shipment details */}
         <div className="fr8x-card p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-brand-500" />
-            <h2 className="text-heading-lg text-foreground">Shipment Details</h2>
+            <MapPin className="h-5 w-5 text-[var(--fr8x-periwinkle)]" />
+            <h2 className="text-heading-lg text-foreground">Shipment Route & Mode Specs</h2>
             <Lock className="h-4 w-4 text-foreground-muted ml-auto" />
           </div>
           <div className="grid grid-cols-2 gap-4 text-body-sm">
@@ -173,19 +200,19 @@ export default function AuctionDetailPage({
               <p className="text-foreground font-medium">{shipment.destination || "—"}</p>
             </div>
             <div>
-              <p className="text-foreground-muted">Origin Port</p>
+              <p className="text-foreground-muted">POL / Origin Hub</p>
               <p className="text-foreground font-medium">{shipment.originPort || "—"}</p>
             </div>
             <div>
-              <p className="text-foreground-muted">Destination Port</p>
+              <p className="text-foreground-muted">POD / Destination Hub</p>
               <p className="text-foreground font-medium">{shipment.destinationPort || "—"}</p>
             </div>
             <div>
               <p className="text-foreground-muted">Mode</p>
-              <p className="text-foreground font-medium">{shipment.mode?.toUpperCase() || "—"}</p>
+              <p className="text-foreground font-medium uppercase">{shipment.mode || "—"}</p>
             </div>
             <div>
-              <p className="text-foreground-muted">Incoterms</p>
+              <p className="text-foreground-muted">Incoterms®</p>
               <p className="text-foreground font-medium">{shipment.incoTerms || "—"}</p>
             </div>
             <div>
@@ -199,28 +226,28 @@ export default function AuctionDetailPage({
           </div>
         </div>
 
-        {/* Container details */}
+        {/* Cargo / Container details */}
         <div className="fr8x-card p-6 space-y-4">
           <div className="flex items-center gap-2">
-            <Package className="h-5 w-5 text-brand-500" />
-            <h2 className="text-heading-lg text-foreground">Container Details</h2>
+            <Package className="h-5 w-5 text-[var(--fr8x-periwinkle)]" />
+            <h2 className="text-heading-lg text-foreground">Equipment & Cargo Line Items</h2>
             <Lock className="h-4 w-4 text-foreground-muted ml-auto" />
           </div>
           <div className="overflow-x-auto">
             <table className="fr8x-table">
               <thead>
                 <tr>
-                  <th>Size</th>
+                  <th>Equipment / Unit</th>
                   <th>Qty</th>
-                  <th>Haz</th>
-                  <th>Weight</th>
+                  <th>Haz Status</th>
+                  <th>Gross Weight</th>
                 </tr>
               </thead>
               <tbody>
                 {auction.containerDetails && auction.containerDetails.length > 0 ? (
                   auction.containerDetails.map((c, i) => (
                     <tr key={i}>
-                      <td>{c.containerSize}</td>
+                      <td className="font-medium">{c.containerSize}</td>
                       <td>{c.numberOfContainers}</td>
                       <td>
                         <span className={c.hazStatus === "non_haz" ? "fr8x-badge-active" : "fr8x-badge-danger"}>
@@ -232,7 +259,7 @@ export default function AuctionDetailPage({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="text-center text-foreground-muted">No container details</td>
+                    <td colSpan={4} className="text-center text-foreground-muted">No equipment details</td>
                   </tr>
                 )}
               </tbody>
@@ -241,15 +268,31 @@ export default function AuctionDetailPage({
         </div>
       </div>
 
+      {/* Commodity Section */}
+      {auction.commodityDetails && auction.commodityDetails.length > 0 && (
+        <div className="fr8x-card p-6 space-y-4">
+          <h2 className="text-heading-lg text-foreground">Commodities & HS Codes</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {auction.commodityDetails.map((comm, idx) => (
+              <div key={idx} className="p-3 border border-border rounded bg-gray-50 text-[11px] space-y-1">
+                <span className="font-semibold text-[var(--fr8x-jet)] block">{comm.description}</span>
+                {comm.hsCode && <span className="text-foreground-secondary block">HS Code: {comm.hsCode}</span>}
+                <span className="text-foreground-secondary block">Weight: {comm.grossWeight.toLocaleString()} KG</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Bid summary */}
       <div className="fr8x-card p-6 space-y-4">
-        <h2 className="text-heading-lg text-foreground">Bid Summary</h2>
+        <h2 className="text-heading-lg text-foreground">Live Reverse Auction Activity Summary</h2>
         <p className="text-body-sm text-foreground-secondary">
-          {auction.bidsCount ? `${auction.bidsCount} bids received` : "No bids received yet"}
+          {auction.bidsCount ? `${auction.bidsCount} competitive bids received so far` : "No carrier bids submitted yet"}
         </p>
         {!auction.bidsCount && (
           <p className="text-caption text-foreground-muted text-center py-4">
-            Bids will appear here once participants start bidding.
+            Carrier bids and live rank updates will appear here automatically when reverse auction starts.
           </p>
         )}
       </div>
