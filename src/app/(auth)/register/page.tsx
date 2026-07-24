@@ -100,6 +100,10 @@ export default function RegisterPage() {
 
       // Handle payment processing if basic tier is selected
       if (selectedTier === "basic") {
+        const metadata: Record<string, unknown> = {};
+        if (gstTaxId) metadata.gstTaxId = gstTaxId;
+        if (paymentMethod === "upi" && upiId) metadata.upiId = upiId;
+
         await processPayment({
           userId: uid,
           userEmail: workEmail.trim(),
@@ -108,7 +112,7 @@ export default function RegisterPage() {
           method: paymentMethod,
           membershipTier: "basic",
           description: `FR8X Basic Membership Subscription for ${companyName.trim()}`,
-          metadata: { gstTaxId, upiId: paymentMethod === "upi" ? upiId : undefined },
+          metadata,
         });
       }
 
@@ -120,8 +124,8 @@ export default function RegisterPage() {
         companyId: null,
         membershipTier: selectedTier,
         status: "active",
-        lastLoginAt: new Date(),
-        createdAt: new Date(),
+        lastLoginAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
         createdBy: uid,
         updatedBy: uid,
         version: 1,
@@ -150,7 +154,7 @@ export default function RegisterPage() {
         industryTags: selectedTags,
         serviceTags: [],
         workExperience: [],
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
         createdBy: uid,
         updatedBy: uid,
         version: 1,
@@ -158,11 +162,23 @@ export default function RegisterPage() {
 
       router.push(ROUTES.FEEDS);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Registration failed.";
+      console.error("Registration error details:", err);
+      const message = err instanceof Error ? err.message : String(err);
+
       if (message.includes("email-already-in-use")) {
-        setError("This email is already registered.");
+        setError("This email is already registered. Please sign in or use another email.");
+      } else if (message.includes("invalid-email")) {
+        setError("Invalid email address format.");
+      } else if (message.includes("weak-password")) {
+        setError("Password is too weak. Please use at least 8 characters.");
+      } else if (message.includes("operation-not-allowed")) {
+        setError("Email/Password authentication is currently disabled in your Firebase project.");
+      } else if (message.includes("network-request-failed")) {
+        setError("Network error. Please check your internet connection.");
+      } else if (message.includes("permission-denied")) {
+        setError("Firestore database permission denied. Check security rules.");
       } else {
-        setError("Registration failed. Please try again.");
+        setError(message || "Registration failed. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
