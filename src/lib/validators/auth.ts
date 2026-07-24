@@ -1,6 +1,7 @@
-// FR8X-CON Zod Validators: Auth schemas
+// FR8X-CON Zod Validators: Auth schemas & Enterprise Policy
 
 import { z } from "zod";
+import { validateEnterpriseEmail } from "@/lib/config/enterpriseRegistrationPolicy";
 
 export const loginSchema = z.object({
   email: z
@@ -24,8 +25,16 @@ export const registerSchema = z
       .max(100, "Full name must be less than 100 characters"),
     workEmail: z
       .string()
-      .min(1, "Work email is required")
-      .email("Please enter a valid work email"),
+      .min(1, "Official business email is required")
+      .email("Please enter a valid corporate email address")
+      .refine(
+        (email) => validateEnterpriseEmail(email).isValid,
+        (email) => ({
+          message:
+            validateEnterpriseEmail(email).reason ||
+            "Personal/public email addresses are not permitted. Please use your official corporate company email.",
+        })
+      ),
     password: z
       .string()
       .min(1, "Password is required")
@@ -39,9 +48,19 @@ export const registerSchema = z
       .string()
       .min(1, "Company name is required")
       .max(200, "Company name must be less than 200 characters"),
-    countryRegion: z
+    companyRegistrationNumber: z
       .string()
-      .min(1, "Country / Region is required"),
+      .min(1, "Company Registration Number / CIN / License is required"),
+    contactNumber: z
+      .string()
+      .min(1, "Official contact number is required"),
+    companyAddress: z
+      .string()
+      .min(1, "Company address is required"),
+    countryRegion: z.string().min(1, "Country / Region is required"),
+    stateCity: z.string().min(1, "State & City is required"),
+    companyWebsite: z.string().optional(),
+    gstTaxId: z.string().optional(),
     role: z.string().min(1, "Please select a business vertical"),
     industryTags: z
       .array(z.string())
@@ -49,7 +68,6 @@ export const registerSchema = z
     membershipTier: z.enum(["trial", "basic", "premium"], {
       required_error: "Please select a membership tier",
     }),
-    gstTaxId: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -68,9 +86,7 @@ export const forgotPasswordSchema = z.object({
 export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export const otpSchema = z.object({
-  contact: z
-    .string()
-    .min(1, "Phone number or email is required"),
+  contact: z.string().min(1, "Phone number or email is required"),
   otp: z
     .string()
     .length(6, "OTP must be 6 digits")
