@@ -1,44 +1,42 @@
-// FR8X-CON Reverse Auction – Live Bidding Page — Spec Page 9 (Ultra-compact)
-// Full alignment with locked specification page 9 — tight table rows, dense layout
+// FR8X-CON Reverse Auction – Live Bidding Page — Spec Page 9 (Ultra-compact multi-modal engine)
+// Dynamically adjusts table headers, unit charges, and rate inputs according to active auction mode & Incoterm
 
 "use client";
 
-import { useState, use, useCallback } from "react";
+import { useState, use, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Trash2, Trophy } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Trophy, Loader2 } from "lucide-react";
 import { FREIGHT_CURRENCIES } from "@/lib/types/currency";
+import { COLLECTIONS } from "@/lib/utils/constants";
+import { getDocument } from "@/lib/firebase/firestore";
+import type { Auction } from "@/lib/types/auction";
 
-// ─── Types ───
-type ContainerRow = {
+type DynamicRow = {
   id: string;
-  numContainers: number;
-  container: string;
-  size: string;
-  commodity: string;
-  type: string;
-  oceanFreight: number;
-  freeTime: number;
-  transit: number;
+  numUnits: number;
+  equipmentOrUnit: string;
+  sizeOrType: string;
+  commodityOrCategory: string;
+  cargoClass: string;
+  freightRate: number;
+  freeTimeDays: number;
+  transitDays: number;
   etd: string;
   eta: string;
-  service: string;
+  serviceType: string;
   remarks: string;
 };
 
 type LocalRow = {
   id: string;
-  numContainers: number;
+  numUnits: number;
   chargesHead: string;
-  size: string;
-  type: string;
+  sizeOrType: string;
+  cargoClass: string;
   currency: string;
   amount: number;
 };
 
-const CONTAINER_SIZE_OPTIONS = ["20' Standard", "40' Standard", "40' HC", "OT", "RF", "FR"];
-const CARGO_TYPE_OPTIONS = ["GEN", "HAZ", "OOG", "IG"];
-
-// Inline cell input — compact, no extra chrome
 function CellInput({ value, onChange, type = "text", className = "", min }: {
   value: string | number;
   onChange: (v: string) => void;
@@ -78,26 +76,64 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
   const resolvedParams = use(params);
   const router = useRouter();
 
-  const [containerRows, setContainerRows] = useState<ContainerRow[]>([
-    { id: "c1", numContainers: 5, container: "20ft Standard", size: "20' Standard", commodity: "General Cargo", type: "GEN", oceanFreight: 1200, freeTime: 7, transit: 21, etd: "2026-08-01", eta: "2026-08-22", service: "Direct", remarks: "Prompt loading" },
+  const [auction, setAuction] = useState<Auction | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch auction mode & Incoterms details
+  useEffect(() => {
+    async function fetchAuction() {
+      setIsLoading(true);
+      try {
+        const data = await getDocument<Auction>(COLLECTIONS.AUCTIONS, resolvedParams.auctionId);
+        if (data) {
+          setAuction(data);
+        }
+      } catch (err) {
+        console.error("Error fetching auction for live bidding:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchAuction();
+  }, [resolvedParams.auctionId]);
+
+  const mode = auction?.shipmentDetails?.mode || "fcl";
+  const incoterm = auction?.shipmentDetails?.incoTerms || "FOB";
+
+  const [chargeRows, setChargeRows] = useState<DynamicRow[]>([
+    {
+      id: "r1",
+      numUnits: 5,
+      equipmentOrUnit: "20' Standard Container",
+      sizeOrType: "20' Standard",
+      commodityOrCategory: "General Cargo",
+      cargoClass: "GEN",
+      freightRate: 1200,
+      freeTimeDays: 7,
+      transitDays: 21,
+      etd: "2026-08-01",
+      eta: "2026-08-22",
+      serviceType: "Direct Line",
+      remarks: "Space Guaranteed",
+    },
   ]);
 
   const [localRows, setLocalRows] = useState<LocalRow[]>([
-    { id: "l1", numContainers: 5, chargesHead: "Terminal Handling Charges (Origin)", size: "20' Standard", type: "GEN", currency: "INR", amount: 8500 },
-    { id: "l2", numContainers: 1, chargesHead: "Documentation Fee",                 size: "20' Standard", type: "GEN", currency: "INR", amount: 3500 },
+    { id: "l1", numUnits: 5, chargesHead: "Terminal Handling Charges - Origin", sizeOrType: "Standard", cargoClass: "GEN", currency: "INR", amount: 8500 },
+    { id: "l2", numUnits: 1, chargesHead: "Documentation & Bill of Lading Fee", sizeOrType: "Standard", cargoClass: "GEN", currency: "INR", amount: 3500 },
   ]);
 
-  const [paymentTerms,     setPaymentTerms]     = useState("30 Days");
-  const [rateValidity,     setRateValidity]      = useState("14 Days");
-  const [remarks,          setRemarks]           = useState("");
-  const [quoteIn,          setQuoteIn]           = useState("USD");
-  const [biddingDecrement, setBiddingDecrement]  = useState("Percentage");
-  const [decrementPct,     setDecrementPct]      = useState("1%");
+  const [paymentTerms, setPaymentTerms] = useState("30 Days");
+  const [rateValidity, setRateValidity] = useState("14 Days");
+  const [remarks, setRemarks] = useState("");
+  const [quoteIn, setQuoteIn] = useState("USD");
+  const [biddingDecrement, setBiddingDecrement] = useState("Percentage");
+  const [decrementPct, setDecrementPct] = useState("1%");
 
-  const updateContainerRow = useCallback((id: string, field: keyof ContainerRow, rawVal: string) => {
-    setContainerRows((prev) => prev.map((r) => {
+  const updateChargeRow = useCallback((id: string, field: keyof DynamicRow, rawVal: string) => {
+    setChargeRows((prev) => prev.map((r) => {
       if (r.id !== id) return r;
-      const numericFields = ["numContainers", "oceanFreight", "freeTime", "transit"] as const;
+      const numericFields = ["numUnits", "freightRate", "freeTimeDays", "transitDays"] as const;
       const val = numericFields.includes(field as typeof numericFields[number])
         ? (parseFloat(rawVal) || 0)
         : rawVal;
@@ -108,7 +144,7 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
   const updateLocalRow = useCallback((id: string, field: keyof LocalRow, rawVal: string) => {
     setLocalRows((prev) => prev.map((r) => {
       if (r.id !== id) return r;
-      const numericFields = ["numContainers", "amount"] as const;
+      const numericFields = ["numUnits", "amount"] as const;
       const val = numericFields.includes(field as typeof numericFields[number])
         ? (parseFloat(rawVal) || 0)
         : rawVal;
@@ -116,28 +152,61 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
     }));
   }, []);
 
-  const addContainerRow = useCallback(() => {
-    setContainerRows((prev) => [...prev, {
-      id: `c${Date.now()}`, numContainers: 1, container: "20ft Standard", size: "20' Standard",
-      commodity: "General Cargo", type: "GEN", oceanFreight: 0, freeTime: 7,
-      transit: 14, etd: "", eta: "", service: "Direct", remarks: "",
+  const addChargeRow = useCallback(() => {
+    setChargeRows((prev) => [...prev, {
+      id: `r${Date.now()}`,
+      numUnits: 1,
+      equipmentOrUnit: `${mode.toUpperCase()} Load Unit`,
+      sizeOrType: "Standard",
+      commodityOrCategory: "General Cargo",
+      cargoClass: "GEN",
+      freightRate: 0,
+      freeTimeDays: 7,
+      transitDays: 14,
+      etd: "",
+      eta: "",
+      serviceType: "Direct",
+      remarks: "",
     }]);
-  }, []);
+  }, [mode]);
 
   const addLocalRow = useCallback(() => {
     setLocalRows((prev) => [...prev, {
-      id: `l${Date.now()}`, numContainers: 1, chargesHead: "", size: "20' Standard",
-      type: "GEN", currency: quoteIn, amount: 0,
+      id: `l${Date.now()}`,
+      numUnits: 1,
+      chargesHead: "Local Surcharge",
+      sizeOrType: "Standard",
+      cargoClass: "GEN",
+      currency: quoteIn,
+      amount: 0,
     }]);
   }, [quoteIn]);
 
-  const removeContainerRow = useCallback((id: string) => {
-    setContainerRows((prev) => prev.filter((r) => r.id !== id));
+  const removeChargeRow = useCallback((id: string) => {
+    setChargeRows((prev) => prev.filter((r) => r.id !== id));
   }, []);
 
   const removeLocalRow = useCallback((id: string) => {
     setLocalRows((prev) => prev.filter((r) => r.id !== id));
   }, []);
+
+  // Compute live total amounts
+  const totalFreightUSD = chargeRows.reduce((sum, r) => sum + (r.freightRate * r.numUnits), 0);
+  const totalLocalsUSD = localRows.reduce((sum, r) => {
+    const amt = r.currency === "INR" ? r.amount / 83 : r.amount;
+    return sum + (amt * r.numUnits);
+  }, 0);
+  const grandTotalUSD = totalFreightUSD + totalLocalsUSD;
+  const grandTotalINR = grandTotalUSD * 83;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16 gap-2">
+        <Loader2 className="h-5 w-5 animate-spin text-foreground-muted" />
+        <span className="text-body-sm text-foreground-muted">Loading live bidding engine...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-0 space-y-2">
@@ -152,34 +221,34 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
 
       {/* Title Banner — matches spec page 9 header bar */}
       <div className="bg-[var(--fr8x-periwinkle)] text-white text-center py-1.5 rounded">
-        <span className="text-[11px] font-semibold">Live Bidding</span>
+        <span className="text-[11px] font-semibold">Live Bidding Engine</span>
         <span className="mx-2 text-white/60">|</span>
-        <span className="text-[11px]">Reverse Auction – Live Bidding</span>
+        <span className="text-[11px]">Mode: {mode.toUpperCase()} ({incoterm}) – Reverse Auction</span>
       </div>
 
-      {/* Metadata & Status Row */}
+      {/* Metadata & Live Ranking Status Overview */}
       <div className="fr8x-card">
         <div className="grid grid-cols-5 gap-0 divide-x divide-border">
           {/* Col 1 */}
           <div className="p-2 space-y-0.5">
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Auction Title:</span> Nhava Sheva to Rotterdam FCL</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Auction Title:</span> {auction?.title || "Multi-Modal Auction"}</p>
             <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Auction ID:</span> {resolvedParams.auctionId}</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Auction Currency:</span> USD</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Shipment Type:</span> FCL</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Currency:</span> {quoteIn}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Shipment Mode:</span> {mode.toUpperCase()}</p>
           </div>
           {/* Col 2 */}
           <div className="p-2 space-y-0.5">
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Service Type:</span> FCL</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Containers:</span> 5 × 20&apos; Standard</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Commodity:</span> General Cargo</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Validity:</span> 14 Days</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Incoterm:</span> {incoterm}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Units:</span> {auction?.containerDetails?.map(c => `${c.numberOfContainers}× ${c.containerSize}`).join(", ") || "1 Lot"}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Commodity:</span> {auction?.commodityDetails?.[0]?.description || "General Cargo"}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Validity:</span> {rateValidity}</p>
           </div>
           {/* Col 3 */}
           <div className="p-2 space-y-0.5">
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">POL:</span> FOB</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">POD:</span> POD</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">FPOD:</span> FOB</p>
-            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Incoterm:</span> FHOB</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Origin:</span> {auction?.shipmentDetails?.origin || "POL"}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Destination:</span> {auction?.shipmentDetails?.destination || "POD"}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Cargo Ready:</span> {auction?.shipmentDetails?.cargoReadyDate || "Prompt"}</p>
+            <p className="text-[10px] text-foreground-secondary"><span className="font-medium text-[var(--fr8x-jet)]">Service:</span> {auction?.shipmentDetails?.serviceType || "Direct"}</p>
           </div>
           {/* Col 4 — LIVE RANKING */}
           <div className="p-2 flex flex-col items-center justify-center text-center bg-[var(--fr8x-mist)]">
@@ -194,21 +263,21 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
           <div className="p-2 flex flex-col justify-center bg-[var(--fr8x-mist)] space-y-1">
             <div>
               <p className="text-[9px] font-semibold text-foreground-secondary uppercase">YOUR TOTAL (in USD)</p>
-              <p className="text-base font-bold text-[var(--fr8x-jet)]">$6,100.00</p>
+              <p className="text-base font-bold text-[var(--fr8x-jet)]">${grandTotalUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
             <div>
               <p className="text-[9px] font-semibold text-foreground-secondary uppercase">YOUR TOTAL (in INR)</p>
-              <p className="text-sm font-semibold text-[var(--fr8x-jet)]">₹5,06,300.00</p>
+              <p className="text-sm font-semibold text-[var(--fr8x-jet)]">₹{grandTotalINR.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ═══ 1. CONTAINERWISE CHARGES ═══ */}
+      {/* ═══ 1. MODE FREIGHT CHARGES TABLE ═══ */}
       <div className="fr8x-card overflow-hidden">
         <div className="fr8x-section-bar flex items-center justify-between px-2 py-0.5">
-          <span>1. CONTAINERWISE CHARGES</span>
-          <button onClick={addContainerRow} className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-medium hover:underline">
+          <span>1. MAIN CARRIAGE FREIGHT CHARGES ({mode.toUpperCase()})</span>
+          <button onClick={addChargeRow} className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-medium hover:underline">
             <Plus className="h-3 w-3" /> [+] Add Row
           </button>
         </div>
@@ -216,14 +285,14 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
           <table className="w-full text-[10px]">
             <thead>
               <tr className="bg-[#FAFAF9]">
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">No. of Containers</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Container</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Size [20&apos;, 40&apos;, OT, RF, FR]</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Qty / Units</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Equipment / Unit</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Spec / Size</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Commodity</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">TYPE [GEN, HAZ, OOG, IG]</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Ocean Freight</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Free Time</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Transit</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Type [GEN/HAZ/OOG]</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Freight Rate ({quoteIn})</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Free Time (Days)</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Transit (Days)</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">ETD</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">ETA</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Service</th>
@@ -232,23 +301,23 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
               </tr>
             </thead>
             <tbody>
-              {containerRows.map((row) => (
+              {chargeRows.map((row) => (
                 <tr key={row.id} className="hover:bg-[var(--fr8x-mist)] border-b border-border last:border-0">
-                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.numContainers} onChange={(v) => updateContainerRow(row.id, "numContainers", v)} min="1" className="w-12" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput value={row.container} onChange={(v) => updateContainerRow(row.id, "container", v)} className="w-28" /></td>
-                  <td className="px-1.5 py-0.5"><CellSelect value={row.size} onChange={(v) => updateContainerRow(row.id, "size", v)} options={CONTAINER_SIZE_OPTIONS} className="w-28" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput value={row.commodity} onChange={(v) => updateContainerRow(row.id, "commodity", v)} className="w-24" /></td>
-                  <td className="px-1.5 py-0.5"><CellSelect value={row.type} onChange={(v) => updateContainerRow(row.id, "type", v)} options={CARGO_TYPE_OPTIONS} className="w-16" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.oceanFreight} onChange={(v) => updateContainerRow(row.id, "oceanFreight", v)} className="w-20" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.freeTime} onChange={(v) => updateContainerRow(row.id, "freeTime", v)} min="0" className="w-12" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.transit} onChange={(v) => updateContainerRow(row.id, "transit", v)} min="0" className="w-12" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput type="date" value={row.etd} onChange={(v) => updateContainerRow(row.id, "etd", v)} className="w-28" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput type="date" value={row.eta} onChange={(v) => updateContainerRow(row.id, "eta", v)} className="w-28" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput value={row.service} onChange={(v) => updateContainerRow(row.id, "service", v)} className="w-20" /></td>
-                  <td className="px-1.5 py-0.5"><CellInput value={row.remarks} onChange={(v) => updateContainerRow(row.id, "remarks", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.numUnits} onChange={(v) => updateChargeRow(row.id, "numUnits", v)} min="1" className="w-12" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.equipmentOrUnit} onChange={(v) => updateChargeRow(row.id, "equipmentOrUnit", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.sizeOrType} onChange={(v) => updateChargeRow(row.id, "sizeOrType", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.commodityOrCategory} onChange={(v) => updateChargeRow(row.id, "commodityOrCategory", v)} className="w-24" /></td>
+                  <td className="px-1.5 py-0.5"><CellSelect value={row.cargoClass} onChange={(v) => updateChargeRow(row.id, "cargoClass", v)} options={["GEN", "HAZ", "OOG", "IG"]} className="w-16" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.freightRate} onChange={(v) => updateChargeRow(row.id, "freightRate", v)} className="w-20 font-semibold" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.freeTimeDays} onChange={(v) => updateChargeRow(row.id, "freeTimeDays", v)} min="0" className="w-12" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.transitDays} onChange={(v) => updateChargeRow(row.id, "transitDays", v)} min="0" className="w-12" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="date" value={row.etd} onChange={(v) => updateChargeRow(row.id, "etd", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="date" value={row.eta} onChange={(v) => updateChargeRow(row.id, "eta", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.serviceType} onChange={(v) => updateChargeRow(row.id, "serviceType", v)} className="w-20" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.remarks} onChange={(v) => updateChargeRow(row.id, "remarks", v)} className="w-28" /></td>
                   <td className="px-1.5 py-0.5">
-                    {containerRows.length > 1 && (
-                      <button onClick={() => removeContainerRow(row.id)} className="text-foreground-muted hover:text-danger transition-colors">
+                    {chargeRows.length > 1 && (
+                      <button onClick={() => removeChargeRow(row.id)} className="text-foreground-muted hover:text-danger transition-colors">
                         <Trash2 className="h-3 w-3" />
                       </button>
                     )}
@@ -260,10 +329,10 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
         </div>
       </div>
 
-      {/* ═══ 2. [LOCAL] CHARGES ═══ */}
+      {/* ═══ 2. LOCAL & DESTINATION CHARGES TABLE ═══ */}
       <div className="fr8x-card overflow-hidden">
         <div className="fr8x-section-bar flex items-center justify-between px-2 py-0.5">
-          <span>2. [LOCAL] CHARGES</span>
+          <span>2. LOCAL & HANDLING CHARGES (MANDATORY ACCORDING TO {incoterm})</span>
           <button onClick={addLocalRow} className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-medium hover:underline">
             <Plus className="h-3 w-3" /> [+] Add Row
           </button>
@@ -272,10 +341,10 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
           <table className="w-full text-[10px]">
             <thead>
               <tr className="bg-[#FAFAF9]">
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">No. of Containers</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Qty / Units</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Charges Head</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Container Size [20&apos;, 40&apos;, OT, RF, FR]</th>
-                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">TYPE [GEN, HAZ, OOG, IG]</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Spec / Size</th>
+                <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Type</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Currency</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Amount</th>
                 <th className="px-1.5 py-1 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Action</th>
@@ -284,10 +353,10 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
             <tbody>
               {localRows.map((row) => (
                 <tr key={row.id} className="hover:bg-[var(--fr8x-mist)] border-b border-border last:border-0">
-                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.numContainers} onChange={(v) => updateLocalRow(row.id, "numContainers", v)} min="1" className="w-12" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput type="number" value={row.numUnits} onChange={(v) => updateLocalRow(row.id, "numUnits", v)} min="1" className="w-12" /></td>
                   <td className="px-1.5 py-0.5"><CellInput value={row.chargesHead} onChange={(v) => updateLocalRow(row.id, "chargesHead", v)} className="w-44" /></td>
-                  <td className="px-1.5 py-0.5"><CellSelect value={row.size} onChange={(v) => updateLocalRow(row.id, "size", v)} options={CONTAINER_SIZE_OPTIONS} className="w-28" /></td>
-                  <td className="px-1.5 py-0.5"><CellSelect value={row.type} onChange={(v) => updateLocalRow(row.id, "type", v)} options={CARGO_TYPE_OPTIONS} className="w-16" /></td>
+                  <td className="px-1.5 py-0.5"><CellInput value={row.sizeOrType} onChange={(v) => updateLocalRow(row.id, "sizeOrType", v)} className="w-28" /></td>
+                  <td className="px-1.5 py-0.5"><CellSelect value={row.cargoClass} onChange={(v) => updateLocalRow(row.id, "cargoClass", v)} options={["GEN", "HAZ", "OOG", "IG"]} className="w-16" /></td>
                   <td className="px-1.5 py-0.5">
                     <select value={row.currency} onChange={(e) => updateLocalRow(row.id, "currency", e.target.value)}
                       className="w-16 border border-border rounded px-1 py-0.5 text-[10px] bg-white focus:border-[var(--fr8x-periwinkle)] focus:outline-none">
@@ -309,7 +378,7 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
 
       {/* ═══ 3. ADDITIONAL INFORMATION ═══ */}
       <div className="fr8x-card overflow-hidden">
-        <div className="fr8x-section-bar">3. ADDITIONAL INFORMATION</div>
+        <div className="fr8x-section-bar">3. COMMERCIAL TERMS & BIDDER REMARKS</div>
         <div className="p-2 grid grid-cols-6 gap-2">
           <div>
             <label className="fr8x-label block mb-0.5">Payment Terms</label>
@@ -337,8 +406,8 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
             <input type="text" value={decrementPct} onChange={(e) => setDecrementPct(e.target.value)} className="fr8x-input" />
           </div>
           <div className="col-span-2 mt-1">
-            <label className="fr8x-label block mb-0.5">Remarks</label>
-            <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className="fr8x-input min-h-[40px] resize-none" placeholder="Any additional notes..." />
+            <label className="fr8x-label block mb-0.5">Remarks / Guarantees</label>
+            <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className="fr8x-input min-h-[40px] resize-none" placeholder="Enter transit guarantee or free time notes..." />
           </div>
         </div>
       </div>
