@@ -188,7 +188,6 @@ export function TopNav() {
                 { label: "Profile", href: ROUTES.PROFILE },
                 { label: "Awards", href: ROUTES.AWARDS },
                 { label: "Blacklist", href: ROUTES.BLACKLIST },
-                { label: "Jobs", href: ROUTES.FEEDS },
               ].map((item) => (
                 <Link
                   key={item.label}
