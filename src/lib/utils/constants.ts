@@ -15,6 +15,12 @@ export const ROUTES = {
   FEEDS: "/feeds",
   PROFILE: "/profile",
   PROFILE_VIEW: (userId: string) => `/profile/${userId}` as const,
+  SAVED_POSTS: "/saved-posts",
+  MY_RFQS: "/my-rfqs",
+  FOLLOWED_TAGS: "/followed-tags",
+  COMPANY_PAGE: "/company",
+  COMPANY_VIEW: (companyId: string) => `/company/${companyId}` as const,
+  SEARCH: "/search",
 
   // Auctions
   AUCTIONS: "/auctions",
@@ -45,6 +51,8 @@ export const ROUTES = {
   GODMODE_BILLING: "/godmode/billing",
   GODMODE_AUDIT: "/godmode/audit",
   GODMODE_SETTINGS: "/godmode/settings",
+  GODMODE_LOCATIONS: "/godmode/locations",
+  GODMODE_BACKUPS: "/godmode/backups",
 } as const;
 
 // Firestore Collections
@@ -72,7 +80,12 @@ export const COLLECTIONS = {
   JOBS: "jobs",
   JOB_APPLICATIONS: "jobApplications",
   TRANSACTIONS: "transactions",
+  CONNECTIONS: "connections",
+  LOCATIONS: "locations",
+  BACKUPS: "backups",
+  LOCATION_AUDIT: "location_audit",
 } as const;
+
 
 // Bid constraints
 export const BID_MAX_SUBMISSIONS = 5;
@@ -296,3 +309,34 @@ export const BREAKPOINTS = {
   XL: 1280,
   "2XL": 1536,
 } as const;
+
+// Global Ports & Locations Seeding Data (Sea, Air, Rail, Dry, ICD)
+export const LOCATION_SEED_DATA = [
+  // Sea Ports
+  { code: "INNSA", name: "Nhava Sheva Port", country: "India", countryCode: "IN", type: "sea", postalCode: "", status: "active", coordinates: "18.95,72.95" },
+  { code: "CNSHA", name: "Shanghai Port", country: "China", countryCode: "CN", type: "sea", postalCode: "", status: "active", coordinates: "31.23,121.47" },
+  { code: "SGSIN", name: "Singapore Port", country: "Singapore", countryCode: "SG", type: "sea", postalCode: "", status: "active", coordinates: "1.35,103.82" },
+  { code: "NLRTM", name: "Rotterdam Port", country: "Netherlands", countryCode: "NL", type: "sea", postalCode: "", status: "active", coordinates: "51.92,4.48" },
+  { code: "USLAX", name: "Los Angeles Port", country: "United States", countryCode: "US", type: "sea", postalCode: "", status: "active", coordinates: "33.74,-118.26" },
+  { code: "USEWR", name: "Newark Port", country: "United States", countryCode: "US", type: "sea", postalCode: "", status: "active", coordinates: "40.68,-74.17" },
+  { code: "AEJEA", name: "Jebel Ali Port", country: "UAE", countryCode: "AE", type: "sea", postalCode: "", status: "active", coordinates: "25.01,55.06" },
+  { code: "DEHAM", name: "Hamburg Port", country: "Germany", countryCode: "DE", type: "sea", postalCode: "", status: "active", coordinates: "53.55,9.99" },
+  { code: "LKCMB", name: "Colombo Port", country: "Sri Lanka", countryCode: "LK", type: "sea", postalCode: "", status: "active", coordinates: "6.93,79.86" },
+
+  // Air Ports
+  { code: "BOM", name: "Mumbai Chhatrapati Shivaji Airport", country: "India", countryCode: "IN", type: "air", postalCode: "", status: "active", coordinates: "19.09,72.87" },
+  { code: "DEL", name: "Delhi Indira Gandhi Airport", country: "India", countryCode: "IN", type: "air", postalCode: "", status: "active", coordinates: "28.56,77.10" },
+  { code: "DXB", name: "Dubai International Airport", country: "UAE", countryCode: "AE", type: "air", postalCode: "", status: "active", coordinates: "25.25,55.36" },
+  { code: "SIN", name: "Singapore Changi Airport", country: "Singapore", countryCode: "SG", type: "air", postalCode: "", status: "active", coordinates: "1.36,103.99" },
+  { code: "LHR", name: "London Heathrow Airport", country: "United Kingdom", countryCode: "GB", type: "air", postalCode: "", status: "active", coordinates: "51.47,-0.45" },
+  { code: "JFK", name: "New York JFK Airport", country: "United States", countryCode: "US", type: "air", postalCode: "", status: "active", coordinates: "40.64,-73.78" },
+  { code: "PVG", name: "Shanghai Pudong Airport", country: "China", countryCode: "CN", type: "air", postalCode: "", status: "active", coordinates: "31.14,121.80" },
+  { code: "FRA", name: "Frankfurt Airport", country: "Germany", countryCode: "DE", type: "air", postalCode: "", status: "active", coordinates: "50.03,8.56" },
+
+  // ICDs / Dry Ports
+  { code: "INDEL", name: "Delhi ICD", country: "India", countryCode: "IN", type: "icd", postalCode: "110020", status: "active", coordinates: "28.52,77.28" },
+  { code: "INTKD", name: "Tughlakabad ICD", country: "India", countryCode: "IN", type: "icd", postalCode: "110020", status: "active", coordinates: "28.50,77.29" },
+  { code: "USCHI", name: "Chicago Rail Terminal", country: "United States", countryCode: "US", type: "rail", postalCode: "60608", status: "active", coordinates: "41.87,-87.62" },
+  { code: "CNCKG", name: "Chongqing Rail Ramp", country: "China", countryCode: "CN", type: "rail", postalCode: "400000", status: "active", coordinates: "29.56,106.55" },
+];
+
