@@ -38,6 +38,7 @@ import {
 import { auctionCreateSchema, type AuctionCreateFormData } from "@/lib/validators/auction";
 import { ROUTES } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
+import LocationSearchInput from "@/components/ui/LocationSearchInput";
 import { FREIGHT_CURRENCIES as CURRENCY_LIST } from "@/lib/types/currency";
 import {
   TRANSPORT_MODES,
@@ -397,12 +398,22 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="fr8x-label">Shipment Origin (City/Country) *</label>
-                    <input className="fr8x-input mt-1" {...register("shipmentDetails.origin")} placeholder="e.g. Mumbai, India" />
+                    <LocationSearchInput
+                      value={watch("shipmentDetails.origin") || ""}
+                      onChange={(val) => setValue("shipmentDetails.origin", val)}
+                      label="Shipment Origin (City/Country) *"
+                      placeholder="e.g. Mumbai, India"
+                      isPlaceOfReceiptOrDelivery={true}
+                    />
                   </div>
                   <div>
-                    <label className="fr8x-label">Shipment Destination (City/Country) *</label>
-                    <input className="fr8x-input mt-1" {...register("shipmentDetails.destination")} placeholder="e.g. Hamburg, Germany" />
+                    <LocationSearchInput
+                      value={watch("shipmentDetails.destination") || ""}
+                      onChange={(val) => setValue("shipmentDetails.destination", val)}
+                      label="Shipment Destination (City/Country) *"
+                      placeholder="e.g. Hamburg, Germany"
+                      isPlaceOfReceiptOrDelivery={true}
+                    />
                   </div>
                   <div>
                     <label className="fr8x-label">Incoterms® 2020 *</label>
@@ -444,12 +455,20 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="fr8x-label">POL / Origin Hub / Terminal (Optional)</label>
-                    <input className="fr8x-input mt-1" {...register("shipmentDetails.originPort")} placeholder="e.g. INNSA / BOM / Rail Depot" />
+                    <LocationSearchInput
+                      value={watch("shipmentDetails.originPort") || ""}
+                      onChange={(val) => setValue("shipmentDetails.originPort", val)}
+                      label="POL / Origin Hub / Terminal (Optional)"
+                      placeholder="e.g. INNSA / BOM / Rail Depot"
+                    />
                   </div>
                   <div>
-                    <label className="fr8x-label">POD / Destination Hub / Terminal (Optional)</label>
-                    <input className="fr8x-input mt-1" {...register("shipmentDetails.destinationPort")} placeholder="e.g. DEHAM / FRA / Dest Ramp" />
+                    <LocationSearchInput
+                      value={watch("shipmentDetails.destinationPort") || ""}
+                      onChange={(val) => setValue("shipmentDetails.destinationPort", val)}
+                      label="POD / Destination Hub / Terminal (Optional)"
+                      placeholder="e.g. DEHAM / FRA / Dest Ramp"
+                    />
                   </div>
                   <div>
                     <label className="fr8x-label">Preferred Carrier / Operator (Optional)</label>
