@@ -15,7 +15,6 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
-  Briefcase,
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -29,7 +28,6 @@ const navItems = [
   { label: "Profile",   href: ROUTES.PROFILE,   icon: User },
   { label: "Awards",    href: ROUTES.AWARDS,    icon: Award },
   { label: "Blacklist", href: ROUTES.BLACKLIST, icon: ShieldAlert },
-  { label: "Jobs",      href: ROUTES.FEEDS,     icon: Briefcase },
 ];
 
 export function Sidebar() {
