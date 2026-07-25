@@ -17,6 +17,8 @@ import {
   limit,
   serverTimestamp,
 } from "@/lib/firebase/firestore";
+import LocationSearchInput from "@/components/ui/LocationSearchInput";
+import { sanitizeText } from "@/lib/utils/security";
 
 type RateTab = "active" | "expired" | "all";
 
@@ -237,21 +239,21 @@ export default function RateCenterPage() {
       const docRef = getDocRef(COLLECTIONS.RATES);
       await setDocument(COLLECTIONS.RATES, docRef.id, {
         srq: `SRQ-${Date.now().toString().slice(-6)}`,
-        rateProvider: rateProvider || user.displayName || user.email || "Verified Provider",
-        carrierForwarderName: carrierForwarderName || user.companyId || "RV-Info Logistics",
-        carrier,
-        pol,
-        pod,
-        fpod,
+        rateProvider: sanitizeText(rateProvider || user.displayName || user.email || "Verified Provider"),
+        carrierForwarderName: sanitizeText(carrierForwarderName || user.companyId || "RV-Info Logistics"),
+        carrier: sanitizeText(carrier),
+        pol: sanitizeText(pol),
+        pod: sanitizeText(pod),
+        fpod: sanitizeText(fpod),
         commodity: "General",
         contType,
         contSize,
-        route,
+        route: sanitizeText(route),
         rate: parseFloat(rate) || 0,
         curr: "USD",
-        tt,
+        tt: sanitizeText(tt),
         routing: routingSD === "S" ? "Single" : "Direct",
-        remarks,
+        remarks: sanitizeText(remarks),
         validityDate,
         transitType,
         lengthCm,
@@ -278,17 +280,17 @@ export default function RateCenterPage() {
     }
     try {
       await updateDocument(COLLECTIONS.RATES, editingRateId, {
-        carrier,
-        pol,
-        pod,
-        fpod,
+        carrier: sanitizeText(carrier),
+        pol: sanitizeText(pol),
+        pod: sanitizeText(pod),
+        fpod: sanitizeText(fpod),
         contType,
         contSize,
-        route,
+        route: sanitizeText(route),
         rate: parseFloat(rate) || 0,
-        tt,
+        tt: sanitizeText(tt),
         routing: routingSD === "S" ? "Single" : "Direct",
-        remarks,
+        remarks: sanitizeText(remarks),
         validityDate,
         transitType,
         lengthCm,
@@ -483,18 +485,31 @@ export default function RateCenterPage() {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="fr8x-label block mb-1">POL *</label>
-                <input type="text" value={pol} onChange={(e) => setPol(e.target.value)} className="fr8x-input text-caption" placeholder="POL (e.g. INBOM)" />
+                <LocationSearchInput
+                  value={pol}
+                  onChange={(val) => setPol(val)}
+                  label="POL *"
+                  placeholder="POL Code"
+                />
               </div>
               <div>
-                <label className="fr8x-label block mb-1">POD *</label>
-                <input type="text" value={pod} onChange={(e) => setPod(e.target.value)} className="fr8x-input text-caption" placeholder="POD (e.g. AEDXB)" />
+                <LocationSearchInput
+                  value={pod}
+                  onChange={(val) => setPod(val)}
+                  label="POD *"
+                  placeholder="POD Code"
+                />
               </div>
             </div>
 
-            <div>
-              <label className="fr8x-label block mb-1">FPOD</label>
-              <input type="text" value={fpod} onChange={(e) => setFpod(e.target.value)} className="fr8x-input text-caption" placeholder="Final POD" />
+            <div className="mt-2">
+              <LocationSearchInput
+                value={fpod}
+                onChange={(val) => setFpod(val)}
+                label="FPOD"
+                placeholder="Final POD Code"
+                isPlaceOfReceiptOrDelivery={true}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
