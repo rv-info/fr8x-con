@@ -15,6 +15,10 @@ import {
   ShieldAlert,
   Settings,
   LogOut,
+  Bookmark,
+  FileText,
+  Tag,
+  Building2,
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
@@ -22,13 +26,18 @@ import { ROUTES, APP_NAME } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
 
 const navItems = [
-  { label: "Feeds",     href: ROUTES.FEEDS,     icon: LayoutDashboard },
-  { label: "Auctions",  href: ROUTES.AUCTIONS,  icon: Gavel },
-  { label: "Rates",     href: ROUTES.RATES,     icon: TrendingUp },
-  { label: "Profile",   href: ROUTES.PROFILE,   icon: User },
-  { label: "Awards",    href: ROUTES.AWARDS,    icon: Award },
-  { label: "Blacklist", href: ROUTES.BLACKLIST, icon: ShieldAlert },
+  { label: "Feeds",     href: ROUTES.FEEDS,         icon: LayoutDashboard },
+  { label: "Auctions",  href: ROUTES.AUCTIONS,      icon: Gavel },
+  { label: "Rates",     href: ROUTES.RATES,         icon: TrendingUp },
+  { label: "Profile",   href: ROUTES.PROFILE,       icon: User },
+  { label: "Saved Posts", href: ROUTES.SAVED_POSTS, icon: Bookmark },
+  { label: "My RFQs",   href: ROUTES.MY_RFQS,       icon: FileText },
+  { label: "Followed Tags", href: ROUTES.FOLLOWED_TAGS, icon: Tag },
+  { label: "Company",   href: ROUTES.COMPANY_PAGE,  icon: Building2 },
+  { label: "Awards",    href: ROUTES.AWARDS,        icon: Award },
+  { label: "Blacklist", href: ROUTES.BLACKLIST,     icon: ShieldAlert },
 ];
+
 
 export function Sidebar() {
   const [hovered, setHovered] = useState(false);
