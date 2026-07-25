@@ -31,7 +31,11 @@ export type FclEquipmentType =
   | "40ft_hc"
   | "45ft_hc"
   | "open_top"
-  | "flat_rack"
+  | "20ft_fr"
+  | "40ft_fr"
+  | "40ft_fr_collapsible"
+  | "20ft_fb"
+  | "40ft_fb"
   | "platform"
   | "reefer"
   | "tank_container"
@@ -162,7 +166,11 @@ export const FCL_EQUIPMENT_TYPES: { id: FclEquipmentType; label: string; code: s
   { id: "40ft_hc", label: "40' High Cube (40'HC)", code: "40HC" },
   { id: "45ft_hc", label: "45' High Cube (45'HC)", code: "45HC" },
   { id: "open_top", label: "Open Top Container (OT)", code: "20OT/40OT" },
-  { id: "flat_rack", label: "Flat Rack Container (FR)", code: "20FR/40FR" },
+  { id: "20ft_fr", label: "20' Flat Rack Container (20'FR)", code: "20FR" },
+  { id: "40ft_fr", label: "40' Flat Rack Container (40'FR)", code: "40FR" },
+  { id: "40ft_fr_collapsible", label: "40' Collapsible Flat Rack (40'CFR)", code: "40CFR" },
+  { id: "20ft_fb", label: "20' Flat Bed (20'FB)", code: "20FB" },
+  { id: "40ft_fb", label: "40' Flat Bed (40'FB)", code: "40FB" },
   { id: "platform", label: "Platform Container", code: "PL" },
   { id: "reefer", label: "Reefer Container (RF)", code: "20RF/40RF" },
   { id: "tank_container", label: "Tank Container", code: "TK" },
