@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Search,
   Bell,
@@ -21,6 +22,7 @@ import { getInitials } from "@/lib/utils/format";
 
 export function TopNav() {
   const { user, signOut } = useAuth();
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -28,7 +30,9 @@ export function TopNav() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement search
+    if (searchQuery.trim()) {
+      router.push(`${ROUTES.SEARCH}?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
   };
 
   return (
@@ -186,6 +190,10 @@ export function TopNav() {
                 { label: "Auctions", href: ROUTES.AUCTIONS },
                 { label: "Rates", href: ROUTES.RATES },
                 { label: "Profile", href: ROUTES.PROFILE },
+                { label: "Saved Posts", href: ROUTES.SAVED_POSTS },
+                { label: "My RFQs", href: ROUTES.MY_RFQS },
+                { label: "Followed Tags", href: ROUTES.FOLLOWED_TAGS },
+                { label: "Company Page", href: ROUTES.COMPANY_PAGE },
                 { label: "Awards", href: ROUTES.AWARDS },
                 { label: "Blacklist", href: ROUTES.BLACKLIST },
               ].map((item) => (
