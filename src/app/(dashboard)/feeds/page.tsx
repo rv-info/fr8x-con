@@ -32,7 +32,60 @@ import {
   Plus,
   Building2,
   CheckCircle2,
+  Bookmark as BookmarkIcon,
+  Tag as TagIcon,
+  Shield,
+  Star,
 } from "lucide-react";
+
+const SPONSORED_ADS = [
+  {
+    title: "DP World Marine Services",
+    label: "Sponsored",
+    description: "Smarter trade flows. End-to-end container logistics, port terminals, and digital booking tools for freight forwarders globally.",
+    link: "www.dpworld.com/maritime",
+  },
+  {
+    title: "Maersk Cold Chain Logistics",
+    label: "Promoted",
+    description: "Keep your cargo fresh from farm to table. Integrated cold storage storage, active atmospheric containers, and real-time sensor tracking.",
+    link: "www.maersk.com/coldchain",
+  },
+  {
+    title: "Vessel Finder Pro Premium",
+    label: "Advertisement",
+    description: "Never lose track of your shipments. Real-time satellite AIS data, route forecasting, port congestion indexes, and geofencing alerts.",
+    link: "www.vesselfinder.com/pro",
+  },
+];
+
+const TRENDING_TAGS_DATA = [
+  { name: "Ocean Freight", related: "Apex Cargo, Rajat Rai (CHA)" },
+  { name: "Air Freight", related: "NVOCC Direct, Trans-Border Line" },
+  { name: "FCL", related: "RV-Info Logistics, Importers Corp" },
+  { name: "LCL", related: "Cross-border Line, Warehouse Ops" },
+  { name: "NVOCC", related: "MLO Agent, Shippers Guild" },
+];
+
+function SponsoredAdBlock({ index = 0 }: { index?: number }) {
+  const ad = SPONSORED_ADS[index % SPONSORED_ADS.length];
+  if (!ad) return null;
+  return (
+    <div className="fr8x-card p-3 bg-amber-50/20 border border-amber-200/50 rounded-lg space-y-1.5 text-left animate-fadeIn">
+      <div className="flex items-center justify-between">
+        <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
+          {ad.label}
+        </span>
+        <span className="text-[8px] text-foreground-muted hover:underline cursor-pointer">{ad.link}</span>
+      </div>
+      <div>
+        <p className="text-[10px] font-bold text-[var(--fr8x-jet)]">{ad.title}</p>
+        <p className="text-[9.5px] text-foreground-secondary mt-0.5 leading-relaxed">{ad.description}</p>
+      </div>
+    </div>
+  );
+}
+
 
 // ─── Types ───
 type PostData = {
@@ -182,8 +235,33 @@ export default function FeedsPage() {
   const [isPosting, setIsPosting] = useState(false);
   const [isPostJobOpen, setIsPostJobOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [followedTags, setFollowedTags] = useState<string[]>([]);
 
   const displayName = user?.displayName || "User";
+
+  // Fetch followed tags from profile
+  useEffect(() => {
+    if (!user?.uid) return;
+    getDocument<{ followedTags?: string[] }>(COLLECTIONS.PROFILES, user.uid).then((data) => {
+      if (data?.followedTags) setFollowedTags(data.followedTags);
+    });
+  }, [user?.uid]);
+
+  const handleToggleFollowTag = async (tag: string) => {
+    if (!user?.uid) return;
+    try {
+      const updated = followedTags.includes(tag)
+        ? followedTags.filter((t) => t !== tag)
+        : [...followedTags, tag];
+      await setDocument(COLLECTIONS.PROFILES, user.uid, { followedTags: updated }, true);
+      setFollowedTags(updated);
+      setToastMsg(`Tag #${tag} follow state updated!`);
+      setTimeout(() => setToastMsg(null), 2500);
+    } catch (err) {
+      console.error("Error toggling follow tag:", err);
+    }
+  };
+
 
   // Fetch user profile
   useEffect(() => {
@@ -374,13 +452,14 @@ export default function FeedsPage() {
           </div>
 
           {/* Navigation */}
-          <nav className="fr8x-card p-1.5 space-y-0.5 bg-white">
-            <button className="fr8x-nav-item w-full text-left">Saved Posts</button>
-            <button className="fr8x-nav-item w-full text-left">My RFQs</button>
-            <button className="fr8x-nav-item w-full text-left">Followed Tags</button>
-            <button className="fr8x-nav-item w-full text-left">Company Page</button>
-            <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full">View Profile</Link>
+          <nav className="fr8x-card p-1.5 space-y-0.5 bg-white text-left">
+            <Link href={ROUTES.SAVED_POSTS} className="fr8x-nav-item w-full block">Saved Posts</Link>
+            <Link href={ROUTES.MY_RFQS} className="fr8x-nav-item w-full block">My RFQs</Link>
+            <Link href={ROUTES.FOLLOWED_TAGS} className="fr8x-nav-item w-full block">Followed Tags</Link>
+            <Link href={ROUTES.COMPANY_PAGE} className="fr8x-nav-item w-full block">Company Page</Link>
+            <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full block">View Profile</Link>
           </nav>
+
         </aside>
 
         {/* ═══ CENTER FEED ═══ */}
@@ -453,11 +532,18 @@ export default function FeedsPage() {
             <EmptyFeed />
           ) : (
             <div className="space-y-2">
-              {filteredPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
+              {filteredPosts.map((post, idx) => (
+                <div key={post.id} className="space-y-2">
+                  <PostCard post={post} />
+                  {/* Inject sponsored ad block after every 4 posts */}
+                  {(idx + 1) % 4 === 0 && (
+                    <SponsoredAdBlock index={Math.floor(idx / 4)} />
+                  )}
+                </div>
               ))}
             </div>
           )}
+
         </main>
 
         {/* ═══ RIGHT SIDEBAR ═══ */}
@@ -507,17 +593,46 @@ export default function FeedsPage() {
           </div>
 
           {/* Trending Tags */}
-          <div className="fr8x-card p-2.5 bg-white">
-            <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1">Trending Tags</p>
-            <ul className="space-y-1">
-              {["Ocean Freight", "Air Freight", "FCL", "LCL", "NVOCC"].map((tag) => (
-                <li key={tag} className="text-[10px] text-foreground-secondary hover:text-[var(--fr8x-jet)] cursor-pointer transition-colors flex items-center justify-between">
-                  <span>#{tag}</span>
-                  <span className="text-[9px] text-foreground-muted">Popular</span>
-                </li>
-              ))}
+          <div className="fr8x-card p-2.5 bg-white text-left">
+            <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
+              <TagIcon className="h-3.5 w-3.5 text-amber-500" />
+              <span>Trending Tags</span>
+            </p>
+            <ul className="space-y-2">
+              {TRENDING_TAGS_DATA.map((t) => {
+                const isFollowing = followedTags.includes(t.name);
+                return (
+                  <li key={t.name} className="text-[10px] text-foreground-secondary border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between">
+                      <span
+                        onClick={() => {
+                          setPostContent(prev => `#${t.name} ` + prev);
+                        }}
+                        className="font-semibold text-[var(--fr8x-jet)] hover:underline cursor-pointer"
+                        title="Click to append tag to post"
+                      >
+                        #{t.name}
+                      </span>
+                      <button
+                        onClick={() => handleToggleFollowTag(t.name)}
+                        className={`text-[8px] px-1.5 py-0.2 rounded font-semibold transition-all ${
+                          isFollowing ? "bg-slate-200 text-slate-700 font-bold" : "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-dimgrey)]"
+                        }`}
+                      >
+                        {isFollowing ? "Following" : "+ Follow"}
+                      </button>
+                    </div>
+                    <div className="text-[8px] text-foreground-muted mt-0.5">
+                      <span>Related: {t.related}</span>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           </div>
+
+          {/* Sidebar Sponsored Ad Block */}
+          <SponsoredAdBlock index={1} />
         </aside>
       </div>
     </div>
