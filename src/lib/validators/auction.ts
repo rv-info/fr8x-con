@@ -154,7 +154,9 @@ export const auctionCreateSchema = z.object({
     chargesHeads: z.array(chargesHeadSchema),
   }),
   startDate: z.string().min(1, "Start date is required"),
-  endDate: z.string().min(1, "End date is required"),
+  startTime: z.string().min(1, "Start time is required").optional(),
+  period: z.number().int().min(1, "Period must be at least 1 minute").optional(),
+  endDate: z.string().optional(),
   invitedBidders: z.array(z.string()).optional(),
 });
 
