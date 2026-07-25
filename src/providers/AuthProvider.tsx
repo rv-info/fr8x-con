@@ -1,4 +1,4 @@
-// FR8X-CON Auth Provider — Manages Firebase Auth & Demo Test Credentials State
+// FR8X-CON Auth Provider — Manages Firebase Auth, Demo Test Credentials & Single-Session Enforcement
 
 "use client";
 
@@ -13,7 +13,7 @@ import {
 } from "react";
 import type { AuthState, AuthUser, UserRole } from "@/lib/types/auth";
 import { onAuthChange, signOut as firebaseSignOut, getStoredDemoUser, DEMO_AUTH_EVENT } from "@/lib/firebase/auth";
-import { getDocument } from "@/lib/firebase/firestore";
+import { getDocument, setDocument, subscribeToDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import { useRouter } from "next/navigation";
 
@@ -24,6 +24,18 @@ type AuthContextType = AuthState & {
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper to get or generate client session token
+function getOrCreateSessionId(uid: string): string {
+  if (typeof window === "undefined") return "";
+  const key = `fr8x_session_${uid}`;
+  let sessId = sessionStorage.getItem(key);
+  if (!sessId) {
+    sessId = `sess_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
+    sessionStorage.setItem(key, sessId);
+  }
+  return sessId;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -66,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isGodMode: boolean;
         companyId: string | null;
         membershipTier: "trial" | "basic" | "premium";
+        activeSessionId?: string;
       }>(COLLECTIONS.USERS, uid);
 
       const isDemoAdmin = email === "admin@fr8x.in";
@@ -80,6 +93,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         companyId: userData?.companyId || null,
         membershipTier: isDemoAdmin ? "premium" : (userData?.membershipTier || "trial"),
       };
+
+      // Single active session enforcement: Register current session ID in Firestore
+      if (typeof window !== "undefined") {
+        const clientSessionId = getOrCreateSessionId(uid);
+        // Save current session ID to Firestore doc
+        await setDocument(
+          COLLECTIONS.USERS,
+          uid,
+          {
+            activeSessionId: clientSessionId,
+            lastLoginAt: new Date().toISOString(),
+          },
+          true
+        );
+      }
 
       setState({
         isAuthenticated: true,
@@ -108,6 +136,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }
   }, []);
+
+  // Real-time Single-Session Monitor
+  useEffect(() => {
+    if (!state.user?.uid) return;
+
+    const uid = state.user.uid;
+    const clientSessionId = getOrCreateSessionId(uid);
+
+    // Subscribe to changes on users/{uid} document to detect concurrent logins
+    const unsubscribeDoc = subscribeToDocument<{ activeSessionId?: string }>(
+      COLLECTIONS.USERS,
+      uid,
+      (remoteData) => {
+        if (remoteData?.activeSessionId && remoteData.activeSessionId !== clientSessionId) {
+          console.warn("Single-session violation detected: Account signed in on another device.");
+          firebaseSignOut();
+          setState({
+            isAuthenticated: false,
+            isLoading: false,
+            user: null,
+            error: "Session terminated: Your account was signed in from another device.",
+          });
+          if (typeof window !== "undefined") {
+            alert("Security Alert: You have been logged out because your account was signed in on another device.");
+          }
+          router.push(ROUTES.LOGIN);
+        }
+      }
+    );
+
+    return () => {
+      unsubscribeDoc();
+    };
+  }, [state.user?.uid, router]);
 
   useEffect(() => {
     // Check local demo session first
@@ -161,6 +223,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
+      if (state.user?.uid && typeof window !== "undefined") {
+        sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
+      }
       await firebaseSignOut();
       setState({
         isAuthenticated: false,
@@ -172,7 +237,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Sign out error:", error);
     }
-  }, [router]);
+  }, [state.user?.uid, router]);
 
   const refreshUser = useCallback(async () => {
     if (state.user) {
