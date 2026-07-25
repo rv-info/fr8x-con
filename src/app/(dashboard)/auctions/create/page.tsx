@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/providers/AuthProvider";
 import { setDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
-import { toast } from "react-hot-toast";
 import {
   ChevronLeft,
   ChevronRight,
@@ -69,6 +68,12 @@ export default function AuctionCreatePage() {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  const showNotification = (msg: string) => {
+    setStatusMessage(msg);
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
 
   const { register, control, handleSubmit, watch, setValue } = useForm<AuctionCreateFormData>({
     resolver: zodResolver(auctionCreateSchema),
@@ -208,7 +213,7 @@ export default function AuctionCreatePage() {
 
   const onSubmit = async (data: AuctionCreateFormData) => {
     if (!user) {
-      toast?.error("You must be logged in to create an auction.");
+      showNotification("You must be logged in to create an auction.");
       return;
     }
     
@@ -221,7 +226,7 @@ export default function AuctionCreatePage() {
         id: auctionId,
         creatorId: user.uid,
         creatorName: user.displayName || "Unknown",
-        creatorCompany: user.companyName || "Unknown",
+        creatorCompany: user.companyId || "Unknown",
         status: "active",
         participantsCount: data.invitedBidders?.length || 0,
         bidsCount: 0,
@@ -231,11 +236,11 @@ export default function AuctionCreatePage() {
       await setDocument(COLLECTIONS.AUCTIONS, auctionId, payload);
       
       console.log("Submitted intelligent multi-modal auction data:", payload);
-      toast?.success("Auction published successfully!");
+      showNotification("Auction published successfully!");
       router.push(ROUTES.AUCTIONS);
     } catch (error) {
       console.error("Failed to create auction:", error);
-      toast?.error("Failed to publish auction. Please try again.");
+      showNotification("Failed to publish auction. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -273,6 +278,11 @@ export default function AuctionCreatePage() {
         <p className="mt-1 text-body-md text-foreground-secondary">
           Unified multi-modal reverse auction posting engine with dynamic field rendering & Incoterms® logic
         </p>
+        {statusMessage && (
+          <div className="mt-3 p-3 bg-brand-50 border border-brand-200 text-brand-900 text-body-sm rounded">
+            {statusMessage}
+          </div>
+        )}
       </div>
 
       {/* Step indicator */}
@@ -969,7 +979,7 @@ export default function AuctionCreatePage() {
                     onClick={(e) => {
                       e.preventDefault();
                       navigator.clipboard.writeText(`${window.location.origin}/register?invite=auction_${crypto.randomUUID()}`);
-                      toast?.success("Invite link copied to clipboard!");
+                      showNotification("Invite link copied to clipboard!");
                     }}
                     className="fr8x-btn-secondary text-[11px] py-1.5 px-3 bg-white border border-blue-300 text-blue-700 whitespace-nowrap"
                   >
