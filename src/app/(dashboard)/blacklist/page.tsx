@@ -23,6 +23,15 @@ export default function BlacklistPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
+  // Per-column search box states
+  const [colFilters, setColFilters] = useState({
+    entity: "",
+    reason: "",
+    issuedBy: "",
+    date: "",
+    appealStatus: "",
+  });
+
   useEffect(() => {
     async function fetchBlacklist() {
       setIsLoading(true);
@@ -42,22 +51,37 @@ export default function BlacklistPage() {
     fetchBlacklist();
   }, []);
 
+  const handleColFilterChange = (key: string, val: string) => {
+    setColFilters((prev) => ({ ...prev, [key]: val }));
+  };
+
   const filteredEntries = useMemo(() => {
-    if (!searchQuery) return entries;
-    const q = searchQuery.toLowerCase();
-    return entries.filter(
-      (e) =>
-        (e.userName || "").toLowerCase().includes(q) ||
-        (e.reason || "").toLowerCase().includes(q)
-    );
-  }, [entries, searchQuery]);
+    return entries.filter((e) => {
+      // Global search
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchName = (e.userName || "").toLowerCase().includes(q);
+        const matchReason = (e.reason || "").toLowerCase().includes(q);
+        if (!matchName && !matchReason) return false;
+      }
+
+      // Per-column search filters
+      if (colFilters.entity && !(e.userName || "").toLowerCase().includes(colFilters.entity.toLowerCase())) return false;
+      if (colFilters.reason && !(e.reason || "").toLowerCase().includes(colFilters.reason.toLowerCase())) return false;
+      if (colFilters.issuedBy && !(e.issuedBy || "").toLowerCase().includes(colFilters.issuedBy.toLowerCase())) return false;
+      if (colFilters.date && !(e.date || "").toLowerCase().includes(colFilters.date.toLowerCase())) return false;
+      if (colFilters.appealStatus && !(e.appealStatus || "").toLowerCase().includes(colFilters.appealStatus.toLowerCase())) return false;
+
+      return true;
+    });
+  }, [entries, searchQuery, colFilters]);
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-display-sm text-foreground">Blacklist</h1>
+        <h1 className="text-display-sm text-foreground font-bold">Blacklist & Enforcement Records</h1>
         <p className="mt-1 text-body-md text-foreground-secondary">
-          Enforcement records and appeal management
+          Enforcement records, verification status, and appeal management
         </p>
       </div>
 
@@ -71,13 +95,16 @@ export default function BlacklistPage() {
             className="fr8x-input pl-10"
           />
         </div>
-        <button className="fr8x-btn-secondary flex items-center gap-2 px-4">
+        <button
+          onClick={() => setColFilters({ entity: "", reason: "", issuedBy: "", date: "", appealStatus: "" })}
+          className="fr8x-btn-secondary flex items-center gap-2 px-4 text-caption"
+        >
           <Filter className="h-4 w-4" />
-          Filters
+          Reset Search Filters
         </button>
       </div>
 
-      <div className="fr8x-card overflow-hidden">
+      <div className="fr8x-card overflow-hidden bg-white">
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-8">
             <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
@@ -86,10 +113,10 @@ export default function BlacklistPage() {
         ) : filteredEntries.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-body-sm text-foreground-secondary">
-              {entries.length === 0 ? "No active blacklist records" : "No entries match your search"}
+              {entries.length === 0 ? "No active blacklist records" : "No entries match your search filters"}
             </p>
             <p className="text-caption text-foreground-muted mt-1">
-              {entries.length === 0 ? "All network participants are currently in good standing." : "Try adjusting your search query."}
+              {entries.length === 0 ? "All network participants are currently in good standing." : "Try clearing or adjusting column search boxes."}
             </p>
           </div>
         ) : (
@@ -102,7 +129,56 @@ export default function BlacklistPage() {
                   <th>Issued By</th>
                   <th>Date</th>
                   <th>Appeal Status</th>
-                  <th className="w-10"></th>
+                  <th className="w-10">Action</th>
+                </tr>
+                {/* Search box below every heading */}
+                <tr className="bg-gray-50 border-b border-border">
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={colFilters.entity}
+                      onChange={(e) => handleColFilterChange("entity", e.target.value)}
+                      placeholder="Filter Entity"
+                      className="fr8x-input text-[10px] py-0.5 px-1.5 h-6 w-full"
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={colFilters.reason}
+                      onChange={(e) => handleColFilterChange("reason", e.target.value)}
+                      placeholder="Filter Reason"
+                      className="fr8x-input text-[10px] py-0.5 px-1.5 h-6 w-full"
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={colFilters.issuedBy}
+                      onChange={(e) => handleColFilterChange("issuedBy", e.target.value)}
+                      placeholder="Filter Issuer"
+                      className="fr8x-input text-[10px] py-0.5 px-1.5 h-6 w-full"
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={colFilters.date}
+                      onChange={(e) => handleColFilterChange("date", e.target.value)}
+                      placeholder="Filter Date"
+                      className="fr8x-input text-[10px] py-0.5 px-1.5 h-6 w-full"
+                    />
+                  </td>
+                  <td className="p-1">
+                    <input
+                      type="text"
+                      value={colFilters.appealStatus}
+                      onChange={(e) => handleColFilterChange("appealStatus", e.target.value)}
+                      placeholder="Filter Appeal"
+                      className="fr8x-input text-[10px] py-0.5 px-1.5 h-6 w-full"
+                    />
+                  </td>
+                  <td className="p-1"></td>
                 </tr>
               </thead>
               <tbody>
