@@ -34,6 +34,15 @@ import {
 } from "@/lib/firebase/firestore";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Button } from "@/components/ui/Button";
+import { ImageUploadWithCrop } from "@/components/ui/ImageUploadWithCrop";
+import { getProfilePhotoPath } from "@/lib/firebase/storage";
+
+function generatePublicId(name: string): string {
+  const prefix = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 5).toUpperCase() || "USER";
+  const num = Math.floor(100 + Math.random() * 900);
+  return `@${prefix}${num}`;
+}
+
 
 type WorkExpItem = {
   id: string;
@@ -63,6 +72,8 @@ type UserProfile = {
   membershipTier?: string;
   workExperience?: WorkExpItem[];
   education?: EduItem[];
+  photoURL?: string | null;
+  publicId?: string;
 };
 
 type UserPost = {
@@ -96,6 +107,8 @@ export default function ProfilePage() {
   const [about, setAbout] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [customTagInput, setCustomTagInput] = useState("");
+  const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [publicId, setPublicId] = useState("");
   
   // Work Exp State
   const [workExpList, setWorkExpList] = useState<WorkExpItem[]>([]);
@@ -132,7 +145,10 @@ export default function ProfilePage() {
     setSelectedTags(p?.industryTags || []);
     setWorkExpList(p?.workExperience || []);
     setEduList(p?.education || []);
+    setPhotoURL(p?.photoURL || null);
+    setPublicId(p?.publicId || "");
   }, [user?.displayName]);
+
 
   // Fetch profile
   useEffect(() => {
@@ -142,10 +158,16 @@ export default function ProfilePage() {
       try {
         const data = await getDocument<UserProfile>(COLLECTIONS.PROFILES, user!.uid);
         if (data) {
+          if (!data.publicId) {
+            const generated = generatePublicId(data.fullName || user?.displayName || "USER");
+            data.publicId = generated;
+            await setDocument(COLLECTIONS.PROFILES, user!.uid, { publicId: generated }, true);
+          }
           setProfile(data);
           syncFormWithProfile(data);
         } else {
           // Initialize defaults
+          const generated = generatePublicId(user?.displayName || "USER");
           const initial: UserProfile = {
             fullName: user?.displayName || "",
             companyName: "",
@@ -156,7 +178,10 @@ export default function ProfilePage() {
             industryTags: [],
             workExperience: [],
             education: [],
+            photoURL: null,
+            publicId: generated,
           };
+          await setDocument(COLLECTIONS.PROFILES, user!.uid, initial, true);
           setProfile(initial);
           syncFormWithProfile(initial);
         }
@@ -168,6 +193,7 @@ export default function ProfilePage() {
     }
     fetchProfile();
   }, [user, syncFormWithProfile]);
+
 
   // Fetch user posts
   useEffect(() => {
@@ -292,20 +318,24 @@ export default function ProfilePage() {
         industryTags: selectedTags,
         workExperience: workExpList,
         education: eduList,
+        photoURL: photoURL,
+        publicId: publicId || generatePublicId(fullName.trim() || user?.displayName || "USER"),
       };
 
       // Save to PROFILES collection
       await setDocument(COLLECTIONS.PROFILES, user.uid, updatedProfile, true);
 
-      // Optionally sync display name in USERS collection
+      // Optionally sync display name & photoURL in USERS collection
       await setDocument(
         COLLECTIONS.USERS,
         user.uid,
         {
           displayName: fullName.trim(),
+          photoURL: photoURL,
         },
         true
       );
+
 
       setProfile(updatedProfile);
       setIsEditing(false);
@@ -388,21 +418,21 @@ export default function ProfilePage() {
         <aside className="w-full lg:w-[260px] shrink-0 space-y-4">
           {/* User Core Info Card */}
           <div className="fr8x-card p-4">
-            <div className="relative w-16 h-16 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg text-[var(--fr8x-jet)] font-semibold mb-3 mx-auto">
-              {displayName.charAt(0)}
-              {isEditing && (
-                <button 
-                  type="button" 
-                  title="Avatar upload (uses user name initial)" 
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[var(--fr8x-periwinkle)] text-white flex items-center justify-center shadow"
-                >
-                  <Pencil className="h-3 w-3" />
-                </button>
+            <div className="relative w-16 h-16 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg text-[var(--fr8x-jet)] font-semibold mb-3 mx-auto overflow-hidden">
+              {photoURL ? (
+                <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+              ) : (
+                displayName.charAt(0)
               )}
             </div>
             <p className="text-body-sm font-semibold text-[var(--fr8x-jet)] text-center">
               {isEditing ? (fullName || "User") : displayName}
             </p>
+            {publicId && (
+              <p className="text-[10px] text-[var(--fr8x-periwinkle)] font-medium text-center mb-1">
+                {publicId}
+              </p>
+            )}
             <p className="text-caption text-foreground-secondary text-center">
               {isEditing ? (designation ? `${designation}${companyName ? ` at ${companyName}` : ''}` : companyName || user?.email || "Logistics Professional") : (profile?.designation ? `${profile.designation}${profile.companyName ? ` at ${profile.companyName}` : ''}` : profile?.companyName || user?.email || "Logistics Professional")}
             </p>
@@ -415,6 +445,7 @@ export default function ProfilePage() {
                 )}
               </p>
             )}
+
 
             {/* Displayed Industry Tags */}
             {((isEditing ? selectedTags : profile?.industryTags) || []).length > 0 && (
@@ -501,18 +532,49 @@ export default function ProfilePage() {
                   <h2 className="text-body-sm font-semibold text-[var(--fr8x-jet)]">Personal & Professional Info</h2>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <label className="fr8x-label block mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      placeholder="e.g. John Doe"
-                      className="fr8x-input"
-                      required
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="md:col-span-1 border-r border-border pr-4 space-y-2">
+                    <label className="fr8x-label block">Profile Picture</label>
+                    <ImageUploadWithCrop
+                      currentImageUrl={photoURL}
+                      storagePath={getProfilePhotoPath(user!.uid)}
+                      onUploadComplete={(url) => {
+                        setPhotoURL(url);
+                      }}
+                      onRemove={() => setPhotoURL(null)}
+                      label="Upload Photo"
+                      aspectRatio="square"
                     />
                   </div>
+                  
+                  <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="fr8x-label block mb-1">Full Name</label>
+                      <input
+                        type="text"
+                        value={fullName}
+                        onChange={(e) => setFullName(e.target.value)}
+                        placeholder="e.g. John Doe"
+                        className="fr8x-input"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="fr8x-label block mb-1">Public Handle (Optional)</label>
+                      <input
+                        type="text"
+                        value={publicId}
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          if (val && !val.startsWith("@")) val = "@" + val;
+                          setPublicId(val.replace(/\s+/g, "").toUpperCase());
+                        }}
+                        placeholder="e.g. @JOHN101"
+                        className="fr8x-input font-mono"
+                      />
+                    </div>
+
 
                   <div>
                     <label className="fr8x-label block mb-1">Designation / Title</label>
@@ -558,8 +620,9 @@ export default function ProfilePage() {
                     />
                   </div>
                 </div>
+              </div>
 
-                <div>
+              <div>
                   <label className="fr8x-label block mb-1">About / Bio</label>
                   <textarea
                     rows={3}
