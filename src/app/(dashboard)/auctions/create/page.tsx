@@ -8,6 +8,10 @@ import { useRouter } from "next/navigation";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/providers/AuthProvider";
+import { setDocument } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
+import { toast } from "react-hot-toast";
 import {
   ChevronLeft,
   ChevronRight,
@@ -62,6 +66,7 @@ const STEPS = [
 
 export default function AuctionCreatePage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -202,12 +207,35 @@ export default function AuctionCreatePage() {
   }, [lclCbm, lclWeightTon]);
 
   const onSubmit = async (data: AuctionCreateFormData) => {
+    if (!user) {
+      toast?.error("You must be logged in to create an auction.");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
-      console.log("Submitting intelligent multi-modal auction data:", data);
+      // Add required system fields
+      const auctionId = crypto.randomUUID();
+      const payload = {
+        ...data,
+        id: auctionId,
+        creatorId: user.uid,
+        creatorName: user.displayName || "Unknown",
+        creatorCompany: user.companyName || "Unknown",
+        status: "active",
+        participantsCount: data.invitedBidders?.length || 0,
+        bidsCount: 0,
+        createdAt: new Date().toISOString(),
+      };
+      
+      await setDocument(COLLECTIONS.AUCTIONS, auctionId, payload);
+      
+      console.log("Submitted intelligent multi-modal auction data:", payload);
+      toast?.success("Auction published successfully!");
       router.push(ROUTES.AUCTIONS);
     } catch (error) {
       console.error("Failed to create auction:", error);
+      toast?.error("Failed to publish auction. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -399,11 +427,11 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="fr8x-label">POL / Origin Hub / Terminal *</label>
+                    <label className="fr8x-label">POL / Origin Hub / Terminal (Optional)</label>
                     <input className="fr8x-input mt-1" {...register("shipmentDetails.originPort")} placeholder="e.g. INNSA / BOM / Rail Depot" />
                   </div>
                   <div>
-                    <label className="fr8x-label">POD / Destination Hub / Terminal *</label>
+                    <label className="fr8x-label">POD / Destination Hub / Terminal (Optional)</label>
                     <input className="fr8x-input mt-1" {...register("shipmentDetails.destinationPort")} placeholder="e.g. DEHAM / FRA / Dest Ramp" />
                   </div>
                   <div>
@@ -695,6 +723,18 @@ export default function AuctionCreatePage() {
                 </div>
               )}
 
+              {/* Handling & Loading Equipment Details */}
+              <div className="fr8x-card p-5 space-y-4">
+                <h3 className="text-heading-lg text-foreground flex items-center gap-2">
+                  <Factory className="h-4 w-4 text-[var(--fr8x-jet)]" />
+                  Handling & Loading Equipment Details
+                </h3>
+                <div>
+                  <label className="fr8x-label">Loader / Special Equipment Needed (Optional)</label>
+                  <input className="fr8x-input mt-1" {...register("modeSpecificDetails.loaderEquipmentRequired")} placeholder="e.g. 50T Mobile Crane, Heavy Forklift, Reach Stacker" />
+                </div>
+              </div>
+
               {/* Equipment & Unit Breakdown Table */}
               <div className="fr8x-card p-5 space-y-5">
                 <div className="flex items-center justify-between">
@@ -758,6 +798,30 @@ export default function AuctionCreatePage() {
                       <div>
                         <label className="fr8x-label">Gross Weight per Unit (KG)</label>
                         <input type="number" className="fr8x-input mt-1" {...register(`containerDetails.${index}.grossWeight`, { valueAsNumber: true })} />
+                      </div>
+                    </div>
+
+                    {/* Conditional Dimensions for Special/OOG Equipment */}
+                    {(
+                      watch(`containerDetails.${index}.containerSize`)?.includes("FR") ||
+                      watch(`containerDetails.${index}.containerSize`)?.includes("FB") ||
+                      watch(`containerDetails.${index}.containerSize`)?.includes("OT") ||
+                      watch(`containerDetails.${index}.containerSize`)?.includes("SPEC")
+                    ) && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-blue-50 rounded border border-blue-200">
+                        <div className="col-span-1 md:col-span-2 flex items-center gap-1.5 text-blue-800 font-semibold text-[11px]">
+                          <Info className="h-4 w-4" /> Oversized Cargo Dimensions (L x W x H)
+                        </div>
+                        <div className="col-span-1 md:col-span-2">
+                          <input className="fr8x-input mt-1" {...register(`containerDetails.${index}.dimensions`)} placeholder="e.g. 10m x 2.4m x 3.1m" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 gap-4">
+                      <div>
+                        <label className="fr8x-label">Unit Remarks / Cargo Description</label>
+                        <input className="fr8x-input mt-1" {...register(`containerDetails.${index}.remarks`)} placeholder="e.g. Needs tarpaulin cover, Fragile top" />
                       </div>
                     </div>
 
@@ -877,6 +941,42 @@ export default function AuctionCreatePage() {
                   <span className="text-body-sm text-foreground">Show public bid amounts to all participants</span>
                 </label>
               </div>
+
+              <div className="space-y-3 pt-4 border-t border-border">
+                <h3 className="text-heading-sm text-foreground font-semibold">Invited Bidders & Networking</h3>
+                <p className="text-body-sm text-foreground-secondary">
+                  Select companies from your connections or invite new bidders via link.
+                </p>
+                <div>
+                   <label className="fr8x-label">Select Registered Bidders (Optional)</label>
+                   <select multiple className="fr8x-input mt-1 min-h-[80px]" {...register("invitedBidders")}>
+                     <option value="comp_1">Maersk Line</option>
+                     <option value="comp_2">Hapag-Lloyd</option>
+                     <option value="comp_3">Kuehne+Nagel</option>
+                     <option value="comp_4">DHL Global Forwarding</option>
+                     <option value="comp_5">DB Schenker</option>
+                   </select>
+                   <p className="mt-1 text-caption text-foreground-muted">Hold Ctrl/Cmd to select multiple bidders.</p>
+                </div>
+                
+                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="text-[11px] text-blue-900">
+                    <strong className="block mb-0.5">Invite New Bidder</strong>
+                    Share this link with a company not registered on FR8X-CON.
+                  </div>
+                  <button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigator.clipboard.writeText(`${window.location.origin}/register?invite=auction_${crypto.randomUUID()}`);
+                      toast?.success("Invite link copied to clipboard!");
+                    }}
+                    className="fr8x-btn-secondary text-[11px] py-1.5 px-3 bg-white border border-blue-300 text-blue-700 whitespace-nowrap"
+                  >
+                    Copy Registration Link
+                  </button>
+                </div>
+              </div>
             </motion.div>
           )}
 
@@ -914,12 +1014,15 @@ export default function AuctionCreatePage() {
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-heading-sm text-foreground font-semibold">Recommended Charge Heads for {selectedIncoterm}:</h3>
+                <h3 className="text-heading-sm text-foreground font-semibold">Charge Heads Configuration for {selectedIncoterm}:</h3>
                 <div className="divide-y divide-border border border-border rounded overflow-hidden">
                   {incotermInfo.applicableChargeHeads.map((headName, i) => (
                     <div key={i} className="p-2.5 flex items-center justify-between bg-white hover:bg-[var(--fr8x-mist)] text-[11px]">
-                      <span className="font-medium text-[var(--fr8x-jet)]">{headName}</span>
-                      <span className="fr8x-badge fr8x-badge-active">Mandatory for Bidders</span>
+                      <label className="flex items-center gap-2 cursor-pointer font-medium text-[var(--fr8x-jet)]">
+                        <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-border text-[var(--fr8x-periwinkle)]" />
+                        {headName}
+                      </label>
+                      <span className="fr8x-badge bg-gray-100 text-gray-600 border border-gray-200">Required Head</span>
                     </div>
                   ))}
                 </div>
