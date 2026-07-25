@@ -168,7 +168,9 @@ export default function AuctionCreatePage() {
         ],
       },
       startDate: new Date().toISOString().split("T")[0],
-      endDate: new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0],
+      startTime: "12:00",
+      period: 120,
+      endDate: "",
     },
   });
 
@@ -221,8 +223,13 @@ export default function AuctionCreatePage() {
     try {
       // Add required system fields
       const auctionId = crypto.randomUUID();
+      const startDt = new Date(`${data.startDate}T${data.startTime || "12:00"}`);
+      const endDt = new Date(startDt.getTime() + (data.period || 120) * 60000);
+      const computedEndDateString = endDt.toISOString().slice(0, 16).replace("T", " ");
+
       const payload = {
         ...data,
+        endDate: computedEndDateString,
         id: auctionId,
         creatorId: user.uid,
         creatorName: user.displayName || "Unknown",
@@ -450,7 +457,7 @@ export default function AuctionCreatePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                   <div>
                     <label className="fr8x-label">Cargo Readiness Date *</label>
                     <input type="date" className="fr8x-input mt-1" {...register("shipmentDetails.cargoReadyDate")} />
@@ -460,12 +467,16 @@ export default function AuctionCreatePage() {
                     <input type="date" className="fr8x-input mt-1" {...register("shipmentDetails.requiredDeliveryDate")} />
                   </div>
                   <div>
-                    <label className="fr8x-label">Auction Start Date *</label>
+                    <label className="fr8x-label">Auction Date *</label>
                     <input type="date" className="fr8x-input mt-1" {...register("startDate")} />
                   </div>
                   <div>
-                    <label className="fr8x-label">Auction End Date *</label>
-                    <input type="date" className="fr8x-input mt-1" {...register("endDate")} />
+                    <label className="fr8x-label">Start Time *</label>
+                    <input type="time" className="fr8x-input mt-1" {...register("startTime")} />
+                  </div>
+                  <div>
+                    <label className="fr8x-label">Period (Minutes) *</label>
+                    <input type="number" min="1" className="fr8x-input mt-1" {...register("period", { valueAsNumber: true })} />
                   </div>
                 </div>
               </div>
