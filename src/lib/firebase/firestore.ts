@@ -8,6 +8,7 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  deleteDoc,
   query,
   where,
   orderBy,
@@ -128,6 +129,17 @@ export async function softDeleteDocument(
     deletedBy,
     updatedAt: serverTimestamp(),
   });
+}
+
+/**
+ * Permanently delete a document.
+ */
+export async function deleteDocument(
+  collectionName: string,
+  docId: string
+): Promise<void> {
+  const docRef = doc(firebaseDb, collectionName, docId);
+  await deleteDoc(docRef);
 }
 
 /**
