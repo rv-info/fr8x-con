@@ -5,8 +5,8 @@ import { z } from "zod";
 export const shipmentDetailsSchema = z.object({
   origin: z.string().min(1, "Origin is required"),
   destination: z.string().min(1, "Destination is required"),
-  originPort: z.string().min(1, "Origin port / location is required"),
-  destinationPort: z.string().min(1, "Destination port / location is required"),
+  originPort: z.string().optional(),
+  destinationPort: z.string().optional(),
   mode: z.enum([
     "fcl",
     "lcl",
@@ -113,6 +113,7 @@ export const modeSpecificDetailsSchema = z.object({
   specialPermitsRequired: z.boolean().optional(),
 
   legsDescription: z.string().optional(),
+  loaderEquipmentRequired: z.string().optional(),
 }).optional();
 
 export const bidRulesSchema = z.object({
@@ -154,6 +155,7 @@ export const auctionCreateSchema = z.object({
   }),
   startDate: z.string().min(1, "Start date is required"),
   endDate: z.string().min(1, "End date is required"),
+  invitedBidders: z.array(z.string()).optional(),
 });
 
 export type AuctionCreateFormData = z.infer<typeof auctionCreateSchema>;
