@@ -24,6 +24,8 @@ import {
   FileText,
   Settings,
   LogOut,
+  MapPin,
+  Archive,
 } from "lucide-react";
 
 const sidebarSections = [
@@ -49,6 +51,8 @@ const sidebarSections = [
       { label: "Billing & Plans", href: ROUTES.GODMODE_BILLING, icon: CreditCard, isRed: false },
       { label: "Audit Log", href: ROUTES.GODMODE_AUDIT, icon: FileText, isRed: false },
       { label: "System Settings", href: ROUTES.GODMODE_SETTINGS, icon: Settings, isRed: false },
+      { label: "Port Locations", href: ROUTES.GODMODE_LOCATIONS, icon: MapPin, isRed: false },
+      { label: "Backup & Recovery", href: ROUTES.GODMODE_BACKUPS, icon: Archive, isRed: false },
     ],
   },
 ];
@@ -61,6 +65,8 @@ const topTabs = [
   { label: "Verification Requests", href: ROUTES.GODMODE_VERIFICATION, icon: CheckSquare },
   { label: "Billing & Plans", href: ROUTES.GODMODE_BILLING, icon: CreditCard },
   { label: "Audit Log", href: ROUTES.GODMODE_AUDIT, icon: FileText },
+  { label: "Locations", href: ROUTES.GODMODE_LOCATIONS, icon: MapPin },
+  { label: "Backups", href: ROUTES.GODMODE_BACKUPS, icon: Archive },
   { label: "System Settings", href: ROUTES.GODMODE_SETTINGS, icon: Settings },
 ];
 
