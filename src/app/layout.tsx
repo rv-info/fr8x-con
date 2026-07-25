@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
+import BackupScheduler from "@/components/layout/BackupScheduler";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -79,6 +80,7 @@ export default function RootLayout({
         <QueryProvider>
           <AuthProvider>
             <CurrencyProvider>
+              <BackupScheduler />
               {children}
             </CurrencyProvider>
           </AuthProvider>
