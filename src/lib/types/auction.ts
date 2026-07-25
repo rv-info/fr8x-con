@@ -34,6 +34,7 @@ export type Auction = {
   bidsCount: number;
   startDate: string;
   endDate: string;
+  invitedBidders?: string[];
   lockedAt?: AuditFields["createdAt"];
 } & AuditFields;
 
@@ -99,6 +100,7 @@ export type ModeSpecificDetails = {
   centerOfGravityInfo?: string;
   liftingPlanRequired?: boolean;
   lashingRequired?: boolean;
+  loaderEquipmentRequired?: string;
 
   // RoRo
   roroVehicleType?: string;
