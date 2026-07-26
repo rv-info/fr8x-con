@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/providers/AuthProvider";
 import { setDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
+import { logAuditEvent } from "@/lib/utils/auditLogger";
 import {
   ChevronLeft,
   ChevronRight,
@@ -224,26 +225,55 @@ export default function AuctionCreatePage() {
     try {
       // Add required system fields
       const auctionId = crypto.randomUUID();
+      const now = new Date();
       const startDt = new Date(`${data.startDate}T${data.startTime || "12:00"}`);
       const endDt = new Date(startDt.getTime() + (data.period || 120) * 60000);
       const computedEndDateString = endDt.toISOString().slice(0, 16).replace("T", " ");
 
+      // Dynamic lifecycle status
+      let initialStatus: "active" | "scheduled" = "active";
+      if (startDt.getTime() > now.getTime() + 5 * 60000) {
+        initialStatus = "scheduled";
+      }
+
       const payload = {
         ...data,
+        auctionType: (data as any).auctionType || "general",
+        selectiveFilters: (data as any).selectiveFilters || {},
+        scoringWeights: (data as any).scoringWeights || {
+          priceWeight: 60,
+          performanceWeight: 15,
+          onTimeWeight: 10,
+          spaceAvailabilityWeight: 10,
+          docAccuracyWeight: 5,
+        },
         endDate: computedEndDateString,
         id: auctionId,
         creatorId: user.uid,
-        creatorName: user.displayName || "Unknown",
-        creatorCompany: user.companyId || "Unknown",
-        status: "active",
+        creatorName: user.displayName || "Procurement Authority",
+        creatorCompany: user.companyId || "Enterprise Buyer",
+        status: initialStatus,
         participantsCount: data.invitedBidders?.length || 0,
+        activeParticipantsCount: 0,
         bidsCount: 0,
+        totalRevisionsCount: 0,
+        evaluationCurrency: data.bidRules?.defaultCurrency || "USD",
         createdAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
       };
       
       await setDocument(COLLECTIONS.AUCTIONS, auctionId, payload);
       
-      console.log("Submitted intelligent multi-modal auction data:", payload);
+      // Permanently record audit log
+      await logAuditEvent(
+        "AUCTION_CREATED",
+        `Created ${payload.auctionType.toUpperCase()} Reverse Auction [Ref: ${(data as any).referenceNumber || auctionId}]`,
+        { uid: user.uid, name: user.displayName || "Procurement Officer", role: "buyer" },
+        { auctionType: payload.auctionType, title: data.title, mode: data.shipmentDetails?.mode, status: initialStatus },
+        auctionId
+      );
+
+      console.log("Submitted reverse auction data:", payload);
       showNotification("Auction published successfully!");
       router.push(ROUTES.AUCTIONS);
     } catch (error) {
@@ -927,17 +957,148 @@ export default function AuctionCreatePage() {
             </motion.div>
           )}
 
-          {/* STEP 3: BID RULES */}
+          {/* STEP 3: BID RULES & SOURCING STRATEGY */}
           {currentStep === 3 && (
             <motion.div
               key="step3"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="fr8x-card p-5 space-y-5"
+              className="fr8x-card p-5 space-y-6"
             >
-              <h2 className="text-heading-lg text-foreground">Bidding Rules & Visibility Rules</h2>
+              <h2 className="text-heading-lg text-foreground">Procurement Strategy, Bidding Rules & Visibility</h2>
 
+              {/* Auction Strategy Type Selection */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded border border-border">
+                <h3 className="text-heading-sm text-foreground font-semibold flex items-center gap-2">
+                  <Gavel className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
+                  1. Select Auction Strategy Type
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <label className={cn(
+                    "flex flex-col p-3 rounded border cursor-pointer transition-all",
+                    (watch("auctionType" as any) || "general") === "general"
+                      ? "border-[var(--fr8x-periwinkle)] bg-[var(--fr8x-mist)] ring-1 ring-[var(--fr8x-periwinkle)]"
+                      : "border-border bg-white"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="general"
+                        checked={(watch("auctionType" as any) || "general") === "general"}
+                        onChange={() => setValue("auctionType" as any, "general")}
+                        className="h-4 w-4 text-[var(--fr8x-periwinkle)]"
+                      />
+                      <span className="font-bold text-[12px] text-[var(--fr8x-jet)]">General Reverse Auction</span>
+                    </div>
+                    <p className="text-[10px] text-foreground-secondary mt-1 pl-6">
+                      Visible to all eligible registered suppliers meeting participation criteria. Open bidding without prior invitation.
+                    </p>
+                  </label>
+
+                  <label className={cn(
+                    "flex flex-col p-3 rounded border cursor-pointer transition-all",
+                    watch("auctionType" as any) === "premium"
+                      ? "border-[var(--fr8x-periwinkle)] bg-[var(--fr8x-mist)] ring-1 ring-[var(--fr8x-periwinkle)]"
+                      : "border-border bg-white"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        value="premium"
+                        checked={watch("auctionType" as any) === "premium"}
+                        onChange={() => setValue("auctionType" as any, "premium")}
+                        className="h-4 w-4 text-[var(--fr8x-periwinkle)]"
+                      />
+                      <span className="font-bold text-[12px] text-[var(--fr8x-jet)]">Premium / Selective Reverse Auction</span>
+                    </div>
+                    <p className="text-[10px] text-foreground-secondary mt-1 pl-6">
+                      Visible exclusively to suppliers explicitly selected by the buyer. Automatic professional email notifications sent on publication.
+                    </p>
+                  </label>
+                </div>
+              </div>
+
+              {/* Selective Filters (for Premium / Selective Auction) */}
+              {watch("auctionType" as any) === "premium" && (
+                <div className="space-y-3 p-4 bg-blue-50/50 border border-blue-200 rounded">
+                  <h3 className="text-heading-sm text-blue-900 font-semibold flex items-center gap-2">
+                    <Info className="h-4 w-4 text-blue-600" />
+                    Targeted Supplier Selection Filters
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="fr8x-label">Country / Region Filter</label>
+                      <input className="fr8x-input mt-1" {...register("selectiveFilters.countries" as any)} placeholder="e.g. India, Germany, UAE" />
+                    </div>
+                    <div>
+                      <label className="fr8x-label">Supplier Vertical Role</label>
+                      <select className="fr8x-input mt-1" {...register("selectiveFilters.supplierRoles" as any)}>
+                        <option value="">All Supplier Roles</option>
+                        <option value="freight_forwarder">Freight Forwarder</option>
+                        <option value="mlo">Shipping Line / MLO</option>
+                        <option value="airline">Airline Cargo</option>
+                        <option value="cha">CHA / Customs Broker</option>
+                        <option value="transporter">Transporter / Fleet</option>
+                        <option value="warehouse">Warehouse Operator</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="fr8x-label">Min Supplier Performance Rating</label>
+                      <select className="fr8x-input mt-1" {...register("selectiveFilters.minPerformanceRating" as any)}>
+                        <option value="0">All Rated Suppliers</option>
+                        <option value="4">4.0+ Stars (Top Performers)</option>
+                        <option value="4.5">4.5+ Stars (Tier 1 Preferred)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-6 pt-2">
+                    <label className="flex items-center gap-2 cursor-pointer text-[11px] text-blue-950 font-medium">
+                      <input type="checkbox" className="h-4 w-4 rounded text-[var(--fr8x-periwinkle)]" {...register("selectiveFilters.preferredVendorListOnly" as any)} />
+                      <span>Limit to Preferred Vendor List (PVL)</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-[11px] text-blue-950 font-medium">
+                      <input type="checkbox" className="h-4 w-4 rounded text-[var(--fr8x-periwinkle)]" {...register("selectiveFilters.previousBusinessRelationshipOnly" as any)} />
+                      <span>Require Prior Business Relationship</span>
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Economic & Strategic Procurement Scoring Weights */}
+              <div className="space-y-3 p-4 bg-gray-50 rounded border border-border">
+                <h3 className="text-heading-sm text-foreground font-semibold">
+                  Total Cost of Ownership (TCO) & Strategic Scoring Model
+                </h3>
+                <p className="text-[10px] text-foreground-secondary">
+                  Configure evaluation weights to balance commercial quote price against supplier performance, reliability, and service quality.
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  <div>
+                    <label className="fr8x-label">Commercial Price %</label>
+                    <input type="number" min="0" max="100" defaultValue="60" className="fr8x-input mt-1 font-bold" {...register("scoringWeights.priceWeight" as any, { valueAsNumber: true })} />
+                  </div>
+                  <div>
+                    <label className="fr8x-label">Performance Rating %</label>
+                    <input type="number" min="0" max="100" defaultValue="15" className="fr8x-input mt-1" {...register("scoringWeights.performanceWeight" as any, { valueAsNumber: true })} />
+                  </div>
+                  <div>
+                    <label className="fr8x-label">On-Time Delivery %</label>
+                    <input type="number" min="0" max="100" defaultValue="10" className="fr8x-input mt-1" {...register("scoringWeights.onTimeWeight" as any, { valueAsNumber: true })} />
+                  </div>
+                  <div>
+                    <label className="fr8x-label">Space Availability %</label>
+                    <input type="number" min="0" max="100" defaultValue="10" className="fr8x-input mt-1" {...register("scoringWeights.spaceAvailabilityWeight" as any, { valueAsNumber: true })} />
+                  </div>
+                  <div>
+                    <label className="fr8x-label">Doc Accuracy %</label>
+                    <input type="number" min="0" max="100" defaultValue="5" className="fr8x-input mt-1" {...register("scoringWeights.docAccuracyWeight" as any, { valueAsNumber: true })} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Standard Rules */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div>
                   <label className="fr8x-label">Max Bid Submissions per Carrier</label>
@@ -956,8 +1117,8 @@ export default function AuctionCreatePage() {
                   <label className="fr8x-label">Ranking Criteria Algorithm</label>
                   <select className="fr8x-input mt-1" {...register("bidRules.rankingRules.criteria")}>
                     <option value="lowest_total">Lowest Total Cost (Standard Reverse Auction)</option>
-                    <option value="weighted">Weighted (Transit Time + Cost)</option>
-                    <option value="custom">Custom Score evaluation</option>
+                    <option value="weighted">Strategic TCO Weighted Evaluation</option>
+                    <option value="custom">Custom Evaluation Matrix</option>
                   </select>
                 </div>
               </div>
@@ -983,38 +1144,23 @@ export default function AuctionCreatePage() {
               </div>
 
               <div className="space-y-3 pt-4 border-t border-border">
-                <h3 className="text-heading-sm text-foreground font-semibold">Invited Bidders & Networking</h3>
+                <h3 className="text-heading-sm text-foreground font-semibold">Invited Bidders & Exclusive Notifications</h3>
                 <p className="text-body-sm text-foreground-secondary">
-                  Select companies from your connections or invite new bidders via link.
+                  Select specific carrier organizations to receive direct invitation alerts.
                 </p>
                 <div>
-                   <label className="fr8x-label">Select Registered Bidders (Optional)</label>
+                   <label className="fr8x-label">Select Registered Bidders</label>
                    <select multiple className="fr8x-input mt-1 min-h-[80px]" {...register("invitedBidders")}>
                      <option value="comp_1">Maersk Line</option>
                      <option value="comp_2">Hapag-Lloyd</option>
                      <option value="comp_3">Kuehne+Nagel</option>
                      <option value="comp_4">DHL Global Forwarding</option>
                      <option value="comp_5">DB Schenker</option>
+                     <option value="comp_6">CMA CGM</option>
+                     <option value="comp_7">MSC Mediterranean Shipping Company</option>
+                     <option value="comp_8">ONE (Ocean Network Express)</option>
                    </select>
                    <p className="mt-1 text-caption text-foreground-muted">Hold Ctrl/Cmd to select multiple bidders.</p>
-                </div>
-                
-                <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="text-[11px] text-blue-900">
-                    <strong className="block mb-0.5">Invite New Bidder</strong>
-                    Share this link with a company not registered on FR8X-CON.
-                  </div>
-                  <button 
-                    type="button" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigator.clipboard.writeText(`${window.location.origin}/register?invite=auction_${crypto.randomUUID()}`);
-                      showNotification("Invite link copied to clipboard!");
-                    }}
-                    className="fr8x-btn-secondary text-[11px] py-1.5 px-3 bg-white border border-blue-300 text-blue-700 whitespace-nowrap"
-                  >
-                    Copy Registration Link
-                  </button>
                 </div>
               </div>
             </motion.div>
