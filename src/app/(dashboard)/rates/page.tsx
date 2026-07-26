@@ -43,6 +43,8 @@ type RateData = {
   status: string;
   createdAt: { seconds: number; nanoseconds: number } | null;
   createdBy: string;
+  serviceProvider?: string;
+  isEdited?: boolean;
 };
 
 export default function RateCenterPage() {
@@ -80,6 +82,7 @@ export default function RateCenterPage() {
   // Per-column filter state for table search boxes
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({
     seq: "",
+    serviceProvider: "",
     carrier: "",
     por: "",
     pol: "",
@@ -126,6 +129,8 @@ export default function RateCenterPage() {
         status: r.status || "active",
         createdAt: r.createdAt || null,
         createdBy: r.createdBy || "",
+        serviceProvider: r.createdByEmail || r.serviceProvider || "Unknown Provider",
+        isEdited: r.isEdited || false,
       }));
       setRates(mappedRates);
     } catch (err) {
@@ -154,6 +159,7 @@ export default function RateCenterPage() {
 
       // Per-column search box filters
       if (columnFilters.seq && !(r.seq || "").toLowerCase().includes(columnFilters.seq.toLowerCase())) return false;
+      if (columnFilters.serviceProvider && !(r.serviceProvider || "").toLowerCase().includes(columnFilters.serviceProvider.toLowerCase())) return false;
       if (columnFilters.carrier && !(r.carrier || "").toLowerCase().includes(columnFilters.carrier.toLowerCase())) return false;
       if (columnFilters.por && !(r.por || "").toLowerCase().includes(columnFilters.por.toLowerCase())) return false;
       if (columnFilters.pol && !(r.pol || "").toLowerCase().includes(columnFilters.pol.toLowerCase())) return false;
@@ -232,6 +238,8 @@ export default function RateCenterPage() {
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
+        createdByEmail: user.email || "Unknown Provider",
+        isEdited: false,
       });
       handleClear();
       fetchRates();
@@ -245,6 +253,11 @@ export default function RateCenterPage() {
   const handleUpdate = useCallback(async () => {
     if (!editingRateId) {
       showNotification("Please select a rate to update from the table.");
+      return;
+    }
+    const targetRate = rates.find((r) => r.id === editingRateId);
+    if (targetRate && targetRate.createdBy !== user?.uid) {
+      showNotification("You can only edit rates that you posted.");
       return;
     }
     try {
@@ -264,6 +277,7 @@ export default function RateCenterPage() {
         tt: sanitizeText(tt),
         routing: sanitizeText(routing),
         remarks: sanitizeText(remarks),
+        isEdited: true,
       });
       handleClear();
       fetchRates();
@@ -272,9 +286,13 @@ export default function RateCenterPage() {
       console.error("Error updating rate:", err);
       showNotification("Failed to update rate.");
     }
-  }, [editingRateId, carrier, por, pol, pod, fpod, rate20dv, type20dv, rate40hc, type40hc, ft, validityDate, rateType, tt, routing, remarks, handleClear, fetchRates]);
+  }, [editingRateId, rates, user, carrier, por, pol, pod, fpod, rate20dv, type20dv, rate40hc, type40hc, ft, validityDate, rateType, tt, routing, remarks, handleClear, fetchRates]);
 
   const handleEditClick = useCallback((r: RateData) => {
+    if (r.createdBy !== user?.uid) {
+      showNotification("You can only edit rates that you posted.");
+      return;
+    }
     setEditingRateId(r.id);
     setCarrier(r.carrier || "");
     setPor(r.por || "");
@@ -292,9 +310,53 @@ export default function RateCenterPage() {
     setRateType(r.rateType || "HANDOVER");
     setRemarks(r.remarks || "");
     showNotification(`Loaded rate ${r.seq} for editing.`);
-  }, []);
+  }, [user]);
+
+  const handleWhatsAppCopy = (r: RateData) => {
+    let formattedDate = r.validityDate;
+    try {
+      if (r.validityDate) {
+        const d = new Date(r.validityDate);
+        if (!isNaN(d.getTime())) {
+          const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+          const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+          formattedDate = `${days[d.getDay()]}, ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      }
+    } catch (e) {
+      console.warn("Date formatting failed:", e);
+    }
+
+    const cleanPol = r.pol.includes("-") ? r.pol.split("-")[1]?.trim() || r.pol : r.pol;
+    const cleanPod = r.pod.includes("-") ? r.pod.split("-")[1]?.trim() || r.pod : r.pod;
+
+    const message = `SEQ : ${r.seq}
+SERVICE PROVIDER : ${r.serviceProvider || ""}
+CARRIER: ${r.carrier}
+POL: ${r.pol}
+POD: ${r.pod}
+O/F FM ${cleanPol} TO ${cleanPod} @ USD ${r.rate20dv}/20DV & USD ${r.rate40hc}/40HC
+F/T: ${r.ft}
+VALIDITY: ${formattedDate} (SAILING)
+TT: ${r.tt}
+ROUTING: ${r.routing}
+REMARKS: ${r.remarks}`;
+
+    navigator.clipboard.writeText(message)
+      .then(() => {
+        showNotification("WhatsApp-friendly rate details copied to clipboard!");
+      })
+      .catch((err) => {
+        console.error("Clipboard copy failed:", err);
+        showNotification("Failed to copy to clipboard.");
+      });
+  };
 
   const handleDuplicateRow = (r: RateData) => {
+    if (r.createdBy !== user?.uid) {
+      showNotification("You can only duplicate rates that you posted.");
+      return;
+    }
     setEditingRateId(null);
     setCarrier(r.carrier || "");
     setPor(r.por || "");
@@ -632,15 +694,25 @@ export default function RateCenterPage() {
                   <XCircle className="h-3 w-3" /> CLEAR
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  if (rates.length > 0 && rates[0]) handleDuplicateRow(rates[0]);
-                  else showNotification("No rates available to duplicate.");
-                }}
-                className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
-              >
-                <Copy className="h-3 w-3" /> DUPLICATE
-              </button>
+              
+              {/* Sidebar Duplicate is only allowed for own rates */}
+              {(!editingRateId || (rates.find(r => r.id === editingRateId)?.createdBy === user?.uid)) && (
+                <button
+                  onClick={() => {
+                    if (editingRateId) {
+                      const r = rates.find(x => x.id === editingRateId);
+                      if (r) handleDuplicateRow(r);
+                    } else if (rates.length > 0) {
+                      const firstOwnRate = rates.find(x => x.createdBy === user?.uid);
+                      if (firstOwnRate) handleDuplicateRow(firstOwnRate);
+                      else showNotification("No own rates available to duplicate.");
+                    }
+                  }}
+                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
+                >
+                  <Copy className="h-3 w-3" /> DUPLICATE
+                </button>
+              )}
             </div>
           </aside>
 
@@ -677,6 +749,7 @@ export default function RateCenterPage() {
                       <tr>
                         <th className="w-8"><input type="checkbox" /></th>
                         <th>SEQ</th>
+                        <th>SERVICE PROVIDER</th>
                         <th>CARRIER</th>
                         <th>POR</th>
                         <th>POL</th>
@@ -692,13 +765,16 @@ export default function RateCenterPage() {
                         <th>TT</th>
                         <th>ROUTING</th>
                         <th>REMARKS</th>
-                        <th className="w-32">ACTION</th>
+                        <th className="w-48">ACTION</th>
                       </tr>
                       {/* Per-column search boxes row */}
                       <tr className="bg-gray-50 border-b border-border">
                         <td className="p-1"></td>
                         <td className="p-1">
                           <input type="text" value={columnFilters.seq} onChange={(e) => handleColumnFilterChange("seq", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
+                        </td>
+                        <td className="p-1">
+                          <input type="text" value={columnFilters.serviceProvider} onChange={(e) => handleColumnFilterChange("serviceProvider", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-20" />
                         </td>
                         <td className="p-1">
                           <input type="text" value={columnFilters.carrier} onChange={(e) => handleColumnFilterChange("carrier", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
@@ -754,19 +830,22 @@ export default function RateCenterPage() {
                           key={r.id}
                           onClick={() => handleEditClick(r)}
                           className={`hover:bg-[var(--fr8x-mist)] cursor-pointer transition-colors ${
+                            r.isEdited ? "text-blue-600 font-medium" : ""
+                          } ${
                             editingRateId === r.id ? "bg-[var(--fr8x-mist)] font-medium border-l-2 border-l-[var(--fr8x-periwinkle)]" : ""
                           }`}
                         >
                           <td onClick={(e) => e.stopPropagation()}><input type="checkbox" /></td>
-                          <td className="font-semibold text-[var(--fr8x-jet)]">{r.seq}</td>
+                          <td className="font-semibold">{r.seq}</td>
+                          <td className="font-medium truncate max-w-[120px]">{r.serviceProvider}</td>
                           <td>{r.carrier}</td>
                           <td>{r.por}</td>
                           <td>{r.pol}</td>
                           <td>{r.pod}</td>
                           <td>{r.fpod}</td>
-                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate20dv}</td>
+                          <td className="font-bold">${r.rate20dv}</td>
                           <td>{r.type20dv}</td>
-                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate40hc}</td>
+                          <td className="font-bold">${r.rate40hc}</td>
                           <td>{r.type40hc}</td>
                           <td>{r.ft}</td>
                           <td>{r.validityDate}</td>
@@ -775,12 +854,27 @@ export default function RateCenterPage() {
                           <td>{r.routing}</td>
                           <td className="truncate max-w-[120px]">{r.remarks}</td>
                           <td onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-1.5 text-[10px]">
-                              <button onClick={() => handleDuplicateRow(r)} className="text-[var(--fr8x-periwinkle)] hover:underline">COPY / DUPLICATE</button>
-                              <span className="text-foreground-muted">|</span>
-                              <button onClick={() => handleMarkExpired(r.id)} className="text-warning hover:underline">mark as expired</button>
-                              <span className="text-foreground-muted">|</span>
-                              <button onClick={() => handleDelete(r.id)} className="text-danger hover:underline">delete</button>
+                            <div className="flex flex-col gap-1 text-[10px]">
+                              <div className="flex items-center gap-1.5">
+                                {r.createdBy === user?.uid ? (
+                                  <>
+                                    <button onClick={() => handleWhatsAppCopy(r)} className="text-[var(--fr8x-periwinkle)] hover:underline font-semibold">COPY (WA)</button>
+                                    <span className="text-foreground-muted">|</span>
+                                    <button onClick={() => handleDuplicateRow(r)} className="text-[var(--fr8x-periwinkle)] hover:underline">DUPLICATE</button>
+                                    <span className="text-foreground-muted">|</span>
+                                    <button onClick={() => handleMarkExpired(r.id)} className="text-warning hover:underline">EXPIRE</button>
+                                    <span className="text-foreground-muted">|</span>
+                                    <button onClick={() => handleDelete(r.id)} className="text-danger hover:underline">DELETE</button>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400 italic">View only</span>
+                                )}
+                              </div>
+                              {r.isEdited && (
+                                <div className="text-[9px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
+                                  EDITED
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
