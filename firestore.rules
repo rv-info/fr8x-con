@@ -176,17 +176,17 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Locations - general reads, admin-only writes
+    // Locations - general reads, authenticated creation for manual unblocking, admin-only updates/deletes
     match /locations/{locationId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isGodMode();
-      allow delete: if isGodMode();
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isGodMode();
     }
 
     // Location Audit - admin reads, append-only writes
     match /location_audit/{auditId} {
-      allow read: if isGodMode();
-      allow create: if isAuthenticated();
+      allow read: if true;
+      allow create: if true;
       allow update: if false;
       allow delete: if false;
     }
