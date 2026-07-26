@@ -175,5 +175,20 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+
+    // Locations - general reads, admin-only writes
+    match /locations/{locationId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isGodMode();
+      allow delete: if isGodMode();
+    }
+
+    // Location Audit - admin reads, append-only writes
+    match /location_audit/{auditId} {
+      allow read: if isGodMode();
+      allow create: if isAuthenticated();
+      allow update: if false;
+      allow delete: if false;
+    }
   }
 }
