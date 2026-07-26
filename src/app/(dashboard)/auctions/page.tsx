@@ -22,6 +22,7 @@ type AuctionData = {
   id: string;
   referenceNumber: string;
   title: string;
+  auctionType?: "general" | "premium";
   shipmentDetails: {
     mode: string;
     origin: string;
@@ -36,18 +37,27 @@ type AuctionData = {
   }>;
   status: AuctionStatus;
   bidsCount: number;
+  totalRevisionsCount?: number;
   participantsCount: number;
+  activeParticipantsCount?: number;
+  lowestBidAmount?: number;
+  evaluationCurrency?: string;
   endDate: string;
   creatorName: string;
+  priority?: string;
   createdAt: { seconds: number; nanoseconds: number } | null;
 };
 
 const AUCTION_TABS: { value: AuctionStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
-  { value: "active", label: "Active" },
+  { value: "active", label: "Live Active" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "closing_soon", label: "Closing Soon" },
   { value: "draft", label: "Drafts" },
   { value: "closed", label: "Closed" },
   { value: "awarded", label: "Awarded" },
+  { value: "cancelled", label: "Cancelled" },
+  { value: "expired", label: "Expired" },
 ];
 
 export default function AuctionsPage() {
@@ -80,15 +90,16 @@ export default function AuctionsPage() {
   const stats = useMemo(() => {
     const total = auctions.length;
     const active = auctions.filter(a => a.status === "active").length;
-    const drafts = auctions.filter(a => a.status === "draft").length;
-    const closed = auctions.filter(a => a.status === "closed").length;
+    const scheduled = auctions.filter(a => a.status === "scheduled").length;
+    const closed = auctions.filter(a => a.status === "closed" || a.status === "closing_soon").length;
     const awarded = auctions.filter(a => a.status === "awarded").length;
+    const cancelled = auctions.filter(a => a.status === "cancelled").length;
     return [
       { label: "Total", value: String(total), color: "text-[var(--fr8x-jet)]" },
-      { label: "Active", value: String(active), color: "text-success" },
-      { label: "Drafts", value: String(drafts), color: "text-warning" },
-      { label: "Closed", value: String(closed), color: "text-foreground-muted" },
+      { label: "Live Active", value: String(active), color: "text-success" },
+      { label: "Scheduled", value: String(scheduled), color: "text-blue-600" },
       { label: "Awarded", value: String(awarded), color: "text-[var(--fr8x-periwinkle)]" },
+      { label: "Cancelled", value: String(cancelled), color: "text-danger" },
     ];
   }, [auctions]);
 
@@ -99,7 +110,8 @@ export default function AuctionsPage() {
         const q = searchQuery.toLowerCase();
         const matchTitle = (a.title || "").toLowerCase().includes(q);
         const matchRef = (a.referenceNumber || "").toLowerCase().includes(q);
-        if (!matchTitle && !matchRef) return false;
+        const matchCreator = (a.creatorName || "").toLowerCase().includes(q);
+        if (!matchTitle && !matchRef && !matchCreator) return false;
       }
       return true;
     });
@@ -122,8 +134,8 @@ export default function AuctionsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[12px] font-semibold text-[var(--fr8x-jet)]">Reverse Auctions</h1>
-          <p className="text-[10px] text-foreground-secondary">Manage & participate in freight reverse auctions</p>
+          <h1 className="text-[12px] font-semibold text-[var(--fr8x-jet)]">Reverse Auctions Governance & Bidding Portal</h1>
+          <p className="text-[10px] text-foreground-secondary">Real-time enterprise freight quotation evaluation & procurement engine</p>
         </div>
         <Link
           href={ROUTES.AUCTION_CREATE}
@@ -151,12 +163,12 @@ export default function AuctionsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search by route, ref, commodity..."
+            placeholder="Search by route, ref, carrier, commodity..."
             className="fr8x-input pl-6 h-6 py-0 text-[10px]"
           />
         </div>
         <button className="fr8x-btn-secondary flex items-center gap-1.5">
-          <Filter className="h-3.5 w-3.5" /> Filters
+          <Filter className="h-3.5 w-3.5" /> Strategy Filters
         </button>
       </div>
 
@@ -179,15 +191,15 @@ export default function AuctionsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 py-8">
             <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
-            <span className="text-[11px] text-foreground-muted">Loading auctions...</span>
+            <span className="text-[11px] text-foreground-muted">Loading auctions database...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="py-8 text-center">
             <p className="text-[11px] text-foreground-secondary">
-              {auctions.length === 0 ? "No auctions created yet" : "No auctions match your filters"}
+              {auctions.length === 0 ? "No auctions registered in platform" : "No auctions match your filters"}
             </p>
             <p className="text-[10px] text-foreground-muted mt-1">
-              {auctions.length === 0 ? "Create your first reverse auction to get started!" : "Try adjusting your search or filters"}
+              {auctions.length === 0 ? "Create your first reverse auction to launch procurement bidding!" : "Try selecting a different lifecycle status tab"}
             </p>
           </div>
         ) : (
@@ -198,11 +210,12 @@ export default function AuctionsPage() {
                   <tr className="bg-[#FAFAF9]">
                     <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Ref <ArrowUpDown className="h-2 w-2" /></button></th>
                     <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap"><button className="flex items-center gap-0.5">Route <ArrowUpDown className="h-2 w-2" /></button></th>
-                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Type</th>
-                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Containers</th>
-                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Commodity</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Strategy</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Mode & Cargo</th>
                     <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Status</th>
-                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Bids</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Participants</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Bids / Revisions</th>
+                    <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Lowest Quote</th>
                     <th className="px-2 py-0.5 text-left text-[9px] font-semibold text-foreground-secondary uppercase border-b border-border whitespace-nowrap">Creator</th>
                     <th className="px-2 py-0.5 text-left text-[9px] border-b border-border w-6"></th>
                   </tr>
@@ -212,24 +225,43 @@ export default function AuctionsPage() {
                     <tr key={a.id} className="hover:bg-[var(--fr8x-mist)] border-b border-border last:border-0">
                       <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.referenceNumber || "—"}</td>
                       <td className="px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">{a.title || "—"}</td>
-                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.shipmentDetails?.mode?.toUpperCase() || "—"}</td>
-                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{formatContainers(a.containerDetails)}</td>
-                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{formatCommodity(a.commodityDetails)}</td>
-                      <td className="px-2 py-0.5">
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">
                         <span className={cn(
-                          "fr8x-badge",
-                          a.status === "active" ? "fr8x-badge-active" :
-                          a.status === "draft" ? "fr8x-badge-pending" :
-                          a.status === "awarded" ? "fr8x-badge-info" :
-                          "fr8x-badge-danger"
+                          "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                          a.auctionType === "premium" ? "bg-purple-50 text-purple-700 border border-purple-200" : "bg-gray-50 text-gray-700 border border-gray-200"
                         )}>
-                          {a.status}
+                          {a.auctionType === "premium" ? "Selective" : "General"}
                         </span>
                       </td>
-                      <td className="px-2 py-0.5 text-[10px] tabular-nums whitespace-nowrap">{a.bidsCount || 0}</td>
+                      <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">
+                        <span className="font-semibold">{a.shipmentDetails?.mode?.toUpperCase()}</span> • {formatContainers(a.containerDetails)}
+                      </td>
+                      <td className="px-2 py-0.5">
+                        <span className={cn(
+                          "fr8x-badge capitalize",
+                          a.status === "active" ? "fr8x-badge-active" :
+                          a.status === "scheduled" ? "bg-blue-50 text-blue-700 border-blue-200" :
+                          a.status === "closing_soon" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                          a.status === "draft" ? "fr8x-badge-pending" :
+                          a.status === "awarded" ? "fr8x-badge-info" :
+                          a.status === "cancelled" ? "bg-red-50 text-red-700 border-red-200" :
+                          "fr8x-badge-danger"
+                        )}>
+                          {a.status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-2 py-0.5 text-[10px] tabular-nums whitespace-nowrap">
+                        {a.activeParticipantsCount || 0} / {a.participantsCount || 0}
+                      </td>
+                      <td className="px-2 py-0.5 text-[10px] tabular-nums whitespace-nowrap">
+                        {a.bidsCount || 0} quotes ({a.totalRevisionsCount || a.bidsCount || 0} revs)
+                      </td>
+                      <td className="px-2 py-0.5 text-[10px] font-bold text-[var(--fr8x-jet)] tabular-nums whitespace-nowrap">
+                        {a.lowestBidAmount ? `${a.evaluationCurrency || "USD"} ${a.lowestBidAmount.toLocaleString()}` : "—"}
+                      </td>
                       <td className="px-2 py-0.5 text-[10px] whitespace-nowrap">{a.creatorName || "—"}</td>
                       <td className="px-2 py-0.5">
-                        <Link href={ROUTES.AUCTION_DETAIL(a.id)} className="text-foreground-muted hover:text-[var(--fr8x-periwinkle)]">
+                        <Link href={ROUTES.AUCTION_DETAIL(a.id)} className="text-foreground-muted hover:text-[var(--fr8x-periwinkle)] flex items-center gap-1" title="Inspect Evaluation Dashboard">
                           <Eye className="h-3 w-3" />
                         </Link>
                       </td>
@@ -241,7 +273,7 @@ export default function AuctionsPage() {
 
             {/* Pagination */}
             <div className="flex items-center justify-between px-3 py-2 border-t border-border">
-              <p className="text-caption text-foreground-muted">Showing {filtered.length} of {auctions.length}</p>
+              <p className="text-caption text-foreground-muted">Showing {filtered.length} of {auctions.length} reverse auctions</p>
             </div>
           </>
         )}
