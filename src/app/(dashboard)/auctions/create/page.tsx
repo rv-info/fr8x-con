@@ -434,6 +434,7 @@ export default function AuctionCreatePage() {
                       label="Shipment Origin (City/Country) *"
                       placeholder="e.g. Mumbai, India"
                       isPlaceOfReceiptOrDelivery={true}
+                      mode={selectedMode}
                     />
                   </div>
                   <div>
@@ -443,6 +444,7 @@ export default function AuctionCreatePage() {
                       label="Shipment Destination (City/Country) *"
                       placeholder="e.g. Hamburg, Germany"
                       isPlaceOfReceiptOrDelivery={true}
+                      mode={selectedMode}
                     />
                   </div>
                   <div>
@@ -490,6 +492,7 @@ export default function AuctionCreatePage() {
                       onChange={(val) => setValue("shipmentDetails.originPort", val)}
                       label="POL / Origin Hub / Terminal (Optional)"
                       placeholder="e.g. INNSA / BOM / Rail Depot"
+                      mode={selectedMode}
                     />
                   </div>
                   <div>
@@ -498,6 +501,7 @@ export default function AuctionCreatePage() {
                       onChange={(val) => setValue("shipmentDetails.destinationPort", val)}
                       label="POD / Destination Hub / Terminal (Optional)"
                       placeholder="e.g. DEHAM / FRA / Dest Ramp"
+                      mode={selectedMode}
                     />
                   </div>
                   <div>
