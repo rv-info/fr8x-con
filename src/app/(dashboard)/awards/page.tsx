@@ -31,6 +31,8 @@ import { useAuth } from "@/providers/AuthProvider";
 import { AWARD_LABELS, type AwardCategory } from "@/lib/types/award";
 import { queryDocuments, getDocument, setDocument, deleteDocument, orderBy, limit } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
+import { KPI_LABELS, type SupplierServiceKPIs, type SupplierGovernanceProfile } from "@/lib/types/supplierGovernance";
+import { logAuditEvent } from "@/lib/utils/auditLogger";
 
 interface AwardDoc {
   id: string;
@@ -227,14 +229,174 @@ export default function AwardsPage() {
     }
   };
 
+  // Supplier Governance KPI Rating Modal State
+  const [showEvalModal, setShowEvalModal] = useState(false);
+  const [evalSupplierId, setEvalSupplierId] = useState("comp_1");
+  const [evalSupplierName, setEvalSupplierName] = useState("Maersk Line Supplier");
+  const [evalSupplierCompany, setEvalSupplierCompany] = useState("Maersk Logistics");
+  const [shipmentRef, setShipmentRef] = useState("SHP-2026-8891");
+  const [feedback, setFeedback] = useState("");
+  const [isSubmittingRating, setIsSubmittingRating] = useState(false);
+
+  const [kpis, setKpis] = useState<SupplierServiceKPIs>({
+    spaceAvailability: 5,
+    bookingConfirmation: 5,
+    onTimeEquipmentPlacement: 5,
+    documentationAccuracy: 5,
+    freightAccuracy: 5,
+    cargoHandling: 5,
+    communication: 5,
+    responsiveness: 5,
+    scheduleReliability: 5,
+    operationalPerformance: 5,
+    overallServiceQuality: 5,
+  });
+
+  const averageKpiScore = useMemo(() => {
+    const vals = Object.values(kpis);
+    const sum = vals.reduce((a, b) => a + b, 0);
+    return Math.round((sum / vals.length) * 10) / 10;
+  }, [kpis]);
+
+  const isPoorPerformance = useMemo(() => {
+    return averageKpiScore < 3.0 || Object.values(kpis).some((v) => v <= 2);
+  }, [averageKpiScore, kpis]);
+
+  // Submit Supplier KPI Performance Evaluation
+  const handleSaveSupplierRating = async () => {
+    if (!user) {
+      alert("You must be logged in to evaluate supplier performance.");
+      return;
+    }
+
+    if (isPoorPerformance && !feedback.trim()) {
+      alert("Mandatory Feedback Required: Please provide explanatory feedback for poor performance scores (rating <= 2 stars or average < 3.0).");
+      return;
+    }
+
+    setIsSubmittingRating(true);
+    try {
+      const ratingId = `rating_${Date.now()}`;
+      const ratingPayload = {
+        id: ratingId,
+        supplierId: evalSupplierId,
+        supplierName: evalSupplierName,
+        supplierCompany: evalSupplierCompany,
+        buyerId: user.uid,
+        buyerName: user.displayName || "Procurement Officer",
+        buyerCompany: user.companyId || "Buyer Enterprise",
+        shipmentRef,
+        kpis,
+        averageScore: averageKpiScore,
+        feedback,
+        isPoorPerformanceRecord: isPoorPerformance,
+        createdAt: new Date().toISOString(),
+      };
+
+      // 1. Save Rating Record
+      await setDocument("supplier_ratings", ratingId, ratingPayload);
+
+      // 2. Fetch existing Supplier Governance Profile
+      const existingGov = await getDocument<SupplierGovernanceProfile>("supplier_governance", evalSupplierId);
+      
+      const prevPoorCount = existingGov?.poorPerformanceRecords || 0;
+      const newPoorCount = isPoorPerformance ? prevPoorCount + 1 : prevPoorCount;
+      const prevTotal = existingGov?.totalEvaluations || 0;
+
+      let newStatus = existingGov?.status || "active";
+      let statusChangedEvent: "SUPPLIER_WARNING_ISSUED" | "SUPPLIER_RESTRICTED" | "SUPPLIER_SUSPENDED" | null = null;
+
+      if (isPoorPerformance) {
+        if (newPoorCount === 1) {
+          newStatus = "warning";
+          statusChangedEvent = "SUPPLIER_WARNING_ISSUED";
+        } else if (newPoorCount === 2) {
+          newStatus = "restricted";
+          statusChangedEvent = "SUPPLIER_RESTRICTED";
+        } else if (newPoorCount >= 3) {
+          newStatus = "suspended";
+          statusChangedEvent = "SUPPLIER_SUSPENDED";
+        }
+      }
+
+      // Compute new average overall rating
+      const prevRating = existingGov?.overallRating || 4.5;
+      const newOverallRating = Math.round(((prevRating * prevTotal + averageKpiScore) / (prevTotal + 1)) * 10) / 10;
+
+      const govPayload = {
+        supplierId: evalSupplierId,
+        supplierName: evalSupplierName,
+        supplierCompany: evalSupplierCompany,
+        overallRating: newOverallRating,
+        totalEvaluations: prevTotal + 1,
+        warningsCount: (existingGov?.warningsCount || 0) + (newPoorCount === 1 && isPoorPerformance ? 1 : 0),
+        poorPerformanceRecords: newPoorCount,
+        status: newStatus,
+        restrictionReason: isPoorPerformance ? feedback || "Accumulated poor performance records" : existingGov?.restrictionReason,
+        lastEvaluatedAt: new Date().toISOString(),
+        onTimeDeliveryPct: existingGov?.onTimeDeliveryPct || 94,
+        spaceAvailabilityPct: existingGov?.spaceAvailabilityPct || 96,
+        documentationAccuracyPct: existingGov?.documentationAccuracyPct || 98,
+        cargoClaimRatioPct: existingGov?.cargoClaimRatioPct || 0.2,
+        cancellationRatioPct: existingGov?.cancellationRatioPct || 1.1,
+        averageResponseTimeHours: existingGov?.averageResponseTimeHours || 2.4,
+      };
+
+      await setDocument("supplier_governance", evalSupplierId, govPayload);
+
+      // 3. Emit Audit Log
+      await logAuditEvent(
+        "SUPPLIER_RATED",
+        `Evaluated Supplier ${evalSupplierCompany} (Score: ${averageKpiScore}/5.0)`,
+        { uid: user.uid, name: user.displayName || "Evaluator", role: "buyer" },
+        { kpis, isPoorPerformanceRecord: isPoorPerformance, newGovernanceStatus: newStatus },
+        undefined,
+        undefined,
+        evalSupplierId
+      );
+
+      if (statusChangedEvent) {
+        await logAuditEvent(
+          statusChangedEvent,
+          `Supplier ${evalSupplierCompany} status updated to ${newStatus.toUpperCase()} (${newPoorCount} Poor Records)`,
+          { uid: user.uid, name: "Governance System", role: "system" },
+          { newStatus, poorPerformanceRecords: newPoorCount },
+          undefined,
+          undefined,
+          evalSupplierId
+        );
+      }
+
+      alert(`Supplier Service Evaluation submitted! Average Score: ${averageKpiScore}/5.0.${
+        isPoorPerformance ? ` Policy Status updated to: ${newStatus.toUpperCase()}` : ""
+      }`);
+
+      setShowEvalModal(false);
+      setFeedback("");
+    } catch (err) {
+      console.error("Error saving supplier evaluation:", err);
+      alert("Failed to submit supplier rating. Please try again.");
+    } finally {
+      setIsSubmittingRating(false);
+    }
+  };
+
   return (
-    <div className="space-y-6 py-3 min-h-screen bg-[var(--fr8x-bg)]">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-display-sm text-[var(--fr8x-jet)] font-semibold">Awards & Honors Registry</h1>
-        <p className="mt-1 text-body-md text-foreground-secondary">
-          Recognizing and verifying excellence, trust, and response in the logistics reverse-auction network
-        </p>
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-display-sm text-foreground">Carrier & Supplier Performance Evaluation</h1>
+          <p className="mt-1 text-body-sm text-foreground-secondary">
+            Measurable 11-KPI Service Quality Ratings, Supplier Governance & Peer Awards
+          </p>
+        </div>
+        <button
+          onClick={() => setShowEvalModal(true)}
+          className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] px-4 py-2 flex items-center gap-1.5 text-body-sm font-semibold"
+        >
+          <Star className="h-4 w-4 fill-white" /> Evaluate Completed Shipment Supplier
+        </button>
       </div>
 
       {/* Popular Awards Strip */}
@@ -321,6 +483,133 @@ export default function AwardsPage() {
           </div>
         )}
       </div>
+
+      {/* ═══ 11-KPI SUPPLIER PERFORMANCE EVALUATION MODAL ═══ */}
+      {showEvalModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full space-y-4 my-8 shadow-xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                  <Star className="h-5 w-5 fill-amber-400 text-amber-500" />
+                  Post-Shipment Supplier Performance Evaluation
+                </h2>
+                <p className="text-caption text-foreground-secondary mt-0.5">
+                  Evaluate supplier performance across 11 standardized logistics execution KPIs
+                </p>
+              </div>
+              <span className={`px-2.5 py-1 rounded text-xs font-black tabular-nums ${
+                averageKpiScore >= 4.0 ? "bg-emerald-100 text-emerald-800" :
+                averageKpiScore >= 3.0 ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"
+              }`}>
+                Avg: {averageKpiScore} / 5.0
+              </span>
+            </div>
+
+            {/* Target Supplier & Shipment Details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-gray-50 border border-border rounded text-[11px]">
+              <div>
+                <label className="fr8x-label block">Select Supplier</label>
+                <select
+                  value={evalSupplierId}
+                  onChange={(e) => {
+                    setEvalSupplierId(e.target.value);
+                    if (e.target.value === "comp_1") { setEvalSupplierName("Maersk Line Supplier"); setEvalSupplierCompany("Maersk Logistics"); }
+                    else if (e.target.value === "comp_2") { setEvalSupplierName("Hapag-Lloyd Agent"); setEvalSupplierCompany("Hapag-Lloyd Express"); }
+                    else { setEvalSupplierName("Kuehne+Nagel Logistics"); setEvalSupplierCompany("Kuehne+Nagel Global"); }
+                  }}
+                  className="fr8x-input mt-1 font-semibold"
+                >
+                  <option value="comp_1">Maersk Logistics (comp_1)</option>
+                  <option value="comp_2">Hapag-Lloyd Express (comp_2)</option>
+                  <option value="comp_3">Kuehne+Nagel Global (comp_3)</option>
+                </select>
+              </div>
+              <div>
+                <label className="fr8x-label block">Shipment Reference</label>
+                <input
+                  type="text"
+                  value={shipmentRef}
+                  onChange={(e) => setShipmentRef(e.target.value)}
+                  className="fr8x-input mt-1"
+                />
+              </div>
+              <div>
+                <label className="fr8x-label block">Evaluation Date</label>
+                <input type="text" readOnly value={new Date().toISOString().split("T")[0]} className="fr8x-input mt-1 bg-gray-100 text-foreground-muted" />
+              </div>
+            </div>
+
+            {/* 11 KPI Star Rating Inputs */}
+            <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1 no-scrollbar border-t border-b border-border py-2">
+              {(Object.keys(KPI_LABELS) as (keyof SupplierServiceKPIs)[]).map((kpiKey) => (
+                <div key={kpiKey} className="flex items-center justify-between p-2 rounded hover:bg-gray-50 text-[11px] border-b border-gray-100 last:border-0">
+                  <span className="font-semibold text-[var(--fr8x-jet)]">{KPI_LABELS[kpiKey]}</span>
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setKpis((prev) => ({ ...prev, [kpiKey]: star }))}
+                        className="p-1 hover:scale-110 transition-transform"
+                      >
+                        <Star className={`h-4 w-4 ${
+                          star <= kpis[kpiKey] ? "fill-amber-400 text-amber-500" : "text-gray-300"
+                        }`} />
+                      </button>
+                    ))}
+                    <span className="w-6 text-right font-mono font-bold text-xs text-[var(--fr8x-jet)] ml-1">
+                      {kpis[kpiKey]}★
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mandatory Feedback block for poor performance */}
+            {isPoorPerformance && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-[11px] space-y-1">
+                <span className="font-bold text-red-900 block">⚠️ Poor Performance Triggered (Rating &lt;= 2 stars or Avg &lt; 3.0)</span>
+                <p className="text-red-800">
+                  Mandatory Feedback Required. Under FR8X-CON Supplier Governance Policy, poor performance records influence supplier eligibility (1 = Warning, 2 = Selective Only, 3 = Automatic Suspension).
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="fr8x-label block mb-1">
+                Evaluator Feedback & Operational Remarks {isPoorPerformance && <span className="text-danger">*</span>}
+              </label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                rows={2}
+                className="fr8x-input w-full text-[11px] resize-none"
+                placeholder={isPoorPerformance ? "Mandatory explanatory feedback explaining poor service execution..." : "Add optional performance remarks..."}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowEvalModal(false)}
+                className="fr8x-btn-secondary text-caption px-4 py-1.5"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSupplierRating}
+                disabled={isSubmittingRating}
+                className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] text-caption px-5 py-1.5 flex items-center gap-1 font-semibold"
+              >
+                {isSubmittingRating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Submit Evaluation & Update Governance"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
