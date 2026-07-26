@@ -5,11 +5,32 @@ import type { TransportMode, IncotermCode } from "@/lib/utils/logisticsEngine";
 
 export type AuctionStatus =
   | "draft"
+  | "scheduled"
   | "active"
+  | "closing_soon"
   | "closed"
   | "awarded"
   | "cancelled"
   | "expired";
+
+export type AuctionType = "general" | "premium";
+
+export type SelectiveFilters = {
+  countries?: string[];
+  regions?: string[];
+  supplierRoles?: string[];
+  minPerformanceRating?: number;
+  preferredVendorListOnly?: boolean;
+  previousBusinessRelationshipOnly?: boolean;
+};
+
+export type StrategicScoringWeights = {
+  priceWeight: number; // e.g. 60%
+  performanceWeight: number; // e.g. 15%
+  onTimeWeight: number; // e.g. 10%
+  spaceAvailabilityWeight: number; // e.g. 10%
+  docAccuracyWeight: number; // e.g. 5%
+};
 
 export type ShipmentMode = TransportMode;
 export type IncoTerms = IncotermCode;
@@ -23,6 +44,9 @@ export type Auction = {
   creatorCompany: string;
   title: string;
   referenceNumber: string;
+  auctionType?: AuctionType; // "general" | "premium"
+  selectiveFilters?: SelectiveFilters;
+  scoringWeights?: StrategicScoringWeights;
   shipmentDetails: ShipmentDetails;
   containerDetails: ContainerDetail[];
   commodityDetails: CommodityDetail[];
@@ -31,10 +55,24 @@ export type Auction = {
   chargesStructure: ChargesStructure;
   status: AuctionStatus;
   participantsCount: number;
+  activeParticipantsCount?: number;
   bidsCount: number;
+  totalRevisionsCount?: number;
+  lowestBidAmount?: number;
+  highestBidAmount?: number;
+  averageBidAmount?: number;
+  evaluationCurrency?: string;
   startDate: string;
   endDate: string;
   invitedBidders?: string[];
+  cancellationReason?: string;
+  cancelledBy?: string;
+  cancelledAt?: string;
+  awardedTo?: string;
+  awardedBidId?: string;
+  awardedAt?: string;
+  priority?: "standard" | "urgent" | "critical";
+  lastActivityAt?: string;
   lockedAt?: AuditFields["createdAt"];
 } & AuditFields;
 
