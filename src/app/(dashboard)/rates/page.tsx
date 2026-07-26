@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, Upload, ChevronLeft, ChevronRight, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import {
@@ -24,42 +24,26 @@ type RateTab = "active" | "expired" | "all";
 
 type RateData = {
   id: string;
-  srq: string;
-  rateProvider: string;
-  carrierForwardsName?: string;
-  carrierForwarderName?: string;
+  seq: string;
   carrier: string;
+  por: string;
   pol: string;
   pod: string;
   fpod: string;
-  commodity: string;
-  contType: string;
-  contSize: string;
-  route: string;
-  rate: number;
-  curr: string;
+  rate20dv: number;
+  type20dv: string;
+  rate40hc: number;
+  type40hc: string;
+  ft: string;
+  validityDate: string;
+  rateType: string;
   tt: string;
   routing: string;
   remarks: string;
   status: string;
-  lengthCm?: string;
-  widthCm?: string;
-  heightCm?: string;
-  cbm?: string;
-  validityDate?: string;
-  transitType?: string;
   createdAt: { seconds: number; nanoseconds: number } | null;
   createdBy: string;
 };
-
-const CONTAINER_SIZES = [
-  { value: "20'", label: "20'" },
-  { value: "40'", label: "40'" },
-  { value: "OT", label: "OT" },
-  { value: "RF", label: "RF" },
-  { value: "DG", label: "DG" },
-  { value: "IG", label: "IG" },
-];
 
 export default function RateCenterPage() {
   const { user } = useAuth();
@@ -77,67 +61,75 @@ export default function RateCenterPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state (left sidebar)
-  const [rateProvider, setRateProvider] = useState("");
-  const [carrierForwardsName, setCarrierForwardsName] = useState("");
   const [carrier, setCarrier] = useState("");
+  const [por, setPor] = useState("");
   const [pol, setPol] = useState("");
   const [pod, setPod] = useState("");
   const [fpod, setFpod] = useState("");
-  const [contSize, setContSize] = useState("20'");
-  const [rate, setRate] = useState("");
-  const [contType, setContType] = useState("GEN");
-  const [route, setRoute] = useState("");
+  const [type20dv, setType20dv] = useState("STANDARD");
+  const [rate20dv, setRate20dv] = useState("");
+  const [type40hc, setType40hc] = useState("STANDARD");
+  const [rate40hc, setRate40hc] = useState("");
+  const [ft, setFt] = useState("");
   const [validityDate, setValidityDate] = useState("");
   const [tt, setTt] = useState("");
-  const [routingSD, setRoutingSD] = useState("S");
-  const [transitType, setTransitType] = useState("SAVING");
+  const [routing, setRouting] = useState("");
+  const [rateType, setRateType] = useState("HANDOVER");
   const [remarks, setRemarks] = useState("");
-
-  // Dimensions state
-  const [lengthCm, setLengthCm] = useState("");
-  const [widthCm, setWidthCm] = useState("");
-  const [heightCm, setHeightCm] = useState("");
-  const [cbm, setCbm] = useState("");
 
   // Per-column filter state for table search boxes
   const [columnFilters, setColumnFilters] = useState<Record<string, string>>({
-    srq: "",
-    rateProvider: "",
+    seq: "",
     carrier: "",
+    por: "",
     pol: "",
     pod: "",
     fpod: "",
-    comm: "",
-    contType: "",
-    contSize: "",
-    route: "",
-    rate: "",
-    curr: "",
+    rate20dv: "",
+    type20dv: "",
+    rate40hc: "",
+    type40hc: "",
+    ft: "",
+    validityDate: "",
+    rateType: "",
     tt: "",
     routing: "",
     remarks: "",
   });
 
-  // Auto-fill Rate Provider & Carrier/Forwards Name from current user profile
-  useEffect(() => {
-    if (user) {
-      setRateProvider(user.displayName || user.email || "Verified Provider");
-      setCarrierForwardsName(user.companyId || "RV-Info Logistics");
-    }
-  }, [user]);
-
   // Fetch rates from Firestore
   const fetchRates = useCallback(async () => {
     setIsLoading(true);
     try {
-      const data = await queryDocuments<RateData>(COLLECTIONS.RATES, [
+      const data = await queryDocuments<any>(COLLECTIONS.RATES, [
         orderBy("createdAt", "desc"),
         limit(100),
       ]);
-      setRates(data);
+      const mappedRates = data.map((r: any) => ({
+        id: r.id,
+        seq: r.seq || r.srq || "",
+        carrier: r.carrier || "",
+        por: r.por || "",
+        pol: r.pol || "",
+        pod: r.pod || "",
+        fpod: r.fpod || "",
+        rate20dv: r.rate20dv !== undefined ? Number(r.rate20dv) : (r.contSize === "20'" ? Number(r.rate) : 0),
+        type20dv: r.type20dv || (r.contSize === "20'" ? r.contType : "STANDARD"),
+        rate40hc: r.rate40hc !== undefined ? Number(r.rate40hc) : (r.contSize === "40'" ? Number(r.rate) : 0),
+        type40hc: r.type40hc || (r.contSize === "40'" ? r.contType : "STANDARD"),
+        ft: r.ft || "",
+        validityDate: r.validityDate || "",
+        rateType: r.rateType || "HANDOVER",
+        tt: r.tt || "",
+        routing: r.routing || "",
+        remarks: r.remarks || "",
+        status: r.status || "active",
+        createdAt: r.createdAt || null,
+        createdBy: r.createdBy || "",
+      }));
+      setRates(mappedRates);
     } catch (err) {
       console.error("Error fetching rates:", err);
-      setRates([]);
     } finally {
       setIsLoading(false);
     }
@@ -146,18 +138,6 @@ export default function RateCenterPage() {
   useEffect(() => {
     fetchRates();
   }, [fetchRates]);
-
-  // Auto-calculate CBM when dimensions change
-  useEffect(() => {
-    const l = parseFloat(lengthCm);
-    const w = parseFloat(widthCm);
-    const h = parseFloat(heightCm);
-    if (!isNaN(l) && !isNaN(w) && !isNaN(h) && l > 0 && w > 0 && h > 0) {
-      // (L x W x H in cm) / 1,000,000 = CBM
-      const calculatedCbm = ((l * w * h) / 1000000).toFixed(2);
-      setCbm(calculatedCbm);
-    }
-  }, [lengthCm, widthCm, heightCm]);
 
   // Column search box handler
   const handleColumnFilterChange = (colKey: string, value: string) => {
@@ -173,18 +153,19 @@ export default function RateCenterPage() {
       if (activeTab === "expired" && r.status !== "expired") return false;
 
       // Per-column search box filters
-      if (columnFilters.srq && !(r.srq || "").toLowerCase().includes(columnFilters.srq.toLowerCase())) return false;
-      if (columnFilters.rateProvider && !(r.rateProvider || "").toLowerCase().includes(columnFilters.rateProvider.toLowerCase())) return false;
+      if (columnFilters.seq && !(r.seq || "").toLowerCase().includes(columnFilters.seq.toLowerCase())) return false;
       if (columnFilters.carrier && !(r.carrier || "").toLowerCase().includes(columnFilters.carrier.toLowerCase())) return false;
+      if (columnFilters.por && !(r.por || "").toLowerCase().includes(columnFilters.por.toLowerCase())) return false;
       if (columnFilters.pol && !(r.pol || "").toLowerCase().includes(columnFilters.pol.toLowerCase())) return false;
       if (columnFilters.pod && !(r.pod || "").toLowerCase().includes(columnFilters.pod.toLowerCase())) return false;
       if (columnFilters.fpod && !(r.fpod || "").toLowerCase().includes(columnFilters.fpod.toLowerCase())) return false;
-      if (columnFilters.comm && !(r.commodity || "").toLowerCase().includes(columnFilters.comm.toLowerCase())) return false;
-      if (columnFilters.contType && !(r.contType || "").toLowerCase().includes(columnFilters.contType.toLowerCase())) return false;
-      if (columnFilters.contSize && !(r.contSize || "").toLowerCase().includes(columnFilters.contSize.toLowerCase())) return false;
-      if (columnFilters.route && !(r.route || "").toLowerCase().includes(columnFilters.route.toLowerCase())) return false;
-      if (columnFilters.rate && !String(r.rate || "").toLowerCase().includes(columnFilters.rate.toLowerCase())) return false;
-      if (columnFilters.curr && !(r.curr || "").toLowerCase().includes(columnFilters.curr.toLowerCase())) return false;
+      if (columnFilters.rate20dv && !String(r.rate20dv || "").toLowerCase().includes(columnFilters.rate20dv.toLowerCase())) return false;
+      if (columnFilters.type20dv && !(r.type20dv || "").toLowerCase().includes(columnFilters.type20dv.toLowerCase())) return false;
+      if (columnFilters.rate40hc && !String(r.rate40hc || "").toLowerCase().includes(columnFilters.rate40hc.toLowerCase())) return false;
+      if (columnFilters.type40hc && !(r.type40hc || "").toLowerCase().includes(columnFilters.type40hc.toLowerCase())) return false;
+      if (columnFilters.ft && !(r.ft || "").toLowerCase().includes(columnFilters.ft.toLowerCase())) return false;
+      if (columnFilters.validityDate && !(r.validityDate || "").toLowerCase().includes(columnFilters.validityDate.toLowerCase())) return false;
+      if (columnFilters.rateType && !(r.rateType || "").toLowerCase().includes(columnFilters.rateType.toLowerCase())) return false;
       if (columnFilters.tt && !(r.tt || "").toLowerCase().includes(columnFilters.tt.toLowerCase())) return false;
       if (columnFilters.routing && !(r.routing || "").toLowerCase().includes(columnFilters.routing.toLowerCase())) return false;
       if (columnFilters.remarks && !(r.remarks || "").toLowerCase().includes(columnFilters.remarks.toLowerCase())) return false;
@@ -208,22 +189,20 @@ export default function RateCenterPage() {
   const handleClear = useCallback(() => {
     setEditingRateId(null);
     setCarrier("");
+    setPor("");
     setPol("");
     setPod("");
     setFpod("");
-    setContSize("20'");
-    setRate("");
-    setContType("GEN");
-    setRoute("");
+    setType20dv("STANDARD");
+    setRate20dv("");
+    setType40hc("STANDARD");
+    setRate40hc("");
+    setFt("");
     setValidityDate("");
     setTt("");
-    setRoutingSD("S");
-    setTransitType("SAVING");
+    setRouting("");
+    setRateType("HANDOVER");
     setRemarks("");
-    setLengthCm("");
-    setWidthCm("");
-    setHeightCm("");
-    setCbm("");
   }, []);
 
   const handleSave = useCallback(async () => {
@@ -234,29 +213,22 @@ export default function RateCenterPage() {
     try {
       const docRef = getDocRef(COLLECTIONS.RATES);
       await setDocument(COLLECTIONS.RATES, docRef.id, {
-        srq: `SRQ-${Date.now().toString().slice(-6)}`,
-        rateProvider: sanitizeText(rateProvider || user.displayName || user.email || "Verified Provider"),
-        carrierForwardsName: sanitizeText(carrierForwardsName || user.companyId || "RV-Info Logistics"),
-        carrierForwarderName: sanitizeText(carrierForwardsName || user.companyId || "RV-Info Logistics"),
+        seq: `SEQ-${Date.now().toString().slice(-6)}`,
         carrier: sanitizeText(carrier),
+        por: sanitizeText(por),
         pol: sanitizeText(pol),
         pod: sanitizeText(pod),
         fpod: sanitizeText(fpod),
-        commodity: "General",
-        contType,
-        contSize,
-        route: sanitizeText(route),
-        rate: parseFloat(rate) || 0,
-        curr: "USD",
-        tt: sanitizeText(tt),
-        routing: routingSD === "S" ? "Single" : "Direct",
-        remarks: sanitizeText(remarks),
+        rate20dv: parseFloat(rate20dv) || 0,
+        type20dv,
+        rate40hc: parseFloat(rate40hc) || 0,
+        type40hc,
+        ft: sanitizeText(ft),
         validityDate,
-        transitType,
-        lengthCm,
-        widthCm,
-        heightCm,
-        cbm,
+        rateType,
+        tt: sanitizeText(tt),
+        routing: sanitizeText(routing),
+        remarks: sanitizeText(remarks),
         status: "active",
         createdAt: serverTimestamp(),
         createdBy: user.uid,
@@ -268,7 +240,7 @@ export default function RateCenterPage() {
       console.error("Error saving rate:", err);
       showNotification("Failed to save rate.");
     }
-  }, [user, rateProvider, carrierForwardsName, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, lengthCm, widthCm, heightCm, cbm, handleClear, fetchRates]);
+  }, [user, carrier, por, pol, pod, fpod, rate20dv, type20dv, rate40hc, type40hc, ft, validityDate, rateType, tt, routing, remarks, handleClear, fetchRates]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingRateId) {
@@ -278,22 +250,20 @@ export default function RateCenterPage() {
     try {
       await updateDocument(COLLECTIONS.RATES, editingRateId, {
         carrier: sanitizeText(carrier),
+        por: sanitizeText(por),
         pol: sanitizeText(pol),
         pod: sanitizeText(pod),
         fpod: sanitizeText(fpod),
-        contType,
-        contSize,
-        route: sanitizeText(route),
-        rate: parseFloat(rate) || 0,
-        tt: sanitizeText(tt),
-        routing: routingSD === "S" ? "Single" : "Direct",
-        remarks: sanitizeText(remarks),
+        rate20dv: parseFloat(rate20dv) || 0,
+        type20dv,
+        rate40hc: parseFloat(rate40hc) || 0,
+        type40hc,
+        ft: sanitizeText(ft),
         validityDate,
-        transitType,
-        lengthCm,
-        widthCm,
-        heightCm,
-        cbm,
+        rateType,
+        tt: sanitizeText(tt),
+        routing: sanitizeText(routing),
+        remarks: sanitizeText(remarks),
       });
       handleClear();
       fetchRates();
@@ -302,47 +272,46 @@ export default function RateCenterPage() {
       console.error("Error updating rate:", err);
       showNotification("Failed to update rate.");
     }
-  }, [editingRateId, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, lengthCm, widthCm, heightCm, cbm, handleClear, fetchRates]);
+  }, [editingRateId, carrier, por, pol, pod, fpod, rate20dv, type20dv, rate40hc, type40hc, ft, validityDate, rateType, tt, routing, remarks, handleClear, fetchRates]);
 
   const handleEditClick = useCallback((r: RateData) => {
     setEditingRateId(r.id);
     setCarrier(r.carrier || "");
+    setPor(r.por || "");
     setPol(r.pol || "");
     setPod(r.pod || "");
     setFpod(r.fpod || "");
-    setContSize(r.contSize || "20'");
-    setRate(r.rate ? String(r.rate) : "");
-    setContType(r.contType || "GEN");
-    setRoute(r.route || "");
+    setType20dv(r.type20dv || "STANDARD");
+    setRate20dv(r.rate20dv ? String(r.rate20dv) : "");
+    setType40hc(r.type40hc || "STANDARD");
+    setRate40hc(r.rate40hc ? String(r.rate40hc) : "");
+    setFt(r.ft || "");
     setValidityDate(r.validityDate || "");
     setTt(r.tt || "");
-    setRoutingSD(r.routing === "Single" ? "S" : "D");
-    setTransitType(r.transitType || "SAVING");
+    setRouting(r.routing || "");
+    setRateType(r.rateType || "HANDOVER");
     setRemarks(r.remarks || "");
-    setLengthCm(r.lengthCm || "");
-    setWidthCm(r.widthCm || "");
-    setHeightCm(r.heightCm || "");
-    setCbm(r.cbm || "");
-    showNotification(`Loaded rate ${r.srq} for editing.`);
+    showNotification(`Loaded rate ${r.seq} for editing.`);
   }, []);
 
   const handleDuplicateRow = (r: RateData) => {
     setEditingRateId(null);
     setCarrier(r.carrier || "");
+    setPor(r.por || "");
     setPol(r.pol || "");
     setPod(r.pod || "");
     setFpod(r.fpod || "");
-    setContSize(r.contSize || "20'");
-    setRate(r.rate ? String(r.rate) : "");
-    setContType(r.contType || "GEN");
-    setRoute(r.route || "");
+    setType20dv(r.type20dv || "STANDARD");
+    setRate20dv(r.rate20dv ? String(r.rate20dv) : "");
+    setType40hc(r.type40hc || "STANDARD");
+    setRate40hc(r.rate40hc ? String(r.rate40hc) : "");
+    setFt(r.ft || "");
+    setValidityDate(r.validityDate || "");
     setTt(r.tt || "");
+    setRouting(r.routing || "");
+    setRateType(r.rateType || "HANDOVER");
     setRemarks(r.remarks ? `${r.remarks} (Copy)` : "Copy");
-    setLengthCm(r.lengthCm || "");
-    setWidthCm(r.widthCm || "");
-    setHeightCm(r.heightCm || "");
-    setCbm(r.cbm || "");
-    showNotification(`Copied rate ${r.srq} into entry form.`);
+    showNotification(`Copied rate ${r.seq} into entry form.`);
   };
 
   const handleMarkExpired = async (id: string) => {
@@ -367,7 +336,7 @@ export default function RateCenterPage() {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,SRQ,RateProvider,Carrier,POL,POD,ContSize,Rate,Curr,TT,Status\nSRQ-1001,RV-Info,Maersk,INBOM,AEDXB,40'HC,1250,USD,12,active\n";
+    const csvContent = "data:text/csv;charset=utf-8,Carrier,POR,POL,POD,FPOD,20DV,20TYPE,40HC,40TYPE,F/T,Date,Type,TT,Routing,Remarks\nMaersk,INBOM,INBOM,AEDXB,AEDXB,1200,STANDARD,1500,STANDARD,14 days,2026-08-31,HANDOVER,12,Direct,Sample rate upload\n";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -456,77 +425,59 @@ export default function RateCenterPage() {
 
         {/* Layout: Left Sidebar (Form) + Right Content (Table) */}
         <div className="flex flex-col lg:flex-row gap-5">
-          {/* ═══ LEFT SIDEBAR: Rate Entry / Filters ═══ */}
+          {/* ═══ LEFT SIDEBAR: Rate Editor Form ═══ */}
           <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">
+            <div className="flex flex-col border-b border-border pb-2">
+              <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
                 RATE EDITOR
               </h2>
-              {editingRateId && (
-                <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Editing</span>
-              )}
+              <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
+                CREATE OR UPDATE RATE
+              </span>
             </div>
 
-            {/* RATE PROVIDER */}
+            {/* CARRIER */}
             <div>
-              <label className="fr8x-label block mb-1">RATE PROVIDER</label>
+              <label className="fr8x-label block mb-1">CARRIER</label>
               <input
                 type="text"
-                value={rateProvider}
-                onChange={(e) => setRateProvider(e.target.value)}
+                value={carrier}
+                onChange={(e) => setCarrier(e.target.value)}
                 className="fr8x-input text-caption"
-                placeholder="Rate Provider"
+                placeholder="Carrier"
               />
             </div>
 
-            {/* CARRIER/FORWARDS NAME */}
-            <div>
-              <label className="fr8x-label block mb-1">CARRIER/FORWARDS NAME</label>
-              <input
-                type="text"
-                value={carrierForwardsName}
-                onChange={(e) => setCarrierForwardsName(e.target.value)}
-                className="fr8x-input text-caption"
-                placeholder="Carrier / Forwards"
-              />
-            </div>
-
-            {/* Carrier */}
-            <div>
-              <label className="fr8x-label block mb-1">Carrier</label>
-              <input type="text" value={carrier} onChange={(e) => setCarrier(e.target.value)} className="fr8x-input text-caption" placeholder="e.g. Maersk, MSC, Hapag" />
-            </div>
-
-            {/* POL | POD */}
+            {/* POR | POL */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <LocationSearchInput
-                  value={pol}
-                  onChange={(val) => setPol(val)}
-                  label="POL *"
-                  placeholder="POL Code"
+                  value={por}
+                  onChange={(val) => setPor(val)}
+                  label="POR"
+                  placeholder="POR"
                   mode="fcl"
                 />
               </div>
               <div>
                 <LocationSearchInput
-                  value={pod}
-                  onChange={(val) => setPod(val)}
-                  label="POD *"
-                  placeholder="POD Code"
+                  value={pol}
+                  onChange={(val) => setPol(val)}
+                  label="POL"
+                  placeholder="POL"
                   mode="fcl"
                 />
               </div>
             </div>
 
             {/* POD | FPOD */}
-            <div className="grid grid-cols-2 gap-2 mt-2">
+            <div className="grid grid-cols-2 gap-2">
               <div>
                 <LocationSearchInput
                   value={pod}
                   onChange={(val) => setPod(val)}
-                  label="POD *"
-                  placeholder="POD Code"
+                  label="POD"
+                  placeholder="POD"
                   mode="fcl"
                 />
               </div>
@@ -535,115 +486,160 @@ export default function RateCenterPage() {
                   value={fpod}
                   onChange={(val) => setFpod(val)}
                   label="FPOD"
-                  placeholder="Final POD Code"
+                  placeholder="FPOD"
                   isPlaceOfReceiptOrDelivery={true}
                   mode="fcl"
                 />
               </div>
             </div>
 
-            {/* CONTAINER SIZE & RATE */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="fr8x-label block mb-1">CONTAINER SIZE</label>
-                <select value={contSize} onChange={(e) => setContSize(e.target.value)} className="fr8x-input text-caption">
-                  {CONTAINER_SIZES.map((cs) => (
-                    <option key={cs.value} value={cs.value}>{cs.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="fr8x-label block mb-1">RATE</label>
-                <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} className="fr8x-input text-caption" placeholder="0.00" />
-              </div>
-            </div>
-
-            {/* Cargo Dimensions Part */}
-            <div className="p-2 bg-[var(--fr8x-mist)] rounded-md space-y-2">
-              <label className="fr8x-label block text-[10px] font-semibold text-[var(--fr8x-jet)]">CARGO DIMENSIONS & VOLUME</label>
-              <div className="grid grid-cols-3 gap-1.5">
-                <div>
-                  <span className="text-[9px] text-foreground-muted block">L (cm)</span>
-                  <input type="number" value={lengthCm} onChange={(e) => setLengthCm(e.target.value)} className="fr8x-input text-[10px] py-0.5" placeholder="L" />
-                </div>
-                <div>
-                  <span className="text-[9px] text-foreground-muted block">W (cm)</span>
-                  <input type="number" value={widthCm} onChange={(e) => setWidthCm(e.target.value)} className="fr8x-input text-[10px] py-0.5" placeholder="W" />
-                </div>
-                <div>
-                  <span className="text-[9px] text-foreground-muted block">H (cm)</span>
-                  <input type="number" value={heightCm} onChange={(e) => setHeightCm(e.target.value)} className="fr8x-input text-[10px] py-0.5" placeholder="H" />
-                </div>
-              </div>
-              <div>
-                <span className="text-[9px] text-foreground-muted block">Calculated CBM</span>
-                <input type="text" value={cbm} onChange={(e) => setCbm(e.target.value)} className="fr8x-input text-[10px] py-0.5 bg-white" placeholder="Total CBM" />
-              </div>
-            </div>
-
+            {/* 20DV TYPE */}
             <div>
-              <label className="fr8x-label block mb-1">CONTAINER TYPE</label>
-              <select value={contType} onChange={(e) => setContType(e.target.value)} className="fr8x-input text-caption">
-                <option value="GEN">GEN (General Purpose)</option>
-                <option value="HAZ">HAZ (Hazardous Cargo)</option>
-                <option value="DG">DG (Dangerous Goods)</option>
-                <option value="IG">IG (In-Gauge)</option>
-                <option value="OOG">OOG (Out of Gauge)</option>
+              <label className="fr8x-label block mb-1">20DV TYPE</label>
+              <select value={type20dv} onChange={(e) => setType20dv(e.target.value)} className="fr8x-input text-caption">
+                <option value="STANDARD">STANDARD</option>
+                <option value="DV">DV</option>
+                <option value="RF">RF</option>
+                <option value="FR">FR</option>
+                <option value="OT">OT</option>
               </select>
             </div>
 
+            {/* USD 20DV */}
             <div>
-              <label className="fr8x-label block mb-1">ROUTE</label>
-              <input type="text" value={route} onChange={(e) => setRoute(e.target.value)} className="fr8x-input text-caption" placeholder="Route description" />
+              <label className="fr8x-label block mb-1">USD 20DV</label>
+              <input
+                type="text"
+                value={rate20dv}
+                onChange={(e) => setRate20dv(e.target.value)}
+                className="fr8x-input text-caption"
+                placeholder="USD 20DV"
+              />
             </div>
 
+            {/* 40HC TYPE */}
             <div>
-              <label className="fr8x-label block mb-1">VALIDITY</label>
-              <input type="date" value={validityDate} onChange={(e) => setValidityDate(e.target.value)} className="fr8x-input text-caption" />
+              <label className="fr8x-label block mb-1">40HC TYPE</label>
+              <select value={type40hc} onChange={(e) => setType40hc(e.target.value)} className="fr8x-input text-caption">
+                <option value="STANDARD">STANDARD</option>
+                <option value="ST">ST</option>
+                <option value="HC">HC</option>
+                <option value="RF">RF</option>
+                <option value="FR">FR</option>
+                <option value="OT">OT</option>
+              </select>
             </div>
 
+            {/* USD 40HC */}
+            <div>
+              <label className="fr8x-label block mb-1">USD 40HC</label>
+              <input
+                type="text"
+                value={rate40hc}
+                onChange={(e) => setRate40hc(e.target.value)}
+                className="fr8x-input text-caption"
+                placeholder="USD 40HC"
+              />
+            </div>
+
+            {/* F/T | VALIDITY */}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="fr8x-label block mb-1">F/T</label>
+                <input
+                  type="text"
+                  value={ft}
+                  onChange={(e) => setFt(e.target.value)}
+                  className="fr8x-input text-caption"
+                  placeholder="F/T"
+                />
+              </div>
+              <div>
+                <label className="fr8x-label block mb-1">VALIDITY</label>
+                <input
+                  type="date"
+                  value={validityDate}
+                  onChange={(e) => setValidityDate(e.target.value)}
+                  className="fr8x-input text-caption"
+                />
+              </div>
+            </div>
+
+            {/* TT | ROUTING */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="fr8x-label block mb-1">TT</label>
-                <input type="text" value={tt} onChange={(e) => setTt(e.target.value)} className="fr8x-input text-caption" placeholder="e.g. 14 Days" />
+                <input
+                  type="text"
+                  value={tt}
+                  onChange={(e) => setTt(e.target.value)}
+                  className="fr8x-input text-caption"
+                  placeholder="TT"
+                />
               </div>
               <div>
-                <label className="fr8x-label block mb-1">ROUTING (S/D)</label>
-                <select value={routingSD} onChange={(e) => setRoutingSD(e.target.value)} className="fr8x-input text-caption">
-                  <option value="S">Single (S)</option>
-                  <option value="D">Direct (D)</option>
-                </select>
+                <label className="fr8x-label block mb-1">ROUTING</label>
+                <input
+                  type="text"
+                  value={routing}
+                  onChange={(e) => setRouting(e.target.value)}
+                  className="fr8x-input text-caption"
+                  placeholder="Routing"
+                />
               </div>
             </div>
 
+            {/* TYPE */}
             <div>
-              <label className="fr8x-label block mb-1">TRANSIT TYPE (SAVING/HARDPORT)</label>
-              <select value={transitType} onChange={(e) => setTransitType(e.target.value)} className="fr8x-input text-caption">
+              <label className="fr8x-label block mb-1">TYPE</label>
+              <select value={rateType} onChange={(e) => setRateType(e.target.value)} className="fr8x-input text-caption">
+                <option value="HANDOVER">HANDOVER</option>
                 <option value="SAVING">SAVING</option>
                 <option value="HARDPORT">HARDPORT</option>
               </select>
             </div>
 
+            {/* REMARKS */}
             <div>
               <label className="fr8x-label block mb-1">REMARKS</label>
-              <textarea value={remarks} onChange={(e) => setRemarks(e.target.value)} className="fr8x-input text-caption min-h-[40px] resize-none" placeholder="Notes..." />
+              <textarea
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                className="fr8x-input text-caption min-h-[40px] resize-none"
+                placeholder="Remarks"
+              />
             </div>
 
             {/* Actions */}
             <div className="pt-2 border-t border-border space-y-2">
               <div className="grid grid-cols-3 gap-2">
-                <button onClick={handleSave} className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] py-1 text-caption font-bold">SAVE</button>
-                <button onClick={handleUpdate} className="fr8x-btn-secondary py-1 text-caption font-bold">UPDATE</button>
-                <button onClick={handleClear} className="fr8x-btn-ghost text-danger py-1 text-caption font-bold">CLEAR</button>
+                <button
+                  onClick={handleSave}
+                  className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                >
+                  <Save className="h-3 w-3" /> SAVE
+                </button>
+                <button
+                  onClick={handleUpdate}
+                  className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                >
+                  <RefreshCw className="h-3 w-3" /> UPDATE
+                </button>
+                <button
+                  onClick={handleClear}
+                  className="bg-[#991B1B] hover:bg-[#B91C1C] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                >
+                  <XCircle className="h-3 w-3" /> CLEAR
+                </button>
               </div>
               <button
                 onClick={() => {
                   if (rates.length > 0 && rates[0]) handleDuplicateRow(rates[0]);
                   else showNotification("No rates available to duplicate.");
                 }}
-                className="fr8x-btn-secondary w-full py-1 text-caption font-bold"
+                className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
               >
-                DUPLICATE
+                <Copy className="h-3 w-3" /> DUPLICATE
               </button>
             </div>
           </aside>
@@ -655,7 +651,11 @@ export default function RateCenterPage() {
                 <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] uppercase tracking-wider">
                   {activeTab === "active" ? "ACTIVE RATES" : activeTab === "expired" ? "EXPIRED RATES" : "ALL RATES"}
                 </h2>
+                <span className="text-[9px] text-gray-500 font-semibold uppercase">
+                  CLICK ANY CELL TO REFLECT IT. HOVER TO VIEW FULL TEXT.
+                </span>
               </div>
+
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2 py-8">
                   <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
@@ -667,7 +667,7 @@ export default function RateCenterPage() {
                     {rates.length === 0 ? "No rates entered yet" : "No rates match the active filters"}
                   </p>
                   <p className="text-[10px] text-foreground-muted mt-1">
-                    Use the rate entry form to add a rate or clear search box filters.
+                    Use the rate editor form to add a rate or clear search box filters.
                   </p>
                 </div>
               ) : (
@@ -676,70 +676,74 @@ export default function RateCenterPage() {
                     <thead>
                       <tr>
                         <th className="w-8"><input type="checkbox" /></th>
-                        <th>SRQ</th>
-                        <th>RATE PROVIDER</th>
+                        <th>SEQ</th>
                         <th>CARRIER</th>
+                        <th>POR</th>
                         <th>POL</th>
                         <th>POD</th>
                         <th>FPOD</th>
-                        <th>COMM</th>
-                        <th>CONT TYPE</th>
-                        <th>CONT SIZE</th>
-                        <th>ROUT</th>
-                        <th>RATE</th>
-                        <th>CURR</th>
+                        <th>20DV</th>
+                        <th>20TYPE</th>
+                        <th>40HC</th>
+                        <th>40TYPE</th>
+                        <th>F/T</th>
+                        <th>DATE</th>
+                        <th>TYPE</th>
                         <th>TT</th>
                         <th>ROUTING</th>
                         <th>REMARKS</th>
-                        <th className="w-48">ACTION</th>
+                        <th className="w-32">ACTION</th>
                       </tr>
                       {/* Per-column search boxes row */}
                       <tr className="bg-gray-50 border-b border-border">
                         <td className="p-1"></td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.srq} onChange={(e) => handleColumnFilterChange("srq", e.target.value)} placeholder="Filter SRQ" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
+                          <input type="text" value={columnFilters.seq} onChange={(e) => handleColumnFilterChange("seq", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.rateProvider} onChange={(e) => handleColumnFilterChange("rateProvider", e.target.value)} placeholder="Filter Provider" className="fr8x-input text-[9px] py-0 px-1 h-5 w-20" />
+                          <input type="text" value={columnFilters.carrier} onChange={(e) => handleColumnFilterChange("carrier", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.carrier} onChange={(e) => handleColumnFilterChange("carrier", e.target.value)} placeholder="Carrier" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
+                          <input type="text" value={columnFilters.por} onChange={(e) => handleColumnFilterChange("por", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.pol} onChange={(e) => handleColumnFilterChange("pol", e.target.value)} placeholder="POL" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.pol} onChange={(e) => handleColumnFilterChange("pol", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.pod} onChange={(e) => handleColumnFilterChange("pod", e.target.value)} placeholder="POD" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.pod} onChange={(e) => handleColumnFilterChange("pod", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.fpod} onChange={(e) => handleColumnFilterChange("fpod", e.target.value)} placeholder="FPOD" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.fpod} onChange={(e) => handleColumnFilterChange("fpod", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.comm} onChange={(e) => handleColumnFilterChange("comm", e.target.value)} placeholder="Comm" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.rate20dv} onChange={(e) => handleColumnFilterChange("rate20dv", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.contType} onChange={(e) => handleColumnFilterChange("contType", e.target.value)} placeholder="Type" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.type20dv} onChange={(e) => handleColumnFilterChange("type20dv", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.contSize} onChange={(e) => handleColumnFilterChange("contSize", e.target.value)} placeholder="Size" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.rate40hc} onChange={(e) => handleColumnFilterChange("rate40hc", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.route} onChange={(e) => handleColumnFilterChange("route", e.target.value)} placeholder="Route" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.type40hc} onChange={(e) => handleColumnFilterChange("type40hc", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.rate} onChange={(e) => handleColumnFilterChange("rate", e.target.value)} placeholder="Rate" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                          <input type="text" value={columnFilters.ft} onChange={(e) => handleColumnFilterChange("ft", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.curr} onChange={(e) => handleColumnFilterChange("curr", e.target.value)} placeholder="Curr" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
+                          <input type="text" value={columnFilters.validityDate} onChange={(e) => handleColumnFilterChange("validityDate", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.tt} onChange={(e) => handleColumnFilterChange("tt", e.target.value)} placeholder="TT" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
+                          <input type="text" value={columnFilters.rateType} onChange={(e) => handleColumnFilterChange("rateType", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.routing} onChange={(e) => handleColumnFilterChange("routing", e.target.value)} placeholder="Rout" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
+                          <input type="text" value={columnFilters.tt} onChange={(e) => handleColumnFilterChange("tt", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
                         </td>
                         <td className="p-1">
-                          <input type="text" value={columnFilters.remarks} onChange={(e) => handleColumnFilterChange("remarks", e.target.value)} placeholder="Remarks" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
+                          <input type="text" value={columnFilters.routing} onChange={(e) => handleColumnFilterChange("routing", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-14" />
+                        </td>
+                        <td className="p-1">
+                          <input type="text" value={columnFilters.remarks} onChange={(e) => handleColumnFilterChange("remarks", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-16" />
                         </td>
                         <td className="p-1"></td>
                       </tr>
@@ -754,23 +758,19 @@ export default function RateCenterPage() {
                           }`}
                         >
                           <td onClick={(e) => e.stopPropagation()}><input type="checkbox" /></td>
-                          <td className="font-semibold text-[var(--fr8x-jet)]">{r.srq}</td>
-                          <td>
-                            <div className="flex items-center gap-1">
-                              <span>{r.rateProvider}</span>
-                              <span className="text-[8px] bg-emerald-100 text-emerald-800 px-1 rounded">Auto</span>
-                            </div>
-                          </td>
+                          <td className="font-semibold text-[var(--fr8x-jet)]">{r.seq}</td>
                           <td>{r.carrier}</td>
+                          <td>{r.por}</td>
                           <td>{r.pol}</td>
                           <td>{r.pod}</td>
                           <td>{r.fpod}</td>
-                          <td>{r.commodity}</td>
-                          <td>{r.contType}</td>
-                          <td className="font-medium">{r.contSize}</td>
-                          <td>{r.route}</td>
-                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate}</td>
-                          <td>{r.curr}</td>
+                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate20dv}</td>
+                          <td>{r.type20dv}</td>
+                          <td className="font-bold text-[var(--fr8x-jet)]">${r.rate40hc}</td>
+                          <td>{r.type40hc}</td>
+                          <td>{r.ft}</td>
+                          <td>{r.validityDate}</td>
+                          <td>{r.rateType}</td>
                           <td>{r.tt}</td>
                           <td>{r.routing}</td>
                           <td className="truncate max-w-[120px]">{r.remarks}</td>
