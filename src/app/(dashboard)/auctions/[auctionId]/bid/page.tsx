@@ -6,12 +6,14 @@
 
 import { useState, use, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Plus, Trash2, Trophy, Loader2, CheckCircle2, AlertCircle, Landmark } from "lucide-react";
+import { ChevronLeft, Plus, Trash2, Trophy, Loader2, CheckCircle2, AlertCircle, Landmark, ShieldAlert, Lock } from "lucide-react";
 import { FREIGHT_CURRENCIES } from "@/lib/types/currency";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import { getDocument, setDocument } from "@/lib/firebase/firestore";
 import { useAuth } from "@/providers/AuthProvider";
 import type { Auction } from "@/lib/types/auction";
+import type { SupplierGovernanceProfile } from "@/lib/types/supplierGovernance";
+import { logAuditEvent } from "@/lib/utils/auditLogger";
 import { Button } from "@/components/ui/Button";
 
 type DynamicRow = {
@@ -84,28 +86,41 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [submitMessage, setSubmitMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  // Fetch auction details
+  // Governance Profile State
+  const [supplierGovernance, setSupplierGovernance] = useState<SupplierGovernanceProfile | null>(null);
+  const [previousBid, setPreviousBid] = useState<any | null>(null);
+
+  // Fetch auction details & supplier governance profile & previous bid
   useEffect(() => {
-    async function fetchAuction() {
+    async function fetchData() {
       setIsLoading(true);
       try {
         const data = await getDocument<Auction>(COLLECTIONS.AUCTIONS, resolvedParams.auctionId);
         if (data) {
           setAuction(data);
-          
-          // Pre-populate Payment Terms & Currency if present
           if (data.bidRules?.defaultCurrency) {
             setQuoteIn(data.bidRules.defaultCurrency);
           }
         }
+
+        if (user?.uid) {
+          // Fetch supplier governance profile
+          const govDoc = await getDocument<SupplierGovernanceProfile>("supplier_governance", user.uid);
+          if (govDoc) setSupplierGovernance(govDoc);
+
+          // Fetch previous bid if existing
+          const existingBidId = `${user.uid}_${resolvedParams.auctionId}`;
+          const prevDoc = await getDocument<any>(COLLECTIONS.BIDS, existingBidId);
+          if (prevDoc) setPreviousBid(prevDoc);
+        }
       } catch (err) {
-        console.error("Error fetching auction for live bidding:", err);
+        console.error("Error fetching auction & governance for live bidding:", err);
       } finally {
         setIsLoading(false);
       }
     }
-    fetchAuction();
-  }, [resolvedParams.auctionId]);
+    fetchData();
+  }, [resolvedParams.auctionId, user?.uid]);
 
   // Synchronize charge rows from fixed auction shipment details
   useEffect(() => {
@@ -135,8 +150,8 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
 
       // Populate local charge rows based on mandatory charge heads configuration from the auction
       const defaultLocals: LocalRow[] = (auction.chargesStructure?.chargesHeads || [])
-        .filter(h => h.type !== "freight")
-        .map((h, index) => ({
+        .filter((h: any) => h.type !== "freight")
+        .map((h: any, index: number) => ({
           id: h.id || `l_${index}`,
           numUnits: 1,
           chargesHead: h.name || "Local Surcharge",
@@ -199,10 +214,28 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
   const grandTotalUSD = totalFreightUSD + totalLocalsUSD;
   const grandTotalINR = grandTotalUSD * 83;
 
+  // Compute governance bidding eligibility
+  const isSuspended = supplierGovernance?.status === "suspended";
+  const isRestricted = supplierGovernance?.status === "restricted";
+  const isGeneralAuction = (auction?.auctionType || "general") === "general";
+  const isInvitedToPremium = auction?.invitedBidders?.includes(user?.uid || "") || auction?.invitedBidders?.includes(user?.companyId || "");
+
+  const isBiddingBlocked = isSuspended || (isRestricted && isGeneralAuction && !isInvitedToPremium);
+  const blockReason = isSuspended
+    ? "Automatic Suspension: Your account is under administrative review due to 3 poor performance records. Bidding is disabled."
+    : isRestricted && isGeneralAuction && !isInvitedToPremium
+    ? "Participation Restricted: As per Supplier Governance Policy (2 Poor Performance Records), you are restricted to Selective/Premium Auctions where explicitly invited."
+    : null;
+
   // Handle Bid Submit
   const handleSubmitBid = async (isDraft: boolean = false) => {
     if (!user?.uid) {
       setSubmitMessage({ type: "error", text: "You must be authenticated to submit a bid." });
+      return;
+    }
+
+    if (isBiddingBlocked) {
+      setSubmitMessage({ type: "error", text: blockReason || "Bidding is restricted under platform governance policy." });
       return;
     }
 
@@ -211,13 +244,29 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
 
     try {
       const bidId = `${user.uid}_${resolvedParams.auctionId}`;
+      const currentRevision = previousBid ? (previousBid.revisionNumber || 1) + 1 : 1;
+      
+      const previousRevisionsHistory = previousBid?.previousRevisions || [];
+      if (previousBid && previousBid.totalAmountUSD) {
+        previousRevisionsHistory.push({
+          revisionNumber: previousBid.revisionNumber || 1,
+          totalAmount: previousBid.totalAmountUSD,
+          totalAmountUSD: previousBid.totalAmountUSD,
+          currency: previousBid.quoteCurrency || "USD",
+          submittedAt: previousBid.submittedAt || new Date().toISOString(),
+        });
+      }
+
       const bidPayload = {
         id: bidId,
         auctionId: resolvedParams.auctionId,
         bidderId: user.uid,
+        participantId: user.uid,
         bidderName: user.displayName || "Logistics Bidder",
+        bidderCompany: user.companyId || "Supplier Partner",
         bidderEmail: user.email,
         status: isDraft ? "draft" : "submitted",
+        currency: quoteIn,
         quoteCurrency: quoteIn,
         paymentTerms,
         rateValidity,
@@ -226,8 +275,12 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
         remarks,
         freightCharges: chargeRows,
         localCharges: localRows,
+        totalAmount: grandTotalUSD,
         totalAmountUSD: grandTotalUSD,
         totalAmountINR: grandTotalINR,
+        submissionNumber: currentRevision,
+        revisionNumber: currentRevision,
+        previousRevisions: previousRevisionsHistory,
         submittedAt: new Date().toISOString(),
       };
 
@@ -235,21 +288,38 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
       await setDocument(COLLECTIONS.BIDS, bidId, bidPayload);
 
       if (!isDraft) {
-        // 2. Increment bids count on active auction
+        // 2. Increment bids count & update lowest bid on active auction
         const currentBidsCount = auction?.bidsCount || 0;
+        const currentLowest = auction?.lowestBidAmount || Infinity;
+        const newLowest = Math.min(currentLowest, grandTotalUSD);
+
         await setDocument(
           COLLECTIONS.AUCTIONS,
           resolvedParams.auctionId,
           {
-            bidsCount: currentBidsCount + 1,
+            bidsCount: currentBidsCount + (previousBid ? 0 : 1),
+            totalRevisionsCount: (auction?.totalRevisionsCount || 0) + 1,
+            lowestBidAmount: newLowest,
+            lastActivityAt: new Date().toISOString(),
           },
           true
+        );
+
+        // 3. Record audit log entry
+        await logAuditEvent(
+          previousBid ? "BID_REVISED" : "BID_SUBMITTED",
+          `${previousBid ? "Revised" : "Submitted"} quote for Auction [Ref: ${auction?.referenceNumber || resolvedParams.auctionId}] (Rev #${currentRevision})`,
+          { uid: user.uid, name: user.displayName || "Supplier Bidder", role: "supplier" },
+          { revisionNumber: currentRevision, quoteAmountUSD: grandTotalUSD, currency: quoteIn },
+          resolvedParams.auctionId,
+          bidId,
+          user.uid
         );
       }
 
       setSubmitMessage({
         type: "success",
-        text: isDraft ? "Bid saved as draft successfully!" : "Your competitive freight bid has been successfully submitted!"
+        text: isDraft ? "Bid saved as draft successfully!" : `Your competitive freight quote (Rev #${currentRevision}) has been successfully posted!`
       });
 
       setTimeout(() => {
@@ -290,6 +360,20 @@ export default function LiveBiddingPage({ params }: { params: Promise<{ auctionI
         <span className="text-white/60">|</span>
         <span className="text-[11px] uppercase">Mode: {mode.toUpperCase()} ({incoterm})</span>
       </div>
+
+      {/* Governance Restriction Warning Alert */}
+      {isBiddingBlocked && (
+        <div className="p-3.5 rounded border border-red-300 bg-red-50 text-red-900 text-body-sm flex items-start gap-2.5 shadow-sm">
+          <ShieldAlert className="h-5 w-5 text-red-600 shrink-0 mt-0.5" />
+          <div className="space-y-1 text-[11px]">
+            <strong className="block text-red-950 font-bold">Supplier Governance Action Active</strong>
+            <p className="text-red-800 font-medium">{blockReason}</p>
+            <p className="text-[10px] text-red-700">
+              Note: Under FR8X-CON Supplier Governance Policy, rate inputs remain read-only. Privileges may only be restored by GodMode Administration after review.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Notifications */}
       {submitMessage && (
