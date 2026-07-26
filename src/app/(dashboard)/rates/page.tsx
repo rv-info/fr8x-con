@@ -490,6 +490,7 @@ export default function RateCenterPage() {
                   onChange={(val) => setPol(val)}
                   label="POL *"
                   placeholder="POL Code"
+                  mode="fcl"
                 />
               </div>
               <div>
@@ -498,6 +499,7 @@ export default function RateCenterPage() {
                   onChange={(val) => setPod(val)}
                   label="POD *"
                   placeholder="POD Code"
+                  mode="fcl"
                 />
               </div>
             </div>
@@ -509,6 +511,7 @@ export default function RateCenterPage() {
                 label="FPOD"
                 placeholder="Final POD Code"
                 isPlaceOfReceiptOrDelivery={true}
+                mode="fcl"
               />
             </div>
 
