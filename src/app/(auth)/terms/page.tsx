@@ -88,6 +88,19 @@ const sections = [
       "By using the platform, users acknowledge that they have read, understood, and agreed to these Terms, Privacy Policy, Intellectual Property Rights, and Acceptable Use policies.",
     ],
   },
+  {
+    title: "5. SUPPLIER GOVERNANCE & REVERSE AUCTION PARTICIPATION POLICY",
+    items: [
+      "All registered suppliers and logistics service providers participating in FR8X-CON Reverse Auctions are subject to the platform Supplier Governance Policy.",
+      "Following shipment award and execution, buyers evaluate suppliers across 11 measurable service KPIs: Space Availability, Booking Confirmation, On-Time Equipment Placement, Documentation Accuracy, Freight Accuracy, Cargo Handling, Communication, Responsiveness, Schedule Reliability, Operational Performance, and Overall Quality.",
+      "Ratings use a standardized five-star system; ratings of 2 stars or below, or overall averages below 3.0 stars, trigger a mandatory Poor Performance Record.",
+      "1 Poor Performance Record: An official system Warning is issued, and active performance monitoring is initialized.",
+      "2 Poor Performance Records: Supplier eligibility is restricted. The supplier is excluded from General Reverse Auctions and may participate only in Premium/Selective Auctions where explicitly selected and invited by the buyer.",
+      "3 Poor Performance Records: Automatic Suspension is applied across all Reverse Auctions. The supplier account receives read-only access to rate viewing and is placed under administrative review.",
+      "Only GodMode Administrative Authority may restore supplier bidding privileges following formal administrative review.",
+      "All auction creation, bidding, revision, cancellation, rating, and governance actions are recorded with permanent, immutable compliance audit logs.",
+    ],
+  },
 ];
 
 export default function TermsPage() {
