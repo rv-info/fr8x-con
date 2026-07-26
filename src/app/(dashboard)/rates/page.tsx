@@ -26,6 +26,7 @@ type RateData = {
   id: string;
   srq: string;
   rateProvider: string;
+  carrierForwardsName?: string;
   carrierForwarderName?: string;
   carrier: string;
   pol: string;
@@ -45,24 +46,19 @@ type RateData = {
   widthCm?: string;
   heightCm?: string;
   cbm?: string;
+  validityDate?: string;
+  transitType?: string;
   createdAt: { seconds: number; nanoseconds: number } | null;
   createdBy: string;
 };
 
 const CONTAINER_SIZES = [
-  { value: "20'DV", label: "20' Dry Van (20'DV)" },
-  { value: "40'DV", label: "40' Dry Van (40'DV)" },
-  { value: "40'HC", label: "40' High Cube (40'HC)" },
-  { value: "45'HC", label: "45' High Cube (45'HC)" },
-  { value: "20'FR", label: "20' Flat Rack (20'FR)" },
-  { value: "40'FR", label: "40' Flat Rack (40'FR)" },
-  { value: "40'FR HC", label: "40' Flat Rack High Cube" },
-  { value: "20'OT", label: "20' Open Top (20'OT)" },
-  { value: "40'OT", label: "40' Open Top (40'OT)" },
-  { value: "20'RF", label: "20' Reefer (20'RF)" },
-  { value: "40'RF", label: "40' Reefer (40'RF)" },
-  { value: "ISO-TK", label: "ISO Tank Container" },
-  { value: "DG", label: "Dangerous Goods Container" },
+  { value: "20'", label: "20'" },
+  { value: "40'", label: "40'" },
+  { value: "OT", label: "OT" },
+  { value: "RF", label: "RF" },
+  { value: "DG", label: "DG" },
+  { value: "IG", label: "IG" },
 ];
 
 export default function RateCenterPage() {
@@ -82,12 +78,12 @@ export default function RateCenterPage() {
 
   // Form state (left sidebar)
   const [rateProvider, setRateProvider] = useState("");
-  const [carrierForwarderName, setCarrierForwarderName] = useState("");
+  const [carrierForwardsName, setCarrierForwardsName] = useState("");
   const [carrier, setCarrier] = useState("");
   const [pol, setPol] = useState("");
   const [pod, setPod] = useState("");
   const [fpod, setFpod] = useState("");
-  const [contSize, setContSize] = useState("20'DV");
+  const [contSize, setContSize] = useState("20'");
   const [rate, setRate] = useState("");
   const [contType, setContType] = useState("GEN");
   const [route, setRoute] = useState("");
@@ -122,11 +118,11 @@ export default function RateCenterPage() {
     remarks: "",
   });
 
-  // Auto-fill Rate Provider & Carrier/Forwarder Name from current user profile
+  // Auto-fill Rate Provider & Carrier/Forwards Name from current user profile
   useEffect(() => {
     if (user) {
       setRateProvider(user.displayName || user.email || "Verified Provider");
-      setCarrierForwarderName(user.companyId || "RV-Info Logistics");
+      setCarrierForwardsName(user.companyId || "RV-Info Logistics");
     }
   }, [user]);
 
@@ -215,7 +211,7 @@ export default function RateCenterPage() {
     setPol("");
     setPod("");
     setFpod("");
-    setContSize("20'DV");
+    setContSize("20'");
     setRate("");
     setContType("GEN");
     setRoute("");
@@ -240,7 +236,8 @@ export default function RateCenterPage() {
       await setDocument(COLLECTIONS.RATES, docRef.id, {
         srq: `SRQ-${Date.now().toString().slice(-6)}`,
         rateProvider: sanitizeText(rateProvider || user.displayName || user.email || "Verified Provider"),
-        carrierForwarderName: sanitizeText(carrierForwarderName || user.companyId || "RV-Info Logistics"),
+        carrierForwardsName: sanitizeText(carrierForwardsName || user.companyId || "RV-Info Logistics"),
+        carrierForwarderName: sanitizeText(carrierForwardsName || user.companyId || "RV-Info Logistics"),
         carrier: sanitizeText(carrier),
         pol: sanitizeText(pol),
         pod: sanitizeText(pod),
@@ -271,7 +268,7 @@ export default function RateCenterPage() {
       console.error("Error saving rate:", err);
       showNotification("Failed to save rate.");
     }
-  }, [user, rateProvider, carrierForwarderName, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, lengthCm, widthCm, heightCm, cbm, handleClear, fetchRates]);
+  }, [user, rateProvider, carrierForwardsName, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, lengthCm, widthCm, heightCm, cbm, handleClear, fetchRates]);
 
   const handleUpdate = useCallback(async () => {
     if (!editingRateId) {
@@ -307,13 +304,35 @@ export default function RateCenterPage() {
     }
   }, [editingRateId, carrier, pol, pod, fpod, contType, contSize, route, rate, tt, routingSD, remarks, validityDate, transitType, lengthCm, widthCm, heightCm, cbm, handleClear, fetchRates]);
 
+  const handleEditClick = useCallback((r: RateData) => {
+    setEditingRateId(r.id);
+    setCarrier(r.carrier || "");
+    setPol(r.pol || "");
+    setPod(r.pod || "");
+    setFpod(r.fpod || "");
+    setContSize(r.contSize || "20'");
+    setRate(r.rate ? String(r.rate) : "");
+    setContType(r.contType || "GEN");
+    setRoute(r.route || "");
+    setValidityDate(r.validityDate || "");
+    setTt(r.tt || "");
+    setRoutingSD(r.routing === "Single" ? "S" : "D");
+    setTransitType(r.transitType || "SAVING");
+    setRemarks(r.remarks || "");
+    setLengthCm(r.lengthCm || "");
+    setWidthCm(r.widthCm || "");
+    setHeightCm(r.heightCm || "");
+    setCbm(r.cbm || "");
+    showNotification(`Loaded rate ${r.srq} for editing.`);
+  }, []);
+
   const handleDuplicateRow = (r: RateData) => {
     setEditingRateId(null);
     setCarrier(r.carrier || "");
     setPol(r.pol || "");
     setPod(r.pod || "");
     setFpod(r.fpod || "");
-    setContSize(r.contSize || "20'DV");
+    setContSize(r.contSize || "20'");
     setRate(r.rate ? String(r.rate) : "");
     setContType(r.contType || "GEN");
     setRoute(r.route || "");
@@ -448,41 +467,37 @@ export default function RateCenterPage() {
               )}
             </div>
 
-            {/* RATE PROVIDER - Auto Picked Up & Read Only */}
+            {/* RATE PROVIDER */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="fr8x-label">RATE PROVIDER</label>
-                <span className="text-[9px] text-emerald-600 font-semibold">(Auto-verified)</span>
-              </div>
+              <label className="fr8x-label block mb-1">RATE PROVIDER</label>
               <input
                 type="text"
                 value={rateProvider}
-                disabled
-                readOnly
-                className="fr8x-input text-caption bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200"
+                onChange={(e) => setRateProvider(e.target.value)}
+                className="fr8x-input text-caption"
+                placeholder="Rate Provider"
               />
             </div>
 
-            {/* CARRIER/FORWARDER NAME - Auto Picked Up & Read Only */}
+            {/* CARRIER/FORWARDS NAME */}
             <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="fr8x-label">CARRIER/FORWARDER NAME</label>
-                <span className="text-[9px] text-emerald-600 font-semibold">(Auto-verified)</span>
-              </div>
+              <label className="fr8x-label block mb-1">CARRIER/FORWARDS NAME</label>
               <input
                 type="text"
-                value={carrierForwarderName}
-                disabled
-                readOnly
-                className="fr8x-input text-caption bg-gray-50 text-gray-600 cursor-not-allowed border-gray-200"
+                value={carrierForwardsName}
+                onChange={(e) => setCarrierForwardsName(e.target.value)}
+                className="fr8x-input text-caption"
+                placeholder="Carrier / Forwards"
               />
             </div>
 
+            {/* Carrier */}
             <div>
-              <label className="fr8x-label block mb-1">Carrier Line</label>
+              <label className="fr8x-label block mb-1">Carrier</label>
               <input type="text" value={carrier} onChange={(e) => setCarrier(e.target.value)} className="fr8x-input text-caption" placeholder="e.g. Maersk, MSC, Hapag" />
             </div>
 
+            {/* POL | POD */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <LocationSearchInput
@@ -504,17 +519,30 @@ export default function RateCenterPage() {
               </div>
             </div>
 
-            <div className="mt-2">
-              <LocationSearchInput
-                value={fpod}
-                onChange={(val) => setFpod(val)}
-                label="FPOD"
-                placeholder="Final POD Code"
-                isPlaceOfReceiptOrDelivery={true}
-                mode="fcl"
-              />
+            {/* POD | FPOD */}
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div>
+                <LocationSearchInput
+                  value={pod}
+                  onChange={(val) => setPod(val)}
+                  label="POD *"
+                  placeholder="POD Code"
+                  mode="fcl"
+                />
+              </div>
+              <div>
+                <LocationSearchInput
+                  value={fpod}
+                  onChange={(val) => setFpod(val)}
+                  label="FPOD"
+                  placeholder="Final POD Code"
+                  isPlaceOfReceiptOrDelivery={true}
+                  mode="fcl"
+                />
+              </div>
             </div>
 
+            {/* CONTAINER SIZE & RATE */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="fr8x-label block mb-1">CONTAINER SIZE</label>
@@ -525,7 +553,7 @@ export default function RateCenterPage() {
                 </select>
               </div>
               <div>
-                <label className="fr8x-label block mb-1">RATE (USD)</label>
+                <label className="fr8x-label block mb-1">RATE</label>
                 <input type="number" value={rate} onChange={(e) => setRate(e.target.value)} className="fr8x-input text-caption" placeholder="0.00" />
               </div>
             </div>
@@ -570,13 +598,13 @@ export default function RateCenterPage() {
             </div>
 
             <div>
-              <label className="fr8x-label block mb-1">VALIDITY (DATE)</label>
+              <label className="fr8x-label block mb-1">VALIDITY</label>
               <input type="date" value={validityDate} onChange={(e) => setValidityDate(e.target.value)} className="fr8x-input text-caption" />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="fr8x-label block mb-1">TT (Days)</label>
+                <label className="fr8x-label block mb-1">TT</label>
                 <input type="text" value={tt} onChange={(e) => setTt(e.target.value)} className="fr8x-input text-caption" placeholder="e.g. 14 Days" />
               </div>
               <div>
@@ -589,7 +617,7 @@ export default function RateCenterPage() {
             </div>
 
             <div>
-              <label className="fr8x-label block mb-1">TRANSIT TYPE</label>
+              <label className="fr8x-label block mb-1">TRANSIT TYPE (SAVING/HARDPORT)</label>
               <select value={transitType} onChange={(e) => setTransitType(e.target.value)} className="fr8x-input text-caption">
                 <option value="SAVING">SAVING</option>
                 <option value="HARDPORT">HARDPORT</option>
@@ -604,18 +632,18 @@ export default function RateCenterPage() {
             {/* Actions */}
             <div className="pt-2 border-t border-border space-y-2">
               <div className="grid grid-cols-3 gap-2">
-                <button onClick={handleSave} className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] py-1 text-caption">SAVE</button>
-                <button onClick={handleUpdate} className="fr8x-btn-secondary py-1 text-caption">UPDATE</button>
-                <button onClick={handleClear} className="fr8x-btn-ghost text-danger py-1 text-caption">CLEAR</button>
+                <button onClick={handleSave} className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] py-1 text-caption font-bold">SAVE</button>
+                <button onClick={handleUpdate} className="fr8x-btn-secondary py-1 text-caption font-bold">UPDATE</button>
+                <button onClick={handleClear} className="fr8x-btn-ghost text-danger py-1 text-caption font-bold">CLEAR</button>
               </div>
               <button
                 onClick={() => {
                   if (rates.length > 0 && rates[0]) handleDuplicateRow(rates[0]);
                   else showNotification("No rates available to duplicate.");
                 }}
-                className="fr8x-btn-secondary w-full py-1 text-caption"
+                className="fr8x-btn-secondary w-full py-1 text-caption font-bold"
               >
-                DUPLICATE LATEST
+                DUPLICATE
               </button>
             </div>
           </aside>
@@ -713,8 +741,14 @@ export default function RateCenterPage() {
                     </thead>
                     <tbody className="divide-y divide-border">
                       {paginatedRates.map((r) => (
-                        <tr key={r.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
-                          <td><input type="checkbox" /></td>
+                        <tr
+                          key={r.id}
+                          onClick={() => handleEditClick(r)}
+                          className={`hover:bg-[var(--fr8x-mist)] cursor-pointer transition-colors ${
+                            editingRateId === r.id ? "bg-[var(--fr8x-mist)] font-medium border-l-2 border-l-[var(--fr8x-periwinkle)]" : ""
+                          }`}
+                        >
+                          <td onClick={(e) => e.stopPropagation()}><input type="checkbox" /></td>
                           <td className="font-semibold text-[var(--fr8x-jet)]">{r.srq}</td>
                           <td>
                             <div className="flex items-center gap-1">
@@ -735,7 +769,7 @@ export default function RateCenterPage() {
                           <td>{r.tt}</td>
                           <td>{r.routing}</td>
                           <td className="truncate max-w-[120px]">{r.remarks}</td>
-                          <td>
+                          <td onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center gap-1.5 text-[10px]">
                               <button onClick={() => handleDuplicateRow(r)} className="text-[var(--fr8x-periwinkle)] hover:underline">COPY / DUPLICATE</button>
                               <span className="text-foreground-muted">|</span>
@@ -757,21 +791,21 @@ export default function RateCenterPage() {
               <span className="text-[11px] text-foreground-muted">
                 Showing {filteredRates.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredRates.length)} of {filteredRates.length} rates
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 font-semibold">
                 <button
                   disabled={currentPage === 1}
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  className="flex items-center gap-1 fr8x-btn-secondary py-0.5 px-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-[10px] disabled:opacity-50 disabled:cursor-not-allowed hover:underline"
                 >
-                  <ChevronLeft className="h-3 w-3" /> Prev
+                  &lt; Prev
                 </button>
-                <span className="text-[11px] font-medium">Page {currentPage} of {totalPages}</span>
+                <span className="text-[11px]">Page {currentPage} of {totalPages || 1}</span>
                 <button
                   disabled={currentPage >= totalPages}
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  className="flex items-center gap-1 fr8x-btn-secondary py-0.5 px-2 text-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-[10px] disabled:opacity-50 disabled:cursor-not-allowed hover:underline"
                 >
-                  Next <ChevronRight className="h-3 w-3" />
+                  Next &gt;
                 </button>
               </div>
             </div>
