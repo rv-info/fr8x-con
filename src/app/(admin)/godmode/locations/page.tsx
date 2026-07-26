@@ -21,6 +21,7 @@ import {
   AlertCircle,
   FileText,
   Search,
+  Upload,
 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS, LOCATION_SEED_DATA, ROUTES } from "@/lib/utils/constants";
@@ -34,10 +35,25 @@ interface LocationDoc {
   name: string;
   country: string;
   countryCode: string;
-  type: "sea" | "air" | "icd" | "dry" | "rail";
+  type: string;
   postalCode: string;
   status: "active" | "disabled";
   coordinates: string;
+  state?: string;
+  city?: string;
+  unlocode?: string;
+  portCode?: string;
+  iataCode?: string;
+  icaoCode?: string;
+  icdCode?: string;
+  cfsCode?: string;
+  railCode?: string;
+  timezone?: string;
+  customsOffice?: string;
+  portAuthority?: string;
+  terminalOperator?: string;
+  aliases?: string[];
+  searchFrequency?: number;
 }
 
 interface AuditDoc {
@@ -64,14 +80,32 @@ export default function GodModeLocationsPage() {
   const [name, setName] = useState("");
   const [country, setCountry] = useState("");
   const [countryCode, setCountryCode] = useState("");
-  const [type, setType] = useState<"sea" | "air" | "icd" | "dry" | "rail">("sea");
+  const [type, setType] = useState<string>("sea");
   const [postalCode, setPostalCode] = useState("");
   const [coordinates, setCoordinates] = useState("");
+  const [stateVal, setStateVal] = useState("");
+  const [cityVal, setCityVal] = useState("");
+  const [unlocode, setUnlocode] = useState("");
+  const [portCode, setPortCode] = useState("");
+  const [iataCode, setIataCode] = useState("");
+  const [icaoCode, setIcaoCode] = useState("");
+  const [icdCode, setIcdCode] = useState("");
+  const [cfsCode, setCfsCode] = useState("");
+  const [railCode, setRailCode] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [customsOffice, setCustomsOffice] = useState("");
+  const [portAuthority, setPortAuthority] = useState("");
+  const [terminalOperator, setTerminalOperator] = useState("");
+  const [aliasesText, setAliasesText] = useState("");
   const [reason, setReason] = useState("");
 
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Bulk CSV States
+  const [csvText, setCsvText] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
 
   // Client IP (fetched dynamically for audit logs)
   const [clientIp, setClientIp] = useState("127.0.0.1");
@@ -137,10 +171,25 @@ export default function GodModeLocationsPage() {
             name: loc.name,
             country: loc.country,
             countryCode: loc.countryCode,
-            type: loc.type as any,
-            postalCode: loc.postalCode,
+            state: loc.state || "",
+            city: loc.city || "",
+            unlocode: loc.unlocode || loc.code,
+            portCode: loc.portCode || "",
+            iataCode: loc.iataCode || "",
+            icaoCode: loc.icaoCode || "",
+            icdCode: loc.icdCode || "",
+            cfsCode: loc.cfsCode || "",
+            railCode: loc.railCode || "",
+            type: loc.type,
+            postalCode: loc.postalCode || "",
             status: "active",
-            coordinates: loc.coordinates,
+            coordinates: loc.coordinates || "",
+            timezone: loc.timezone || "",
+            customsOffice: loc.customsOffice || "",
+            portAuthority: loc.portAuthority || "",
+            terminalOperator: loc.terminalOperator || "",
+            aliases: loc.aliases || [],
+            searchFrequency: loc.searchFrequency || 0,
           };
           await setDocument(COLLECTIONS.LOCATIONS, docId, payload);
           
@@ -152,6 +201,7 @@ export default function GodModeLocationsPage() {
             timestamp: new Date().toISOString(),
             details: `Seeded standard location ${loc.code} (${loc.name})`,
             ipAddress: clientIp,
+            newValue: JSON.stringify(payload),
           });
 
           seedCount++;
@@ -164,6 +214,147 @@ export default function GodModeLocationsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // --- CSV Bulk Import parser ---
+  const handleBulkImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+    setFormSuccess(null);
+    if (!csvText.trim()) {
+      setFormError("Please paste or load CSV text first.");
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const lines = csvText.split("\n").map((line) => line.trim()).filter(Boolean);
+      if (lines.length < 2 || !lines[0]) {
+        setFormError("CSV data must contain a header row and at least one data row.");
+        setIsImporting(false);
+        return;
+      }
+
+      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+      
+      let importedCount = 0;
+      let skippedCount = 0;
+
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i];
+        if (!line) continue;
+
+        // Regex split supporting quoted cells
+        const values = line
+          .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+          .map((v) => v.replace(/^"|"$/g, "").trim());
+
+        const row: Record<string, string> = {};
+        headers.forEach((header, idx) => {
+          row[header] = values[idx] || "";
+        });
+
+        const rowCode = (row.code || "").toUpperCase().replace(/\s+/g, "");
+        const rowName = row.name || "";
+        const rowCountry = row.country || "";
+        const rowCountryCode = (row.countrycode || "").toUpperCase();
+        const rowType = (row.type || "sea").toLowerCase();
+
+        if (!rowCode || !rowName || !rowCountry || !rowCountryCode) {
+          skippedCount++;
+          continue;
+        }
+
+        const validTypes = [
+          "sea", "air", "air_terminal", "rail", "dry", "icd", "cfs",
+          "warehouse", "distribution_center", "border_crossing", "inland_hub",
+          "city", "customer_location"
+        ];
+        const typeToUse = validTypes.includes(rowType) ? rowType : "sea";
+
+        const docId = `loc_${rowCode.toLowerCase()}`;
+        const prevDoc = locations.find((l) => l.code === rowCode);
+
+        const payload: LocationDoc = {
+          id: docId,
+          code: rowCode,
+          name: rowName,
+          country: rowCountry,
+          countryCode: rowCountryCode,
+          type: typeToUse,
+          postalCode: row.postalcode || "",
+          coordinates: row.coordinates || "",
+          status: "active",
+          state: row.state || "",
+          city: row.city || "",
+          unlocode: row.unlocode || rowCode,
+          portCode: row.portcode || (typeToUse === "sea" ? rowCode : ""),
+          iataCode: row.iatacode || (typeToUse === "air" ? rowCode : ""),
+          icaoCode: row.icaocode || "",
+          icdCode: row.icdcode || "",
+          cfsCode: row.cfscode || "",
+          railCode: row.railcode || "",
+          timezone: row.timezone || "",
+          customsOffice: row.customsoffice || "",
+          portAuthority: row.portauthority || "",
+          terminalOperator: row.terminaloperator || "",
+          aliases: row.aliases ? row.aliases.split(";").map((a) => a.trim()).filter(Boolean) : [],
+          searchFrequency: prevDoc?.searchFrequency || 0,
+        };
+
+        await setDocument(COLLECTIONS.LOCATIONS, docId, payload);
+        
+        // Log Audit Log
+        const auditId = `audit_${Date.now()}_${i}`;
+        await setDocument(COLLECTIONS.LOCATION_AUDIT, auditId, {
+          id: auditId,
+          action: "bulk_import",
+          userId: user.uid,
+          timestamp: new Date().toISOString(),
+          details: `Bulk imported/updated location ${rowCode} (${rowName})`,
+          ipAddress: clientIp,
+          newValue: JSON.stringify(payload),
+        });
+
+        importedCount++;
+      }
+
+      setFormSuccess(`Bulk import completed successfully. Imported: ${importedCount}, Skipped: ${skippedCount}.`);
+      setCsvText("");
+      loadData();
+    } catch (err: any) {
+      console.error("Bulk CSV import error:", err);
+      setFormError(`Bulk import failed: ${err.message}`);
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  // --- Form Reset Helper ---
+  const resetForm = () => {
+    setEditingId(null);
+    setCode("");
+    setName("");
+    setCountry("");
+    setCountryCode("");
+    setType("sea");
+    setPostalCode("");
+    setCoordinates("");
+    setStateVal("");
+    setCityVal("");
+    setUnlocode("");
+    setPortCode("");
+    setIataCode("");
+    setIcaoCode("");
+    setIcdCode("");
+    setCfsCode("");
+    setRailCode("");
+    setTimezone("");
+    setCustomsOffice("");
+    setPortAuthority("");
+    setTerminalOperator("");
+    setAliasesText("");
+    setReason("");
   };
 
   // --- Duplicate & Format Validation ---
@@ -179,6 +370,23 @@ export default function GodModeLocationsPage() {
     const cleanCountryCode = sanitizeText(countryCode).toUpperCase().replace(/\s+/g, "");
     const cleanPostal = sanitizeText(postalCode);
     const cleanCoords = sanitizeText(coordinates).replace(/\s+/g, "");
+    
+    const cleanState = sanitizeText(stateVal);
+    const cleanCity = sanitizeText(cityVal);
+    const cleanUnlocode = sanitizeText(unlocode).toUpperCase().replace(/\s+/g, "");
+    const cleanPortCode = sanitizeText(portCode).toUpperCase().replace(/\s+/g, "");
+    const cleanIataCode = sanitizeText(iataCode).toUpperCase().replace(/\s+/g, "");
+    const cleanIcaoCode = sanitizeText(icaoCode).toUpperCase().replace(/\s+/g, "");
+    const cleanIcdCode = sanitizeText(icdCode).toUpperCase().replace(/\s+/g, "");
+    const cleanCfsCode = sanitizeText(cfsCode).toUpperCase().replace(/\s+/g, "");
+    const cleanRailCode = sanitizeText(railCode).toUpperCase().replace(/\s+/g, "");
+    const cleanTimezone = sanitizeText(timezone);
+    const cleanCustomsOffice = sanitizeText(customsOffice);
+    const cleanPortAuthority = sanitizeText(portAuthority);
+    const cleanTerminalOperator = sanitizeText(terminalOperator);
+    const parsedAliases = aliasesText
+      ? aliasesText.split(",").map((a) => sanitizeText(a).trim()).filter(Boolean)
+      : [];
 
     // 2. Mandatory validations
     if (!cleanCode || !cleanName || !cleanCountry || !cleanCountryCode) {
@@ -202,7 +410,7 @@ export default function GodModeLocationsPage() {
       }
     }
 
-    // 5. Postal code format check (alphanumeric, max 10 chars)
+    // 5. Postal code format check
     if (cleanPostal && cleanPostal.length > 10) {
       setFormError("Postal/PIN code must be alphanumeric and under 10 characters.");
       return;
@@ -214,9 +422,13 @@ export default function GodModeLocationsPage() {
       
       // Fetch previous values for audit logs
       let prevValueStr = "";
+      let prevFreq = 0;
       if (editingId) {
         const prevDoc = await getDocument<LocationDoc>(COLLECTIONS.LOCATIONS, editingId);
-        if (prevDoc) prevValueStr = JSON.stringify(prevDoc);
+        if (prevDoc) {
+          prevValueStr = JSON.stringify(prevDoc);
+          prevFreq = prevDoc.searchFrequency || 0;
+        }
       }
 
       const payload: LocationDoc = {
@@ -229,6 +441,21 @@ export default function GodModeLocationsPage() {
         postalCode: cleanPostal,
         status: "active",
         coordinates: cleanCoords,
+        state: cleanState,
+        city: cleanCity,
+        unlocode: cleanUnlocode || (type === "sea" ? cleanCode : ""),
+        portCode: cleanPortCode || (type === "sea" ? cleanCode : ""),
+        iataCode: cleanIataCode || (type === "air" ? cleanCode : ""),
+        icaoCode: cleanIcaoCode,
+        icdCode: cleanIcdCode,
+        cfsCode: cleanCfsCode,
+        railCode: cleanRailCode,
+        timezone: cleanTimezone,
+        customsOffice: cleanCustomsOffice,
+        portAuthority: cleanPortAuthority,
+        terminalOperator: cleanTerminalOperator,
+        aliases: parsedAliases,
+        searchFrequency: prevFreq,
       };
 
       await setDocument(COLLECTIONS.LOCATIONS, docId, payload);
@@ -248,16 +475,7 @@ export default function GodModeLocationsPage() {
 
       setFormSuccess(`Location ${cleanCode} saved successfully.`);
       
-      // Reset form
-      setEditingId(null);
-      setCode("");
-      setName("");
-      setCountry("");
-      setCountryCode("");
-      setType("sea");
-      setPostalCode("");
-      setCoordinates("");
-      setReason("");
+      resetForm();
       setActiveTab("list");
       loadData();
     } catch (err: any) {
@@ -302,6 +520,20 @@ export default function GodModeLocationsPage() {
     setType(loc.type);
     setPostalCode(loc.postalCode || "");
     setCoordinates(loc.coordinates || "");
+    setStateVal(loc.state || "");
+    setCityVal(loc.city || "");
+    setUnlocode(loc.unlocode || "");
+    setPortCode(loc.portCode || "");
+    setIataCode(loc.iataCode || "");
+    setIcaoCode(loc.icaoCode || "");
+    setIcdCode(loc.icdCode || "");
+    setCfsCode(loc.cfsCode || "");
+    setRailCode(loc.railCode || "");
+    setTimezone(loc.timezone || "");
+    setCustomsOffice(loc.customsOffice || "");
+    setPortAuthority(loc.portAuthority || "");
+    setTerminalOperator(loc.terminalOperator || "");
+    setAliasesText(loc.aliases ? loc.aliases.join(", ") : "");
     setActiveTab("form");
   };
 
@@ -312,19 +544,13 @@ export default function GodModeLocationsPage() {
         <div>
           <h1 className="text-display-sm text-[var(--fr8x-jet)] font-semibold">Location Control Center</h1>
           <p className="text-caption text-foreground-secondary">
-            GodMode admin console to configure sea ports, airports, and inland ICD rail depots.
+            GodMode admin console to configure sea ports, airports, dry terminals, warehouses, and ICD rail depots.
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => {
-              setEditingId(null);
-              setCode("");
-              setName("");
-              setCountry("");
-              setCountryCode("");
-              setPostalCode("");
-              setCoordinates("");
+              resetForm();
               setActiveTab("form");
             }}
             className="fr8x-btn-primary py-1 px-3 text-[10px] flex items-center gap-1.5"
@@ -391,9 +617,10 @@ export default function GodModeLocationsPage() {
                       <th className="p-3">Port Code</th>
                       <th className="p-3">Location Name</th>
                       <th className="p-3">Country</th>
-                      <th className="p-3">Mode Type</th>
+                      <th className="p-3">Facility Type</th>
                       <th className="p-3">Postal / ZIP</th>
-                      <th className="p-3">Coordinates</th>
+                      <th className="p-3">UN/LOCODE</th>
+                      <th className="p-3">Time Zone</th>
                       <th className="p-3">Status</th>
                       <th className="p-3 text-right">Actions</th>
                     </tr>
@@ -410,7 +637,8 @@ export default function GodModeLocationsPage() {
                           </span>
                         </td>
                         <td className="p-3 font-mono">{loc.postalCode || "—"}</td>
-                        <td className="p-3 font-mono text-[9px]">{loc.coordinates || "—"}</td>
+                        <td className="p-3 font-mono text-[9px]">{loc.unlocode || "—"}</td>
+                        <td className="p-3 text-foreground-secondary">{loc.timezone || "—"}</td>
                         <td className="p-3">
                           <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold uppercase ${
                             loc.status === "active" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
@@ -452,126 +680,310 @@ export default function GodModeLocationsPage() {
 
           {/* TAB 2: ADD/EDIT FORM */}
           {activeTab === "form" && (
-            <div className="bg-white fr8x-card p-5 max-w-2xl">
+            <div className="bg-white fr8x-card p-5 max-w-4xl">
               <h2 className="text-body-md font-bold text-[var(--fr8x-jet)] border-b border-border pb-2 mb-4">
                 {editingId ? `Modify Location: ${code}` : "Register New Logistics Location"}
               </h2>
 
-              <form onSubmit={handleSaveLocation} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="fr8x-label block mb-1">Port/Terminal Code *</label>
-                    <input
-                      type="text"
-                      value={code}
-                      onChange={(e) => setCode(e.target.value)}
-                      placeholder="e.g. INNSA or BOM"
-                      className="fr8x-input font-mono uppercase"
-                      disabled={!!editingId}
-                      required
-                    />
-                    <p className="text-[8.5px] text-foreground-muted mt-0.5">UN/LOCODE or IATA code. Immutable after save.</p>
-                  </div>
-                  <div>
-                    <label className="fr8x-label block mb-1">Location / Port Name *</label>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="e.g. Nhava Sheva or Chhatrapati Shivaji"
-                      className="fr8x-input font-semibold"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="col-span-2">
-                    <label className="fr8x-label block mb-1">Country Name *</label>
-                    <input
-                      type="text"
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                      placeholder="e.g. India"
-                      className="fr8x-input"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="fr8x-label block mb-1">Country ISO Code *</label>
-                    <input
-                      type="text"
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      placeholder="e.g. IN"
-                      className="fr8x-input uppercase"
-                      maxLength={2}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="fr8x-label block mb-1">Transport Mode *</label>
-                    <select
-                      value={type}
-                      onChange={(e) => setType(e.target.value as any)}
-                      className="fr8x-input"
-                    >
-                      <option value="sea">Sea Port</option>
-                      <option value="air">Airport</option>
-                      <option value="icd">Inland Container Depot (ICD)</option>
-                      <option value="dry">Dry Port</option>
-                      <option value="rail">Inland Rail Terminal</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="fr8x-label block mb-1">Postal / ZIP Code (Optional)</label>
-                    <input
-                      type="text"
-                      value={postalCode}
-                      onChange={(e) => setPostalCode(e.target.value)}
-                      placeholder="e.g. 110020"
-                      className="fr8x-input font-mono"
-                    />
-                    <p className="text-[8.5px] text-foreground-muted mt-0.5">Required for POR or FPOD sites.</p>
-                  </div>
-                  <div>
-                    <label className="fr8x-label block mb-1">Coordinates (Optional)</label>
-                    <input
-                      type="text"
-                      value={coordinates}
-                      onChange={(e) => setCoordinates(e.target.value)}
-                      placeholder="lat,lon (e.g. 18.95,72.95)"
-                      className="fr8x-input font-mono"
-                    />
-                  </div>
-                </div>
-
+              <form onSubmit={handleSaveLocation} className="space-y-5">
+                {/* Section 1: Core Identifiers */}
                 <div>
-                  <label className="fr8x-label block mb-1">Audit Reason for Change / Entry *</label>
-                  <input
-                    type="text"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="e.g. Standard UN/LOCODE verification or coordinate fix"
-                    className="fr8x-input"
-                    required
-                  />
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">1. Core Identifiers</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1">Port/Terminal Code *</label>
+                      <input
+                        type="text"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        placeholder="e.g. INNSA or BOM"
+                        className="fr8x-input font-mono uppercase"
+                        disabled={!!editingId}
+                        required
+                      />
+                      <p className="text-[8.5px] text-foreground-muted mt-0.5">UN/LOCODE or IATA code. Immutable after save.</p>
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Location / Facility Name *</label>
+                      <input
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Nhava Sheva Port"
+                        className="fr8x-input font-semibold"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Facility Type *</label>
+                      <select
+                        value={type}
+                        onChange={(e) => setType(e.target.value)}
+                        className="fr8x-input font-semibold text-[var(--fr8x-jet)]"
+                      >
+                        <option value="sea">Sea Port</option>
+                        <option value="air">Airport</option>
+                        <option value="air_terminal">Air Cargo Terminal</option>
+                        <option value="icd">Inland Container Depot (ICD)</option>
+                        <option value="cfs">Container Freight Station (CFS)</option>
+                        <option value="rail">Rail Terminal / Yard</option>
+                        <option value="dry">Dry Port</option>
+                        <option value="inland_hub">Inland Hub</option>
+                        <option value="warehouse">Warehouse</option>
+                        <option value="distribution_center">Distribution Center</option>
+                        <option value="border_crossing">Border Crossing</option>
+                        <option value="city">City</option>
+                        <option value="customer_location">Customer Location</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex gap-2.5 pt-2 border-t border-border">
-                  <Button type="submit" isLoading={isSubmitting} className="fr8x-btn-primary px-4 py-1.5 text-[10px]">
+                {/* Section 2: Geographic Details */}
+                <div>
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">2. Geographic Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1">Country Name *</label>
+                      <input
+                        type="text"
+                        value={country}
+                        onChange={(e) => setCountry(e.target.value)}
+                        placeholder="e.g. India"
+                        className="fr8x-input"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Country ISO Code *</label>
+                      <input
+                        type="text"
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        placeholder="e.g. IN"
+                        className="fr8x-input uppercase"
+                        maxLength={2}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">State / Province</label>
+                      <input
+                        type="text"
+                        value={stateVal}
+                        onChange={(e) => setStateVal(e.target.value)}
+                        placeholder="e.g. Maharashtra"
+                        className="fr8x-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">City</label>
+                      <input
+                        type="text"
+                        value={cityVal}
+                        onChange={(e) => setCityVal(e.target.value)}
+                        placeholder="e.g. Mumbai"
+                        className="fr8x-input"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <div>
+                      <label className="fr8x-label block mb-1">Postal / ZIP Code</label>
+                      <input
+                        type="text"
+                        value={postalCode}
+                        onChange={(e) => setPostalCode(e.target.value)}
+                        placeholder="e.g. 110020"
+                        className="fr8x-input font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Coordinates (lat,lon)</label>
+                      <input
+                        type="text"
+                        value={coordinates}
+                        onChange={(e) => setCoordinates(e.target.value)}
+                        placeholder="e.g. 18.95,72.95"
+                        className="fr8x-input font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Time Zone</label>
+                      <input
+                        type="text"
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        placeholder="e.g. GMT+5:30"
+                        className="fr8x-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Specialized Logistics Codes */}
+                <div>
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">3. Specialized Logistics Reference Codes</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1">UN/LOCODE</label>
+                      <input
+                        type="text"
+                        value={unlocode}
+                        onChange={(e) => setUnlocode(e.target.value)}
+                        placeholder="e.g. INNSA"
+                        className="fr8x-input font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Port Code</label>
+                      <input
+                        type="text"
+                        value={portCode}
+                        onChange={(e) => setPortCode(e.target.value)}
+                        placeholder="e.g. INNSA"
+                        className="fr8x-input font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">IATA Code</label>
+                      <input
+                        type="text"
+                        value={iataCode}
+                        onChange={(e) => setIataCode(e.target.value)}
+                        placeholder="e.g. BOM"
+                        className="fr8x-input font-mono uppercase"
+                        maxLength={3}
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">ICAO Code</label>
+                      <input
+                        type="text"
+                        value={icaoCode}
+                        onChange={(e) => setIcaoCode(e.target.value)}
+                        placeholder="e.g. VABB"
+                        className="fr8x-input font-mono uppercase"
+                        maxLength={4}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                    <div>
+                      <label className="fr8x-label block mb-1">ICD Code</label>
+                      <input
+                        type="text"
+                        value={icdCode}
+                        onChange={(e) => setIcdCode(e.target.value)}
+                        placeholder="e.g. INTKD"
+                        className="fr8x-input font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">CFS Code</label>
+                      <input
+                        type="text"
+                        value={cfsCode}
+                        onChange={(e) => setCfsCode(e.target.value)}
+                        placeholder="e.g. INNSA_CFS"
+                        className="fr8x-input font-mono uppercase"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Railway Terminal Code</label>
+                      <input
+                        type="text"
+                        value={railCode}
+                        onChange={(e) => setRailCode(e.target.value)}
+                        placeholder="e.g. USCHI_COR"
+                        className="fr8x-input font-mono uppercase"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Facility Administration */}
+                <div>
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">4. Facility Administration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1">Customs Office</label>
+                      <input
+                        type="text"
+                        value={customsOffice}
+                        onChange={(e) => setCustomsOffice(e.target.value)}
+                        placeholder="e.g. Sahar Air Cargo Customs"
+                        className="fr8x-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Port Authority</label>
+                      <input
+                        type="text"
+                        value={portAuthority}
+                        onChange={(e) => setPortAuthority(e.target.value)}
+                        placeholder="e.g. Jawaharlal Nehru Port Authority"
+                        className="fr8x-input"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Terminal Operator</label>
+                      <input
+                        type="text"
+                        value={terminalOperator}
+                        onChange={(e) => setTerminalOperator(e.target.value)}
+                        placeholder="e.g. DP World / APM Terminals"
+                        className="fr8x-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 5: Search & Aliases */}
+                <div>
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">5. Search & Aliases</h3>
+                  <div>
+                    <label className="fr8x-label block mb-1">Aliases / Abbreviations / Synonyms (Comma-separated)</label>
+                    <input
+                      type="text"
+                      value={aliasesText}
+                      onChange={(e) => setAliasesText(e.target.value)}
+                      placeholder="e.g. JNPT, Mumbai Port, Nhava Sheva Port, JNCH"
+                      className="fr8x-input"
+                    />
+                    <p className="text-[8.5px] text-foreground-muted mt-0.5">Used by the search engine to match local names or common typos.</p>
+                  </div>
+                </div>
+
+                {/* Section 6: Audit trail reason */}
+                <div>
+                  <h3 className="text-caption font-bold text-[var(--fr8x-periwinkle)] uppercase tracking-wider mb-2">6. Audit Log Enforcement</h3>
+                  <div>
+                    <label className="fr8x-label block mb-1">Audit Reason for Change / Entry *</label>
+                    <input
+                      type="text"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="e.g. Seeding ICD terminal codes or adding coordinates for new DC"
+                      className="fr8x-input"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-2.5 pt-4 border-t border-border">
+                  <Button type="submit" isLoading={isSubmitting} className="fr8x-btn-primary px-5 py-2 text-[10px]">
                     {editingId ? "Save Modifications" : "Register Location"}
                   </Button>
                   <button
                     type="button"
                     onClick={() => {
-                      setEditingId(null);
+                      resetForm();
                       setActiveTab("list");
                     }}
-                    className="fr8x-btn-secondary px-4 py-1.5 text-[10px]"
+                    className="fr8x-btn-secondary px-5 py-2 text-[10px]"
                   >
                     Cancel
                   </button>
@@ -582,39 +994,78 @@ export default function GodModeLocationsPage() {
 
           {/* TAB 3: BULK OPERATIONS */}
           {activeTab === "bulk" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-white fr8x-card p-5 space-y-4">
-                <div>
-                  <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Central Master Seeding</h3>
-                  <p className="text-caption text-foreground-secondary mt-1">
-                    Populate the master locations directory with verified sea ports, airports, and ICD terminals.
-                  </p>
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-white fr8x-card p-5 space-y-4">
+                  <div>
+                    <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Central Master Seeding</h3>
+                    <p className="text-caption text-foreground-secondary mt-1">
+                      Populate the master locations directory with the expanded 25+ verified global logistics ports, airports, and ICD terminals.
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleSeedDatabase}
+                    className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1.5 px-4 flex items-center gap-1.5 shadow"
+                  >
+                    <Database className="h-4.5 w-4.5" />
+                    <span>Execute Seed Master Database</span>
+                  </button>
                 </div>
-                <button
-                  onClick={handleSeedDatabase}
-                  className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1.5 px-4 flex items-center gap-1.5 shadow"
-                >
-                  <Database className="h-4.5 w-4.5" />
-                  <span>Execute Seed Master Database</span>
-                </button>
+
+                <div className="bg-white fr8x-card p-5 space-y-4">
+                  <div>
+                    <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">UN/LOCODE Synchronization</h3>
+                    <p className="text-caption text-foreground-secondary mt-1">
+                      Synchronize location status flags and directory profiles with UN/LOCODE official API registries.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setFormSuccess("Synchronization complete. 0 updates pending, location records match official UN/LOCODE v2025.2.");
+                    }}
+                    className="fr8x-btn-secondary text-[10px] py-1.5 px-4 flex items-center gap-1.5"
+                  >
+                    <RefreshCw className="h-4.5 w-4.5 text-slate-500" />
+                    <span>Sync Registry</span>
+                  </button>
+                </div>
               </div>
 
+              {/* CSV Bulk Import Section */}
               <div className="bg-white fr8x-card p-5 space-y-4">
                 <div>
-                  <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">UN/LOCODE Synchronization</h3>
+                  <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-1.5">
+                    <Upload className="h-4.5 w-4.5 text-[var(--fr8x-periwinkle)]" /> Bulk Import Locations via CSV
+                  </h3>
                   <p className="text-caption text-foreground-secondary mt-1">
-                    Synchronize location status flags and directory profiles with UN/LOCODE official API registries.
+                    Paste CSV data to register multiple locations in bulk. The importer handles both creations and updates.
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setFormSuccess("Synchronization complete. 0 updates pending, location records match official UN/LOCODE v2025.2.");
-                  }}
-                  className="fr8x-btn-secondary text-[10px] py-1.5 px-4 flex items-center gap-1.5"
-                >
-                  <RefreshCw className="h-4.5 w-4.5 text-slate-500" />
-                  <span>Sync Registry</span>
-                </button>
+                
+                <div className="bg-slate-50 p-3 rounded border border-slate-200 text-[9px] text-foreground-muted font-mono leading-relaxed space-y-1">
+                  <p className="font-bold text-[10px] text-slate-700">Expected CSV Header Format:</p>
+                  <p className="bg-white p-1 rounded select-all border border-slate-200/60 overflow-x-auto whitespace-nowrap">
+                    code,name,country,countryCode,type,postalCode,coordinates,state,city,unlocode,portCode,iataCode,icaoCode,icdCode,cfsCode,railCode,timezone,customsOffice,portAuthority,terminalOperator,aliases
+                  </p>
+                  <p className="text-slate-500">* Note: Map type to one of: sea, air, air_terminal, rail, dry, icd, cfs, warehouse, distribution_center, border_crossing, inland_hub, city. Delimit aliases using a semicolon (e.g. "JNPT;Mumbai Port").</p>
+                </div>
+
+                <form onSubmit={handleBulkImport} className="space-y-3">
+                  <textarea
+                    rows={8}
+                    value={csvText}
+                    onChange={(e) => setCsvText(e.target.value)}
+                    placeholder='INNSA,Nhava Sheva Port,India,IN,sea,400707,"18.95,72.95",Maharashtra,Mumbai,INNSA,INNSA,,,,,"GMT+5:30",JN Custom House,JN Port Authority,DP World,"JNPT;Mumbai;Nhava Sheva"'
+                    className="fr8x-input font-mono text-[10px] min-h-[120px] resize-y"
+                  />
+                  <Button
+                    type="submit"
+                    isLoading={isImporting}
+                    className="fr8x-btn-primary text-[10px] py-1.5 px-4"
+                  >
+                    Import CSV Data
+                  </Button>
+                </form>
               </div>
             </div>
           )}
