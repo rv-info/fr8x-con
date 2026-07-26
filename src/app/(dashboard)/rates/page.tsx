@@ -460,7 +460,7 @@ export default function RateCenterPage() {
           <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">
-                {editingRateId ? "EDIT RATE ENTRY" : "RATE ENTRY / FILTERS"}
+                RATE EDITOR
               </h2>
               {editingRateId && (
                 <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-medium">Editing</span>
@@ -651,6 +651,11 @@ export default function RateCenterPage() {
           {/* ═══ MAIN CONTENT: Rates Table ═══ */}
           <main className="flex-1 min-w-0 space-y-4">
             <div className="fr8x-card bg-white overflow-hidden">
+              <div className="px-4 py-3 border-b border-border bg-gray-50 flex items-center justify-between">
+                <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] uppercase tracking-wider">
+                  {activeTab === "active" ? "ACTIVE RATES" : activeTab === "expired" ? "EXPIRED RATES" : "ALL RATES"}
+                </h2>
+              </div>
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2 py-8">
                   <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
