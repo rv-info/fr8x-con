@@ -2,23 +2,41 @@
 
 import type { AuditFields } from "./common";
 
+export type BidRevisionSnapshot = {
+  revisionNumber: number;
+  totalAmount: number;
+  totalAmountUSD: number;
+  currency: string;
+  submittedAt: string;
+};
+
 export type Bid = {
   id: string;
   auctionId: string;
   participantId: string;
-  freight: BidFreight;
+  bidderId?: string;
+  bidderName?: string;
+  bidderCompany?: string;
+  freight?: BidFreight;
+  freightCharges?: any[];
   localCharges: BidChargeRow[];
-  destinationCharges: BidChargeRow[];
-  containerCharges: ContainerCharge[];
-  freeTime: FreeTime;
-  sailingSchedule: SailingSchedule;
-  transitTime: number; // days
-  transhipment: "direct" | "transhipment";
-  remarks: string;
+  destinationCharges?: BidChargeRow[];
+  containerCharges?: ContainerCharge[];
+  freeTime?: FreeTime;
+  sailingSchedule?: SailingSchedule;
+  transitTime?: number; // days
+  transhipment?: "direct" | "transhipment";
+  remarks?: string;
   currency: string;
+  quoteCurrency?: string;
   totalAmount: number;
+  totalAmountUSD?: number;
+  totalAmountINR?: number;
   submissionNumber: number; // 1–5
+  revisionNumber?: number;
+  previousRevisions?: BidRevisionSnapshot[];
   rank?: number;
+  tcoScore?: number;
 } & AuditFields;
 
 export type BidFreight = {
