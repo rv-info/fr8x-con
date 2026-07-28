@@ -26,6 +26,7 @@ import {
   LogOut,
   MapPin,
   Archive,
+  Megaphone,
 } from "lucide-react";
 
 const sidebarSections = [
@@ -48,6 +49,7 @@ const sidebarSections = [
   {
     title: "Platform",
     items: [
+      { label: "Ad Management", href: ROUTES.GODMODE_ADS, icon: Megaphone, isRed: false },
       { label: "Billing & Plans", href: ROUTES.GODMODE_BILLING, icon: CreditCard, isRed: false },
       { label: "Audit Log", href: ROUTES.GODMODE_AUDIT, icon: FileText, isRed: false },
       { label: "System Settings", href: ROUTES.GODMODE_SETTINGS, icon: Settings, isRed: false },
@@ -60,6 +62,7 @@ const sidebarSections = [
 const topTabs = [
   { label: "Dashboard", href: ROUTES.GODMODE, icon: LayoutDashboard },
   { label: "Users & Members", href: ROUTES.GODMODE_USERS, icon: Users },
+  { label: "Ad Management", href: ROUTES.GODMODE_ADS, icon: Megaphone },
   { label: "Moderation Queue", href: ROUTES.GODMODE_MODERATION, icon: Flag },
   { label: "Blacklist Registry", href: ROUTES.GODMODE_BLACKLIST, icon: ShieldAlert },
   { label: "Verification Requests", href: ROUTES.GODMODE_VERIFICATION, icon: CheckSquare },
