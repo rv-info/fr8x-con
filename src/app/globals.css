@@ -46,7 +46,7 @@
   }
 
   html {
-    font-size: 13px; /* Base font size drives all rem values */
+    font-size: 14px; /* Base font size elevated for enhanced readability */
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
