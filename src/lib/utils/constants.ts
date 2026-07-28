@@ -12,11 +12,13 @@ export const ROUTES = {
   TERMS: "/terms",
 
   // Dashboard
+  // Dashboard
   FEEDS: "/feeds",
   PROFILE: "/profile",
   PROFILE_VIEW: (userId: string) => `/profile/${userId}` as const,
   SAVED_POSTS: "/saved-posts",
-  MY_RFQS: "/my-rfqs",
+  CONTACTS: "/contacts",
+  MESSAGES: "/messages",
   FOLLOWED_TAGS: "/followed-tags",
   COMPANY_PAGE: "/company",
   COMPANY_VIEW: (companyId: string) => `/company/${companyId}` as const,
@@ -44,6 +46,7 @@ export const ROUTES = {
   GODMODE_USERS: "/godmode/users",
   GODMODE_COMPANIES: "/godmode/companies",
   GODMODE_AUCTIONS: "/godmode/auctions",
+  GODMODE_ADS: "/godmode/ads",
   GODMODE_AWARDS: "/godmode/awards",
   GODMODE_BLACKLIST: "/godmode/blacklist",
   GODMODE_MODERATION: "/godmode/moderation",
