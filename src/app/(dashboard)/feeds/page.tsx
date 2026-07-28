@@ -454,7 +454,7 @@ export default function FeedsPage() {
           {/* Navigation */}
           <nav className="fr8x-card p-1.5 space-y-0.5 bg-white text-left">
             <Link href={ROUTES.SAVED_POSTS} className="fr8x-nav-item w-full block">Saved Posts</Link>
-            <Link href={ROUTES.MY_RFQS} className="fr8x-nav-item w-full block">My RFQs</Link>
+            <Link href={ROUTES.AUCTIONS} className="fr8x-nav-item w-full block">My RFQs</Link>
             <Link href={ROUTES.FOLLOWED_TAGS} className="fr8x-nav-item w-full block">Followed Tags</Link>
             <Link href={ROUTES.COMPANY_PAGE} className="fr8x-nav-item w-full block">Company Page</Link>
             <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full block">View Profile</Link>
