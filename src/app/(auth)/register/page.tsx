@@ -191,6 +191,19 @@ export default function RegisterPage() {
         version: 1,
       });
 
+      // Trigger Welcome Email via /api/send-email (Zoho SMTP)
+      fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: workEmail.trim(),
+          type: "welcome",
+          displayName: fullName.trim(),
+        }),
+      }).catch((emailErr) => {
+        console.warn("Welcome email dispatch warning:", emailErr);
+      });
+
       router.push(ROUTES.FEEDS);
     } catch (err: unknown) {
       console.error("Enterprise registration error details:", err);
