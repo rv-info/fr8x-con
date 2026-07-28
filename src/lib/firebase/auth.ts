@@ -130,15 +130,24 @@ export async function signInWithMicrosoft(): Promise<UserCredential> {
 }
 
 /**
- * Send password reset email to customer from tech@fr8x.in.
+ * Send password reset email via Zoho SMTP / /api/send-email.
  */
 export async function resetPassword(email: string): Promise<void> {
-  try {
-    await sendCustomerPasswordResetEmail(email);
-  } catch (e) {
-    console.warn("Online email service dispatch error, falling back to Firebase Auth:", e);
+  const response = await fetch("/api/send-email", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email: email.trim(),
+      type: "reset",
+    }),
+  });
+
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    throw new Error(data.error || "Failed to send reset email. Please try again.");
   }
-  return sendPasswordResetEmail(firebaseAuth, email);
 }
 
 /**
