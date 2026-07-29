@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES, APP_NAME } from "@/lib/utils/constants";
 import { getInitials } from "@/lib/utils/format";
+import { CurrencySelector } from "@/components/ui/CurrencySelector";
 
 export function TopNav() {
   const { user, signOut } = useAuth();
@@ -67,7 +68,10 @@ export function TopNav() {
       </form>
 
       {/* Right section */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5">
+        {/* Live Currency Selector */}
+        <CurrencySelector />
+
         {/* Search icon for mobile */}
         <button className="md:hidden p-1.5 text-foreground-secondary hover:text-foreground">
           <Search className="h-4 w-4" />
