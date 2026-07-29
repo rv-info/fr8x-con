@@ -1,4 +1,5 @@
-// FR8X-CON Auth Provider — Manages Firebase Auth, Demo Test Credentials & Single-Session Enforcement
+// FR8X-CON Auth Provider — Production
+// Firebase Auth only. No demo credentials. GodMode verified from Firestore server-side.
 
 "use client";
 
@@ -12,7 +13,7 @@ import {
   type ReactNode,
 } from "react";
 import type { AuthState, AuthUser, UserRole } from "@/lib/types/auth";
-import { onAuthChange, signOut as firebaseSignOut, getStoredDemoUser, DEMO_AUTH_EVENT } from "@/lib/firebase/auth";
+import { onAuthChange, signOut as firebaseSignOut } from "@/lib/firebase/auth";
 import { getDocument, setDocument, subscribeToDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import { useRouter } from "next/navigation";
@@ -25,13 +26,13 @@ type AuthContextType = AuthState & {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Helper to get or generate client session token
+/** Generate or retrieve a stable session ID for single-session enforcement */
 function getOrCreateSessionId(uid: string): string {
   if (typeof window === "undefined") return "";
   const key = `fr8x_session_${uid}`;
   let sessId = sessionStorage.getItem(key);
   if (!sessId) {
-    sessId = `sess_${Math.random().toString(36).substring(2, 9)}_${Date.now()}`;
+    sessId = `sess_${crypto.randomUUID()}`;
     sessionStorage.setItem(key, sessId);
   }
   return sessId;
@@ -46,156 +47,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
   const router = useRouter();
 
-  const syncDemoUser = useCallback(() => {
-    const demo = getStoredDemoUser();
-    if (demo) {
-      const authUser: AuthUser = {
-        uid: demo.id,
-        email: demo.email,
-        displayName: demo.displayName,
-        photoURL: null,
-        emailVerified: true,
-        role: demo.role as UserRole,
-        isGodMode: demo.isGodMode,
-        companyId: null,
-        membershipTier: demo.membershipTier,
-      };
-      setState({
-        isAuthenticated: true,
-        isLoading: false,
-        user: authUser,
-        error: null,
-      });
-      return true;
-    }
-    return false;
-  }, []);
+  const fetchUserData = useCallback(
+    async (
+      uid: string,
+      email: string | null,
+      displayName: string | null,
+      photoURL: string | null,
+      emailVerified: boolean
+    ) => {
+      try {
+        const userData = await getDocument<{
+          role: UserRole;
+          isGodMode: boolean;
+          companyId: string | null;
+          membershipTier: "trial" | "basic" | "premium";
+        }>(COLLECTIONS.USERS, uid);
 
-  const fetchUserData = useCallback(async (uid: string, email: string | null, displayName: string | null, photoURL: string | null, emailVerified: boolean) => {
-    try {
-      const userData = await getDocument<{
-        role: UserRole;
-        isGodMode: boolean;
-        companyId: string | null;
-        membershipTier: "trial" | "basic" | "premium";
-        activeSessionId?: string;
-      }>(COLLECTIONS.USERS, uid);
-
-      const isDemoAdmin = email === "admin@fr8x.in";
-      const authUser: AuthUser = {
-        uid,
-        email,
-        displayName: displayName || (isDemoAdmin ? "GodMode Administrator" : email === "user@fr8x.in" ? "Demo Freight Forwarder" : null),
-        photoURL,
-        emailVerified,
-        role: isDemoAdmin ? "admin" : (userData?.role || "freight_forwarder"),
-        isGodMode: isDemoAdmin ? true : (userData?.isGodMode || false),
-        companyId: userData?.companyId || null,
-        membershipTier: isDemoAdmin ? "premium" : (userData?.membershipTier || "trial"),
-      };
-
-      // Single active session enforcement: Register current session ID in Firestore
-      if (typeof window !== "undefined") {
-        const clientSessionId = getOrCreateSessionId(uid);
-        // Save current session ID to Firestore doc
-        await setDocument(
-          COLLECTIONS.USERS,
-          uid,
-          {
-            activeSessionId: clientSessionId,
-            lastLoginAt: new Date().toISOString(),
-          },
-          true
-        );
-      }
-
-      setState({
-        isAuthenticated: true,
-        isLoading: false,
-        user: authUser,
-        error: null,
-      });
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-      const isDemoAdmin = email === "admin@fr8x.in";
-      setState({
-        isAuthenticated: true,
-        isLoading: false,
-        user: {
+        const authUser: AuthUser = {
           uid,
           email,
-          displayName: displayName || (isDemoAdmin ? "GodMode Administrator" : email === "user@fr8x.in" ? "Demo Freight Forwarder" : null),
+          displayName: displayName || email,
           photoURL,
           emailVerified,
-          role: isDemoAdmin ? "admin" : "freight_forwarder",
-          isGodMode: isDemoAdmin ? true : false,
-          companyId: null,
-          membershipTier: isDemoAdmin ? "premium" : "trial",
-        },
-        error: null,
-      });
-    }
-  }, []);
+          // GodMode MUST come from Firestore, never from email match
+          role: userData?.role || "freight_forwarder",
+          isGodMode: userData?.isGodMode === true,
+          companyId: userData?.companyId || null,
+          membershipTier: userData?.membershipTier || "trial",
+        };
 
-  // Real-time Single-Session Monitor
+        // Register current session in Firestore for single-session enforcement
+        if (typeof window !== "undefined") {
+          const clientSessionId = getOrCreateSessionId(uid);
+          await setDocument(
+            COLLECTIONS.USERS,
+            uid,
+            { activeSessionId: clientSessionId, lastLoginAt: new Date().toISOString() },
+            true
+          );
+        }
+
+        setState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: authUser,
+          error: null,
+        });
+      } catch {
+        // If Firestore fetch fails, still allow auth but without elevated privileges
+        setState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            uid,
+            email,
+            displayName: displayName || email,
+            photoURL,
+            emailVerified,
+            role: "freight_forwarder",
+            isGodMode: false, // Never default to GodMode on error
+            companyId: null,
+            membershipTier: "trial",
+          },
+          error: null,
+        });
+      }
+    },
+    []
+  );
+
+  // Real-time single-session enforcement monitor
   useEffect(() => {
     if (!state.user?.uid) return;
-
     const uid = state.user.uid;
     const clientSessionId = getOrCreateSessionId(uid);
 
-    // Subscribe to changes on users/{uid} document to detect concurrent logins
-    const unsubscribeDoc = subscribeToDocument<{ activeSessionId?: string }>(
+    const unsubscribe = subscribeToDocument<{ activeSessionId?: string }>(
       COLLECTIONS.USERS,
       uid,
       (remoteData) => {
-        if (remoteData?.activeSessionId && remoteData.activeSessionId !== clientSessionId) {
-          console.warn("Single-session violation detected: Account signed in on another device.");
+        if (
+          remoteData?.activeSessionId &&
+          remoteData.activeSessionId !== clientSessionId
+        ) {
           firebaseSignOut();
           setState({
             isAuthenticated: false,
             isLoading: false,
             user: null,
-            error: "Session terminated: Your account was signed in from another device.",
+            error: "Your session was terminated because your account signed in from another device.",
           });
-          if (typeof window !== "undefined") {
-            alert("Security Alert: You have been logged out because your account was signed in on another device.");
-          }
           router.push(ROUTES.LOGIN);
         }
       }
     );
 
-    return () => {
-      unsubscribeDoc();
-    };
+    return () => unsubscribe();
   }, [state.user?.uid, router]);
 
+  // Firebase Auth state listener
   useEffect(() => {
-    // Check local demo session first
-    const hasDemo = syncDemoUser();
-
-    // Listen to local demo auth changes
-    const handleDemoChange = () => {
-      if (!syncDemoUser()) {
-        setState({
-          isAuthenticated: false,
-          isLoading: false,
-          user: null,
-          error: null,
-        });
-      }
-    };
-
-    if (typeof window !== "undefined") {
-      window.addEventListener(DEMO_AUTH_EVENT, handleDemoChange);
-    }
-
     const unsubscribe = onAuthChange(async (firebaseUser) => {
-      const demo = getStoredDemoUser();
-      if (demo) {
-        syncDemoUser();
-      } else if (firebaseUser) {
+      if (firebaseUser) {
         await fetchUserData(
           firebaseUser.uid,
           firebaseUser.email,
@@ -203,7 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firebaseUser.photoURL,
           firebaseUser.emailVerified
         );
-      } else if (!hasDemo) {
+      } else {
         setState({
           isAuthenticated: false,
           isLoading: false,
@@ -213,13 +166,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => {
-      unsubscribe();
-      if (typeof window !== "undefined") {
-        window.removeEventListener(DEMO_AUTH_EVENT, handleDemoChange);
-      }
-    };
-  }, [fetchUserData, syncDemoUser]);
+    return () => unsubscribe();
+  }, [fetchUserData]);
 
   const signOut = useCallback(async () => {
     try {
@@ -227,21 +175,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
       }
       await firebaseSignOut();
-      setState({
-        isAuthenticated: false,
-        isLoading: false,
-        user: null,
-        error: null,
-      });
+      setState({ isAuthenticated: false, isLoading: false, user: null, error: null });
       router.push(ROUTES.LOGIN);
-    } catch (error) {
-      console.error("Sign out error:", error);
+    } catch {
+      // Sign out silently
     }
   }, [state.user?.uid, router]);
 
   const refreshUser = useCallback(async () => {
     if (state.user) {
-      if (syncDemoUser()) return;
       await fetchUserData(
         state.user.uid,
         state.user.email,
@@ -250,7 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         state.user.emailVerified
       );
     }
-  }, [state.user, fetchUserData, syncDemoUser]);
+  }, [state.user, fetchUserData]);
 
   const hasRole = useCallback(
     (role: UserRole | UserRole[]) => {
@@ -263,20 +205,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({
-      ...state,
-      signOut,
-      refreshUser,
-      hasRole,
-    }),
+    () => ({ ...state, signOut, refreshUser, hasRole }),
     [state, signOut, refreshUser, hasRole]
   );
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
