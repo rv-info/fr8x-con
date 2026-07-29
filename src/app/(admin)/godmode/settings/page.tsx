@@ -469,10 +469,11 @@ export default function GodModeSettingsPage() {
             <div>
               <label className="fr8x-label block mb-1 text-xs">SMTP Port</label>
               <input
-                type="number"
+                type="text"
                 value={emailSettings.smtpPort}
-                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: parseInt(e.target.value) || 465 })}
+                onChange={(e) => setEmailSettings({ ...emailSettings, smtpPort: e.target.value })}
                 className="fr8x-input font-mono"
+                placeholder="465"
               />
             </div>
 
