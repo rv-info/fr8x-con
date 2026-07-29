@@ -1,5 +1,5 @@
 // FR8X-CON Provider-Independent Email Service Layer & Editable Template Manager (Zoho Mail Free Ready)
-"use client";
+// Universal module — can be imported from client or server contexts.
 
 import { getGodModeEmailSettings, type GodModeEmailSettings } from "@/lib/utils/email-config";
 
