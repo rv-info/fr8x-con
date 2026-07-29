@@ -1,8 +1,11 @@
 // FR8X-CON GodMode Enterprise Advertisement Wizard & Targeting Control Panel
+// Firestore-backed: campaigns persist across sessions, real-time sync.
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AdBanner, DEFAULT_ENTERPRISE_AD, type AdvertisementDoc, type TargetAudienceRules } from "@/components/ads/AdBanner";
+import { subscribeToDocuments, setDocument, updateDocument, deleteDocument } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
 import { Button } from "@/components/ui/Button";
 import {
   Megaphone,
@@ -86,10 +89,28 @@ const INITIAL_CAMPAIGNS: AdvertisementDoc[] = [
   },
 ];
 
+const FIRESTORE_ADS_COLLECTION = COLLECTIONS.ADS || "ads";
+
 export default function GodModeAdsPage() {
-  const [ads, setAds] = useState<AdvertisementDoc[]>(INITIAL_CAMPAIGNS);
+  const [ads, setAds] = useState<AdvertisementDoc[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
+
+  // Subscribe to Firestore ads collection in real-time
+  useEffect(() => {
+    setIsLoading(true);
+    const unsubscribe = subscribeToDocuments<AdvertisementDoc>(
+      FIRESTORE_ADS_COLLECTION,
+      [],
+      (data) => {
+        setAds(data);
+        setIsLoading(false);
+      }
+    );
+    return () => unsubscribe();
+  }, []);
 
   // Device Preview Modal State
   const [previewAd, setPreviewAd] = useState<AdvertisementDoc | null>(null);
@@ -114,22 +135,34 @@ export default function GodModeAdsPage() {
   const [targetPlan, setTargetPlan] = useState("All");
   const [targetDevice, setTargetDevice] = useState<"all" | "desktop" | "mobile" | "tablet">("all");
 
-  const handleToggleStatus = (id: string) => {
-    setAds((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, status: a.status === "active" ? "disabled" : "active" } : a))
-    );
+  const handleToggleStatus = async (id: string) => {
+    const ad = ads.find((a) => a.id === id);
+    if (!ad) return;
+    const newStatus = ad.status === "active" ? "disabled" : "active";
+    try {
+      await updateDocument(FIRESTORE_ADS_COLLECTION, id, { status: newStatus });
+    } catch (err) {
+      console.error("Failed to toggle ad status:", err);
+    }
   };
 
-  const handleDeleteAd = (id: string) => {
-    setAds((prev) => prev.filter((a) => a.id !== id));
+  const handleDeleteAd = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this ad campaign? This cannot be undone.")) return;
+    try {
+      await deleteDocument(FIRESTORE_ADS_COLLECTION, id);
+    } catch (err) {
+      console.error("Failed to delete ad:", err);
+    }
   };
 
-  const handlePublishAd = (e: React.FormEvent) => {
+  const handlePublishAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !adName.trim()) return;
+    setIsSaving(true);
 
+    const newId = `ad_${Date.now()}`;
     const newAd: AdvertisementDoc = {
-      id: `ad_${Date.now()}`,
+      id: newId,
       adName: adName.trim(),
       title: title.trim(),
       type,
@@ -151,16 +184,22 @@ export default function GodModeAdsPage() {
       uniqueViews: 0,
       clicks: 0,
       ctr: 0,
+      createdAt: new Date().toISOString(),
     };
 
-    setAds([newAd, ...ads]);
-    setShowWizard(false);
-    setWizardStep(1);
-
-    // Reset Form
-    setAdName("");
-    setTitle("");
-    setShortDescription("");
+    try {
+      await setDocument(FIRESTORE_ADS_COLLECTION, newId, newAd);
+      setShowWizard(false);
+      setWizardStep(1);
+      // Reset Form
+      setAdName("");
+      setTitle("");
+      setShortDescription("");
+    } catch (err) {
+      console.error("Failed to publish ad:", err);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
