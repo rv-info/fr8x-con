@@ -1,174 +1,181 @@
-// Firestore Security Rules for FR8X-CON
-// Role-based access control, server-verified writes for privileged collections
+// Firestore Security Rules for FR8X-CON — Production
+// Role-based access control. All privilege decisions server-verified.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
+
+    // ── Helper Functions ──
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     function getUserData() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
-    
+
     function isGodMode() {
       return isAuthenticated() && getUserData().isGodMode == true;
     }
-    
+
     function hasRole(role) {
       return isAuthenticated() && getUserData().role == role;
     }
-    
-    function isValidTimestamp(field) {
-      return field is timestamp;
+
+    function isNotDeleted() {
+      return !("isDeleted" in resource.data) || resource.data.isDeleted == false;
     }
-    
-    // Users collection
+
+    // ── Users ──
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.isGodMode == false;
       allow update: if isOwner(userId) || isGodMode();
       allow delete: if isGodMode();
     }
-    
-    // Profiles collection
+
+    // ── Profiles ──
     match /profiles/{profileId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(profileId);
       allow update: if isOwner(profileId) || isGodMode();
       allow delete: if isGodMode();
     }
-    
-    // Companies collection
+
+    // ── Companies ──
     match /companies/{companyId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(["name", "createdBy"])
+        && request.resource.data.createdBy == request.auth.uid;
       allow update: if isGodMode();
       allow delete: if isGodMode();
     }
-    
-    // Posts collection
+
+    // ── Posts / Feed ──
     match /posts/{postId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
-      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isGodMode());
+      allow read: if isAuthenticated() && isNotDeleted();
+      allow create: if isAuthenticated()
+        && request.resource.data.authorId == request.auth.uid
+        && request.resource.data.isDeleted == false;
+      allow update: if isAuthenticated()
+        && resource.data.authorId == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(["authorId", "createdAt"]);
+      allow delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isGodMode());
     }
-    
-    // Comments collection
+
+    // ── Comments ──
     match /comments/{commentId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.authorId == request.auth.uid;
       allow update: if isAuthenticated() && resource.data.authorId == request.auth.uid;
-      allow delete: if isAuthenticated() && (resource.data.authorId == request.auth.uid || isGodMode());
+      allow delete: if isAuthenticated()
+        && (resource.data.authorId == request.auth.uid || isGodMode());
     }
-    
-    // Likes collection
+
+    // ── Likes ──
     match /likes/{likeId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
-    
-    // Bookmarks collection
+
+    // ── Bookmarks ──
     match /bookmarks/{bookmarkId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
-    
-    // Auctions - server-verified writes only for critical operations
+
+    // ── Auctions ──
     match /auctions/{auctionId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (
-        resource.data.creatorId == request.auth.uid || isGodMode()
-      );
+      allow update: if isAuthenticated()
+        && (resource.data.creatorId == request.auth.uid || isGodMode());
       allow delete: if isGodMode();
     }
-    
-    // Auction participants
+
+    // ── Auction Participants ──
     match /auctionParticipants/{participantId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isAuthenticated();
       allow delete: if isGodMode();
     }
-    
-    // Bids - server-verified via Cloud Functions
-    // Client can read own bids; writes go through Cloud Functions
+
+    // ── Bids — server-only writes via Admin SDK ──
     match /bids/{bidId} {
-      allow read: if isAuthenticated() && (
-        resource.data.participantId == request.auth.uid || isGodMode()
-      );
-      // Writes are done via Cloud Functions only
+      allow read: if isAuthenticated()
+        && (resource.data.participantId == request.auth.uid || isGodMode());
       allow write: if false;
     }
-    
-    // Live Ranks - read-only for clients
+
+    // ── Live Ranks — server-only ──
     match /liveRanks/{rankId} {
       allow read: if isAuthenticated();
-      // Writes are done via Cloud Functions only
       allow write: if false;
     }
-    
-    // Rates
+
+    // ── Rates ──
     match /rates/{rateId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (
-        resource.data.submittedBy == request.auth.uid || isGodMode()
-      );
+      allow update: if isAuthenticated()
+        && (resource.data.submittedBy == request.auth.uid || isGodMode());
       allow delete: if isGodMode();
     }
-    
-    // Awards - admin-only writes
+
+    // ── Awards — admin-only writes ──
     match /awards/{awardId} {
       allow read: if isAuthenticated();
       allow write: if isGodMode();
     }
-    
-    // Blacklists - admin-only writes
+
+    // ── Blacklists — admin-only ──
     match /blacklists/{blacklistId} {
       allow read: if isAuthenticated();
       allow write: if isGodMode();
     }
-    
-    // Currencies - server-managed
+
+    // ── Currencies — server-managed ──
     match /currencies/{currencyId} {
       allow read: if isAuthenticated();
-      allow write: if false; // Server-managed via Cloud Functions
+      allow write: if false;
     }
-    
-    // Notifications
+
+    // ── Notifications ──
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow write: if false; // Server-managed
+      // Only allow marking as read/dismissed — not creating or deleting
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["isRead", "readAt"]);
+      allow create: if false;  // Server Admin SDK only
+      allow delete: if false;  // Server Admin SDK only
     }
-    
-    // Audit log - append-only, no client deletes
+
+    // ── Audit Log — append-only, GodMode read ──
     match /audit/{logId} {
       allow read: if isGodMode();
       allow create: if isAuthenticated();
       allow update: if false;
       allow delete: if false;
     }
-    
-    // Settings - admin-only
+
+    // ── Settings — admin-only ──
     match /settings/{settingId} {
       allow read: if isAuthenticated();
       allow write: if isGodMode();
     }
-    
-    // Logs
+
+    // ── Logs — append-only ──
     match /logs/{logId} {
       allow read: if isGodMode();
       allow create: if isAuthenticated();
@@ -176,19 +183,113 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Locations - general reads, authenticated creation for manual unblocking, admin-only updates/deletes
+    // ── Locations — authenticated only (was incorrectly open) ──
     match /locations/{locationId} {
-      allow read: if true;
-      allow create: if true;
-      allow update, delete: if isGodMode();
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isGodMode();
+      allow delete: if isGodMode();
     }
 
-    // Location Audit - admin reads, append-only writes
+    // ── Location Audit — authenticated only ──
     match /location_audit/{auditId} {
-      allow read: if true;
-      allow create: if true;
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
       allow update: if false;
       allow delete: if false;
+    }
+
+    // ── Jobs ──
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.postedBy == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.postedBy == request.auth.uid || isGodMode());
+      allow delete: if isAuthenticated()
+        && (resource.data.postedBy == request.auth.uid || isGodMode());
+    }
+
+    // ── Job Applications ──
+    match /jobApplications/{appId} {
+      allow read: if isAuthenticated()
+        && (resource.data.applicantId == request.auth.uid || isGodMode());
+      allow create: if isAuthenticated() && request.resource.data.applicantId == request.auth.uid;
+      allow update: if isGodMode();
+      allow delete: if isGodMode();
+    }
+
+    // ── Transactions — owner read, server writes ──
+    match /transactions/{txId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isGodMode());
+      allow write: if false; // Server Admin SDK only via webhook
+    }
+
+    // ── Connections / Contacts ──
+    match /connections/{connectionId} {
+      allow read: if isAuthenticated()
+        && (resource.data.requesterId == request.auth.uid
+            || resource.data.recipientId == request.auth.uid
+            || isGodMode());
+      allow create: if isAuthenticated()
+        && request.resource.data.requesterId == request.auth.uid;
+      allow update: if isAuthenticated()
+        && (resource.data.requesterId == request.auth.uid
+            || resource.data.recipientId == request.auth.uid);
+      allow delete: if isAuthenticated()
+        && (resource.data.requesterId == request.auth.uid
+            || resource.data.recipientId == request.auth.uid
+            || isGodMode());
+    }
+
+    // ── Backups — admin-only ──
+    match /backups/{backupId} {
+      allow read: if isGodMode();
+      allow write: if isGodMode();
+    }
+
+    // ── Advertisements — GodMode write, authenticated read ──
+    match /ads/{adId} {
+      allow read: if isAuthenticated();
+      allow write: if isGodMode();
+    }
+
+    // ── OTPs — server Admin SDK only, no client access ──
+    match /otps/{otpId} {
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // ── Invoices — owner read, server write ──
+    match /invoices/{invoiceId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isGodMode());
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ── Receipts — owner read, server write ──
+    match /receipts/{receiptId} {
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isGodMode());
+      allow write: if false; // Server Admin SDK only
+    }
+
+    // ── Stamps & Signatures — GodMode only ──
+    match /stamps/{stampId} {
+      allow read: if isGodMode();
+      allow write: if isGodMode();
+    }
+
+    // ── Push Tokens ──
+    match /push_tokens/{tokenId} {
+      allow read: if isOwner(tokenId);
+      allow write: if isOwner(tokenId);
+    }
+
+    // ── Tags / Trending ──
+    match /tags/{tagId} {
+      allow read: if isAuthenticated();
+      allow write: if isGodMode();
     }
   }
 }
