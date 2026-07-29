@@ -4,57 +4,47 @@ This PRD specifies the functional requirements, validation, and layout structure
 
 ---
 
-## 1. Profile & Company Identity
+## 1. Profile & Company Identity (Centralized Hub)
 
-### User Profile
-* **Picture Upload**: Interactive photo uploader with canvas crop/resize, file type check (`.jpg`, `.png`, `.webp`), and size limit validation (max 2MB).
-* **Identity Handles**: Permanent unique handles (e.g., `@RAJAT001`) automatically generated upon profile save.
-
-### Company Profile
-* **Logo Management**: Logo upload, crop/resize, replace, and delete.
-* **Credentials Forms**: Business fields: GSTN Number (validated, 15-digit), PAN (10-digit), CIN (21-digit), IEC, business registration number, company type selection, year established.
-* **Public Visibility**: Displays in about sections, search results, and public company pages.
-
----
-
-## 2. Professional Network Partners (Networking)
-
-* **Relationship Model**: Replace traditional friendship with "Network Partners".
-* **Connection Handlers**:
-  * Send request, cancel request, accept, reject, block, unblock.
-  * Follow / Unfollow toggle.
-* **Proximity Metrics**:
-  * Industry Match %: overlap of selected specialization tags.
-  * Mutual connections count.
-  * Shared company indicator.
+### User Profile Hub (`/profile`)
+* **Centralized Hub Architecture**: The Profile section serves as the single centralized hub for all networking, company details, posts, enterprise contacts, contact requests, messaging, saved posts, followed tags, awards, and blacklist management.
+* **Navigation Slimming**: Left navigation (`Sidebar.tsx`) trimmed down to core platform modules (`Feeds`, `Auctions`, `Rates`, `Profile`, and `Admin`), moving all secondary networking tabs into Profile.
+* **Profile Tabs**:
+  * **Profile Overview**: Picture upload, public handles (`@HANDLE`), designation, About/Bio, Work Experience list, and Education list.
+  * **Company Profile**: Logo, corporate info, credentials, and member team.
+  * **My Posts**: Complete feed history of user's published updates with soft deletion.
+  * **Contacts & Blocked**: Approved contacts list and blacklisted members tabs (`[ Contacts ] [ Blocked ]`).
+  * **Contact Requests**: Received pending requests and sent requests.
+  * **Messages**: Real-time enterprise chat.
+  * **Saved Posts**: Bookmarked posts.
+  * **Followed Tags**: Followed industry tags.
+  * **Awards & Certifications**: Verifications and awards.
+  * **Blacklist**: Blacklisted members and unblock controls.
 
 ---
 
-## 3. Awards & Nominated Honors
+## 2. Enterprise Contact Management & Messaging System
 
-* **Reactions**: Like, Celebrate, Recommend, Support.
-* **Up/Down Voting**: Vote once, change vote, or remove vote. Displays recommendation score.
-* **Comments**: Create, reply, edit, and delete comments on awards.
-* **Tiers of Verification**:
-  * Company Verification (by employees of the same company).
-  * Community Verification (after receiving 3+ partner verifies).
-  * Admin Verification (signed by GodMode administrators).
+* **Contact Management**: Search users & companies directory, Send Contact Request, Cancel Sent Request, Accept, Reject, Block, and Remove Contact.
+* **Strict Communication Rules**: Only approved contacts are eligible for 1-to-1 instant messaging.
+* **Contacts Panel**: Left-side Contacts Panel in Feeds and Profile displaying profile pictures, company names, user names, online/offline status (future-ready), last active timestamps, and Quick Chat launcher buttons.
+* **Contact Search Inside Chat**: Top of chat panel contact search bar with live filtering by Name, Company Name, or Username. Selecting a contact opens existing conversation or automatically initializes a new conversation without leaving the current page.
+* **Floating Chat Launcher**: Floating widget fixed in the bottom-right corner of every page allowing instant real-time messaging, file sharing, rate quote sharing, and auction card sharing from anywhere on the platform.
 
 ---
 
-## 4. Universal Search System
+## 5. Feed Layout & Advertisement Management
 
-* **Omni-Search Bar**: Auto-complete and suggestions drop-down on typing.
-* **Dashboard Tab Selection**: All | Professionals | Companies | RFQs | Tags.
-* **Sidebar Filters**: Country, City, Company Name, Industry Tag, Verification Status.
-* **History**: Stores last 5 searches in local storage history.
-
----
-
-## 5. Feed Advertising & Tag Follows
-
-* **Ad Blocks**: Inject sponsored ads between feed posts and under trending tags.
-* **Trending Tag Follows**: Follow/unfollow hashtags, appending hashtags to composer on click, showing related company contacts.
+* **Feed 3-Column Layout**:
+  * **Left Panel**: User Summary Card + Approved Contacts Panel.
+  * **Center Panel**: Feed Composer + Feed Timeline (Reverse Auction updates, Company posts, Logistics updates).
+  * **Right Panel (Strict Order)**:
+    1. **Logistics Jobs** (Fixed height container)
+    2. **Trending Tags** (Positioned directly below Logistics Jobs, fixed position, no ads above)
+    3. **Advertisement Block 1**
+    4. **Advertisement Block 2**
+* **GodMode Advertisement Management (`/godmode/ads`)**:
+  * Campaign CRUD, activate/deactivate, preview, schedule, banner image uploads, HTML uploads, CTA button configuration, internal/external links, impression/click analytics (CTR %), and asset specification guidelines (Recommended size 300×250 / 1200×300, formats JPG/PNG/WEBP/SVG/HTML5, max file size 2MB, resolution 72 DPI minimum).
 
 ---
 
