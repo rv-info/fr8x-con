@@ -38,24 +38,26 @@ import {
   Star,
 } from "lucide-react";
 
+import { ContactsPanel } from "@/components/contacts/ContactsPanel";
+
 const SPONSORED_ADS = [
   {
-    title: "DP World Marine Services",
+    title: "FR8X Ocean Freight Intelligence 2026",
     label: "Sponsored",
     description: "Smarter trade flows. End-to-end container logistics, port terminals, and digital booking tools for freight forwarders globally.",
-    link: "www.dpworld.com/maritime",
+    link: "www.fr8x.in/ocean-intel",
   },
   {
-    title: "Maersk Cold Chain Logistics",
+    title: "FR8X Cold Chain Logistics",
     label: "Promoted",
     description: "Keep your cargo fresh from farm to table. Integrated cold storage storage, active atmospheric containers, and real-time sensor tracking.",
-    link: "www.maersk.com/coldchain",
+    link: "www.fr8x.in/coldchain",
   },
   {
-    title: "Vessel Finder Pro Premium",
+    title: "FR8X Vessel Finder Pro Premium",
     label: "Advertisement",
     description: "Never lose track of your shipments. Real-time satellite AIS data, route forecasting, port congestion indexes, and geofencing alerts.",
-    link: "www.vesselfinder.com/pro",
+    link: "www.fr8x.in/vessel-pro",
   },
 ];
 
@@ -451,15 +453,17 @@ export default function FeedsPage() {
             )}
           </div>
 
-          {/* Navigation */}
+          {/* Navigation Links */}
           <nav className="fr8x-card p-1.5 space-y-0.5 bg-white text-left">
-            <Link href={ROUTES.SAVED_POSTS} className="fr8x-nav-item w-full block">Saved Posts</Link>
+            <Link href={`${ROUTES.PROFILE}?tab=saved-posts`} className="fr8x-nav-item w-full block">Saved Posts</Link>
             <Link href={ROUTES.AUCTIONS} className="fr8x-nav-item w-full block">My RFQs</Link>
-            <Link href={ROUTES.FOLLOWED_TAGS} className="fr8x-nav-item w-full block">Followed Tags</Link>
-            <Link href={ROUTES.COMPANY_PAGE} className="fr8x-nav-item w-full block">Company Page</Link>
+            <Link href={`${ROUTES.PROFILE}?tab=followed-tags`} className="fr8x-nav-item w-full block">Followed Tags</Link>
+            <Link href={`${ROUTES.PROFILE}?tab=company`} className="fr8x-nav-item w-full block">Company Page</Link>
             <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full block">View Profile</Link>
           </nav>
 
+          {/* Approved Contacts Panel (Reference Layout Image 1 - added contact) */}
+          <ContactsPanel compact maxDisplay={6} />
         </aside>
 
         {/* ═══ CENTER FEED ═══ */}
@@ -543,12 +547,11 @@ export default function FeedsPage() {
               ))}
             </div>
           )}
-
         </main>
 
-        {/* ═══ RIGHT SIDEBAR ═══ */}
+        {/* ═══ RIGHT SIDEBAR (Strict Reference Order) ═══ */}
         <aside className="hidden xl:block w-[220px] shrink-0 space-y-2">
-          {/* Jobs Utility Section */}
+          {/* 1. Logistics Jobs Section (Fixed) */}
           <div className="fr8x-card p-2.5 bg-white space-y-2 border border-blue-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -574,7 +577,7 @@ export default function FeedsPage() {
                 </button>
               </div>
             ) : (
-              <div className="max-h-[260px] overflow-y-auto space-y-1.5 pr-0.5">
+              <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-0.5">
                 {jobs.map((job) => (
                   <div
                     key={job.id}
@@ -592,7 +595,7 @@ export default function FeedsPage() {
             )}
           </div>
 
-          {/* Trending Tags */}
+          {/* 2. Trending Tags (Moved directly below Logistics Jobs, fixed position) */}
           <div className="fr8x-card p-2.5 bg-white text-left">
             <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
               <TagIcon className="h-3.5 w-3.5 text-amber-500" />
@@ -631,7 +634,10 @@ export default function FeedsPage() {
             </ul>
           </div>
 
-          {/* Sidebar Sponsored Ad Block */}
+          {/* 3. Advertisement Block 1 */}
+          <SponsoredAdBlock index={0} />
+
+          {/* 4. Advertisement Block 2 */}
           <SponsoredAdBlock index={1} />
         </aside>
       </div>
