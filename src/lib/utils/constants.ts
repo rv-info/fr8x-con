@@ -87,6 +87,13 @@ export const COLLECTIONS = {
   LOCATIONS: "locations",
   BACKUPS: "backups",
   LOCATION_AUDIT: "location_audit",
+  ADS: "ads",
+  OTPS: "otps",
+  INVOICES: "invoices",
+  RECEIPTS: "receipts",
+  STAMPS: "stamps",
+  PUSH_TOKENS: "push_tokens",
+  TAGS: "tags",
 } as const;
 
 
@@ -180,11 +187,11 @@ export const INCOTERMS_LIST = [
   "DDP",
 ] as const;
 
-// Membership tiers (spec page 2 — Trail = 2 days)
+// Membership tiers (spec page 2 — Trial = 2 days free access)
 export const MEMBERSHIP_TIERS = [
   {
     id: "trial",
-    name: "Trail",
+    name: "Trial",
     priceINR: 0,
     priceUSD: 0,
     period: "2 days",
