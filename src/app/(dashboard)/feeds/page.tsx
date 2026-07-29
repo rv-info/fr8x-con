@@ -21,6 +21,7 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import type { FeedFilterCategory } from "@/lib/types/feed";
 import PostJobDialog from "@/components/jobs/PostJobDialog";
 import type { JobPosting } from "@/lib/types/job";
+import { AdBanner } from "@/components/ads/AdBanner";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -40,53 +41,14 @@ import {
 
 import { ContactsPanel } from "@/components/contacts/ContactsPanel";
 
-const SPONSORED_ADS = [
-  {
-    title: "FR8X Ocean Freight Intelligence 2026",
-    label: "Sponsored",
-    description: "Smarter trade flows. End-to-end container logistics, port terminals, and digital booking tools for freight forwarders globally.",
-    link: "www.fr8x.in/ocean-intel",
-  },
-  {
-    title: "FR8X Cold Chain Logistics",
-    label: "Promoted",
-    description: "Keep your cargo fresh from farm to table. Integrated cold storage storage, active atmospheric containers, and real-time sensor tracking.",
-    link: "www.fr8x.in/coldchain",
-  },
-  {
-    title: "FR8X Vessel Finder Pro Premium",
-    label: "Advertisement",
-    description: "Never lose track of your shipments. Real-time satellite AIS data, route forecasting, port congestion indexes, and geofencing alerts.",
-    link: "www.fr8x.in/vessel-pro",
-  },
+// Trending tags fetched from Firestore (see below)
+const DEFAULT_TRENDING_TAGS = [
+  { name: "Ocean Freight", related: "Global Trade Lanes" },
+  { name: "Air Freight", related: "Express Logistics" },
+  { name: "FCL", related: "Container Shipping" },
+  { name: "LCL", related: "Consolidation" },
+  { name: "NVOCC", related: "Freight Forwarding" },
 ];
-
-const TRENDING_TAGS_DATA = [
-  { name: "Ocean Freight", related: "Apex Cargo, Rajat Rai (CHA)" },
-  { name: "Air Freight", related: "NVOCC Direct, Trans-Border Line" },
-  { name: "FCL", related: "RV-Info Logistics, Importers Corp" },
-  { name: "LCL", related: "Cross-border Line, Warehouse Ops" },
-  { name: "NVOCC", related: "MLO Agent, Shippers Guild" },
-];
-
-function SponsoredAdBlock({ index = 0 }: { index?: number }) {
-  const ad = SPONSORED_ADS[index % SPONSORED_ADS.length];
-  if (!ad) return null;
-  return (
-    <div className="fr8x-card p-3 bg-amber-50/20 border border-amber-200/50 rounded-lg space-y-1.5 text-left animate-fadeIn">
-      <div className="flex items-center justify-between">
-        <span className="text-[8px] uppercase tracking-wider font-extrabold text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded">
-          {ad.label}
-        </span>
-        <span className="text-[8px] text-foreground-muted hover:underline cursor-pointer">{ad.link}</span>
-      </div>
-      <div>
-        <p className="text-[10px] font-bold text-[var(--fr8x-jet)]">{ad.title}</p>
-        <p className="text-[9.5px] text-foreground-secondary mt-0.5 leading-relaxed">{ad.description}</p>
-      </div>
-    </div>
-  );
-}
 
 
 // ─── Types ───
@@ -233,6 +195,7 @@ export default function FeedsPage() {
   const [posts, setPosts] = useState<PostData[]>([]);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [jobs, setJobs] = useState<JobData[]>([]);
+  const [trendingTags, setTrendingTags] = useState(DEFAULT_TRENDING_TAGS);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
   const [isPostJobOpen, setIsPostJobOpen] = useState(false);
@@ -240,6 +203,16 @@ export default function FeedsPage() {
   const [followedTags, setFollowedTags] = useState<string[]>([]);
 
   const displayName = user?.displayName || "User";
+
+  // Fetch trending tags from Firestore (fallback to defaults)
+  useEffect(() => {
+    queryDocuments<{ name: string; related: string }>("tags", [
+      orderBy("name"),
+      limit(10),
+    ])
+      .then((data) => { if (data.length > 0) setTrendingTags(data); })
+      .catch(() => undefined);
+  }, []);
 
   // Fetch followed tags from profile
   useEffect(() => {
@@ -332,7 +305,7 @@ export default function FeedsPage() {
       await setDocument(COLLECTIONS.POSTS, docRef.id, {
         authorId: user.uid,
         authorName: user.displayName || "User",
-        authorCompany: profile?.companyName || "RV-Info Member",
+        authorCompany: profile?.companyName || "Logistics Network Member",
         authorLocation: profile?.location ? `${profile.location}, ${profile.country || ""}` : "",
         content: postContent.trim(),
         category: selectedTag === "all" ? "" : selectedTag,
@@ -539,9 +512,9 @@ export default function FeedsPage() {
               {filteredPosts.map((post, idx) => (
                 <div key={post.id} className="space-y-2">
                   <PostCard post={post} />
-                  {/* Inject sponsored ad block after every 4 posts */}
+                  {/* Inject Firestore-backed ad after every 4 posts */}
                   {(idx + 1) % 4 === 0 && (
-                    <SponsoredAdBlock index={Math.floor(idx / 4)} />
+                    <AdBanner adIndex={Math.floor(idx / 4)} />
                   )}
                 </div>
               ))}
@@ -551,7 +524,7 @@ export default function FeedsPage() {
 
         {/* ═══ RIGHT SIDEBAR (Strict Reference Order) ═══ */}
         <aside className="hidden xl:block w-[220px] shrink-0 space-y-2">
-          {/* 1. Logistics Jobs Section (Fixed) */}
+          {/* 1. Logistics Jobs Section */}
           <div className="fr8x-card p-2.5 bg-white space-y-2 border border-blue-100">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5">
@@ -595,14 +568,14 @@ export default function FeedsPage() {
             )}
           </div>
 
-          {/* 2. Trending Tags (Moved directly below Logistics Jobs, fixed position) */}
+          {/* 2. Trending Tags — fetched from Firestore */}
           <div className="fr8x-card p-2.5 bg-white text-left">
             <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
               <TagIcon className="h-3.5 w-3.5 text-amber-500" />
               <span>Trending Tags</span>
             </p>
             <ul className="space-y-2">
-              {TRENDING_TAGS_DATA.map((t) => {
+              {trendingTags.map((t) => {
                 const isFollowing = followedTags.includes(t.name);
                 return (
                   <li key={t.name} className="text-[10px] text-foreground-secondary border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
@@ -634,11 +607,11 @@ export default function FeedsPage() {
             </ul>
           </div>
 
-          {/* 3. Advertisement Block 1 */}
-          <SponsoredAdBlock index={0} />
+          {/* 3. Firestore-backed Advertisement */}
+          <AdBanner adIndex={0} />
 
-          {/* 4. Advertisement Block 2 */}
-          <SponsoredAdBlock index={1} />
+          {/* 4. Firestore-backed Advertisement #2 */}
+          <AdBanner adIndex={1} />
         </aside>
       </div>
     </div>
