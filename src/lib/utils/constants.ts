@@ -12,7 +12,6 @@ export const ROUTES = {
   TERMS: "/terms",
 
   // Dashboard
-  // Dashboard
   FEEDS: "/feeds",
   PROFILE: "/profile",
   PROFILE_VIEW: (userId: string) => `/profile/${userId}` as const,
