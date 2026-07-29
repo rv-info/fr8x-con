@@ -30,14 +30,7 @@ const navItems = [
   { label: "Feeds", href: ROUTES.FEEDS, icon: LayoutDashboard },
   { label: "Auctions", href: ROUTES.AUCTIONS, icon: Gavel },
   { label: "Rates", href: ROUTES.RATES, icon: TrendingUp },
-  { label: "Contacts", href: ROUTES.CONTACTS, icon: Users },
-  { label: "Messages", href: ROUTES.MESSAGES, icon: MessageSquare },
   { label: "Profile", href: ROUTES.PROFILE, icon: User },
-  { label: "Saved Posts", href: ROUTES.SAVED_POSTS, icon: Bookmark },
-  { label: "Followed Tags", href: ROUTES.FOLLOWED_TAGS, icon: Tag },
-  { label: "Company", href: ROUTES.COMPANY_PAGE, icon: Building2 },
-  { label: "Awards", href: ROUTES.AWARDS, icon: Award },
-  { label: "Blacklist", href: ROUTES.BLACKLIST, icon: ShieldAlert },
 ];
 
 
