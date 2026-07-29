@@ -57,14 +57,23 @@ This PRD specifies the functional requirements, validation, and layout structure
 
 ## 7. Platform Security & Sanitization
 
-* **Text Inputs**: Sanitized using `sanitizeText` to block HTML/XSS scripts, SQL injections, relative path traversal (`../`), and CSV/Excel formula injections (obfuscating `=+-@|`).
-* **Image Uploads**: MIME signatures checked by magic bytes (PNG, JPEG, WEBP). Strips EXIF metadata using canvas-driven redrawing.
-* **Malware Scanner**: Mock antivirus scans EICAR strings and blocks executable extensions (.exe, .sh, .bat).
+## 8. GodMode Enterprise Billing, Subscription & Global System Settings
 
-## 8. Snapshot Database Backups
+* **Enterprise Subscription Plans (`/godmode/billing`)**:
+  * Configurable subscription tiers (`Trial`, `Basic`, `Professional`, `Enterprise`, `Custom`) with dynamic limits for users, branches, storage, reverse auctions, rate postings, messaging, jobs, ads, API, AI, and priority support.
+* **Provider-Independent Payment Architecture**:
+  * Gateway adapters for PayPal (live/sandbox, webhook monitor), Direct Bank Transfer (SWIFT/IBAN), and UPI (with live client-side canvas QR Code generation, preview, PNG download, and auto-regeneration).
+  * Provider health monitoring dashboard (active status, last success, last failure, pending events).
+  * Interface contracts for Razorpay, Stripe, PayU, PhonePe, Wise, and Adyen with zero database redesign.
+  * Payment & Invoice History tracking with CSV export.
+  * Dynamic country-wise tax configuration (GST, VAT, Sales Tax) and Coupon administration (discount types, usage caps, corporate/referral flags).
+  * Invoice template configuration (logo, GST, PAN, address, terms, prefix).
 
-* Runs daily in the background at 12:00 AM IST.
-* Encodes and compresses Firestore data, verifying integrity.
-* Implements retention configs: Daily, Weekly, Monthly limits.
-* Restore console restricted to GodMode, logging action details and reason to audit.
+* **Global System Control Center (`/godmode/settings`)**:
+  * **Authentication**: Password complexity rules, session timeouts, max concurrent sessions, MFA toggle, OAuth (Google/Microsoft), and Passkey readiness.
+  * **Registration Policy**: Mandated email verification, auto vs manual approval, domain/country whitelists & blacklists.
+  * **Zoho Free Email Dispatcher Setup**: Provider-independent Email Service Layer (Zoho SMTP ready) with server-side encrypted credentials and connection testing.
+  * **Editable Email Templates**: 12 system email templates with dynamic placeholders (`{{userName}}`, `{{companyName}}`, `{{link}}`, `{{invoiceNo}}`, `{{amount}}`).
+  * **Live Feature Toggles**: Dynamic module switches (`Feed`, `Auctions`, `Messaging`, `Contacts`, `Jobs`, `AI`, `Ads`, `Registration`, `Maintenance Mode`) without redeployment.
+  * **Security Center & Monitoring**: Firestore/Auth/Storage/Queue metrics, failed login logs, blocked IPs, suspicious activity tracking, snapshot backups & restore, and immutable audit trail logs.
 
