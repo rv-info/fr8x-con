@@ -11,6 +11,8 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { CurrencyTicker } from "@/components/layout/CurrencyTicker";
 
+import { FloatingChat } from "@/components/chat/FloatingChat";
+
 export default function DashboardLayout({
   children,
 }: {
@@ -39,7 +41,7 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
+    <div className="flex h-screen flex-col overflow-hidden bg-background relative">
       {/* Currency Ticker Strip */}
       <CurrencyTicker />
 
@@ -61,6 +63,9 @@ export default function DashboardLayout({
           </main>
         </div>
       </div>
+
+      {/* Floating Chat Launcher (Every Page) */}
+      <FloatingChat />
     </div>
   );
 }
