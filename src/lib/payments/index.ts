@@ -1,5 +1,6 @@
-// FR8X-CON Extensible Payment Engine & Gateway Architecture
-// Supports PayPal, UPI, Card, Bank Transfer, with complete status flow & transaction logging
+// FR8X-CON Payment Engine & Gateway Architecture
+// IMPORTANT: Transaction status is only set to 'success' via server-side webhook (api/payments/webhook).
+// Never trust client-side payment status. All gateways initiate as 'pending'.
 
 import { setDocument, getDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
@@ -141,7 +142,7 @@ export class CardGateway implements PaymentGateway {
       amount: params.amount,
       currency: params.currency || "INR",
       method: "card",
-      status: "success",
+      status: "pending", // Status set to pending — only webhook marks success
       gatewayReference: `CARD_TXN_${Date.now()}`,
       membershipTier: params.membershipTier,
       description: params.description || "FR8X Payment via Credit/Debit Card",
@@ -155,7 +156,7 @@ export class CardGateway implements PaymentGateway {
   }
 
   async verifyPayment(transactionId: string): Promise<PaymentVerificationResult> {
-    return { success: true, transactionId, status: "success", message: "Card transaction verified" };
+    return { success: false, transactionId, status: "pending", message: "Card payment verification happens via server webhook." };
   }
 }
 
@@ -221,50 +222,12 @@ export const paymentRegistry = new PaymentGatewayRegistry();
 
 // ═══ TRANSACTION LOGGING HELPERS ═══
 export async function saveTransaction(tx: PaymentTransaction): Promise<void> {
-  try {
-    await setDocument(COLLECTIONS.TRANSACTIONS, tx.transactionId, tx);
-  } catch (err) {
-    console.warn("Firestore transaction logging fallback to localStorage:", err);
-  }
-
-  // Save to client-side storage for offline/fallback persistence
-  if (typeof window !== "undefined") {
-    try {
-      const savedLogsStr = localStorage.getItem("fr8x_payment_transactions");
-      const logs: PaymentTransaction[] = savedLogsStr ? JSON.parse(savedLogsStr) : [];
-      const existingIdx = logs.findIndex((item) => item.transactionId === tx.transactionId);
-      if (existingIdx >= 0) {
-        logs[existingIdx] = tx;
-      } else {
-        logs.unshift(tx);
-      }
-      localStorage.setItem("fr8x_payment_transactions", JSON.stringify(logs.slice(0, 100)));
-    } catch (e) {
-      console.error("Failed to update localStorage transactions:", e);
-    }
-  }
+  await setDocument(COLLECTIONS.TRANSACTIONS, tx.transactionId, tx);
 }
 
 export async function getTransaction(transactionId: string): Promise<PaymentTransaction | null> {
-  try {
-    const doc = await getDocument<PaymentTransaction>(COLLECTIONS.TRANSACTIONS, transactionId);
-    if (doc) return doc;
-  } catch (err) {
-    console.warn("Firestore fetch error:", err);
-  }
-
-  if (typeof window !== "undefined") {
-    try {
-      const savedLogsStr = localStorage.getItem("fr8x_payment_transactions");
-      if (savedLogsStr) {
-        const logs: PaymentTransaction[] = JSON.parse(savedLogsStr);
-        return logs.find((item) => item.transactionId === transactionId) || null;
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }
-  return null;
+  const doc = await getDocument<PaymentTransaction>(COLLECTIONS.TRANSACTIONS, transactionId);
+  return doc || null;
 }
 
 /**
