@@ -1,15 +1,14 @@
-// FR8X-CON GodMode Layout — Spec Page 11
-// Separate GodMode Login at /godmode/login
-// Brand: GodMODE
-// Left Nav: Overview (Dashboard, Users & Members, Companies [Red]), Trust & Compliance (Moderation Queue, Blacklist Registry, Verification Requests), Platform (Billing & Plans, Audit Log, System Settings)
-// Top Tabs Navigation + Footer "login" link
+// FR8X-CON GodMode Layout — Production
+// Server-side GodMode token verified on mount.
+// All privileges server-validated, not client-trusted.
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
+import { getIdToken } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -74,19 +73,39 @@ const topTabs = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isAuthenticated, signOut } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   const isLoginPage = pathname === ROUTES.GODMODE_LOGIN || pathname === "/godmode/login";
 
-  useEffect(() => {
-    if (!isLoginPage && !isLoading && (!isAuthenticated || !user?.isGodMode)) {
+  // Server-side GodMode token verification
+  const verifyGodModeServer = useCallback(async () => {
+    if (isLoginPage || isLoading) return;
+    if (!isAuthenticated || !user?.isGodMode) {
+      router.replace(ROUTES.GODMODE_LOGIN);
+      return;
+    }
+    try {
+      const token = await getIdToken();
+      if (!token) { router.replace(ROUTES.GODMODE_LOGIN); return; }
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        await signOut();
+        router.replace(ROUTES.GODMODE_LOGIN);
+      }
+    } catch {
       router.replace(ROUTES.GODMODE_LOGIN);
     }
-  }, [isLoading, isAuthenticated, user, router, isLoginPage]);
+  }, [isLoginPage, isLoading, isAuthenticated, user, router, signOut]);
 
-  // If rendering GodMode login page, render children directly without admin layout frame
+  useEffect(() => {
+    verifyGodModeServer();
+  }, [verifyGodModeServer]);
+
   if (isLoginPage) {
     return <div className="w-full min-h-screen bg-[#0F172A] text-white">{children}</div>;
   }
@@ -146,11 +165,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Footer */}
         <div className="px-4 py-3 border-t border-slate-700 flex items-center justify-between text-body-sm text-slate-400">
-          <Link href={ROUTES.GODMODE_LOGIN} className="hover:text-white transition-colors flex items-center gap-1.5 font-medium">
+          <button
+            onClick={() => signOut()}
+            className="hover:text-white transition-colors flex items-center gap-1.5 font-medium"
+            aria-label="Sign out of GodMode"
+          >
             <LogOut className="h-4 w-4" />
-            login
-          </Link>
-          <span className="text-[10px] text-slate-500">v1.0</span>
+            Sign Out
+          </button>
+          <span className="text-[10px] text-slate-500">{process.env.NEXT_PUBLIC_APP_VERSION || "v1.0"}</span>
         </div>
       </aside>
 
