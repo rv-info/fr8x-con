@@ -39,6 +39,10 @@ export type Profile = {
   workExperience: WorkExperience[];
   publicId?: string; // e.g. @RAJAT001
   followedTags?: string[];
+  // Contact privacy settings (Phase 7)
+  phoneVisibility?: "public" | "contacts_only" | "company_only" | "hidden";
+  emailVisibility?: "public" | "contacts_only" | "company_only" | "hidden";
+  whatsappVisibility?: "public" | "contacts_only" | "company_only" | "hidden";
 } & AuditFields;
 
 export type WorkExperience = {
@@ -81,8 +85,8 @@ export type ConnectionRelation = {
   status: 'pending' | 'accepted' | 'rejected' | 'blocked';
   requesterId: string;
   blockedById?: string;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: string | { seconds: number; nanoseconds: number };
+  updatedAt: string | { seconds: number; nanoseconds: number };
 };
 
 export type Connection = {
