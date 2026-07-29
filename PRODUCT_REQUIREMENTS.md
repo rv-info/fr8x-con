@@ -77,3 +77,30 @@ This PRD specifies the functional requirements, validation, and layout structure
   * **Live Feature Toggles**: Dynamic module switches (`Feed`, `Auctions`, `Messaging`, `Contacts`, `Jobs`, `AI`, `Ads`, `Registration`, `Maintenance Mode`) without redeployment.
   * **Security Center & Monitoring**: Firestore/Auth/Storage/Queue metrics, failed login logs, blocked IPs, suspicious activity tracking, snapshot backups & restore, and immutable audit trail logs.
 
+## 9. Final Production Readiness, Mobile Store Package & Currency Engine
+
+* **Enterprise Advertisement Wizard & Targeting (`/godmode/ads`)**:
+  * 4-step Advertisement Creation Wizard supporting Image, Carousel, HTML, Rich Text, and Video formats.
+  * Destination URL configuration (internal vs external redirects, open in new tab vs inside app).
+  * **Audience Targeting Rules**: Target Country, Business Type, Subscription Plan, and Device Target (Desktop, Mobile, Tablet, All Devices).
+  * **Image Upload Specifications Modal**: Guidelines for Leaderboard (1600×400), Sidebar (400×800), Square (1080×1080), Mobile Banner (1080×540), 5MB max, auto compression & lazy loading.
+  * **Live Device Preview Modal**: Viewport simulation for Desktop, Tablet, and Mobile views.
+  * **Performance Analytics**: Impressions, Unique Views, Clicks, CTR %, Device Type, and Top Performing Ads.
+
+* **Mobile App Store Readiness Package (`/mobile`)**:
+  * Expo and EAS build configuration (`app.json`, `eas.json`) targeting Google Play Store (`in.fr8x.con`) and Apple App Store (`in.fr8x.con`).
+  * **Mobile Security Suite (`mobileSecurity.ts`)**: App Check validation, SSL Pinning, Encrypted Storage (`SecureStore`), Token Rotation, Root/Jailbreak detection, Screen capture protection, Debugger detection, API request signing, and Biometric authentication.
+  * **Store Compliance Artifacts**: `PRIVACY_POLICY.md`, `TERMS_OF_SERVICE.md`, and `STORE_METADATA.md` (Store listings, screenshot guidelines, and permission justifications for Camera, Photos, Biometrics, and Location).
+
+* **Live Currency Conversion Engine (`currencyService.ts`)**:
+  * Centralized Currency Service supporting **16 currencies**: INR, USD, EUR, GBP, AED, SGD, JPY, AUD, CAD, CHF, CNY, SAR, QAR, KWD, OMR, BHD.
+  * Live exchange rate calculations, caching, fallback rates, and global formatting helpers.
+  * Navbar `CurrencySelector` component allowing users to set their preferred display currency with preferences stored in LocalStorage/Firestore.
+
+* **Enterprise Feed & Excel Sheet Previewer (`FeedAttachmentViewer.tsx`)**:
+  * Inline attachment viewer for PDF, Word, PowerPoint, Excel, CSV, and Images.
+  * **Excel Sheet Previewer**: Displays File Name, Sheet Name, Row/Col Count, first 8–10 rows preview, and an "Open Full File" button. Prevents browser DOM lag from rendering thousands of rows directly in the feed.
+
+* **Production Clean State**:
+  * Reusable `EmptyState.tsx` components for clean production states when live collections return 0 records ("No Reverse Auctions Available", "No Active Rates Found", "No Contacts Connected", etc.).
+
