@@ -1,4 +1,5 @@
-// FR8X-CON Firebase & Local Demo Auth Helpers
+// FR8X-CON Firebase Auth Helpers — Production
+// No demo credentials. All auth is real Firebase Auth.
 
 import {
   signInWithEmailAndPassword,
@@ -6,7 +7,6 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   OAuthProvider,
-  sendPasswordResetEmail,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   updateProfile,
@@ -14,10 +14,6 @@ import {
   type UserCredential,
 } from "firebase/auth";
 import { firebaseAuth } from "./config";
-import { setDocument } from "./firestore";
-import { COLLECTIONS } from "@/lib/utils/constants";
-import { isDemoCredentialMatch, getDemoUserSession } from "@/lib/config/demoCredentials";
-import { sendCustomerPasswordResetEmail } from "@/lib/email/service";
 
 // Auth providers
 const googleProvider = new GoogleAuthProvider();
@@ -29,73 +25,13 @@ microsoftProvider.addScope("email");
 microsoftProvider.addScope("profile");
 
 /**
- * Custom event for local demo user auth sync
- */
-export const DEMO_AUTH_EVENT = "fr8x_demo_auth_changed";
-
-export function getStoredDemoUser() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = localStorage.getItem("fr8x_demo_user");
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Sign in with email and password (with standalone demo fallback support).
+ * Sign in with email and password (Firebase Auth only).
  */
 export async function signInWithEmail(
   email: string,
   password: string
 ): Promise<UserCredential> {
-  const trimmed = email.trim();
-
-  // Check standalone demo credentials file first
-  const demoMatch = isDemoCredentialMatch(trimmed, password);
-  if (demoMatch) {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("fr8x_demo_user", JSON.stringify(demoMatch));
-      window.dispatchEvent(new Event(DEMO_AUTH_EVENT));
-    }
-    // Return mock UserCredential object
-    return {
-      user: {
-        uid: demoMatch.id,
-        email: demoMatch.email,
-        displayName: demoMatch.displayName,
-        emailVerified: true,
-        isAnonymous: false,
-        metadata: {},
-        providerData: [],
-        refreshToken: "demo-token",
-        tenantId: null,
-        delete: async () => {},
-        getIdToken: async () => "demo-token",
-        getIdTokenResult: async () => ({} as any),
-        reload: async () => {},
-        toJSON: () => ({}),
-        phoneNumber: null,
-        photoURL: null,
-        providerId: "demo",
-      } as unknown as FirebaseUser,
-      providerId: "demo",
-      operationType: "signIn",
-    };
-  }
-
-  // Live Firebase auth attempt
-  try {
-    return await signInWithEmailAndPassword(firebaseAuth, trimmed, password);
-  } catch (err: unknown) {
-    // If demo email but different password, throw invalid password
-    const demoSession = getDemoUserSession(trimmed);
-    if (demoSession) {
-      throw new Error("Invalid email or password.");
-    }
-    throw err;
-  }
+  return signInWithEmailAndPassword(firebaseAuth, email.trim(), password);
 }
 
 /**
@@ -108,7 +44,7 @@ export async function createAccountWithEmail(
 ): Promise<UserCredential> {
   const credential = await createUserWithEmailAndPassword(
     firebaseAuth,
-    email,
+    email.trim(),
     password
   );
   await updateProfile(credential.user, { displayName });
@@ -116,34 +52,65 @@ export async function createAccountWithEmail(
 }
 
 /**
- * Sign in with Google.
+ * Sign in with Google OAuth.
  */
 export async function signInWithGoogle(): Promise<UserCredential> {
   return signInWithPopup(firebaseAuth, googleProvider);
 }
 
 /**
- * Sign in with Microsoft.
+ * Sign in with Microsoft OAuth.
  */
 export async function signInWithMicrosoft(): Promise<UserCredential> {
   return signInWithPopup(firebaseAuth, microsoftProvider);
 }
 
 /**
- * Send password reset email via Zoho SMTP / /api/send-email.
+ * Initiate Email OTP flow. Calls server-side API to generate & send OTP.
+ * Never returns OTP to client.
+ */
+export async function sendEmailOTP(email: string): Promise<{ success: boolean; error?: string }> {
+  const response = await fetch("/api/auth/otp/send", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase() }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    return { success: false, error: data.error || "Failed to send OTP. Please try again." };
+  }
+  return { success: true };
+}
+
+/**
+ * Verify Email OTP. Returns a Firebase custom token on success.
+ * The custom token is then used to sign in via signInWithCustomToken.
+ */
+export async function verifyEmailOTP(
+  email: string,
+  otp: string
+): Promise<{ success: boolean; customToken?: string; error?: string }> {
+  const response = await fetch("/api/auth/otp/verify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim().toLowerCase(), otp: otp.trim() }),
+  });
+  const data = await response.json();
+  if (!response.ok || !data.success) {
+    return { success: false, error: data.error || "Invalid or expired OTP." };
+  }
+  return { success: true, customToken: data.customToken };
+}
+
+/**
+ * Send password reset email via server-side API (Zoho SMTP / Resend).
  */
 export async function resetPassword(email: string): Promise<void> {
   const response = await fetch("/api/send-email", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      email: email.trim(),
-      type: "reset",
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: email.trim(), type: "reset" }),
   });
-
   const data = await response.json();
   if (!response.ok || !data.success) {
     throw new Error(data.error || "Failed to send reset email. Please try again.");
@@ -154,13 +121,9 @@ export async function resetPassword(email: string): Promise<void> {
  * Sign out the current user.
  */
 export async function signOut(): Promise<void> {
-  if (typeof window !== "undefined") {
-    localStorage.removeItem("fr8x_demo_user");
-    window.dispatchEvent(new Event(DEMO_AUTH_EVENT));
-  }
   try {
     await firebaseSignOut(firebaseAuth);
-  } catch (e) {
+  } catch {
     // Ignore firebase signout error if offline
   }
 }
@@ -175,11 +138,9 @@ export function onAuthChange(
 }
 
 /**
- * Get current user ID token
+ * Get current user ID token (forced refresh).
  */
 export async function getIdToken(): Promise<string | null> {
-  const demoUser = getStoredDemoUser();
-  if (demoUser) return "demo-token";
   const user = firebaseAuth.currentUser;
   if (!user) return null;
   return user.getIdToken(true);
