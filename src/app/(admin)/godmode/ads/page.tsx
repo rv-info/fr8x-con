@@ -1,261 +1,284 @@
-// FR8X-CON GodMode Enterprise Advertisement Management System
-
+// FR8X-CON GodMode Enterprise Advertisement Wizard & Targeting Control Panel
 "use client";
 
 import { useState } from "react";
-import { AdBanner, type AdvertisementDoc } from "@/components/ads/AdBanner";
+import { AdBanner, DEFAULT_ENTERPRISE_AD, type AdvertisementDoc, type TargetAudienceRules } from "@/components/ads/AdBanner";
 import { Button } from "@/components/ui/Button";
 import {
   Megaphone,
   Plus,
-  Edit,
   Trash2,
   Eye,
   MousePointer,
   TrendingUp,
-  Calendar,
-  FileImage,
-  Link2,
-  CheckCircle,
-  XCircle,
   HelpCircle,
   Sparkles,
   ExternalLink,
-  Code,
   Info,
+  Monitor,
+  Smartphone,
+  Tablet,
+  CheckCircle,
+  Globe,
+  Sliders,
+  Filter,
+  Check,
+  X,
 } from "lucide-react";
 
-const SAMPLE_ADS: AdvertisementDoc[] = [
+const INITIAL_CAMPAIGNS: AdvertisementDoc[] = [
   {
     id: "ad_101",
+    adName: "Q3 Ocean Freight Rate Campaign",
     title: "FR8X Verified Ocean Freight Intelligence 2026",
-    type: "banner",
-    richText: "Unlock premium benchmark rates across 500+ global trade lanes with verified shipping lines.",
-    targetUrl: "/auctions",
+    type: "image",
+    shortDescription: "Unlock verified benchmark rates across 500+ global trade lanes.",
+    destinationUrl: "/auctions",
     targetType: "internal",
+    openMode: "inside_app",
     ctaText: "Explore Auctions Now",
     startDate: "2026-07-01",
     endDate: "2026-12-31",
     status: "active",
+    audience: { country: "India", businessType: "Freight Forwarder", subscriptionPlan: "All", device: "all" },
     impressions: 4820,
+    uniqueViews: 3210,
     clicks: 642,
+    ctr: 13.3,
   },
   {
     id: "ad_102",
-    title: "Global Supply Chain Summit — Dubai 2026",
-    type: "card",
-    richText: "Join top NVOCCs, MLOs, and freight forwarders for exclusive networking.",
-    targetUrl: "https://example.com/summit",
+    adName: "Dubai Logistics Summit 2026",
+    title: "Global Supply Chain & Freight Summit — Dubai 2026",
+    type: "rich_text",
+    shortDescription: "Join top NVOCCs, MLOs, and freight forwarders for exclusive networking.",
+    destinationUrl: "https://example.com/summit",
     targetType: "external",
+    openMode: "new_tab",
     ctaText: "Register Interest",
     startDate: "2026-08-01",
     endDate: "2026-09-15",
     status: "active",
+    audience: { country: "UAE", businessType: "Shipping Line / MLO", subscriptionPlan: "Professional", device: "all" },
     impressions: 2150,
+    uniqueViews: 1480,
     clicks: 310,
+    ctr: 14.4,
   },
   {
     id: "ad_103",
-    title: "Special Reefer Container Promotion",
-    type: "banner",
-    richText: "Discounted cold chain transport for perishable cargo.",
-    targetUrl: "/rates",
+    adName: "Cold Chain Transport Promo",
+    title: "Special Reefer Container Cold Chain Promotion",
+    type: "image",
+    shortDescription: "Discounted cold chain transport for perishable ocean cargo.",
+    destinationUrl: "/rates",
     targetType: "internal",
+    openMode: "inside_app",
     ctaText: "View Reefer Rates",
     startDate: "2026-06-01",
     endDate: "2026-07-15",
-    status: "expired",
+    status: "disabled",
+    audience: { country: "All", businessType: "Exporter", subscriptionPlan: "Basic", device: "all" },
     impressions: 9100,
+    uniqueViews: 6800,
     clicks: 1120,
+    ctr: 12.3,
   },
 ];
 
 export default function GodModeAdsPage() {
-  const [ads, setAds] = useState<AdvertisementDoc[]>(SAMPLE_ADS);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [ads, setAds] = useState<AdvertisementDoc[]>(INITIAL_CAMPAIGNS);
+  const [showWizard, setShowWizard] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
-  // New Ad Form State
+  // Device Preview Modal State
+  const [previewAd, setPreviewAd] = useState<AdvertisementDoc | null>(null);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  // Wizard Form Steps State
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [adName, setAdName] = useState("");
   const [title, setTitle] = useState("");
-  const [type, setType] = useState<"banner" | "card" | "html">("banner");
-  const [richText, setRichText] = useState("");
-  const [targetUrl, setTargetUrl] = useState("");
+  const [type, setType] = useState<"image" | "carousel" | "html" | "rich_text" | "video">("image");
+  const [shortDescription, setShortDescription] = useState("");
+  const [destinationUrl, setDestinationUrl] = useState("/auctions");
   const [targetType, setTargetType] = useState<"internal" | "external">("internal");
+  const [openMode, setOpenMode] = useState<"new_tab" | "inside_app">("inside_app");
   const [ctaText, setCtaText] = useState("Learn More");
   const [startDate, setStartDate] = useState("2026-08-01");
   const [endDate, setEndDate] = useState("2026-12-31");
 
+  // Audience Targeting State
+  const [targetCountry, setTargetCountry] = useState("All");
+  const [targetBusinessType, setTargetBusinessType] = useState("All");
+  const [targetPlan, setTargetPlan] = useState("All");
+  const [targetDevice, setTargetDevice] = useState<"all" | "desktop" | "mobile" | "tablet">("all");
+
   const handleToggleStatus = (id: string) => {
     setAds((prev) =>
-      prev.map((ad) =>
-        ad.id === id ? { ...ad, status: ad.status === "active" ? "inactive" : "active" } : ad
-      )
+      prev.map((a) => (a.id === id ? { ...a, status: a.status === "active" ? "disabled" : "active" } : a))
     );
   };
 
   const handleDeleteAd = (id: string) => {
-    setAds((prev) => prev.filter((ad) => ad.id !== id));
+    setAds((prev) => prev.filter((a) => a.id !== id));
   };
 
-  const handleCreateAd = (e: React.FormEvent) => {
+  const handlePublishAd = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || !adName.trim()) return;
 
     const newAd: AdvertisementDoc = {
       id: `ad_${Date.now()}`,
+      adName: adName.trim(),
       title: title.trim(),
       type,
-      richText: richText.trim(),
-      targetUrl: targetUrl.trim(),
+      shortDescription: shortDescription.trim(),
+      destinationUrl: destinationUrl.trim(),
       targetType,
+      openMode,
       ctaText: ctaText.trim() || "Learn More",
       startDate,
       endDate,
       status: "active",
+      audience: {
+        country: targetCountry,
+        businessType: targetBusinessType,
+        subscriptionPlan: targetPlan,
+        device: targetDevice,
+      },
       impressions: 0,
+      uniqueViews: 0,
       clicks: 0,
+      ctr: 0,
     };
 
     setAds([newAd, ...ads]);
-    setShowCreateModal(false);
+    setShowWizard(false);
+    setWizardStep(1);
 
     // Reset Form
+    setAdName("");
     setTitle("");
-    setRichText("");
-    setTargetUrl("");
+    setShortDescription("");
   };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 text-left">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <div className="flex items-center gap-2">
             <Megaphone className="h-6 w-6 text-[#56C5F0]" />
-            <h1 className="text-display-sm font-bold text-foreground">Enterprise Advertisement Management</h1>
+            <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)]">
+              Enterprise Advertisement Control Center & Wizard
+            </h1>
           </div>
           <p className="text-body-sm text-foreground-secondary mt-1">
-            Configure rich multimedia campaigns, promotional banners, CTA buttons, and performance analytics.
+            Configure multimedia ad campaigns, CTA redirects, audience targeting rules, and live device previews.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
+          <button
             onClick={() => setShowGuide(!showGuide)}
-            className="bg-slate-100 text-slate-800 text-body-sm px-3.5 py-2 flex items-center gap-1.5 hover:bg-slate-200"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-body-sm font-bold rounded-lg flex items-center gap-1.5 border border-slate-300"
           >
-            <HelpCircle className="h-4 w-4" /> Upload Guidelines
-          </Button>
+            <HelpCircle className="h-4 w-4 text-blue-600" /> Upload Guidelines
+          </button>
 
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-[#56C5F0] text-white text-body-sm px-4 py-2 flex items-center gap-1.5 hover:bg-[#3ABFF0]"
+          <button
+            onClick={() => {
+              setShowWizard(true);
+              setWizardStep(1);
+            }}
+            className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-white text-body-sm px-4 py-2 flex items-center gap-1.5 font-bold"
           >
-            <Plus className="h-4 w-4" /> Create Advertisement
-          </Button>
+            <Plus className="h-4 w-4" /> Create Ad Campaign Wizard
+          </button>
         </div>
       </div>
 
-      {/* ═══ UPLOAD GUIDELINES PANEL ═══ */}
+      {/* UPLOAD SPECIFICATIONS GUIDELINES PANEL */}
       {showGuide && (
-        <div className="p-5 bg-blue-50 border border-blue-200 rounded-xl space-y-3 text-body-sm text-blue-950">
-          <div className="flex items-center justify-between">
+        <div className="p-5 bg-blue-50 border border-blue-200 rounded-xl space-y-3 text-body-sm text-blue-950 animate-fadeIn">
+          <div className="flex items-center justify-between border-b border-blue-200 pb-2">
             <h3 className="text-heading-sm font-bold flex items-center gap-2">
-              <Info className="h-5 w-5 text-[#56C5F0]" /> Ad Asset & Upload Specifications
+              <Info className="h-5 w-5 text-[#56C5F0]" /> Asset & Banner Upload Guidelines
             </h3>
-            <button onClick={() => setShowGuide(false)} className="text-blue-700 font-bold text-caption">Close</button>
+            <button onClick={() => setShowGuide(false)} className="text-blue-700 font-bold text-caption hover:underline">
+              Close
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-caption pt-1">
             <div className="bg-white p-3 rounded-lg border border-blue-100">
-              <p className="font-bold text-caption text-blue-900">Recommended Banner Sizes</p>
-              <p className="text-caption text-blue-950 mt-1">Leaderboard: 1200 × 300 px<br />Rectangle: 300 × 250 px</p>
+              <p className="font-bold text-blue-900">Recommended Banner Sizes</p>
+              <p className="text-slate-600 mt-1">Leaderboard: 1600 × 400 px<br />Sidebar: 400 × 800 px<br />Square: 1080 × 1080 px<br />Mobile Banner: 1080 × 540 px</p>
             </div>
             <div className="bg-white p-3 rounded-lg border border-blue-100">
-              <p className="font-bold text-caption text-blue-900">Supported Formats</p>
-              <p className="text-caption text-blue-950 mt-1">JPG, PNG, WEBP, SVG, HTML5</p>
+              <p className="font-bold text-blue-900">Supported Formats</p>
+              <p className="text-slate-600 mt-1">JPG, PNG, WEBP, SVG, HTML5</p>
             </div>
             <div className="bg-white p-3 rounded-lg border border-blue-100">
-              <p className="font-bold text-caption text-blue-900">Maximum File Size</p>
-              <p className="text-caption text-blue-950 mt-1">2 MB per image asset</p>
+              <p className="font-bold text-blue-900">Maximum File Size</p>
+              <p className="text-slate-600 mt-1">5 MB limit per banner<br />Recommended &lt; 500 KB</p>
             </div>
             <div className="bg-white p-3 rounded-lg border border-blue-100">
-              <p className="font-bold text-caption text-blue-900">Resolution & Quality</p>
-              <p className="text-caption text-blue-950 mt-1">72 DPI minimum / 1080p crisp rendering</p>
+              <p className="font-bold text-blue-900">Optimization & Delivery</p>
+              <p className="text-slate-600 mt-1">Automatic Compression<br />Lazy Loading Enabled</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Analytics Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="fr8x-card p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-body-sm text-foreground-secondary">Total Impressions</p>
-              <p className="text-display-sm font-bold text-foreground mt-1">
-                {ads.reduce((acc, a) => acc + a.impressions, 0).toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#56C5F0] flex items-center justify-center">
-              <Eye className="h-5 w-5" />
-            </div>
-          </div>
+      {/* Analytics Summary */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="fr8x-card p-4">
+          <p className="text-caption text-foreground-secondary">Total Impressions</p>
+          <p className="text-display-sm font-bold text-[var(--fr8x-jet)] mt-1">
+            {ads.reduce((acc, a) => acc + a.impressions, 0).toLocaleString()}
+          </p>
         </div>
 
-        <div className="fr8x-card p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-body-sm text-foreground-secondary">Total Clicks</p>
-              <p className="text-display-sm font-bold text-foreground mt-1">
-                {ads.reduce((acc, a) => acc + a.clicks, 0).toLocaleString()}
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <MousePointer className="h-5 w-5" />
-            </div>
-          </div>
+        <div className="fr8x-card p-4">
+          <p className="text-caption text-foreground-secondary">Unique Views</p>
+          <p className="text-display-sm font-bold text-blue-600 mt-1">
+            {ads.reduce((acc, a) => acc + a.uniqueViews, 0).toLocaleString()}
+          </p>
         </div>
 
-        <div className="fr8x-card p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-body-sm text-foreground-secondary">Avg Click-Through Rate (CTR)</p>
-              <p className="text-display-sm font-bold text-foreground mt-1">
-                {((ads.reduce((acc, a) => acc + a.clicks, 0) / (ads.reduce((acc, a) => acc + a.impressions, 0) || 1)) * 100).toFixed(2)}%
-              </p>
-            </div>
-            <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <TrendingUp className="h-5 w-5" />
-            </div>
-          </div>
+        <div className="fr8x-card p-4">
+          <p className="text-caption text-foreground-secondary">Total Clicks</p>
+          <p className="text-display-sm font-bold text-emerald-600 mt-1">
+            {ads.reduce((acc, a) => acc + a.clicks, 0).toLocaleString()}
+          </p>
+        </div>
+
+        <div className="fr8x-card p-4">
+          <p className="text-caption text-foreground-secondary">Avg Click-Through Rate (CTR)</p>
+          <p className="text-display-sm font-bold text-purple-600 mt-1">
+            {((ads.reduce((acc, a) => acc + a.clicks, 0) / (ads.reduce((acc, a) => acc + a.impressions, 0) || 1)) * 100).toFixed(2)}%
+          </p>
         </div>
       </div>
 
-      {/* Live Preview Panel */}
-      <div className="space-y-2">
-        <h2 className="text-heading-md font-bold text-foreground flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-amber-500" /> Live Platform Preview
-        </h2>
-        <AdBanner />
-      </div>
-
-      {/* Campaign List Table */}
-      <div className="fr8x-card overflow-hidden">
+      {/* Campaigns Table */}
+      <div className="fr8x-card overflow-hidden bg-white">
         <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-          <h2 className="text-heading-md font-bold text-foreground">Active & Scheduled Campaigns</h2>
-          <span className="text-caption text-foreground-muted">{ads.length} campaigns total</span>
+          <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)]">Active & Scheduled Ad Campaigns</h2>
+          <span className="text-caption text-foreground-muted">{ads.length} total campaigns</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="fr8x-table">
+          <table className="fr8x-table text-[11px]">
             <thead>
               <tr>
-                <th>Campaign Title</th>
-                <th>Type</th>
-                <th>Redirect Link</th>
-                <th>Schedule</th>
+                <th>Ad Name & Title</th>
+                <th>Format</th>
+                <th>Audience Targeting</th>
                 <th>Impressions</th>
+                <th>Unique Views</th>
                 <th>Clicks</th>
                 <th>CTR %</th>
                 <th>Status</th>
@@ -263,135 +286,329 @@ export default function GodModeAdsPage() {
               </tr>
             </thead>
             <tbody>
-              {ads.map((ad) => {
-                const ctr = ((ad.clicks / (ad.impressions || 1)) * 100).toFixed(1);
-                return (
-                  <tr key={ad.id}>
-                    <td className="font-semibold text-foreground">{ad.title}</td>
-                    <td className="capitalize">{ad.type}</td>
-                    <td>
-                      <span className="font-mono text-caption">{ad.targetUrl || "N/A"}</span>
-                    </td>
-                    <td>{ad.startDate || "Immediate"} to {ad.endDate || "Indefinite"}</td>
-                    <td className="font-semibold">{ad.impressions.toLocaleString()}</td>
-                    <td className="font-semibold text-emerald-600">{ad.clicks.toLocaleString()}</td>
-                    <td className="font-bold">{ctr}%</td>
-                    <td>
-                      <span className={ad.status === "active" ? "fr8x-badge-active" : "fr8x-badge-pending"}>
-                        {ad.status}
-                      </span>
-                    </td>
-                    <td>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleToggleStatus(ad.id)}
-                          className="px-2 py-1 rounded text-caption border border-border hover:bg-slate-100"
-                        >
-                          {ad.status === "active" ? "Deactivate" : "Activate"}
-                        </button>
-                        <button
-                          onClick={() => handleDeleteAd(ad.id)}
-                          className="p-1 rounded text-danger hover:bg-danger-light"
-                          title="Delete Campaign"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
+              {ads.map((ad) => (
+                <tr key={ad.id}>
+                  <td>
+                    <p className="font-bold text-[var(--fr8x-jet)]">{ad.adName}</p>
+                    <p className="text-caption text-foreground-muted truncate max-w-xs">{ad.title}</p>
+                  </td>
+                  <td className="capitalize font-mono">{ad.type}</td>
+                  <td>
+                    <div className="text-[10px] space-y-0.5 font-mono">
+                      <p>Country: <span className="font-bold text-blue-900">{ad.audience?.country || "All"}</span></p>
+                      <p>Type: <span className="font-bold text-emerald-900">{ad.audience?.businessType || "All"}</span></p>
+                    </div>
+                  </td>
+                  <td className="font-bold">{ad.impressions.toLocaleString()}</td>
+                  <td>{ad.uniqueViews.toLocaleString()}</td>
+                  <td className="font-bold text-emerald-700">{ad.clicks.toLocaleString()}</td>
+                  <td className="font-bold text-purple-700">{ad.ctr}%</td>
+                  <td>
+                    <span className={ad.status === "active" ? "fr8x-badge-active" : "fr8x-badge-pending"}>
+                      {ad.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => {
+                          setPreviewAd(ad);
+                          setPreviewDevice("desktop");
+                        }}
+                        className="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-caption font-semibold flex items-center gap-1"
+                        title="Live Device Preview"
+                      >
+                        <Eye className="h-3 w-3" /> Preview
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleStatus(ad.id)}
+                        className="px-2 py-1 rounded text-caption border border-border hover:bg-slate-100 font-semibold"
+                      >
+                        {ad.status === "active" ? "Disable" : "Enable"}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteAd(ad.id)}
+                        className="p-1 rounded text-rose-600 hover:bg-rose-50"
+                        title="Delete Campaign"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Create Ad Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-xl shadow-xl space-y-4">
-            <h2 className="text-heading-lg font-bold text-foreground">Create New Campaign</h2>
-
-            <form onSubmit={handleCreateAd} className="space-y-4">
+      {/* AD WIZARD MODAL */}
+      {showWizard && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-2xl shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
               <div>
-                <label className="fr8x-label block mb-1">Campaign Title *</label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="fr8x-input py-2 text-body-sm"
-                  placeholder="e.g. Q3 Ocean Freight Special"
-                  required
-                />
+                <h2 className="text-heading-lg font-bold text-[var(--fr8x-jet)]">Create Campaign Wizard</h2>
+                <p className="text-caption text-foreground-secondary">Step {wizardStep} of 3</p>
               </div>
+              <button onClick={() => setShowWizard(false)} className="text-slate-500 hover:text-slate-800">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-              <div>
-                <label className="fr8x-label block mb-1">Ad Content / Subtitle</label>
-                <textarea
-                  value={richText}
-                  onChange={(e) => setRichText(e.target.value)}
-                  className="fr8x-input py-2 text-body-sm h-20"
-                  placeholder="Descriptive text for the banner or card..."
-                />
-              </div>
+            <form onSubmit={handlePublishAd} className="space-y-4 text-body-sm">
+              {/* STEP 1: CAMPAIGN DETAILS */}
+              {wizardStep === 1 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1 text-xs">Ad Campaign Name *</label>
+                      <input
+                        type="text"
+                        value={adName}
+                        onChange={(e) => setAdName(e.target.value)}
+                        className="fr8x-input font-bold"
+                        placeholder="e.g. Q3 Ocean Freight Promo"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1 text-xs">Ad Format Type</label>
+                      <select value={type} onChange={(e) => setType(e.target.value as any)} className="fr8x-input font-medium">
+                        <option value="image">Banner Image</option>
+                        <option value="rich_text">Rich Text & Title Card</option>
+                        <option value="carousel">Carousel (Multi-Card)</option>
+                        <option value="html">Custom HTML5 Code</option>
+                        <option value="video">Video (Future Ready)</option>
+                      </select>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="fr8x-label block mb-1">Target URL / Link</label>
-                  <input
-                    type="text"
-                    value={targetUrl}
-                    onChange={(e) => setTargetUrl(e.target.value)}
-                    className="fr8x-input py-2 text-body-sm font-mono"
-                    placeholder="/auctions or https://..."
-                  />
-                </div>
-                <div>
-                  <label className="fr8x-label block mb-1">CTA Button Text</label>
-                  <input
-                    type="text"
-                    value={ctaText}
-                    onChange={(e) => setCtaText(e.target.value)}
-                    className="fr8x-input py-2 text-body-sm"
-                    placeholder="Learn More"
-                  />
-                </div>
-              </div>
+                  <div>
+                    <label className="fr8x-label block mb-1 text-xs">Banner Display Title *</label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="fr8x-input font-bold"
+                      placeholder="e.g. FR8X Verified Freight Rates 2026"
+                      required
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="fr8x-label block mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="fr8x-input py-2 text-body-sm"
-                  />
+                  <div>
+                    <label className="fr8x-label block mb-1 text-xs">Short Subtitle / Description</label>
+                    <textarea
+                      rows={2}
+                      value={shortDescription}
+                      onChange={(e) => setShortDescription(e.target.value)}
+                      className="fr8x-input"
+                      placeholder="Promotional copy displayed on banner..."
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="fr8x-label block mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="fr8x-input py-2 text-body-sm"
-                  />
-                </div>
-              </div>
+              )}
 
-              <div className="pt-3 border-t border-border flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="px-4 py-2 rounded-lg border border-border text-body-sm hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <Button type="submit" className="bg-[#56C5F0] text-white px-5 py-2">
-                  Publish Campaign
-                </Button>
+              {/* STEP 2: DESTINATION & REDIRECT */}
+              {wizardStep === 2 && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1 text-xs">CTA Button Text</label>
+                      <input
+                        type="text"
+                        value={ctaText}
+                        onChange={(e) => setCtaText(e.target.value)}
+                        className="fr8x-input font-bold"
+                        placeholder="Learn More"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="fr8x-label block mb-1 text-xs">Redirect Target Type</label>
+                      <select value={targetType} onChange={(e) => setTargetType(e.target.value as any)} className="fr8x-input">
+                        <option value="internal">Internal Platform Route (e.g. /auctions)</option>
+                        <option value="external">External Website Link (https://...)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="fr8x-label block mb-1 text-xs">Destination URL / Link *</label>
+                    <input
+                      type="text"
+                      value={destinationUrl}
+                      onChange={(e) => setDestinationUrl(e.target.value)}
+                      className="fr8x-input font-mono"
+                      placeholder="/auctions or https://example.com"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="fr8x-label block mb-1 text-xs">Open Action Mode</label>
+                    <select value={openMode} onChange={(e) => setOpenMode(e.target.value as any)} className="fr8x-input">
+                      <option value="inside_app">Open Inside FR8X-CON Application</option>
+                      <option value="new_tab">Open in New Browser Tab</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: AUDIENCE TARGETING */}
+              {wizardStep === 3 && (
+                <div className="space-y-4">
+                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-xl space-y-3">
+                    <h4 className="font-bold text-purple-950 flex items-center gap-1.5 text-xs">
+                      <Filter className="h-4 w-4 text-purple-600" /> Target Audience Rules
+                    </h4>
+
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label className="fr8x-label block mb-1 text-[11px]">Target Country</label>
+                        <select value={targetCountry} onChange={(e) => setTargetCountry(e.target.value)} className="fr8x-input bg-white">
+                          <option value="All">All Countries</option>
+                          <option value="India">India</option>
+                          <option value="UAE">United Arab Emirates</option>
+                          <option value="USA">United States</option>
+                          <option value="UK">United Kingdom</option>
+                          <option value="Singapore">Singapore</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="fr8x-label block mb-1 text-[11px]">Target Business Type</label>
+                        <select value={targetBusinessType} onChange={(e) => setTargetBusinessType(e.target.value)} className="fr8x-input bg-white">
+                          <option value="All">All Business Categories</option>
+                          <option value="Freight Forwarder">Freight Forwarder</option>
+                          <option value="Shipping Line / MLO">Shipping Line / MLO</option>
+                          <option value="Exporter">Exporter / Importer</option>
+                          <option value="Customs Broker">Customs Broker</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="fr8x-label block mb-1 text-[11px]">Target Subscription Plan</label>
+                        <select value={targetPlan} onChange={(e) => setTargetPlan(e.target.value)} className="fr8x-input bg-white">
+                          <option value="All">All Tiers</option>
+                          <option value="Trial">Trial Tier</option>
+                          <option value="Basic">Basic Tier</option>
+                          <option value="Professional">Professional Tier</option>
+                          <option value="Enterprise">Enterprise Tier</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="fr8x-label block mb-1 text-[11px]">Target Device</label>
+                        <select value={targetDevice} onChange={(e) => setTargetDevice(e.target.value as any)} className="fr8x-input bg-white">
+                          <option value="all">All Devices</option>
+                          <option value="desktop">Desktop Only</option>
+                          <option value="mobile">Mobile Only</option>
+                          <option value="tablet">Tablet Only</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Wizard Navigation Actions */}
+              <div className="flex items-center justify-between pt-3 border-t border-border">
+                {wizardStep > 1 ? (
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep((prev) => (prev - 1) as any)}
+                    className="px-4 py-2 border rounded-lg text-body-sm font-semibold hover:bg-slate-100"
+                  >
+                    Back
+                  </button>
+                ) : <div />}
+
+                {wizardStep < 3 ? (
+                  <button
+                    type="button"
+                    onClick={() => setWizardStep((prev) => (prev + 1) as any)}
+                    className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] px-5 py-2 text-body-sm font-bold"
+                  >
+                    Next Step →
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="fr8x-btn-primary bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 text-body-sm font-bold flex items-center gap-1.5"
+                  >
+                    <Check className="h-4 w-4" /> Publish Campaign Live
+                  </button>
+                )}
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE DEVICE PREVIEW MODAL */}
+      {previewAd && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-3xl space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-heading-md font-bold text-[var(--fr8x-jet)]">Device Preview: {previewAd.adName}</h3>
+                <p className="text-caption text-foreground-secondary">Simulating responsive viewports in FR8X-CON UI</p>
+              </div>
+
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
+                <button
+                  onClick={() => setPreviewDevice("desktop")}
+                  className={`px-3 py-1 rounded text-caption font-bold flex items-center gap-1 ${
+                    previewDevice === "desktop" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"
+                  }`}
+                >
+                  <Monitor className="h-3.5 w-3.5" /> Desktop
+                </button>
+                <button
+                  onClick={() => setPreviewDevice("tablet")}
+                  className={`px-3 py-1 rounded text-caption font-bold flex items-center gap-1 ${
+                    previewDevice === "tablet" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"
+                  }`}
+                >
+                  <Tablet className="h-3.5 w-3.5" /> Tablet
+                </button>
+                <button
+                  onClick={() => setPreviewDevice("mobile")}
+                  className={`px-3 py-1 rounded text-caption font-bold flex items-center gap-1 ${
+                    previewDevice === "mobile" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"
+                  }`}
+                >
+                  <Smartphone className="h-3.5 w-3.5" /> Mobile
+                </button>
+              </div>
+            </div>
+
+            {/* Viewport Frame */}
+            <div className="flex justify-center p-4 bg-slate-100 rounded-xl border border-slate-200 overflow-x-auto">
+              <div
+                className={`transition-all duration-300 ${
+                  previewDevice === "desktop"
+                    ? "w-full max-w-2xl"
+                    : previewDevice === "tablet"
+                    ? "w-[480px]"
+                    : "w-[320px]"
+                }`}
+              >
+                <AdBanner ad={previewAd} deviceViewport={previewDevice} />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setPreviewAd(null)}
+                className="fr8x-btn-secondary px-5 py-2 text-body-sm font-bold"
+              >
+                Close Preview
+              </button>
+            </div>
           </div>
         </div>
       )}
