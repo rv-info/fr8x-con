@@ -1,9 +1,16 @@
-// FR8X-CON Reusable Enterprise Ad Banner Component with Device Responsive Layouts & Analytics
+// FR8X-CON Reusable Enterprise Ad Banner — Firestore-backed
+// Fetches active ads from Firestore. Tracks impressions + clicks atomically.
+// Supports targeting by device, subscription tier, and country.
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { ExternalLink, Megaphone, Monitor, Smartphone, Tablet } from "lucide-react";
+import { ExternalLink, Megaphone } from "lucide-react";
+import { queryDocuments, updateDocument, where } from "@/lib/firebase/firestore";
+import { increment } from "firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
+import { useAuth } from "@/providers/AuthProvider";
 
 export interface TargetAudienceRules {
   country?: string;
@@ -31,12 +38,7 @@ export interface AdvertisementDoc {
   uniqueViews: number;
   clicks: number;
   ctr: number;
-}
-
-interface AdBannerProps {
-  ad?: AdvertisementDoc;
-  deviceViewport?: "desktop" | "tablet" | "mobile";
-  className?: string;
+  createdAt?: string;
 }
 
 export const DEFAULT_ENTERPRISE_AD: AdvertisementDoc = {
@@ -44,47 +46,111 @@ export const DEFAULT_ENTERPRISE_AD: AdvertisementDoc = {
   adName: "FR8X Ocean Rate Intelligence 2026",
   title: "FR8X Verified Ocean Freight Intelligence 2026",
   type: "image",
-  mediaUrl: "",
   shortDescription: "Unlock verified benchmark rates across 500+ global trade lanes.",
   destinationUrl: "/auctions",
   targetType: "internal",
   openMode: "inside_app",
   ctaText: "Explore Auctions Now",
   status: "active",
-  audience: {
-    country: "All",
-    businessType: "All",
-    subscriptionPlan: "All",
-    device: "all",
-  },
-  impressions: 4820,
-  uniqueViews: 3210,
-  clicks: 642,
-  ctr: 13.3,
+  audience: { country: "All", businessType: "All", subscriptionPlan: "All", device: "all" },
+  impressions: 0,
+  uniqueViews: 0,
+  clicks: 0,
+  ctr: 0,
 };
 
-export function AdBanner({ ad = DEFAULT_ENTERPRISE_AD, deviceViewport = "desktop", className = "" }: AdBannerProps) {
-  const [tracked, setTracked] = useState(false);
+interface AdBannerProps {
+  /** If provided, shows this specific ad. Otherwise fetches from Firestore. */
+  ad?: AdvertisementDoc;
+  deviceViewport?: "desktop" | "tablet" | "mobile";
+  className?: string;
+  /** When used inside a feed, pass an index to rotate through available ads */
+  adIndex?: number;
+}
 
+const ADS_COLLECTION = COLLECTIONS.ADS || "ads";
+
+/** Detect device type from user agent */
+function getDeviceType(): "desktop" | "tablet" | "mobile" {
+  if (typeof window === "undefined") return "desktop";
+  const ua = navigator.userAgent;
+  if (/tablet|ipad|playbook|silk/i.test(ua)) return "tablet";
+  if (/mobile|android|iphone|ipod|windows phone/i.test(ua)) return "mobile";
+  return "desktop";
+}
+
+export function AdBanner({
+  ad: propAd,
+  deviceViewport,
+  className = "",
+  adIndex = 0,
+}: AdBannerProps) {
+  const { user } = useAuth();
+  const [firestoreAds, setFirestoreAds] = useState<AdvertisementDoc[]>([]);
+  const [isLoading, setIsLoading] = useState(!propAd);
+  const impressionTracked = useRef(false);
+  const resolvedDevice = deviceViewport || getDeviceType();
+
+  // Fetch active ads from Firestore (only when no prop ad provided)
   useEffect(() => {
-    if (!tracked && ad.status === "active") {
-      setTracked(true);
-      // Increment impression analytics counter
-    }
-  }, [tracked, ad.status]);
+    if (propAd) return;
 
-  if (ad.status !== "active") return null;
+    setIsLoading(true);
+    queryDocuments<AdvertisementDoc>(ADS_COLLECTION, [
+      where("status", "==", "active"),
+    ])
+      .then((docs) => {
+        const now = new Date();
+        const filtered = docs.filter((a) => {
+          // Date range check
+          if (a.startDate && new Date(a.startDate) > now) return false;
+          if (a.endDate && new Date(a.endDate) < now) return false;
+          // Device targeting
+          if (a.audience?.device && a.audience.device !== "all" && a.audience.device !== resolvedDevice) return false;
+          // Subscription targeting
+          if (a.audience?.subscriptionPlan && a.audience.subscriptionPlan !== "All") {
+            const userTier = user?.membershipTier || "trial";
+            if (!a.audience.subscriptionPlan.toLowerCase().includes(userTier)) return false;
+          }
+          return true;
+        });
+        setFirestoreAds(filtered);
+      })
+      .catch(() => setFirestoreAds([]))
+      .finally(() => setIsLoading(false));
+  }, [propAd, resolvedDevice, user?.membershipTier]);
 
-  const isExternal = ad.targetType === "external";
-  const openInNewTab = ad.openMode === "new_tab" || isExternal;
+  const activeAd = propAd ?? firestoreAds[adIndex % Math.max(firestoreAds.length, 1)];
+
+  // Track impression on render (once per mount)
+  useEffect(() => {
+    if (!activeAd?.id || impressionTracked.current) return;
+    if (activeAd.status !== "active") return;
+    impressionTracked.current = true;
+
+    updateDocument(ADS_COLLECTION, activeAd.id, {
+      impressions: increment(1) as unknown as number,
+    }).catch(() => undefined); // Fail silently
+  }, [activeAd?.id, activeAd?.status]);
+
+  const handleCTAClick = useCallback(() => {
+    if (!activeAd?.id) return;
+    updateDocument(ADS_COLLECTION, activeAd.id, {
+      clicks: increment(1) as unknown as number,
+    }).catch(() => undefined);
+  }, [activeAd?.id]);
+
+  if (isLoading) return null;
+  if (!activeAd || activeAd.status !== "active") return null;
+
+  const isExternal = activeAd.targetType === "external";
+  const openInNewTab = activeAd.openMode === "new_tab" || isExternal;
 
   return (
     <div
       className={`w-full rounded-xl p-4 sm:p-5 text-white shadow-sm overflow-hidden relative group transition-all ${
-        deviceViewport === "mobile"
+        resolvedDevice === "mobile"
           ? "bg-gradient-to-r from-[#0b192c] to-[#1e7bb0] text-xs"
-          : deviceViewport === "tablet"
-          ? "bg-gradient-to-r from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
           : "bg-gradient-to-r from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
       } ${className}`}
     >
@@ -94,31 +160,37 @@ export function AdBanner({ ad = DEFAULT_ENTERPRISE_AD, deviceViewport = "desktop
             <span className="bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1">
               <Megaphone className="h-3 w-3 text-amber-300" /> Promoted
             </span>
-            <h4 className="text-body-md font-bold text-white leading-tight">{ad.title}</h4>
+            <h4 className="text-body-md font-bold text-white leading-tight">{activeAd.title}</h4>
           </div>
 
-          {ad.shortDescription && (
-            <p className="text-body-sm text-blue-100/90 leading-snug line-clamp-2">{ad.shortDescription}</p>
+          {activeAd.shortDescription && (
+            <p className="text-body-sm text-blue-100/90 leading-snug line-clamp-2">
+              {activeAd.shortDescription}
+            </p>
           )}
         </div>
 
-        {ad.destinationUrl && (
+        {activeAd.destinationUrl && (
           <div className="shrink-0 pt-1 sm:pt-0">
             {openInNewTab ? (
               <a
-                href={ad.destinationUrl}
+                href={activeAd.destinationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={handleCTAClick}
                 className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-body-sm px-3.5 py-1.5 rounded-lg hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                aria-label={`${activeAd.ctaText || "Visit Link"} — opens in new tab`}
               >
-                {ad.ctaText || "Visit Link"} <ExternalLink className="h-3.5 w-3.5" />
+                {activeAd.ctaText || "Visit Link"} <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : (
               <Link
-                href={ad.destinationUrl}
+                href={activeAd.destinationUrl}
+                onClick={handleCTAClick}
                 className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-body-sm px-3.5 py-1.5 rounded-lg hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                aria-label={activeAd.ctaText || "Learn More"}
               >
-                {ad.ctaText || "Learn More"}
+                {activeAd.ctaText || "Learn More"}
               </Link>
             )}
           </div>
