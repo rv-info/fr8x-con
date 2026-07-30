@@ -5,15 +5,14 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
+    "scheme": "fr8xcon",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#0F172A"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "in.fr8x.con",
@@ -21,7 +20,8 @@
       "infoPlist": {
         "NSCameraUsageDescription": "FR8X-CON requires camera access to scan shipping document QR codes and capture bill of lading images.",
         "NSPhotoLibraryUsageDescription": "FR8X-CON requires photo access to upload container inspection images and proof of delivery documents.",
-        "NSFaceIDUsageDescription": "FR8X-CON uses Face ID for secure biometric login to your enterprise freight account."
+        "NSFaceIDUsageDescription": "FR8X-CON uses Face ID for secure biometric login to your enterprise freight account.",
+        "NSUserNotificationsUsageDescription": "FR8X-CON sends push notifications for auction updates, bid alerts, rate changes, and important logistics events."
       }
     },
     "android": {
@@ -37,7 +37,9 @@
         "WRITE_EXTERNAL_STORAGE",
         "USE_BIOMETRIC",
         "USE_FINGERPRINT",
-        "INTERNET"
+        "INTERNET",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
       ]
     },
     "web": {
@@ -46,7 +48,15 @@
     "plugins": [
       "expo-router",
       "expo-local-authentication",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#56C5F0",
+          "sounds": []
+        }
+      ]
     ],
     "extra": {
       "eas": {
