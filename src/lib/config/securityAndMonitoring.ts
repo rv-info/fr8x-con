@@ -12,6 +12,15 @@ export interface AuthenticationSettingsDoc {
   googleLoginEnabled: boolean;
   microsoftLoginEnabled: boolean;
   passkeySupportReady: boolean;
+  // Enhanced Security Controls
+  highEncryptionMode: boolean;
+  rateLimitingEnabled: boolean;
+  rateLimitMaxPerMin: number;
+  bruteForceProtectionEnabled: boolean;
+  maxFailedLoginAttempts: number;
+  lockoutDurationMinutes: number;
+  credentialStuffingDetectionEnabled: boolean;
+  uniqueAccountsPerIpWindow: number;
 }
 
 export interface UserRegistrationSettingsDoc {
@@ -61,6 +70,15 @@ export const DEFAULT_AUTH_SETTINGS: AuthenticationSettingsDoc = {
   googleLoginEnabled: true,
   microsoftLoginEnabled: true,
   passkeySupportReady: true,
+  // High Encryption, Rate Limiting & Threat Protection
+  highEncryptionMode: true,
+  rateLimitingEnabled: true,
+  rateLimitMaxPerMin: 30,
+  bruteForceProtectionEnabled: true,
+  maxFailedLoginAttempts: 5,
+  lockoutDurationMinutes: 15,
+  credentialStuffingDetectionEnabled: true,
+  uniqueAccountsPerIpWindow: 4,
 };
 
 export const DEFAULT_REGISTRATION_SETTINGS: UserRegistrationSettingsDoc = {
