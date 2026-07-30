@@ -56,7 +56,12 @@ import {
 } from "@/lib/firebase/contacts";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Button } from "@/components/ui/Button";
-import { ImageUploadWithCrop } from "@/components/ui/ImageUploadWithCrop";
+import dynamic from "next/dynamic";
+// Heavy image cropping component: only needed when user enters edit mode
+const ImageUploadWithCrop = dynamic(
+  () => import("@/components/ui/ImageUploadWithCrop").then((m) => ({ default: m.ImageUploadWithCrop })),
+  { ssr: false, loading: () => null }
+);
 import { getProfilePhotoPath } from "@/lib/firebase/storage";
 import Link from "next/link";
 import { ContactsPanel } from "@/components/contacts/ContactsPanel";
