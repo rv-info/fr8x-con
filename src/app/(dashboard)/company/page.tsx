@@ -9,7 +9,12 @@ import { Building2, ShieldCheck, MapPin, Upload, FileText, Calendar, Loader2, Ar
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import { getDocument, setDocument, queryDocuments, where, limit } from "@/lib/firebase/firestore";
-import { ImageUploadWithCrop } from "@/components/ui/ImageUploadWithCrop";
+import dynamic from "next/dynamic";
+// Heavy image cropping component: lazy-loaded only when editing company profile
+const ImageUploadWithCrop = dynamic(
+  () => import("@/components/ui/ImageUploadWithCrop").then((m) => ({ default: m.ImageUploadWithCrop })),
+  { ssr: false, loading: () => null }
+);
 import { getCompanyLogoPath } from "@/lib/firebase/storage";
 import { Button } from "@/components/ui/Button";
 
