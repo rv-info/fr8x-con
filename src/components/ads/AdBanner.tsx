@@ -36,6 +36,7 @@ export interface AdvertisementDoc {
   startDate?: string;
   endDate?: string;
   status: "active" | "disabled" | "scheduled" | "expired";
+  isActive?: boolean;
   audience?: TargetAudienceRules;
   impressions: number;
   uniqueViews: number;
