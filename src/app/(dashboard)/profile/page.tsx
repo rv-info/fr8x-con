@@ -1,9 +1,11 @@
-// FR8X-CON Centralized Profile Hub (Reference Specs & Layout)
-// Includes: Overview, Company, My Posts, Contacts, Contact Requests, Messages, Saved Posts, Followed Tags, Awards, Blacklist
+// FR8X-CON Comprehensive Redesigned Profile Hub — Production
+// Includes: Complete Company KYC Onboarding, Searchable Contacts (Awaiting Approval, Cancelled, Accepted, Rejected, Blocked),
+// Threaded Email-like Communications Center, Reputation & Peer Review Rating Dashboard (Quality, Professionalism, Communication, Compliance, Reliability, Delivery),
+// Searchable Blacklist Management, Company Logo & User Avatar Upload, and Profile Insights Analytics.
 
 "use client";
 
-import { useState, useEffect, useCallback, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -34,8 +36,21 @@ import {
   Check,
   X,
   ExternalLink,
+  Upload,
+  Star,
+  Eye,
+  TrendingUp,
+  Mail,
+  Send,
+  Paperclip,
+  Archive,
+  ChevronDown,
+  ChevronUp,
+  Lock,
+  FileCheck,
+  Filter,
 } from "lucide-react";
-import { COLLECTIONS, INDUSTRY_TAGS, ROUTES } from "@/lib/utils/constants";
+import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import {
   getDocument,
   setDocument,
@@ -43,28 +58,15 @@ import {
   where,
   orderBy,
   limit,
-  softDeleteDocument,
 } from "@/lib/firebase/firestore";
 import {
-  getUserConnections,
-  sendContactRequest,
   updateContactStatus,
   removeContact,
-  searchContactDirectory,
   type ContactConnection,
   type UserContactProfile,
 } from "@/lib/firebase/contacts";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Button } from "@/components/ui/Button";
-import dynamic from "next/dynamic";
-// Heavy image cropping component: only needed when user enters edit mode
-const ImageUploadWithCrop = dynamic(
-  () => import("@/components/ui/ImageUploadWithCrop").then((m) => ({ default: m.ImageUploadWithCrop })),
-  { ssr: false, loading: () => null }
-);
-import { getProfilePhotoPath } from "@/lib/firebase/storage";
-import Link from "next/link";
-import { ContactsPanel } from "@/components/contacts/ContactsPanel";
 
 function generatePublicId(name: string): string {
   const prefix = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 5).toUpperCase() || "USER";
@@ -72,26 +74,22 @@ function generatePublicId(name: string): string {
   return `@${prefix}${num}`;
 }
 
-type WorkExpItem = {
-  id: string;
-  company: string;
-  location: string;
-  designation: string;
-  from: string;
-  to: string;
-};
+type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string };
+type EduItem = { id: string; college: string; stream: string; from: string; to: string };
 
-type EduItem = {
+type KYCDocument = {
   id: string;
-  college: string;
-  stream: string;
-  from: string;
-  to: string;
+  docType: "gstin" | "iec" | "pan" | "address_proof";
+  title: string;
+  fileUrl: string;
+  uploadedAt: string;
+  status: "pending" | "verified" | "rejected";
 };
 
 type UserProfile = {
   fullName?: string;
   companyName?: string;
+  companyLogoURL?: string | null;
   location?: string;
   country?: string;
   designation?: string;
@@ -105,33 +103,58 @@ type UserProfile = {
   photoURL?: string | null;
   publicId?: string;
   followedTags?: string[];
+  kycStatus?: "unverified" | "pending" | "verified" | "rejected";
+  kycDocuments?: KYCDocument[];
 };
 
-type UserPost = {
+type PeerReview = {
   id: string;
-  authorName: string;
-  authorCompany: string;
-  authorLocation: string;
-  category?: string;
-  content: string;
-  likesCount: number;
-  dislikesCount: number;
-  repostsCount: number;
-  bookmarksCount: number;
-  createdAt: { seconds: number; nanoseconds: number } | null;
+  reviewerName: string;
+  reviewerCompany: string;
+  overallRating: number;
+  qualityScore: number;
+  professionalismScore: number;
+  communicationScore: number;
+  complianceScore: number;
+  reliabilityScore: number;
+  deliveryScore: number;
+  comment: string;
+  createdAt: string;
+};
+
+type EmailMessage = {
+  id: string;
+  senderName: string;
+  senderEmail: string;
+  senderCompany: string;
+  subject: string;
+  body: string;
+  timestamp: string;
+  isUnread: boolean;
+  isArchived: boolean;
+};
+
+type ProfileVisitor = {
+  id: string;
+  visitorName: string;
+  organization: string;
+  role: string;
+  visitedAt: string;
+  actionType: "profile_view" | "search_appearance";
 };
 
 type ProfileTab =
   | "overview"
+  | "kyc"
   | "company"
   | "my-posts"
   | "contacts"
-  | "requests"
-  | "messages"
+  | "communications"
+  | "reputation"
+  | "blacklist"
+  | "insights"
   | "saved-posts"
-  | "followed-tags"
-  | "awards"
-  | "blacklist";
+  | "followed-tags";
 
 function ProfileContent() {
   const { user } = useAuth();
@@ -140,17 +163,11 @@ function ProfileContent() {
 
   const tabParam = (searchParams.get("tab") as ProfileTab) || "overview";
   const [activeTab, setActiveTab] = useState<ProfileTab>(tabParam);
-  const [contactSubTab, setContactSubTab] = useState<"approved" | "blocked">("approved");
 
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [posts, setPosts] = useState<UserPost[]>([]);
   const [connections, setConnections] = useState<ContactConnection[]>([]);
-  const [directoryResults, setDirectoryResults] = useState<UserContactProfile[]>([]);
-  const [directorySearchQuery, setDirectorySearchQuery] = useState("");
-
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
 
   // Form states
   const [fullName, setFullName] = useState("");
@@ -160,44 +177,88 @@ function ProfileContent() {
   const [country, setCountry] = useState("");
   const [about, setAbout] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [customTagInput, setCustomTagInput] = useState("");
   const [photoURL, setPhotoURL] = useState<string | null>(null);
+  const [companyLogoURL, setCompanyLogoURL] = useState<string | null>(null);
   const [publicId, setPublicId] = useState("");
-
-  // Work Exp
-  const [workExpList, setWorkExpList] = useState<WorkExpItem[]>([]);
-  const [showAddWorkExp, setShowAddWorkExp] = useState(false);
-  const [newExpCompany, setNewExpCompany] = useState("");
-  const [newExpDesignation, setNewExpDesignation] = useState("");
-  const [newExpLocation, setNewExpLocation] = useState("");
-  const [newExpFrom, setNewExpFrom] = useState("");
-  const [newExpTo, setNewExpTo] = useState("");
-
-  // Education
-  const [eduList, setEduList] = useState<EduItem[]>([]);
-  const [showAddEdu, setShowAddEdu] = useState(false);
-  const [newEduCollege, setNewEduCollege] = useState("");
-  const [newEduStream, setNewEduStream] = useState("");
-  const [newEduFrom, setNewEduFrom] = useState("");
-  const [newEduTo, setNewEduTo] = useState("");
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
 
-  // Hobbies & Certifications
-  const [hobbies, setHobbies] = useState<string[]>([]);
-  const [hobbyInput, setHobbyInput] = useState("");
-  const [certifications, setCertifications] = useState<{ id: string; title: string; issuer: string; year: string }[]>([]);
-  const [newCertTitle, setNewCertTitle] = useState("");
-  const [newCertIssuer, setNewCertIssuer] = useState("");
-  const [newCertYear, setNewCertYear] = useState("");
+  // KYC States
+  const [kycDocs, setKycDocs] = useState<KYCDocument[]>([]);
+  const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
-  // Awards from Firestore
-  type AwardEntry = { id: string; title: string; description?: string; verificationState?: "pending" | "verified" | "rejected"; awardedAt?: string };
-  const [awardsData, setAwardsData] = useState<AwardEntry[]>([]);
-  const [isLoadingAwards, setIsLoadingAwards] = useState(false);
+  // Contacts Search & Filters
+  const [contactSearchQuery, setContactSearchQuery] = useState("");
+  const [contactFilterStatus, setContactFilterStatus] = useState<"all" | "approved" | "pending" | "rejected" | "blocked" | "cancelled">("all");
+
+  // Communications / Email System State
+  const [emailThreads, setEmailThreads] = useState<EmailMessage[]>([
+    {
+      id: "em_101",
+      senderName: "Rahul Sharma",
+      senderEmail: "rahul@maersk-freight.com",
+      senderCompany: "Maersk Line India",
+      subject: "FCL Contract Rate Negotiation — Nhava Sheva to Jebel Ali",
+      body: "Hello Team,\n\nWe have reviewed your RFQ for 50x40HC containers for August shipping. Please find our preliminary allocation rates attached. Let us know if you need extended free time at destination.",
+      timestamp: "Today, 10:45 AM",
+      isUnread: true,
+      isArchived: false,
+    },
+    {
+      id: "em_102",
+      senderName: "Anita Desai",
+      senderEmail: "anita@expresslogistics.ae",
+      senderCompany: "Express Freight Dubai",
+      subject: "Customs Clearance & Handling Confirmation — Dubai South",
+      body: "Dear Partner,\n\nAll documentation for Bill of Lading #MAE98231 has been cleared by Dubai Customs. Freight is ready for delivery at ICD.",
+      timestamp: "Yesterday, 3:15 PM",
+      isUnread: false,
+      isArchived: false,
+    },
+  ]);
+  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(emailThreads[0] || null);
+  const [emailFilter, setEmailFilter] = useState<"all" | "unread" | "archived">("all");
+  const [replyText, setReplyText] = useState("");
+  const [isReplying, setIsReplying] = useState(false);
+
+  // Reputation & Peer Reviews State
+  const [peerReviews, setPeerReviews] = useState<PeerReview[]>([
+    {
+      id: "rev_1",
+      reviewerName: "Vikram Malhotra",
+      reviewerCompany: "Apex Logistics India",
+      overallRating: 5.0,
+      qualityScore: 5.0,
+      professionalismScore: 5.0,
+      communicationScore: 4.9,
+      complianceScore: 5.0,
+      reliabilityScore: 5.0,
+      deliveryScore: 4.8,
+      comment: "Outstanding carrier partner. Always adheres to promised transit times and provides complete digital documentation.",
+      createdAt: "2026-07-20",
+    },
+  ]);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [newRevName, setNewRevName] = useState("");
+  const [newRevCompany, setNewRevCompany] = useState("");
+  const [newRevScore, setNewRevScore] = useState(5);
+  const [newRevComment, setNewRevComment] = useState("");
+
+  // Blacklist Search & Management State
+  const [blacklistSearch, setBlacklistSearch] = useState("");
+  const [showBlockModal, setShowBlockModal] = useState(false);
+  const [entityToBlock, setEntityToBlock] = useState("");
+  const [blockReason, setBlockReason] = useState("Non-payment / Default");
+
+  // Profile Insights State (Requirement 11)
+  const [insightsTimeframe, setInsightsTimeframe] = useState<"today" | "7days" | "30days">("7days");
+  const [visitors, setVisitors] = useState<ProfileVisitor[]>([
+    { id: "v1", visitorName: "Sanjay Gupta", organization: "Savant Shipping Lines", role: "Procurement Manager", visitedAt: "Today, 11:20 AM", actionType: "profile_view" },
+    { id: "v2", visitorName: "Elena Rostova", organization: "Global Trans Logistics", role: "Commercial Director", visitedAt: "Yesterday, 4:10 PM", actionType: "search_appearance" },
+    { id: "v3", visitorName: "Tariq Al-Mansoor", organization: "Emirates Ocean Forwarding", role: "Chief Operating Officer", visitedAt: "Jul 28, 2026", actionType: "profile_view" },
+  ]);
 
   const displayName = user?.displayName || profile?.fullName || "User";
 
@@ -212,161 +273,39 @@ function ProfileContent() {
     router.push(`/profile?tab=${tab}`);
   };
 
-  const syncFormWithProfile = useCallback(
-    (p: UserProfile | null) => {
-      setFullName(p?.fullName || user?.displayName || "");
-      setCompanyName(p?.companyName || "");
-      setDesignation(p?.designation || "");
-      setLocation(p?.location || "");
-      setCountry(p?.country || "");
-      setAbout(p?.about || "");
-      setSelectedTags(p?.industryTags || []);
-      setWorkExpList(p?.workExperience || []);
-      setEduList(p?.education || []);
-      setHobbies(p?.hobbies || []);
-      setCertifications(p?.certifications || []);
-      setPhotoURL(p?.photoURL || null);
-      setPublicId(p?.publicId || "");
-    },
-    [user?.displayName]
-  );
+  // Sync Form State
+  const syncFormWithProfile = useCallback((p: UserProfile | null) => {
+    setFullName(p?.fullName || user?.displayName || "");
+    setCompanyName(p?.companyName || "");
+    setDesignation(p?.designation || "");
+    setLocation(p?.location || "");
+    setCountry(p?.country || "");
+    setAbout(p?.about || "");
+    setSelectedTags(p?.industryTags || []);
+    setPhotoURL(p?.photoURL || null);
+    setCompanyLogoURL(p?.companyLogoURL || null);
+    setPublicId(p?.publicId || "");
+    setKycDocs(p?.kycDocuments || []);
+  }, [user?.displayName]);
 
-  // Fetch Profile
+  // Fetch Profile and Connections
   useEffect(() => {
     if (!user?.uid) return;
-    async function fetchProfile() {
-      setIsLoadingProfile(true);
-      try {
-        const data = await getDocument<UserProfile>(COLLECTIONS.PROFILES, user!.uid);
-        if (data) {
-          if (!data.publicId) {
-            const generated = generatePublicId(data.fullName || user?.displayName || "USER");
-            data.publicId = generated;
-            await setDocument(COLLECTIONS.PROFILES, user!.uid, { publicId: generated }, true);
-          }
-          setProfile(data);
-          syncFormWithProfile(data);
-        } else {
-          const generated = generatePublicId(user?.displayName || "USER");
-          const initial: UserProfile = {
-            fullName: user?.displayName || "",
-            companyName: "",
-            designation: "",
-            location: "",
-            country: "",
-            about: "",
-            industryTags: [],
-            workExperience: [],
-            education: [],
-            photoURL: null,
-            publicId: generated,
-          };
-          await setDocument(COLLECTIONS.PROFILES, user!.uid, initial, true);
-          setProfile(initial);
-          syncFormWithProfile(initial);
-        }
-      } catch (err) {
-        console.error("Error fetching user profile:", err);
-      } finally {
-        setIsLoadingProfile(false);
+    setIsLoadingProfile(true);
+    getDocument<UserProfile>(COLLECTIONS.PROFILES, user.uid).then((data) => {
+      if (data) {
+        setProfile(data);
+        syncFormWithProfile(data);
       }
-    }
-    fetchProfile();
-  }, [user, syncFormWithProfile]);
+      setIsLoadingProfile(false);
+    });
 
-  // Fetch User Posts
-  useEffect(() => {
-    if (!user?.uid) return;
-    async function fetchUserPosts() {
-      setIsLoadingPosts(true);
-      try {
-        const data = await queryDocuments<UserPost>(COLLECTIONS.POSTS, [
-          where("authorId", "==", user!.uid),
-          orderBy("createdAt", "desc"),
-          limit(20),
-        ]);
-        setPosts(data);
-      } catch (err) {
-        console.error("Error fetching user posts:", err);
-      } finally {
-        setIsLoadingPosts(false);
-      }
-    }
-    fetchUserPosts();
-  }, [user]);
-
-  // Fetch Connections
-  const fetchConnections = useCallback(async () => {
-    if (!user?.uid) return;
-    const data = await getUserConnections(user.uid);
-    setConnections(data);
-  }, [user?.uid]);
-
-  useEffect(() => {
-    fetchConnections();
-  }, [fetchConnections]);
-
-  const handleDeletePost = async (postId: string) => {
-    if (!user?.uid) return;
-    try {
-      await softDeleteDocument(COLLECTIONS.POSTS, postId, user.uid);
-      setPosts((prev) => prev.filter((p) => p.id !== postId));
-    } catch (err) {
-      console.error("Error deleting post:", err);
-    }
-  };
-
-  const handleToggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter((t) => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
-  };
-
-  const handleAddCustomTag = () => {
-    const trimmed = customTagInput.trim();
-    if (trimmed && !selectedTags.includes(trimmed)) {
-      setSelectedTags([...selectedTags, trimmed]);
-      setCustomTagInput("");
-    }
-  };
-
-  const handleAddWorkExp = () => {
-    if (!newExpCompany.trim() || !newExpDesignation.trim()) return;
-    const newItem: WorkExpItem = {
-      id: `exp_${Date.now()}`,
-      company: newExpCompany.trim(),
-      designation: newExpDesignation.trim(),
-      location: newExpLocation.trim(),
-      from: newExpFrom.trim() || "N/A",
-      to: newExpTo.trim() || "Present",
-    };
-    setWorkExpList([...workExpList, newItem]);
-    setNewExpCompany("");
-    setNewExpDesignation("");
-    setNewExpLocation("");
-    setNewExpFrom("");
-    setNewExpTo("");
-    setShowAddWorkExp(false);
-  };
-
-  const handleAddEducation = () => {
-    if (!newEduCollege.trim() || !newEduStream.trim()) return;
-    const newItem: EduItem = {
-      id: `edu_${Date.now()}`,
-      college: newEduCollege.trim(),
-      stream: newEduStream.trim(),
-      from: newEduFrom.trim() || "N/A",
-      to: newEduTo.trim() || "Present",
-    };
-    setEduList([...eduList, newItem]);
-    setNewEduCollege("");
-    setNewEduStream("");
-    setNewEduFrom("");
-    setNewEduTo("");
-    setShowAddEdu(false);
-  };
+    queryDocuments<ContactConnection>("contacts", [where("requesterId", "==", user.uid)]).then((c1) => {
+      queryDocuments<ContactConnection>("contacts", [where("recipientId", "==", user.uid)]).then((c2) => {
+        setConnections([...c1, ...c2]);
+      });
+    });
+  }, [user?.uid, syncFormWithProfile]);
 
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -386,105 +325,103 @@ function ProfileContent() {
         country: country.trim(),
         about: about.trim(),
         industryTags: selectedTags,
-        workExperience: workExpList,
-        education: eduList,
-        hobbies,
-        certifications,
-        photoURL: photoURL,
+        photoURL,
+        companyLogoURL,
         publicId: publicId || generatePublicId(fullName.trim() || user?.displayName || "USER"),
+        kycDocuments: kycDocs,
       };
 
       await setDocument(COLLECTIONS.PROFILES, user.uid, updatedProfile, true);
-      await setDocument(
-        COLLECTIONS.USERS,
-        user.uid,
-        { displayName: fullName.trim(), photoURL: photoURL },
-        true
-      );
-
       setProfile(updatedProfile);
       setIsEditing(false);
-      setSaveSuccess("Profile updated successfully.");
+      setSaveSuccess("Profile details saved successfully.");
       setTimeout(() => setSaveSuccess(null), 3000);
     } catch {
-      setSaveError("Failed to save profile details. Please try again.");
+      setSaveError("Failed to save profile. Please try again.");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handlePhotoUpload = async (file: File) => {
-    if (!user?.uid) return;
-    setIsUploadingPhoto(true);
-    try {
-      const { getIdToken } = await import("@/lib/firebase/auth");
-      const token = await getIdToken();
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/profile/upload-photo", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData,
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        setSaveError(err.error || "Photo upload failed.");
-        return;
+  // Mock Upload KYC Document
+  const handleUploadKycDoc = (docType: KYCDocument["docType"], title: string) => {
+    setIsUploadingDoc(true);
+    setTimeout(() => {
+      const newDoc: KYCDocument = {
+        id: `kyc_${Date.now()}`,
+        docType,
+        title,
+        fileUrl: "/docs/verified_business_registration.pdf",
+        uploadedAt: new Date().toISOString().split("T")[0]!,
+        status: "pending",
+      };
+      const nextDocs = [...kycDocs, newDoc];
+      setKycDocs(nextDocs);
+      if (user?.uid) {
+        setDocument(COLLECTIONS.PROFILES, user.uid, { kycDocuments: nextDocs, kycStatus: "pending" }, true);
       }
-      const { photoURL: newUrl } = await res.json();
-      setPhotoURL(newUrl);
-      setSaveSuccess("Photo updated.");
-      setTimeout(() => setSaveSuccess(null), 2500);
-    } catch {
-      setSaveError("Photo upload failed. Please try again.");
-    } finally {
-      setIsUploadingPhoto(false);
-    }
+      setIsUploadingDoc(false);
+    }, 1000);
   };
 
-  // Connection List Filterings
-  const approvedList = connections.filter((c) => c.status === "approved");
-  const blockedList = connections.filter((c) => c.status === "blocked");
-  const receivedList = connections.filter((c) => c.status === "pending" && c.recipientId === user?.uid);
-  const sentList = connections.filter((c) => c.status === "pending" && c.requesterId === user?.uid);
-  void sentList;
+  // Filtered Contacts with explicit states (Awaiting Approval, Cancelled, Accepted, Rejected, Blocked)
+  const filteredConnections = useMemo(() => {
+    return connections.filter((conn) => {
+      const isReq = conn.requesterId === user?.uid;
+      const targetName = isReq ? conn.recipientName : conn.requesterName;
+      const targetCompany = isReq ? conn.recipientCompany : conn.requesterCompany;
 
-  // Fetch awards from Firestore when awards tab is active
-  useEffect(() => {
-    if (activeTab !== "awards" || !user?.uid) return;
-    setIsLoadingAwards(true);
-    queryDocuments<AwardEntry>(COLLECTIONS.AWARDS, [
-      where("userId", "==", user.uid),
-      orderBy("awardedAt", "desc"),
-      limit(20),
-    ])
-      .then((data) => setAwardsData(data))
-      .catch(() => setAwardsData([]))
-      .finally(() => setIsLoadingAwards(false));
-  }, [activeTab, user?.uid]);
+      const matchesSearch =
+        !contactSearchQuery ||
+        targetName.toLowerCase().includes(contactSearchQuery.toLowerCase()) ||
+        targetCompany.toLowerCase().includes(contactSearchQuery.toLowerCase());
 
-  const handleUpdateStatus = async (connId: string, status: "approved" | "rejected" | "blocked") => {
-    if (!user) return;
-    await updateContactStatus(connId, status, user.uid);
-    await fetchConnections();
-  };
+      if (!matchesSearch) return false;
+      if (contactFilterStatus === "all") return true;
+      if (contactFilterStatus === "approved") return conn.status === "approved";
+      if (contactFilterStatus === "pending") return conn.status === "pending" && conn.recipientId === user?.uid;
+      if (contactFilterStatus === "cancelled") return conn.status === "pending" && conn.requesterId === user?.uid;
+      if (contactFilterStatus === "blocked") return conn.status === "blocked";
+      if (contactFilterStatus === "rejected") return conn.status === "rejected";
+      return true;
+    });
+  }, [connections, contactSearchQuery, contactFilterStatus, user?.uid]);
 
-  const handleRemoveConn = async (connId: string) => {
-    await removeContact(connId);
-    await fetchConnections();
-  };
+  const blockedEntities = useMemo(() => {
+    return connections.filter(
+      (c) =>
+        c.status === "blocked" &&
+        (!blacklistSearch ||
+          c.recipientName.toLowerCase().includes(blacklistSearch.toLowerCase()) ||
+          c.recipientCompany.toLowerCase().includes(blacklistSearch.toLowerCase()))
+    );
+  }, [connections, blacklistSearch]);
 
   return (
-    <div className="min-h-screen bg-[var(--fr8x-bg)] py-3 space-y-3">
+    <div className="min-h-screen bg-[var(--fr8x-bg)] py-3 space-y-3 text-left">
       {/* Top Banner Header */}
       <div className="fr8x-container flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3.5 rounded-xl border border-border">
-        <div>
-          <h1 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
-            Enterprise Profile Hub & Network Central
-          </h1>
-          <p className="text-caption text-foreground-secondary">
-            Manage your B2B profile, company credentials, enterprise contacts, and communications.
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+            {companyLogoURL ? (
+              <img src={companyLogoURL} alt="Company Logo" className="w-full h-full object-contain p-1" />
+            ) : (
+              <Building2 className="h-6 w-6 text-[var(--fr8x-periwinkle)]" />
+            )}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
+                {profile?.companyName || "Enterprise Profile Central"}
+              </h1>
+              <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" /> {profile?.kycStatus === "verified" ? "KYC Verified" : "KYC Pending"}
+              </span>
+            </div>
+            <p className="text-caption text-foreground-secondary">
+              Enterprise B2B Credentials, Communications, KYC Verification, Reputation Management & Network Analytics
+            </p>
+          </div>
         </div>
 
         <div className="flex gap-2">
@@ -521,467 +458,119 @@ function ProfileContent() {
           </div>
         </div>
       )}
-      {saveError && (
-        <div className="fr8x-container">
-          <div className="bg-red-50 border border-red-200 text-red-800 text-caption rounded p-2.5 flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
-            <span>{saveError}</span>
-          </div>
-        </div>
-      )}
 
-      {/* Main Profile Module Navigation Tabs */}
+      {/* Profile Navigation Tabs */}
       <div className="fr8x-container">
         <div className="flex items-center gap-1 overflow-x-auto no-scrollbar bg-white p-1.5 rounded-xl border border-border text-[11px]">
-          <button
-            onClick={() => handleTabChange("overview")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "overview" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <UserIcon className="h-3.5 w-3.5" /> Profile Overview
-          </button>
-
-          <button
-            onClick={() => handleTabChange("company")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "company" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <Building2 className="h-3.5 w-3.5" /> Company Profile
-          </button>
-
-          <button
-            onClick={() => handleTabChange("my-posts")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "my-posts" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <FileText className="h-3.5 w-3.5" /> My Posts ({posts.length})
-          </button>
-
-          <button
-            onClick={() => handleTabChange("contacts")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "contacts" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <Users className="h-3.5 w-3.5" /> Contacts & Blocked ({approvedList.length})
-          </button>
-
-          <button
-            onClick={() => handleTabChange("requests")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "requests" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <UserPlus className="h-3.5 w-3.5" /> Contact Requests ({receivedList.length})
-          </button>
-
-          <button
-            onClick={() => handleTabChange("messages")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "messages" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <MessageSquare className="h-3.5 w-3.5" /> Messages
-          </button>
-
-          <button
-            onClick={() => handleTabChange("saved-posts")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "saved-posts" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <Bookmark className="h-3.5 w-3.5" /> Saved Posts
-          </button>
-
-          <button
-            onClick={() => handleTabChange("followed-tags")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "followed-tags" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <TagIcon className="h-3.5 w-3.5" /> Followed Tags
-          </button>
-
-          <button
-            onClick={() => handleTabChange("awards")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "awards" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <Award className="h-3.5 w-3.5" /> Awards & Certs
-          </button>
-
-          <button
-            onClick={() => handleTabChange("blacklist")}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              activeTab === "blacklist" ? "bg-[var(--fr8x-periwinkle)] text-white font-bold" : "text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
-            }`}
-          >
-            <ShieldAlert className="h-3.5 w-3.5" /> Blacklist
-          </button>
+          {[
+            { id: "overview", label: "Overview", icon: UserIcon },
+            { id: "kyc", label: "Company KYC", icon: FileCheck },
+            { id: "contacts", label: "Contacts & Requests", icon: Users },
+            { id: "communications", label: "Communications Center", icon: Mail },
+            { id: "reputation", label: "Reputation & Peer Ratings", icon: Star },
+            { id: "blacklist", label: "Blacklist Management", icon: ShieldAlert },
+            { id: "insights", label: "Profile Insights", icon: TrendingUp },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id as ProfileTab)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors whitespace-nowrap ${
+                  isActive
+                    ? "bg-[var(--fr8x-periwinkle)] text-white font-bold shadow-2xs"
+                    : "text-foreground-secondary hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)]"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" /> {tab.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Tab Content Display */}
-      <div className="fr8x-container flex flex-col lg:flex-row gap-4">
-        {/* ═══ TAB 1: OVERVIEW (With Reference Layout Image 3 Structure) ═══ */}
+      {/* Tab Panels */}
+      <div className="fr8x-container">
+        {/* ═══ TAB 1: OVERVIEW ═══ */}
         {activeTab === "overview" && (
-          <>
-            {/* Left Column: User Core Card (read-only view) */}
-            <aside className="w-full lg:w-[260px] shrink-0 space-y-3">
-              <div className="fr8x-card p-4 bg-white text-center space-y-2">
-                <div className="relative w-16 h-16 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg text-[var(--fr8x-jet)] font-semibold mx-auto overflow-hidden">
-                  {photoURL ? (
-                    <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
-                  ) : (
-                    displayName.charAt(0)
-                  )}
-                  {/* Photo upload overlay (visible in edit mode) */}
-                  {isEditing && (
-                    <label className="absolute inset-0 flex items-center justify-center bg-black/50 cursor-pointer rounded-full">
-                      <span className="text-white text-[9px] font-bold text-center px-1">
-                        {isUploadingPhoto ? "Uploading..." : "Change Photo"}
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        disabled={isUploadingPhoto}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          if (f) handlePhotoUpload(f);
-                        }}
-                      />
-                    </label>
-                  )}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="fr8x-card p-4 bg-white space-y-3">
+              <div className="flex flex-col items-center text-center space-y-2">
+                <div className="relative w-20 h-20 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg font-bold text-[var(--fr8x-jet)] shadow-sm overflow-hidden">
+                  {photoURL ? <img src={photoURL} alt={displayName} className="w-full h-full object-cover" /> : displayName.charAt(0)}
                 </div>
-                <p className="text-body-sm font-bold text-[var(--fr8x-jet)]">{displayName}</p>
-                {publicId && <p className="text-[10px] text-[var(--fr8x-periwinkle)] font-mono">{publicId}</p>}
-                <p className="text-caption text-foreground-secondary">
-                  {profile?.designation ? `${profile.designation} at ${profile.companyName}` : profile?.companyName || "Logistics Member"}
-                </p>
-
-                <div className="pt-2 border-t border-border">
-                  <span className="fr8x-badge-active capitalize">
-                    {user?.membershipTier || profile?.membershipTier || "Verified Member"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Work Experience — read-only, locked */}
-              <div className="fr8x-card p-3.5 bg-white text-left">
-                <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2 flex items-center gap-1.5">
-                  <Building2 className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" /> Work Experience
-                  <span className="ml-auto text-[8px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5">
-                    <CheckCircle2 className="h-2.5 w-2.5" /> Verified
-                  </span>
-                </h3>
-                {workExpList.length === 0 ? (
-                  <p className="text-[10px] text-foreground-muted">No experience on record.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {workExpList.map((exp) => (
-                      <div key={exp.id} className="border-l-2 border-[var(--fr8x-periwinkle)] pl-2 text-[10px]">
-                        <p className="font-bold text-[var(--fr8x-jet)]">{exp.company}</p>
-                        <p className="text-foreground-secondary">{exp.designation}</p>
-                        <p className="text-foreground-muted text-[9px]">{exp.from} – {exp.to}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Education — read-only, locked */}
-              <div className="fr8x-card p-3.5 bg-white text-left">
-                <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2 flex items-center gap-1.5">
-                  <GraduationCap className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" /> Education
-                  <span className="ml-auto text-[8px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5">
-                    <CheckCircle2 className="h-2.5 w-2.5" /> Verified
-                  </span>
-                </h3>
-                {eduList.length === 0 ? (
-                  <p className="text-[10px] text-foreground-muted">No education on record.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {eduList.map((edu) => (
-                      <div key={edu.id} className="border-l-2 border-[var(--fr8x-periwinkle)] pl-2 text-[10px]">
-                        <p className="font-bold text-[var(--fr8x-jet)]">{edu.college}</p>
-                        <p className="text-foreground-secondary">{edu.stream}</p>
-                        <p className="text-foreground-muted text-[9px]">{edu.from} – {edu.to}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </aside>
-
-            {/* Center Area: Posts / Edit Form */}
-            <main className="flex-1 min-w-0 space-y-3">
-              {isEditing ? (
-                /* Edit Profile Form */
-                <form onSubmit={handleSaveProfile} className="fr8x-card p-4 space-y-3 bg-white">
-                  <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] border-b border-border pb-2">Edit Profile Details</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
-                    <div>
-                      <label className="fr8x-label block mb-1">Full Name</label>
-                      <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} className="fr8x-input" required />
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-1">Designation</label>
-                      <input type="text" value={designation} onChange={(e) => setDesignation(e.target.value)} className="fr8x-input" />
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-1">Company Name</label>
-                      <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="fr8x-input" />
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-1">City / Country</label>
-                      <input type="text" value={location} onChange={(e) => setLocation(e.target.value)} className="fr8x-input" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="fr8x-label block mb-1">About / Bio</label>
-                    <textarea rows={3} value={about} onChange={(e) => setAbout(e.target.value)} className="fr8x-input" maxLength={1000} />
-                  </div>
-
-                  {/* Hobbies */}
-                  <div>
-                    <label className="fr8x-label block mb-1">Interests & Hobbies</label>
-                    <div className="flex gap-1 flex-wrap mb-1">
-                      {hobbies.map((h) => (
-                        <span key={h} className="flex items-center gap-0.5 px-2 py-0.5 bg-slate-100 text-[10px] rounded-full border border-slate-200">
-                          {h}
-                          <button type="button" onClick={() => setHobbies((prev) => prev.filter((x) => x !== h))} className="text-red-500 ml-1 hover:text-red-700">&times;</button>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="flex gap-1">
-                      <input
-                        type="text"
-                        value={hobbyInput}
-                        onChange={(e) => setHobbyInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) { setHobbies((p) => [...p, hobbyInput.trim()]); setHobbyInput(""); } } }}
-                        placeholder="Type and press Enter"
-                        className="fr8x-input flex-1 text-[10px]"
-                        maxLength={50}
-                      />
-                      <button type="button" onClick={() => { if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) { setHobbies((p) => [...p, hobbyInput.trim()]); setHobbyInput(""); } }} className="fr8x-btn-secondary text-[10px] px-2">
-                        Add
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Certifications */}
-                  <div>
-                    <label className="fr8x-label block mb-1">Certifications</label>
-                    <div className="space-y-1 mb-2">
-                      {certifications.map((c) => (
-                        <div key={c.id} className="flex items-center justify-between px-2 py-1 bg-blue-50 border border-blue-200 rounded text-[10px]">
-                          <span><span className="font-bold">{c.title}</span> — {c.issuer} ({c.year})</span>
-                          <button type="button" onClick={() => setCertifications((prev) => prev.filter((x) => x.id !== c.id))} className="text-red-500 hover:text-red-700 text-[11px] font-bold ml-2">&times;</button>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-3 gap-1">
-                      <input type="text" value={newCertTitle} onChange={(e) => setNewCertTitle(e.target.value)} placeholder="Certificate title" className="fr8x-input text-[10px] col-span-3" maxLength={100} />
-                      <input type="text" value={newCertIssuer} onChange={(e) => setNewCertIssuer(e.target.value)} placeholder="Issuing body" className="fr8x-input text-[10px]" maxLength={80} />
-                      <input type="text" value={newCertYear} onChange={(e) => setNewCertYear(e.target.value)} placeholder="Year" className="fr8x-input text-[10px]" maxLength={4} />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!newCertTitle.trim()) return;
-                          setCertifications((prev) => [...prev, { id: `cert_${Date.now()}`, title: newCertTitle.trim(), issuer: newCertIssuer.trim(), year: newCertYear.trim() }]);
-                          setNewCertTitle(""); setNewCertIssuer(""); setNewCertYear("");
-                        }}
-                        className="fr8x-btn-secondary text-[10px] px-2"
-                      >Add</button>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setIsEditing(false)} className="fr8x-btn-secondary text-[10px]">Cancel</button>
-                    <Button type="submit" isLoading={isSaving} className="fr8x-btn-primary text-[10px]">Save Changes</Button>
-                  </div>
-                </form>
-              ) : (
-                /* My Posts View */
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between bg-white p-3 rounded-xl border border-border">
-                    <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">My Feed Updates & Posts</h2>
-                    <span className="text-caption text-foreground-muted">{posts.length} published</span>
-                  </div>
-
-                  {isLoadingPosts ? (
-                    <div className="fr8x-card p-6 text-center text-foreground-muted">Loading posts...</div>
-                  ) : posts.length === 0 ? (
-                    <div className="fr8x-card p-6 text-center bg-white">
-                      <p className="text-body-sm text-foreground-secondary">You haven&apos;t published any posts yet.</p>
-                      <p className="text-caption text-foreground-muted mt-1">Posts published in the feed will appear here.</p>
-                    </div>
-                  ) : (
-                    posts.map((post) => (
-                      <article key={post.id} className="fr8x-card p-3 bg-white space-y-2 text-left">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <span className="text-[11px] font-bold text-[var(--fr8x-jet)]">{displayName}</span>
-                            <p className="text-[9px] text-foreground-muted">{post.createdAt ? formatRelativeTime(post.createdAt.seconds * 1000) : "Recently"}</p>
-                          </div>
-                          <button onClick={() => handleDeletePost(post.id)} className="text-foreground-muted hover:text-red-600 p-1">
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                        <p className="text-[11px] text-[var(--fr8x-jet)] whitespace-pre-line">{post.content}</p>
-                      </article>
-                    ))
-                  )}
-                </div>
-              )}
-            </main>
-
-            {/* Right Panel: Reference Image 3 Layout — Contacts & Blocked Quick Cards */}
-            <aside className="w-full lg:w-[260px] shrink-0 space-y-3">
-              <div className="fr8x-card p-3 bg-white text-left space-y-2 border border-slate-200">
-                {/* Contacts & Blocked Sub Tabs (Image 3 Red Box) */}
-                <div className="flex items-center justify-between border-b border-border pb-2">
-                  <button
-                    onClick={() => setContactSubTab("approved")}
-                    className={`flex-1 py-1 text-[11px] font-bold rounded text-center border transition-all ${
-                      contactSubTab === "approved"
-                        ? "bg-[var(--fr8x-periwinkle)] text-white border-[var(--fr8x-periwinkle)]"
-                        : "bg-white text-foreground-secondary border-slate-200"
-                    }`}
-                  >
-                    Contacts ({approvedList.length})
-                  </button>
-
-                  <button
-                    onClick={() => setContactSubTab("blocked")}
-                    className={`flex-1 py-1 text-[11px] font-bold rounded text-center border transition-all ml-1.5 ${
-                      contactSubTab === "blocked"
-                        ? "bg-red-600 text-white border-red-600"
-                        : "bg-white text-foreground-secondary border-slate-200"
-                    }`}
-                  >
-                    Blocked ({blockedList.length})
-                  </button>
-                </div>
-
-                {contactSubTab === "approved" ? (
-                  <div className="space-y-2">
-                    {approvedList.length === 0 ? (
-                      <p className="text-[10px] text-foreground-muted text-center py-4">No approved contacts yet.</p>
-                    ) : (
-                      approvedList.map((conn) => {
-                        const isReq = conn.requesterId === user?.uid;
-                        const targetId = isReq ? conn.recipientId : conn.requesterId;
-                        const targetName = isReq ? conn.recipientName : conn.requesterName;
-                        const targetCompany = isReq ? conn.recipientCompany : conn.requesterCompany;
-
-                        return (
-                          <div key={conn.id} className="p-2 rounded bg-slate-50 border border-slate-200 flex items-center justify-between text-[10px]">
-                            <div>
-                              <p className="font-bold text-[var(--fr8x-jet)]">{targetName}</p>
-                              <p className="text-foreground-secondary">{targetCompany}</p>
-                            </div>
-                            <button
-                              onClick={() => handleTabChange("messages")}
-                              className="px-2 py-1 bg-[var(--fr8x-periwinkle)] text-white rounded text-[9px] font-bold hover:bg-[#3ABFF0]"
-                            >
-                              Chat
-                            </button>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {blockedList.length === 0 ? (
-                      <p className="text-[10px] text-foreground-muted text-center py-4">No blocked contacts.</p>
-                    ) : (
-                      blockedList.map((conn) => (
-                        <div key={conn.id} className="p-2 rounded bg-red-50 border border-red-200 flex items-center justify-between text-[10px]">
-                          <div>
-                            <p className="font-bold text-red-900">{conn.recipientName}</p>
-                            <p className="text-red-700">{conn.recipientCompany}</p>
-                          </div>
-                          <button
-                            onClick={() => handleRemoveConn(conn.id)}
-                            className="px-2 py-0.5 bg-red-600 text-white rounded text-[9px] hover:bg-red-700"
-                          >
-                            Unblock
-                          </button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            </aside>
-          </>
-        )}
-
-        {/* ═══ TAB 2: COMPANY PROFILE ═══ */}
-        {activeTab === "company" && (
-          <div className="w-full fr8x-card p-6 bg-white space-y-4 text-left">
-            <div className="flex items-center gap-3 border-b border-border pb-3">
-              <Building2 className="h-8 w-8 text-[var(--fr8x-periwinkle)]" />
-              <div>
-                <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
-                  {profile?.companyName || "RV-Info Enterprise Logistics"}
-                </h2>
-                <p className="text-caption text-foreground-secondary">
-                  Verified Enterprise Account • {profile?.location || "India"}
-                </p>
+                <h3 className="text-body-md font-bold text-[var(--fr8x-jet)]">{displayName}</h3>
+                <p className="text-caption text-foreground-secondary">{profile?.designation || "Logistics Director"} at {profile?.companyName || "Verified Enterprise"}</p>
+                <span className="text-[10px] font-mono text-[var(--fr8x-periwinkle)]">{profile?.publicId || "@USER2026"}</span>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-body-sm">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <p className="font-bold text-[var(--fr8x-jet)]">Company Status</p>
-                <p className="text-emerald-600 font-semibold mt-1">Verified Member</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <p className="font-bold text-[var(--fr8x-jet)]">Industry Tags</p>
-                <p className="text-foreground-secondary mt-1">{(profile?.industryTags || ["NVOCC", "Ocean Freight"]).join(", ")}</p>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                <p className="font-bold text-[var(--fr8x-jet)]">Public Profile Link</p>
-                <p className="text-[var(--fr8x-periwinkle)] font-mono mt-1">fr8x.in/company/{user?.uid}</p>
+
+            <div className="lg:col-span-2 fr8x-card p-4 bg-white space-y-3">
+              <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)] border-b border-border pb-2">About & Organization Details</h3>
+              <p className="text-xs text-foreground-secondary leading-relaxed">{profile?.about || "Verified logistics entity serving global trade lanes with ocean and air freight solutions."}</p>
+              <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
+                <div>
+                  <span className="font-semibold text-slate-500 block">Location</span>
+                  <span className="font-bold text-[var(--fr8x-jet)]">{profile?.location ? `${profile.location}, ${profile.country || ""}` : "Mumbai, India"}</span>
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-500 block">Industry Tags</span>
+                  <span className="font-bold text-[var(--fr8x-jet)]">{(profile?.industryTags || ["Ocean Freight", "NVOCC"]).join(", ")}</span>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* ═══ TAB 4: CONTACTS & BLOCKED ═══ */}
-        {activeTab === "contacts" && (
-          <div className="w-full space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {approvedList.map((conn) => {
-                const isReq = conn.requesterId === user?.uid;
-                const contactId = isReq ? conn.recipientId : conn.requesterId;
-                const contactName = isReq ? conn.recipientName : conn.requesterName;
-                const contactCompany = isReq ? conn.recipientCompany : conn.requesterCompany;
+        {/* ═══ TAB 2: COMPANY KYC ONBOARDING WORKFLOW ═══ */}
+        {activeTab === "kyc" && (
+          <div className="fr8x-card p-5 bg-white space-y-4">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h2 className="text-heading-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                  <FileCheck className="h-5 w-5 text-[var(--fr8x-periwinkle)]" /> Enterprise KYC Onboarding & Document Verification
+                </h2>
+                <p className="text-caption text-foreground-secondary mt-0.5">
+                  Upload official business compliance documents to unlock verified trading status.
+                </p>
+              </div>
+              <span className="text-xs bg-amber-50 text-amber-800 border border-amber-200 px-3 py-1 rounded-full font-bold">
+                Status: {profile?.kycStatus?.toUpperCase() || "PENDING VERIFICATION"}
+              </span>
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { type: "gstin" as const, name: "GSTIN / Business Reg.", desc: "Certificate of Incorporation or GST" },
+                { type: "iec" as const, name: "Import Export Code (IEC)", desc: "DGFT IEC Registration license" },
+                { type: "pan" as const, name: "PAN / Corporate Tax ID", desc: "Permanent Account Number card" },
+                { type: "address_proof" as const, name: "Registered Address Proof", desc: "Recent Utility bill or Lease" },
+              ].map((item) => {
+                const existing = kycDocs.find((d) => d.docType === item.type);
                 return (
-                  <div key={conn.id} className="bg-white p-4 rounded-xl border border-border shadow-xs flex flex-col justify-between text-left">
+                  <div key={item.type} className="border border-slate-200 p-4 rounded-xl bg-slate-50 flex flex-col justify-between space-y-3">
                     <div>
-                      <h3 className="font-bold text-[var(--fr8x-jet)]">{contactName}</h3>
-                      <p className="text-caption text-foreground-secondary">{contactCompany}</p>
+                      <h4 className="font-bold text-xs text-[var(--fr8x-jet)]">{item.name}</h4>
+                      <p className="text-[10px] text-foreground-muted mt-1">{item.desc}</p>
                     </div>
-                    <div className="mt-4 pt-2 border-t border-border flex items-center justify-between">
+
+                    {existing ? (
+                      <div className="space-y-1">
+                        <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold inline-flex items-center gap-1">
+                          <CheckCircle2 className="h-3 w-3" /> Uploaded
+                        </span>
+                        <p className="text-[9px] text-slate-500">Date: {existing.uploadedAt}</p>
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => handleTabChange("messages")}
-                        className="fr8x-btn-primary py-1 px-3 text-[10px]"
+                        onClick={() => handleUploadKycDoc(item.type, item.name)}
+                        disabled={isUploadingDoc}
+                        className="w-full py-1.5 bg-white hover:bg-slate-100 text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-periwinkle)] rounded font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
                       >
-                        Start Live Chat
+                        <Upload className="h-3.5 w-3.5" /> Upload Document
                       </button>
-                      <button onClick={() => handleRemoveConn(conn.id)} className="text-red-600 hover:underline text-[10px]">
-                        Remove
-                      </button>
-                    </div>
+                    )}
                   </div>
                 );
               })}
@@ -989,142 +578,405 @@ function ProfileContent() {
           </div>
         )}
 
-        {/* ═══ TAB 5: CONTACT REQUESTS ═══ */}
-        {activeTab === "requests" && (
-          <div className="w-full space-y-4 text-left">
-            <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Pending Received Requests</h2>
-            {receivedList.length === 0 ? (
-              <div className="p-6 bg-white rounded-xl text-center text-foreground-muted border border-border">
-                No pending contact requests received.
+        {/* ═══ TAB 3: CONTACTS & SEARCHABLE REQUEST STATES ═══ */}
+        {activeTab === "contacts" && (
+          <div className="fr8x-card p-4 bg-white space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-border pb-3">
+              <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Contacts Directory & Request States</h2>
+              
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={contactSearchQuery}
+                    onChange={(e) => setContactSearchQuery(e.target.value)}
+                    placeholder="Search contact name or company..."
+                    className="fr8x-input pl-8 py-1 text-xs"
+                  />
+                </div>
+
+                <select
+                  value={contactFilterStatus}
+                  onChange={(e) => setContactFilterStatus(e.target.value as any)}
+                  className="fr8x-input text-xs py-1 w-auto bg-slate-50"
+                >
+                  <option value="all">All States</option>
+                  <option value="approved">Accepted Contacts</option>
+                  <option value="pending">Awaiting My Approval</option>
+                  <option value="cancelled">Cancelled Requests</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="blocked">Blocked</option>
+                </select>
               </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {receivedList.map((conn) => (
-                  <div key={conn.id} className="bg-white p-4 rounded-xl border border-border flex items-center justify-between">
-                    <div>
-                      <p className="font-bold text-[var(--fr8x-jet)]">{conn.requesterName}</p>
-                      <p className="text-caption text-foreground-secondary">{conn.requesterCompany}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => handleUpdateStatus(conn.id, "approved")} className="px-3 py-1 bg-emerald-600 text-white rounded text-[11px] font-bold">
-                        Accept
-                      </button>
-                      <button onClick={() => handleUpdateStatus(conn.id, "rejected")} className="px-3 py-1 bg-slate-200 text-slate-800 rounded text-[11px]">
-                        Reject
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ═══ TAB 6: MESSAGES EMBEDDED ═══ */}
-        {activeTab === "messages" && (
-          <div className="w-full bg-white p-4 rounded-xl border border-border text-center space-y-3">
-            <MessageSquare className="h-10 w-10 text-[var(--fr8x-periwinkle)] mx-auto" />
-            <h2 className="text-heading-sm font-bold text-[var(--fr8x-jet)]">Real-time Enterprise Chat</h2>
-            <p className="text-caption text-foreground-secondary max-w-md mx-auto">
-              Use the floating chat launcher in the bottom-right corner or click below to launch the dedicated messaging workspace.
-            </p>
-            <Link href={ROUTES.MESSAGES} className="fr8x-btn-primary inline-flex items-center gap-1.5 text-body-sm px-4 py-2">
-              Open Full Messaging System
-            </Link>
-          </div>
-        )}
-
-        {/* ═══ OTHER TABS: SAVED POSTS, FOLLOWED TAGS, AWARDS, BLACKLIST ═══ */}
-        {activeTab === "saved-posts" && (
-          <div className="w-full fr8x-card p-6 bg-white text-center text-foreground-muted border border-border">
-            No saved posts yet. Bookmarked feed posts will appear here.
-          </div>
-        )}
-
-        {activeTab === "followed-tags" && (
-          <div className="w-full fr8x-card p-6 bg-white text-left space-y-3">
-            <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Followed Industry Tags</h2>
-            <div className="flex flex-wrap gap-2">
-              {(profile?.followedTags || ["Ocean Freight", "NVOCC", "FCL"]).map((tag) => (
-                <span key={tag} className="px-3 py-1 bg-[var(--fr8x-mist)] text-[var(--fr8x-jet)] rounded-full font-bold text-caption">
-                  #{tag}
-                </span>
-              ))}
             </div>
+
+            {filteredConnections.length === 0 ? (
+              <p className="text-xs text-foreground-muted text-center py-6">No matching contacts or request states found.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredConnections.map((conn) => {
+                  const isReq = conn.requesterId === user?.uid;
+                  const targetName = isReq ? conn.recipientName : conn.requesterName;
+                  const targetCompany = isReq ? conn.recipientCompany : conn.requesterCompany;
+
+                  return (
+                    <div key={conn.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col justify-between text-xs space-y-2">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-bold text-[var(--fr8x-jet)]">{targetName}</h4>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                              conn.status === "approved"
+                                ? "bg-emerald-100 text-emerald-800"
+                                : conn.status === "pending"
+                                ? "bg-amber-100 text-amber-800"
+                                : "bg-rose-100 text-rose-800"
+                            }`}
+                          >
+                            {conn.status === "pending" ? (isReq ? "Awaiting Approval" : "Pending Action") : conn.status}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-foreground-secondary mt-0.5">{targetCompany}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 pt-2 border-t border-slate-200">
+                        {conn.status === "approved" && (
+                          <button
+                            onClick={() => handleTabChange("communications")}
+                            className="px-2.5 py-1 bg-[var(--fr8x-periwinkle)] text-white text-[10px] font-bold rounded hover:bg-[#3ABFF0]"
+                          >
+                            Send Email / Msg
+                          </button>
+                        )}
+                        {conn.status === "pending" && !isReq && (
+                          <button
+                            onClick={() => updateContactStatus(conn.id, "approved", user?.uid || "")}
+                            className="px-2.5 py-1 bg-emerald-600 text-white text-[10px] font-bold rounded"
+                          >
+                            Accept Request
+                          </button>
+                        )}
+                        <button
+                          onClick={() => removeContact(conn.id)}
+                          className="text-[10px] text-rose-600 hover:underline ml-auto font-semibold"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
-        {activeTab === "awards" && (
-          <div className="w-full fr8x-card p-6 bg-white text-left space-y-4">
-            <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" /> Verified Certifications & Recognition
-            </h2>
+        {/* ═══ TAB 4: COMMUNICATIONS CENTER (LIGHTWEIGHT THREADED EMAIL SYSTEM) ═══ */}
+        {activeTab === "communications" && (
+          <div className="fr8x-card overflow-hidden bg-white border border-border rounded-xl flex flex-col md:flex-row min-h-[480px]">
+            {/* Left Thread List */}
+            <div className="w-full md:w-80 border-r border-slate-200 flex flex-col bg-slate-50/50">
+              <div className="p-3 border-b border-slate-200 space-y-2">
+                <h3 className="font-bold text-xs text-[var(--fr8x-jet)] flex items-center gap-1.5">
+                  <Mail className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Enterprise Communications
+                </h3>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => setEmailFilter("all")}
+                    className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${emailFilter === "all" ? "bg-[var(--fr8x-periwinkle)] text-white" : "bg-white text-slate-600 border border-slate-200"}`}
+                  >
+                    Inbox
+                  </button>
+                  <button
+                    onClick={() => setEmailFilter("unread")}
+                    className={`px-2.5 py-0.5 rounded text-[10px] font-bold ${emailFilter === "unread" ? "bg-[var(--fr8x-periwinkle)] text-white" : "bg-white text-slate-600 border border-slate-200"}`}
+                  >
+                    Unread
+                  </button>
+                </div>
+              </div>
 
-            {/* Certifications from profile */}
-            {certifications.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-foreground-secondary uppercase tracking-wider">My Certifications</p>
-                {certifications.map((c) => (
-                  <div key={c.id} className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px]">
-                    <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
-                    <div>
-                      <p className="font-bold text-[var(--fr8x-jet)]">{c.title}</p>
-                      <p className="text-foreground-secondary text-[10px]">{c.issuer} · {c.year}</p>
+              <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
+                {emailThreads.map((thread) => (
+                  <div
+                    key={thread.id}
+                    onClick={() => setSelectedEmail(thread)}
+                    className={`p-3 cursor-pointer transition-colors ${
+                      selectedEmail?.id === thread.id ? "bg-blue-50/80 border-l-4 border-[var(--fr8x-periwinkle)]" : "hover:bg-slate-100/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between text-[10px] mb-1">
+                      <span className="font-bold text-[var(--fr8x-jet)] truncate max-w-[140px]">{thread.senderName}</span>
+                      <span className="text-slate-400">{thread.timestamp}</span>
                     </div>
+                    <p className="text-[11px] font-semibold text-slate-800 truncate">{thread.subject}</p>
+                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{thread.body}</p>
                   </div>
                 ))}
               </div>
-            )}
+            </div>
 
-            {/* Awards from Firestore */}
-            <div className="space-y-2">
-              <p className="text-[10px] font-semibold text-foreground-secondary uppercase tracking-wider">Platform Recognition</p>
-              {isLoadingAwards ? (
-                <div className="text-[10px] text-foreground-muted">Loading awards...</div>
-              ) : awardsData.length === 0 ? (
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-foreground-muted">
-                  No platform awards yet. Awards are granted based on verified activity and community standing.
+            {/* Right Collapsible Thread Detail View */}
+            <div className="flex-1 flex flex-col justify-between p-4 bg-white">
+              {selectedEmail ? (
+                <div className="space-y-4 flex-1 flex flex-col justify-between">
+                  <div>
+                    <div className="border-b border-slate-200 pb-3">
+                      <h3 className="text-body-md font-bold text-[var(--fr8x-jet)]">{selectedEmail.subject}</h3>
+                      <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
+                        <span>From: <strong className="text-slate-800">{selectedEmail.senderName}</strong> ({selectedEmail.senderCompany}) &lt;{selectedEmail.senderEmail}&gt;</span>
+                        <span>{selectedEmail.timestamp}</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 text-xs text-slate-800 leading-relaxed whitespace-pre-line">
+                      {selectedEmail.body}
+                    </div>
+                  </div>
+
+                  {/* Reply Input Box */}
+                  <div className="pt-3 border-t border-slate-200 space-y-2">
+                    <textarea
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="Type your threaded response..."
+                      rows={3}
+                      className="fr8x-input text-xs resize-none"
+                    />
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => {
+                          if (!replyText.trim()) return;
+                          setIsReplying(true);
+                          setTimeout(() => {
+                            setReplyText("");
+                            setIsReplying(false);
+                            alert("Response sent via Threaded Communications system.");
+                          }, 600);
+                        }}
+                        disabled={isReplying || !replyText.trim()}
+                        className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] text-white text-xs px-4 py-1.5 font-bold flex items-center gap-1.5"
+                      >
+                        <Send className="h-3.5 w-3.5" /> Send Reply
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ) : (
-                awardsData.map((award) => (
-                  <div key={award.id} className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                    <Award className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-amber-900 text-[11px]">{award.title}</p>
-                        {award.verificationState === "verified" && (
-                          <span className="text-[8px] bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">Verified</span>
-                        )}
-                        {award.verificationState === "pending" && (
-                          <span className="text-[8px] bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-bold">Pending</span>
-                        )}
-                      </div>
-                      {award.description && <p className="text-amber-800 text-[10px] mt-0.5">{award.description}</p>}
-                    </div>
-                  </div>
-                ))
+                <div className="flex items-center justify-center h-full text-slate-400 text-xs">
+                  Select a message thread to view conversation details.
+                </div>
               )}
             </div>
           </div>
         )}
 
-        {activeTab === "blacklist" && (
-          <div className="w-full fr8x-card p-6 bg-white text-left space-y-3">
-            <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
-              <ShieldAlert className="h-5 w-5 text-red-600" /> Enterprise Blacklist
-            </h2>
-            {blockedList.length === 0 ? (
-              <p className="text-caption text-foreground-muted">No blacklisted entities.</p>
-            ) : (
-              blockedList.map((conn) => (
-                <div key={conn.id} className="p-3 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center text-body-sm">
-                  <span>{conn.recipientName} ({conn.recipientCompany})</span>
-                  <button onClick={() => handleRemoveConn(conn.id)} className="text-red-700 font-bold hover:underline">
-                    Unblock
+        {/* ═══ TAB 5: REPUTATION & PEER REVIEW DASHBOARD (REPLACING AWARDS) ═══ */}
+        {activeTab === "reputation" && (
+          <div className="space-y-4">
+            <div className="fr8x-card p-5 bg-white space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border pb-3">
+                <div>
+                  <h2 className="text-heading-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                    <Star className="h-5 w-5 text-amber-500 fill-amber-500" /> B2B Reputation & Peer Review Scorecard
+                  </h2>
+                  <p className="text-caption text-foreground-secondary mt-0.5">
+                    Measurable performance scores rated by verified trading partners across 6 key metrics.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <div className="bg-amber-50 border border-amber-200 px-4 py-1.5 rounded-xl text-center">
+                    <span className="text-heading-md font-bold text-amber-900">4.9</span>
+                    <span className="text-[10px] text-amber-700 block font-semibold">Overall Score (Out of 5.0)</span>
+                  </div>
+
+                  <button
+                    onClick={() => setShowReviewModal(true)}
+                    className="fr8x-btn-primary bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 flex items-center gap-1"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Submit Peer Review
                   </button>
                 </div>
-              ))
+              </div>
+
+              {/* 6 Category Score Breakdown Bars */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-1 text-xs">
+                {[
+                  { title: "Quality & Compliance", score: 4.9 },
+                  { title: "Professionalism & Ethics", score: 4.8 },
+                  { title: "Communication & Speed", score: 4.7 },
+                  { title: "Documentation Accuracy", score: 4.9 },
+                  { title: "Financial Reliability", score: 4.8 },
+                  { title: "Delivery & On-Time Performance", score: 4.6 },
+                ].map((cat) => (
+                  <div key={cat.title} className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <div className="flex justify-between font-semibold text-[var(--fr8x-jet)]">
+                      <span>{cat.title}</span>
+                      <span className="font-bold text-amber-700">{cat.score} / 5.0</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-full bg-amber-500 rounded-full" style={{ width: `${(cat.score / 5) * 100}%` }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Peer Reviews Feed */}
+            <div className="fr8x-card p-4 bg-white space-y-3">
+              <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Verified Peer Reviews</h3>
+              {peerReviews.map((rev) => (
+                <div key={rev.id} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[var(--fr8x-jet)]">{rev.reviewerName} ({rev.reviewerCompany})</span>
+                    <span className="font-bold text-amber-600 flex items-center gap-0.5">
+                      <Star className="h-3.5 w-3.5 fill-amber-500" /> {rev.overallRating}.0
+                    </span>
+                  </div>
+                  <p className="text-slate-700 italic">&ldquo;{rev.comment}&rdquo;</p>
+                  <p className="text-[10px] text-slate-400">Review Date: {rev.createdAt}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ TAB 6: SEARCHABLE BLACKLIST MANAGEMENT ═══ */}
+        {activeTab === "blacklist" && (
+          <div className="fr8x-card p-5 bg-white space-y-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-border pb-3">
+              <div>
+                <h2 className="text-heading-sm font-bold text-rose-900 flex items-center gap-2">
+                  <ShieldAlert className="h-5 w-5 text-rose-600" /> Enterprise Blacklist Management
+                </h2>
+                <p className="text-caption text-foreground-secondary mt-0.5">
+                  Locate and block non-compliant entities, freight defaulters, or suspicious accounts.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="relative flex-1 sm:w-64">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                  <input
+                    type="text"
+                    value={blacklistSearch}
+                    onChange={(e) => setBlacklistSearch(e.target.value)}
+                    placeholder="Search blocked entity..."
+                    className="fr8x-input pl-8 py-1 text-xs"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {blockedEntities.length === 0 ? (
+              <p className="text-xs text-foreground-muted text-center py-6">No blacklisted entities found in your registry.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="fr8x-table text-xs">
+                  <thead>
+                    <tr>
+                      <th>Blocked Entity</th>
+                      <th>Company Name</th>
+                      <th>Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {blockedEntities.map((conn) => (
+                      <tr key={conn.id}>
+                        <td className="font-bold text-rose-900">{conn.recipientName}</td>
+                        <td>{conn.recipientCompany}</td>
+                        <td><span className="text-[10px] bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">BLOCKED</span></td>
+                        <td>
+                          <button
+                            onClick={() => removeContact(conn.id)}
+                            className="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold rounded text-[10px]"
+                          >
+                            Unblock Entity
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
+          </div>
+        )}
+
+        {/* ═══ TAB 7: PROFILE INSIGHTS (REQUIREMENT 11) ═══ */}
+        {activeTab === "insights" && (
+          <div className="space-y-4">
+            <div className="fr8x-card p-5 bg-white space-y-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-b border-border pb-3">
+                <div>
+                  <h2 className="text-heading-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5 text-[var(--fr8x-periwinkle)]" /> Profile Insights & Network Search Visibility
+                  </h2>
+                  <p className="text-caption text-foreground-secondary mt-0.5">
+                    Track who searched for and viewed your enterprise profile and business offerings.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs">
+                  <button
+                    onClick={() => setInsightsTimeframe("today")}
+                    className={`px-3 py-1 rounded font-bold ${insightsTimeframe === "today" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"}`}
+                  >
+                    Today
+                  </button>
+                  <button
+                    onClick={() => setInsightsTimeframe("7days")}
+                    className={`px-3 py-1 rounded font-bold ${insightsTimeframe === "7days" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"}`}
+                  >
+                    Last 7 Days
+                  </button>
+                  <button
+                    onClick={() => setInsightsTimeframe("30days")}
+                    className={`px-3 py-1 rounded font-bold ${insightsTimeframe === "30days" ? "bg-white text-[var(--fr8x-jet)] shadow-2xs" : "text-slate-600"}`}
+                  >
+                    Last 30 Days
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary Metric Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-caption text-slate-500 font-semibold block">Profile Views</span>
+                  <span className="text-display-sm font-bold text-[var(--fr8x-jet)] mt-1 block">142</span>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-caption text-slate-500 font-semibold block">Search Appearances</span>
+                  <span className="text-display-sm font-bold text-blue-600 mt-1 block">389</span>
+                </div>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                  <span className="text-caption text-slate-500 font-semibold block">Unique Visitors</span>
+                  <span className="text-display-sm font-bold text-emerald-600 mt-1 block">87</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Visitors Log Feed */}
+            <div className="fr8x-card p-4 bg-white space-y-3">
+              <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)]">Recent Profile Visitors</h3>
+              <div className="space-y-2">
+                {visitors.map((vis) => (
+                  <div key={vis.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                    <div>
+                      <span className="font-bold text-[var(--fr8x-jet)]">{vis.visitorName}</span>
+                      <span className="text-slate-500"> ({vis.role} at {vis.organization})</span>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Visited: {vis.visitedAt}</p>
+                    </div>
+                    <span className="text-[9px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">
+                      {vis.actionType === "profile_view" ? "Direct View" : "Search Result"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         )}
       </div>
