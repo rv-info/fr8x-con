@@ -9,6 +9,7 @@ import { Shield, ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithEmail } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
+import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 import { Button } from "@/components/ui/Button";
 
 export default function GodModeLoginPage() {
@@ -22,7 +23,7 @@ export default function GodModeLoginPage() {
   // If already authenticated as GodMode admin, redirect directly to /godmode
   useEffect(() => {
     if (isAuthenticated && user?.isGodMode) {
-      router.replace(ROUTES.GODMODE);
+      router.replace(ADMIN_ROUTES.GODMODE);
     }
   }, [isAuthenticated, user, router]);
 
@@ -38,7 +39,7 @@ export default function GodModeLoginPage() {
 
     try {
       await signInWithEmail(emailOrUser.trim(), password);
-      router.push(ROUTES.GODMODE);
+      router.push(ADMIN_ROUTES.GODMODE);
     } catch (err: unknown) {
       console.error("GodMode Login error:", err);
       setError("Authentication failed. Invalid admin credentials.");
