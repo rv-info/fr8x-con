@@ -6,7 +6,7 @@
 
 import { useState, useMemo, useRef, useEffect } from "react";
 import { LOCATION_SEED_DATA } from "@/lib/utils/constants";
-import { Search, MapPin, Check, AlertCircle } from "lucide-react";
+import { Search, MapPin, AlertCircle } from "lucide-react";
 
 export interface SelectedLocation {
   code: string;
@@ -29,7 +29,7 @@ export function LocationAutocomplete({
   label,
   value,
   onChange,
-  placeholder = "Search port, airport, city, or UN/LOCODE...",
+  placeholder = "Type 3+ letters to search Location/Port.",
   required = false,
 }: LocationAutocompleteProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,9 +41,9 @@ export function LocationAutocomplete({
     setSearchTerm(value);
   }, [value]);
 
-  // Search filter across UN/LOCODE seed dataset
+  // Search filter across UN/LOCODE seed dataset (3+ chars requirement)
   const filteredSuggestions = useMemo(() => {
-    if (!searchTerm || searchTerm.trim().length < 2) return [];
+    if (!searchTerm || searchTerm.trim().length < 3) return [];
     const q = searchTerm.toLowerCase().trim();
     return LOCATION_SEED_DATA.filter(
       (loc) =>
