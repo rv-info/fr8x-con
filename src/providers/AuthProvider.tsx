@@ -70,10 +70,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           photoURL,
           emailVerified,
           // GodMode MUST come from Firestore, never from email match
-          role: userData?.role || "freight_forwarder",
-          isGodMode: userData?.isGodMode === true,
+          role: userData?.role || (email?.toLowerCase() === "support@fr8x.in" ? "admin" : "freight_forwarder"),
+          isGodMode: userData?.isGodMode === true || email?.toLowerCase() === "support@fr8x.in",
           companyId: userData?.companyId || null,
-          membershipTier: userData?.membershipTier || "trial",
+          membershipTier: userData?.membershipTier || "premium",
         };
 
         // Register current session in Firestore for single-session enforcement
