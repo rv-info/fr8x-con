@@ -144,70 +144,108 @@ export function AdBanner({
     }).catch(() => undefined);
   }, [activeAd?.id]);
 
-  if (isLoading) return null;
-  if (!activeAd || activeAd.status !== "active") return null;
+  if (isLoading) {
+    return (
+      <div className="w-full max-w-[348px] min-h-[254px] rounded-xl bg-slate-100 animate-pulse p-4 flex flex-col justify-between border border-slate-200 shadow-2xs mx-auto">
+        <div className="space-y-2">
+          <div className="h-4 w-20 bg-slate-200 rounded" />
+          <div className="h-6 w-3/4 bg-slate-200 rounded" />
+          <div className="h-4 w-full bg-slate-200 rounded" />
+        </div>
+        <div className="h-8 w-28 bg-slate-200 rounded" />
+      </div>
+    );
+  }
+
+  // Requirement 2: In cases where no advertisements are available, display a visually appealing "Advertise Here" placeholder using a skeleton loading style
+  if (!activeAd || activeAd.status !== "active") {
+    return (
+      <div className="w-full max-w-[348px] min-h-[254px] rounded-xl border-2 border-dashed border-[var(--fr8x-periwinkle)]/40 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-2xs transition-all hover:border-[var(--fr8x-periwinkle)] mx-auto">
+        {/* Animated Skeleton Wave Effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+        
+        <div className="w-12 h-12 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] flex items-center justify-center mb-3 shadow-2xs group-hover:scale-105 transition-transform">
+          <Megaphone className="h-6 w-6" />
+        </div>
+
+        <h4 className="text-body-md font-bold text-[var(--fr8x-jet)]">Advertise Here</h4>
+        <p className="text-[11px] text-foreground-secondary mt-1 max-w-[260px] leading-snug">
+          Reach thousands of verified freight forwarders, carriers, and shippers across the global logistics network.
+        </p>
+
+        <Link
+          href="/company"
+          className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[var(--fr8x-periwinkle)] hover:bg-[#3ABFF0] text-white text-[11px] font-bold rounded-lg shadow-sm transition-all active:scale-95"
+        >
+          Promote Your Services <ExternalLink className="h-3 w-3" />
+        </Link>
+      </div>
+    );
+  }
 
   const isExternal = activeAd.targetType === "external";
   const openInNewTab = activeAd.openMode === "new_tab" || isExternal;
-
   const isEntireClickable = activeAd.clickBehavior === "entire_banner" && activeAd.destinationUrl;
 
   const content = (
     <div
-      className={`w-full rounded-xl text-white shadow-sm overflow-hidden relative group transition-all ${
-        activeAd.isPortrait ? "max-w-xs mx-auto flex-col" : ""
+      className={`w-full max-w-[348px] min-h-[254px] rounded-xl text-white shadow-sm overflow-hidden relative group transition-all flex flex-col justify-between mx-auto ${
+        activeAd.isPortrait ? "max-w-xs flex-col" : ""
       } ${
         resolvedDevice === "mobile"
           ? "bg-gradient-to-r from-[#0b192c] to-[#1e7bb0] text-xs"
-          : "bg-gradient-to-r from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
+          : "bg-gradient-to-br from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
       } ${className}`}
     >
       {/* Media Image / GIF if present */}
-      {activeAd.mediaUrl && (
-        <div className="w-full relative overflow-hidden max-h-48">
+      {activeAd.mediaUrl ? (
+        <div className="w-full relative overflow-hidden h-[130px] shrink-0 bg-slate-900">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={activeAd.mediaUrl}
             alt={activeAd.title}
             className={`w-full h-full object-${activeAd.mediaFit || "cover"}`}
           />
+          <div className="absolute top-2 left-2 bg-black/50 backdrop-blur-xs px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider text-white flex items-center gap-1">
+            <Megaphone className="h-2.5 w-2.5 text-amber-300" /> Promoted
+          </div>
+        </div>
+      ) : (
+        <div className="p-3 pb-0 flex items-center gap-2">
+          <span className="bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1">
+            <Megaphone className="h-2.5 w-2.5 text-amber-300" /> Promoted
+          </span>
         </div>
       )}
 
-      <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
-        <div className="space-y-1 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1">
-              <Megaphone className="h-3 w-3 text-amber-300" /> Promoted
-            </span>
-            <h4 className="text-body-md font-bold text-white leading-tight">{activeAd.title}</h4>
-          </div>
-
+      <div className="p-3.5 flex flex-col flex-1 justify-between gap-2 relative z-10 text-left">
+        <div className="space-y-1">
+          <h4 className="text-body-sm font-bold text-white leading-tight line-clamp-2">{activeAd.title}</h4>
           {activeAd.shortDescription && (
-            <p className="text-body-sm text-blue-100/90 leading-snug line-clamp-2">
+            <p className="text-[11px] text-blue-100/90 leading-snug line-clamp-2">
               {activeAd.shortDescription}
             </p>
           )}
         </div>
 
         {activeAd.destinationUrl && (
-          <div className="shrink-0 pt-1 sm:pt-0">
+          <div className="pt-1">
             {openInNewTab ? (
               <a
                 href={activeAd.destinationUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleCTAClick}
-                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-body-sm px-3.5 py-1.5 rounded-lg hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-[11px] px-3 py-1 rounded-md hover:bg-blue-50 transition-all shadow-md active:scale-95"
                 aria-label={`${activeAd.ctaText || "Visit Link"} — opens in new tab`}
               >
-                {activeAd.ctaText || "Visit Link"} <ExternalLink className="h-3.5 w-3.5" />
+                {activeAd.ctaText || "Visit Link"} <ExternalLink className="h-3 w-3" />
               </a>
             ) : (
               <Link
                 href={activeAd.destinationUrl}
                 onClick={handleCTAClick}
-                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-body-sm px-3.5 py-1.5 rounded-lg hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-[11px] px-3 py-1 rounded-md hover:bg-blue-50 transition-all shadow-md active:scale-95"
                 aria-label={activeAd.ctaText || "Learn More"}
               >
                 {activeAd.ctaText || "Learn More"}
@@ -218,7 +256,7 @@ export function AdBanner({
       </div>
 
       {/* Decorative Brand Accent */}
-      <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none" />
+      <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-white/5 rounded-full blur-xl pointer-events-none" />
     </div>
   );
 
