@@ -4,7 +4,7 @@
 import { useState, useEffect, memo } from "react";
 import { useAuth } from "@/providers/AuthProvider";
 import { getUserConnections, type ContactConnection } from "@/lib/firebase/contacts";
-import { MessageSquare, Users, Circle, Building2, ExternalLink, Loader2 } from "lucide-react";
+import { MessageSquare, Users, Building2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { ROUTES } from "@/lib/utils/constants";
 
