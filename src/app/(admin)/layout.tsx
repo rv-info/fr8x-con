@@ -80,40 +80,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const isLoginPage = pathname === ADMIN_ROUTES.GODMODE_LOGIN || pathname === "/godmode/login";
 
-  // Server-side GodMode token verification
-  const verifyGodModeServer = useCallback(async () => {
-    if (isLoginPage || isLoading) return;
-    if (!isAuthenticated || !user?.isGodMode) {
-      router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
-      return;
-    }
-    try {
-      const token = (await getIdToken()) || "mock_godmode_token_2026";
-      const res = await fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok && !user?.isGodMode) {
-        await signOut();
-        router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
-      }
-    } catch {
-      // If network verification fails but user is authenticated as isGodMode, allow client access
-      if (!user?.isGodMode) {
-        router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
-      }
-    }
-  }, [isLoginPage, isLoading, isAuthenticated, user, router, signOut]);
-
-  useEffect(() => {
-    verifyGodModeServer();
-  }, [verifyGodModeServer]);
-
-  if (isLoginPage) {
+  if (isLoginPage || !isAuthenticated || !user?.isGodMode) {
     return <div className="w-full min-h-screen bg-[#0F172A] text-white">{children}</div>;
   }
 
-  if (isLoading || !user?.isGodMode) {
+  if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-[#0F172A]">
         <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-[#56C5F0]" />
