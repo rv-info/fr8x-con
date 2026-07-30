@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const otpDoc = otpQuery.docs[0];
+    const otpDoc = otpQuery.docs[0]!;
     const otpData = otpDoc.data();
     const otpRef = otpDoc.ref;
 
