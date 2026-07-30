@@ -184,6 +184,20 @@ function ProfileContent() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  // Hobbies & Certifications
+  const [hobbies, setHobbies] = useState<string[]>([]);
+  const [hobbyInput, setHobbyInput] = useState("");
+  const [certifications, setCertifications] = useState<{ id: string; title: string; issuer: string; year: string }[]>([]);
+  const [newCertTitle, setNewCertTitle] = useState("");
+  const [newCertIssuer, setNewCertIssuer] = useState("");
+  const [newCertYear, setNewCertYear] = useState("");
+
+  // Awards from Firestore
+  type AwardEntry = { id: string; title: string; description?: string; verificationState?: "pending" | "verified" | "rejected"; awardedAt?: string };
+  const [awardsData, setAwardsData] = useState<AwardEntry[]>([]);
+  const [isLoadingAwards, setIsLoadingAwards] = useState(false);
 
   const displayName = user?.displayName || profile?.fullName || "User";
 
@@ -209,6 +223,8 @@ function ProfileContent() {
       setSelectedTags(p?.industryTags || []);
       setWorkExpList(p?.workExperience || []);
       setEduList(p?.education || []);
+      setHobbies(p?.hobbies || []);
+      setCertifications(p?.certifications || []);
       setPhotoURL(p?.photoURL || null);
       setPublicId(p?.publicId || "");
     },
@@ -372,6 +388,8 @@ function ProfileContent() {
         industryTags: selectedTags,
         workExperience: workExpList,
         education: eduList,
+        hobbies,
+        certifications,
         photoURL: photoURL,
         publicId: publicId || generatePublicId(fullName.trim() || user?.displayName || "USER"),
       };
@@ -386,13 +404,41 @@ function ProfileContent() {
 
       setProfile(updatedProfile);
       setIsEditing(false);
-      setSaveSuccess("Profile updated successfully!");
+      setSaveSuccess("Profile updated successfully.");
       setTimeout(() => setSaveSuccess(null), 3000);
-    } catch (err) {
-      console.error("Error saving profile:", err);
-      setSaveError("Failed to save profile details.");
+    } catch {
+      setSaveError("Failed to save profile details. Please try again.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    if (!user?.uid) return;
+    setIsUploadingPhoto(true);
+    try {
+      const { getIdToken } = await import("@/lib/firebase/auth");
+      const token = await getIdToken();
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/profile/upload-photo", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setSaveError(err.error || "Photo upload failed.");
+        return;
+      }
+      const { photoURL: newUrl } = await res.json();
+      setPhotoURL(newUrl);
+      setSaveSuccess("Photo updated.");
+      setTimeout(() => setSaveSuccess(null), 2500);
+    } catch {
+      setSaveError("Photo upload failed. Please try again.");
+    } finally {
+      setIsUploadingPhoto(false);
     }
   };
 
@@ -401,6 +447,21 @@ function ProfileContent() {
   const blockedList = connections.filter((c) => c.status === "blocked");
   const receivedList = connections.filter((c) => c.status === "pending" && c.recipientId === user?.uid);
   const sentList = connections.filter((c) => c.status === "pending" && c.requesterId === user?.uid);
+  void sentList;
+
+  // Fetch awards from Firestore when awards tab is active
+  useEffect(() => {
+    if (activeTab !== "awards" || !user?.uid) return;
+    setIsLoadingAwards(true);
+    queryDocuments<AwardEntry>(COLLECTIONS.AWARDS, [
+      where("userId", "==", user.uid),
+      orderBy("awardedAt", "desc"),
+      limit(20),
+    ])
+      .then((data) => setAwardsData(data))
+      .catch(() => setAwardsData([]))
+      .finally(() => setIsLoadingAwards(false));
+  }, [activeTab, user?.uid]);
 
   const handleUpdateStatus = async (connId: string, status: "approved" | "rejected" | "blocked") => {
     if (!user) return;
@@ -569,7 +630,7 @@ function ProfileContent() {
         {/* ═══ TAB 1: OVERVIEW (With Reference Layout Image 3 Structure) ═══ */}
         {activeTab === "overview" && (
           <>
-            {/* Left Column: User Core Card + Work Exp + Education */}
+            {/* Left Column: User Core Card (read-only view) */}
             <aside className="w-full lg:w-[260px] shrink-0 space-y-3">
               <div className="fr8x-card p-4 bg-white text-center space-y-2">
                 <div className="relative w-16 h-16 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg text-[var(--fr8x-jet)] font-semibold mx-auto overflow-hidden">
@@ -577,6 +638,24 @@ function ProfileContent() {
                     <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
                     displayName.charAt(0)
+                  )}
+                  {/* Photo upload overlay (visible in edit mode) */}
+                  {isEditing && (
+                    <label className="absolute inset-0 flex items-center justify-center bg-black/50 cursor-pointer rounded-full">
+                      <span className="text-white text-[9px] font-bold text-center px-1">
+                        {isUploadingPhoto ? "Uploading..." : "Change Photo"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        disabled={isUploadingPhoto}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handlePhotoUpload(f);
+                        }}
+                      />
+                    </label>
                   )}
                 </div>
                 <p className="text-body-sm font-bold text-[var(--fr8x-jet)]">{displayName}</p>
@@ -592,13 +671,16 @@ function ProfileContent() {
                 </div>
               </div>
 
-              {/* Work Experience */}
+              {/* Work Experience — read-only, locked */}
               <div className="fr8x-card p-3.5 bg-white text-left">
                 <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2 flex items-center gap-1.5">
                   <Building2 className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" /> Work Experience
+                  <span className="ml-auto text-[8px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5">
+                    <CheckCircle2 className="h-2.5 w-2.5" /> Verified
+                  </span>
                 </h3>
                 {workExpList.length === 0 ? (
-                  <p className="text-[10px] text-foreground-muted">No experience details added yet.</p>
+                  <p className="text-[10px] text-foreground-muted">No experience on record.</p>
                 ) : (
                   <div className="space-y-2">
                     {workExpList.map((exp) => (
@@ -612,13 +694,16 @@ function ProfileContent() {
                 )}
               </div>
 
-              {/* Education */}
+              {/* Education — read-only, locked */}
               <div className="fr8x-card p-3.5 bg-white text-left">
                 <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2 flex items-center gap-1.5">
                   <GraduationCap className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" /> Education
+                  <span className="ml-auto text-[8px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-semibold flex items-center gap-0.5">
+                    <CheckCircle2 className="h-2.5 w-2.5" /> Verified
+                  </span>
                 </h3>
                 {eduList.length === 0 ? (
-                  <p className="text-[10px] text-foreground-muted">No education details added yet.</p>
+                  <p className="text-[10px] text-foreground-muted">No education on record.</p>
                 ) : (
                   <div className="space-y-2">
                     {eduList.map((edu) => (
@@ -659,8 +744,63 @@ function ProfileContent() {
                   </div>
                   <div>
                     <label className="fr8x-label block mb-1">About / Bio</label>
-                    <textarea rows={3} value={about} onChange={(e) => setAbout(e.target.value)} className="fr8x-input" />
+                    <textarea rows={3} value={about} onChange={(e) => setAbout(e.target.value)} className="fr8x-input" maxLength={1000} />
                   </div>
+
+                  {/* Hobbies */}
+                  <div>
+                    <label className="fr8x-label block mb-1">Interests & Hobbies</label>
+                    <div className="flex gap-1 flex-wrap mb-1">
+                      {hobbies.map((h) => (
+                        <span key={h} className="flex items-center gap-0.5 px-2 py-0.5 bg-slate-100 text-[10px] rounded-full border border-slate-200">
+                          {h}
+                          <button type="button" onClick={() => setHobbies((prev) => prev.filter((x) => x !== h))} className="text-red-500 ml-1 hover:text-red-700">&times;</button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex gap-1">
+                      <input
+                        type="text"
+                        value={hobbyInput}
+                        onChange={(e) => setHobbyInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) { setHobbies((p) => [...p, hobbyInput.trim()]); setHobbyInput(""); } } }}
+                        placeholder="Type and press Enter"
+                        className="fr8x-input flex-1 text-[10px]"
+                        maxLength={50}
+                      />
+                      <button type="button" onClick={() => { if (hobbyInput.trim() && !hobbies.includes(hobbyInput.trim())) { setHobbies((p) => [...p, hobbyInput.trim()]); setHobbyInput(""); } }} className="fr8x-btn-secondary text-[10px] px-2">
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Certifications */}
+                  <div>
+                    <label className="fr8x-label block mb-1">Certifications</label>
+                    <div className="space-y-1 mb-2">
+                      {certifications.map((c) => (
+                        <div key={c.id} className="flex items-center justify-between px-2 py-1 bg-blue-50 border border-blue-200 rounded text-[10px]">
+                          <span><span className="font-bold">{c.title}</span> — {c.issuer} ({c.year})</span>
+                          <button type="button" onClick={() => setCertifications((prev) => prev.filter((x) => x.id !== c.id))} className="text-red-500 hover:text-red-700 text-[11px] font-bold ml-2">&times;</button>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      <input type="text" value={newCertTitle} onChange={(e) => setNewCertTitle(e.target.value)} placeholder="Certificate title" className="fr8x-input text-[10px] col-span-3" maxLength={100} />
+                      <input type="text" value={newCertIssuer} onChange={(e) => setNewCertIssuer(e.target.value)} placeholder="Issuing body" className="fr8x-input text-[10px]" maxLength={80} />
+                      <input type="text" value={newCertYear} onChange={(e) => setNewCertYear(e.target.value)} placeholder="Year" className="fr8x-input text-[10px]" maxLength={4} />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!newCertTitle.trim()) return;
+                          setCertifications((prev) => [...prev, { id: `cert_${Date.now()}`, title: newCertTitle.trim(), issuer: newCertIssuer.trim(), year: newCertYear.trim() }]);
+                          setNewCertTitle(""); setNewCertIssuer(""); setNewCertYear("");
+                        }}
+                        className="fr8x-btn-secondary text-[10px] px-2"
+                      >Add</button>
+                    </div>
+                  </div>
+
                   <div className="flex justify-end gap-2 pt-2">
                     <button type="button" onClick={() => setIsEditing(false)} className="fr8x-btn-secondary text-[10px]">Cancel</button>
                     <Button type="submit" isLoading={isSaving} className="fr8x-btn-primary text-[10px]">Save Changes</Button>
@@ -915,13 +1055,55 @@ function ProfileContent() {
         )}
 
         {activeTab === "awards" && (
-          <div className="w-full fr8x-card p-6 bg-white text-left space-y-3">
+          <div className="w-full fr8x-card p-6 bg-white text-left space-y-4">
             <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
-              <Award className="h-5 w-5 text-amber-500" /> Awards & Verified Certifications
+              <Award className="h-5 w-5 text-amber-500" /> Verified Certifications & Recognition
             </h2>
-            <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-1">
-              <p className="font-bold text-amber-900">FR8X Gold Star Forwarder 2026</p>
-              <p className="text-caption text-amber-800">Verified by FR8X Network Moderation Team</p>
+
+            {/* Certifications from profile */}
+            {certifications.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[10px] font-semibold text-foreground-secondary uppercase tracking-wider">My Certifications</p>
+                {certifications.map((c) => (
+                  <div key={c.id} className="flex items-center gap-2 p-2.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px]">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 shrink-0" />
+                    <div>
+                      <p className="font-bold text-[var(--fr8x-jet)]">{c.title}</p>
+                      <p className="text-foreground-secondary text-[10px]">{c.issuer} · {c.year}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Awards from Firestore */}
+            <div className="space-y-2">
+              <p className="text-[10px] font-semibold text-foreground-secondary uppercase tracking-wider">Platform Recognition</p>
+              {isLoadingAwards ? (
+                <div className="text-[10px] text-foreground-muted">Loading awards...</div>
+              ) : awardsData.length === 0 ? (
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-[11px] text-foreground-muted">
+                  No platform awards yet. Awards are granted based on verified activity and community standing.
+                </div>
+              ) : (
+                awardsData.map((award) => (
+                  <div key={award.id} className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <Award className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-bold text-amber-900 text-[11px]">{award.title}</p>
+                        {award.verificationState === "verified" && (
+                          <span className="text-[8px] bg-emerald-100 text-emerald-700 border border-emerald-200 px-1.5 py-0.5 rounded font-bold">Verified</span>
+                        )}
+                        {award.verificationState === "pending" && (
+                          <span className="text-[8px] bg-amber-100 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-bold">Pending</span>
+                        )}
+                      </div>
+                      {award.description && <p className="text-amber-800 text-[10px] mt-0.5">{award.description}</p>}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
