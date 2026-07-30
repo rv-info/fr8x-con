@@ -111,7 +111,7 @@ export default function AuctionsPage() {
       if (isSelective && user) {
         const isCreator = a.creatorName === user.displayName || a.creatorEmail === user.email;
         const isInvited = a.invitedParticipantIds?.includes(user.uid);
-        if (!isCreator && !isInvited && !user.isGodMode) {
+        if (!isCreator && !isInvited) {
           return false; // Hide selective auction if not invited
         }
       }
