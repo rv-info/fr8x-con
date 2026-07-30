@@ -57,11 +57,6 @@
           "sounds": []
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "fr8x-con-production-mobile"
-      }
-    }
+    ]
   }
 }
