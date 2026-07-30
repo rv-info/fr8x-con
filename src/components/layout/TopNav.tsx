@@ -144,16 +144,7 @@ export function TopNav() {
                   <User className="h-3 w-3 text-foreground-secondary" />
                   My Profile
                 </Link>
-                {user?.isGodMode && (
-                  <Link
-                    href={ROUTES.GODMODE}
-                    className="flex items-center gap-2 px-3 py-2 text-[11px] text-foreground hover:bg-[var(--fr8x-mist)] transition-colors"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <Settings className="h-3 w-3 text-foreground-secondary" />
-                    Admin Panel
-                  </Link>
-                )}
+
                 <div className="my-0.5 h-px bg-border" />
                 <button
                   onClick={() => {
