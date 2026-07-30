@@ -47,9 +47,13 @@ export function middleware(request: NextRequest) {
 
   maybeCleanup();
 
-  // ── Handle GodMode domain routing ──
-  if (host === "god.fr8x.in" && pathname === "/") {
-    return NextResponse.rewrite(new URL("/godmode", request.url));
+  // ── Protection for privileged paths: Hide GodMode routes from unauthorized discovery ──
+  if (pathname.startsWith("/godmode") && pathname !== "/godmode/login") {
+    const adminToken = request.cookies.get("fr8x_godmode_token")?.value || request.headers.get("x-godmode-auth");
+    if (!adminToken) {
+      // Return standard 404 to avoid revealing privileged route existence
+      return new NextResponse("404 Not Found", { status: 404 });
+    }
   }
 
   // ── API rate limiting (stricter) ──
