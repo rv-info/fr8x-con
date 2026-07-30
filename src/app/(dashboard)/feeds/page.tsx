@@ -1,15 +1,17 @@
-// FR8X-CON Feeds Page — Spec Page 3 (Ultra-compact, perf-optimized)
-// 3-column layout: user card + connections | feed + composer | suggested + trending + jobs
+// FR8X-CON Feeds Page — Production
+// Feed-only. No job posting. 3-line collapse. Like/Dislike/Comment/Repost/Hide.
+// Content sanitized before write. Blocked contacts filtered. Posts ranked by engagement.
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo, useRef } from "react";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES, FEED_CATEGORIES, COLLECTIONS } from "@/lib/utils/constants";
 import {
   queryDocuments,
   setDocument,
+  updateDocument,
   getDocRef,
   getDocument,
   where,
@@ -18,44 +20,26 @@ import {
   serverTimestamp,
 } from "@/lib/firebase/firestore";
 import { formatRelativeTime } from "@/lib/utils/format";
+import { sanitizePostContent } from "@/lib/utils/sanitize";
 import type { FeedFilterCategory } from "@/lib/types/feed";
-import dynamic from "next/dynamic";
-import type { JobPosting } from "@/lib/types/job";
-
-// Heavy modal: only loaded when user clicks "Post a Job"
-const PostJobDialog = dynamic(() => import("@/components/jobs/PostJobDialog"), {
-  ssr: false,
-  loading: () => null,
-});
 import { AdBanner } from "@/components/ads/AdBanner";
 import {
   ThumbsUp,
   ThumbsDown,
   Repeat2,
   Bookmark,
-  Share2,
-  Briefcase,
+  MessageSquare,
   Loader2,
   Plus,
   Building2,
   CheckCircle2,
-  Bookmark as BookmarkIcon,
   Tag as TagIcon,
-  Shield,
-  Star,
+  EyeOff,
+  ChevronDown,
+  ChevronUp,
+  Send,
 } from "lucide-react";
-
 import { ContactsPanel } from "@/components/contacts/ContactsPanel";
-
-// Trending tags fetched from Firestore (see below)
-const DEFAULT_TRENDING_TAGS = [
-  { name: "Ocean Freight", related: "Global Trade Lanes" },
-  { name: "Air Freight", related: "Express Logistics" },
-  { name: "FCL", related: "Container Shipping" },
-  { name: "LCL", related: "Consolidation" },
-  { name: "NVOCC", related: "Freight Forwarding" },
-];
-
 
 // ─── Types ───
 type PostData = {
@@ -70,6 +54,7 @@ type PostData = {
   dislikesCount: number;
   repostsCount: number;
   bookmarksCount: number;
+  commentsCount?: number;
   createdAt: { seconds: number; nanoseconds: number } | null;
   isDeleted?: boolean;
 };
@@ -84,17 +69,7 @@ type ProfileData = {
   industryTags: string[];
 };
 
-type JobData = {
-  id: string;
-  title: string;
-  salary: string;
-  currency: string;
-  postedBy: string;
-  companyName?: string;
-  city?: string;
-};
-
-// ─── Layered Avatar Component (Person Avatar with Company Badge/Logo behind) ───
+// ─── Layered Avatar ───
 const LayeredAvatar = memo(function LayeredAvatar({
   personName,
   companyName,
@@ -106,21 +81,16 @@ const LayeredAvatar = memo(function LayeredAvatar({
 }) {
   const pInitial = (personName || "U").charAt(0).toUpperCase();
   const cInitial = (companyName || "C").charAt(0).toUpperCase();
-
   const outerSizeClass = size === "lg" ? "w-12 h-12" : size === "md" ? "w-10 h-10" : "w-8 h-8";
   const personAvatarSize = size === "lg" ? "w-8 h-8 text-[12px]" : size === "md" ? "w-7 h-7 text-[10px]" : "w-5 h-5 text-[9px]";
   const companyBadgeSize = size === "lg" ? "w-5 h-5 text-[9px]" : size === "md" ? "w-4 h-4 text-[8px]" : "w-3.5 h-3.5 text-[7px]";
+  void companyBadgeSize;
 
   return (
     <div className={`relative flex items-center justify-center ${outerSizeClass} shrink-0`}>
-      {/* Background Company Logo / Badge */}
       <div className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 flex items-center justify-center text-white font-bold shadow-sm overflow-hidden">
-        <span className="opacity-80 text-[10px] uppercase font-semibold tracking-tighter">
-          {cInitial}
-        </span>
+        <span className="opacity-80 text-[10px] uppercase font-semibold tracking-tighter">{cInitial}</span>
       </div>
-
-      {/* Foreground Person Avatar Overlaid */}
       <div
         className={`absolute -bottom-1 -right-1 ${personAvatarSize} rounded-full bg-[var(--fr8x-lavender)] border-2 border-white flex items-center justify-center font-bold text-[var(--fr8x-jet)] shadow-md`}
         title={`${personName} (${companyName || "Verified Company"})`}
@@ -132,14 +102,135 @@ const LayeredAvatar = memo(function LayeredAvatar({
 });
 
 // ─── Post Card ───
-const PostCard = memo(function PostCard({ post }: { post: PostData }) {
+function PostCard({
+  post,
+  currentUserId,
+  onHide,
+}: {
+  post: PostData;
+  currentUserId: string;
+  onHide: (id: string) => void;
+}) {
   const timeAgo = post.createdAt
     ? formatRelativeTime(post.createdAt.seconds * 1000)
     : "Just now";
 
+  // 3-line collapse state
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [needsCollapse, setNeedsCollapse] = useState(false);
+  const contentRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    // Check if content exceeds 3 lines (line-height ~20px, 3 lines ~60px)
+    if (el.scrollHeight > el.offsetHeight + 2) {
+      setNeedsCollapse(true);
+    }
+  }, [post.content]);
+
+  // Interaction state
+  const [likes, setLikes] = useState(post.likesCount || 0);
+  const [dislikes, setDislikes] = useState(post.dislikesCount || 0);
+  const [reposts, setReposts] = useState(post.repostsCount || 0);
+  const [userLiked, setUserLiked] = useState(false);
+  const [userDisliked, setUserDisliked] = useState(false);
+  const [userReposted, setUserReposted] = useState(false);
+  const [showComment, setShowComment] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [isPostingComment, setIsPostingComment] = useState(false);
+
+  const interactionKey = `fr8x_interact_${post.id}_${currentUserId}`;
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(interactionKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        setUserLiked(!!parsed.liked);
+        setUserDisliked(!!parsed.disliked);
+        setUserReposted(!!parsed.reposted);
+      }
+    } catch { /* ignore */ }
+  }, [interactionKey]);
+
+  function saveInteraction(liked: boolean, disliked: boolean, reposted: boolean) {
+    try {
+      sessionStorage.setItem(interactionKey, JSON.stringify({ liked, disliked, reposted }));
+    } catch { /* ignore */ }
+  }
+
+  const handleLike = async () => {
+    if (userLiked) return;
+    const newLikes = likes + 1;
+    const newDislikes = userDisliked ? dislikes - 1 : dislikes;
+    setLikes(newLikes);
+    if (userDisliked) setDislikes(newDislikes);
+    setUserLiked(true);
+    setUserDisliked(false);
+    saveInteraction(true, false, userReposted);
+    try {
+      await updateDocument(COLLECTIONS.POSTS, post.id, {
+        likesCount: newLikes,
+        ...(userDisliked ? { dislikesCount: newDislikes } : {}),
+      });
+    } catch { /* non-critical */ }
+  };
+
+  const handleDislike = async () => {
+    if (userDisliked) return;
+    const newDislikes = dislikes + 1;
+    const newLikes = userLiked ? likes - 1 : likes;
+    setDislikes(newDislikes);
+    if (userLiked) setLikes(newLikes);
+    setUserDisliked(true);
+    setUserLiked(false);
+    saveInteraction(false, true, userReposted);
+    try {
+      await updateDocument(COLLECTIONS.POSTS, post.id, {
+        dislikesCount: newDislikes,
+        ...(userLiked ? { likesCount: newLikes } : {}),
+      });
+    } catch { /* non-critical */ }
+  };
+
+  const handleRepost = async () => {
+    if (userReposted) return;
+    const newReposts = reposts + 1;
+    setReposts(newReposts);
+    setUserReposted(true);
+    saveInteraction(userLiked, userDisliked, true);
+    try {
+      await updateDocument(COLLECTIONS.POSTS, post.id, { repostsCount: newReposts });
+    } catch { /* non-critical */ }
+  };
+
+  const handlePostComment = async () => {
+    if (!commentText.trim() || isPostingComment) return;
+    setIsPostingComment(true);
+    const sanitized = sanitizePostContent(commentText.trim());
+    if (!sanitized) { setIsPostingComment(false); return; }
+    try {
+      const ref = getDocRef(COLLECTIONS.COMMENTS);
+      await setDocument(COLLECTIONS.COMMENTS, ref.id, {
+        postId: post.id,
+        authorId: currentUserId,
+        content: sanitized,
+        createdAt: serverTimestamp(),
+        isDeleted: false,
+      });
+      await updateDocument(COLLECTIONS.POSTS, post.id, {
+        commentsCount: (post.commentsCount || 0) + 1,
+      });
+      setCommentText("");
+      setShowComment(false);
+    } catch { /* non-critical */ } finally {
+      setIsPostingComment(false);
+    }
+  };
+
   return (
     <article className="fr8x-card p-3 bg-white">
-      {/* Author header with Layered Person & Company Avatar */}
+      {/* Author header */}
       <div className="flex items-start gap-2.5 mb-2">
         <LayeredAvatar personName={post.authorName} companyName={post.authorCompany} size="md" />
         <div className="flex-1 min-w-0">
@@ -156,41 +247,119 @@ const PostCard = memo(function PostCard({ post }: { post: PostData }) {
             {post.authorLocation ? ` • ${post.authorLocation}` : ""}
           </p>
         </div>
+        {/* Hide button */}
+        <button
+          onClick={() => onHide(post.id)}
+          title="Hide this post"
+          className="text-foreground-muted hover:text-foreground transition-colors p-0.5 shrink-0"
+        >
+          <EyeOff className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      {/* Content */}
-      <p className="text-[11px] text-[var(--fr8x-jet)] mb-2 leading-relaxed whitespace-pre-line">{post.content}</p>
+      {/* Content — 3-line collapse */}
+      <div className="mb-2">
+        <p
+          ref={contentRef}
+          className={`text-[11px] text-[var(--fr8x-jet)] leading-relaxed whitespace-pre-line ${
+            !isExpanded && needsCollapse ? "line-clamp-3" : ""
+          }`}
+        >
+          {post.content}
+        </p>
+        {needsCollapse && (
+          <button
+            onClick={() => setIsExpanded((v) => !v)}
+            className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-semibold mt-0.5 hover:underline"
+          >
+            {isExpanded ? (
+              <><ChevronUp className="h-3 w-3" /> Show less</>
+            ) : (
+              <><ChevronDown className="h-3 w-3" /> Read more</>
+            )}
+          </button>
+        )}
+      </div>
 
       {/* Interaction bar */}
-      <div className="flex items-center gap-4 text-[10px] text-foreground-secondary pt-1 border-t border-border">
-        <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors">
-          <ThumbsUp className="h-3 w-3" /> {post.likesCount || 0}
+      <div className="flex items-center gap-3 text-[10px] text-foreground-secondary pt-1.5 border-t border-border">
+        <button
+          onClick={handleLike}
+          className={`flex items-center gap-1 transition-colors ${userLiked ? "text-emerald-600 font-bold" : "hover:text-emerald-600"}`}
+          title="Like"
+        >
+          <ThumbsUp className="h-3 w-3" /> {likes}
         </button>
-        <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors">
-          <ThumbsDown className="h-3 w-3" /> {post.dislikesCount || 0}
+        <button
+          onClick={handleDislike}
+          className={`flex items-center gap-1 transition-colors ${userDisliked ? "text-red-500 font-bold" : "hover:text-red-500"}`}
+          title="Dislike"
+        >
+          <ThumbsDown className="h-3 w-3" /> {dislikes}
         </button>
-        <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors">
-          <Repeat2 className="h-3 w-3" /> {post.repostsCount || 0}
+        <button
+          onClick={() => setShowComment((v) => !v)}
+          className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors"
+          title="Comment"
+        >
+          <MessageSquare className="h-3 w-3" /> Comment
         </button>
-        <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors">
-          <Bookmark className="h-3 w-3" /> {post.bookmarksCount || 0}
+        <button
+          onClick={handleRepost}
+          className={`flex items-center gap-1 transition-colors ${userReposted ? "text-[var(--fr8x-periwinkle)] font-bold" : "hover:text-[var(--fr8x-jet)]"}`}
+          title="Repost"
+        >
+          <Repeat2 className="h-3 w-3" /> {reposts}
         </button>
-        <button className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors">
-          <Share2 className="h-3 w-3" /> Share
+        <button
+          className="flex items-center gap-1 hover:text-amber-500 transition-colors ml-auto"
+          title="Save post"
+        >
+          <Bookmark className="h-3 w-3" />
         </button>
       </div>
+
+      {/* Inline comment input */}
+      {showComment && (
+        <div className="mt-2 flex items-start gap-1.5">
+          <textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Write a comment..."
+            rows={2}
+            className="fr8x-input flex-1 text-[10px] resize-none"
+            maxLength={500}
+          />
+          <button
+            onClick={handlePostComment}
+            disabled={isPostingComment || !commentText.trim()}
+            className="px-2 py-1 bg-[var(--fr8x-periwinkle)] text-white rounded text-[10px] font-bold hover:bg-[#3ABFF0] disabled:opacity-40 flex items-center gap-1 mt-0.5"
+          >
+            {isPostingComment ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+          </button>
+        </div>
+      )}
     </article>
   );
-});
+}
 
 const EmptyFeed = memo(function EmptyFeed() {
   return (
     <div className="fr8x-card p-6 text-center bg-white">
       <p className="text-[11px] text-foreground-secondary mb-1">No posts yet</p>
-      <p className="text-[10px] text-foreground-muted">Be the first to share an update or post a job requirement with your network!</p>
+      <p className="text-[10px] text-foreground-muted">Be the first to share an update with your network.</p>
     </div>
   );
 });
+
+// Trending tag defaults (fallback if Firestore tags collection is empty)
+const DEFAULT_TRENDING_TAGS = [
+  { name: "Ocean Freight", related: "Global Trade Lanes" },
+  { name: "Air Freight", related: "Express Logistics" },
+  { name: "FCL", related: "Container Shipping" },
+  { name: "LCL", related: "Consolidation" },
+  { name: "NVOCC", related: "Freight Forwarding" },
+];
 
 // ─── Main Feeds Component ───
 export default function FeedsPage() {
@@ -199,23 +368,33 @@ export default function FeedsPage() {
   const [postContent, setPostContent] = useState("");
   const [selectedTag, setSelectedTag] = useState("all");
   const [posts, setPosts] = useState<PostData[]>([]);
+  const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
+  const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [jobs, setJobs] = useState<JobData[]>([]);
   const [trendingTags, setTrendingTags] = useState(DEFAULT_TRENDING_TAGS);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
-  const [isPostJobOpen, setIsPostJobOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [followedTags, setFollowedTags] = useState<string[]>([]);
 
   const displayName = user?.displayName || "User";
 
-  // Fetch trending tags from Firestore (fallback to defaults)
+  function showToast(msg: string) {
+    setToastMsg(msg);
+    setTimeout(() => setToastMsg(null), 3000);
+  }
+
+  // Restore hidden posts from sessionStorage
   useEffect(() => {
-    queryDocuments<{ name: string; related: string }>("tags", [
-      orderBy("name"),
-      limit(10),
-    ])
+    try {
+      const saved = sessionStorage.getItem("fr8x_hidden_posts");
+      if (saved) setHiddenPostIds(new Set(JSON.parse(saved)));
+    } catch { /* ignore */ }
+  }, []);
+
+  // Fetch trending tags from Firestore
+  useEffect(() => {
+    queryDocuments<{ name: string; related: string }>("tags", [orderBy("name"), limit(10)])
       .then((data) => { if (data.length > 0) setTrendingTags(data); })
       .catch(() => undefined);
   }, []);
@@ -228,21 +407,21 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  const handleToggleFollowTag = async (tag: string) => {
+  // Fetch blocked user IDs from contacts
+  useEffect(() => {
     if (!user?.uid) return;
-    try {
-      const updated = followedTags.includes(tag)
-        ? followedTags.filter((t) => t !== tag)
-        : [...followedTags, tag];
-      await setDocument(COLLECTIONS.PROFILES, user.uid, { followedTags: updated }, true);
-      setFollowedTags(updated);
-      setToastMsg(`Tag #${tag} follow state updated!`);
-      setTimeout(() => setToastMsg(null), 2500);
-    } catch (err) {
-      console.error("Error toggling follow tag:", err);
-    }
-  };
-
+    queryDocuments<{ requesterId: string; recipientId: string; status: string }>(
+      "contacts",
+      [where("status", "==", "blocked"), limit(200)]
+    ).then((data) => {
+      const blocked = new Set<string>();
+      data.forEach((c) => {
+        if (c.requesterId === user.uid) blocked.add(c.recipientId);
+        if (c.recipientId === user.uid) blocked.add(c.requesterId);
+      });
+      setBlockedUserIds(blocked);
+    }).catch(() => undefined);
+  }, [user?.uid]);
 
   // Fetch user profile
   useEffect(() => {
@@ -252,7 +431,7 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  // Fetch posts from Firestore
+  // Fetch posts
   const fetchPosts = useCallback(async () => {
     setIsLoadingPosts(true);
     try {
@@ -260,16 +439,15 @@ export default function FeedsPage() {
         where("isDeleted", "!=", true),
         orderBy("isDeleted"),
         orderBy("createdAt", "desc"),
-        limit(30),
+        limit(50),
       ];
       const data = await queryDocuments<PostData>(COLLECTIONS.POSTS, constraints);
       setPosts(data);
-    } catch (err) {
-      console.error("Error fetching posts with compound constraint:", err);
+    } catch {
       try {
         const data = await queryDocuments<PostData>(COLLECTIONS.POSTS, [
           orderBy("createdAt", "desc"),
-          limit(30),
+          limit(50),
         ]);
         setPosts(data.filter((p) => !p.isDeleted));
       } catch {
@@ -280,40 +458,73 @@ export default function FeedsPage() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
+  useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
-  // Fetch jobs
-  const fetchJobs = useCallback(() => {
-    queryDocuments<JobData>(COLLECTIONS.JOBS, [
-      orderBy("createdAt", "desc"),
-      limit(15),
-    ]).then(setJobs).catch(() => setJobs([]));
+  const handleToggleFollowTag = async (tag: string) => {
+    if (!user?.uid) return;
+    try {
+      const updated = followedTags.includes(tag)
+        ? followedTags.filter((t) => t !== tag)
+        : [...followedTags, tag];
+      await setDocument(COLLECTIONS.PROFILES, user.uid, { followedTags: updated }, true);
+      setFollowedTags(updated);
+    } catch { /* non-critical */ }
+  };
+
+  const handleHidePost = useCallback((postId: string) => {
+    setHiddenPostIds((prev) => {
+      const next = new Set(prev);
+      next.add(postId);
+      try { sessionStorage.setItem("fr8x_hidden_posts", JSON.stringify([...next])); } catch { /* ignore */ }
+      return next;
+    });
   }, []);
 
-  useEffect(() => {
-    fetchJobs();
-  }, [fetchJobs]);
-
+  // Ranked, filtered posts
   const filteredPosts = useMemo(() => {
-    if (activeCategory === "all") return posts;
-    return posts.filter((p) =>
-      (p.category || "").toLowerCase().includes(activeCategory.replace("_", " "))
-    );
-  }, [activeCategory, posts]);
+    const now = Date.now() / 1000;
+    return posts
+      .filter(
+        (p) =>
+          !hiddenPostIds.has(p.id) &&
+          !blockedUserIds.has(p.authorId) &&
+          (activeCategory === "all" ||
+            (p.category || "").toLowerCase().includes(activeCategory.replace("_", " ")))
+      )
+      .map((p) => {
+        // Freshness decay: posts older than 48h get reduced score
+        const ageHours = p.createdAt
+          ? (now - p.createdAt.seconds) / 3600
+          : 999;
+        const freshnessScore = Math.max(0, 1 - ageHours / 48);
+        const engagementScore =
+          (p.likesCount || 0) * 2 +
+          (p.repostsCount || 0) * 1.5 -
+          (p.dislikesCount || 0) * 0.5;
+        const rankScore = engagementScore + freshnessScore * 10;
+        return { ...p, rankScore };
+      })
+      .sort((a, b) => b.rankScore - a.rankScore);
+  }, [posts, hiddenPostIds, blockedUserIds, activeCategory]);
+
+  const wordCount = useMemo(
+    () => postContent.trim().split(/\s+/).filter(Boolean).length,
+    [postContent]
+  );
 
   const handlePost = useCallback(async () => {
-    if (!postContent.trim() || !user) return;
+    if (!postContent.trim() || !user || wordCount > 1000) return;
     setIsPosting(true);
     try {
+      const sanitized = sanitizePostContent(postContent.trim());
+      if (!sanitized) { setIsPosting(false); return; }
       const docRef = getDocRef(COLLECTIONS.POSTS);
       await setDocument(COLLECTIONS.POSTS, docRef.id, {
         authorId: user.uid,
         authorName: user.displayName || "User",
-        authorCompany: profile?.companyName || "Logistics Network Member",
+        authorCompany: profile?.companyName || "",
         authorLocation: profile?.location ? `${profile.location}, ${profile.country || ""}` : "",
-        content: postContent.trim(),
+        content: sanitized,
         category: selectedTag === "all" ? "" : selectedTag,
         likesCount: 0,
         dislikesCount: 0,
@@ -326,75 +537,14 @@ export default function FeedsPage() {
       });
       setPostContent("");
       fetchPosts();
-      setToastMsg("Post published to network feed!");
-      setTimeout(() => setToastMsg(null), 3000);
-    } catch (err) {
-      console.error("Error creating post:", err);
-    } finally {
+      showToast("Post published to network feed.");
+    } catch { /* non-critical */ } finally {
       setIsPosting(false);
     }
-  }, [postContent, user, profile, selectedTag, fetchPosts]);
-
-  // Handle Job Post Creation & Cross-posting to Feed
-  const handleJobSubmitted = async (jobPayload: Partial<JobPosting>) => {
-    if (!user) return;
-    try {
-      // 1. Save Job to COLLECTIONS.JOBS
-      const jobDocRef = getDocRef(COLLECTIONS.JOBS);
-      await setDocument(COLLECTIONS.JOBS, jobDocRef.id, {
-        title: jobPayload.jobTitle || "Logistics Role",
-        companyName: jobPayload.companyName || profile?.companyName || "Logistics Company",
-        salary: jobPayload.salaryMin ? `${jobPayload.salaryMin}-${jobPayload.salaryMax}` : "Competitive",
-        currency: "INR",
-        postedBy: user.uid,
-        city: jobPayload.city || "",
-        createdAt: serverTimestamp(),
-        ...jobPayload,
-      });
-
-      // 2. Cross-post automatically to Feed (COLLECTIONS.POSTS) as job_vacancy post
-      const feedPostDocRef = getDocRef(COLLECTIONS.POSTS);
-      const postText = `🚨 JOB VACANCY: ${jobPayload.jobTitle || "Logistics Requirement"}\n` +
-        `Company: ${jobPayload.companyName || profile?.companyName || "Logistics Firm"}\n` +
-        `Location: ${jobPayload.city || "India"}, ${jobPayload.country || "India"}\n` +
-        `Salary Range: ₹${jobPayload.salaryMin || 0} - ₹${jobPayload.salaryMax || 0} LPA\n` +
-        `Required Skills: ${jobPayload.requiredSkills || "Freight Negotiation, Documentation"}\n` +
-        `Apply Email: ${jobPayload.email || jobPayload.officialEmail || user.email}`;
-
-      await setDocument(COLLECTIONS.POSTS, feedPostDocRef.id, {
-        authorId: user.uid,
-        authorName: user.displayName || "Recruiter",
-        authorCompany: jobPayload.companyName || profile?.companyName || "Logistics Corp",
-        authorLocation: jobPayload.city ? `${jobPayload.city}, India` : "",
-        content: postText,
-        category: "job_vacancy",
-        likesCount: 0,
-        dislikesCount: 0,
-        repostsCount: 0,
-        bookmarksCount: 0,
-        isDeleted: false,
-        createdAt: serverTimestamp(),
-        createdBy: user.uid,
-      });
-
-      fetchJobs();
-      fetchPosts();
-      setToastMsg("Job posted successfully & cross-published to network feeds!");
-      setTimeout(() => setToastMsg(null), 3000);
-    } catch (err) {
-      console.error("Error cross-posting job:", err);
-    }
-  };
+  }, [postContent, user, profile, selectedTag, fetchPosts, wordCount]);
 
   return (
     <div className="min-h-0">
-      {/* Job Popup Dialog */}
-      <PostJobDialog
-        isOpen={isPostJobOpen}
-        onClose={() => setIsPostJobOpen(false)}
-        onSubmit={handleJobSubmitted}
-      />
-
       {/* Header & Toast */}
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-[11px] font-semibold text-[var(--fr8x-jet)]">Feeds</h1>
@@ -410,7 +560,6 @@ export default function FeedsPage() {
       <div className="flex gap-3 items-start">
         {/* ═══ LEFT SIDEBAR ═══ */}
         <aside className="hidden lg:block w-[200px] shrink-0 space-y-2">
-          {/* User Card with Layered Avatar */}
           <div className="fr8x-card p-3 bg-white space-y-2">
             <div className="flex items-center gap-2.5 border-b border-border pb-2">
               <LayeredAvatar personName={displayName} companyName={profile?.companyName} size="lg" />
@@ -418,21 +567,20 @@ export default function FeedsPage() {
                 <p className="text-[11px] font-bold text-[var(--fr8x-jet)] truncate">{displayName}</p>
                 <p className="text-[10px] text-emerald-600 font-medium truncate flex items-center gap-0.5">
                   <Building2 className="h-2.5 w-2.5" />
-                  {profile?.companyName || "RV-Info Logistics"}
+                  {profile?.companyName || "Logistics Network"}
                 </p>
               </div>
             </div>
             <p className="text-[10px] text-foreground-secondary">
-              {profile?.location ? `${profile.location}, ${profile.country || ""}` : "Verified Logistics Member"}
+              {profile?.location ? `${profile.location}, ${profile.country || ""}` : "Verified Member"}
             </p>
             {profile?.industryTags && profile.industryTags.length > 0 && (
               <p className="text-[9px] text-foreground-muted">
-                Tags: {profile.industryTags.slice(0, 3).join(", ")}
+                {profile.industryTags.slice(0, 3).join(", ")}
               </p>
             )}
           </div>
 
-          {/* Navigation Links */}
           <nav className="fr8x-card p-1.5 space-y-0.5 bg-white text-left">
             <Link href={`${ROUTES.PROFILE}?tab=saved-posts`} className="fr8x-nav-item w-full block">Saved Posts</Link>
             <Link href={ROUTES.AUCTIONS} className="fr8x-nav-item w-full block">My RFQs</Link>
@@ -441,7 +589,6 @@ export default function FeedsPage() {
             <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full block">View Profile</Link>
           </nav>
 
-          {/* Approved Contacts Panel (Reference Layout Image 1 - added contact) */}
           <ContactsPanel compact maxDisplay={6} />
         </aside>
 
@@ -468,26 +615,20 @@ export default function FeedsPage() {
                   type="button"
                   onClick={() => setPostContent((prev) => prev + " **bold** ")}
                   className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-bold hover:bg-slate-100"
-                  title="Add Bold text"
-                >
-                  B
-                </button>
+                  title="Bold"
+                >B</button>
                 <button
                   type="button"
                   onClick={() => setPostContent((prev) => prev + " *italic* ")}
                   className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] italic font-semibold hover:bg-slate-100"
-                  title="Add Italic text"
-                >
-                  I
-                </button>
+                  title="Italic"
+                >I</button>
                 <button
                   type="button"
                   onClick={() => setPostContent((prev) => prev + " <u>underline</u> ")}
                   className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] underline hover:bg-slate-100"
-                  title="Add Underline text"
-                >
-                  U
-                </button>
+                  title="Underline"
+                >U</button>
                 <button
                   type="button"
                   onClick={() =>
@@ -499,25 +640,21 @@ export default function FeedsPage() {
                   }
                   className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-semibold hover:bg-slate-100"
                   title="Insert Table"
-                >
-                  📊 Table
-                </button>
+                >Table</button>
               </div>
 
               <span
                 className={`text-[10px] font-mono font-bold ${
-                  postContent.trim().split(/\s+/).filter(Boolean).length > 1000
-                    ? "text-danger"
-                    : "text-foreground-muted"
+                  wordCount > 1000 ? "text-danger" : "text-foreground-muted"
                 }`}
               >
-                {postContent.trim().split(/\s+/).filter(Boolean).length} / 1000 words
+                {wordCount} / 1000
               </span>
             </div>
 
-            {postContent.trim().split(/\s+/).filter(Boolean).length > 1000 && (
+            {wordCount > 1000 && (
               <p className="text-[10px] text-danger font-semibold mb-1">
-                ⚠️ Post exceeds maximum 1000-word limit. Please shorten your content.
+                Post exceeds the 1000-word limit. Please shorten your content.
               </p>
             )}
 
@@ -535,11 +672,7 @@ export default function FeedsPage() {
 
               <button
                 onClick={handlePost}
-                disabled={
-                  isPosting ||
-                  !postContent.trim() ||
-                  postContent.trim().split(/\s+/).filter(Boolean).length > 1000
-                }
+                disabled={isPosting || !postContent.trim() || wordCount > 1000}
                 className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1 px-3 flex items-center gap-1 disabled:opacity-40"
               >
                 {isPosting ? <Loader2 className="h-3 w-3 animate-spin" /> : "POST"}
@@ -564,7 +697,7 @@ export default function FeedsPage() {
           {isLoadingPosts ? (
             <div className="fr8x-card p-6 flex items-center justify-center gap-2 bg-white">
               <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
-              <span className="text-[11px] text-foreground-muted">Loading network posts...</span>
+              <span className="text-[11px] text-foreground-muted">Loading posts...</span>
             </div>
           ) : filteredPosts.length === 0 ? (
             <EmptyFeed />
@@ -572,68 +705,25 @@ export default function FeedsPage() {
             <div className="space-y-2">
               {filteredPosts.map((post, idx) => (
                 <div key={post.id} className="space-y-2">
-                  <PostCard post={post} />
-                  {/* Inject Firestore-backed ad after every 4 posts */}
-                  {(idx + 1) % 4 === 0 && (
-                    <AdBanner adIndex={Math.floor(idx / 4)} />
-                  )}
+                  <PostCard
+                    post={post}
+                    currentUserId={user?.uid || ""}
+                    onHide={handleHidePost}
+                  />
+                  {(idx + 1) % 4 === 0 && <AdBanner adIndex={Math.floor(idx / 4)} />}
                 </div>
               ))}
             </div>
           )}
         </main>
 
-        {/* ═══ RIGHT SIDEBAR (Strict Reference Order) ═══ */}
+        {/* ═══ RIGHT SIDEBAR ═══ */}
         <aside className="hidden xl:block w-[220px] shrink-0 space-y-2">
-          {/* 1. Logistics Jobs Section */}
-          <div className="fr8x-card p-2.5 bg-white space-y-2 border border-blue-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Briefcase className="h-4 w-4 text-[#56C5F0]" />
-                <p className="text-[11px] font-bold text-[var(--fr8x-jet)]">Logistics Jobs</p>
-              </div>
-              <button
-                onClick={() => setIsPostJobOpen(true)}
-                className="text-[9px] bg-[#56C5F0] hover:bg-[#3ABFF0] text-white px-2 py-0.5 rounded font-semibold flex items-center gap-0.5 shadow-sm"
-              >
-                <Plus className="h-2.5 w-2.5" /> POST JOB
-              </button>
-            </div>
-
-            {jobs.length === 0 ? (
-              <div className="text-center py-2">
-                <p className="text-[10px] text-foreground-muted">No active job posts</p>
-                <button
-                  onClick={() => setIsPostJobOpen(true)}
-                  className="text-[10px] text-[var(--fr8x-periwinkle)] font-medium hover:underline mt-1 block w-full text-center"
-                >
-                  Create job requirement
-                </button>
-              </div>
-            ) : (
-              <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-0.5">
-                {jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="p-1.5 bg-slate-50 hover:bg-slate-100 rounded border border-slate-200 transition-colors"
-                  >
-                    <p className="text-[10px] font-bold text-[var(--fr8x-jet)] truncate">{job.title}</p>
-                    <p className="text-[9px] text-foreground-secondary truncate">{job.companyName || "Logistics Provider"}</p>
-                    <div className="flex items-center justify-between text-[9px] text-emerald-700 font-semibold mt-1">
-                      <span>{job.salary ? `₹${job.salary} LPA` : "Best in Industry"}</span>
-                      <span className="text-[8px] bg-emerald-100 px-1 rounded">Active</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 2. Trending Tags — fetched from Firestore */}
+          {/* Trending Tags */}
           <div className="fr8x-card p-2.5 bg-white text-left">
             <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
               <TagIcon className="h-3.5 w-3.5 text-amber-500" />
-              <span>Trending Tags</span>
+              <span>Trending Topics</span>
             </p>
             <ul className="space-y-2">
               {trendingTags.map((t) => {
@@ -642,36 +732,32 @@ export default function FeedsPage() {
                   <li key={t.name} className="text-[10px] text-foreground-secondary border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between">
                       <span
-                        onClick={() => {
-                          setPostContent(prev => `#${t.name} ` + prev);
-                        }}
+                        onClick={() => setPostContent((prev) => `#${t.name} ` + prev)}
                         className="font-semibold text-[var(--fr8x-jet)] hover:underline cursor-pointer"
-                        title="Click to append tag to post"
+                        title="Append tag to post"
                       >
                         #{t.name}
                       </span>
                       <button
                         onClick={() => handleToggleFollowTag(t.name)}
-                        className={`text-[8px] px-1.5 py-0.2 rounded font-semibold transition-all ${
-                          isFollowing ? "bg-slate-200 text-slate-700 font-bold" : "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-dimgrey)]"
+                        className={`text-[8px] px-1.5 rounded font-semibold transition-all ${
+                          isFollowing
+                            ? "bg-slate-200 text-slate-700"
+                            : "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-dimgrey)]"
                         }`}
                       >
                         {isFollowing ? "Following" : "+ Follow"}
                       </button>
                     </div>
-                    <div className="text-[8px] text-foreground-muted mt-0.5">
-                      <span>Related: {t.related}</span>
-                    </div>
+                    <div className="text-[8px] text-foreground-muted mt-0.5">Related: {t.related}</div>
                   </li>
                 );
               })}
             </ul>
           </div>
 
-          {/* 3. Firestore-backed Advertisement */}
+          {/* Ads */}
           <AdBanner adIndex={0} />
-
-          {/* 4. Firestore-backed Advertisement #2 */}
           <AdBanner adIndex={1} />
         </aside>
       </div>
