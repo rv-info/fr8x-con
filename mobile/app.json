@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "FR8X-CON Enterprise Logistics",
-    "slug": "fr8x-con-mobile",
+    "owner": "fr8xs-team",
+    "slug": "fr8x-con",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
