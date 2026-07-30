@@ -18,13 +18,6 @@ export default function GodModeLoginPage() {
   const router = useRouter();
   const { isAuthenticated, user, refreshUser } = useAuth();
 
-  // If already authenticated as GodMode admin, redirect directly to /godmode
-  useEffect(() => {
-    if (isAuthenticated && user?.isGodMode) {
-      router.replace(ADMIN_ROUTES.GODMODE);
-    }
-  }, [isAuthenticated, user, router]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanEmail = emailOrUser.trim().toLowerCase();
