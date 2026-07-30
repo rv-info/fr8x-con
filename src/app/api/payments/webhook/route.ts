@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true });
     }
 
-    const txDoc = txQuery.docs[0];
+    const txDoc = txQuery.docs[0]!;
     const txData = txDoc.data();
 
     // Update transaction status
