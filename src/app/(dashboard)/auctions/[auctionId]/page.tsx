@@ -91,9 +91,7 @@ export default function AuctionDetailPage({
     return user.uid === auction.creatorId;
   }, [user, auction]);
 
-  const isGodMode = useMemo(() => {
-    return user?.email?.toLowerCase().includes("admin") || user?.email?.toLowerCase().includes("godmode");
-  }, [user]);
+
 
   // Compute 13 Real-Time Evaluation Dashboard Statistics
   const evaluationStats = useMemo(() => {
@@ -159,7 +157,7 @@ export default function AuctionDetailPage({
       await logAuditEvent(
         "AUCTION_CANCELLED",
         `Cancelled Reverse Auction [Ref: ${auction.referenceNumber || auction.id}]`,
-        { uid: user.uid, name: user.displayName || "Authority", role: isGodMode ? "godmode_admin" : "buyer" },
+        { uid: user.uid, name: user.displayName || "Authority", role: "buyer" },
         { cancellationReason: cancelReason, previousStatus: auction.status },
         auction.id
       );
@@ -211,7 +209,7 @@ export default function AuctionDetailPage({
 
         {/* Action Controls for Owner / GodMode */}
         <div className="flex items-center gap-2">
-          {auction.status !== "cancelled" && auction.status !== "closed" && (isOwner || isGodMode) && (
+          {auction.status !== "cancelled" && auction.status !== "closed" && (isOwner) && (
             <button
               onClick={() => setShowCancelModal(true)}
               className="fr8x-btn-secondary text-danger border-danger/30 hover:bg-danger-light flex items-center gap-1.5 text-caption px-3 py-1.5"
@@ -296,7 +294,7 @@ export default function AuctionDetailPage({
       </div>
 
       {/* ═══ REAL-TIME BUYER PROCUREMENT EVALUATION DASHBOARD ═══ */}
-      {(isOwner || isGodMode) && (
+      {(isOwner) && (
         <div className="space-y-4">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <h2 className="text-heading-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
