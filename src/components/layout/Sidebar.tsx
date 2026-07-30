@@ -85,22 +85,6 @@ export function Sidebar() {
           );
         })}
 
-        {/* Admin link — shown only to GodMode, never labelled "GodMode" in nav */}
-        {user?.isGodMode && (
-          <Link
-            href={ROUTES.GODMODE}
-            title={!hovered ? "Admin" : undefined}
-            className={cn(
-              "flex items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors duration-100",
-              pathname.startsWith("/godmode")
-                ? "bg-warning-light text-warning-dark font-semibold"
-                : "text-foreground-secondary hover:bg-warning-light/60 hover:text-warning-dark"
-            )}
-          >
-            <Settings className="h-3.5 w-3.5 shrink-0" />
-            {hovered && <span>Admin</span>}
-          </Link>
-        )}
       </nav>
 
       {/* Sign out */}
