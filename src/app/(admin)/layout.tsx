@@ -9,6 +9,7 @@ import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { getIdToken } from "@/lib/firebase/auth";
+import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 import { ROUTES } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
 import {
@@ -32,44 +33,44 @@ const sidebarSections = [
   {
     title: "Overview",
     items: [
-      { label: "Dashboard", href: ROUTES.GODMODE, icon: LayoutDashboard, isRed: false },
-      { label: "Users & Members", href: ROUTES.GODMODE_USERS, icon: Users, isRed: false },
-      { label: "Companies", href: ROUTES.GODMODE_COMPANIES, icon: Building2, isRed: true },
+      { label: "Dashboard", href: ADMIN_ROUTES.GODMODE, icon: LayoutDashboard, isRed: false },
+      { label: "Users & Members", href: ADMIN_ROUTES.GODMODE_USERS, icon: Users, isRed: false },
+      { label: "Companies", href: ADMIN_ROUTES.GODMODE_COMPANIES, icon: Building2, isRed: true },
     ],
   },
   {
     title: "Trust & Compliance",
     items: [
-      { label: "Moderation Queue", href: ROUTES.GODMODE_MODERATION, icon: Flag, isRed: false },
-      { label: "Blacklist Registry", href: ROUTES.GODMODE_BLACKLIST, icon: ShieldAlert, isRed: false },
-      { label: "Verification Requests", href: ROUTES.GODMODE_VERIFICATION, icon: CheckSquare, isRed: false },
+      { label: "Moderation Queue", href: ADMIN_ROUTES.GODMODE_MODERATION, icon: Flag, isRed: false },
+      { label: "Blacklist Registry", href: ADMIN_ROUTES.GODMODE_BLACKLIST, icon: ShieldAlert, isRed: false },
+      { label: "Verification Requests", href: ADMIN_ROUTES.GODMODE_VERIFICATION, icon: CheckSquare, isRed: false },
     ],
   },
   {
     title: "Platform",
     items: [
-      { label: "Ad Management", href: ROUTES.GODMODE_ADS, icon: Megaphone, isRed: false },
-      { label: "Billing & Plans", href: ROUTES.GODMODE_BILLING, icon: CreditCard, isRed: false },
-      { label: "Audit Log", href: ROUTES.GODMODE_AUDIT, icon: FileText, isRed: false },
-      { label: "System Settings", href: ROUTES.GODMODE_SETTINGS, icon: Settings, isRed: false },
-      { label: "Port Locations", href: ROUTES.GODMODE_LOCATIONS, icon: MapPin, isRed: false },
-      { label: "Backup & Recovery", href: ROUTES.GODMODE_BACKUPS, icon: Archive, isRed: false },
+      { label: "Ad Management", href: ADMIN_ROUTES.GODMODE_ADS, icon: Megaphone, isRed: false },
+      { label: "Billing & Plans", href: ADMIN_ROUTES.GODMODE_BILLING, icon: CreditCard, isRed: false },
+      { label: "Audit Log", href: ADMIN_ROUTES.GODMODE_AUDIT, icon: FileText, isRed: false },
+      { label: "System Settings", href: ADMIN_ROUTES.GODMODE_SETTINGS, icon: Settings, isRed: false },
+      { label: "Port Locations", href: ADMIN_ROUTES.GODMODE_LOCATIONS, icon: MapPin, isRed: false },
+      { label: "Backup & Recovery", href: ADMIN_ROUTES.GODMODE_BACKUPS, icon: Archive, isRed: false },
     ],
   },
 ];
 
 const topTabs = [
-  { label: "Dashboard", href: ROUTES.GODMODE, icon: LayoutDashboard },
-  { label: "Users & Members", href: ROUTES.GODMODE_USERS, icon: Users },
-  { label: "Ad Management", href: ROUTES.GODMODE_ADS, icon: Megaphone },
-  { label: "Moderation Queue", href: ROUTES.GODMODE_MODERATION, icon: Flag },
-  { label: "Blacklist Registry", href: ROUTES.GODMODE_BLACKLIST, icon: ShieldAlert },
-  { label: "Verification Requests", href: ROUTES.GODMODE_VERIFICATION, icon: CheckSquare },
-  { label: "Billing & Plans", href: ROUTES.GODMODE_BILLING, icon: CreditCard },
-  { label: "Audit Log", href: ROUTES.GODMODE_AUDIT, icon: FileText },
-  { label: "Locations", href: ROUTES.GODMODE_LOCATIONS, icon: MapPin },
-  { label: "Backups", href: ROUTES.GODMODE_BACKUPS, icon: Archive },
-  { label: "System Settings", href: ROUTES.GODMODE_SETTINGS, icon: Settings },
+  { label: "Dashboard", href: ADMIN_ROUTES.GODMODE, icon: LayoutDashboard },
+  { label: "Users & Members", href: ADMIN_ROUTES.GODMODE_USERS, icon: Users },
+  { label: "Ad Management", href: ADMIN_ROUTES.GODMODE_ADS, icon: Megaphone },
+  { label: "Moderation Queue", href: ADMIN_ROUTES.GODMODE_MODERATION, icon: Flag },
+  { label: "Blacklist Registry", href: ADMIN_ROUTES.GODMODE_BLACKLIST, icon: ShieldAlert },
+  { label: "Verification Requests", href: ADMIN_ROUTES.GODMODE_VERIFICATION, icon: CheckSquare },
+  { label: "Billing & Plans", href: ADMIN_ROUTES.GODMODE_BILLING, icon: CreditCard },
+  { label: "Audit Log", href: ADMIN_ROUTES.GODMODE_AUDIT, icon: FileText },
+  { label: "Locations", href: ADMIN_ROUTES.GODMODE_LOCATIONS, icon: MapPin },
+  { label: "Backups", href: ADMIN_ROUTES.GODMODE_BACKUPS, icon: Archive },
+  { label: "System Settings", href: ADMIN_ROUTES.GODMODE_SETTINGS, icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -77,28 +78,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const pathname = usePathname();
 
-  const isLoginPage = pathname === ROUTES.GODMODE_LOGIN || pathname === "/godmode/login";
+  const isLoginPage = pathname === ADMIN_ROUTES.GODMODE_LOGIN || pathname === "/godmode/login";
 
   // Server-side GodMode token verification
   const verifyGodModeServer = useCallback(async () => {
     if (isLoginPage || isLoading) return;
     if (!isAuthenticated || !user?.isGodMode) {
-      router.replace(ROUTES.GODMODE_LOGIN);
+      router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
       return;
     }
     try {
       const token = await getIdToken();
-      if (!token) { router.replace(ROUTES.GODMODE_LOGIN); return; }
+      if (!token) { router.replace(ADMIN_ROUTES.GODMODE_LOGIN); return; }
       const res = await fetch("/api/admin/verify", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) {
         await signOut();
-        router.replace(ROUTES.GODMODE_LOGIN);
+        router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
       }
     } catch {
-      router.replace(ROUTES.GODMODE_LOGIN);
+      router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
     }
   }, [isLoginPage, isLoading, isAuthenticated, user, router, signOut]);
 
@@ -112,11 +113,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoading || !user?.isGodMode) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-[#0F172A] text-white">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-[#56C5F0]" />
-          <p className="text-body-md text-slate-300 font-medium">Verifying GodMODE admin access...</p>
-        </div>
+      <div className="flex h-screen w-full items-center justify-center bg-[#0F172A]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-700 border-t-[#56C5F0]" />
       </div>
     );
   }
