@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from "react";
 import { AdBanner, DEFAULT_ENTERPRISE_AD, type AdvertisementDoc, type TargetAudienceRules } from "@/components/ads/AdBanner";
-import { subscribeToDocuments, setDocument, updateDocument, deleteDocument } from "@/lib/firebase/firestore";
+import { subscribeToQuery, setDocument, updateDocument, deleteDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import { Button } from "@/components/ui/Button";
 import {
@@ -101,10 +101,10 @@ export default function GodModeAdsPage() {
   // Subscribe to Firestore ads collection in real-time
   useEffect(() => {
     setIsLoading(true);
-    const unsubscribe = subscribeToDocuments<AdvertisementDoc>(
+    const unsubscribe = subscribeToQuery<AdvertisementDoc>(
       FIRESTORE_ADS_COLLECTION,
       [],
-      (data) => {
+      (data: AdvertisementDoc[]) => {
         setAds(data);
         setIsLoading(false);
       }
