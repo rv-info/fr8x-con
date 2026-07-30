@@ -29,65 +29,7 @@ import {
   X,
 } from "lucide-react";
 
-const INITIAL_CAMPAIGNS: AdvertisementDoc[] = [
-  {
-    id: "ad_101",
-    adName: "Q3 Ocean Freight Rate Campaign",
-    title: "FR8X Verified Ocean Freight Intelligence 2026",
-    type: "image",
-    shortDescription: "Unlock verified benchmark rates across 500+ global trade lanes.",
-    destinationUrl: "/auctions",
-    targetType: "internal",
-    openMode: "inside_app",
-    ctaText: "Explore Auctions Now",
-    startDate: "2026-07-01",
-    endDate: "2026-12-31",
-    status: "active",
-    audience: { country: "India", businessType: "Freight Forwarder", subscriptionPlan: "All", device: "all" },
-    impressions: 4820,
-    uniqueViews: 3210,
-    clicks: 642,
-    ctr: 13.3,
-  },
-  {
-    id: "ad_102",
-    adName: "Dubai Logistics Summit 2026",
-    title: "Global Supply Chain & Freight Summit — Dubai 2026",
-    type: "rich_text",
-    shortDescription: "Join top NVOCCs, MLOs, and freight forwarders for exclusive networking.",
-    destinationUrl: "https://example.com/summit",
-    targetType: "external",
-    openMode: "new_tab",
-    ctaText: "Register Interest",
-    startDate: "2026-08-01",
-    endDate: "2026-09-15",
-    status: "active",
-    audience: { country: "UAE", businessType: "Shipping Line / MLO", subscriptionPlan: "Professional", device: "all" },
-    impressions: 2150,
-    uniqueViews: 1480,
-    clicks: 310,
-    ctr: 14.4,
-  },
-  {
-    id: "ad_103",
-    adName: "Cold Chain Transport Promo",
-    title: "Special Reefer Container Cold Chain Promotion",
-    type: "image",
-    shortDescription: "Discounted cold chain transport for perishable ocean cargo.",
-    destinationUrl: "/rates",
-    targetType: "internal",
-    openMode: "inside_app",
-    ctaText: "View Reefer Rates",
-    startDate: "2026-06-01",
-    endDate: "2026-07-15",
-    status: "disabled",
-    audience: { country: "All", businessType: "Exporter", subscriptionPlan: "Basic", device: "all" },
-    impressions: 9100,
-    uniqueViews: 6800,
-    clicks: 1120,
-    ctr: 12.3,
-  },
-];
+
 
 const FIRESTORE_ADS_COLLECTION = COLLECTIONS.ADS || "ads";
 
@@ -129,11 +71,46 @@ export default function GodModeAdsPage() {
   const [startDate, setStartDate] = useState("2026-08-01");
   const [endDate, setEndDate] = useState("2026-12-31");
 
+  // Media & Layout State
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [clickBehavior, setClickBehavior] = useState<"entire_banner" | "cta_only">("cta_only");
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [mediaFit, setMediaFit] = useState<"cover" | "contain" | "fill">("cover");
   // Audience Targeting State
   const [targetCountry, setTargetCountry] = useState("All");
   const [targetBusinessType, setTargetBusinessType] = useState("All");
   const [targetPlan, setTargetPlan] = useState("All");
   const [targetDevice, setTargetDevice] = useState<"all" | "desktop" | "mobile" | "tablet">("all");
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleFileUpload = async (file: File) => {
+    setIsUploadingMedia(true);
+    setUploadError(null);
+    try {
+      const { getIdToken } = await import("@/lib/firebase/auth");
+      const token = await getIdToken();
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/ads/upload", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setUploadError(data.error || "Upload failed");
+      } else {
+        setMediaUrl(data.url);
+      }
+    } catch {
+      setUploadError("Network error during file upload");
+    } finally {
+      setIsUploadingMedia(false);
+    }
+  };
 
   const handleToggleStatus = async (id: string) => {
     const ad = ads.find((a) => a.id === id);
@@ -166,6 +143,10 @@ export default function GodModeAdsPage() {
       adName: adName.trim(),
       title: title.trim(),
       type,
+      mediaUrl: mediaUrl.trim() || undefined,
+      clickBehavior,
+      isPortrait,
+      mediaFit,
       shortDescription: shortDescription.trim(),
       destinationUrl: destinationUrl.trim(),
       targetType,
