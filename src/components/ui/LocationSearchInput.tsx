@@ -33,7 +33,7 @@ const queryCache = new Map<string, LocationDoc[]>();
 export default function LocationSearchInput({
   value,
   onChange,
-  placeholder = "Search location...",
+  placeholder = "Type 3+ letters to search Location/Port.",
   className = "",
   label,
   mode = "multimodal",
@@ -65,7 +65,8 @@ export default function LocationSearchInput({
 
   const performSearch = async (searchVal: string) => {
     const trimmed = searchVal.trim();
-    if (trimmed.length < 2) {
+    // Search begins once user enters 3 or more characters
+    if (trimmed.length < 3) {
       setResults([]);
       setIsLoading(false);
       return;
