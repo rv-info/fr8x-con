@@ -398,7 +398,7 @@ export default function GodModeAdsPage() {
             </div>
 
             <form onSubmit={handlePublishAd} className="space-y-4 text-body-sm">
-              {/* STEP 1: CAMPAIGN DETAILS */}
+              {/* STEP 1: CAMPAIGN DETAILS & CREATIVE UPLOAD */}
               {wizardStep === 1 && (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -416,13 +416,69 @@ export default function GodModeAdsPage() {
                     <div>
                       <label className="fr8x-label block mb-1 text-xs">Ad Format Type</label>
                       <select value={type} onChange={(e) => setType(e.target.value as "image" | "carousel" | "html" | "rich_text" | "video")} className="fr8x-input font-medium">
-                        <option value="image">Banner Image</option>
+                        <option value="image">Banner Image / GIF (348 × 254 px)</option>
                         <option value="rich_text">Rich Text & Title Card</option>
                         <option value="carousel">Carousel (Multi-Card)</option>
                         <option value="html">Custom HTML5 Code</option>
-                        <option value="video">Video (Future Ready)</option>
                       </select>
                     </div>
+                  </div>
+
+                  {/* DRAG AND DROP CREATIVE UPLOAD ZONE */}
+                  <div>
+                    <label className="fr8x-label block mb-1 text-xs font-bold text-[var(--fr8x-jet)]">
+                      Creative Image / Animated GIF Upload (Recommended: 348 × 254 px)
+                    </label>
+                    
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleFileUpload(file);
+                      }}
+                      className="border-2 border-dashed border-slate-300 hover:border-[var(--fr8x-periwinkle)] bg-slate-50 hover:bg-blue-50/40 p-4 rounded-xl text-center transition-colors cursor-pointer relative"
+                    >
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/gif"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleFileUpload(file);
+                        }}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+
+                      {isUploadingMedia ? (
+                        <div className="flex flex-col items-center gap-1.5 py-2">
+                          <Sparkles className="h-6 w-6 text-[#56C5F0] animate-spin" />
+                          <p className="text-xs font-semibold text-slate-600">Uploading and validating creative asset...</p>
+                        </div>
+                      ) : mediaUrl ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-[180px] h-[110px] rounded-lg overflow-hidden border border-slate-300 shadow-sm relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={mediaUrl} alt="Ad Creative Preview" className="w-full h-full object-cover" />
+                          </div>
+                          <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                            <CheckCircle className="h-3.5 w-3.5" /> Creative Uploaded & Validated (348 × 254 px Ready)
+                          </p>
+                          <span className="text-[10px] text-slate-500 underline">Click or drag new file to replace</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 py-2">
+                          <Plus className="h-6 w-6 text-[var(--fr8x-periwinkle)]" />
+                          <p className="text-xs font-bold text-slate-800">Drag & Drop creative asset here or click to browse</p>
+                          <p className="text-[10px] text-slate-500">Supports JPEG, JPG, PNG, Animated GIF up to 5 MB (Auto-responsive 348 × 254 px)</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {uploadError && (
+                      <p className="text-[11px] text-rose-600 font-semibold mt-1 flex items-center gap-1">
+                        <X className="h-3.5 w-3.5" /> {uploadError}
+                      </p>
+                    )}
                   </div>
 
                   <div>
