@@ -30,6 +30,9 @@ export interface AdvertisementDoc {
   targetType: "external" | "internal";
   openMode: "new_tab" | "inside_app";
   ctaText?: string;
+  clickBehavior?: "entire_banner" | "cta_only";
+  isPortrait?: boolean;
+  mediaFit?: "cover" | "contain" | "fill";
   startDate?: string;
   endDate?: string;
   status: "active" | "disabled" | "scheduled" | "expired";
@@ -146,15 +149,31 @@ export function AdBanner({
   const isExternal = activeAd.targetType === "external";
   const openInNewTab = activeAd.openMode === "new_tab" || isExternal;
 
-  return (
+  const isEntireClickable = activeAd.clickBehavior === "entire_banner" && activeAd.destinationUrl;
+
+  const content = (
     <div
-      className={`w-full rounded-xl p-4 sm:p-5 text-white shadow-sm overflow-hidden relative group transition-all ${
+      className={`w-full rounded-xl text-white shadow-sm overflow-hidden relative group transition-all ${
+        activeAd.isPortrait ? "max-w-xs mx-auto flex-col" : ""
+      } ${
         resolvedDevice === "mobile"
           ? "bg-gradient-to-r from-[#0b192c] to-[#1e7bb0] text-xs"
           : "bg-gradient-to-r from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
       } ${className}`}
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
+      {/* Media Image / GIF if present */}
+      {activeAd.mediaUrl && (
+        <div className="w-full relative overflow-hidden max-h-48">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={activeAd.mediaUrl}
+            alt={activeAd.title}
+            className={`w-full h-full object-${activeAd.mediaFit || "cover"}`}
+          />
+        </div>
+      )}
+
+      <div className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
         <div className="space-y-1 flex-1">
           <div className="flex items-center gap-2">
             <span className="bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-blue-100 flex items-center gap-1">
@@ -201,4 +220,24 @@ export function AdBanner({
       <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/5 rounded-full blur-xl pointer-events-none" />
     </div>
   );
+
+  if (isEntireClickable) {
+    return openInNewTab ? (
+      <a
+        href={activeAd.destinationUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={handleCTAClick}
+        className="block cursor-pointer"
+      >
+        {content}
+      </a>
+    ) : (
+      <Link href={activeAd.destinationUrl!} onClick={handleCTAClick} className="block cursor-pointer">
+        {content}
+      </Link>
+    );
+  }
+
+  return content;
 }
