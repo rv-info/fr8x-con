@@ -11,7 +11,13 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
 import { CurrencyTicker } from "@/components/layout/CurrencyTicker";
 
-import { FloatingChat } from "@/components/chat/FloatingChat";
+import dynamic from "next/dynamic";
+
+// Heavy components: lazy-loaded to reduce initial bundle size
+const FloatingChat = dynamic(
+  () => import("@/components/chat/FloatingChat").then((m) => ({ default: m.FloatingChat })),
+  { ssr: false }
+);
 
 export default function DashboardLayout({
   children,
