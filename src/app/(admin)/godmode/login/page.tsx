@@ -41,40 +41,26 @@ export default function GodModeLoginPage() {
     setIsSubmitting(true);
 
     try {
-      let uid = "";
-      try {
-        const cred = await signInWithEmail(cleanEmail, cleanPassword);
-        uid = cred.user.uid;
-      } catch (authErr: any) {
-        // If account doesn't exist in Firebase Auth yet, auto-create it
-        if (
-          authErr.code === "auth/user-not-found" ||
-          authErr.code === "auth/invalid-credential" ||
-          authErr.code === "auth/wrong-password"
-        ) {
-          try {
-            const newCred = await createAccountWithEmail(cleanEmail, cleanPassword, "GodMode Administrator");
-            uid = newCred.user.uid;
-          } catch (createErr: any) {
-            // Re-throw if creation fails for other reasons (e.g. weak password)
-            if (createErr.code !== "auth/email-already-in-use") {
-              throw createErr;
-            }
-            // If email already in use, try sign in once more
-            const retryCred = await signInWithEmail(cleanEmail, cleanPassword);
-            uid = retryCred.user.uid;
-          }
-        } else {
-          throw authErr;
-        }
-      }
-
-      // Provision/Elevate GodMode status in Firestore server-side
-      await fetch("/api/admin/seed-godmode", {
+      // 1. Call server-side provision API (creates/syncs account via REST API + sets cookie + elevates Firestore)
+      const seedRes = await fetch("/api/admin/seed-godmode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid, email: cleanEmail, password: cleanPassword }),
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
       });
+
+      const seedData = await seedRes.json();
+      console.log("GodMode Provision Response:", seedData);
+
+      // 2. Sign in via Firebase Auth client SDK
+      try {
+        await signInWithEmail(cleanEmail, cleanPassword);
+      } catch (clientAuthErr: any) {
+        console.warn("Client Firebase Auth signin notice:", clientAuthErr?.message || clientAuthErr);
+        // If client SDK failed but server cookie was issued, still allow access
+        if (!seedData.success) {
+          throw clientAuthErr;
+        }
+      }
 
       router.push(ADMIN_ROUTES.GODMODE);
     } catch (err: unknown) {
