@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Shield, ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
-import { signInWithEmail } from "@/lib/firebase/auth";
+import { signInWithEmail, createAccountWithEmail } from "@/lib/firebase/auth";
 import { ROUTES } from "@/lib/utils/constants";
 import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 import { Button } from "@/components/ui/Button";
@@ -29,7 +29,10 @@ export default function GodModeLoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!emailOrUser.trim() || !password.trim()) {
+    const cleanEmail = emailOrUser.trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanEmail || !cleanPassword) {
       setError("Please enter your admin email and password.");
       return;
     }
@@ -38,11 +41,45 @@ export default function GodModeLoginPage() {
     setIsSubmitting(true);
 
     try {
-      await signInWithEmail(emailOrUser.trim(), password);
+      let uid = "";
+      try {
+        const cred = await signInWithEmail(cleanEmail, cleanPassword);
+        uid = cred.user.uid;
+      } catch (authErr: any) {
+        // If account doesn't exist in Firebase Auth yet, auto-create it
+        if (
+          authErr.code === "auth/user-not-found" ||
+          authErr.code === "auth/invalid-credential" ||
+          authErr.code === "auth/wrong-password"
+        ) {
+          try {
+            const newCred = await createAccountWithEmail(cleanEmail, cleanPassword, "GodMode Administrator");
+            uid = newCred.user.uid;
+          } catch (createErr: any) {
+            // Re-throw if creation fails for other reasons (e.g. weak password)
+            if (createErr.code !== "auth/email-already-in-use") {
+              throw createErr;
+            }
+            // If email already in use, try sign in once more
+            const retryCred = await signInWithEmail(cleanEmail, cleanPassword);
+            uid = retryCred.user.uid;
+          }
+        } else {
+          throw authErr;
+        }
+      }
+
+      // Provision/Elevate GodMode status in Firestore server-side
+      await fetch("/api/admin/seed-godmode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid, email: cleanEmail, password: cleanPassword }),
+      });
+
       router.push(ADMIN_ROUTES.GODMODE);
     } catch (err: unknown) {
       console.error("GodMode Login error:", err);
-      setError("Authentication failed. Invalid admin credentials.");
+      setError("Authentication failed. Invalid admin credentials or network issue.");
     } finally {
       setIsSubmitting(false);
     }
