@@ -74,6 +74,64 @@ export default function GodModeLocationsPage() {
   const [mergingSourceLoc, setMergingSourceLoc] = useState<LocationDoc | null>(null);
   const [targetMergeId, setTargetMergeId] = useState("");
 
+  // Bulk Upload State
+  const [bulkCsvFile, setBulkCsvFile] = useState<File | null>(null);
+  const [isBulkUploading, setIsBulkUploading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{
+    totalRows: number;
+    successCount: number;
+    failureCount: number;
+    errors: string[];
+  } | null>(null);
+
+  const downloadSampleTemplate = () => {
+    const csvHeader = "code,name,country,countryCode,type,city,state,unlocode\n";
+    const sampleRows =
+      "INNSA,Nhava Sheva Port,India,IN,sea,Navi Mumbai,Maharashtra,INNSA\n" +
+      "BOM,Chhatrapati Shivaji Airport,India,IN,air,Mumbai,Maharashtra,INBOM\n" +
+      "AEJEA,Jebel Ali Port,UAE,AE,sea,Dubai,Dubai,AEJEA\n";
+    const blob = new Blob([csvHeader + sampleRows], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sample_locations.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleBulkUploadSubmit = async () => {
+    if (!bulkCsvFile) return;
+    setIsBulkUploading(true);
+    setBulkResult(null);
+
+    try {
+      const csvText = await bulkCsvFile.text();
+      const { getIdToken } = await import("@/lib/firebase/auth");
+      const token = await getIdToken();
+
+      const res = await fetch("/api/admin/locations/bulk-upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ csvContent: csvText }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setBulkResult(data);
+        fetchLocationsAndAudit();
+      } else {
+        alert(`Bulk upload error: ${data.error}`);
+      }
+    } catch {
+      alert("Failed to process bulk upload file.");
+    } finally {
+      setIsBulkUploading(false);
+    }
+  };
+
   const fetchLocationsAndAudit = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -371,6 +429,15 @@ export default function GodModeLocationsPage() {
         </button>
 
         <button
+          onClick={() => setActiveTab("bulk")}
+          className={`py-2 px-3 border-b-2 font-medium flex items-center gap-1.5 ${
+            activeTab === "bulk" ? "border-[var(--fr8x-periwinkle)] text-[var(--fr8x-periwinkle)]" : "border-transparent text-gray-500"
+          }`}
+        >
+          <Upload className="w-3.5 h-3.5" /> Bulk CSV Import
+        </button>
+
+        <button
           onClick={() => setActiveTab("audit")}
           className={`py-2 px-3 border-b-2 font-medium flex items-center gap-1.5 ${
             activeTab === "audit" ? "border-[var(--fr8x-periwinkle)] text-[var(--fr8x-periwinkle)]" : "border-transparent text-gray-500"
@@ -430,6 +497,82 @@ export default function GodModeLocationsPage() {
             <button type="submit" className="fr8x-btn-primary">Save Location</button>
           </div>
         </form>
+      ) : activeTab === "bulk" ? (
+        <div className="bg-white rounded border border-gray-200 p-5 space-y-4">
+          <div className="flex items-center justify-between border-b pb-3">
+            <div>
+              <h2 className="font-bold text-sm text-[var(--fr8x-jet)]">Bulk Location Master CSV Import</h2>
+              <p className="text-[11px] text-gray-500">Upload CSV file with structured location records to import ports, airports, and ICDs.</p>
+            </div>
+            <button
+              type="button"
+              onClick={downloadSampleTemplate}
+              className="fr8x-btn-secondary flex items-center gap-1.5 text-xs"
+            >
+              <ArrowDownToLine className="w-3.5 h-3.5" /> Download Template CSV
+            </button>
+          </div>
+
+          <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center space-y-3 bg-gray-50">
+            <Upload className="w-8 h-8 text-gray-400 mx-auto" />
+            <div>
+              <p className="font-semibold text-xs text-gray-700">Select CSV file for Bulk Import</p>
+              <p className="text-[10px] text-gray-500 mt-0.5">Required columns: code, name, country, countryCode, type</p>
+            </div>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={(e) => setBulkCsvFile(e.target.files?.[0] || null)}
+              className="block mx-auto text-xs text-gray-600"
+            />
+            {bulkCsvFile && (
+              <p className="text-xs text-emerald-700 font-semibold">Selected: {bulkCsvFile.name} ({Math.ceil(bulkCsvFile.size / 1024)} KB)</p>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="button"
+              disabled={!bulkCsvFile || isBulkUploading}
+              onClick={handleBulkUploadSubmit}
+              className="fr8x-btn-primary flex items-center gap-2 px-5 py-2"
+            >
+              {isBulkUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+              Start Bulk Import
+            </button>
+          </div>
+
+          {bulkResult && (
+            <div className="p-4 rounded border bg-slate-50 space-y-2 border-slate-200">
+              <h3 className="font-bold text-xs text-slate-900 flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Import Results Summary
+              </h3>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div className="p-2 bg-white rounded border text-center">
+                  <p className="text-gray-500 text-[10px]">Total Rows</p>
+                  <p className="font-bold text-sm text-gray-900">{bulkResult.totalRows}</p>
+                </div>
+                <div className="p-2 bg-emerald-50 border border-emerald-200 rounded text-center">
+                  <p className="text-emerald-700 text-[10px]">Successfully Imported</p>
+                  <p className="font-bold text-sm text-emerald-800">{bulkResult.successCount}</p>
+                </div>
+                <div className="p-2 bg-red-50 border border-red-200 rounded text-center">
+                  <p className="text-red-700 text-[10px]">Failed Rows</p>
+                  <p className="font-bold text-sm text-red-800">{bulkResult.failureCount}</p>
+                </div>
+              </div>
+
+              {bulkResult.errors.length > 0 && (
+                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded max-h-40 overflow-y-auto space-y-1">
+                  <p className="font-bold text-red-900 text-[11px]">Validation & Error Log:</p>
+                  {bulkResult.errors.map((err, idx) => (
+                    <p key={idx} className="text-[10px] text-red-700 font-mono">• {err}</p>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       ) : activeTab === "audit" ? (
         <div className="bg-white rounded border border-gray-200 overflow-hidden">
           <table className="fr8x-table w-full">
