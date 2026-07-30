@@ -397,7 +397,7 @@ export default function FeedsPage() {
 
       {/* Header & Toast */}
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[11px] font-semibold text-[var(--fr8x-jet)]">Feeds & Logistics Network</h1>
+        <h1 className="text-[11px] font-semibold text-[var(--fr8x-jet)]">Feeds</h1>
         {toastMsg && (
           <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
             <CheckCircle2 className="h-3 w-3" />
@@ -461,6 +461,66 @@ export default function FeedsPage() {
               className="fr8x-input min-h-[56px] resize-none mb-1.5 text-[10px]"
             />
 
+            {/* Rich Formatting Toolbar */}
+            <div className="flex items-center justify-between mb-1.5 border-b border-border pb-1">
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setPostContent((prev) => prev + " **bold** ")}
+                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-bold hover:bg-slate-100"
+                  title="Add Bold text"
+                >
+                  B
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPostContent((prev) => prev + " *italic* ")}
+                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] italic font-semibold hover:bg-slate-100"
+                  title="Add Italic text"
+                >
+                  I
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPostContent((prev) => prev + " <u>underline</u> ")}
+                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] underline hover:bg-slate-100"
+                  title="Add Underline text"
+                >
+                  U
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setPostContent(
+                      (prev) =>
+                        prev +
+                        "\n| Port | Rate (USD) | Transit Time |\n| --- | --- | --- |\n| INNSA | 1200 | 14 Days |\n"
+                    )
+                  }
+                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-semibold hover:bg-slate-100"
+                  title="Insert Table"
+                >
+                  📊 Table
+                </button>
+              </div>
+
+              <span
+                className={`text-[10px] font-mono font-bold ${
+                  postContent.trim().split(/\s+/).filter(Boolean).length > 1000
+                    ? "text-danger"
+                    : "text-foreground-muted"
+                }`}
+              >
+                {postContent.trim().split(/\s+/).filter(Boolean).length} / 1000 words
+              </span>
+            </div>
+
+            {postContent.trim().split(/\s+/).filter(Boolean).length > 1000 && (
+              <p className="text-[10px] text-danger font-semibold mb-1">
+                ⚠️ Post exceeds maximum 1000-word limit. Please shorten your content.
+              </p>
+            )}
+
             <div className="flex items-center justify-between">
               <select
                 value={selectedTag}
@@ -473,22 +533,17 @@ export default function FeedsPage() {
                 ))}
               </select>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setIsPostJobOpen(true)}
-                  className="fr8x-btn-secondary text-[10px] py-1 px-2.5 flex items-center gap-1"
-                >
-                  <Briefcase className="h-3 w-3" /> Post Job Requirement
-                </button>
-
-                <button
-                  onClick={handlePost}
-                  className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1 px-3"
-                  disabled={!postContent.trim() || isPosting}
-                >
-                  {isPosting ? "Posting..." : "POST"}
-                </button>
-              </div>
+              <button
+                onClick={handlePost}
+                disabled={
+                  isPosting ||
+                  !postContent.trim() ||
+                  postContent.trim().split(/\s+/).filter(Boolean).length > 1000
+                }
+                className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1 px-3 flex items-center gap-1 disabled:opacity-40"
+              >
+                {isPosting ? <Loader2 className="h-3 w-3 animate-spin" /> : "POST"}
+              </button>
             </div>
           </div>
 
