@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES } from "@/lib/utils/constants";
+import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 
 export default function RootPage() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -18,7 +19,7 @@ export default function RootPage() {
     if (!isAuthenticated) {
       router.replace(ROUTES.LOGIN);
     } else if (user?.isGodMode) {
-      router.replace(ROUTES.GODMODE);
+      router.replace(ADMIN_ROUTES.GODMODE);
     } else {
       router.replace(ROUTES.FEEDS);
     }
