@@ -4,11 +4,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Shield, ArrowRight } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { signInWithEmail, createAccountWithEmail } from "@/lib/firebase/auth";
-import { ROUTES } from "@/lib/utils/constants";
 import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 import { Button } from "@/components/ui/Button";
 
@@ -18,7 +16,7 @@ export default function GodModeLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, refreshUser } = useAuth();
 
   // If already authenticated as GodMode admin, redirect directly to /godmode
   useEffect(() => {
@@ -41,15 +39,14 @@ export default function GodModeLoginPage() {
     setIsSubmitting(true);
 
     try {
-      // 1. Direct Master Admin Check or Provisioning Call
-      const isMasterAdmin = cleanEmail === "support@fr8x.in" && cleanPassword === "QWERTY@123x";
-
-      if (isMasterAdmin) {
-        // Set secure cookie for Middleware authorization
-        document.cookie = `fr8x_godmode_token=godmode_admin_token_2026; path=/; max-age=604800; SameSite=Lax`;
+      if (cleanEmail === "support@fr8x.in" && cleanPassword === "QWERTY@123x") {
+        if (typeof window !== "undefined") {
+          sessionStorage.setItem("fr8x_godmode_admin", "true");
+          document.cookie = "fr8x_godmode_token=godmode_admin_token_2026; path=/; max-age=604800; SameSite=Lax";
+        }
       }
 
-      // 2. Provision / Sync User in Firebase Auth & Firestore
+      // 1. Provision account server-side via API route
       try {
         await fetch("/api/admin/seed-godmode", {
           method: "POST",
@@ -60,19 +57,15 @@ export default function GodModeLoginPage() {
         console.warn("Background seed notice:", seedErr);
       }
 
-      // 3. Authenticate with Firebase Auth Client SDK
-      try {
-        await signInWithEmail(cleanEmail, cleanPassword);
-      } catch (clientAuthErr: any) {
-        console.warn("Client Firebase Auth notice:", clientAuthErr?.message || clientAuthErr);
-        if (!isMasterAdmin) {
-          throw clientAuthErr;
-        }
+      // 2. Sign in via Firebase Auth client SDK (uses fallback if API key is invalid)
+      await signInWithEmail(cleanEmail, cleanPassword);
+
+      // 3. Refresh user state in AuthProvider and navigate cleanly via Next.js App Router
+      if (refreshUser) {
+        await refreshUser();
       }
 
-      // 4. Set cookie once more to ensure state persistence
-      document.cookie = `fr8x_godmode_token=godmode_admin_token_2026; path=/; max-age=604800; SameSite=Lax`;
-      window.location.href = ADMIN_ROUTES.GODMODE;
+      router.push(ADMIN_ROUTES.GODMODE);
     } catch (err: unknown) {
       console.error("GodMode Login error:", err);
       setError("Authentication failed. Invalid admin credentials or network issue.");
