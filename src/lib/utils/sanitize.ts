@@ -1,80 +1,85 @@
-// FR8X-CON Utility: Input Sanitization
-// Protects against XSS, injection, and malicious input
+// FR8X-CON Content Sanitization Utilities
+// Server-safe: no DOM dependency. Used before any user-generated content
+// is written to Firestore or rendered in the UI.
 
 /**
- * Sanitize a string by escaping HTML entities.
- * Prevents XSS attacks in rendered output.
+ * Strips dangerous HTML, script injection vectors, javascript: hrefs,
+ * data: URIs, and on* event handlers from user-supplied content strings.
+ * Safe to call both client-side and in API routes (no DOM required).
  */
-export function escapeHtml(str: string): string {
-  const map: Record<string, string> = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-    "/": "&#x2F;",
-    "`": "&#x60;",
-  };
-  return str.replace(/[&<>"'`/]/g, (char) => map[char] || char);
-}
-
-/**
- * Strip HTML tags from a string.
- */
-export function stripHtml(str: string): string {
-  return str.replace(/<[^>]*>/g, "");
-}
-
-/**
- * Sanitize user input: trim, strip HTML, limit length.
- */
-export function sanitizeInput(input: string, maxLength: number = 10000): string {
+export function sanitizePostContent(input: string): string {
   if (!input || typeof input !== "string") return "";
-  return stripHtml(input.trim()).slice(0, maxLength);
+
+  let s = input;
+
+  // Remove script tags and content
+  s = s.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "");
+
+  // Remove iframe, object, embed, form, input elements
+  s = s.replace(/<(iframe|object|embed|form|input|button|link|meta|base)[^>]*>/gi, "");
+
+  // Strip on* event handler attributes (onclick, onload, onerror, etc.)
+  s = s.replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, "");
+  s = s.replace(/\s+on\w+\s*=\s*[^\s>]*/gi, "");
+
+  // Remove javascript: and vbscript: protocol hrefs
+  s = s.replace(/href\s*=\s*["']?\s*javascript:[^"'\s>]*/gi, 'href="#"');
+  s = s.replace(/href\s*=\s*["']?\s*vbscript:[^"'\s>]*/gi, 'href="#"');
+
+  // Remove data: URIs (common XSS vector in src/href attributes)
+  s = s.replace(/src\s*=\s*["']?\s*data:[^"'\s>]*/gi, 'src=""');
+  s = s.replace(/href\s*=\s*["']?\s*data:[^"'\s>]*/gi, 'href="#"');
+
+  // Remove HTML comments (can hide malicious payloads)
+  s = s.replace(/<!--[\s\S]*?-->/g, "");
+
+  return s.trim();
 }
 
 /**
- * Sanitize a search query: remove special regex characters.
+ * Validates and sanitizes a URL for use in ad destination links.
+ * Accepts: internal paths (starting with /) and safe external https:// URLs.
+ * Rejects: javascript:, data:, http:// (non-TLS), and any other schemes.
  */
-export function sanitizeSearchQuery(query: string): string {
-  return query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").trim();
-}
+export function sanitizeUrl(url: string): string {
+  if (!url || typeof url !== "string") return "/";
+  const trimmed = url.trim();
 
-/**
- * Validate and sanitize an email address.
- */
-export function sanitizeEmail(email: string): string {
-  return email.trim().toLowerCase();
-}
+  // Allow internal paths
+  if (trimmed.startsWith("/") && !trimmed.startsWith("//")) {
+    return trimmed.replace(/[<>"'`]/g, "");
+  }
 
-/**
- * Remove null bytes and control characters from input.
- */
-export function removeControlChars(str: string): string {
-  return str.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
-}
-
-/**
- * Sanitize an object's string values recursively.
- */
-export function sanitizeObject<T extends Record<string, unknown>>(
-  obj: T,
-  maxStringLength: number = 10000
-): T {
-  const sanitized = { ...obj };
-  for (const key in sanitized) {
-    const value = sanitized[key];
-    if (typeof value === "string") {
-      (sanitized as Record<string, unknown>)[key] = sanitizeInput(
-        value,
-        maxStringLength
-      );
-    } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-      (sanitized as Record<string, unknown>)[key] = sanitizeObject(
-        value as Record<string, unknown>,
-        maxStringLength
-      );
+  // Allow https:// external URLs only
+  if (/^https:\/\//i.test(trimmed)) {
+    try {
+      const parsed = new URL(trimmed);
+      // Block localhost/private IPs (SSRF prevention)
+      const hostname = parsed.hostname.toLowerCase();
+      const isPrivate =
+        hostname === "localhost" ||
+        hostname === "127.0.0.1" ||
+        hostname.startsWith("192.168.") ||
+        hostname.startsWith("10.") ||
+        hostname.startsWith("172.16.") ||
+        hostname.endsWith(".local") ||
+        hostname === "metadata.google.internal";
+      if (isPrivate) return "/";
+      return parsed.toString();
+    } catch {
+      return "/";
     }
   }
-  return sanitized;
+
+  return "/";
+}
+
+/**
+ * Sanitizes a plain-text field value: strips HTML tags and trims.
+ * Use for name, designation, company, and other text-only fields.
+ */
+export function sanitizeTextField(input: string, maxLength = 500): string {
+  if (!input || typeof input !== "string") return "";
+  const stripped = input.replace(/<[^>]+>/g, "").trim();
+  return stripped.slice(0, maxLength);
 }
