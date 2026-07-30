@@ -397,16 +397,27 @@ REMARKS: ${r.remarks}`;
     }
   };
 
+  // Bulk Upload Preview State
+  const [showUploadPreview, setShowUploadPreview] = useState(false);
+  const [parsedRows, setParsedRows] = useState<any[]>([]);
+  const [invalidRows, setInvalidRows] = useState<any[]>([]);
+  const [isProcessingUpload, setIsProcessingUpload] = useState(false);
+
   const handleDownloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Carrier,POR,POL,POD,FPOD,20DV,20TYPE,40HC,40TYPE,F/T,Date,Type,TT,Routing,Remarks\nMaersk,INBOM,INBOM,AEDXB,AEDXB,1200,STANDARD,1500,STANDARD,14 days,2026-08-31,HANDOVER,12,Direct,Sample rate upload\n";
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      "Carrier,POR,POL,POD,FPOD,Rate_20DV,Type_20DV,Rate_40HC,Type_40HC,Free_Time,Validity_Date,Rate_Type,Transit_Time,Routing,Service_Provider_ID,Remarks\n" +
+      "Maersk Line,INBOM - Mumbai,INNSA - Nhava Sheva Port,AEDXB - Jebel Ali Port,AEDXB,1250,STANDARD,1650,STANDARD,14 Days,2026-09-30,HANDOVER,12 Days,Direct,provider@maersk.com,Verified benchmark ocean rate\n" +
+      "MSC,INMAA - Chennai,INMAA - Chennai Port,SGSIN - Singapore Port,SGSIN,950,STANDARD,1350,STANDARD,10 Days,2026-09-15,DIRECT,7 Days,Direct,provider@msc.com,Promotional rate allocation\n";
+
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "rate_upload_template.csv");
+    link.setAttribute("download", "FR8X_Standard_Rate_Import_Template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showNotification("Downloaded sample CSV template.");
+    showNotification("Downloaded standard rate import template (CSV).");
   };
 
   const handleBulkUploadClick = () => {
@@ -415,10 +426,133 @@ REMARKS: ${r.remarks}`;
 
   const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      showNotification(`File "${file.name}" uploaded successfully. Processing rates...`);
-      e.target.value = "";
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (lines.length <= 1) {
+        showNotification("Uploaded file is empty or missing data rows.");
+        return;
+      }
+
+      const valid: any[] = [];
+      const invalid: any[] = [];
+
+      lines.slice(1).forEach((line, index) => {
+        const cols = line.split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+        const [
+          rawCarrier,
+          rawPor,
+          rawPol,
+          rawPod,
+          rawFpod,
+          rawRate20,
+          rawType20,
+          rawRate40,
+          rawType40,
+          rawFt,
+          rawValidity,
+          rawRateType,
+          rawTt,
+          rawRouting,
+          rawProvider,
+          rawRemarks,
+        ] = cols;
+
+        const rowNum = index + 2;
+        const rate20 = parseFloat(rawRate20 || "0") || 0;
+        const rate40 = parseFloat(rawRate40 || "0") || 0;
+
+        const missingFields: string[] = [];
+        if (!rawPol) missingFields.push("POL");
+        if (!rawPod) missingFields.push("POD");
+        if (rate20 <= 0 && rate40 <= 0) missingFields.push("Rate 20DV or 40HC");
+
+        if (missingFields.length > 0) {
+          invalid.push({
+            rowNum,
+            line,
+            reason: `Missing required field(s): ${missingFields.join(", ")}`,
+          });
+        } else {
+          // Auto-associate service provider with current user email or provided code
+          const providerAssigned = rawProvider || user?.email || "Current Provider";
+
+          valid.push({
+            seq: `SEQ-BULK-${Date.now().toString().slice(-4)}-${index + 1}`,
+            carrier: rawCarrier || "N/A",
+            por: rawPor || rawPol,
+            pol: rawPol,
+            pod: rawPod,
+            fpod: rawFpod || rawPod,
+            rate20dv: rate20,
+            type20dv: rawType20 || "STANDARD",
+            rate40hc: rate40,
+            type40hc: rawType40 || "STANDARD",
+            ft: rawFt || "7 Days",
+            validityDate: rawValidity || "2026-12-31",
+            rateType: rawRateType || "HANDOVER",
+            tt: rawTt || "N/A",
+            routing: rawRouting || "Direct",
+            remarks: rawRemarks || "Bulk Uploaded Rate",
+            status: "active",
+            createdBy: user?.uid || "system",
+            createdByEmail: providerAssigned,
+            serviceProvider: providerAssigned,
+          });
+        }
+      });
+
+      setParsedRows(valid);
+      setInvalidRows(invalid);
+      setShowUploadPreview(true);
+    };
+
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
+  const handleConfirmBulkUpload = async () => {
+    if (parsedRows.length === 0) return;
+    setIsProcessingUpload(true);
+
+    try {
+      for (const rateObj of parsedRows) {
+        const docRef = getDocRef(COLLECTIONS.RATES);
+        await setDocument(COLLECTIONS.RATES, docRef.id, {
+          ...rateObj,
+          createdAt: serverTimestamp(),
+        });
+      }
+      setShowUploadPreview(false);
+      fetchRates();
+      showNotification(`Successfully uploaded ${parsedRows.length} rates associated with service provider!`);
+    } catch (err) {
+      console.error("Bulk rate commit failed:", err);
+      showNotification("Error saving bulk rates.");
+    } finally {
+      setIsProcessingUpload(false);
     }
+  };
+
+  const handleDownloadErrorLog = () => {
+    if (invalidRows.length === 0) return;
+    let csvErr = "Row_Number,Raw_Line,Error_Reason\n";
+    invalidRows.forEach((r) => {
+      csvErr += `"${r.rowNum}","${r.line.replace(/"/g, '""')}","${r.reason}"\n`;
+    });
+
+    const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvErr);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "Rate_Upload_Error_Log.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -911,6 +1045,100 @@ REMARKS: ${r.remarks}`;
           </main>
         </div>
       </div>
+
+      {/* BULK UPLOAD PREVIEW & VALIDATION MODAL */}
+      {showUploadPreview && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl space-y-4 text-left">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <div>
+                <h3 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
+                  Bulk Rate Upload Validation & Preview Screen
+                </h3>
+                <p className="text-caption text-foreground-secondary mt-0.5">
+                  Verified rows will automatically associate with your service provider account.
+                </p>
+              </div>
+              <button onClick={() => setShowUploadPreview(false)} className="text-slate-400 hover:text-slate-700">
+                <XCircle className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Validation summary chips */}
+            <div className="flex items-center gap-3 text-xs">
+              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-lg font-bold">
+                ✓ {parsedRows.length} Valid Rows Ready to Import
+              </span>
+              {invalidRows.length > 0 && (
+                <span className="bg-rose-50 text-rose-800 border border-rose-200 px-3 py-1 rounded-lg font-bold flex items-center gap-1">
+                  ⚠ {invalidRows.length} Validation Errors
+                  <button onClick={handleDownloadErrorLog} className="underline text-[10px] ml-1">
+                    (Download Error Log .CSV)
+                  </button>
+                </span>
+              )}
+            </div>
+
+            {/* Preview Table */}
+            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xl">
+              <table className="fr8x-table text-[10px]">
+                <thead>
+                  <tr>
+                    <th>Status</th>
+                    <th>Carrier</th>
+                    <th>POL</th>
+                    <th>POD</th>
+                    <th>20DV Rate</th>
+                    <th>40HC Rate</th>
+                    <th>Validity</th>
+                    <th>Service Provider (Auto-mapped)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsedRows.map((r, idx) => (
+                    <tr key={idx} className="bg-emerald-50/40">
+                      <td><span className="text-emerald-700 font-bold">Valid</span></td>
+                      <td className="font-bold">{r.carrier}</td>
+                      <td>{r.pol}</td>
+                      <td>{r.pod}</td>
+                      <td className="font-mono font-bold">${r.rate20dv}</td>
+                      <td className="font-mono font-bold">${r.rate40hc}</td>
+                      <td>{r.validityDate}</td>
+                      <td className="font-mono font-bold text-blue-900">{r.serviceProvider}</td>
+                    </tr>
+                  ))}
+                  {invalidRows.map((err, idx) => (
+                    <tr key={`err_${idx}`} className="bg-rose-50/50 text-rose-900">
+                      <td><span className="text-rose-700 font-bold">Error</span></td>
+                      <td colSpan={6} className="text-rose-700 font-semibold">{err.reason} (Row {err.rowNum})</td>
+                      <td><span className="text-slate-400">N/A</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-between pt-3 border-t border-border">
+              <button
+                onClick={() => setShowUploadPreview(false)}
+                className="fr8x-btn-secondary text-xs px-4 py-2 font-bold"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleConfirmBulkUpload}
+                disabled={isProcessingUpload || parsedRows.length === 0}
+                className="fr8x-btn-primary bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-6 py-2 font-bold flex items-center gap-1.5 disabled:opacity-40"
+              >
+                {isProcessingUpload ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Confirm & Import {parsedRows.length} Valid Rates
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
