@@ -38,6 +38,7 @@ import {
 
 import { auctionCreateSchema, type AuctionCreateFormData } from "@/lib/validators/auction";
 import { ROUTES } from "@/lib/utils/constants";
+import { LocationAutocomplete } from "@/components/ui/LocationAutocomplete";
 import { cn } from "@/lib/utils/cn";
 import LocationSearchInput from "@/components/ui/LocationSearchInput";
 import { FREIGHT_CURRENCIES as CURRENCY_LIST } from "@/lib/types/currency";
@@ -428,23 +429,21 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <LocationSearchInput
+                    <LocationAutocomplete
                       value={watch("shipmentDetails.origin") || ""}
                       onChange={(val) => setValue("shipmentDetails.origin", val)}
-                      label="Shipment Origin (City/Country) *"
-                      placeholder="e.g. Mumbai, India"
-                      isPlaceOfReceiptOrDelivery={true}
-                      mode={selectedMode}
+                      label="Shipment Origin (City/Country)"
+                      placeholder="e.g. Nhava Sheva (INNSA, India)"
+                      required
                     />
                   </div>
                   <div>
-                    <LocationSearchInput
+                    <LocationAutocomplete
                       value={watch("shipmentDetails.destination") || ""}
                       onChange={(val) => setValue("shipmentDetails.destination", val)}
-                      label="Shipment Destination (City/Country) *"
-                      placeholder="e.g. Hamburg, Germany"
-                      isPlaceOfReceiptOrDelivery={true}
-                      mode={selectedMode}
+                      label="Shipment Destination (City/Country)"
+                      placeholder="e.g. Hamburg (DEHAM, Germany)"
+                      required
                     />
                   </div>
                   <div>
@@ -487,21 +486,19 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <LocationSearchInput
+                    <LocationAutocomplete
                       value={watch("shipmentDetails.originPort") || ""}
                       onChange={(val) => setValue("shipmentDetails.originPort", val)}
                       label="POL / Origin Hub / Terminal (Optional)"
                       placeholder="e.g. INNSA / BOM / Rail Depot"
-                      mode={selectedMode}
                     />
                   </div>
                   <div>
-                    <LocationSearchInput
+                    <LocationAutocomplete
                       value={watch("shipmentDetails.destinationPort") || ""}
                       onChange={(val) => setValue("shipmentDetails.destinationPort", val)}
                       label="POD / Destination Hub / Terminal (Optional)"
                       placeholder="e.g. DEHAM / FRA / Dest Ramp"
-                      mode={selectedMode}
                     />
                   </div>
                   <div>
