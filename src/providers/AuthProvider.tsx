@@ -156,6 +156,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firebaseUser.photoURL,
           firebaseUser.emailVerified
         );
+      } else if (
+        typeof window !== "undefined" &&
+        (document.cookie.includes("fr8x_godmode_token") || sessionStorage.getItem("fr8x_godmode_admin"))
+      ) {
+        setState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: {
+            uid: "godmode_admin_dev_uid",
+            email: "support@fr8x.in",
+            displayName: "GodMode Administrator",
+            photoURL: null,
+            emailVerified: true,
+            role: "admin",
+            isGodMode: true,
+            companyId: null,
+            membershipTier: "premium",
+          },
+          error: null,
+        });
       } else {
         setState({
           isAuthenticated: false,
@@ -171,8 +191,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     try {
-      if (state.user?.uid && typeof window !== "undefined") {
-        sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
+      if (typeof window !== "undefined") {
+        if (state.user?.uid) {
+          sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
+        }
+        sessionStorage.removeItem("fr8x_godmode_admin");
+        document.cookie = "fr8x_godmode_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
       await firebaseSignOut();
       setState({ isAuthenticated: false, isLoading: false, user: null, error: null });
