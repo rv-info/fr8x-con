@@ -19,8 +19,14 @@ import {
 } from "@/lib/firebase/firestore";
 import { formatRelativeTime } from "@/lib/utils/format";
 import type { FeedFilterCategory } from "@/lib/types/feed";
-import PostJobDialog from "@/components/jobs/PostJobDialog";
+import dynamic from "next/dynamic";
 import type { JobPosting } from "@/lib/types/job";
+
+// Heavy modal: only loaded when user clicks "Post a Job"
+const PostJobDialog = dynamic(() => import("@/components/jobs/PostJobDialog"), {
+  ssr: false,
+  loading: () => null,
+});
 import { AdBanner } from "@/components/ads/AdBanner";
 import {
   ThumbsUp,
