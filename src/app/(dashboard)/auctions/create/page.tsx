@@ -273,7 +273,7 @@ export default function AuctionCreatePage() {
         auctionId
       );
 
-      console.log("Submitted reverse auction data:", payload);
+      // Auction created successfully
       showNotification("Auction published successfully!");
       router.push(ROUTES.AUCTIONS);
     } catch (error) {
