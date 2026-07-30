@@ -9,6 +9,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES } from "@/lib/utils/constants";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TopNav } from "@/components/layout/TopNav";
+import { BackButton } from "@/components/layout/BackButton";
 import { CurrencyTicker } from "@/components/layout/CurrencyTicker";
 
 import dynamic from "next/dynamic";
@@ -60,6 +61,9 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top Navigation */}
           <TopNav />
+
+          {/* Standard Back Button directly below Search/TopNav */}
+          <BackButton />
 
           {/* Page content */}
           <main className="flex-1 overflow-y-auto">
