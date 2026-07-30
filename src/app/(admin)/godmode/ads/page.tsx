@@ -415,7 +415,7 @@ export default function GodModeAdsPage() {
                     </div>
                     <div>
                       <label className="fr8x-label block mb-1 text-xs">Ad Format Type</label>
-                      <select value={type} onChange={(e) => setType(e.target.value as any)} className="fr8x-input font-medium">
+                      <select value={type} onChange={(e) => setType(e.target.value as "image" | "carousel" | "html" | "rich_text" | "video")} className="fr8x-input font-medium">
                         <option value="image">Banner Image</option>
                         <option value="rich_text">Rich Text & Title Card</option>
                         <option value="carousel">Carousel (Multi-Card)</option>
@@ -467,7 +467,7 @@ export default function GodModeAdsPage() {
 
                     <div>
                       <label className="fr8x-label block mb-1 text-xs">Redirect Target Type</label>
-                      <select value={targetType} onChange={(e) => setTargetType(e.target.value as any)} className="fr8x-input">
+                      <select value={targetType} onChange={(e) => setTargetType(e.target.value as "internal" | "external")} className="fr8x-input">
                         <option value="internal">Internal Platform Route (e.g. /auctions)</option>
                         <option value="external">External Website Link (https://...)</option>
                       </select>
@@ -488,7 +488,7 @@ export default function GodModeAdsPage() {
 
                   <div>
                     <label className="fr8x-label block mb-1 text-xs">Open Action Mode</label>
-                    <select value={openMode} onChange={(e) => setOpenMode(e.target.value as any)} className="fr8x-input">
+                    <select value={openMode} onChange={(e) => setOpenMode(e.target.value as "new_tab" | "inside_app")} className="fr8x-input">
                       <option value="inside_app">Open Inside FR8X-CON Application</option>
                       <option value="new_tab">Open in New Browser Tab</option>
                     </select>
@@ -541,7 +541,7 @@ export default function GodModeAdsPage() {
 
                       <div>
                         <label className="fr8x-label block mb-1 text-[11px]">Target Device</label>
-                        <select value={targetDevice} onChange={(e) => setTargetDevice(e.target.value as any)} className="fr8x-input bg-white">
+                        <select value={targetDevice} onChange={(e) => setTargetDevice(e.target.value as "all" | "desktop" | "mobile" | "tablet")} className="fr8x-input bg-white">
                           <option value="all">All Devices</option>
                           <option value="desktop">Desktop Only</option>
                           <option value="mobile">Mobile Only</option>
@@ -558,7 +558,7 @@ export default function GodModeAdsPage() {
                 {wizardStep > 1 ? (
                   <button
                     type="button"
-                    onClick={() => setWizardStep((prev) => (prev - 1) as any)}
+                    onClick={() => setWizardStep((prev) => Math.max(1, prev - 1) as 1 | 2 | 3)}
                     className="px-4 py-2 border rounded-lg text-body-sm font-semibold hover:bg-slate-100"
                   >
                     Back
@@ -568,7 +568,7 @@ export default function GodModeAdsPage() {
                 {wizardStep < 3 ? (
                   <button
                     type="button"
-                    onClick={() => setWizardStep((prev) => (prev + 1) as any)}
+                    onClick={() => setWizardStep((prev) => Math.min(3, prev + 1) as 1 | 2 | 3)}
                     className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] px-5 py-2 text-body-sm font-bold"
                   >
                     Next Step →
