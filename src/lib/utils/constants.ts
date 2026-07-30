@@ -38,23 +38,6 @@ export const ROUTES = {
 
   // Jobs
   JOBS: "/jobs",
-
-  // Admin / GodMode
-  GODMODE: "/godmode",
-  GODMODE_LOGIN: "/godmode/login",
-  GODMODE_USERS: "/godmode/users",
-  GODMODE_COMPANIES: "/godmode/companies",
-  GODMODE_AUCTIONS: "/godmode/auctions",
-  GODMODE_ADS: "/godmode/ads",
-  GODMODE_AWARDS: "/godmode/awards",
-  GODMODE_BLACKLIST: "/godmode/blacklist",
-  GODMODE_MODERATION: "/godmode/moderation",
-  GODMODE_VERIFICATION: "/godmode/verification",
-  GODMODE_BILLING: "/godmode/billing",
-  GODMODE_AUDIT: "/godmode/audit",
-  GODMODE_SETTINGS: "/godmode/settings",
-  GODMODE_LOCATIONS: "/godmode/locations",
-  GODMODE_BACKUPS: "/godmode/backups",
 } as const;
 
 // Firestore Collections
