@@ -333,9 +333,75 @@ export default function GodModeSettingsPage() {
                 className="fr8x-input font-bold"
               />
             </div>
+
+            <div>
+              <label className="fr8x-label block mb-1 text-xs">Rate Limit Ceiling (Req/Min)</label>
+              <input
+                type="number"
+                value={authSettings.rateLimitMaxPerMin}
+                onChange={(e) => setAuthSettings({ ...authSettings, rateLimitMaxPerMin: parseInt(e.target.value) || 30 })}
+                className="fr8x-input font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="fr8x-label block mb-1 text-xs">Max Failed Logins before Lockout</label>
+              <input
+                type="number"
+                value={authSettings.maxFailedLoginAttempts}
+                onChange={(e) => setAuthSettings({ ...authSettings, maxFailedLoginAttempts: parseInt(e.target.value) || 5 })}
+                className="fr8x-input font-bold"
+              />
+            </div>
+
+            <div>
+              <label className="fr8x-label block mb-1 text-xs">Lockout Duration (Minutes)</label>
+              <input
+                type="number"
+                value={authSettings.lockoutDurationMinutes}
+                onChange={(e) => setAuthSettings({ ...authSettings, lockoutDurationMinutes: parseInt(e.target.value) || 15 })}
+                className="fr8x-input font-bold"
+              />
+            </div>
           </div>
 
-          <div className="pt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-caption">
+          <div className="pt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-caption border-t border-slate-100">
+            <label className="flex items-center gap-2 cursor-pointer font-semibold text-emerald-700">
+              <input
+                type="checkbox"
+                checked={authSettings.highEncryptionMode}
+                onChange={(e) => setAuthSettings({ ...authSettings, highEncryptionMode: e.target.checked })}
+              />
+              AES-256-GCM High Encryption
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer font-semibold text-blue-700">
+              <input
+                type="checkbox"
+                checked={authSettings.rateLimitingEnabled}
+                onChange={(e) => setAuthSettings({ ...authSettings, rateLimitingEnabled: e.target.checked })}
+              />
+              Sliding-Window Rate Limiting
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer font-semibold text-red-700">
+              <input
+                type="checkbox"
+                checked={authSettings.bruteForceProtectionEnabled}
+                onChange={(e) => setAuthSettings({ ...authSettings, bruteForceProtectionEnabled: e.target.checked })}
+              />
+              Brute-Force Lockout Protection
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer font-semibold text-amber-700">
+              <input
+                type="checkbox"
+                checked={authSettings.credentialStuffingDetectionEnabled}
+                onChange={(e) => setAuthSettings({ ...authSettings, credentialStuffingDetectionEnabled: e.target.checked })}
+              />
+              Credential Stuffing Defense
+            </label>
+
             <label className="flex items-center gap-2 cursor-pointer font-semibold">
               <input
                 type="checkbox"
