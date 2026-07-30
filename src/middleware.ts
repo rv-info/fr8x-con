@@ -98,15 +98,16 @@ export function middleware(request: NextRequest) {
 
   const isAuthRoute = pathname === "/godmode/login" || pathname.startsWith("/api/auth/");
   const isAdminApi = pathname.startsWith("/api/admin/");
-  const isSensitivePath = pathname.startsWith("/godmode") || isAuthRoute || isAdminApi;
+  const isSeedRoute = pathname === "/api/admin/seed-godmode";
+  const isSensitivePath = (pathname.startsWith("/godmode") || isAuthRoute || isAdminApi) && !isSeedRoute;
 
-  // ── 1. Brute-force Lockout Enforcement ──
-  if (isSensitivePath && isBruteForceBlocked(ip)) {
+  // ── 1. Brute-force Lockout Enforcement (exempt login page & seed endpoint) ──
+  if (isSensitivePath && pathname !== "/godmode/login" && isBruteForceBlocked(ip)) {
     return opaque403("IP_LOCKED_BRUTE_FORCE");
   }
 
   // ── 2. Credential Stuffing & Automated Bot Threat Analysis ──
-  if (isAuthRoute && request.method === "POST") {
+  if (isAuthRoute && request.method === "POST" && !isSeedRoute) {
     const stuffingAssessment = evaluateCredentialStuffingRisk(ip, undefined, userAgent);
     if (stuffingAssessment.action === "block") {
       recordBruteForceFailure(ip);
@@ -114,14 +115,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // ── 3. GodMode Route Isolation & Probe Tracking ──
+  // ── 3. GodMode Route Isolation ──
   if (pathname.startsWith("/godmode")) {
     if (pathname !== "/godmode/login") {
       const adminToken =
         request.cookies.get("fr8x_godmode_token")?.value ||
         request.headers.get("x-godmode-auth");
       if (!adminToken) {
-        recordBruteForceFailure(ip);
         return opaque404();
       }
     }
