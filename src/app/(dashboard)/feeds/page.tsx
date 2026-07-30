@@ -23,6 +23,7 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { sanitizePostContent } from "@/lib/utils/sanitize";
 import type { FeedFilterCategory } from "@/lib/types/feed";
 import { AdBanner } from "@/components/ads/AdBanner";
+import { RichPostEditor } from "@/components/feeds/RichPostEditor";
 import {
   ThumbsUp,
   ThumbsDown,
@@ -594,91 +595,16 @@ export default function FeedsPage() {
 
         {/* ═══ CENTER FEED ═══ */}
         <main className="flex-1 min-w-0 space-y-2">
-          {/* Post Composer */}
-          <div className="fr8x-card p-2.5 bg-white">
-            <div className="flex items-center gap-2 mb-1.5">
-              <LayeredAvatar personName={displayName} companyName={profile?.companyName} size="sm" />
-              <p className="text-[11px] font-medium text-[var(--fr8x-jet)]">{displayName}</p>
-            </div>
-
-            <textarea
-              value={postContent}
-              onChange={(e) => setPostContent(e.target.value)}
-              placeholder="Share an update or rate inquiry with your logistics network..."
-              className="fr8x-input min-h-[56px] resize-none mb-1.5 text-[10px]"
-            />
-
-            {/* Rich Formatting Toolbar */}
-            <div className="flex items-center justify-between mb-1.5 border-b border-border pb-1">
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setPostContent((prev) => prev + " **bold** ")}
-                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-bold hover:bg-slate-100"
-                  title="Bold"
-                >B</button>
-                <button
-                  type="button"
-                  onClick={() => setPostContent((prev) => prev + " *italic* ")}
-                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] italic font-semibold hover:bg-slate-100"
-                  title="Italic"
-                >I</button>
-                <button
-                  type="button"
-                  onClick={() => setPostContent((prev) => prev + " <u>underline</u> ")}
-                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] underline hover:bg-slate-100"
-                  title="Underline"
-                >U</button>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setPostContent(
-                      (prev) =>
-                        prev +
-                        "\n| Port | Rate (USD) | Transit Time |\n| --- | --- | --- |\n| INNSA | 1200 | 14 Days |\n"
-                    )
-                  }
-                  className="px-1.5 py-0.5 rounded border border-border bg-slate-50 text-[10px] font-semibold hover:bg-slate-100"
-                  title="Insert Table"
-                >Table</button>
-              </div>
-
-              <span
-                className={`text-[10px] font-mono font-bold ${
-                  wordCount > 1000 ? "text-danger" : "text-foreground-muted"
-                }`}
-              >
-                {wordCount} / 1000
-              </span>
-            </div>
-
-            {wordCount > 1000 && (
-              <p className="text-[10px] text-danger font-semibold mb-1">
-                Post exceeds the 1000-word limit. Please shorten your content.
-              </p>
-            )}
-
-            <div className="flex items-center justify-between">
-              <select
-                value={selectedTag}
-                onChange={(e) => setSelectedTag(e.target.value)}
-                className="fr8x-input w-auto text-[10px] py-0.5 h-6"
-              >
-                <option value="all">Select category</option>
-                {FEED_CATEGORIES.filter((c) => c.value !== "all").map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-
-              <button
-                onClick={handlePost}
-                disabled={isPosting || !postContent.trim() || wordCount > 1000}
-                className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1 px-3 flex items-center gap-1 disabled:opacity-40"
-              >
-                {isPosting ? <Loader2 className="h-3 w-3 animate-spin" /> : "POST"}
-              </button>
-            </div>
-          </div>
+          {/* Enhanced Professional Rich Text Post Composer */}
+          <RichPostEditor
+            content={postContent}
+            onChange={setPostContent}
+            onSubmit={handlePost}
+            isPosting={isPosting}
+            selectedCategory={selectedTag}
+            onCategoryChange={setSelectedTag}
+            categories={FEED_CATEGORIES}
+          />
 
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1 overflow-x-auto no-scrollbar">
