@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { AdBanner, DEFAULT_ENTERPRISE_AD, type AdvertisementDoc, type TargetAudienceRules } from "@/components/ads/AdBanner";
 import { subscribeToQuery, setDocument, updateDocument, deleteDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
+import { sanitizeUrl } from "@/lib/utils/sanitize";
 import { Button } from "@/components/ui/Button";
 import {
   Megaphone,
@@ -137,6 +138,13 @@ export default function GodModeAdsPage() {
     if (!title.trim() || !adName.trim()) return;
     setIsSaving(true);
 
+    // Sanitize destination URL (prevent SSRF / open redirect)
+    const safeUrl = sanitizeUrl(destinationUrl.trim());
+    if (!safeUrl || safeUrl === "/" && destinationUrl.trim() !== "/") {
+      setIsSaving(false);
+      return;
+    }
+
     const newId = `ad_${Date.now()}`;
     const newAd: AdvertisementDoc = {
       id: newId,
@@ -148,13 +156,14 @@ export default function GodModeAdsPage() {
       isPortrait,
       mediaFit,
       shortDescription: shortDescription.trim(),
-      destinationUrl: destinationUrl.trim(),
+      destinationUrl: safeUrl,
       targetType,
       openMode,
       ctaText: ctaText.trim() || "Learn More",
       startDate,
       endDate,
       status: "active",
+      isActive: true,
       audience: {
         country: targetCountry,
         businessType: targetBusinessType,
@@ -324,9 +333,26 @@ export default function GodModeAdsPage() {
                   <td className="font-bold text-emerald-700">{ad.clicks.toLocaleString()}</td>
                   <td className="font-bold text-purple-700">{ad.ctr}%</td>
                   <td>
-                    <span className={ad.status === "active" ? "fr8x-badge-active" : "fr8x-badge-pending"}>
-                      {ad.status}
-                    </span>
+                    {/* isActive toggle switch */}
+                    <label className="relative inline-flex items-center gap-2 cursor-pointer">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={ad.status === "active"}
+                          onChange={() => handleToggleStatus(ad.id)}
+                        />
+                        <div
+                          className={`w-9 h-5 rounded-full transition-colors ${ad.status === "active" ? "bg-emerald-500" : "bg-slate-300"}`}
+                        />
+                        <div
+                          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${ad.status === "active" ? "translate-x-4" : "translate-x-0"}`}
+                        />
+                      </div>
+                      <span className={`text-[10px] font-semibold ${ad.status === "active" ? "text-emerald-700" : "text-slate-500"}`}>
+                        {ad.status === "active" ? "Active" : "Paused"}
+                      </span>
+                    </label>
                   </td>
                   <td>
                     <div className="flex items-center gap-1.5">
@@ -339,13 +365,6 @@ export default function GodModeAdsPage() {
                         title="Live Device Preview"
                       >
                         <Eye className="h-3 w-3" /> Preview
-                      </button>
-
-                      <button
-                        onClick={() => handleToggleStatus(ad.id)}
-                        className="px-2 py-1 rounded text-caption border border-border hover:bg-slate-100 font-semibold"
-                      >
-                        {ad.status === "active" ? "Disable" : "Enable"}
                       </button>
 
                       <button
