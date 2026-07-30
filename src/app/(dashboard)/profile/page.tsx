@@ -100,6 +100,8 @@ type UserProfile = {
   membershipTier?: string;
   workExperience?: WorkExpItem[];
   education?: EduItem[];
+  hobbies?: string[];
+  certifications?: { id: string; title: string; issuer: string; year: string; verified?: boolean }[];
   photoURL?: string | null;
   publicId?: string;
   followedTags?: string[];
