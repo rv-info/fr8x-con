@@ -18,8 +18,6 @@ export default function RootPage() {
 
     if (!isAuthenticated) {
       router.replace(ROUTES.LOGIN);
-    } else if (user?.isGodMode) {
-      router.replace(ADMIN_ROUTES.GODMODE);
     } else {
       router.replace(ROUTES.FEEDS);
     }
