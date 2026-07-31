@@ -5,7 +5,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import {
@@ -49,6 +49,8 @@ import {
   Lock,
   FileCheck,
   Filter,
+  Camera,
+  Briefcase,
 } from "lucide-react";
 import { COLLECTIONS, ROUTES } from "@/lib/utils/constants";
 import {
@@ -67,6 +69,7 @@ import {
 } from "@/lib/firebase/contacts";
 import { formatRelativeTime } from "@/lib/utils/format";
 import { Button } from "@/components/ui/Button";
+import { uploadFileWithProgress } from "@/lib/firebase/storage";
 
 function generatePublicId(name: string): string {
   const prefix = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 5).toUpperCase() || "USER";
@@ -189,6 +192,18 @@ function ProfileContent() {
   const [kycDocs, setKycDocs] = useState<KYCDocument[]>([]);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
+  // Photo & Logo upload
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [uploadPhotoProgress, setUploadPhotoProgress] = useState(0);
+  const [uploadLogoProgress, setUploadLogoProgress] = useState(0);
+
+  // Work Experience & Education
+  const [workExperience, setWorkExperience] = useState<WorkExpItem[]>([]);
+  const [education, setEducation] = useState<EduItem[]>([]);
+
   // Contacts Search & Filters
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [contactFilterStatus, setContactFilterStatus] = useState<"all" | "approved" | "pending" | "rejected" | "blocked" | "cancelled">("all");
@@ -286,7 +301,75 @@ function ProfileContent() {
     setCompanyLogoURL(p?.companyLogoURL || null);
     setPublicId(p?.publicId || "");
     setKycDocs(p?.kycDocuments || []);
+    setWorkExperience(p?.workExperience || []);
+    setEducation(p?.education || []);
   }, [user?.displayName]);
+
+  // ─── Photo Upload Handler ───
+  const handlePhotoUpload = async (file: File) => {
+    if (!user?.uid || !file) return;
+    setIsUploadingPhoto(true);
+    setUploadPhotoProgress(0);
+    try {
+      const path = `profiles/${user.uid}/photo_${Date.now()}`;
+      const url = await uploadFileWithProgress(path, file, (p) => setUploadPhotoProgress(Math.round(p)));
+      setPhotoURL(url);
+      await setDocument(COLLECTIONS.PROFILES, user.uid, { photoURL: url }, true);
+    } catch (err) {
+      console.error("Photo upload failed:", err);
+      setSaveError("Photo upload failed. Please try again.");
+    } finally {
+      setIsUploadingPhoto(false);
+      setUploadPhotoProgress(0);
+    }
+  };
+
+  // ─── Logo Upload Handler ───
+  const handleLogoUpload = async (file: File) => {
+    if (!user?.uid || !file) return;
+    setIsUploadingLogo(true);
+    setUploadLogoProgress(0);
+    try {
+      const path = `companies/${user.uid}/logo_${Date.now()}`;
+      const url = await uploadFileWithProgress(path, file, (p) => setUploadLogoProgress(Math.round(p)));
+      setCompanyLogoURL(url);
+      await setDocument(COLLECTIONS.PROFILES, user.uid, { companyLogoURL: url }, true);
+    } catch (err) {
+      console.error("Logo upload failed:", err);
+      setSaveError("Logo upload failed. Please try again.");
+    } finally {
+      setIsUploadingLogo(false);
+      setUploadLogoProgress(0);
+    }
+  };
+
+  // ─── Work Experience CRUD ───
+  const handleAddWorkExp = () => {
+    setWorkExperience((prev) => [
+      ...prev,
+      { id: `we_${Date.now()}`, company: "", location: "", designation: "", from: "", to: "" },
+    ]);
+  };
+  const handleUpdateWorkExp = (id: string, field: keyof WorkExpItem, value: string) => {
+    setWorkExperience((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  };
+  const handleRemoveWorkExp = (id: string) => {
+    setWorkExperience((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  // ─── Education CRUD ───
+  const handleAddEdu = () => {
+    setEducation((prev) => [
+      ...prev,
+      { id: `edu_${Date.now()}`, college: "", stream: "", from: "", to: "" },
+    ]);
+  };
+  const handleUpdateEdu = (id: string, field: keyof EduItem, value: string) => {
+    setEducation((prev) => prev.map((item) => (item.id === id ? { ...item, [field]: value } : item)));
+  };
+  const handleRemoveEdu = (id: string) => {
+    setEducation((prev) => prev.filter((item) => item.id !== id));
+  };
 
   // Fetch Profile and Connections
   useEffect(() => {
@@ -329,6 +412,8 @@ function ProfileContent() {
         companyLogoURL,
         publicId: publicId || generatePublicId(fullName.trim() || user?.displayName || "USER"),
         kycDocuments: kycDocs,
+        workExperience,
+        education,
       };
 
       await setDocument(COLLECTIONS.PROFILES, user.uid, updatedProfile, true);
@@ -399,14 +484,44 @@ function ProfileContent() {
 
   return (
     <div className="min-h-screen bg-[var(--fr8x-bg)] py-3 space-y-3 text-left">
+      {/* Hidden file inputs */}
+      <input
+        ref={photoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoUpload(f); e.target.value = ""; }}
+      />
+      <input
+        ref={logoInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }}
+      />
+
       {/* Top Banner Header */}
       <div className="fr8x-container flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3.5 rounded-xl border border-border">
         <div className="flex items-center gap-3">
-          <div className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
-            {companyLogoURL ? (
+          <div
+            className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0 group cursor-pointer"
+            onClick={() => isEditing && logoInputRef.current?.click()}
+            title={isEditing ? "Click to upload company logo" : undefined}
+          >
+            {isUploadingLogo ? (
+              <div className="flex flex-col items-center">
+                <Loader2 className="h-4 w-4 text-white animate-spin" />
+                <span className="text-[8px] text-white mt-0.5">{uploadLogoProgress}%</span>
+              </div>
+            ) : companyLogoURL ? (
               <img src={companyLogoURL} alt="Company Logo" className="w-full h-full object-contain p-1" />
             ) : (
               <Building2 className="h-6 w-6 text-[var(--fr8x-periwinkle)]" />
+            )}
+            {isEditing && !isUploadingLogo && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
+                <Camera className="h-4 w-4 text-white" />
+              </div>
             )}
           </div>
           <div>
@@ -497,9 +612,32 @@ function ProfileContent() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="fr8x-card p-4 bg-white space-y-3">
               <div className="flex flex-col items-center text-center space-y-2">
-                <div className="relative w-20 h-20 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg font-bold text-[var(--fr8x-jet)] shadow-sm overflow-hidden">
-                  {photoURL ? <img src={photoURL} alt={displayName} className="w-full h-full object-cover" /> : displayName.charAt(0)}
+                {/* Profile Photo with upload overlay */}
+                <div
+                  className="relative w-20 h-20 rounded-full bg-[var(--fr8x-lavender)] flex items-center justify-center text-heading-lg font-bold text-[var(--fr8x-jet)] shadow-sm overflow-hidden group cursor-pointer"
+                  onClick={() => isEditing && photoInputRef.current?.click()}
+                  title={isEditing ? "Click to upload profile photo" : undefined}
+                >
+                  {isUploadingPhoto ? (
+                    <div className="flex flex-col items-center">
+                      <Loader2 className="h-5 w-5 text-slate-700 animate-spin" />
+                      <span className="text-[9px] text-slate-600 mt-0.5">{uploadPhotoProgress}%</span>
+                    </div>
+                  ) : photoURL ? (
+                    <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                  ) : (
+                    displayName.charAt(0)
+                  )}
+                  {isEditing && !isUploadingPhoto && (
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                      <Camera className="h-5 w-5 text-white" />
+                      <span className="text-[8px] text-white font-semibold mt-0.5">Upload</span>
+                    </div>
+                  )}
                 </div>
+                {isEditing && (
+                  <p className="text-[9px] text-slate-400">Click photo to change</p>
+                )}
                 <h3 className="text-body-md font-bold text-[var(--fr8x-jet)]">{displayName}</h3>
                 <p className="text-caption text-foreground-secondary">{profile?.designation || "Logistics Director"} at {profile?.companyName || "Verified Enterprise"}</p>
                 <span className="text-[10px] font-mono text-[var(--fr8x-periwinkle)]">{profile?.publicId || "@USER2026"}</span>
@@ -508,16 +646,201 @@ function ProfileContent() {
 
             <div className="lg:col-span-2 fr8x-card p-4 bg-white space-y-3">
               <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)] border-b border-border pb-2">About & Organization Details</h3>
-              <p className="text-xs text-foreground-secondary leading-relaxed">{profile?.about || "Verified logistics entity serving global trade lanes with ocean and air freight solutions."}</p>
+              {isEditing ? (
+                <textarea
+                  value={about}
+                  onChange={(e) => setAbout(e.target.value)}
+                  rows={3}
+                  className="fr8x-input text-xs resize-none w-full"
+                  placeholder="Describe your company and expertise..."
+                />
+              ) : (
+                <p className="text-xs text-foreground-secondary leading-relaxed">{profile?.about || "Verified logistics entity serving global trade lanes with ocean and air freight solutions."}</p>
+              )}
               <div className="grid grid-cols-2 gap-3 pt-2 text-xs">
                 <div>
-                  <span className="font-semibold text-slate-500 block">Location</span>
-                  <span className="font-bold text-[var(--fr8x-jet)]">{profile?.location ? `${profile.location}, ${profile.country || ""}` : "Mumbai, India"}</span>
+                  <span className="font-semibold text-slate-500 block mb-0.5">Location</span>
+                  {isEditing ? (
+                    <div className="flex gap-1">
+                      <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City" className="fr8x-input text-xs py-1 flex-1" />
+                      <input value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Country" className="fr8x-input text-xs py-1 flex-1" />
+                    </div>
+                  ) : (
+                    <span className="font-bold text-[var(--fr8x-jet)]">{profile?.location ? `${profile.location}, ${profile.country || ""}` : "Mumbai, India"}</span>
+                  )}
                 </div>
                 <div>
-                  <span className="font-semibold text-slate-500 block">Industry Tags</span>
-                  <span className="font-bold text-[var(--fr8x-jet)]">{(profile?.industryTags || ["Ocean Freight", "NVOCC"]).join(", ")}</span>
+                  <span className="font-semibold text-slate-500 block mb-0.5">Designation</span>
+                  {isEditing ? (
+                    <input value={designation} onChange={(e) => setDesignation(e.target.value)} placeholder="Your role" className="fr8x-input text-xs py-1 w-full" />
+                  ) : (
+                    <span className="font-bold text-[var(--fr8x-jet)]">{profile?.designation || "Logistics Director"}</span>
+                  )}
                 </div>
+              </div>
+              {isEditing && (
+                <div className="pt-1 text-xs">
+                  <span className="font-semibold text-slate-500 block mb-0.5">Company Name</span>
+                  <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Your company" className="fr8x-input text-xs py-1 w-full" />
+                </div>
+              )}
+            </div>
+
+            {/* ─── Work Experience Section ─── */}
+            <div className="lg:col-span-3 fr8x-card p-4 bg-white space-y-3">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                  <Briefcase className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Work Experience
+                </h3>
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={handleAddWorkExp}
+                    className="flex items-center gap-1 text-[11px] text-[var(--fr8x-periwinkle)] font-bold hover:underline"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Experience
+                  </button>
+                )}
+              </div>
+
+              {workExperience.length === 0 && !isEditing && (
+                <p className="text-xs text-foreground-muted py-2">No work experience added yet.</p>
+              )}
+
+              <div className="space-y-3">
+                {workExperience.map((item) => (
+                  <div key={item.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={item.company}
+                            onChange={(e) => handleUpdateWorkExp(item.id, "company", e.target.value)}
+                            placeholder="Company name"
+                            className="fr8x-input text-xs py-1"
+                          />
+                          <input
+                            value={item.designation}
+                            onChange={(e) => handleUpdateWorkExp(item.id, "designation", e.target.value)}
+                            placeholder="Designation / Role"
+                            className="fr8x-input text-xs py-1"
+                          />
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                          <input
+                            value={item.location}
+                            onChange={(e) => handleUpdateWorkExp(item.id, "location", e.target.value)}
+                            placeholder="Location"
+                            className="fr8x-input text-xs py-1"
+                          />
+                          <input
+                            value={item.from}
+                            onChange={(e) => handleUpdateWorkExp(item.id, "from", e.target.value)}
+                            placeholder="From (e.g. 2019)"
+                            className="fr8x-input text-xs py-1"
+                          />
+                          <input
+                            value={item.to}
+                            onChange={(e) => handleUpdateWorkExp(item.id, "to", e.target.value)}
+                            placeholder="To (e.g. Present)"
+                            className="fr8x-input text-xs py-1"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveWorkExp(item.id)}
+                          className="text-[10px] text-rose-500 hover:underline font-semibold flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" /> Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[var(--fr8x-jet)]">{item.designation || "Role"}</span>
+                          <span className="text-slate-400 text-[10px]">{item.from}{item.to ? ` – ${item.to}` : ""}</span>
+                        </div>
+                        <p className="text-slate-600 mt-0.5">{item.company}{item.location ? `, ${item.location}` : ""}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ─── Education Section ─── */}
+            <div className="lg:col-span-3 fr8x-card p-4 bg-white space-y-3">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <h3 className="text-body-sm font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Education
+                </h3>
+                {isEditing && (
+                  <button
+                    type="button"
+                    onClick={handleAddEdu}
+                    className="flex items-center gap-1 text-[11px] text-[var(--fr8x-periwinkle)] font-bold hover:underline"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Add Education
+                  </button>
+                )}
+              </div>
+
+              {education.length === 0 && !isEditing && (
+                <p className="text-xs text-foreground-muted py-2">No education records added yet.</p>
+              )}
+
+              <div className="space-y-3">
+                {education.map((item) => (
+                  <div key={item.id} className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={item.college}
+                            onChange={(e) => handleUpdateEdu(item.id, "college", e.target.value)}
+                            placeholder="College / University"
+                            className="fr8x-input text-xs py-1"
+                          />
+                          <input
+                            value={item.stream}
+                            onChange={(e) => handleUpdateEdu(item.id, "stream", e.target.value)}
+                            placeholder="Stream / Degree"
+                            className="fr8x-input text-xs py-1"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <input
+                            value={item.from}
+                            onChange={(e) => handleUpdateEdu(item.id, "from", e.target.value)}
+                            placeholder="From (e.g. 2015)"
+                            className="fr8x-input text-xs py-1"
+                          />
+                          <input
+                            value={item.to}
+                            onChange={(e) => handleUpdateEdu(item.id, "to", e.target.value)}
+                            placeholder="To (e.g. 2019)"
+                            className="fr8x-input text-xs py-1"
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveEdu(item.id)}
+                          className="text-[10px] text-rose-500 hover:underline font-semibold flex items-center gap-1"
+                        >
+                          <Trash2 className="h-3 w-3" /> Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-[var(--fr8x-jet)]">{item.stream || "Degree"}</span>
+                          <span className="text-slate-400 text-[10px]">{item.from}{item.to ? ` – ${item.to}` : ""}</span>
+                        </div>
+                        <p className="text-slate-600 mt-0.5">{item.college}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
