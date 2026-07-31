@@ -145,6 +145,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [state.user?.uid, router]);
 
+  // Listen for active local session updates
+  useEffect(() => {
+    const handleAuthChangeEvent = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt.detail) {
+        setState({
+          isAuthenticated: true,
+          isLoading: false,
+          user: customEvt.detail,
+          error: null,
+        });
+      } else {
+        setState({
+          isAuthenticated: false,
+          isLoading: false,
+          user: null,
+          error: null,
+        });
+      }
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("fr8x_auth_change", handleAuthChangeEvent);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("fr8x_auth_change", handleAuthChangeEvent);
+      }
+    };
+  }, []);
+
   // Firebase Auth state listener
   useEffect(() => {
     const unsubscribe = onAuthChange(async (firebaseUser) => {
@@ -157,6 +187,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firebaseUser.emailVerified
         );
       } else {
+        if (typeof window !== "undefined") {
+          const storedUser = sessionStorage.getItem("fr8x_active_user") || localStorage.getItem("fr8x_active_user");
+          if (storedUser) {
+            try {
+              const parsed = JSON.parse(storedUser);
+              if (parsed && parsed.uid) {
+                setState({
+                  isAuthenticated: true,
+                  isLoading: false,
+                  user: parsed,
+                  error: null,
+                });
+                return;
+              }
+            } catch {
+              // Ignore invalid stored JSON
+            }
+          }
+        }
         setState({
           isAuthenticated: false,
           isLoading: false,
@@ -175,6 +224,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (state.user?.uid) {
           sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
         }
+        sessionStorage.removeItem("fr8x_active_user");
+        localStorage.removeItem("fr8x_active_user");
         sessionStorage.removeItem("fr8x_godmode_admin");
         document.cookie = "fr8x_godmode_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
