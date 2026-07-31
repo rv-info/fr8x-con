@@ -44,10 +44,12 @@ type Auction = {
 };
 
 function getTimeRemaining(endsAt: Auction["endsAt"]): string {
+  if (!endsAt) return "Closed";
   const endSeconds =
     typeof endsAt === "string"
       ? new Date(endsAt).getTime() / 1000
-      : (endsAt as { seconds: number }).seconds;
+      : (endsAt as { seconds?: number })?.seconds ?? 0;
+  if (!endSeconds) return "Closed";
   const remaining = endSeconds - Date.now() / 1000;
   if (remaining <= 0) return "Closed";
   const hours = Math.floor(remaining / 3600);
