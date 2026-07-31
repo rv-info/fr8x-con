@@ -11,33 +11,27 @@ export function sanitizeText(input: string): string {
   let sanitized = input.normalize("NFKC");
 
   // Prevent XSS / HTML / Script Injections
-  // Neutralize script tags, html entities, iframe elements, event handlers
   sanitized = sanitized
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
-    .replace(/on\w+\s*=\s*(["'][^"']*["']|[^\s>]+)/gi, "") // remove onload, onerror, etc.
-    .replace(/javascript:\s*/gi, "no-javascript:"); // neutralize javascript: protocols
+    .replace(/on\w+\s*=\s*(["'][^"']*["']|[^\s>]+)/gi, "")
+    .replace(/javascript:\s*/gi, "no-javascript:");
 
   // Escape basic HTML tags to prevent HTML injection
   sanitized = sanitized
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
 
-  // Prevent SQL Injection (escape quotes, semi-colons, and SQL comments)
-  // Even though Firestore is a NoSQL DB, we validate input to prevent downstream SQL leaks.
+  // Prevent dangerous semi-colons and SQL comment leaks without breaking single quotes or container ticks (e.g. 20'DV, 40'HC)
   sanitized = sanitized
-    .replace(/['"]/g, "") // remove quotes
-    .replace(/;/g, " ")   // replace semi-colons with spaces
-    .replace(/--/g, " "); // replace double dash comments with space
+    .replace(/;/g, " ");
 
-  // Prevent CSV / Excel Formula Injection (Formula Obfuscation)
-  // Cells starting with =, +, -, @, | can execute arbitrary code in Excel/CSV exports
-  if (/^[=\+\-\@\|]/.test(sanitized)) {
-    sanitized = "'" + sanitized; // Prepend apostrophe to neutralize formula trigger
+  // Prevent CSV / Excel Formula Injection (cells starting with =, +, @, |)
+  if (/^[=\+\@\|]/.test(sanitized)) {
+    sanitized = "'" + sanitized;
   }
 
   // Prevent Path Traversal
-  // Strip relative path indicators like ../ or ..\
   sanitized = sanitized
     .replace(/\.\.\//g, "")
     .replace(/\.\.\\/g, "");
