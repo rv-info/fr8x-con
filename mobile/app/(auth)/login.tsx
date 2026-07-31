@@ -17,6 +17,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/hooks/useAuth";
+import { useResponsive } from "../../src/utils/responsive";
 
 const COLORS = {
   bg: "#0F172A",
@@ -285,10 +286,13 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: "center",
     padding: 24,
+    width: "100%",
+    maxWidth: 520,
+    alignSelf: "center",
   },
   brandContainer: {
     alignItems: "center",
-    marginBottom: 40,
+    marginBottom: 32,
   },
   brandTitle: {
     fontSize: 36,
@@ -309,6 +313,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderWidth: 1,
     borderColor: COLORS.border,
+    width: "100%",
   },
   cardTitle: {
     fontSize: 22,

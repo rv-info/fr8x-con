@@ -5,7 +5,7 @@
     "slug": "fr8x-con",
     "version": "1.0.0",
     "sdkVersion": "51.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": "fr8xcon",

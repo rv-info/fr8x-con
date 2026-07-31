@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: "700", color: COLORS.text, fontFamily: "Inter-Bold" },
   headerSubtitle: { fontSize: 12, color: COLORS.textMuted, fontFamily: "Inter-Regular", marginTop: 2 },
   loadingContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  listContent: { paddingBottom: 20 },
+  listContent: { paddingBottom: 20, maxWidth: 768, width: "100%", alignSelf: "center" },
   separator: { height: 1, backgroundColor: COLORS.border },
   auctionCard: { backgroundColor: COLORS.surface, padding: 16 },
   auctionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
