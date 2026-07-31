@@ -69,9 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: displayName || email,
           photoURL,
           emailVerified,
-          // GodMode MUST come from Firestore, never from email match
-          role: userData?.role || (email?.toLowerCase() === "support@fr8x.in" ? "admin" : "freight_forwarder"),
-          isGodMode: userData?.isGodMode === true || email?.toLowerCase() === "support@fr8x.in",
+          role: userData?.role || "freight_forwarder",
+          isGodMode: userData?.isGodMode === true,
           companyId: userData?.companyId || null,
           membershipTier: userData?.membershipTier || "premium",
         };
@@ -156,26 +155,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           firebaseUser.photoURL,
           firebaseUser.emailVerified
         );
-      } else if (
-        typeof window !== "undefined" &&
-        (document.cookie.includes("fr8x_godmode_token") || sessionStorage.getItem("fr8x_godmode_admin"))
-      ) {
-        setState({
-          isAuthenticated: true,
-          isLoading: false,
-          user: {
-            uid: "godmode_admin_dev_uid",
-            email: "support@fr8x.in",
-            displayName: "GodMode Administrator",
-            photoURL: null,
-            emailVerified: true,
-            role: "admin",
-            isGodMode: true,
-            companyId: null,
-            membershipTier: "premium",
-          },
-          error: null,
-        });
       } else {
         setState({
           isAuthenticated: false,
