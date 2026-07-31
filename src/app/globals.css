@@ -46,7 +46,7 @@
   }
 
   html {
-    font-size: 21px; /* 1.5x Base font size throughout the web application */
+    font-size: 16px; /* Industry standard base font size */
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
