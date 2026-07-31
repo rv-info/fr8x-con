@@ -7,6 +7,7 @@ import { Stack, useRouter, useSegments, SplashScreen } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Platform, AppState, type AppStateStatus } from "react-native";
 import * as Font from "expo-font";
+import * as Updates from "expo-updates";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useAuth } from "../src/hooks/useAuth";
@@ -66,6 +67,23 @@ export default function RootLayout() {
       }
     }
     loadFonts();
+  }, []);
+
+  // Background OTA Auto-Update hook
+  useEffect(() => {
+    async function checkOtaUpdates() {
+      if (__DEV__) return;
+      try {
+        const update = await Updates.checkForUpdateAsync();
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync();
+          // Quietly updated in background; applies on next app launch
+        }
+      } catch (err) {
+        console.warn("Background OTA update check handled silently:", err);
+      }
+    }
+    checkOtaUpdates();
   }, []);
 
   // Biometric re-auth on app foreground
