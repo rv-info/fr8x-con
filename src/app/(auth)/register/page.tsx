@@ -142,7 +142,10 @@ export default function RegisterPage() {
 
       // Create user document with enterprise metadata
       await setDocument(COLLECTIONS.USERS, uid, {
+        uid,
         email: workEmail.trim(),
+        fullName: fullName.trim(),
+        displayName: fullName.trim(),
         role,
         isGodMode: false,
         companyName: companyName.trim(),
