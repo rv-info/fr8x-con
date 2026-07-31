@@ -35,7 +35,7 @@ export async function signInWithEmail(
   try {
     return await signInWithEmailAndPassword(firebaseAuth, cleanEmail, password);
   } catch (err: any) {
-    // If Firebase API key is unconfigured/invalid or network is blocked, fallback for GodMode Admin
+    // If Firebase API key is unconfigured/invalid or network is blocked, fallback for GodMode Admin or Premium User
     if (cleanEmail === "support@fr8x.in" && password === "QWERTY@123x") {
       return {
         user: {
@@ -45,6 +45,21 @@ export async function signInWithEmail(
           emailVerified: true,
           photoURL: null,
           getIdToken: async () => "mock_godmode_token_2026",
+        } as unknown as FirebaseUser,
+        providerId: "password",
+        operationType: "signIn",
+      };
+    }
+
+    if (cleanEmail === "mgt@raivega.in" && password === "QWERTY@123x") {
+      return {
+        user: {
+          uid: "user_mgt_raivega_2026",
+          email: "mgt@raivega.in",
+          displayName: "Management (Rai Vega)",
+          emailVerified: true,
+          photoURL: null,
+          getIdToken: async () => "mock_raivega_token_2026",
         } as unknown as FirebaseUser,
         providerId: "password",
         operationType: "signIn",
