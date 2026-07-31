@@ -1,6 +1,7 @@
 // FR8X-CON Mobile — Tab Bar Layout
 // Core navigation: Feeds | Auctions | Rates | Messages | Profile
 
+import { ComponentProps } from "react";
 import { Tabs } from "expo-router";
 import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -13,7 +14,7 @@ const COLORS = {
   textMuted: "#64748B",
 };
 
-type TabIconName = "newspaper" | "newspaper-outline" | "gavel" | "gavel-outline" | "trending-up" | "trending-up-outline" | "chatbubbles" | "chatbubbles-outline" | "person" | "person-outline" | "notifications" | "notifications-outline";
+type TabIconName = ComponentProps<typeof Ionicons>["name"];
 
 function TabIcon({ name, color }: { name: TabIconName; size: number; color: string }) {
   return <Ionicons name={name} size={22} color={color} />;
@@ -54,7 +55,7 @@ export default function TabsLayout() {
         options={{
           title: "Auctions",
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon name={focused ? "gavel" : "gavel-outline"} size={size} color={color} />
+            <TabIcon name={focused ? "hammer" : "hammer-outline"} size={size} color={color} />
           ),
         }}
       />
