@@ -17,7 +17,9 @@ import {
 import type { NotificationPayload } from "../src/services/pushNotifications";
 
 // Prevent splash screen auto-hide until fonts are loaded
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {
+  /* Ignore top-level splash screen errors */
+});
 
 function useProtectedRoute(isAuthenticated: boolean, isLoading: boolean) {
   const segments = useSegments();
@@ -39,20 +41,27 @@ export default function RootLayout() {
   const { user, isLoading, isAuthenticated, authenticateWithBiometrics, biometricEnabled } =
     useAuth();
 
-  // Font loading
+  // Font loading with non-fatal fallback
   useEffect(() => {
-    Font.loadAsync({
-      "Inter-Regular": require("./assets/fonts/Inter-Regular.ttf"),
-      "Inter-Medium": require("./assets/fonts/Inter-Medium.ttf"),
-      "Inter-SemiBold": require("./assets/fonts/Inter-SemiBold.ttf"),
-      "Inter-Bold": require("./assets/fonts/Inter-Bold.ttf"),
-    })
-      .catch(() => {
-        // Non-fatal: system font fallback
-      })
-      .finally(() => {
-        SplashScreen.hideAsync();
-      });
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          "Inter-Regular": require("./assets/fonts/Inter-Regular.ttf"),
+          "Inter-Medium": require("./assets/fonts/Inter-Medium.ttf"),
+          "Inter-SemiBold": require("./assets/fonts/Inter-SemiBold.ttf"),
+          "Inter-Bold": require("./assets/fonts/Inter-Bold.ttf"),
+        });
+      } catch (err) {
+        console.warn("Font loading fallback to default system fonts:", err);
+      } finally {
+        try {
+          await SplashScreen.hideAsync();
+        } catch {
+          /* Ignore splash screen hide errors */
+        }
+      }
+    }
+    loadFonts();
   }, []);
 
   // Biometric re-auth on app foreground
