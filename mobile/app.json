@@ -50,6 +50,13 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [],
+    "updates": {
+      "url": "https://u.expo.dev/a6b388b8-9419-4569-88f8-44566339ab15",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "extra": {
       "eas": {
         "projectId": "a6b388b8-9419-4569-88f8-44566339ab15"
