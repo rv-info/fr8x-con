@@ -114,14 +114,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "700",
     color: COLORS.text,
-    fontFamily: "Inter-Bold",
     marginBottom: 8,
     textAlign: "center",
   },
   subtitle: {
     fontSize: 14,
     color: COLORS.textMuted,
-    fontFamily: "Inter-Regular",
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 16,
@@ -138,7 +136,6 @@ const styles = StyleSheet.create({
   errorText: {
     color: COLORS.danger,
     fontSize: 12,
-    fontFamily: "Inter-Regular",
   },
   button: {
     backgroundColor: COLORS.accent,
@@ -152,6 +149,5 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 15,
     fontWeight: "700",
-    fontFamily: "Inter-Bold",
   },
 });
