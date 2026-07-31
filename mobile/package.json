@@ -10,9 +10,14 @@
     "build:android": "eas build --platform android",
     "build:ios": "eas build --platform ios",
     "submit:android": "eas submit --platform android",
-    "submit:ios": "eas submit --platform ios"
+    "submit:ios": "eas submit --platform ios",
+    "update:ota": "eas update --auto",
+    "update:android": "eas update --platform android --auto"
   },
   "dependencies": {
+    "@babel/helpers": "^8.0.0",
+    "@babel/runtime": "^8.0.0",
+    "@babel/traverse": "^8.0.4",
     "@expo/vector-icons": "^14.0.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/native": "^6.1.17",

@@ -34,13 +34,14 @@ export function useAuth() {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
 
   useEffect(() => {
-    // Check biometric availability
-    LocalAuthentication.hasHardwareAsync().then((has) => {
-      setBiometricAvailable(has);
-    });
-    SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY).then((val) => {
-      setBiometricEnabled(val === "true");
-    });
+    // Check biometric availability with crash-proof fallbacks
+    LocalAuthentication.hasHardwareAsync()
+      .then((has) => setBiometricAvailable(has))
+      .catch(() => setBiometricAvailable(false));
+
+    SecureStore.getItemAsync(BIOMETRIC_ENABLED_KEY)
+      .then((val) => setBiometricEnabled(val === "true"))
+      .catch(() => setBiometricEnabled(false));
 
     // Firebase auth state listener
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {

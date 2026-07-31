@@ -42,15 +42,18 @@ export default function RootLayout() {
   const { user, isLoading, isAuthenticated, authenticateWithBiometrics, biometricEnabled } =
     useAuth();
 
-  // Font loading with non-fatal fallback
+  // Font loading with robust non-fatal fallback
   useEffect(() => {
     async function loadFonts() {
       try {
+        // Attempt safe load if fonts exist, otherwise fall back to system fonts seamlessly
         await Font.loadAsync({
-          "Inter-Regular": require("./assets/fonts/Inter-Regular.ttf"),
-          "Inter-Medium": require("./assets/fonts/Inter-Medium.ttf"),
-          "Inter-SemiBold": require("./assets/fonts/Inter-SemiBold.ttf"),
-          "Inter-Bold": require("./assets/fonts/Inter-Bold.ttf"),
+          "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
+          "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
+          "Inter-SemiBold": require("../assets/fonts/Inter-SemiBold.ttf"),
+          "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
+        }).catch((fontErr) => {
+          console.warn("Custom fonts unavailable/corrupt, falling back to system fonts:", fontErr);
         });
       } catch (err) {
         console.warn("Font loading fallback to default system fonts:", err);
@@ -104,16 +107,20 @@ export default function RootLayout() {
 
   // Handle notification that launched the app
   useEffect(() => {
-    getLastNotificationResponse().then((response) => {
-      if (response) {
-        const content = response.notification.request.content;
-        handleNotificationTap({
-          title: content.title ?? "",
-          body: content.body ?? "",
-          data: content.data as NotificationPayload["data"],
-        });
-      }
-    });
+    getLastNotificationResponse()
+      .then((response) => {
+        if (response) {
+          const content = response.notification.request.content;
+          handleNotificationTap({
+            title: content.title ?? "",
+            body: content.body ?? "",
+            data: content.data as NotificationPayload["data"],
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn("Notification launch check ignored:", err);
+      });
   }, [handleNotificationTap]);
 
   usePushNotifications(user?.uid, handleNotificationTap);
