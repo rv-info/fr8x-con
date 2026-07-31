@@ -155,15 +155,27 @@ export default function DownloadPage() {
               )}
             </button>
 
-            <a
-              href="https://u.expo.dev/a6b388b8-9419-4569-88f8-44566339ab15"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3 px-4 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2"
-            >
-              <span>View Expo EAS Channel & OTA Status</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <a
+                href="https://expo.dev/accounts/fr8xs-team/projects/fr8x-con/builds"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                <span>Download via Expo Cloud Builds</span>
+                <ExternalLink className="w-3.5 h-3.5 text-[#56C5F0]" />
+              </a>
+
+              <a
+                href="https://u.expo.dev/a6b388b8-9419-4569-88f8-44566339ab15"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl border border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-semibold transition-colors flex items-center justify-center gap-2"
+              >
+                <span>EAS OTA Channel Status</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </div>
         </div>
 
