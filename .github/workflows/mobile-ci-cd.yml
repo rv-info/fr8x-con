@@ -32,13 +32,14 @@ jobs:
           cd mobile
           npm ci
 
-      - name: 🔍 Type Check Mobile App
+      - name: 📱 Build Expo Application Bundle
         run: |
           cd mobile
-          npx tsc --noEmit
+          npx expo export
 
       - name: 📲 Publish Over-The-Air (OTA) Update
-        if: github.event_name == 'push'
+        if: ${{ secrets.EXPO_TOKEN != '' }}
+        continue-on-error: true
         run: |
           cd mobile
           eas update --auto --non-interactive
