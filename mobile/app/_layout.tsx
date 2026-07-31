@@ -15,6 +15,7 @@ import {
   getLastNotificationResponse,
 } from "../src/services/pushNotifications";
 import type { NotificationPayload } from "../src/services/pushNotifications";
+import { AppSupervisorErrorBoundary } from "../src/components/ErrorBoundary";
 
 // Prevent splash screen auto-hide until fonts are loaded
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -119,14 +120,16 @@ export default function RootLayout() {
   useProtectedRoute(isAuthenticated, isLoading);
 
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar style={Platform.OS === "ios" ? "dark" : "auto"} />
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        </Stack>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+    <AppSupervisorErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <StatusBar style={Platform.OS === "ios" ? "dark" : "auto"} />
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </AppSupervisorErrorBoundary>
   );
 }
