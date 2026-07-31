@@ -107,8 +107,8 @@ export function usePushNotifications(
   userId: string | undefined,
   onNotificationTap: (payload: NotificationPayload) => void
 ) {
-  const notificationListener = useRef<Notifications.EventSubscription>();
-  const responseListener = useRef<Notifications.EventSubscription>();
+  const notificationListener = useRef<Notifications.Subscription>();
+  const responseListener = useRef<Notifications.Subscription>();
 
   const handleNotificationTap = useCallback(
     (response: Notifications.NotificationResponse) => {
