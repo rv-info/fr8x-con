@@ -1,5 +1,5 @@
 // FR8X-CON Mobile — Login Screen
-// Email OTP authentication with biometric fallback.
+// Supports Account Password Authentication (primary) & Email OTP with Biometric fallback.
 
 import { useState, useRef, useCallback } from "react";
 import {
@@ -17,7 +17,6 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../src/hooks/useAuth";
-import { useResponsive } from "../../src/utils/responsive";
 
 const COLORS = {
   bg: "#0F172A",
@@ -30,14 +29,25 @@ const COLORS = {
   success: "#4ADE80",
 };
 
-type AuthStep = "email" | "otp";
+type AuthMode = "password" | "otp";
+type OTPStep = "email" | "otp";
 
 export default function LoginScreen() {
-  const { sendOTP, verifyOTP, biometricAvailable, biometricEnabled, authenticateWithBiometrics } =
-    useAuth();
+  const {
+    signInWithPassword,
+    sendOTP,
+    verifyOTP,
+    biometricAvailable,
+    biometricEnabled,
+    authenticateWithBiometrics,
+  } = useAuth();
 
-  const [step, setStep] = useState<AuthStep>("email");
+  const [mode, setMode] = useState<AuthMode>("password");
+  const [otpStep, setOtpStep] = useState<OTPStep>("email");
+
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -59,6 +69,25 @@ export default function LoginScreen() {
     }, 1000);
   }, []);
 
+  const handlePasswordSignIn = useCallback(async () => {
+    if (!email.trim() || !email.includes("@")) {
+      setError("Please enter a valid company email address");
+      return;
+    }
+    if (!password.trim()) {
+      setError("Please enter your password");
+      return;
+    }
+    setIsLoading(true);
+    setError(null);
+
+    const result = await signInWithPassword(email.trim().toLowerCase(), password.trim());
+    setIsLoading(false);
+    if (!result.success) {
+      setError(result.error ?? "Invalid email or password");
+    }
+  }, [email, password, signInWithPassword]);
+
   const handleSendOTP = useCallback(async () => {
     if (!email.trim() || !email.includes("@")) {
       setError("Please enter a valid email address");
@@ -69,7 +98,7 @@ export default function LoginScreen() {
     const result = await sendOTP(email.trim().toLowerCase());
     setIsLoading(false);
     if (result.success) {
-      setStep("otp");
+      setOtpStep("otp");
       startResendTimer();
     } else {
       setError(result.error ?? "Failed to send OTP");
@@ -91,13 +120,12 @@ export default function LoginScreen() {
       setOtp(["", "", "", "", "", ""]);
       otpRefs.current[0]?.focus();
     }
-    // On success: auth state updates automatically via onAuthStateChanged
   }, [otp, email, verifyOTP]);
 
   const handleBiometric = useCallback(async () => {
     const success = await authenticateWithBiometrics();
     if (!success) {
-      Alert.alert("Biometric authentication failed", "Please sign in with your email OTP.");
+      Alert.alert("Biometric authentication failed", "Please sign in with your password or OTP.");
     }
   }, [authenticateWithBiometrics]);
 
@@ -139,41 +167,89 @@ export default function LoginScreen() {
             <Text style={styles.brandSubtitle}>Enterprise Freight Platform</Text>
           </View>
 
+          {/* Mode Switcher Tabs */}
+          <View style={styles.modeTabsContainer}>
+            <TouchableOpacity
+              style={[styles.modeTab, mode === "password" && styles.modeTabActive]}
+              onPress={() => {
+                setMode("password");
+                setError(null);
+              }}
+            >
+              <Text style={[styles.modeTabText, mode === "password" && styles.modeTabTextActive]}>
+                Password Sign In
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modeTab, mode === "otp" && styles.modeTabActive]}
+              onPress={() => {
+                setMode("otp");
+                setOtpStep("email");
+                setError(null);
+              }}
+            >
+              <Text style={[styles.modeTabText, mode === "otp" && styles.modeTabTextActive]}>
+                OTP Sign In
+              </Text>
+            </TouchableOpacity>
+          </View>
+
           {/* Card */}
           <View style={styles.card}>
-            {step === "email" ? (
+            {mode === "password" ? (
               <>
-                <Text style={styles.cardTitle}>Sign In</Text>
+                <Text style={styles.cardTitle}>Account Login</Text>
                 <Text style={styles.cardDescription}>
-                  Enter your company email to receive a one-time password
+                  Enter your official corporate email and account password
                 </Text>
 
+                <Text style={styles.fieldLabel}>Business Email</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="yourname@company.com"
+                  placeholder="name@company.com"
                   placeholderTextColor={COLORS.textMuted}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  returnKeyType="send"
-                  onSubmitEditing={handleSendOTP}
                   accessibilityLabel="Email address"
                 />
+
+                <Text style={styles.fieldLabel}>Password</Text>
+                <View style={styles.passwordContainer}>
+                  <TextInput
+                    style={[styles.input, styles.passwordInput]}
+                    placeholder="••••••••"
+                    placeholderTextColor={COLORS.textMuted}
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    returnKeyType="done"
+                    onSubmitEditing={handlePasswordSignIn}
+                    accessibilityLabel="Password"
+                  />
+                  <TouchableOpacity
+                    style={styles.showHideButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Text style={styles.showHideText}>{showPassword ? "Hide" : "Show"}</Text>
+                  </TouchableOpacity>
+                </View>
 
                 {error && <Text style={styles.errorText}>{error}</Text>}
 
                 <TouchableOpacity
                   style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
-                  onPress={handleSendOTP}
+                  onPress={handlePasswordSignIn}
                   disabled={isLoading}
-                  accessibilityLabel="Send OTP"
+                  accessibilityLabel="Sign in with Password"
                 >
                   {isLoading ? (
                     <ActivityIndicator color="#fff" size="small" />
                   ) : (
-                    <Text style={styles.primaryButtonText}>Send OTP</Text>
+                    <Text style={styles.primaryButtonText}>Sign In with Password</Text>
                   )}
                 </TouchableOpacity>
 
@@ -190,6 +266,42 @@ export default function LoginScreen() {
                   </TouchableOpacity>
                 )}
               </>
+            ) : otpStep === "email" ? (
+              <>
+                <Text style={styles.cardTitle}>One-Time Password Login</Text>
+                <Text style={styles.cardDescription}>
+                  Enter your company email to receive a 6-digit OTP
+                </Text>
+
+                <TextInput
+                  style={styles.input}
+                  placeholder="name@company.com"
+                  placeholderTextColor={COLORS.textMuted}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  returnKeyType="send"
+                  onSubmitEditing={handleSendOTP}
+                  accessibilityLabel="Email address for OTP"
+                />
+
+                {error && <Text style={styles.errorText}>{error}</Text>}
+
+                <TouchableOpacity
+                  style={[styles.primaryButton, isLoading && styles.buttonDisabled]}
+                  onPress={handleSendOTP}
+                  disabled={isLoading}
+                  accessibilityLabel="Send OTP"
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Text style={styles.primaryButtonText}>Send OTP Code</Text>
+                  )}
+                </TouchableOpacity>
+              </>
             ) : (
               <>
                 <Text style={styles.cardTitle}>Verify OTP</Text>
@@ -198,7 +310,6 @@ export default function LoginScreen() {
                   <Text style={styles.emailHighlight}>{email}</Text>
                 </Text>
 
-                {/* 6-digit OTP input */}
                 <View style={styles.otpContainer}>
                   {otp.map((digit, i) => (
                     <TextInput
@@ -237,9 +348,7 @@ export default function LoginScreen() {
                   <Text style={styles.cardDescription}>Didn&apos;t receive the code? </Text>
                   <TouchableOpacity
                     onPress={() => {
-                      if (resendCooldown === 0) {
-                        handleSendOTP();
-                      }
+                      if (resendCooldown === 0) handleSendOTP();
                     }}
                     disabled={resendCooldown > 0}
                     accessibilityLabel="Resend OTP"
@@ -257,7 +366,7 @@ export default function LoginScreen() {
 
                 <TouchableOpacity
                   onPress={() => {
-                    setStep("email");
+                    setOtpStep("email");
                     setOtp(["", "", "", "", "", ""]);
                     setError(null);
                   }}
@@ -292,20 +401,45 @@ const styles = StyleSheet.create({
   },
   brandContainer: {
     alignItems: "center",
-    marginBottom: 32,
+    marginBottom: 20,
   },
   brandTitle: {
     fontSize: 36,
     fontWeight: "800",
     color: COLORS.accent,
     letterSpacing: 3,
-    fontFamily: "Inter-Bold",
   },
   brandSubtitle: {
     fontSize: 13,
     color: COLORS.textMuted,
     marginTop: 4,
-    fontFamily: "Inter-Regular",
+  },
+  modeTabsContainer: {
+    flexDirection: "row",
+    backgroundColor: COLORS.surface,
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 8,
+  },
+  modeTabActive: {
+    backgroundColor: COLORS.accent,
+  },
+  modeTabText: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.textMuted,
+  },
+  modeTabTextActive: {
+    color: "#0F172A",
+    fontWeight: "700",
   },
   card: {
     backgroundColor: COLORS.surface,
@@ -319,19 +453,22 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: COLORS.text,
-    marginBottom: 8,
-    fontFamily: "Inter-Bold",
+    marginBottom: 6,
   },
   cardDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: COLORS.textMuted,
-    marginBottom: 20,
-    lineHeight: 20,
-    fontFamily: "Inter-Regular",
+    marginBottom: 18,
+    lineHeight: 18,
+  },
+  fieldLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: COLORS.text,
+    marginBottom: 6,
   },
   emailHighlight: {
     color: COLORS.accent,
-    fontFamily: "Inter-Medium",
   },
   input: {
     backgroundColor: "#0F172A",
@@ -342,7 +479,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.text,
     marginBottom: 16,
-    fontFamily: "Inter-Regular",
+  },
+  passwordContainer: {
+    position: "relative",
+    justifyContent: "center",
+  },
+  passwordInput: {
+    paddingRight: 60,
+  },
+  showHideButton: {
+    position: "absolute",
+    right: 14,
+    top: 14,
+  },
+  showHideText: {
+    color: COLORS.accent,
+    fontSize: 13,
+    fontWeight: "600",
   },
   primaryButton: {
     backgroundColor: COLORS.accent,
@@ -358,7 +511,6 @@ const styles = StyleSheet.create({
     color: "#0F172A",
     fontSize: 16,
     fontWeight: "700",
-    fontFamily: "Inter-Bold",
   },
   biometricButton: {
     marginTop: 16,
@@ -371,7 +523,6 @@ const styles = StyleSheet.create({
   biometricButtonText: {
     color: COLORS.textMuted,
     fontSize: 14,
-    fontFamily: "Inter-Medium",
   },
   otpContainer: {
     flexDirection: "row",
@@ -389,7 +540,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: COLORS.text,
-    fontFamily: "Inter-Bold",
   },
   otpInputFilled: {
     borderColor: COLORS.accent,
@@ -398,7 +548,6 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     fontSize: 13,
     marginBottom: 12,
-    fontFamily: "Inter-Regular",
   },
   resendRow: {
     flexDirection: "row",
@@ -409,7 +558,6 @@ const styles = StyleSheet.create({
   resendText: {
     color: COLORS.accent,
     fontSize: 14,
-    fontFamily: "Inter-Medium",
   },
   resendTextDisabled: {
     color: COLORS.textMuted,
@@ -419,6 +567,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: "center",
     marginTop: 16,
-    fontFamily: "Inter-Regular",
   },
 });
