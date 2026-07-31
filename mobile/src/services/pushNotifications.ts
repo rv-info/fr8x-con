@@ -72,10 +72,10 @@ export async function registerForPushNotifications(
   }
 
   const tokenResponse = await Notifications.getExpoPushTokenAsync({
-    projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
-  });
+    projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID || "a6b388b8-9419-4569-88f8-44566339ab15",
+  }).catch(() => null);
 
-  const pushToken = tokenResponse.data;
+  const pushToken = tokenResponse?.data ?? null;
 
   // Store push token in Firestore for server-side targeting
   if (userId && pushToken) {
