@@ -103,7 +103,9 @@ export async function provisionUserToFirestore(
       {
         uid,
         email,
+        fullName: displayName,
         displayName,
+        companyName,
         role: "freight_forwarder",
         isGodMode: false,
         membershipTier,
@@ -200,18 +202,43 @@ export async function signInWithEmail(
 
   // Special intense handling for support@fr8x.in
   if (cleanEmail === "support@fr8x.in" && password === "QWERTY@123x") {
+    const godmodeUid = "godmode_admin_dev_uid";
+    const provisionGodModeDoc = async (uidToUse: string) => {
+      await setDocument(
+        COLLECTIONS.USERS,
+        uidToUse,
+        {
+          uid: uidToUse,
+          email: cleanEmail,
+          fullName: "GodMode Administrator",
+          displayName: "GodMode Administrator",
+          role: "admin",
+          isGodMode: true,
+          membershipTier: "premium",
+          status: "active",
+          emailVerified: true,
+          updatedAt: new Date().toISOString(),
+          lastLoginAt: new Date().toISOString(),
+        },
+        true
+      ).catch(() => {});
+    };
+
     try {
       const credential = await signInWithEmailAndPassword(firebaseAuth, cleanEmail, password);
+      await provisionGodModeDoc(credential.user.uid);
       saveActiveUserSession(credential.user.uid, cleanEmail, "GodMode Administrator", "premium", null, true, "admin");
       return credential;
     } catch {
       try {
         const credential = await createUserWithEmailAndPassword(firebaseAuth, cleanEmail, password);
         await updateProfile(credential.user, { displayName: "GodMode Administrator" });
+        await provisionGodModeDoc(credential.user.uid);
         saveActiveUserSession(credential.user.uid, cleanEmail, "GodMode Administrator", "premium", null, true, "admin");
         return credential;
       } catch {
-        const fallbackUid = "godmode_admin_dev_uid";
+        const fallbackUid = godmodeUid;
+        await provisionGodModeDoc(fallbackUid);
         saveActiveUserSession(fallbackUid, cleanEmail, "GodMode Administrator", "premium", null, true, "admin");
         return {
           user: {
