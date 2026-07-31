@@ -378,6 +378,8 @@ export default function FeedsPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [followedTags, setFollowedTags] = useState<string[]>([]);
 
+  const [postError, setPostError] = useState<string | null>(null);
+
   const displayName = user?.displayName || "User";
 
   function showToast(msg: string) {
@@ -514,13 +516,30 @@ export default function FeedsPage() {
   );
 
   const handlePost = useCallback(async () => {
-    if (!postContent.trim() || !user || wordCount > 1000) return;
+    if (!postContent.trim()) {
+      setPostError("Post content cannot be empty.");
+      return;
+    }
+    if (!user) {
+      setPostError("You must be logged in to create a post.");
+      return;
+    }
+    if (wordCount > 1000) {
+      setPostError("Post content exceeds 1000 words limit.");
+      return;
+    }
+
     setIsPosting(true);
+    setPostError(null);
     try {
       const sanitized = sanitizePostContent(postContent.trim());
-      if (!sanitized) { setIsPosting(false); return; }
+      if (!sanitized) {
+        setPostError("Post content contained invalid HTML or scripts.");
+        setIsPosting(false);
+        return;
+      }
       const docRef = getDocRef(COLLECTIONS.POSTS);
-      await setDocument(COLLECTIONS.POSTS, docRef.id, {
+      const newPostPayload = {
         authorId: user.uid,
         authorName: user.displayName || "User",
         authorCompany: profile?.companyName || "",
@@ -535,11 +554,36 @@ export default function FeedsPage() {
         isDeleted: false,
         createdAt: serverTimestamp(),
         createdBy: user.uid,
-      });
+      };
+
+      await setDocument(COLLECTIONS.POSTS, docRef.id, newPostPayload);
+
+      // Optimistic local add to guarantee immediate visual appearance
+      const localPost: PostData = {
+        id: docRef.id,
+        authorId: user.uid,
+        authorName: user.displayName || "User",
+        authorCompany: profile?.companyName || "",
+        authorLocation: profile?.location ? `${profile.location}, ${profile.country || ""}` : "",
+        content: sanitized,
+        category: selectedTag === "all" ? "" : selectedTag,
+        likesCount: 0,
+        dislikesCount: 0,
+        repostsCount: 0,
+        bookmarksCount: 0,
+        commentsCount: 0,
+        createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
+        isDeleted: false,
+      };
+      setPosts((prev) => [localPost, ...prev]);
+
       setPostContent("");
       fetchPosts();
       showToast("Post published to network feed.");
-    } catch { /* non-critical */ } finally {
+    } catch (err: any) {
+      console.error("Error creating post:", err);
+      setPostError(err?.message || "Failed to publish post. Please check connection and try again.");
+    } finally {
       setIsPosting(false);
     }
   }, [postContent, user, profile, selectedTag, fetchPosts, wordCount]);
@@ -598,9 +642,13 @@ export default function FeedsPage() {
           {/* Enhanced Professional Rich Text Post Composer */}
           <RichPostEditor
             content={postContent}
-            onChange={setPostContent}
+            onChange={(val) => {
+              setPostContent(val);
+              if (postError) setPostError(null);
+            }}
             onSubmit={handlePost}
             isPosting={isPosting}
+            errorMessage={postError}
             selectedCategory={selectedTag}
             onCategoryChange={setSelectedTag}
             categories={FEED_CATEGORIES}
