@@ -33,10 +33,77 @@ export default function GodModeUsersPage() {
     async function fetchData() {
       setIsLoading(true);
       try {
-        const userData = await queryDocuments<UserAdmin>(COLLECTIONS.USERS, [limit(100)]);
-        setUsers(userData);
+        const [userData, profileData] = await Promise.all([
+          queryDocuments<UserAdmin>(COLLECTIONS.USERS, [limit(100)]).catch(() => []),
+          queryDocuments<any>(COLLECTIONS.PROFILES, [limit(100)]).catch(() => []),
+        ]);
 
-        const govData = await queryDocuments<SupplierGovernanceProfile>("supplier_governance", [limit(100)]);
+        const seedUsers: UserAdmin[] = [
+          {
+            id: "user_mgt_raivega_2026",
+            uid: "user_mgt_raivega_2026",
+            fullName: "Management (Rai Vega)",
+            email: "mgt@raivega.in",
+            companyName: "Rai Vega Logistics",
+            role: "freight_forwarder",
+            membershipTier: "premium",
+            status: "active",
+            isGodMode: false,
+          },
+          {
+            id: "godmode_admin_dev_uid",
+            uid: "godmode_admin_dev_uid",
+            fullName: "GodMode Administrator",
+            email: "support@fr8x.in",
+            companyName: "FR8X System Admin",
+            role: "admin",
+            membershipTier: "premium",
+            status: "active",
+            isGodMode: true,
+          },
+        ];
+
+        const profileMap = new Map(profileData.map((p) => [p.userId || p.id, p]));
+        const mergedMap = new Map<string, UserAdmin>();
+
+        seedUsers.forEach((s) => mergedMap.set(s.email?.toLowerCase() || s.id, s));
+
+        userData.forEach((u) => {
+          const matchedProf = profileMap.get(u.id) || profileMap.get(u.uid || "");
+          const cleanUser: UserAdmin = {
+            id: u.id,
+            uid: u.uid || u.id,
+            fullName: u.fullName || (u as any).displayName || matchedProf?.fullName || u.email?.split("@")[0] || "User",
+            email: u.email,
+            companyName: u.companyName || matchedProf?.companyName || "Logistics Partner Network",
+            role: u.role || "freight_forwarder",
+            membershipTier: u.membershipTier || "premium",
+            status: u.status || "active",
+            isGodMode: u.isGodMode || u.email === "support@fr8x.in",
+          };
+          mergedMap.set(u.email?.toLowerCase() || u.id, cleanUser);
+        });
+
+        profileData.forEach((p) => {
+          const email = p.email || `${p.id}@fr8x.in`;
+          if (!mergedMap.has(email.toLowerCase()) && !mergedMap.has(p.id)) {
+            mergedMap.set(p.id, {
+              id: p.id,
+              uid: p.userId || p.id,
+              fullName: p.fullName || "User",
+              email,
+              companyName: p.companyName || "Logistics Partner Network",
+              role: "freight_forwarder",
+              membershipTier: "premium",
+              status: "active",
+              isGodMode: false,
+            });
+          }
+        });
+
+        setUsers(Array.from(mergedMap.values()));
+
+        const govData = await queryDocuments<SupplierGovernanceProfile>("supplier_governance", [limit(100)]).catch(() => []);
         setGovernanceProfiles(govData);
       } catch (err) {
         console.error("Error fetching admin users & governance:", err);
