@@ -13,12 +13,13 @@
     "submit:ios": "eas submit --platform ios"
   },
   "dependencies": {
+    "@expo/vector-icons": "^14.0.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/native": "^6.1.17",
     "@react-navigation/native-stack": "^6.9.26",
-    "@expo/vector-icons": "^14.0.0",
     "bplist-creator": "^0.1.1",
     "bplist-parser": "^0.3.2",
+    "debug": "^4.4.3",
     "expo": "~51.0.0",
     "expo-constants": "~16.0.2",
     "expo-device": "~6.0.2",
@@ -30,6 +31,7 @@
     "expo-secure-store": "~13.0.2",
     "expo-splash-screen": "~0.27.7",
     "expo-status-bar": "~1.12.1",
+    "expo-updates": "~0.25.27",
     "firebase": "^10.12.2",
     "plist": "^5.0.0",
     "react": "18.2.0",
