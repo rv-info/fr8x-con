@@ -12,5 +12,8 @@ export async function GET() {
     otaAutoUpdateEnabled: true,
     lastUpdated: new Date().toISOString(),
     downloadUrl: "/downloads/fr8x-con-release.apk",
+    expoProjectUrl: "https://expo.dev/projects/a6b388b8-9419-4569-88f8-44566339ab15",
+    expoBuildsUrl: "https://expo.dev/accounts/fr8xs-team/projects/fr8x-con/builds",
+    easUpdateChannelUrl: "https://u.expo.dev/a6b388b8-9419-4569-88f8-44566339ab15",
   });
 }
