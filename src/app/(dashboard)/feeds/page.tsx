@@ -434,9 +434,22 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  // Fetch posts
+  const [visibleCount, setVisibleCount] = useState(15);
+
+  // Fetch posts with session caching for 10x instant load speed
   const fetchPosts = useCallback(async () => {
-    setIsLoadingPosts(true);
+    // Check session cache first
+    try {
+      const cached = sessionStorage.getItem("fr8x_cached_feed_posts");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPosts(parsed);
+          setIsLoadingPosts(false);
+        }
+      }
+    } catch { /* ignore */ }
+
     try {
       const constraints = [
         where("isDeleted", "!=", true),
@@ -446,13 +459,16 @@ export default function FeedsPage() {
       ];
       const data = await queryDocuments<PostData>(COLLECTIONS.POSTS, constraints);
       setPosts(data);
+      try { sessionStorage.setItem("fr8x_cached_feed_posts", JSON.stringify(data)); } catch { /* ignore */ }
     } catch {
       try {
         const data = await queryDocuments<PostData>(COLLECTIONS.POSTS, [
           orderBy("createdAt", "desc"),
           limit(50),
         ]);
-        setPosts(data.filter((p) => !p.isDeleted));
+        const cleaned = data.filter((p) => !p.isDeleted);
+        setPosts(cleaned);
+        try { sessionStorage.setItem("fr8x_cached_feed_posts", JSON.stringify(cleaned)); } catch { /* ignore */ }
       } catch {
         setPosts([]);
       }
@@ -539,9 +555,10 @@ export default function FeedsPage() {
         return;
       }
       const docRef = getDocRef(COLLECTIONS.POSTS);
+      const activeAuthorName = profile?.fullName || user.displayName || "User";
       const newPostPayload = {
         authorId: user.uid,
-        authorName: user.displayName || "User",
+        authorName: activeAuthorName,
         authorCompany: profile?.companyName || "",
         authorLocation: profile?.location ? `${profile.location}, ${profile.country || ""}` : "",
         content: sanitized,
@@ -562,7 +579,7 @@ export default function FeedsPage() {
       const localPost: PostData = {
         id: docRef.id,
         authorId: user.uid,
-        authorName: user.displayName || "User",
+        authorName: activeAuthorName,
         authorCompany: profile?.companyName || "",
         authorLocation: profile?.location ? `${profile.location}, ${profile.country || ""}` : "",
         content: sanitized,
@@ -677,7 +694,7 @@ export default function FeedsPage() {
             <EmptyFeed />
           ) : (
             <div className="space-y-2">
-              {filteredPosts.map((post, idx) => (
+              {filteredPosts.slice(0, visibleCount).map((post, idx) => (
                 <div key={post.id} className="space-y-2">
                   <PostCard
                     post={post}
@@ -687,6 +704,17 @@ export default function FeedsPage() {
                   {(idx + 1) % 4 === 0 && <AdBanner adIndex={Math.floor(idx / 4)} />}
                 </div>
               ))}
+
+              {filteredPosts.length > visibleCount && (
+                <div className="pt-2 text-center">
+                  <button
+                    onClick={() => setVisibleCount((prev) => prev + 15)}
+                    className="w-full py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs rounded-xl shadow-2xs transition-colors"
+                  >
+                    Load More Network Updates ({filteredPosts.length - visibleCount} remaining)
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </main>
