@@ -23,6 +23,7 @@ import {
   Send,
   Loader2,
   X,
+  AlertCircle,
 } from "lucide-react";
 
 interface RichPostEditorProps {
@@ -30,6 +31,7 @@ interface RichPostEditorProps {
   onChange: (val: string) => void;
   onSubmit: () => void;
   isPosting?: boolean;
+  errorMessage?: string | null;
   selectedCategory: string;
   onCategoryChange: (cat: string) => void;
   categories: readonly { label: string; value: string }[] | { label: string; value: string }[];
@@ -42,6 +44,7 @@ export function RichPostEditor({
   onChange,
   onSubmit,
   isPosting = false,
+  errorMessage,
   selectedCategory,
   onCategoryChange,
   categories,
@@ -129,6 +132,13 @@ export function RichPostEditor({
 
   return (
     <div className="fr8x-card p-3 bg-white border border-border space-y-2 text-left">
+      {errorMessage && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 text-caption rounded p-2 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Editor Main Text Area */}
       <textarea
         ref={textareaRef}
