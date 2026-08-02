@@ -46,7 +46,7 @@
   }
 
   html {
-    font-size: 16px; /* Industry standard base font size */
+    font-size: 14.8px; /* Reduced by 1.2pt from 16px */
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -55,8 +55,8 @@
 
   body {
     @apply bg-[var(--fr8x-bg)] text-[var(--fr8x-jet)] font-sans;
-    font-size: 0.95rem;
-    line-height: 1.5;
+    font-size: 0.875rem;
+    line-height: 1.45;
   }
 
   /* Compact scrollbar */
@@ -87,44 +87,44 @@
 
   /* ── Buttons ── */
   .fr8x-btn-primary {
-    @apply bg-[var(--fr8x-periwinkle)] text-white font-medium rounded-lg px-3.5 py-1.5
-           text-[15px] leading-none transition-all duration-150
+    @apply bg-[var(--fr8x-periwinkle)] text-white font-medium rounded-lg px-3 py-1.5
+           text-[13.8px] leading-none transition-all duration-150
            hover:opacity-90 active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .fr8x-btn-secondary {
     @apply bg-white text-[var(--fr8x-jet)] border border-[var(--fr8x-dimgrey)] font-medium
-           rounded-lg px-3.5 py-1.5 text-[15px] leading-none transition-all duration-150
+           rounded-lg px-3 py-1.5 text-[13.8px] leading-none transition-all duration-150
            hover:bg-[var(--fr8x-mist)] active:scale-[0.98]
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .fr8x-btn-ghost {
-    @apply text-foreground-secondary font-medium rounded-lg px-3.5 py-1.5
-           text-[15px] leading-none transition-all duration-150
+    @apply text-foreground-secondary font-medium rounded-lg px-3 py-1.5
+           text-[13.8px] leading-none transition-all duration-150
            hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)]
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   /* ── Inputs ── */
   .fr8x-input {
-    @apply w-full rounded-lg border border-[var(--fr8x-lavender)] bg-white px-3 py-2
-           text-[15px] leading-tight text-[var(--fr8x-jet)] placeholder:text-gray-400
+    @apply w-full rounded-lg border border-[var(--fr8x-lavender)] bg-white px-2.5 py-1.5
+           text-[13.8px] leading-tight text-[var(--fr8x-jet)] placeholder:text-gray-400
            transition-colors duration-150
            focus:border-[var(--fr8x-periwinkle)] focus:ring-2 focus:ring-[var(--fr8x-periwinkle)] focus:outline-none
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .fr8x-input-frozen { @apply fr8x-input bg-[var(--fr8x-frozen)]; }
-  .fr8x-label { @apply text-[15px] font-medium text-[var(--fr8x-jet)] leading-tight; }
+  .fr8x-label { @apply text-[13.8px] font-medium text-[var(--fr8x-jet)] leading-tight; }
 
   /* ── Section heading ── */
   .fr8x-section-heading {
-    @apply text-[15px] font-semibold text-[var(--fr8x-jet)] uppercase tracking-wide;
+    @apply text-[13.8px] font-semibold text-[var(--fr8x-jet)] uppercase tracking-wide;
   }
 
   /* ── Tables ── */
-  .fr8x-table { @apply w-full text-[15px]; }
+  .fr8x-table { @apply w-full text-[13.8px]; }
   .fr8x-table th {
-    @apply text-left text-[13px] font-semibold text-foreground-secondary
+    @apply text-left text-[11.8px] font-semibold text-foreground-secondary
            uppercase tracking-wide px-3 py-2 border-b border-border bg-[#FAFAF9] whitespace-nowrap;
   }
   .fr8x-table td {
@@ -133,12 +133,12 @@
   .fr8x-table tbody tr {
     @apply transition-colors duration-75 hover:bg-[var(--fr8x-mist)];
   }
-  .fr8x-table-compact th { @apply px-2 py-1 text-[13px]; }
-  .fr8x-table-compact td { @apply px-2 py-1 text-[13px]; }
+  .fr8x-table-compact th { @apply px-2 py-1 text-[11.8px]; }
+  .fr8x-table-compact td { @apply px-2 py-1 text-[11.8px]; }
 
   /* ── Status badges ── */
   .fr8x-badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[13px] font-medium leading-snug;
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11.8px] font-medium leading-snug;
   }
   .fr8x-badge-active  { @apply fr8x-badge bg-success-light text-success-dark; }
   .fr8x-badge-pending { @apply fr8x-badge bg-warning-light text-warning-dark; }
@@ -148,12 +148,12 @@
   /* ── Currency ticker ── */
   .fr8x-ticker {
     @apply h-[28px] bg-brand-950 text-white overflow-hidden
-           flex items-center text-[13px] whitespace-nowrap;
+           flex items-center text-[11.8px] whitespace-nowrap;
   }
 
   /* ── Sidebar nav ── */
   .fr8x-nav-item {
-    @apply flex items-center gap-2 rounded-lg px-3 py-1.5 text-[15px]
+    @apply flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13.8px]
            text-foreground-secondary transition-colors duration-100
            hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)];
   }
@@ -163,13 +163,13 @@
 
   /* ── Live rank ── */
   .fr8x-rank-display {
-    @apply text-5xl font-bold text-[var(--fr8x-periwinkle)] tabular-nums;
+    @apply text-4xl font-bold text-[var(--fr8x-periwinkle)] tabular-nums;
   }
-  .fr8x-rank-subtitle { @apply text-[15px] text-foreground-secondary; }
+  .fr8x-rank-subtitle { @apply text-[13.8px] text-foreground-secondary; }
 
   /* ── Tabs ── */
   .fr8x-tab {
-    @apply px-3.5 py-1 text-[15px] font-medium whitespace-nowrap transition-colors rounded-lg;
+    @apply px-3 py-1 text-[13.8px] font-medium whitespace-nowrap transition-colors rounded-lg;
   }
   .fr8x-tab-active   { @apply fr8x-tab bg-[var(--fr8x-periwinkle)] text-white; }
   .fr8x-tab-inactive { @apply fr8x-tab text-foreground-secondary hover:text-[var(--fr8x-jet)] hover:bg-[var(--fr8x-mist)]; }
@@ -179,15 +179,15 @@
     @apply fr8x-card-compact flex flex-col items-center justify-center text-center p-3;
   }
   .fr8x-stat-value {
-    @apply text-xl font-bold text-[var(--fr8x-jet)] tabular-nums leading-none;
+    @apply text-lg font-bold text-[var(--fr8x-jet)] tabular-nums leading-none;
   }
   .fr8x-stat-label {
-    @apply text-[13px] text-foreground-secondary uppercase tracking-wide mt-1;
+    @apply text-[11.8px] text-foreground-secondary uppercase tracking-wide mt-1;
   }
 
   /* ── Section divider label ── */
   .fr8x-section-bar {
-    @apply bg-blue-100 text-[var(--fr8x-jet)] text-[13px] font-semibold px-3 py-1
+    @apply bg-blue-100 text-[var(--fr8x-jet)] text-[11.8px] font-semibold px-3 py-1
            uppercase tracking-wider border-y border-blue-200;
   }
 }
