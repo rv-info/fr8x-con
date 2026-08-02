@@ -34,10 +34,13 @@ import {
   Check,
   X,
   Trash2,
-  Circle,
+  Star,
+  Award,
 } from "lucide-react";
+import { PeerReviewModal } from "@/components/contacts/PeerReviewModal";
+import { queryDocuments, limit } from "@/lib/firebase/firestore";
 
-type ContactTab = "approved" | "received" | "sent" | "rejected" | "blocked" | "search";
+type ContactTab = "approved" | "received" | "sent" | "rejected" | "blocked" | "search" | "reviews";
 
 export default function ContactsPage() {
   const { user } = useAuth();
@@ -46,9 +49,14 @@ export default function ContactsPage() {
   const [activeTab, setActiveTab] = useState<ContactTab>("approved");
   const [connections, setConnections] = useState<ContactConnection[]>([]);
   const [directoryResults, setDirectoryResults] = useState<UserContactProfile[]>([]);
+  const [peerReviews, setPeerReviews] = useState<any[]>([]);
+  const [reviewsSearchQuery, setReviewsSearchQuery] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  // Peer Review Modal state
+  const [selectedReviewTarget, setSelectedReviewTarget] = useState<{ id: string; name: string; company?: string } | null>(null);
 
   const fetchConnections = async () => {
     if (!user) return;
@@ -66,13 +74,26 @@ export default function ContactsPage() {
     setIsLoading(false);
   };
 
+  const fetchPeerReviews = async () => {
+    try {
+      const docs = await queryDocuments<any>("peer_reviews", [limit(50)]);
+      setPeerReviews(docs);
+    } catch {
+      setPeerReviews([]);
+    }
+  };
+
   useEffect(() => {
     fetchConnections();
+    fetchPeerReviews();
   }, [user]);
 
   useEffect(() => {
     if (activeTab === "search") {
       handleSearchDirectory();
+    }
+    if (activeTab === "reviews") {
+      fetchPeerReviews();
     }
   }, [activeTab, searchQuery]);
 
@@ -242,6 +263,18 @@ export default function ContactsPage() {
           <Search className="h-4 w-4" />
           Directory Search
         </button>
+
+        <button
+          onClick={() => setActiveTab("reviews")}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-body-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === "reviews"
+              ? "bg-[var(--fr8x-periwinkle)] text-white"
+              : "bg-white text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
+          }`}
+        >
+          <Award className="h-4 w-4" />
+          Peer Reviews ({peerReviews.length})
+        </button>
       </div>
 
       {/* ═══ TAB 1: APPROVED CONTACTS ═══ */}
@@ -299,6 +332,15 @@ export default function ContactsPage() {
                         <MessageSquare className="h-3.5 w-3.5" />
                         Chat
                       </Link>
+
+                      <button
+                        onClick={() => setSelectedReviewTarget({ id: contactId, name: contactName, company: contactCompany })}
+                        className="px-2 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-800 text-[11px] font-semibold flex items-center gap-1 hover:bg-amber-100"
+                        title="Submit Peer Review"
+                      >
+                        <Award className="h-3.5 w-3.5 text-amber-600" />
+                        Review
+                      </button>
 
                       <Link
                         href={ROUTES.PROFILE_VIEW(contactId)}
@@ -482,6 +524,88 @@ export default function ContactsPage() {
             })}
           </div>
         </div>
+      )}
+
+      {/* ═══ TAB 5: PEER REVIEWS & RATINGS ═══ */}
+      {activeTab === "reviews" && (
+        <div className="space-y-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
+              <input
+                type="text"
+                value={reviewsSearchQuery}
+                onChange={(e) => setReviewsSearchQuery(e.target.value)}
+                placeholder="Search peer reviews by partner name, company, or performance category..."
+                className="fr8x-input pl-9 py-2.5 text-body-md"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {peerReviews
+              .filter((rev) => {
+                if (!reviewsSearchQuery.trim()) return true;
+                const q = reviewsSearchQuery.toLowerCase();
+                return (
+                  rev.targetUserName?.toLowerCase().includes(q) ||
+                  rev.targetUserCompany?.toLowerCase().includes(q) ||
+                  rev.title?.toLowerCase().includes(q) ||
+                  rev.performanceCategory?.toLowerCase().includes(q)
+                );
+              })
+              .map((rev) => (
+                <div key={rev.id} className="bg-white p-5 rounded-xl border border-border shadow-sm space-y-2">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-body font-bold text-[var(--fr8x-jet)]">{rev.title}</h3>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          {rev.performanceCategory || "Operations"}
+                        </span>
+                      </div>
+                      <p className="text-caption text-foreground-secondary mt-0.5">
+                        Reviewed Partner: <strong>{rev.targetUserName}</strong> ({rev.targetUserCompany})
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 text-amber-500 font-bold text-body-md">
+                      <Star className="h-4 w-4 fill-amber-400" />
+                      <span>{rev.rating}.0 / 5.0</span>
+                    </div>
+                  </div>
+                  <p className="text-body-sm text-foreground-secondary leading-relaxed bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    &ldquo;{rev.comment}&rdquo;
+                  </p>
+                  <div className="flex items-center justify-between text-[11px] text-foreground-muted pt-1">
+                    <span>Evaluated by: {rev.reviewerName} ({rev.reviewerCompany})</span>
+                    <span>{(rev as any).createdAt?.seconds ? new Date(rev.createdAt.seconds * 1000).toLocaleDateString() : "Recent"}</span>
+                  </div>
+                </div>
+              ))}
+
+            {peerReviews.length === 0 && (
+              <div className="p-8 text-center bg-white rounded-xl border border-dashed border-border">
+                <Award className="mx-auto h-10 w-10 text-foreground-muted mb-2" />
+                <p className="text-body-md font-semibold text-[var(--fr8x-jet)]">No Peer Reviews Submitted Yet</p>
+                <p className="text-caption text-foreground-secondary mt-1">
+                  Go to Approved Contacts and click &quot;Review&quot; to submit a performance evaluation for a logistics partner.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Peer Review Submission Modal */}
+      {selectedReviewTarget && (
+        <PeerReviewModal
+          isOpen={!!selectedReviewTarget}
+          onClose={() => setSelectedReviewTarget(null)}
+          targetUserId={selectedReviewTarget.id}
+          targetUserName={selectedReviewTarget.name}
+          targetUserCompany={selectedReviewTarget.company}
+          onSuccess={() => fetchPeerReviews()}
+        />
       )}
     </div>
   );
