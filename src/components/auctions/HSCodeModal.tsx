@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, X, Check, BookOpen } from "lucide-react";
+import { Search, X, BookOpen } from "lucide-react";
 
 export interface HSCodeItem {
   code: string;
