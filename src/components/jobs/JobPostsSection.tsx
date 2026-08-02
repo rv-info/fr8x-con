@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Briefcase, MapPin, Plus, Building, ExternalLink } from "lucide-react";
+import { Briefcase, MapPin, Plus, Building } from "lucide-react";
 import { queryDocuments, limit, orderBy } from "@/lib/firebase/firestore";
 import PostJobDialog from "./PostJobDialog";
 import JobDetailsDialog from "./JobDetailsDialog";
