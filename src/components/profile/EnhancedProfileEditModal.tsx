@@ -19,11 +19,6 @@ import {
   MapPin,
   ShieldCheck,
   Eye,
-  Lock,
-  FileCheck,
-  Truck,
-  Anchor,
-  Share2,
 } from "lucide-react";
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { compressAndOptimizeImage } from "@/lib/utils/imageOptimizer";
