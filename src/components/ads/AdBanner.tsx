@@ -11,6 +11,7 @@ import { queryDocuments, updateDocument, where } from "@/lib/firebase/firestore"
 import { increment } from "firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import { useAuth } from "@/providers/AuthProvider";
+import { AdRequestModal } from "./AdRequestModal";
 
 export interface TargetAudienceRules {
   country?: string;
@@ -137,6 +138,8 @@ export function AdBanner({
     }).catch(() => undefined); // Fail silently
   }, [activeAd?.id, activeAd?.status]);
 
+  const [isAdRequestOpen, setIsAdRequestOpen] = useState(false);
+
   const handleCTAClick = useCallback(() => {
     if (!activeAd?.id) return;
     updateDocument(ADS_COLLECTION, activeAd.id, {
@@ -160,26 +163,30 @@ export function AdBanner({
   // Requirement 2: In cases where no advertisements are available, display a visually appealing "Advertise Here" placeholder using a skeleton loading style
   if (!activeAd || activeAd.status !== "active") {
     return (
-      <div className="w-full max-w-[348px] min-h-[254px] rounded-xl border-2 border-dashed border-[var(--fr8x-periwinkle)]/40 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-2xs transition-all hover:border-[var(--fr8x-periwinkle)] mx-auto">
-        {/* Animated Skeleton Wave Effect */}
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
-        
-        <div className="w-12 h-12 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] flex items-center justify-center mb-3 shadow-2xs group-hover:scale-105 transition-transform">
-          <Megaphone className="h-6 w-6" />
+      <>
+        <div className="w-full max-w-[348px] min-h-[254px] rounded-xl border-2 border-dashed border-[var(--fr8x-periwinkle)]/40 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-2xs transition-all hover:border-[var(--fr8x-periwinkle)] mx-auto">
+          {/* Animated Skeleton Wave Effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+          
+          <div className="w-12 h-12 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] flex items-center justify-center mb-3 shadow-2xs group-hover:scale-105 transition-transform">
+            <Megaphone className="h-6 w-6" />
+          </div>
+
+          <h4 className="text-body-md font-bold text-[var(--fr8x-jet)]">Advertise Here</h4>
+          <p className="text-[11px] text-foreground-secondary mt-1 max-w-[260px] leading-snug">
+            Reach thousands of verified freight forwarders, carriers, and shippers across the global logistics network.
+          </p>
+
+          <button
+            onClick={() => setIsAdRequestOpen(true)}
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[var(--fr8x-periwinkle)] hover:bg-[#3ABFF0] text-white text-[11px] font-bold rounded-lg shadow-sm transition-all active:scale-95"
+          >
+            Promote Your Services <ExternalLink className="h-3 w-3" />
+          </button>
         </div>
 
-        <h4 className="text-body-md font-bold text-[var(--fr8x-jet)]">Advertise Here</h4>
-        <p className="text-[11px] text-foreground-secondary mt-1 max-w-[260px] leading-snug">
-          Reach thousands of verified freight forwarders, carriers, and shippers across the global logistics network.
-        </p>
-
-        <Link
-          href="/company"
-          className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[var(--fr8x-periwinkle)] hover:bg-[#3ABFF0] text-white text-[11px] font-bold rounded-lg shadow-sm transition-all active:scale-95"
-        >
-          Promote Your Services <ExternalLink className="h-3 w-3" />
-        </Link>
-      </div>
+        <AdRequestModal isOpen={isAdRequestOpen} onClose={() => setIsAdRequestOpen(false)} />
+      </>
     );
   }
 
