@@ -40,6 +40,8 @@ import {
   ChevronUp,
   Send,
 } from "lucide-react";
+import { validateContentModeration } from "@/lib/security/contentModeration";
+import { JobPostsSection } from "@/components/jobs/JobPostsSection";
 import { ContactsPanel } from "@/components/contacts/ContactsPanel";
 
 // ─── Types ───
@@ -545,6 +547,13 @@ export default function FeedsPage() {
       return;
     }
 
+    // Content moderation safety check
+    const modResult = validateContentModeration(postContent);
+    if (!modResult.isClean) {
+      setPostError(modResult.flaggedReason || "Post blocked due to prohibited or unsafe content.");
+      return;
+    }
+
     setIsPosting(true);
     setPostError(null);
     try {
@@ -643,14 +652,6 @@ export default function FeedsPage() {
             )}
           </div>
 
-          <nav className="fr8x-card p-1.5 space-y-0.5 bg-white text-left">
-            <Link href={`${ROUTES.PROFILE}?tab=saved-posts`} className="fr8x-nav-item w-full block">Saved Posts</Link>
-            <Link href={ROUTES.AUCTIONS} className="fr8x-nav-item w-full block">My RFQs</Link>
-            <Link href={`${ROUTES.PROFILE}?tab=followed-tags`} className="fr8x-nav-item w-full block">Followed Tags</Link>
-            <Link href={`${ROUTES.PROFILE}?tab=company`} className="fr8x-nav-item w-full block">Company Page</Link>
-            <Link href={ROUTES.PROFILE} className="fr8x-nav-item w-full block">View Profile</Link>
-          </nav>
-
           <ContactsPanel compact maxDisplay={6} />
         </aside>
 
@@ -721,6 +722,9 @@ export default function FeedsPage() {
 
         {/* ═══ RIGHT SIDEBAR ═══ */}
         <aside className="hidden xl:block w-[220px] shrink-0 space-y-2">
+          {/* Industry Job Posts Section */}
+          <JobPostsSection />
+
           {/* Trending Tags */}
           <div className="fr8x-card p-2.5 bg-white text-left">
             <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
