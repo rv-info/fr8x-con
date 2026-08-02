@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy, CopyPlus, MessageSquare, Clock, Trash2, ChevronDown, ChevronUp, Share2 } from "lucide-react";
+import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy, CopyPlus, MessageSquare, Clock, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import {
@@ -731,249 +731,276 @@ REMARKS: ${r.remarks}`;
 
         {/* Layout: Left Sidebar (Form) + Right Content (Table) */}
         <div className="flex flex-col lg:flex-row gap-5">
-          {/* ═══ LEFT SIDEBAR: Rate Editor Form (Collapsible) ═══ */}
-          <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white self-start">
-            <div className="flex items-center justify-between border-b border-border pb-2">
-              <div>
-                <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
-                  RATE EDITOR
-                </h2>
-                <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
-                  CREATE OR UPDATE RATE
+          {/* ═══ LEFT SIDEBAR: Rate Editor Form (Collapsible Horizontally) ═══ */}
+          {isRateEditorOpen ? (
+            <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white self-start transition-all duration-300 ease-in-out">
+              <div className="flex items-center justify-between border-b border-border pb-2">
+                <div>
+                  <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
+                    RATE EDITOR
+                  </h2>
+                  <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
+                    CREATE OR UPDATE RATE
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsRateEditorOpen(false)}
+                  className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                  title="Collapse Rate Editor (Expand Table)"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                {/* CARRIER */}
+                <div>
+                  <label className="fr8x-label block mb-1">CARRIER</label>
+                  <input
+                    type="text"
+                    value={carrier}
+                    onChange={(e) => setCarrier(e.target.value)}
+                    className="fr8x-input text-caption"
+                    placeholder="Carrier"
+                  />
+                </div>
+
+                {/* POR | POL */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <LocationSearchInput
+                      value={por}
+                      onChange={(val) => setPor(val)}
+                      label="POR"
+                      placeholder="POR"
+                      mode="fcl"
+                    />
+                  </div>
+                  <div>
+                    <LocationSearchInput
+                      value={pol}
+                      onChange={(val) => setPol(val)}
+                      label="POL"
+                      placeholder="POL"
+                      mode="fcl"
+                    />
+                  </div>
+                </div>
+
+                {/* POD | FPOD */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <LocationSearchInput
+                      value={pod}
+                      onChange={(val) => setPod(val)}
+                      label="POD"
+                      placeholder="POD"
+                      mode="fcl"
+                    />
+                  </div>
+                  <div>
+                    <LocationSearchInput
+                      value={fpod}
+                      onChange={(val) => setFpod(val)}
+                      label="FPOD"
+                      placeholder="FPOD"
+                      isPlaceOfReceiptOrDelivery={true}
+                      mode="fcl"
+                    />
+                  </div>
+                </div>
+
+                {/* 20DV TYPE */}
+                <div>
+                  <label className="fr8x-label block mb-1">20DV TYPE</label>
+                  <select value={type20dv} onChange={(e) => setType20dv(e.target.value)} className="fr8x-input text-caption">
+                    <option value="STANDARD">STANDARD</option>
+                    <option value="DV">DV</option>
+                    <option value="RF">RF</option>
+                    <option value="FR">FR</option>
+                    <option value="OT">OT</option>
+                  </select>
+                </div>
+
+                {/* USD 20DV */}
+                <div>
+                  <label className="fr8x-label block mb-1">USD 20DV</label>
+                  <input
+                    type="text"
+                    value={rate20dv}
+                    onChange={(e) => setRate20dv(e.target.value)}
+                    className="fr8x-input text-caption"
+                    placeholder="USD 20DV"
+                  />
+                </div>
+
+                {/* 40HC TYPE */}
+                <div>
+                  <label className="fr8x-label block mb-1">40HC TYPE</label>
+                  <select value={type40hc} onChange={(e) => setType40hc(e.target.value)} className="fr8x-input text-caption">
+                    <option value="STANDARD">STANDARD</option>
+                    <option value="ST">ST</option>
+                    <option value="HC">HC</option>
+                    <option value="RF">RF</option>
+                    <option value="FR">FR</option>
+                    <option value="OT">OT</option>
+                  </select>
+                </div>
+
+                {/* USD 40HC */}
+                <div>
+                  <label className="fr8x-label block mb-1">USD 40HC</label>
+                  <input
+                    type="text"
+                    value={rate40hc}
+                    onChange={(e) => setRate40hc(e.target.value)}
+                    className="fr8x-input text-caption"
+                    placeholder="USD 40HC"
+                  />
+                </div>
+
+                {/* F/T | VALIDITY */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="fr8x-label block mb-1">F/T</label>
+                    <input
+                      type="text"
+                      value={ft}
+                      onChange={(e) => setFt(e.target.value)}
+                      className="fr8x-input text-caption"
+                      placeholder="F/T"
+                    />
+                  </div>
+                  <div>
+                    <label className="fr8x-label block mb-1">VALIDITY</label>
+                    <input
+                      type="date"
+                      value={validityDate}
+                      onChange={(e) => setValidityDate(e.target.value)}
+                      className="fr8x-input text-caption"
+                    />
+                  </div>
+                </div>
+
+                {/* TT | ROUTING */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="fr8x-label block mb-1">TT</label>
+                    <input
+                      type="text"
+                      value={tt}
+                      onChange={(e) => setTt(e.target.value)}
+                      className="fr8x-input text-caption"
+                      placeholder="TT"
+                    />
+                  </div>
+                  <div>
+                    <label className="fr8x-label block mb-1">ROUTING</label>
+                    <input
+                      type="text"
+                      value={routing}
+                      onChange={(e) => setRouting(e.target.value)}
+                      className="fr8x-input text-caption"
+                      placeholder="Routing"
+                    />
+                  </div>
+                </div>
+
+                {/* TYPE */}
+                <div>
+                  <label className="fr8x-label block mb-1">TYPE</label>
+                  <select value={rateType} onChange={(e) => setRateType(e.target.value)} className="fr8x-input text-caption">
+                    <option value="HANDOVER">HANDOVER</option>
+                    <option value="SAVING">SAVING</option>
+                    <option value="HARDPORT">HARDPORT</option>
+                  </select>
+                </div>
+
+                {/* REMARKS */}
+                <div>
+                  <label className="fr8x-label block mb-1">REMARKS</label>
+                  <textarea
+                    value={remarks}
+                    onChange={(e) => setRemarks(e.target.value)}
+                    className="fr8x-input text-caption min-h-[40px] resize-none"
+                    placeholder="Remarks"
+                  />
+                </div>
+
+                {/* Actions */}
+                <div className="pt-2 border-t border-border space-y-2">
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={handleSave}
+                      className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                    >
+                      <Save className="h-3 w-3" /> SAVE
+                    </button>
+                    <button
+                      onClick={handleUpdate}
+                      className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                    >
+                      <RefreshCw className="h-3 w-3" /> UPDATE
+                    </button>
+                    <button
+                      onClick={handleClear}
+                      className="bg-[#991B1B] hover:bg-[#B91C1C] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                    >
+                      <XCircle className="h-3 w-3" /> CLEAR
+                    </button>
+                  </div>
+                  
+                  {/* Sidebar Duplicate is only allowed for own rates */}
+                  {(!editingRateId || (rates.find(r => r.id === editingRateId)?.createdBy === user?.uid)) && (
+                    <button
+                      onClick={() => {
+                        if (editingRateId) {
+                          const r = rates.find(x => x.id === editingRateId);
+                          if (r) handleDuplicateRow(r);
+                        } else if (rates.length > 0) {
+                          const firstOwnRate = rates.find(x => x.createdBy === user?.uid);
+                          if (firstOwnRate) handleDuplicateRow(firstOwnRate);
+                          else showNotification("No own rates available to duplicate.");
+                        }
+                      }}
+                      className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
+                    >
+                      <Copy className="h-3 w-3" /> DUPLICATE
+                    </button>
+                  )}
+                </div>
+              </div>
+            </aside>
+          ) : (
+            <aside
+              onClick={() => setIsRateEditorOpen(true)}
+              className="w-full lg:w-12 shrink-0 fr8x-card p-2 bg-white self-start transition-all duration-300 ease-in-out cursor-pointer hover:bg-slate-50 border border-slate-200 hover:border-slate-300 flex lg:flex-col items-center justify-between lg:justify-start gap-3 select-none py-3"
+              title="Click to Expand Rate Editor"
+            >
+              <div className="flex items-center gap-2 lg:flex-col">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsRateEditorOpen(true);
+                  }}
+                  className="p-1.5 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  title="Expand Rate Editor"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <span className="text-caption font-bold text-slate-700 lg:hidden">
+                  EXPAND RATE EDITOR
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsRateEditorOpen(!isRateEditorOpen)}
-                className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                title={isRateEditorOpen ? "Collapse Rate Editor" : "Expand Rate Editor"}
-              >
-                {isRateEditorOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-            </div>
-
-            {isRateEditorOpen && (
-              <div className="space-y-3 pt-1">
-
-            {/* CARRIER */}
-            <div>
-              <label className="fr8x-label block mb-1">CARRIER</label>
-              <input
-                type="text"
-                value={carrier}
-                onChange={(e) => setCarrier(e.target.value)}
-                className="fr8x-input text-caption"
-                placeholder="Carrier"
-              />
-            </div>
-
-            {/* POR | POL */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <LocationSearchInput
-                  value={por}
-                  onChange={(val) => setPor(val)}
-                  label="POR"
-                  placeholder="POR"
-                  mode="fcl"
-                />
+              <div className="hidden lg:flex items-center justify-center pt-4">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest [writing-mode:vertical-lr] rotate-180 whitespace-nowrap">
+                  RATE EDITOR
+                </span>
               </div>
-              <div>
-                <LocationSearchInput
-                  value={pol}
-                  onChange={(val) => setPol(val)}
-                  label="POL"
-                  placeholder="POL"
-                  mode="fcl"
-                />
-              </div>
-            </div>
-
-            {/* POD | FPOD */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <LocationSearchInput
-                  value={pod}
-                  onChange={(val) => setPod(val)}
-                  label="POD"
-                  placeholder="POD"
-                  mode="fcl"
-                />
-              </div>
-              <div>
-                <LocationSearchInput
-                  value={fpod}
-                  onChange={(val) => setFpod(val)}
-                  label="FPOD"
-                  placeholder="FPOD"
-                  isPlaceOfReceiptOrDelivery={true}
-                  mode="fcl"
-                />
-              </div>
-            </div>
-
-            {/* 20DV TYPE */}
-            <div>
-              <label className="fr8x-label block mb-1">20DV TYPE</label>
-              <select value={type20dv} onChange={(e) => setType20dv(e.target.value)} className="fr8x-input text-caption">
-                <option value="STANDARD">STANDARD</option>
-                <option value="DV">DV</option>
-                <option value="RF">RF</option>
-                <option value="FR">FR</option>
-                <option value="OT">OT</option>
-              </select>
-            </div>
-
-            {/* USD 20DV */}
-            <div>
-              <label className="fr8x-label block mb-1">USD 20DV</label>
-              <input
-                type="text"
-                value={rate20dv}
-                onChange={(e) => setRate20dv(e.target.value)}
-                className="fr8x-input text-caption"
-                placeholder="USD 20DV"
-              />
-            </div>
-
-            {/* 40HC TYPE */}
-            <div>
-              <label className="fr8x-label block mb-1">40HC TYPE</label>
-              <select value={type40hc} onChange={(e) => setType40hc(e.target.value)} className="fr8x-input text-caption">
-                <option value="STANDARD">STANDARD</option>
-                <option value="ST">ST</option>
-                <option value="HC">HC</option>
-                <option value="RF">RF</option>
-                <option value="FR">FR</option>
-                <option value="OT">OT</option>
-              </select>
-            </div>
-
-            {/* USD 40HC */}
-            <div>
-              <label className="fr8x-label block mb-1">USD 40HC</label>
-              <input
-                type="text"
-                value={rate40hc}
-                onChange={(e) => setRate40hc(e.target.value)}
-                className="fr8x-input text-caption"
-                placeholder="USD 40HC"
-              />
-            </div>
-
-            {/* F/T | VALIDITY */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="fr8x-label block mb-1">F/T</label>
-                <input
-                  type="text"
-                  value={ft}
-                  onChange={(e) => setFt(e.target.value)}
-                  className="fr8x-input text-caption"
-                  placeholder="F/T"
-                />
-              </div>
-              <div>
-                <label className="fr8x-label block mb-1">VALIDITY</label>
-                <input
-                  type="date"
-                  value={validityDate}
-                  onChange={(e) => setValidityDate(e.target.value)}
-                  className="fr8x-input text-caption"
-                />
-              </div>
-            </div>
-
-            {/* TT | ROUTING */}
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="fr8x-label block mb-1">TT</label>
-                <input
-                  type="text"
-                  value={tt}
-                  onChange={(e) => setTt(e.target.value)}
-                  className="fr8x-input text-caption"
-                  placeholder="TT"
-                />
-              </div>
-              <div>
-                <label className="fr8x-label block mb-1">ROUTING</label>
-                <input
-                  type="text"
-                  value={routing}
-                  onChange={(e) => setRouting(e.target.value)}
-                  className="fr8x-input text-caption"
-                  placeholder="Routing"
-                />
-              </div>
-            </div>
-
-            {/* TYPE */}
-            <div>
-              <label className="fr8x-label block mb-1">TYPE</label>
-              <select value={rateType} onChange={(e) => setRateType(e.target.value)} className="fr8x-input text-caption">
-                <option value="HANDOVER">HANDOVER</option>
-                <option value="SAVING">SAVING</option>
-                <option value="HARDPORT">HARDPORT</option>
-              </select>
-            </div>
-
-            {/* REMARKS */}
-            <div>
-              <label className="fr8x-label block mb-1">REMARKS</label>
-              <textarea
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                className="fr8x-input text-caption min-h-[40px] resize-none"
-                placeholder="Remarks"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="pt-2 border-t border-border space-y-2">
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={handleSave}
-                  className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
-                >
-                  <Save className="h-3 w-3" /> SAVE
-                </button>
-                <button
-                  onClick={handleUpdate}
-                  className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
-                >
-                  <RefreshCw className="h-3 w-3" /> UPDATE
-                </button>
-                <button
-                  onClick={handleClear}
-                  className="bg-[#991B1B] hover:bg-[#B91C1C] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
-                >
-                  <XCircle className="h-3 w-3" /> CLEAR
-                </button>
-              </div>
-              
-              {/* Sidebar Duplicate is only allowed for own rates */}
-              {(!editingRateId || (rates.find(r => r.id === editingRateId)?.createdBy === user?.uid)) && (
-                <button
-                  onClick={() => {
-                    if (editingRateId) {
-                      const r = rates.find(x => x.id === editingRateId);
-                      if (r) handleDuplicateRow(r);
-                    } else if (rates.length > 0) {
-                      const firstOwnRate = rates.find(x => x.createdBy === user?.uid);
-                      if (firstOwnRate) handleDuplicateRow(firstOwnRate);
-                      else showNotification("No own rates available to duplicate.");
-                    }
-                  }}
-                  className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
-                >
-                  <Copy className="h-3 w-3" /> DUPLICATE
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </aside>
+            </aside>
+          )}
 
           {/* ═══ MAIN CONTENT: Rates Table ═══ */}
           <main className="flex-1 min-w-0 space-y-4">
