@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, ZoomIn, ZoomOut, RotateCw, Check, Trash2 } from "lucide-react";
+import { X, ZoomIn, RotateCw, Check, Trash2 } from "lucide-react";
 
 interface ImageCropModalProps {
   isOpen: boolean;
