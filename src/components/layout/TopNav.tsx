@@ -19,6 +19,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES, APP_NAME } from "@/lib/utils/constants";
 import { getInitials } from "@/lib/utils/format";
 import { CurrencySelector } from "@/components/ui/CurrencySelector";
+import { LanguageSelector } from "@/components/ui/LanguageSelector";
 
 export function TopNav() {
   const { user, signOut } = useAuth();
@@ -68,6 +69,9 @@ export function TopNav() {
 
       {/* Right section */}
       <div className="flex items-center gap-1.5">
+        {/* Global Translation & Language Selector (positioned before Currency Selector) */}
+        <LanguageSelector />
+
         {/* Live Currency Selector */}
         <CurrencySelector />
 
@@ -186,9 +190,6 @@ export function TopNav() {
                 { label: "Contacts", href: ROUTES.CONTACTS },
                 { label: "Messages", href: ROUTES.MESSAGES },
                 { label: "Profile", href: ROUTES.PROFILE },
-                { label: "Saved Posts", href: ROUTES.SAVED_POSTS },
-                { label: "Followed Tags", href: ROUTES.FOLLOWED_TAGS },
-                { label: "Company Page", href: ROUTES.COMPANY_PAGE },
                 { label: "Awards", href: ROUTES.AWARDS },
                 { label: "Blacklist", href: ROUTES.BLACKLIST },
               ].map((item) => (
