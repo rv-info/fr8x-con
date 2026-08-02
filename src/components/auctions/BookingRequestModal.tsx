@@ -75,6 +75,7 @@ SHIPMENT & BOOKING DETAILS
 • Container Type: ${shipment.containerType}
 • Transport Mode: ${shipment.transportMode}
 • Rate Validity: ${shipment.validity}
+• Bid Terms & Condition: Subject to space and equipment availability of carrier.
 
 Please issue the Booking Confirmation (SO / Booking Order) and shipping instructions at your earliest convenience.
 
