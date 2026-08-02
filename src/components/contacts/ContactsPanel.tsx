@@ -55,6 +55,7 @@ export function ContactsPanel({ onSelectChat, compact = false, maxDisplay }: Con
   const { user } = useAuth();
   const [connections, setConnections] = useState<ContactConnection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -69,7 +70,7 @@ export function ContactsPanel({ onSelectChat, compact = false, maxDisplay }: Con
           setConnections(approved);
         }
       } catch (err) {
-        console.error("Error loading approved contacts:", err);
+        console.error("Error loading contacts:", err);
       } finally {
         if (isSubscribed) setIsLoading(false);
       }
@@ -81,7 +82,18 @@ export function ContactsPanel({ onSelectChat, compact = false, maxDisplay }: Con
     };
   }, [user?.uid]);
 
-  const displayList = maxDisplay ? connections.slice(0, maxDisplay) : connections;
+  const filteredConnections = connections.filter((conn) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    return (
+      (conn.recipientName || "").toLowerCase().includes(q) ||
+      (conn.requesterName || "").toLowerCase().includes(q) ||
+      (conn.recipientCompany || "").toLowerCase().includes(q) ||
+      (conn.requesterCompany || "").toLowerCase().includes(q)
+    );
+  });
+
+  const displayList = maxDisplay ? filteredConnections.slice(0, maxDisplay) : filteredConnections;
 
   return (
     <div className="fr8x-card p-2.5 bg-white space-y-2 text-left animate-fadeIn border border-slate-200/80">
@@ -89,11 +101,22 @@ export function ContactsPanel({ onSelectChat, compact = false, maxDisplay }: Con
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" />
-          <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)]">Approved Contacts</h3>
+          <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)]">Contact List</h3>
         </div>
         <span className="text-[9px] font-semibold bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded-full">
-          {connections.length}
+          {filteredConnections.length}
         </span>
+      </div>
+
+      {/* Search Bar directly below Contact List header */}
+      <div>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search contacts..."
+          className="fr8x-input text-[10px] py-1 px-2 h-6"
+        />
       </div>
 
       {/* Contacts List Body */}
