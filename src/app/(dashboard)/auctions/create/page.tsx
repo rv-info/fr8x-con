@@ -41,6 +41,8 @@ import { ROUTES } from "@/lib/utils/constants";
 import { LocationAutocomplete } from "@/components/ui/LocationAutocomplete";
 import { cn } from "@/lib/utils/cn";
 import LocationSearchInput from "@/components/ui/LocationSearchInput";
+import { HSCodeModal } from "@/components/auctions/HSCodeModal";
+import { PortSearchInput } from "@/components/auctions/PortSearchInput";
 import { FREIGHT_CURRENCIES as CURRENCY_LIST } from "@/lib/types/currency";
 import {
   TRANSPORT_MODES,
@@ -72,6 +74,22 @@ export default function AuctionCreatePage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // HS Code Modal State
+  const [isHSModalOpen, setIsHSModalOpen] = useState(false);
+  const [activeHSIndex, setActiveHSIndex] = useState(0);
+
+  // Bidder Selection & Stored Presets (+ Bidders) State
+  const [biddersSearch, setBiddersSearch] = useState("");
+  const [selectedBidders, setSelectedBidders] = useState<string[]>([
+    "comp_1", "comp_3", "comp_4"
+  ]);
+  const [savedBidderPresets, setSavedBidderPresets] = useState<{ name: string; bidders: string[] }[]>([
+    { name: "Core Ocean Forwarders", bidders: ["comp_1", "comp_2", "comp_3"] },
+    { name: "Air Freight Specialists", bidders: ["comp_4", "comp_5"] },
+  ]);
+  const [newPresetName, setNewPresetName] = useState("");
+  const [showAddPreset, setShowAddPreset] = useState(false);
 
   const showNotification = (msg: string) => {
     setStatusMessage(msg);
@@ -429,21 +447,21 @@ export default function AuctionCreatePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <LocationAutocomplete
+                    <PortSearchInput
                       value={watch("shipmentDetails.origin") || ""}
                       onChange={(val) => setValue("shipmentDetails.origin", val)}
                       label="Shipment Origin (City/Country)"
-                      placeholder="e.g. Nhava Sheva (INNSA, India)"
-                      required
+                      placeholder="Search origin port or city..."
+                      required={false}
                     />
                   </div>
                   <div>
-                    <LocationAutocomplete
+                    <PortSearchInput
                       value={watch("shipmentDetails.destination") || ""}
                       onChange={(val) => setValue("shipmentDetails.destination", val)}
                       label="Shipment Destination (City/Country)"
-                      placeholder="e.g. Hamburg (DEHAM, Germany)"
-                      required
+                      placeholder="Search destination port or city..."
+                      required={false}
                     />
                   </div>
                   <div>
@@ -945,8 +963,20 @@ export default function AuctionCreatePage() {
                       <input className="fr8x-input mt-1" {...register(`commodityDetails.${index}.description`)} />
                     </div>
                     <div>
-                      <label className="fr8x-label">HS Code (Optional)</label>
-                      <input className="fr8x-input mt-1" {...register(`commodityDetails.${index}.hsCode`)} placeholder="e.g. 8471.30" />
+                      <div className="flex items-center justify-between">
+                        <label className="fr8x-label">HS Code (Optional)</label>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveHSIndex(index);
+                            setIsHSModalOpen(true);
+                          }}
+                          className="text-[10px] text-[var(--fr8x-periwinkle)] font-bold hover:underline"
+                        >
+                          🔍 Free HS Lookup
+                        </button>
+                      </div>
+                      <input className="fr8x-input mt-1 font-mono text-[11px]" {...register(`commodityDetails.${index}.hsCode`)} placeholder="e.g. 8471.30" />
                     </div>
                     <div>
                       <label className="fr8x-label">Total Gross Weight (KG)</label>
@@ -955,6 +985,18 @@ export default function AuctionCreatePage() {
                   </div>
                 ))}
               </div>
+
+              {/* Free HS Code Lookup Library Modal */}
+              <HSCodeModal
+                isOpen={isHSModalOpen}
+                onClose={() => setIsHSModalOpen(false)}
+                onSelect={(code, desc) => {
+                  setValue(`commodityDetails.${activeHSIndex}.hsCode`, code);
+                  if (desc && !watch(`commodityDetails.${activeHSIndex}.description`)) {
+                    setValue(`commodityDetails.${activeHSIndex}.description`, desc);
+                  }
+                }}
+              />
             </motion.div>
           )}
 
@@ -1144,24 +1186,130 @@ export default function AuctionCreatePage() {
                 </label>
               </div>
 
-              <div className="space-y-3 pt-4 border-t border-border">
-                <h3 className="text-heading-sm text-foreground font-semibold">Invited Bidders & Exclusive Notifications</h3>
-                <p className="text-body-sm text-foreground-secondary">
-                  Select specific carrier organizations to receive direct invitation alerts.
-                </p>
-                <div>
-                   <label className="fr8x-label">Select Registered Bidders</label>
-                   <select multiple className="fr8x-input mt-1 min-h-[80px]" {...register("invitedBidders")}>
-                     <option value="comp_1">Maersk Line</option>
-                     <option value="comp_2">Hapag-Lloyd</option>
-                     <option value="comp_3">Kuehne+Nagel</option>
-                     <option value="comp_4">DHL Global Forwarding</option>
-                     <option value="comp_5">DB Schenker</option>
-                     <option value="comp_6">CMA CGM</option>
-                     <option value="comp_7">MSC Mediterranean Shipping Company</option>
-                     <option value="comp_8">ONE (Ocean Network Express)</option>
-                   </select>
-                   <p className="mt-1 text-caption text-foreground-muted">Hold Ctrl/Cmd to select multiple bidders.</p>
+              {/* Primary Tick-Box Bidder Selection & + Bidders Preset Control */}
+              <div className="space-y-4 pt-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-heading-sm text-foreground font-semibold flex items-center gap-2">
+                      <Plus className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
+                      Target Bidder Selection Workflow
+                    </h3>
+                    <p className="text-[11px] text-foreground-secondary mt-0.5">
+                      Primary tick-box selection for Forwarders, NVOCCs, and Carriers. Save lists as reusable presets.
+                    </p>
+                  </div>
+
+                  {/* Saved Presets (+ Bidders control) */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">Presets:</span>
+                    {savedBidderPresets.map((preset) => (
+                      <button
+                        key={preset.name}
+                        type="button"
+                        onClick={() => {
+                          setSelectedBidders(preset.bidders);
+                          setValue("invitedBidders", preset.bidders);
+                          showNotification(`Applied preset: ${preset.name}`);
+                        }}
+                        className="text-[10px] px-2 py-0.5 bg-slate-100 hover:bg-[var(--fr8x-mist)] text-slate-800 font-semibold rounded border border-slate-200"
+                      >
+                        {preset.name} ({preset.bidders.length})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filter and + Bidders Save Panel */}
+                <div className="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                  <input
+                    type="text"
+                    value={biddersSearch}
+                    onChange={(e) => setBiddersSearch(e.target.value)}
+                    placeholder="Search forwarder, NVOCC, or carrier..."
+                    className="fr8x-input text-[11px] h-7 max-w-xs"
+                  />
+
+                  <div className="flex items-center gap-1.5">
+                    {showAddPreset ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="text"
+                          value={newPresetName}
+                          onChange={(e) => setNewPresetName(e.target.value)}
+                          placeholder="Preset Group Name"
+                          className="fr8x-input text-[10px] h-7 w-36"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (newPresetName.trim()) {
+                              setSavedBidderPresets((prev) => [...prev, { name: newPresetName.trim(), bidders: selectedBidders }]);
+                              setNewPresetName("");
+                              setShowAddPreset(false);
+                              showNotification("Bidder group preset saved!");
+                            }
+                          }}
+                          className="px-2 py-1 bg-[var(--fr8x-periwinkle)] text-white text-[10px] font-bold rounded"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddPreset(true)}
+                        className="px-2.5 py-1 bg-[var(--fr8x-periwinkle)] hover:bg-[#3ABFF0] text-white text-[10px] font-bold rounded flex items-center gap-1 shadow-2xs"
+                      >
+                        <Plus className="h-3 w-3" /> Save + Bidders Group
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tick-Box Selection List */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-lg bg-white">
+                  {[
+                    { id: "comp_1", name: "Maersk Logistics & Forwarding", type: "Carrier / Forwarder" },
+                    { id: "comp_2", name: "Hapag-Lloyd NVOCC Services", type: "NVOCC / Carrier" },
+                    { id: "comp_3", name: "Kuehne+Nagel Global Logistics", type: "Freight Forwarder" },
+                    { id: "comp_4", name: "DHL Global Forwarding", type: "Freight Forwarder" },
+                    { id: "comp_5", name: "DB Schenker Supply Chain", type: "Freight Forwarder" },
+                    { id: "comp_6", name: "CMA CGM Logistics", type: "Carrier / Forwarder" },
+                    { id: "comp_7", name: "MSC Cargo Solutions", type: "Carrier / Forwarder" },
+                    { id: "comp_8", name: "Apex Logistics India", type: "NVOCC / Forwarder" },
+                    { id: "comp_9", name: "TransGlobe Ocean Lines", type: "NVOCC" },
+                  ]
+                    .filter((b) => b.name.toLowerCase().includes(biddersSearch.toLowerCase()))
+                    .map((b) => {
+                      const isChecked = selectedBidders.includes(b.id);
+                      return (
+                        <label
+                          key={b.id}
+                          className={`flex items-center gap-2 p-2 rounded-md border text-[11px] cursor-pointer transition-colors ${
+                            isChecked
+                              ? "bg-[var(--fr8x-mist)] border-[var(--fr8x-periwinkle)] text-[var(--fr8x-jet)] font-semibold"
+                              : "bg-white border-slate-100 text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => {
+                              const next = isChecked
+                                ? selectedBidders.filter((id) => id !== b.id)
+                                : [...selectedBidders, b.id];
+                              setSelectedBidders(next);
+                              setValue("invitedBidders", next);
+                            }}
+                            className="h-4 w-4 rounded text-[var(--fr8x-periwinkle)]"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate leading-tight font-medium">{b.name}</p>
+                            <p className="text-[9px] text-slate-400">{b.type}</p>
+                          </div>
+                        </label>
+                      );
+                    })}
                 </div>
               </div>
             </motion.div>
@@ -1226,26 +1374,89 @@ export default function AuctionCreatePage() {
               exit={{ opacity: 0, x: -20 }}
               className="fr8x-card p-5 space-y-5"
             >
-              <h2 className="text-heading-lg text-foreground">Review Multi-Modal Auction Details</h2>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-border bg-[var(--fr8x-mist)] rounded text-[11px]">
+              <div className="border-b border-border pb-3">
+                <h2 className="text-heading-lg text-foreground">Review & Submit Multi-Modal Reverse Auction</h2>
+                <p className="text-caption text-foreground-secondary mt-0.5">
+                  Verify all freight routing, cargo dimensions, bidder invitation lists, and scoring rules before publishing.
+                </p>
+              </div>
+
+              {/* Title & Core Route Banner */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border border-border bg-[var(--fr8x-mist)] rounded-xl text-[11px]">
+                <div className="col-span-1 md:col-span-4 border-b border-slate-200/60 pb-2">
+                  <span className="text-[10px] text-foreground-muted uppercase font-bold">Auction Title:</span>
+                  <p className="text-body-md font-bold text-[var(--fr8x-jet)]">
+                    {watch("title") || `${selectedMode.toUpperCase()} Shipment - ${watch("shipmentDetails.origin") || "Origin"} to ${watch("shipmentDetails.destination") || "Destination"}`}
+                  </p>
+                </div>
+
                 <div>
                   <span className="text-foreground-secondary block">Transport Mode:</span>
-                  <strong className="text-base text-[var(--fr8x-jet)] uppercase">{selectedMode}</strong>
+                  <strong className="text-body-sm text-[var(--fr8x-jet)] uppercase">{selectedMode}</strong>
                 </div>
                 <div>
-                  <span className="text-foreground-secondary block">Incoterm:</span>
-                  <strong className="text-base text-[var(--fr8x-jet)]">{selectedIncoterm}</strong>
+                  <span className="text-foreground-secondary block">Incoterms® 2020:</span>
+                  <strong className="text-body-sm text-[var(--fr8x-jet)]">{selectedIncoterm}</strong>
                 </div>
                 <div>
-                  <span className="text-foreground-secondary block">Route:</span>
-                  <strong className="text-base text-[var(--fr8x-jet)]">{watch("shipmentDetails.origin")} → {watch("shipmentDetails.destination")}</strong>
+                  <span className="text-foreground-secondary block">Shipment Origin:</span>
+                  <strong className="text-body-sm text-[var(--fr8x-jet)]">{watch("shipmentDetails.origin") || "Not Specified"}</strong>
+                </div>
+                <div>
+                  <span className="text-foreground-secondary block">Shipment Destination:</span>
+                  <strong className="text-body-sm text-[var(--fr8x-jet)]">{watch("shipmentDetails.destination") || "Not Specified"}</strong>
                 </div>
               </div>
 
-              <div className="p-4 border border-warning/30 bg-warning-light rounded-lg text-[11px]">
-                <p className="text-warning-dark font-medium">
-                  ⚠️ Note: Once published, auction mode specifications and Incoterms responsibilities will be locked for all live bidding carriers.
+              {/* Cargo & Equipment Summary */}
+              <div className="p-4 border border-slate-200 bg-white rounded-xl space-y-2 text-[11px]">
+                <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Package className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Cargo & Unit Line Items Summary
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-500 block">Total Units / Containers:</span>
+                    <span className="font-bold text-slate-900">{containerFields.length} Unit Line(s)</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Total Gross Weight:</span>
+                    <span className="font-bold text-slate-900">{grossWtKg} KG</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Declared HS Code:</span>
+                    <span className="font-mono font-bold text-indigo-600">
+                      {watch("commodityDetails.0.hsCode") || "Optional (Not Specified)"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bidding & Visibility Summary */}
+              <div className="p-4 border border-slate-200 bg-white rounded-xl space-y-2 text-[11px]">
+                <h3 className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Gavel className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Sourcing Strategy & Bidder Invitations
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-500 block">Auction Strategy:</span>
+                    <span className="font-bold text-slate-900 uppercase">
+                      {watch("auctionType" as any) === "premium" ? "Premium / Selective" : "General Reverse Auction"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Invited Bidders:</span>
+                    <span className="font-bold text-emerald-600">{selectedBidders.length} Selected Forwarders / NVOCCs</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 block">Base Currency:</span>
+                    <span className="font-bold text-slate-900">{watch("bidRules.defaultCurrency") || "USD"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 border border-amber-200 bg-amber-50 rounded-lg text-[11px]">
+                <p className="text-amber-900 font-medium">
+                  ⚠️ Note: Once published, auction specifications and Incoterms responsibilities will be locked for all bidding forwarders and carriers.
                 </p>
               </div>
             </motion.div>
