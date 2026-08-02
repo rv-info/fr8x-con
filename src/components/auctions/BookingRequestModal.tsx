@@ -8,14 +8,8 @@ import {
   Mail,
   CheckCircle2,
   AlertCircle,
-  FileText,
   Send,
   X,
-  Building2,
-  MapPin,
-  Calendar,
-  DollarSign,
-  Package,
 } from "lucide-react";
 
 export interface BookingShipmentData {
