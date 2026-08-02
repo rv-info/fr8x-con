@@ -28,7 +28,9 @@ import {
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { compressAndOptimizeImage } from "@/lib/utils/imageOptimizer";
 
-export type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string };
+import { ImageCropModal } from "./ImageCropModal";
+
+export type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string; roleDescription?: string };
 export type EduItem = { id: string; college: string; stream: string; from: string; to: string };
 export type CertItem = { id: string; title: string; issuer: string; year: string };
 
@@ -100,6 +102,22 @@ export function EnhancedProfileEditModal({
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
   const [logoProgress, setLogoProgress] = useState(0);
+
+  const [isSavedState, setIsSavedState] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
+
+  // Esc key listener with unsaved changes prompt
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isOpen) {
+        setShowUnsavedPrompt(true);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
 
   useEffect(() => {
     setFormData(initialData);
@@ -185,7 +203,11 @@ export function EnhancedProfileEditModal({
     setIsSaving(true);
     try {
       await onSave(formData);
-      onClose();
+      setIsSavedState(true);
+      setTimeout(() => {
+        setIsSavedState(false);
+        onClose();
+      }, 1500);
     } catch (err) {
       console.error(err);
     } finally {
@@ -535,6 +557,20 @@ export function EnhancedProfileEditModal({
                             className="fr8x-input"
                           />
                         </div>
+                        <div>
+                          <textarea
+                            value={we.roleDescription || ""}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, roleDescription: e.target.value } : item)),
+                              })
+                            }
+                            placeholder="Detailed job profile & key responsibilities (e.g. Managed ocean freight rate negotiations, handled customs clearance for Asia-Europe lanes)..."
+                            rows={2}
+                            className="fr8x-input text-[11px] resize-none"
+                          />
+                        </div>
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, workExperience: formData.workExperience.filter((item) => item.id !== we.id) })}
@@ -674,15 +710,64 @@ export function EnhancedProfileEditModal({
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="fr8x-btn-primary flex items-center gap-2 px-5 py-2"
+                  disabled={isSaving || isSavedState}
+                  className={`fr8x-btn-primary flex items-center gap-2 px-5 py-2 transition-all ${
+                    isSavedState ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
+                  }`}
                 >
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  <span>Save Profile Studio</span>
+                  {isSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : isSavedState ? (
+                    <CheckCircle2 className="h-4 w-4 text-white" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>{isSavedState ? "Saved" : "Save Profile"}</span>
                 </button>
               </div>
             </form>
           </div>
+
+          {/* Image Crop Modal */}
+          <ImageCropModal
+            isOpen={showCropModal}
+            imageSrc={cropImageSrc || formData.photoURL}
+            onClose={() => setShowCropModal(false)}
+            onSaveCrop={(cropped) => setFormData((prev) => ({ ...prev, photoURL: cropped }))}
+            onRemovePicture={() => setFormData((prev) => ({ ...prev, photoURL: null }))}
+          />
+
+          {/* Unsaved Changes Prompt Modal on Esc */}
+          {showUnsavedPrompt && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+              <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl space-y-3">
+                <h4 className="text-body-md font-bold text-slate-900">Save Unsaved Changes?</h4>
+                <p className="text-caption text-slate-600">
+                  You pressed Esc. Would you like to save your profile changes before closing?
+                </p>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowUnsavedPrompt(false);
+                      onClose();
+                    }}
+                    className="fr8x-btn-secondary text-[11px] px-3 py-1.5"
+                  >
+                    Discard & Close
+                  </button>
+                  <button
+                    onClick={async (e) => {
+                      setShowUnsavedPrompt(false);
+                      await handleFormSubmit(e as any);
+                    }}
+                    className="fr8x-btn-primary text-[11px] px-4 py-1.5"
+                  >
+                    Save & Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Side-by-Side Live Card Preview */}
           {showLivePreview && (
