@@ -37,6 +37,7 @@ import type { Auction, AuctionStatus } from "@/lib/types/auction";
 import type { Bid } from "@/lib/types/bid";
 import { normalizeCurrency, calculateTCOScore } from "@/lib/utils/procurementScoring";
 import { logAuditEvent } from "@/lib/utils/auditLogger";
+import { AuctionDisputeModal } from "@/components/auctions/AuctionDisputeModal";
 
 export default function AuctionDetailPage({
   params,
@@ -56,6 +57,9 @@ export default function AuctionDetailPage({
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [isCancelling, setIsCancelling] = useState(false);
+
+  // Authenticity Concern Dispute Modal State
+  const [showDisputeModal, setShowDisputeModal] = useState(false);
 
   // Active Tab View for Owner
   const [activeOwnerTab, setActiveOwnerTab] = useState<"ranking" | "history" | "tco">("ranking");
@@ -207,8 +211,17 @@ export default function AuctionDetailPage({
           <ChevronLeft className="h-4 w-4" /> Back to Auctions
         </button>
 
-        {/* Action Controls for Owner / GodMode */}
+        {/* Action Controls for Owner / Bidders */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowDisputeModal(true)}
+            className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 font-bold rounded-lg border border-red-200 text-caption flex items-center gap-1.5 transition-colors"
+            title="Raise authenticity concern regarding award status, forwarder delivery, or booking"
+          >
+            <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+            Raise Authenticity Concern
+          </button>
+
           {auction.status !== "cancelled" && auction.status !== "closed" && (isOwner) && (
             <button
               onClick={() => setShowCancelModal(true)}
@@ -665,6 +678,15 @@ export default function AuctionDetailPage({
           </div>
         </div>
       )}
+
+      {/* Authenticity Concern Dispute Modal */}
+      <AuctionDisputeModal
+        isOpen={showDisputeModal}
+        onClose={() => setShowDisputeModal(false)}
+        auctionId={auction.id}
+        auctionTitle={auction.title}
+        userRoleType={isOwner ? "posting_party" : "bidding_party"}
+      />
     </div>
   );
 }
