@@ -36,6 +36,7 @@ const FIRESTORE_ADS_COLLECTION = COLLECTIONS.ADS || "ads";
 
 export default function GodModeAdsPage() {
   const [ads, setAds] = useState<AdvertisementDoc[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [showWizard, setShowWizard] = useState(false);
@@ -54,6 +55,52 @@ export default function GodModeAdsPage() {
     );
     return () => unsubscribe();
   }, []);
+
+  // Subscribe to Pending Ad Requests from customers
+  useEffect(() => {
+    const unsubscribe = subscribeToQuery<any>("ad_requests", [], (data) => {
+      setPendingRequests(data.filter((r) => r.status === "pending"));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleApproveRequest = async (req: any) => {
+    try {
+      const newId = `ad_${Date.now()}`;
+      const newAd: AdvertisementDoc = {
+        id: newId,
+        adName: req.adName || req.title,
+        title: req.title,
+        type: req.type || "image",
+        mediaUrl: req.mediaUrl || undefined,
+        shortDescription: req.shortDescription,
+        destinationUrl: req.destinationUrl,
+        targetType: req.targetType || "external",
+        openMode: req.openMode || "new_tab",
+        ctaText: req.ctaText || "Learn More",
+        status: "active",
+        isActive: true,
+        audience: { country: "All", businessType: "All", subscriptionPlan: "All", device: "all" },
+        impressions: 0,
+        uniqueViews: 0,
+        clicks: 0,
+        ctr: 0,
+        createdAt: new Date().toISOString(),
+      };
+      await setDocument(FIRESTORE_ADS_COLLECTION, newId, newAd);
+      await updateDocument("ad_requests", req.id, { status: "approved", approvedAt: new Date().toISOString() });
+    } catch (err) {
+      console.error("Failed to approve ad request:", err);
+    }
+  };
+
+  const handleRejectRequest = async (reqId: string) => {
+    try {
+      await updateDocument("ad_requests", reqId, { status: "rejected", rejectedAt: new Date().toISOString() });
+    } catch (err) {
+      console.error("Failed to reject ad request:", err);
+    }
+  };
 
   // Device Preview Modal State
   const [previewAd, setPreviewAd] = useState<AdvertisementDoc | null>(null);
@@ -227,6 +274,56 @@ export default function GodModeAdsPage() {
           </button>
         </div>
       </div>
+
+      {/* Pending Customer Ad Requests Review Section */}
+      {pendingRequests.length > 0 && (
+        <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-body-sm font-bold text-amber-900 flex items-center gap-2">
+              <Megaphone className="h-4 w-4 text-amber-600" />
+              Pending Customer Ad Requests ({pendingRequests.length})
+            </h3>
+            <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
+              Approval Required
+            </span>
+          </div>
+
+          <div className="divide-y divide-amber-200/60 bg-white rounded-lg border border-amber-200 overflow-hidden">
+            {pendingRequests.map((req) => (
+              <div key={req.id} className="p-3 flex flex-col md:flex-row md:items-center justify-between gap-3 text-[11px]">
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center gap-2 font-bold text-slate-900">
+                    <span>{req.title}</span>
+                    <span className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200 font-normal">
+                      {req.companyName || "Customer Request"}
+                    </span>
+                  </div>
+                  {req.shortDescription && <p className="text-slate-600 line-clamp-1">{req.shortDescription}</p>}
+                  <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                    <span>Target: {req.destinationUrl}</span>
+                    <span>Contact: {req.contactEmail}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleRejectRequest(req.id)}
+                    className="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-800 font-bold rounded text-[10px] flex items-center gap-1"
+                  >
+                    <X className="h-3 w-3" /> Reject
+                  </button>
+                  <button
+                    onClick={() => handleApproveRequest(req)}
+                    className="px-3.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded text-[10px] flex items-center gap-1 shadow-sm"
+                  >
+                    <Check className="h-3 w-3" /> Approve & Go Live
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* UPLOAD SPECIFICATIONS GUIDELINES PANEL */}
       {showGuide && (
