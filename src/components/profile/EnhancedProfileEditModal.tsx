@@ -142,14 +142,14 @@ export function EnhancedProfileEditModal({
     if (!file) return;
     setIsUploadingPhoto(true);
     try {
-      // Compress image client-side to <40KB WebP and strip EXIF for high performance & privacy
       const compressedDataUrl = await compressAndOptimizeImage(file, 600, 600, 0.75);
-      setFormData((prev) => ({ ...prev, photoURL: compressedDataUrl }));
-
+      setCropImageSrc(compressedDataUrl);
+      setShowCropModal(true);
+      
       try {
         const path = `profiles/${userId}/photo_${Date.now()}`;
         const url = await uploadFileWithProgress(path, file, (p) => setPhotoProgress(Math.round(p)));
-        setFormData((prev) => ({ ...prev, photoURL: url }));
+        setCropImageSrc(url);
       } catch {
         /* Keep compressed data URL fallback */
       }
