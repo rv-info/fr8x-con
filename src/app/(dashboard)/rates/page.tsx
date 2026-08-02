@@ -4,7 +4,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy } from "lucide-react";
+import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy, CopyPlus, MessageSquare, Clock, Trash2, ChevronDown, ChevronUp, Share2 } from "lucide-react";
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import {
@@ -54,6 +54,9 @@ export default function RateCenterPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingRateId, setEditingRateId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Collapsible Rate Editor State
+  const [isRateEditorOpen, setIsRateEditorOpen] = useState(true);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -728,16 +731,29 @@ REMARKS: ${r.remarks}`;
 
         {/* Layout: Left Sidebar (Form) + Right Content (Table) */}
         <div className="flex flex-col lg:flex-row gap-5">
-          {/* ═══ LEFT SIDEBAR: Rate Editor Form ═══ */}
-          <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white">
-            <div className="flex flex-col border-b border-border pb-2">
-              <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
-                RATE EDITOR
-              </h2>
-              <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
-                CREATE OR UPDATE RATE
-              </span>
+          {/* ═══ LEFT SIDEBAR: Rate Editor Form (Collapsible) ═══ */}
+          <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white self-start">
+            <div className="flex items-center justify-between border-b border-border pb-2">
+              <div>
+                <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
+                  RATE EDITOR
+                </h2>
+                <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
+                  CREATE OR UPDATE RATE
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsRateEditorOpen(!isRateEditorOpen)}
+                className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                title={isRateEditorOpen ? "Collapse Rate Editor" : "Expand Rate Editor"}
+              >
+                {isRateEditorOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
             </div>
+
+            {isRateEditorOpen && (
+              <div className="space-y-3 pt-1">
 
             {/* CARRIER */}
             <div>
@@ -955,7 +971,9 @@ REMARKS: ${r.remarks}`;
                 </button>
               )}
             </div>
-          </aside>
+          </div>
+        )}
+      </aside>
 
           {/* ═══ MAIN CONTENT: Rates Table ═══ */}
           <main className="flex-1 min-w-0 space-y-4">
@@ -1099,13 +1117,54 @@ REMARKS: ${r.remarks}`;
                               <div className="flex items-center gap-1.5">
                                 {r.createdBy === user?.uid ? (
                                   <>
-                                    <button onClick={() => handleWhatsAppCopy(r)} className="text-[var(--fr8x-periwinkle)] hover:underline font-semibold">COPY (WA)</button>
-                                    <span className="text-foreground-muted">|</span>
-                                    <button onClick={() => handleDuplicateRow(r)} className="text-[var(--fr8x-periwinkle)] hover:underline">DUPLICATE</button>
-                                    <span className="text-foreground-muted">|</span>
-                                    <button onClick={() => handleMarkExpired(r.id)} className="text-warning hover:underline">EXPIRE</button>
-                                    <span className="text-foreground-muted">|</span>
-                                    <button onClick={() => handleDelete(r.id)} className="text-danger hover:underline">DELETE</button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const text = `FR8X Rate: ${r.pol} -> ${r.pod} | 20DV: $${r.rate20dv} | 40HC: $${r.rate40hc} | Carrier: ${r.carrier} | Validity: ${r.validityDate}`;
+                                        navigator.clipboard.writeText(text);
+                                        showNotification("Rate summary copied to clipboard!");
+                                      }}
+                                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                      title="Copy Rate Summary"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleWhatsAppCopy(r)}
+                                      className="p-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                                      title="Share via WhatsApp (WA)"
+                                    >
+                                      <MessageSquare className="h-3.5 w-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDuplicateRow(r)}
+                                      className="p-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                                      title="Duplicate Rate Sheet"
+                                    >
+                                      <CopyPlus className="h-3.5 w-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMarkExpired(r.id)}
+                                      className="p-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                                      title="Mark as Expired"
+                                    >
+                                      <Clock className="h-3.5 w-3.5" />
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDelete(r.id)}
+                                      className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                                      title="Delete Rate"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
                                   </>
                                 ) : (
                                   <span className="text-gray-400 italic">View only</span>
