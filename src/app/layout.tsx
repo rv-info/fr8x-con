@@ -101,6 +101,8 @@ const jsonLdOrganization = {
   },
 };
 
+import { LanguageProvider } from "@/components/ui/LanguageSelector";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className="h-full">
@@ -115,10 +117,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="h-full bg-background antialiased">
         <QueryProvider>
           <AuthProvider>
-            <CurrencyProvider>
-              <BackupScheduler />
-              {children}
-            </CurrencyProvider>
+            <LanguageProvider>
+              <CurrencyProvider>
+                <BackupScheduler />
+                {children}
+              </CurrencyProvider>
+            </LanguageProvider>
           </AuthProvider>
         </QueryProvider>
       </body>
