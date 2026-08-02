@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email,
           displayName: displayName || (isRaiVegaUser ? "Management (Rai Vega)" : email),
           photoURL,
-          emailVerified: true,
+          emailVerified,
           role: isRaiVegaUser ? "admin" : (userData?.role || "freight_forwarder"),
           isGodMode: isRaiVegaUser ? true : (userData?.isGodMode === true),
           companyId: userData?.companyId || (isRaiVegaUser ? "comp_raivega_001" : null),
