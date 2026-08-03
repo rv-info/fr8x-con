@@ -411,54 +411,138 @@ export function EnhancedProfileEditModal({
               {/* TAB 3: LOGO & AVATAR BRANDING */}
               {activeSection === "branding" && (
                 <div className="space-y-5">
-                  <h3 className="text-base font-bold text-slate-900 border-b pb-2">Enterprise Branding &amp; Visual Identity</h3>
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">Enterprise Branding &amp; Visual Identity</h3>
+                      <p className="text-xs text-slate-500">Upload, crop, or delete custom logo and avatar images for your enterprise profile.</p>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Photo Uploader */}
-                    <div className="p-4 border-2 border-dashed border-slate-300 rounded-2xl text-center space-y-3 bg-slate-50/50">
-                      <h4 className="font-bold text-sm text-slate-800">Profile Avatar Photo</h4>
-                      <div className="relative w-24 h-24 mx-auto rounded-full bg-slate-200 border-2 border-white shadow-md overflow-hidden flex items-center justify-center">
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handlePhotoSelect(file);
+                      }}
+                      className="p-5 border-2 border-dashed border-slate-300 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3 bg-slate-50/60 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-sm text-slate-800">Profile Avatar Photo</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.photoURL ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                          {formData.photoURL ? 'Image Active' : 'Blank / Default'}
+                        </span>
+                      </div>
+
+                      <div className="relative w-28 h-28 mx-auto rounded-full bg-slate-200 border-2 border-white shadow-md overflow-hidden flex items-center justify-center group">
                         {formData.photoURL ? (
                           <img src={formData.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="h-10 w-10 text-slate-400" />
+                          <User className="h-12 w-12 text-slate-400" />
                         )}
                         {isUploadingPhoto && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold">
+                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs font-bold">
+                            <Loader2 className="h-5 w-5 animate-spin mb-1 text-white" />
                             {photoProgress}%
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => photoInputRef.current?.click()}
-                        className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5"
-                      >
-                        <Upload className="h-4 w-4" /> Upload Avatar Photo
-                      </button>
+
+                      <p className="text-[11px] text-slate-500">
+                        Drag &amp; drop an image here or click below (PNG, JPG, WebP)
+                      </p>
+
+                      <div className="space-y-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => photoInputRef.current?.click()}
+                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5 text-xs py-2 font-bold"
+                        >
+                          <Upload className="h-4 w-4" /> {formData.photoURL ? "Change Avatar Photo" : "Upload Avatar Photo"}
+                        </button>
+
+                        {formData.photoURL && (
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setCropImageSrc(formData.photoURL);
+                                setShowCropModal(true);
+                              }}
+                              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1"
+                            >
+                              <Camera className="h-3.5 w-3.5" /> Crop / Zoom
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFormData((prev) => ({ ...prev, photoURL: null }))}
+                              className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors"
+                              title="Delete avatar image back to blank default upload"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" /> Delete Image
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Logo Uploader */}
-                    <div className="p-4 border-2 border-dashed border-slate-300 rounded-2xl text-center space-y-3 bg-slate-50/50">
-                      <h4 className="font-bold text-sm text-slate-800">Company Logo Banner</h4>
-                      <div className="relative w-24 h-24 mx-auto rounded-2xl bg-slate-900 border-2 border-white shadow-md overflow-hidden flex items-center justify-center p-2">
+                    <div
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) handleLogoSelect(file);
+                      }}
+                      className="p-5 border-2 border-dashed border-slate-300 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3 bg-slate-50/60 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-sm text-slate-800">Company Logo Banner</h4>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.companyLogoURL ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                          {formData.companyLogoURL ? 'Logo Active' : 'Blank / Default'}
+                        </span>
+                      </div>
+
+                      <div className="relative w-28 h-28 mx-auto rounded-2xl bg-slate-900 border-2 border-white shadow-md overflow-hidden flex items-center justify-center p-2 group">
                         {formData.companyLogoURL ? (
                           <img src={formData.companyLogoURL} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
-                          <Building2 className="h-10 w-10 text-[var(--fr8x-periwinkle)]" />
+                          <Building2 className="h-12 w-12 text-[var(--fr8x-periwinkle)]" />
                         )}
                         {isUploadingLogo && (
-                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-xs font-bold">
+                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs font-bold">
+                            <Loader2 className="h-5 w-5 animate-spin mb-1 text-white" />
                             {logoProgress}%
                           </div>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => logoInputRef.current?.click()}
-                        className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5"
-                      >
-                        <Upload className="h-4 w-4" /> Upload Company Logo
-                      </button>
+
+                      <p className="text-[11px] text-slate-500">
+                        Drag &amp; drop company logo here or click below
+                      </p>
+
+                      <div className="space-y-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5 text-xs py-2 font-bold"
+                        >
+                          <Upload className="h-4 w-4" /> {formData.companyLogoURL ? "Change Company Logo" : "Upload Company Logo"}
+                        </button>
+
+                        {formData.companyLogoURL && (
+                          <button
+                            type="button"
+                            onClick={() => setFormData((prev) => ({ ...prev, companyLogoURL: null }))}
+                            className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors"
+                            title="Delete logo image back to blank default upload"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" /> Delete Logo Image
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
