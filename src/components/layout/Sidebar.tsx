@@ -95,7 +95,7 @@ export function Sidebar() {
                   : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               )}
             >
-              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <Icon className="h-5 w-5 shrink-0" />
               {isExpanded && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
             </Link>
           );
