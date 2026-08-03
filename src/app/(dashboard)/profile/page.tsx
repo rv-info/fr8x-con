@@ -611,7 +611,7 @@ function ProfileContent() {
       <div className="fr8x-container flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-3.5 rounded-xl border border-border">
         <div className="flex items-center gap-3">
           <div
-            className="relative w-12 h-12 rounded-xl bg-slate-900 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0 group cursor-pointer"
+            className="relative w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0 group cursor-pointer shadow-2xs"
             onClick={() => {
               if (!isEditing) setIsEditing(true);
               logoInputRef.current?.click();
@@ -620,8 +620,8 @@ function ProfileContent() {
           >
             {isUploadingLogo ? (
               <div className="flex flex-col items-center">
-                <Loader2 className="h-4 w-4 text-white animate-spin" />
-                <span className="text-[8px] text-white mt-0.5">{uploadLogoProgress}%</span>
+                <Loader2 className="h-4 w-4 text-[var(--fr8x-periwinkle)] animate-spin" />
+                <span className="text-[8px] text-slate-600 mt-0.5">{uploadLogoProgress}%</span>
               </div>
             ) : companyLogoURL ? (
               <img src={companyLogoURL} alt="Company Logo" className="w-full h-full object-contain p-1" />
@@ -629,14 +629,14 @@ function ProfileContent() {
               <Building2 className="h-6 w-6 text-[var(--fr8x-periwinkle)]" />
             )}
             {!isUploadingLogo && (
-              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-1">
+              <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-1">
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     logoInputRef.current?.click();
                   }}
-                  className="p-1 rounded bg-slate-800 text-white hover:bg-slate-700"
+                  className="p-1 rounded bg-white text-slate-800 hover:bg-slate-100 shadow-xs"
                   title="Upload Logo"
                 >
                   <Camera className="h-3.5 w-3.5" />
