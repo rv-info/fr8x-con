@@ -195,7 +195,7 @@ export function EnhancedProfileEditModal({
   };
 
   const strengthBadge = getStrengthBadge(completionScore);
-  const activeThemeConfig = CARD_THEMES.find((t) => t.id === (formData.cardTheme || "indigo")) || CARD_THEMES[0];
+  const activeThemeConfig = (CARD_THEMES.find((t) => t.id === (formData.cardTheme || "indigo")) || CARD_THEMES[0])!;
 
   // Photo & Logo Upload Handlers
   const handlePhotoSelect = async (file: File) => {
