@@ -364,10 +364,16 @@ const DEFAULT_TRENDING_TAGS = [
   { name: "NVOCC", related: "Freight Forwarding" },
 ];
 
+import { calculateTrendingScore } from "@/lib/utils/feedRanking";
+import { subscribeToQuery } from "@/lib/firebase/firestore";
+
+type FeedSortMode = "newest" | "trending" | "most_viewed" | "most_commented" | "most_reposted";
+
 // ─── Main Feeds Component ───
 export default function FeedsPage() {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<FeedFilterCategory>("all");
+  const [sortMode, setSortMode] = useState<FeedSortMode>("newest");
   const [postContent, setPostContent] = useState("");
   const [selectedTag, setSelectedTag] = useState("all");
   const [posts, setPosts] = useState<PostData[]>([]);
@@ -379,8 +385,8 @@ export default function FeedsPage() {
   const [isPosting, setIsPosting] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [followedTags, setFollowedTags] = useState<string[]>([]);
-
   const [postError, setPostError] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(15);
 
   const displayName = user?.displayName || "User";
 
@@ -436,10 +442,7 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  const [visibleCount, setVisibleCount] = useState(15);
-
-  // Fetch posts with session caching for 10x instant load speed
-  // Default seed posts if Firestore has no posts yet
+  // Initial seed fallback posts
   const INITIAL_SEED_POSTS: PostData[] = useMemo(() => [
     {
       id: "seed_post_101",
@@ -475,45 +478,25 @@ export default function FeedsPage() {
     },
   ], []);
 
-  // Fetch posts with session caching for instant load speed
-  const fetchPosts = useCallback(async () => {
-    // 1. Check session cache first
-    try {
-      const cached = sessionStorage.getItem("fr8x_cached_feed_posts");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setPosts(parsed);
-          setIsLoadingPosts(false);
+  // Real-time Firestore subscription to posts collection
+  useEffect(() => {
+    setIsLoadingPosts(true);
+    const unsubscribe = subscribeToQuery<PostData>(
+      COLLECTIONS.POSTS,
+      [limit(100)],
+      (remotePosts) => {
+        const valid = remotePosts.filter((p) => !p.isDeleted);
+        if (valid.length > 0) {
+          setPosts(valid);
+        } else {
+          setPosts(INITIAL_SEED_POSTS);
         }
+        setIsLoadingPosts(false);
       }
-    } catch { /* ignore */ }
+    );
 
-    // 2. Fetch from Firestore without composite index restrictions
-    try {
-      const data = await queryDocuments<PostData>(COLLECTIONS.POSTS, [limit(50)]);
-      const validPosts = data.filter((p) => !p.isDeleted);
-      if (validPosts.length > 0) {
-        setPosts((prev) => {
-          // Merge newly created local posts that might not be in query result yet
-          const existingIds = new Set(validPosts.map((p) => p.id));
-          const localOnly = prev.filter((p) => !existingIds.has(p.id));
-          const combined = [...localOnly, ...validPosts];
-          try { sessionStorage.setItem("fr8x_cached_feed_posts", JSON.stringify(combined)); } catch { /* ignore */ }
-          return combined;
-        });
-      } else {
-        setPosts((prev) => (prev.length > 0 ? prev : INITIAL_SEED_POSTS));
-      }
-    } catch (err) {
-      console.warn("Firestore post fetch fallback notice:", err);
-      setPosts((prev) => (prev.length > 0 ? prev : INITIAL_SEED_POSTS));
-    } finally {
-      setIsLoadingPosts(false);
-    }
+    return () => unsubscribe();
   }, [INITIAL_SEED_POSTS]);
-
-  useEffect(() => { fetchPosts(); }, [fetchPosts]);
 
   const handleToggleFollowTag = async (tag: string) => {
     if (!user?.uid) return;
@@ -535,31 +518,37 @@ export default function FeedsPage() {
     });
   }, []);
 
-  // Ranked, filtered posts
+  // Ranked & sorted posts according to sortMode
   const filteredPosts = useMemo(() => {
-    const now = Date.now() / 1000;
-    return posts
-      .filter(
-        (p) =>
-          !hiddenPostIds.has(p.id) &&
-          !blockedUserIds.has(p.authorId) &&
-          (activeCategory === "all" ||
-            (p.category || "").toLowerCase().includes(activeCategory.replace("_", " ")))
-      )
-      .map((p) => {
-        const ageHours = p.createdAt
-          ? (now - p.createdAt.seconds) / 3600
-          : 999;
-        const freshnessScore = Math.max(0, 1 - ageHours / 48);
-        const engagementScore =
-          (p.likesCount || 0) * 2 +
-          (p.repostsCount || 0) * 1.5 -
-          (p.dislikesCount || 0) * 0.5;
-        const rankScore = engagementScore + freshnessScore * 10;
-        return { ...p, rankScore };
-      })
-      .sort((a, b) => b.rankScore - a.rankScore);
-  }, [posts, hiddenPostIds, blockedUserIds, activeCategory]);
+    const filtered = posts.filter(
+      (p) =>
+        !hiddenPostIds.has(p.id) &&
+        !blockedUserIds.has(p.authorId) &&
+        (activeCategory === "all" ||
+          (p.category || "").toLowerCase().includes(activeCategory.replace("_", " ")))
+    );
+
+    return [...filtered].sort((a, b) => {
+      if (sortMode === "newest") {
+        const tA = a.createdAt ? (typeof a.createdAt === "object" ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000) : 0;
+        const tB = b.createdAt ? (typeof b.createdAt === "object" ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000) : 0;
+        return tB - tA;
+      }
+      if (sortMode === "trending") {
+        return calculateTrendingScore(b) - calculateTrendingScore(a);
+      }
+      if (sortMode === "most_viewed") {
+        return ((b as any).viewsCount || 0) - ((a as any).viewsCount || 0);
+      }
+      if (sortMode === "most_commented") {
+        return (b.commentsCount || 0) - (a.commentsCount || 0);
+      }
+      if (sortMode === "most_reposted") {
+        return (b.repostsCount || 0) - (a.repostsCount || 0);
+      }
+      return 0;
+    });
+  }, [posts, hiddenPostIds, blockedUserIds, activeCategory, sortMode]);
 
   const wordCount = useMemo(
     () => postContent.trim().split(/\s+/).filter(Boolean).length,
@@ -712,6 +701,50 @@ export default function FeedsPage() {
             onCategoryChange={setSelectedTag}
             categories={FEED_CATEGORIES}
           />
+
+          {/* 5 Primary Feed Sorting Tabs */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto no-scrollbar">
+            <button
+              onClick={() => setSortMode("newest")}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
+                sortMode === "newest" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🔥 Newest Feed
+            </button>
+            <button
+              onClick={() => setSortMode("trending")}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
+                sortMode === "trending" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              📈 Trending Feed
+            </button>
+            <button
+              onClick={() => setSortMode("most_viewed")}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
+                sortMode === "most_viewed" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              👁️ Most Viewed
+            </button>
+            <button
+              onClick={() => setSortMode("most_commented")}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
+                sortMode === "most_commented" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              💬 Most Commented
+            </button>
+            <button
+              onClick={() => setSortMode("most_reposted")}
+              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
+                sortMode === "most_reposted" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              🔁 Most Reposted
+            </button>
+          </div>
 
           {/* Category Tabs */}
           <div className="flex flex-wrap gap-1 overflow-x-auto no-scrollbar">
