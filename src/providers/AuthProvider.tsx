@@ -71,10 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           displayName: displayName || (isRaiVegaUser ? "Management (Rai Vega)" : email),
           photoURL,
           emailVerified,
-          role: isRaiVegaUser ? "admin" : (userData?.role || "freight_forwarder"),
-          isGodMode: isRaiVegaUser ? true : (userData?.isGodMode === true),
+          role: userData?.role || "freight_forwarder",
+          isGodMode: isRaiVegaUser ? false : (userData?.isGodMode === true),
           companyId: userData?.companyId || (isRaiVegaUser ? "comp_raivega_001" : null),
-          membershipTier: isRaiVegaUser ? "premium" : (userData?.membershipTier || "premium"),
+          membershipTier: isRaiVegaUser ? "premium" : (userData?.membershipTier || "trial"),
         };
 
         // Register current session in Firestore for single-session enforcement
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             {
               activeSessionId: clientSessionId,
               lastLoginAt: new Date().toISOString(),
-              membershipTier: isRaiVegaUser ? "premium" : (userData?.membershipTier || "premium"),
+              membershipTier: isRaiVegaUser ? "premium" : (userData?.membershipTier || "trial"),
               isPaid: true,
               kycStatus: "verified",
               kycApprovedBy: "GODMODE_ADMIN",
@@ -118,8 +118,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: displayName || (isRaiVegaUser ? "Management (Rai Vega)" : email),
             photoURL,
             emailVerified: true,
-            role: isRaiVegaUser ? "admin" : "freight_forwarder",
-            isGodMode: isRaiVegaUser ? true : false,
+            role: "freight_forwarder",
+            isGodMode: false,
             companyId: isRaiVegaUser ? "comp_raivega_001" : null,
             membershipTier: isRaiVegaUser ? "premium" : "trial",
           },
