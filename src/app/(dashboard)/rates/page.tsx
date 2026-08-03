@@ -20,7 +20,7 @@ import {
 import LocationSearchInput from "@/components/ui/LocationSearchInput";
 import { sanitizeText } from "@/lib/utils/security";
 
-type RateTab = "active" | "expired" | "all";
+type RateTab = "active" | "expired" | "all" | "self";
 
 type RateData = {
   id: string;
@@ -103,102 +103,7 @@ export default function RateCenterPage() {
     remarks: "",
   });
 
-  // Benchmark fallback seed rates
-  const DEFAULT_INITIAL_RATES: RateData[] = useMemo(() => [
-    {
-      id: "rate_seed_1",
-      seq: "SEQ-982101",
-      carrier: "Maersk Line",
-      por: "INBOM - Mumbai",
-      pol: "INNSA - Nhava Sheva",
-      pod: "AEDXB - Jebel Ali Port",
-      fpod: "AEDXB",
-      rate20dv: 1250,
-      type20dv: "STANDARD",
-      rate40hc: 1650,
-      type40hc: "STANDARD",
-      ft: "14 Days",
-      validityDate: "2026-09-30",
-      rateType: "HANDOVER",
-      tt: "12 Days",
-      routing: "Direct",
-      remarks: "Verified Ocean Benchmark Rate",
-      status: "active",
-      createdAt: null,
-      createdBy: user?.uid || "user_mgt_raivega_2026",
-      serviceProvider: user?.email || "mgt@raivega.in",
-      isEdited: false,
-    },
-    {
-      id: "rate_seed_2",
-      seq: "SEQ-982102",
-      carrier: "MSC",
-      por: "INMAA - Chennai",
-      pol: "INMAA - Chennai Port",
-      pod: "SGSIN - Singapore Port",
-      fpod: "SGSIN",
-      rate20dv: 950,
-      type20dv: "STANDARD",
-      rate40hc: 1350,
-      type40hc: "STANDARD",
-      ft: "10 Days",
-      validityDate: "2026-09-15",
-      rateType: "SAVING",
-      tt: "7 Days",
-      routing: "Direct",
-      remarks: "Promotional allocation rate",
-      status: "active",
-      createdAt: null,
-      createdBy: user?.uid || "user_mgt_raivega_2026",
-      serviceProvider: user?.email || "mgt@raivega.in",
-      isEdited: false,
-    },
-    {
-      id: "rate_seed_3",
-      seq: "SEQ-982103",
-      carrier: "CMA CGM",
-      por: "INMUN - Mundra",
-      pol: "INMUN - Mundra Port",
-      pod: "NLRTM - Rotterdam Port",
-      fpod: "NLRTM",
-      rate20dv: 1850,
-      type20dv: "STANDARD",
-      rate40hc: 2450,
-      type40hc: "STANDARD",
-      ft: "21 Days",
-      validityDate: "2026-10-15",
-      rateType: "HANDOVER",
-      tt: "24 Days",
-      routing: "Direct",
-      remarks: "Extended free time allocation",
-      status: "active",
-      createdAt: null,
-      createdBy: "godmode_admin_dev_uid",
-      serviceProvider: "support@fr8x.in",
-      isEdited: false,
-    },
-  ], [user]);
-
-  // Persistent deleted and expired rate IDs state
-  const [deletedRateIds, setDeletedRateIds] = useState<Set<string>>(() => {
-    try {
-      const saved = typeof window !== "undefined" ? localStorage.getItem("fr8x_deleted_rate_ids") : null;
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  const [expiredRateIds, setExpiredRateIds] = useState<Set<string>>(() => {
-    try {
-      const saved = typeof window !== "undefined" ? localStorage.getItem("fr8x_expired_rate_ids") : null;
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-
-  // Fetch rates from Firestore with index fallback and benchmark seeding
+  // ─── Fetch Rates: Firestore Only, No Seed Data ───────────────────────────
   const fetchRates = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -206,14 +111,11 @@ export default function RateCenterPage() {
       try {
         data = await queryDocuments<any>(COLLECTIONS.RATES, [
           orderBy("createdAt", "desc"),
-          limit(100),
+          limit(200),
         ]);
       } catch {
-        data = await queryDocuments<any>(COLLECTIONS.RATES, [limit(100)]).catch(() => []);
-      }
-
-      if (data.length === 0) {
-        data = await queryDocuments<any>(COLLECTIONS.RATES, [limit(100)]).catch(() => []);
+        // Index may not exist yet — fallback to unordered query
+        data = await queryDocuments<any>(COLLECTIONS.RATES, [limit(200)]).catch(() => []);
       }
 
       const mappedRates: RateData[] = data.map((r: any) => ({
@@ -229,7 +131,7 @@ export default function RateCenterPage() {
         rate40hc: r.rate40hc !== undefined ? Number(r.rate40hc) : (r.contSize === "40'" ? Number(r.rate) : 0),
         type40hc: r.type40hc || (r.contSize === "40'" ? r.contType : "STANDARD"),
         ft: r.ft || "7 Days",
-        validityDate: r.validityDate || "2026-12-31",
+        validityDate: r.validityDate || "",
         rateType: r.rateType || "HANDOVER",
         tt: r.tt || "N/A",
         routing: r.routing || "Direct",
@@ -237,38 +139,18 @@ export default function RateCenterPage() {
         status: r.status || "active",
         createdAt: r.createdAt || null,
         createdBy: r.createdBy || "",
-        serviceProvider: r.createdByEmail || r.serviceProvider || "Logistics Partner",
+        serviceProvider: r.serviceProvider || r.createdByEmail || "",
         isEdited: r.isEdited || false,
       }));
 
-      // Combine Firestore rates with benchmark default rates if needed, respecting deletions & expirations
-      const mergedMap = new Map<string, RateData>();
-      DEFAULT_INITIAL_RATES.forEach((seed) => {
-        if (!deletedRateIds.has(seed.id)) {
-          mergedMap.set(seed.id, seed);
-        }
-      });
-      mappedRates.forEach((real) => {
-        if (!deletedRateIds.has(real.id)) {
-          mergedMap.set(real.id, real);
-        }
-      });
-
-      const finalRates = Array.from(mergedMap.values()).map((r) =>
-        expiredRateIds.has(r.id) ? { ...r, status: "expired" } : r
-      );
-
-      setRates(finalRates);
+      setRates(mappedRates);
     } catch (err) {
       console.error("Error fetching rates:", err);
-      const fallbackRates = DEFAULT_INITIAL_RATES.filter((seed) => !deletedRateIds.has(seed.id)).map((r) =>
-        expiredRateIds.has(r.id) ? { ...r, status: "expired" } : r
-      );
-      setRates(fallbackRates);
+      setRates([]);
     } finally {
       setIsLoading(false);
     }
-  }, [DEFAULT_INITIAL_RATES, deletedRateIds, expiredRateIds]);
+  }, []);
 
   useEffect(() => {
     fetchRates();
@@ -286,6 +168,7 @@ export default function RateCenterPage() {
       // Tab filter
       if (activeTab === "active" && r.status !== "active") return false;
       if (activeTab === "expired" && r.status !== "expired") return false;
+      if (activeTab === "self" && r.createdBy !== user?.uid) return false;
 
       // Per-column search box filters
       if (columnFilters.seq && !(r.seq || "").toLowerCase().includes(columnFilters.seq.toLowerCase())) return false;
@@ -308,7 +191,8 @@ export default function RateCenterPage() {
 
       return true;
     });
-  }, [rates, activeTab, columnFilters]);
+  }, [rates, activeTab, columnFilters, user?.uid]);
+
 
   // Paginated rates
   const totalPages = Math.max(1, Math.ceil(filteredRates.length / ITEMS_PER_PAGE));
@@ -342,54 +226,65 @@ export default function RateCenterPage() {
   }, []);
 
   const handleSave = useCallback(async () => {
-    const userUid = user?.uid || "active_user_2026";
-    const userEmail = user?.email || "mgt@raivega.in";
+    const userUid = user?.uid;
+    const userEmail = user?.email;
+
+    if (!userUid) {
+      showNotification("You must be logged in to submit rates.");
+      return;
+    }
 
     if (!pol && !pod && !carrier && !rate20dv && !rate40hc) {
       showNotification("Please enter rate details (POL, POD, Carrier, or Rate).");
       return;
     }
 
-    const newRateId = `rate_local_${Date.now()}`;
     const seqCode = `SEQ-${Date.now().toString().slice(-6)}`;
+    const docRef = getDocRef(COLLECTIONS.RATES);
+    const newRateId = docRef.id;
+
     const newRateObj: RateData = {
       id: newRateId,
       seq: seqCode,
       carrier: sanitizeText(carrier) || "Carrier N/A",
-      por: sanitizeText(por) || sanitizeText(pol) || "POR",
-      pol: sanitizeText(pol) || "POL",
-      pod: sanitizeText(pod) || "POD",
-      fpod: sanitizeText(fpod) || sanitizeText(pod) || "FPOD",
+      por: sanitizeText(por) || sanitizeText(pol) || "",
+      pol: sanitizeText(pol) || "",
+      pod: sanitizeText(pod) || "",
+      fpod: sanitizeText(fpod) || sanitizeText(pod) || "",
       rate20dv: parseFloat(rate20dv) || 0,
       type20dv,
       rate40hc: parseFloat(rate40hc) || 0,
       type40hc,
       ft: sanitizeText(ft) || "7 Days",
-      validityDate: validityDate || "2026-12-31",
+      validityDate: validityDate || "",
       rateType,
       tt: sanitizeText(tt) || "N/A",
       routing: sanitizeText(routing) || "Direct",
-      remarks: sanitizeText(remarks) || "New Active Rate",
+      remarks: sanitizeText(remarks) || "",
       status: "active",
       createdAt: null,
       createdBy: userUid,
-      serviceProvider: userEmail,
+      serviceProvider: userEmail || "",
       isEdited: false,
     };
 
-    // Instant local state update for 100% UI speed and visibility
+    // Optimistic local update so UI is instant
     setRates((prev) => [newRateObj, ...prev]);
 
     try {
-      const docRef = getDocRef(COLLECTIONS.RATES);
-      await setDocument(COLLECTIONS.RATES, docRef.id, {
+      await setDocument(COLLECTIONS.RATES, newRateId, {
         ...newRateObj,
         createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        createdByName: user?.displayName || "",
+        revisionNumber: 1,
       });
-      showNotification(`Rate ${seqCode} saved successfully!`);
+      showNotification(`Rate ${seqCode} saved to network.`);
     } catch (err) {
-      console.warn("Firestore save rate notice (saved locally):", err);
-      showNotification(`Rate ${seqCode} saved locally!`);
+      console.error("Error saving rate to Firestore:", err);
+      // Remove optimistic entry on failure
+      setRates((prev) => prev.filter((r) => r.id !== newRateId));
+      showNotification("Failed to save rate. Please try again.");
     } finally {
       handleClear();
     }
@@ -517,52 +412,44 @@ REMARKS: ${r.remarks}`;
   };
 
   const handleMarkExpired = useCallback(async (id: string) => {
-    // 1. Instant local state update
+    // Optimistic update
     setRates((prev) =>
       prev.map((r) => (r.id === id ? { ...r, status: "expired" } : r))
     );
-    setExpiredRateIds((prev) => {
-      const next = new Set(prev).add(id);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("fr8x_expired_rate_ids", JSON.stringify(Array.from(next)));
-        }
-      } catch {}
-      return next;
-    });
     showNotification("Rate marked as expired.");
-
     try {
-      await updateDocument(COLLECTIONS.RATES, id, { status: "expired" });
+      await updateDocument(COLLECTIONS.RATES, id, {
+        status: "expired",
+        expiredAt: serverTimestamp(),
+        expiredBy: user?.uid || "",
+      });
     } catch (err) {
-      console.warn("Firestore mark expired notice (updated locally):", err);
+      console.error("Error marking rate expired:", err);
+      // Rollback optimistic update
+      setRates((prev) =>
+        prev.map((r) => (r.id === id ? { ...r, status: "active" } : r))
+      );
+      showNotification("Failed to update rate status.");
     }
-  }, []);
+  }, [user?.uid]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Are you sure you want to delete this rate?")) return;
-    // 1. Instant local state update
+    if (!confirm("Are you sure you want to permanently delete this rate? This cannot be undone.")) return;
+    // Optimistic remove
     setRates((prev) => prev.filter((r) => r.id !== id));
     if (editingRateId === id) {
       handleClear();
     }
-    setDeletedRateIds((prev) => {
-      const next = new Set(prev).add(id);
-      try {
-        if (typeof window !== "undefined") {
-          localStorage.setItem("fr8x_deleted_rate_ids", JSON.stringify(Array.from(next)));
-        }
-      } catch {}
-      return next;
-    });
     showNotification("Rate deleted.");
-
     try {
       await deleteDocument(COLLECTIONS.RATES, id);
     } catch (err) {
-      console.warn("Firestore delete rate notice (deleted locally):", err);
+      console.error("Error deleting rate from Firestore:", err);
+      // Refetch to restore state
+      fetchRates();
+      showNotification("Failed to delete rate. Please try again.");
     }
-  }, [editingRateId, handleClear]);
+  }, [editingRateId, handleClear, fetchRates]);
 
   // Bulk Upload Preview State
   const [showUploadPreview, setShowUploadPreview] = useState(false);
@@ -747,7 +634,7 @@ REMARKS: ${r.remarks}`;
 
         {/* Top Navigation / Tabs & Bulk Action Buttons */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-3">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => { setActiveTab("active"); setCurrentPage(1); }}
               className={activeTab === "active" ? "fr8x-tab-active font-semibold" : "fr8x-tab-inactive"}
@@ -765,6 +652,13 @@ REMARKS: ${r.remarks}`;
               className={activeTab === "all" ? "fr8x-tab-active font-semibold" : "fr8x-tab-inactive"}
             >
               ALL RATES
+            </button>
+            <button
+              onClick={() => { setActiveTab("self"); setCurrentPage(1); }}
+              className={activeTab === "self" ? "fr8x-tab-active font-semibold" : "fr8x-tab-inactive"}
+              title="Show only rates you have submitted"
+            >
+              SELF POSTED
             </button>
           </div>
 
