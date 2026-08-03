@@ -258,4 +258,12 @@
   /* Performance hints */
   .gpu { will-change: transform; }
   .contain-layout { contain: layout; }
+
+  /* ── GLOBAL ICON SCALING OVERRIDE ── */
+  svg.lucide,
+  svg[class*="lucide-"] {
+    transform: scale(1.25);
+    transform-origin: center;
+    stroke-width: 2.2px !important;
+  }
 }
