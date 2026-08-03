@@ -3,15 +3,11 @@ import {
   collection,
   doc,
   getDocs,
-  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   query,
   where,
-  or,
-  and,
-  serverTimestamp,
 } from "firebase/firestore";
 import { firebaseDb } from "./config";
 import { COLLECTIONS } from "@/lib/utils/constants";
