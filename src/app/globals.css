@@ -169,8 +169,8 @@
 
   /* ── Currency ticker (10px Body) ── */
   .fr8x-ticker {
-    @apply h-[28px] bg-brand-950 text-white overflow-hidden
-           flex items-center text-[10px] whitespace-nowrap;
+    @apply h-[28px] bg-slate-100 text-slate-800 border-b border-border overflow-hidden
+           flex items-center text-[10px] whitespace-nowrap font-medium;
   }
 
   /* ── Sidebar nav (10px Body) ── */
