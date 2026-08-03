@@ -109,17 +109,35 @@ const config: Config = {
         ],
       },
       fontSize: {
-        "display-xl": ["3rem", { lineHeight: "1.1", fontWeight: "700" }],
-        "display-lg": ["2.25rem", { lineHeight: "1.2", fontWeight: "700" }],
-        "display-md": ["1.875rem", { lineHeight: "1.25", fontWeight: "600" }],
-        "display-sm": ["1.5rem", { lineHeight: "1.3", fontWeight: "600" }],
-        "heading-lg": ["1.25rem", { lineHeight: "1.4", fontWeight: "600" }],
-        "heading-md": ["1.125rem", { lineHeight: "1.4", fontWeight: "600" }],
-        "heading-sm": ["1rem", { lineHeight: "1.5", fontWeight: "600" }],
-        "body-lg": ["1rem", { lineHeight: "1.6", fontWeight: "400" }],
-        "body-md": ["0.875rem", { lineHeight: "1.6", fontWeight: "400" }],
-        "body-sm": ["0.8125rem", { lineHeight: "1.5", fontWeight: "400" }],
-        caption: ["0.75rem", { lineHeight: "1.4", fontWeight: "400" }],
+        // ── 3 STRICT FONT SIZES FOR ENTIRE WEB APPLICATION ──
+        // 1. Heading: 12px font size
+        heading: ["12px", { lineHeight: "1.3", fontWeight: "600" }],
+        "heading-lg": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
+        "heading-md": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
+        "heading-sm": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
+        "display-xl": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
+        "display-lg": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
+        "display-md": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
+        "display-sm": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
+        "3xl": ["12px", { lineHeight: "1.3" }],
+        "2xl": ["12px", { lineHeight: "1.3" }],
+        xl: ["12px", { lineHeight: "1.3" }],
+        lg: ["12px", { lineHeight: "1.3" }],
+
+        // 2. Body: 10px font size
+        body: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        "body-lg": ["10px", { lineHeight: "1.4", fontWeight: "500" }],
+        "body-md": ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        "body-sm": ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        base: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        md: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        sm: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+
+        // 3. Small: 8px font size
+        small: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
+        caption: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
+        xs: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
+        "2xs": ["8px", { lineHeight: "1.3", fontWeight: "400" }],
       },
       boxShadow: {
         card: "0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
