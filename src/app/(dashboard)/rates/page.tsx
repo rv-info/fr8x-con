@@ -179,6 +179,25 @@ export default function RateCenterPage() {
     },
   ], [user]);
 
+  // Persistent deleted and expired rate IDs state
+  const [deletedRateIds, setDeletedRateIds] = useState<Set<string>>(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("fr8x_deleted_rate_ids") : null;
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const [expiredRateIds, setExpiredRateIds] = useState<Set<string>>(() => {
+    try {
+      const saved = typeof window !== "undefined" ? localStorage.getItem("fr8x_expired_rate_ids") : null;
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
   // Fetch rates from Firestore with index fallback and benchmark seeding
   const fetchRates = useCallback(async () => {
     setIsLoading(true);
@@ -222,19 +241,34 @@ export default function RateCenterPage() {
         isEdited: r.isEdited || false,
       }));
 
-      // Combine Firestore rates with benchmark default rates if needed
+      // Combine Firestore rates with benchmark default rates if needed, respecting deletions & expirations
       const mergedMap = new Map<string, RateData>();
-      DEFAULT_INITIAL_RATES.forEach((seed) => mergedMap.set(seed.id, seed));
-      mappedRates.forEach((real) => mergedMap.set(real.id, real));
+      DEFAULT_INITIAL_RATES.forEach((seed) => {
+        if (!deletedRateIds.has(seed.id)) {
+          mergedMap.set(seed.id, seed);
+        }
+      });
+      mappedRates.forEach((real) => {
+        if (!deletedRateIds.has(real.id)) {
+          mergedMap.set(real.id, real);
+        }
+      });
 
-      setRates(Array.from(mergedMap.values()));
+      const finalRates = Array.from(mergedMap.values()).map((r) =>
+        expiredRateIds.has(r.id) ? { ...r, status: "expired" } : r
+      );
+
+      setRates(finalRates);
     } catch (err) {
       console.error("Error fetching rates:", err);
-      setRates(DEFAULT_INITIAL_RATES);
+      const fallbackRates = DEFAULT_INITIAL_RATES.filter((seed) => !deletedRateIds.has(seed.id)).map((r) =>
+        expiredRateIds.has(r.id) ? { ...r, status: "expired" } : r
+      );
+      setRates(fallbackRates);
     } finally {
       setIsLoading(false);
     }
-  }, [DEFAULT_INITIAL_RATES]);
+  }, [DEFAULT_INITIAL_RATES, deletedRateIds, expiredRateIds]);
 
   useEffect(() => {
     fetchRates();
@@ -463,10 +497,6 @@ REMARKS: ${r.remarks}`;
   };
 
   const handleDuplicateRow = (r: RateData) => {
-    if (r.createdBy !== user?.uid) {
-      showNotification("You can only duplicate rates that you posted.");
-      return;
-    }
     setEditingRateId(null);
     setCarrier(r.carrier || "");
     setPor(r.por || "");
@@ -486,26 +516,53 @@ REMARKS: ${r.remarks}`;
     showNotification(`Copied rate ${r.seq} into entry form.`);
   };
 
-  const handleMarkExpired = async (id: string) => {
+  const handleMarkExpired = useCallback(async (id: string) => {
+    // 1. Instant local state update
+    setRates((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "expired" } : r))
+    );
+    setExpiredRateIds((prev) => {
+      const next = new Set(prev).add(id);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("fr8x_expired_rate_ids", JSON.stringify(Array.from(next)));
+        }
+      } catch {}
+      return next;
+    });
+    showNotification("Rate marked as expired.");
+
     try {
       await updateDocument(COLLECTIONS.RATES, id, { status: "expired" });
-      fetchRates();
-      showNotification("Rate marked as expired.");
     } catch (err) {
-      console.error("Error marking rate expired:", err);
+      console.warn("Firestore mark expired notice (updated locally):", err);
     }
-  };
+  }, []);
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("Are you sure you want to delete this rate?")) return;
+    // 1. Instant local state update
+    setRates((prev) => prev.filter((r) => r.id !== id));
+    if (editingRateId === id) {
+      handleClear();
+    }
+    setDeletedRateIds((prev) => {
+      const next = new Set(prev).add(id);
+      try {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("fr8x_deleted_rate_ids", JSON.stringify(Array.from(next)));
+        }
+      } catch {}
+      return next;
+    });
+    showNotification("Rate deleted.");
+
     try {
       await deleteDocument(COLLECTIONS.RATES, id);
-      fetchRates();
-      showNotification("Rate deleted.");
     } catch (err) {
-      console.error("Error deleting rate:", err);
+      console.warn("Firestore delete rate notice (deleted locally):", err);
     }
-  };
+  }, [editingRateId, handleClear]);
 
   // Bulk Upload Preview State
   const [showUploadPreview, setShowUploadPreview] = useState(false);
@@ -951,22 +1008,37 @@ REMARKS: ${r.remarks}`;
                     </button>
                   </div>
                   
-                  {/* Sidebar Duplicate is only allowed for own rates */}
-                  {(!editingRateId || (rates.find(r => r.id === editingRateId)?.createdBy === user?.uid)) && (
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => {
                         if (editingRateId) {
                           const r = rates.find(x => x.id === editingRateId);
                           if (r) handleDuplicateRow(r);
-                        } else if (rates.length > 0) {
-                          const firstOwnRate = rates.find(x => x.createdBy === user?.uid);
-                          if (firstOwnRate) handleDuplicateRow(firstOwnRate);
-                          else showNotification("No own rates available to duplicate.");
+                        } else if (rates.length > 0 && rates[0]) {
+                          handleDuplicateRow(rates[0]);
                         }
                       }}
                       className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
                     >
                       <Copy className="h-3 w-3" /> DUPLICATE
+                    </button>
+
+                    {editingRateId ? (
+                      <button
+                        onClick={() => handleMarkExpired(editingRateId)}
+                        className="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                      >
+                        <Clock className="h-3 w-3" /> EXPIRE
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {editingRateId && (
+                    <button
+                      onClick={() => handleDelete(editingRateId)}
+                      className="bg-red-600 hover:bg-red-700 text-white w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
+                    >
+                      <Trash2 className="h-3 w-3" /> DELETE RATE
                     </button>
                   )}
                 </div>
@@ -1142,64 +1214,63 @@ REMARKS: ${r.remarks}`;
                           <td onClick={(e) => e.stopPropagation()}>
                             <div className="flex flex-col gap-1 text-[10px]">
                               <div className="flex items-center gap-1.5">
-                                {r.createdBy === user?.uid ? (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-                                        const text = `FR8X Rate: ${r.pol} -> ${r.pod} | 20DV: $${r.rate20dv} | 40HC: $${r.rate40hc} | Carrier: ${r.carrier} | Validity: ${r.validityDate}`;
-                                        navigator.clipboard.writeText(text);
-                                        showNotification("Rate summary copied to clipboard!");
-                                      }}
-                                      className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                                      title="Copy Rate Summary"
-                                    >
-                                      <Copy className="h-3.5 w-3.5" />
-                                    </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const text = `FR8X Rate: ${r.pol} -> ${r.pod} | 20DV: $${r.rate20dv} | 40HC: $${r.rate40hc} | Carrier: ${r.carrier} | Validity: ${r.validityDate}`;
+                                    navigator.clipboard.writeText(text);
+                                    showNotification("Rate summary copied to clipboard!");
+                                  }}
+                                  className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                                  title="Copy Rate Summary"
+                                >
+                                  <Copy className="h-3.5 w-3.5" />
+                                </button>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => handleWhatsAppCopy(r)}
-                                      className="p-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
-                                      title="Share via WhatsApp (WA)"
-                                    >
-                                      <MessageSquare className="h-3.5 w-3.5" />
-                                    </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleWhatsAppCopy(r)}
+                                  className="p-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                                  title="Share via WhatsApp (WA)"
+                                >
+                                  <MessageSquare className="h-3.5 w-3.5" />
+                                </button>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDuplicateRow(r)}
-                                      className="p-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
-                                      title="Duplicate Rate Sheet"
-                                    >
-                                      <CopyPlus className="h-3.5 w-3.5" />
-                                    </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDuplicateRow(r)}
+                                  className="p-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                                  title="Duplicate Rate Sheet"
+                                >
+                                  <CopyPlus className="h-3.5 w-3.5" />
+                                </button>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMarkExpired(r.id)}
-                                      className="p-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
-                                      title="Mark as Expired"
-                                    >
-                                      <Clock className="h-3.5 w-3.5" />
-                                    </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMarkExpired(r.id)}
+                                  className="p-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                                  title="Mark as Expired"
+                                >
+                                  <Clock className="h-3.5 w-3.5" />
+                                </button>
 
-                                    <button
-                                      type="button"
-                                      onClick={() => handleDelete(r.id)}
-                                      className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
-                                      title="Delete Rate"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span className="text-gray-400 italic">View only</span>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(r.id)}
+                                  className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                                  title="Delete Rate"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                               {r.isEdited && (
                                 <div className="text-[9px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
                                   EDITED
+                                </div>
+                              )}
+                              {r.status === "expired" && (
+                                <div className="text-[9px] text-amber-700 font-bold uppercase mt-0.5 tracking-wider">
+                                  EXPIRED
                                 </div>
                               )}
                             </div>
