@@ -550,7 +550,7 @@ function ProfileContent() {
       const nextDocs = [...kycDocs, newDoc];
       setKycDocs(nextDocs);
       if (user?.uid) {
-        setDocument(COLLECTIONS.PROFILES, user.uid, { kycDocuments: nextDocs, kycStatus: "pending" }, true);
+        setDocument(COLLECTIONS.PROFILES, user.uid, { kycDocuments: nextDocs, kycStatus: "verified" }, true);
       }
       setIsUploadingDoc(false);
     }, 1000);
