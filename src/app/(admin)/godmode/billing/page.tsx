@@ -2,6 +2,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { queryDocuments, limit } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
 import {
   CreditCard,
   DollarSign,
@@ -87,6 +89,9 @@ export default function GodModeBillingPage() {
   useEffect(() => {
     setDetails(getGodModePaymentDetails());
     setPlans(getStoredSubscriptionPlans());
+    queryDocuments<PaymentTransactionRecord>(COLLECTIONS.TRANSACTIONS, [limit(100)])
+      .then((data) => setTransactions(data))
+      .catch(() => setTransactions([]));
   }, []);
 
   // Render QR Canvas when UPI ID or Merchant Name changes
