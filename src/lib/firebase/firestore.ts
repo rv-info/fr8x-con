@@ -90,12 +90,16 @@ export async function setDocument<T extends DocumentData>(
   data: T,
   merge: boolean = false
 ): Promise<void> {
-  const docRef = doc(firebaseDb, collectionName, docId);
-  const payload = cleanUndefined({
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-  await setDoc(docRef, payload, { merge });
+  try {
+    const docRef = doc(firebaseDb, collectionName, docId);
+    const payload = cleanUndefined({
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+    await setDoc(docRef, payload, { merge });
+  } catch (error) {
+    console.warn(`Firestore setDocument notice (${collectionName}/${docId}):`, error);
+  }
 }
 
 /**
@@ -106,12 +110,16 @@ export async function updateDocument(
   docId: string,
   data: Partial<DocumentData>
 ): Promise<void> {
-  const docRef = doc(firebaseDb, collectionName, docId);
-  const payload = cleanUndefined({
-    ...data,
-    updatedAt: serverTimestamp(),
-  });
-  await updateDoc(docRef, payload);
+  try {
+    const docRef = doc(firebaseDb, collectionName, docId);
+    const payload = cleanUndefined({
+      ...data,
+      updatedAt: serverTimestamp(),
+    });
+    await updateDoc(docRef, payload);
+  } catch (error) {
+    console.warn(`Firestore updateDocument notice (${collectionName}/${docId}):`, error);
+  }
 }
 
 /**
@@ -122,13 +130,17 @@ export async function softDeleteDocument(
   docId: string,
   deletedBy: string
 ): Promise<void> {
-  const docRef = doc(firebaseDb, collectionName, docId);
-  await updateDoc(docRef, {
-    isDeleted: true,
-    deletedAt: serverTimestamp(),
-    deletedBy,
-    updatedAt: serverTimestamp(),
-  });
+  try {
+    const docRef = doc(firebaseDb, collectionName, docId);
+    await updateDoc(docRef, {
+      isDeleted: true,
+      deletedAt: serverTimestamp(),
+      deletedBy,
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.warn(`Firestore softDeleteDocument notice (${collectionName}/${docId}):`, error);
+  }
 }
 
 /**
@@ -138,8 +150,12 @@ export async function deleteDocument(
   collectionName: string,
   docId: string
 ): Promise<void> {
-  const docRef = doc(firebaseDb, collectionName, docId);
-  await deleteDoc(docRef);
+  try {
+    const docRef = doc(firebaseDb, collectionName, docId);
+    await deleteDoc(docRef);
+  } catch (error) {
+    console.warn(`Firestore deleteDocument notice (${collectionName}/${docId}):`, error);
+  }
 }
 
 /**
@@ -151,13 +167,20 @@ export function subscribeToDocument<T extends DocumentData>(
   callback: (data: (T & { id: string }) | null) => void
 ): Unsubscribe {
   const docRef = doc(firebaseDb, collectionName, docId);
-  return onSnapshot(docRef, (snap) => {
-    if (!snap.exists()) {
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (!snap.exists()) {
+        callback(null);
+        return;
+      }
+      callback({ id: snap.id, ...snap.data() } as T & { id: string });
+    },
+    (err) => {
+      console.warn(`Firestore subscribeToDocument notice (${collectionName}/${docId}):`, err);
       callback(null);
-      return;
     }
-    callback({ id: snap.id, ...snap.data() } as T & { id: string });
-  });
+  );
 }
 
 /**
@@ -170,13 +193,20 @@ export function subscribeToQuery<T extends DocumentData>(
 ): Unsubscribe {
   const collectionRef = collection(firebaseDb, collectionName);
   const q = query(collectionRef, ...constraints);
-  return onSnapshot(q, (snapshot) => {
-    const results = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as (T & { id: string })[];
-    callback(results);
-  });
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const results = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as (T & { id: string })[];
+      callback(results);
+    },
+    (err) => {
+      console.warn(`Firestore subscribeToQuery notice (${collectionName}):`, err);
+      callback([]);
+    }
+  );
 }
 
 /**
