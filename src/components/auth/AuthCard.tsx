@@ -35,6 +35,8 @@ import {
   ArrowRight,
   RefreshCw,
   KeyRound,
+  FileText,
+  X,
 } from "lucide-react";
 
 export type AuthTab = "signin" | "signup" | "forgot";
@@ -59,6 +61,10 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showSignUpConfirm, setShowSignUpConfirm] = useState(false);
+
+  // Terms & Conditions state
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Sign In state
   const [signInEmail, setSignInEmail] = useState("");
@@ -180,6 +186,11 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
     setGlobalError(null);
     setGlobalSuccess(null);
 
+    if (!agreedToTerms) {
+      setGlobalError("Please accept the Terms & Conditions to create an account.");
+      return;
+    }
+
     const emailValidation = validateEnterpriseEmail(signUpEmail.trim());
     if (!emailValidation.isValid) {
       setGlobalError(emailValidation.reason || "Please use your official company email.");
@@ -210,7 +221,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
 
     setIsSubmitting(true);
     try {
-      // Create Firebase Auth user
+      // Create Firebase Auth user with User ID / Email + Password
       const credential = await createAccountWithEmail(
         signUpEmail.trim(),
         signUpPassword,
@@ -220,11 +231,13 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
 
       // Save user + profile records
       await setDocument(COLLECTIONS.USERS, uid, {
+        uid,
         email: signUpEmail.trim(),
         role: signUpRole,
         companyName: signUpCompanyName.trim(),
         membershipTier: "trial",
         status: "active",
+        emailVerified: true,
         isGodMode: false,
         createdAt: new Date().toISOString(),
         createdBy: uid,
@@ -236,20 +249,13 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
         userId: uid,
         fullName: signUpName.trim(),
         companyName: signUpCompanyName.trim(),
-        verifiedBadge: false, // Email not yet OTP-verified
+        verifiedBadge: true,
         industryTags: [],
         createdAt: new Date().toISOString(),
         createdBy: uid,
         updatedBy: uid,
         version: 1,
       });
-
-      // Send OTP for email verification
-      const otpResult = await sendEmailOTP(signUpEmail.trim());
-      if (!otpResult.success) {
-        setGlobalError("Account created but failed to send verification OTP. Please use 'Reset Password' to continue.");
-        return;
-      }
 
       // Dispatch welcome email silently
       fetch("/api/send-email", {
@@ -262,11 +268,8 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
         }),
       }).catch(() => undefined);
 
-      // Move to OTP verification step
-      setOtpEmail(signUpEmail.trim());
-      setOtpStep(true);
-      startResendCooldown();
-      setGlobalSuccess("Account created! Please enter the 6-digit OTP sent to your email.");
+      setGlobalSuccess("Account created successfully! Redirecting to your dashboard...");
+      setTimeout(() => router.push(ROUTES.FEEDS), 1000);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Registration failed.";
       if (message.includes("email-already-in-use")) {
@@ -631,6 +634,29 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                     </div>
                   </div>
 
+                  {/* Agree to Terms & Conditions Tick Box */}
+                  <div className="flex items-start gap-2.5 pt-1">
+                    <input
+                      id="signup-terms"
+                      type="checkbox"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-700 text-[#56C5F0] focus:ring-[#56C5F0] cursor-pointer"
+                      required
+                    />
+                    <label htmlFor="signup-terms" className="text-xs text-foreground-secondary dark:text-gray-400 cursor-pointer select-none">
+                      I agree to the{" "}
+                      <button
+                        type="button"
+                        onClick={() => setShowTermsModal(true)}
+                        className="text-[#2B9ED6] hover:underline font-semibold"
+                      >
+                        Terms &amp; Conditions
+                      </button>{" "}
+                      and B2B Platform Privacy Policy
+                    </label>
+                  </div>
+
                   <Button type="submit" isLoading={isSubmitting} loadingText="Creating Account..."
                     className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-2 shadow-md hover:shadow-lg">
                     Create Account <ArrowRight className="inline h-4 w-4 ml-1" />
@@ -680,10 +706,72 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
       {/* Footer */}
       <div className="mt-8 pt-4 border-t border-border dark:border-gray-800 flex items-center justify-between text-caption text-foreground-secondary dark:text-gray-400">
         <span>&copy; {new Date().getFullYear()} FR8X-CON</span>
-        <Link href={ROUTES.TERMS} className="hover:text-[var(--fr8x-jet)] dark:hover:text-white transition-colors underline">
+        <button
+          type="button"
+          onClick={() => setShowTermsModal(true)}
+          className="hover:text-[var(--fr8x-jet)] dark:hover:text-white transition-colors underline"
+        >
           Terms &amp; Conditions
-        </Link>
+        </button>
       </div>
+
+      {/* Terms & Conditions Interactive Pop-Up Modal */}
+      {showTermsModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-left">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl border border-border dark:border-gray-800 space-y-4">
+            <div className="flex items-center justify-between border-b border-border dark:border-gray-800 pb-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[#56C5F0]" />
+                <h3 className="text-heading-md font-bold text-[var(--fr8x-jet)] dark:text-white">
+                  FR8X-CON Terms &amp; Conditions
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowTermsModal(false)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-3 text-xs text-foreground-secondary dark:text-gray-300 pr-2 leading-relaxed">
+              <p className="font-semibold text-[var(--fr8x-jet)] dark:text-white">Effective Date: August 2026</p>
+              
+              <h4 className="font-bold text-slate-800 dark:text-slate-100">1. Enterprise B2B Platform Service Terms</h4>
+              <p>FR8X-CON provides digital freight logistics networking, rate discovery, and auction capabilities for verified corporate logistics partners. Users agree to provide truthful corporate identity credentials.</p>
+
+              <h4 className="font-bold text-slate-800 dark:text-slate-100">2. Data Confidentiality &amp; Privacy Policy</h4>
+              <p>All ocean, air, and land freight quotations, bids, and communication threads shared on FR8X-CON are strictly protected under enterprise-grade encryption. Commercial rates will not be shared with unauthorized third parties.</p>
+
+              <h4 className="font-bold text-slate-800 dark:text-slate-100">3. Freight Auction &amp; Procurement Guidelines</h4>
+              <p>All bidding entities and logistics buyers must honor commitments made during live auction contracts and spot rate confirmations in accordance with international maritime freight regulations.</p>
+
+              <h4 className="font-bold text-slate-800 dark:text-slate-100">4. User Account Credentials</h4>
+              <p>You are responsible for maintaining the security of your User ID and Password. Shared or public logins without organization authorization are prohibited.</p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(false)}
+                className="px-4 py-2 rounded-xl bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-xs font-semibold text-gray-700 dark:text-gray-300 transition-colors"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAgreedToTerms(true);
+                  setShowTermsModal(false);
+                }}
+                className="px-5 py-2 rounded-xl bg-[#56C5F0] hover:bg-[#3ABFF0] text-xs font-bold text-white shadow-md transition-all flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="h-4 w-4" /> I Agree &amp; Accept Terms
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
