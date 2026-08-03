@@ -169,20 +169,21 @@ export function TopNav() {
       {showMobileMenu && (
         <>
           <div
-            className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+            className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 lg:hidden"
             onClick={() => setShowMobileMenu(false)}
           />
-          <div className="fixed top-0 left-0 bottom-0 w-64 bg-background-card z-50 shadow-elevated lg:hidden">
-            <div className="flex items-center justify-between px-3 py-3 border-b border-border">
-              <span className="text-body-sm font-bold text-[var(--fr8x-periwinkle)]">{APP_NAME}</span>
+          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200 z-50 shadow-xl lg:hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
+              <span className="text-[12px] font-bold text-[var(--fr8x-periwinkle)] tracking-wide">{APP_NAME} Navigation</span>
               <button
                 onClick={() => setShowMobileMenu(false)}
-                className="p-1.5 text-foreground-secondary"
+                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                aria-label="Close mobile menu"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
-            <nav className="px-2 py-3 space-y-0.5">
+            <nav className="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
               {[
                 { label: "Feeds", href: ROUTES.FEEDS },
                 { label: "Auctions", href: ROUTES.AUCTIONS },
@@ -197,12 +198,15 @@ export function TopNav() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setShowMobileMenu(false)}
-                  className="block rounded-md px-2 py-1.5 text-body-sm text-foreground-secondary hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)]"
+                  className="flex items-center justify-between rounded-md px-3 py-2 text-[10px] font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-transparent hover:border-slate-200"
                 >
-                  {item.label}
+                  <span>{item.label}</span>
                 </Link>
               ))}
             </nav>
+            <div className="p-3 border-t border-slate-200 bg-slate-50 text-[8px] text-slate-500 text-center">
+              FR8X-CON Mobile Platform v1.0
+            </div>
           </div>
         </>
       )}
