@@ -377,6 +377,49 @@ function ProfileContent() {
     reader.readAsDataURL(file);
   };
 
+  // ─── Photo & Logo Removal Handlers (Delete image for blank upload) ───
+  const handleRemovePhoto = async () => {
+    const targetUid = user?.uid || "default_user";
+    setPhotoURL(null);
+    setProfile((prev) => (prev ? { ...prev, photoURL: null } : null));
+    try {
+      const cached = localStorage.getItem(`fr8x_profile_${targetUid}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        parsed.photoURL = null;
+        localStorage.setItem(`fr8x_profile_${targetUid}`, JSON.stringify(parsed));
+      }
+    } catch {}
+    try {
+      await setDocument(COLLECTIONS.PROFILES, targetUid, { photoURL: null }, true);
+      setSaveSuccess("Profile photo removed. Blank upload ready.");
+      setTimeout(() => setSaveSuccess(null), 3000);
+    } catch (err) {
+      console.warn("Notice updating photo removal:", err);
+    }
+  };
+
+  const handleRemoveLogo = async () => {
+    const targetUid = user?.uid || "default_user";
+    setCompanyLogoURL(null);
+    setProfile((prev) => (prev ? { ...prev, companyLogoURL: null } : null));
+    try {
+      const cached = localStorage.getItem(`fr8x_profile_${targetUid}`);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        parsed.companyLogoURL = null;
+        localStorage.setItem(`fr8x_profile_${targetUid}`, JSON.stringify(parsed));
+      }
+    } catch {}
+    try {
+      await setDocument(COLLECTIONS.PROFILES, targetUid, { companyLogoURL: null }, true);
+      setSaveSuccess("Company logo removed. Blank upload ready.");
+      setTimeout(() => setSaveSuccess(null), 3000);
+    } catch (err) {
+      console.warn("Notice updating logo removal:", err);
+    }
+  };
+
   // ─── Work Experience CRUD ───
   const handleAddWorkExp = () => {
     setWorkExperience((prev) => [
@@ -586,8 +629,31 @@ function ProfileContent() {
               <Building2 className="h-6 w-6 text-[var(--fr8x-periwinkle)]" />
             )}
             {!isUploadingLogo && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl">
-                <Camera className="h-4 w-4 text-white" />
+              <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-xl gap-1">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    logoInputRef.current?.click();
+                  }}
+                  className="p-1 rounded bg-slate-800 text-white hover:bg-slate-700"
+                  title="Upload Logo"
+                >
+                  <Camera className="h-3.5 w-3.5" />
+                </button>
+                {companyLogoURL && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveLogo();
+                    }}
+                    className="p-1 rounded bg-rose-600 text-white hover:bg-rose-700"
+                    title="Delete Logo Image"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -684,9 +750,31 @@ function ProfileContent() {
                     fullName.charAt(0) || displayName.charAt(0)
                   )}
                   {!isUploadingPhoto && (
-                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                      <Camera className="h-5 w-5 text-white" />
-                      <span className="text-[8px] text-white font-semibold mt-0.5">Upload</span>
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          photoInputRef.current?.click();
+                        }}
+                        className="p-1 rounded bg-slate-800 text-white hover:bg-slate-700"
+                        title="Upload Avatar Photo"
+                      >
+                        <Camera className="h-3.5 w-3.5" />
+                      </button>
+                      {photoURL && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemovePhoto();
+                          }}
+                          className="p-1 rounded bg-rose-600 text-white hover:bg-rose-700"
+                          title="Delete Avatar Image"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
