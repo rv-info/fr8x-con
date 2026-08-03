@@ -74,8 +74,8 @@ export function PeerReviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 text-left">
-      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl border border-border">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm p-4 text-left">
+      <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl border border-slate-300">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
             <Award className="h-5 w-5 text-amber-500" />
