@@ -55,7 +55,6 @@ function sanitizeHtml(raw: string): string {
       // For <a> tags, only allow href and target attributes
       if (lowerTag === "a") {
         const hrefMatch = match.match(/href=["']([^"'<>]+)["']/i);
-        const targetMatch = match.match(/target=["']([^"'<>]+)["']/i);
         const href = hrefMatch ? ` href="${hrefMatch[1]}"` : "";
         // Force all links to open in new tab with noopener for safety
         return `<a${href} target="_blank" rel="noopener noreferrer">`;
