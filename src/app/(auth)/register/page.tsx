@@ -24,7 +24,7 @@ import {
 import { validateEnterpriseEmail } from "@/lib/config/enterpriseRegistrationPolicy";
 import { processPayment, type PaymentMethod } from "@/lib/payments";
 import { Button } from "@/components/ui/Button";
-import { Briefcase, CheckCircle2, ShieldCheck, AlertCircle } from "lucide-react";
+import { Briefcase, CheckCircle2, ShieldCheck, AlertCircle, FileText, X } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -70,6 +70,9 @@ export default function RegisterPage() {
   const [cvv, setCvv] = useState("");
   const [upiId, setUpiId] = useState("");
 
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
@@ -78,6 +81,10 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      setError("Please agree to the Terms & Conditions before creating an enterprise account.");
+      return;
+    }
     if (!role) {
       setError("Please select your Business Vertical first.");
       return;
@@ -493,6 +500,29 @@ export default function RegisterPage() {
                 </div>
               )}
 
+              {/* Agree to Terms & Conditions Tick Box */}
+              <div className="flex items-start gap-2.5 pt-2">
+                <input
+                  id="reg-terms"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#56C5F0] focus:ring-[#56C5F0] cursor-pointer"
+                  required
+                />
+                <label htmlFor="reg-terms" className="text-xs text-foreground-secondary cursor-pointer select-none">
+                  I agree to the{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowTermsModal(true)}
+                    className="text-[#2B9ED6] hover:underline font-semibold"
+                  >
+                    Terms &amp; Conditions
+                  </button>{" "}
+                  and B2B Enterprise Policy
+                </label>
+              </div>
+
               {/* Payment Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full">
                 <Button
@@ -516,6 +546,64 @@ export default function RegisterPage() {
             </Link>
           </div>
         </form>
+
+        {/* Terms & Conditions Interactive Pop-Up Modal */}
+        {showTermsModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 text-left">
+            <div className="bg-white rounded-2xl p-6 w-full max-w-xl max-h-[85vh] flex flex-col shadow-2xl border border-border space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-[#56C5F0]" />
+                  <h3 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
+                    FR8X-CON Enterprise Terms &amp; Conditions
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowTermsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 text-xs text-foreground-secondary pr-2 leading-relaxed">
+                <p className="font-semibold text-[var(--fr8x-jet)]">Effective Date: August 2026</p>
+                
+                <h4 className="font-bold text-slate-800">1. Enterprise B2B Platform Service Terms</h4>
+                <p>FR8X-CON provides digital freight logistics networking, rate discovery, and auction capabilities for verified corporate logistics partners. Users agree to provide truthful corporate identity credentials.</p>
+
+                <h4 className="font-bold text-slate-800">2. Data Confidentiality &amp; Privacy Policy</h4>
+                <p>All ocean, air, and land freight quotations, bids, and communication threads shared on FR8X-CON are strictly protected under enterprise-grade encryption. Commercial rates will not be shared with unauthorized third parties.</p>
+
+                <h4 className="font-bold text-slate-800">3. Freight Auction &amp; Procurement Guidelines</h4>
+                <p>All bidding entities and logistics buyers must honor commitments made during live auction contracts and spot rate confirmations in accordance with international maritime freight regulations.</p>
+
+                <h4 className="font-bold text-slate-800">4. User Account Credentials</h4>
+                <p>You are responsible for maintaining the security of your User ID and Password. Shared or public logins without organization authorization are prohibited.</p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-3 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setShowTermsModal(false)}
+                  className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-semibold text-gray-700 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAgreedToTerms(true);
+                    setShowTermsModal(false);
+                  }}
+                  className="px-5 py-2 rounded-xl bg-[#56C5F0] hover:bg-[#3ABFF0] text-xs font-bold text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <CheckCircle2 className="h-4 w-4" /> I Agree &amp; Accept Terms
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
