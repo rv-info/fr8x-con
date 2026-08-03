@@ -144,6 +144,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           remoteData?.activeSessionId &&
           remoteData.activeSessionId !== clientSessionId
         ) {
+          if (typeof window !== "undefined") {
+            sessionStorage.clear();
+            localStorage.removeItem("fr8x_active_user");
+            sessionStorage.removeItem("fr8x_godmode_admin");
+            document.cookie = "fr8x_godmode_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+          }
           firebaseSignOut();
           setState({
             isAuthenticated: false,
@@ -151,7 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             user: null,
             error: "Your session was terminated because your account signed in from another device.",
           });
-          router.push(ROUTES.LOGIN);
+          if (typeof window !== "undefined") {
+            window.location.replace(ROUTES.LOGIN);
+          } else {
+            router.push(ROUTES.LOGIN);
+          }
         }
       }
     );
@@ -238,16 +248,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (state.user?.uid) {
           sessionStorage.removeItem(`fr8x_session_${state.user.uid}`);
         }
-        sessionStorage.removeItem("fr8x_active_user");
+        sessionStorage.clear();
         localStorage.removeItem("fr8x_active_user");
         sessionStorage.removeItem("fr8x_godmode_admin");
         document.cookie = "fr8x_godmode_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       }
       await firebaseSignOut();
       setState({ isAuthenticated: false, isLoading: false, user: null, error: null });
-      router.push(ROUTES.LOGIN);
+      if (typeof window !== "undefined") {
+        window.location.replace(ROUTES.LOGIN);
+      } else {
+        router.push(ROUTES.LOGIN);
+      }
     } catch {
-      // Sign out silently
+      if (typeof window !== "undefined") {
+        window.location.replace(ROUTES.LOGIN);
+      }
     }
   }, [state.user?.uid, router]);
 
