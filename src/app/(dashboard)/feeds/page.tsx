@@ -1,6 +1,7 @@
-// FR8X-CON Feeds Page — Production
-// Feed-only. No job posting. 3-line collapse. Like/Dislike/Comment/Repost/Hide.
-// Content sanitized before write. Blocked contacts filtered. Posts ranked by engagement.
+// FR8X-CON Feeds — Production
+// All DB-backed. No seed posts. Interactions persist in Firestore feedInteractions collection.
+// Hidden posts persist per user in feedHidden collection.
+// Premium enterprise-grade feed with professional sort tabs.
 
 "use client";
 
@@ -31,7 +32,6 @@ import {
   Bookmark,
   MessageSquare,
   Loader2,
-  Plus,
   Building2,
   CheckCircle2,
   Tag as TagIcon,
@@ -39,12 +39,19 @@ import {
   ChevronDown,
   ChevronUp,
   Send,
+  TrendingUp,
+  Clock,
+  Eye,
+  BarChart3,
 } from "lucide-react";
 import { validateContentModeration } from "@/lib/security/contentModeration";
 import { JobPostsSection } from "@/components/jobs/JobPostsSection";
 import { ContactsPanel } from "@/components/contacts/ContactsPanel";
+import { calculateTrendingScore } from "@/lib/utils/feedRanking";
+import { subscribeToQuery } from "@/lib/firebase/firestore";
 
-// ─── Types ───
+// ─── Types ────────────────────────────────────────────────────────────────────
+
 type PostData = {
   id: string;
   authorId: string;
@@ -58,6 +65,7 @@ type PostData = {
   repostsCount: number;
   bookmarksCount: number;
   commentsCount?: number;
+  viewsCount?: number;
   createdAt: { seconds: number; nanoseconds: number } | null;
   isDeleted?: boolean;
 };
@@ -72,27 +80,66 @@ type ProfileData = {
   industryTags: string[];
 };
 
-// ─── Layered Avatar ───
+type FeedInteraction = {
+  userId: string;
+  postId: string;
+  liked: boolean;
+  disliked: boolean;
+  reposted: boolean;
+  saved: boolean;
+  updatedAt: { seconds: number; nanoseconds: number } | null;
+};
+
+type FeedSortMode = "newest" | "trending" | "most_viewed" | "most_commented" | "most_reposted";
+
+// ─── Layered Avatar ───────────────────────────────────────────────────────────
+
 const LayeredAvatar = memo(function LayeredAvatar({
   personName,
   companyName,
+  photoURL,
   size = "md",
 }: {
   personName: string;
   companyName?: string;
+  photoURL?: string;
   size?: "sm" | "md" | "lg";
 }) {
   const pInitial = (personName || "U").charAt(0).toUpperCase();
   const cInitial = (companyName || "C").charAt(0).toUpperCase();
-  const outerSizeClass = size === "lg" ? "w-12 h-12" : size === "md" ? "w-10 h-10" : "w-8 h-8";
-  const personAvatarSize = size === "lg" ? "w-8 h-8 text-[12px]" : size === "md" ? "w-7 h-7 text-[10px]" : "w-5 h-5 text-[9px]";
-  const companyBadgeSize = size === "lg" ? "w-5 h-5 text-[9px]" : size === "md" ? "w-4 h-4 text-[8px]" : "w-3.5 h-3.5 text-[7px]";
-  void companyBadgeSize;
+
+  const outerSizeClass =
+    size === "lg" ? "w-14 h-14" : size === "md" ? "w-12 h-12" : "w-9 h-9";
+  const personAvatarSize =
+    size === "lg"
+      ? "w-9 h-9 text-[13px]"
+      : size === "md"
+      ? "w-8 h-8 text-[11px]"
+      : "w-6 h-6 text-[10px]";
+  const companyBadgeSize =
+    size === "lg" ? "w-6 h-6 text-[10px]" : size === "md" ? "w-5 h-5 text-[9px]" : "w-4 h-4 text-[8px]";
+
+  if (photoURL) {
+    return (
+      <div className={`relative flex items-center justify-center ${outerSizeClass} shrink-0`}>
+        <img
+          src={photoURL}
+          alt={personName}
+          className="w-full h-full rounded-full object-cover border-2 border-white shadow-sm"
+        />
+        <div
+          className={`absolute -bottom-1 -right-1 ${companyBadgeSize} rounded bg-slate-800 border border-white flex items-center justify-center font-bold text-white shadow-sm`}
+        >
+          <span className="text-[7px] uppercase">{cInitial}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`relative flex items-center justify-center ${outerSizeClass} shrink-0`}>
-      <div className="absolute top-0 left-0 w-full h-full rounded-lg bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 flex items-center justify-center text-white font-bold shadow-sm overflow-hidden">
-        <span className="opacity-80 text-[10px] uppercase font-semibold tracking-tighter">{cInitial}</span>
+      <div className="absolute top-0 left-0 w-full h-full rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 border border-slate-600 flex items-center justify-center text-white font-bold shadow-sm overflow-hidden">
+        <span className="opacity-70 text-[11px] uppercase font-semibold tracking-tighter">{cInitial}</span>
       </div>
       <div
         className={`absolute -bottom-1 -right-1 ${personAvatarSize} rounded-full bg-[var(--fr8x-lavender)] border-2 border-white flex items-center justify-center font-bold text-[var(--fr8x-jet)] shadow-md`}
@@ -104,21 +151,23 @@ const LayeredAvatar = memo(function LayeredAvatar({
   );
 });
 
-// ─── Post Card ───
+// ─── Post Card ────────────────────────────────────────────────────────────────
+
 function PostCard({
   post,
   currentUserId,
   onHide,
+  initialInteraction,
 }: {
   post: PostData;
   currentUserId: string;
   onHide: (id: string) => void;
+  initialInteraction?: FeedInteraction | null;
 }) {
   const timeAgo = post.createdAt
     ? formatRelativeTime(post.createdAt.seconds * 1000)
     : "Just now";
 
-  // 3-line collapse state
   const [isExpanded, setIsExpanded] = useState(false);
   const [needsCollapse, setNeedsCollapse] = useState(false);
   const contentRef = useRef<HTMLParagraphElement>(null);
@@ -126,41 +175,45 @@ function PostCard({
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
-    // Check if content exceeds 3 lines (line-height ~20px, 3 lines ~60px)
     if (el.scrollHeight > el.offsetHeight + 2) {
       setNeedsCollapse(true);
     }
   }, [post.content]);
 
-  // Interaction state
   const [likes, setLikes] = useState(post.likesCount || 0);
   const [dislikes, setDislikes] = useState(post.dislikesCount || 0);
   const [reposts, setReposts] = useState(post.repostsCount || 0);
-  const [userLiked, setUserLiked] = useState(false);
-  const [userDisliked, setUserDisliked] = useState(false);
-  const [userReposted, setUserReposted] = useState(false);
+  const [saved, setSaved] = useState(initialInteraction?.saved ?? false);
+  const [userLiked, setUserLiked] = useState(initialInteraction?.liked ?? false);
+  const [userDisliked, setUserDisliked] = useState(initialInteraction?.disliked ?? false);
+  const [userReposted, setUserReposted] = useState(initialInteraction?.reposted ?? false);
   const [showComment, setShowComment] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [isPostingComment, setIsPostingComment] = useState(false);
 
-  const interactionKey = `fr8x_interact_${post.id}_${currentUserId}`;
-  useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem(interactionKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setUserLiked(!!parsed.liked);
-        setUserDisliked(!!parsed.disliked);
-        setUserReposted(!!parsed.reposted);
-      }
-    } catch { /* ignore */ }
-  }, [interactionKey]);
+  const interactionDocId = `${currentUserId}_${post.id}`;
 
-  function saveInteraction(liked: boolean, disliked: boolean, reposted: boolean) {
-    try {
-      sessionStorage.setItem(interactionKey, JSON.stringify({ liked, disliked, reposted }));
-    } catch { /* ignore */ }
-  }
+  const persistInteraction = useCallback(
+    async (update: Partial<FeedInteraction>) => {
+      if (!currentUserId) return;
+      try {
+        await setDocument(
+          COLLECTIONS.FEED_INTERACTIONS,
+          interactionDocId,
+          {
+            userId: currentUserId,
+            postId: post.id,
+            updatedAt: serverTimestamp(),
+            ...update,
+          },
+          true
+        );
+      } catch {
+        // Non-critical
+      }
+    },
+    [currentUserId, interactionDocId, post.id]
+  );
 
   const handleLike = async () => {
     if (userLiked) return;
@@ -170,7 +223,7 @@ function PostCard({
     if (userDisliked) setDislikes(newDislikes);
     setUserLiked(true);
     setUserDisliked(false);
-    saveInteraction(true, false, userReposted);
+    await persistInteraction({ liked: true, disliked: false });
     try {
       await updateDocument(COLLECTIONS.POSTS, post.id, {
         likesCount: newLikes,
@@ -187,7 +240,7 @@ function PostCard({
     if (userLiked) setLikes(newLikes);
     setUserDisliked(true);
     setUserLiked(false);
-    saveInteraction(false, true, userReposted);
+    await persistInteraction({ disliked: true, liked: false });
     try {
       await updateDocument(COLLECTIONS.POSTS, post.id, {
         dislikesCount: newDislikes,
@@ -201,9 +254,20 @@ function PostCard({
     const newReposts = reposts + 1;
     setReposts(newReposts);
     setUserReposted(true);
-    saveInteraction(userLiked, userDisliked, true);
+    await persistInteraction({ reposted: true });
     try {
       await updateDocument(COLLECTIONS.POSTS, post.id, { repostsCount: newReposts });
+    } catch { /* non-critical */ }
+  };
+
+  const handleSave = async () => {
+    const next = !saved;
+    setSaved(next);
+    await persistInteraction({ saved: next });
+    try {
+      await updateDocument(COLLECTIONS.POSTS, post.id, {
+        bookmarksCount: next ? (post.bookmarksCount || 0) + 1 : Math.max(0, (post.bookmarksCount || 0) - 1),
+      });
     } catch { /* non-critical */ }
   };
 
@@ -219,6 +283,7 @@ function PostCard({
         authorId: currentUserId,
         content: sanitized,
         createdAt: serverTimestamp(),
+        createdBy: currentUserId,
         isDeleted: false,
       });
       await updateDocument(COLLECTIONS.POSTS, post.id, {
@@ -232,39 +297,47 @@ function PostCard({
   };
 
   return (
-    <article className="fr8x-card p-3 bg-white">
+    <article className="bg-white rounded-xl border border-slate-200/80 shadow-sm p-4 space-y-3">
       {/* Author header */}
-      <div className="flex items-start gap-2.5 mb-2">
-        <LayeredAvatar personName={post.authorName} companyName={post.authorCompany} size="md" />
+      <div className="flex items-start gap-3">
+        <LayeredAvatar
+          personName={post.authorName}
+          companyName={post.authorCompany}
+          size="md"
+        />
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[11px] font-semibold text-[var(--fr8x-jet)]">{post.authorName}</span>
-            <span className="text-[9px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded font-medium border border-slate-200 flex items-center gap-0.5">
-              <Building2 className="h-2.5 w-2.5 text-slate-500" />
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[12px] font-bold text-[var(--fr8x-jet)]">{post.authorName}</span>
+            <span className="text-[9px] bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded font-semibold border border-slate-200 flex items-center gap-1">
+              <Building2 className="h-2.5 w-2.5" />
               {post.authorCompany || "Freight Network Member"}
             </span>
+            {post.category && (
+              <span className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded font-medium border border-blue-100 flex items-center gap-1">
+                <TagIcon className="h-2.5 w-2.5" />
+                {post.category}
+              </span>
+            )}
           </div>
-          <p className="text-[10px] text-foreground-muted">
+          <p className="text-[10px] text-foreground-muted mt-0.5">
             {timeAgo}
-            {post.category ? ` • ${post.category}` : ""}
-            {post.authorLocation ? ` • ${post.authorLocation}` : ""}
+            {post.authorLocation ? ` · ${post.authorLocation}` : ""}
           </p>
         </div>
-        {/* Hide button */}
         <button
           onClick={() => onHide(post.id)}
           title="Hide this post"
-          className="text-foreground-muted hover:text-foreground transition-colors p-0.5 shrink-0"
+          className="text-foreground-muted hover:text-slate-600 transition-colors p-1 rounded hover:bg-slate-100 shrink-0"
         >
           <EyeOff className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Content — 3-line collapse */}
-      <div className="mb-2">
+      {/* Content */}
+      <div>
         <p
           ref={contentRef}
-          className={`text-[11px] text-[var(--fr8x-jet)] leading-relaxed whitespace-pre-line ${
+          className={`text-[12px] text-[var(--fr8x-jet)] leading-relaxed whitespace-pre-line ${
             !isExpanded && needsCollapse ? "line-clamp-3" : ""
           }`}
         >
@@ -273,7 +346,7 @@ function PostCard({
         {needsCollapse && (
           <button
             onClick={() => setIsExpanded((v) => !v)}
-            className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-semibold mt-0.5 hover:underline"
+            className="flex items-center gap-0.5 text-[10px] text-[var(--fr8x-periwinkle)] font-semibold mt-1 hover:underline"
           >
             {isExpanded ? (
               <><ChevronUp className="h-3 w-3" /> Show less</>
@@ -285,58 +358,59 @@ function PostCard({
       </div>
 
       {/* Interaction bar */}
-      <div className="flex items-center gap-3 text-[10px] text-foreground-secondary pt-1.5 border-t border-border">
+      <div className="flex items-center gap-4 text-[10px] text-foreground-secondary pt-2 border-t border-slate-100">
         <button
           onClick={handleLike}
-          className={`flex items-center gap-1 transition-colors ${userLiked ? "text-emerald-600 font-bold" : "hover:text-emerald-600"}`}
+          className={`flex items-center gap-1.5 transition-colors ${userLiked ? "text-emerald-600 font-bold" : "hover:text-emerald-600"}`}
           title="Like"
         >
-          <ThumbsUp className="h-3 w-3" /> {likes}
+          <ThumbsUp className="h-3.5 w-3.5" /> <span>{likes}</span>
         </button>
         <button
           onClick={handleDislike}
-          className={`flex items-center gap-1 transition-colors ${userDisliked ? "text-red-500 font-bold" : "hover:text-red-500"}`}
+          className={`flex items-center gap-1.5 transition-colors ${userDisliked ? "text-red-500 font-bold" : "hover:text-red-500"}`}
           title="Dislike"
         >
-          <ThumbsDown className="h-3 w-3" /> {dislikes}
+          <ThumbsDown className="h-3.5 w-3.5" /> <span>{dislikes}</span>
         </button>
         <button
           onClick={() => setShowComment((v) => !v)}
-          className="flex items-center gap-1 hover:text-[var(--fr8x-jet)] transition-colors"
+          className="flex items-center gap-1.5 hover:text-[var(--fr8x-periwinkle)] transition-colors"
           title="Comment"
         >
-          <MessageSquare className="h-3 w-3" /> Comment
+          <MessageSquare className="h-3.5 w-3.5" /> <span>{post.commentsCount || 0}</span>
         </button>
         <button
           onClick={handleRepost}
-          className={`flex items-center gap-1 transition-colors ${userReposted ? "text-[var(--fr8x-periwinkle)] font-bold" : "hover:text-[var(--fr8x-jet)]"}`}
+          className={`flex items-center gap-1.5 transition-colors ${userReposted ? "text-[var(--fr8x-periwinkle)] font-bold" : "hover:text-[var(--fr8x-periwinkle)]"}`}
           title="Repost"
         >
-          <Repeat2 className="h-3 w-3" /> {reposts}
+          <Repeat2 className="h-3.5 w-3.5" /> <span>{reposts}</span>
         </button>
         <button
-          className="flex items-center gap-1 hover:text-amber-500 transition-colors ml-auto"
-          title="Save post"
+          onClick={handleSave}
+          className={`flex items-center gap-1.5 transition-colors ml-auto ${saved ? "text-amber-500" : "hover:text-amber-500"}`}
+          title={saved ? "Saved" : "Save post"}
         >
-          <Bookmark className="h-3 w-3" />
+          <Bookmark className={`h-3.5 w-3.5 ${saved ? "fill-amber-500" : ""}`} />
         </button>
       </div>
 
-      {/* Inline comment input */}
+      {/* Inline comment */}
       {showComment && (
-        <div className="mt-2 flex items-start gap-1.5">
+        <div className="flex items-start gap-2 pt-1">
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder="Write a professional comment..."
             rows={2}
-            className="fr8x-input flex-1 text-[10px] resize-none"
+            className="fr8x-input flex-1 text-[11px] resize-none"
             maxLength={500}
           />
           <button
             onClick={handlePostComment}
             disabled={isPostingComment || !commentText.trim()}
-            className="px-2 py-1 bg-[var(--fr8x-periwinkle)] text-white rounded text-[10px] font-bold hover:bg-[#3ABFF0] disabled:opacity-40 flex items-center gap-1 mt-0.5"
+            className="px-3 py-1.5 bg-[var(--fr8x-periwinkle)] text-white rounded-lg text-[10px] font-bold hover:bg-[#3ABFF0] disabled:opacity-40 flex items-center gap-1 mt-0.5 transition-colors shrink-0"
           >
             {isPostingComment ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
           </button>
@@ -348,28 +422,30 @@ function PostCard({
 
 const EmptyFeed = memo(function EmptyFeed() {
   return (
-    <div className="fr8x-card p-6 text-center bg-white">
-      <p className="text-[11px] text-foreground-secondary mb-1">No posts yet</p>
-      <p className="text-[10px] text-foreground-muted">Be the first to share an update with your network.</p>
+    <div className="bg-white rounded-xl border border-slate-200 p-10 text-center shadow-sm">
+      <div className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center mx-auto mb-3">
+        <BarChart3 className="h-6 w-6 text-slate-400" />
+      </div>
+      <p className="text-[13px] font-semibold text-[var(--fr8x-jet)] mb-1">No posts yet</p>
+      <p className="text-[11px] text-foreground-muted">
+        Be the first to share an industry update, rate, or insight with your network.
+      </p>
     </div>
   );
 });
 
-// Trending tag defaults (fallback if Firestore tags collection is empty)
-const DEFAULT_TRENDING_TAGS = [
-  { name: "Ocean Freight", related: "Global Trade Lanes" },
-  { name: "Air Freight", related: "Express Logistics" },
-  { name: "FCL", related: "Container Shipping" },
-  { name: "LCL", related: "Consolidation" },
-  { name: "NVOCC", related: "Freight Forwarding" },
+// ─── Sort Tabs Config ─────────────────────────────────────────────────────────
+
+const SORT_TABS: { value: FeedSortMode; label: string; icon: React.ReactNode }[] = [
+  { value: "newest", label: "Latest", icon: <Clock className="h-3 w-3" /> },
+  { value: "trending", label: "Trending", icon: <TrendingUp className="h-3 w-3" /> },
+  { value: "most_viewed", label: "Most Viewed", icon: <Eye className="h-3 w-3" /> },
+  { value: "most_commented", label: "Most Discussed", icon: <MessageSquare className="h-3 w-3" /> },
+  { value: "most_reposted", label: "Most Shared", icon: <Repeat2 className="h-3 w-3" /> },
 ];
 
-import { calculateTrendingScore } from "@/lib/utils/feedRanking";
-import { subscribeToQuery } from "@/lib/firebase/firestore";
+// ─── Main Feeds Page ──────────────────────────────────────────────────────────
 
-type FeedSortMode = "newest" | "trending" | "most_viewed" | "most_commented" | "most_reposted";
-
-// ─── Main Feeds Component ───
 export default function FeedsPage() {
   const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<FeedFilterCategory>("all");
@@ -380,13 +456,14 @@ export default function FeedsPage() {
   const [hiddenPostIds, setHiddenPostIds] = useState<Set<string>>(new Set());
   const [blockedUserIds, setBlockedUserIds] = useState<Set<string>>(new Set());
   const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [trendingTags, setTrendingTags] = useState(DEFAULT_TRENDING_TAGS);
+  const [trendingTags, setTrendingTags] = useState<{ name: string; related: string }[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isPosting, setIsPosting] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [followedTags, setFollowedTags] = useState<string[]>([]);
   const [postError, setPostError] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(15);
+  const [interactions, setInteractions] = useState<Record<string, FeedInteraction>>({});
 
   const displayName = user?.displayName || "User";
 
@@ -395,22 +472,38 @@ export default function FeedsPage() {
     setTimeout(() => setToastMsg(null), 3000);
   }
 
-  // Restore hidden posts from sessionStorage
+  // Load hidden post IDs from Firestore (per user, not sessionStorage)
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem("fr8x_hidden_posts");
-      if (saved) setHiddenPostIds(new Set(JSON.parse(saved)));
-    } catch { /* ignore */ }
-  }, []);
+    if (!user?.uid) return;
+    queryDocuments<{ postId: string }>(
+      COLLECTIONS.FEED_HIDDEN,
+      [where("userId", "==", user.uid), limit(500)]
+    ).then((data) => {
+      setHiddenPostIds(new Set(data.map((d) => d.postId)));
+    }).catch(() => undefined);
+  }, [user?.uid]);
 
-  // Fetch trending tags from Firestore
+  // Load feed interactions for current user (likes/reposts/saves)
+  useEffect(() => {
+    if (!user?.uid) return;
+    queryDocuments<FeedInteraction>(
+      COLLECTIONS.FEED_INTERACTIONS,
+      [where("userId", "==", user.uid), limit(500)]
+    ).then((data) => {
+      const map: Record<string, FeedInteraction> = {};
+      data.forEach((i) => { map[i.postId] = i; });
+      setInteractions(map);
+    }).catch(() => undefined);
+  }, [user?.uid]);
+
+  // Fetch trending tags
   useEffect(() => {
     queryDocuments<{ name: string; related: string }>("tags", [orderBy("name"), limit(10)])
       .then((data) => { if (data.length > 0) setTrendingTags(data); })
       .catch(() => undefined);
   }, []);
 
-  // Fetch followed tags from profile
+  // Fetch followed tags
   useEffect(() => {
     if (!user?.uid) return;
     getDocument<{ followedTags?: string[] }>(COLLECTIONS.PROFILES, user.uid).then((data) => {
@@ -418,7 +511,7 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  // Fetch blocked user IDs from contacts
+  // Fetch blocked user IDs
   useEffect(() => {
     if (!user?.uid) return;
     queryDocuments<{ requesterId: string; recipientId: string; status: string }>(
@@ -442,61 +535,21 @@ export default function FeedsPage() {
     });
   }, [user?.uid]);
 
-  // Initial seed fallback posts
-  const INITIAL_SEED_POSTS: PostData[] = useMemo(() => [
-    {
-      id: "seed_post_101",
-      authorId: "user_mgt_raivega_2026",
-      authorName: "Management (Rai Vega)",
-      authorCompany: "Rai Vega Logistics Pvt Ltd",
-      authorLocation: "JNPT / Nhava Sheva, India",
-      content: "Spot Rate Special: 20x40FT High Cube containers available for immediate loading JNPT to Hamburg & Rotterdam. Guaranteed space and equipment release.",
-      category: "Spot Rates",
-      likesCount: 14,
-      dislikesCount: 0,
-      repostsCount: 5,
-      bookmarksCount: 8,
-      commentsCount: 3,
-      createdAt: { seconds: Math.floor(Date.now() / 1000) - 3600, nanoseconds: 0 },
-      isDeleted: false,
-    },
-    {
-      id: "seed_post_102",
-      authorId: "godmode_admin_dev_uid",
-      authorName: "GodMode Administrator",
-      authorCompany: "FR8X System Operations",
-      authorLocation: "Mumbai, Maharashtra",
-      content: "Welcome to the FR8X-CON Enterprise Logistics Exchange Network. Connect with verified freight forwarders, shippers, and transporters across Indian port hubs.",
-      category: "Market Updates",
-      likesCount: 28,
-      dislikesCount: 0,
-      repostsCount: 12,
-      bookmarksCount: 15,
-      commentsCount: 6,
-      createdAt: { seconds: Math.floor(Date.now() / 1000) - 7200, nanoseconds: 0 },
-      isDeleted: false,
-    },
-  ], []);
-
-  // Real-time Firestore subscription to posts collection
+  // Real-time Firestore subscription to posts
   useEffect(() => {
     setIsLoadingPosts(true);
     const unsubscribe = subscribeToQuery<PostData>(
       COLLECTIONS.POSTS,
-      [limit(100)],
+      [where("isDeleted", "!=", true), limit(100)],
       (remotePosts) => {
+        // Filter out deleted, sort will happen in filteredPosts memo
         const valid = remotePosts.filter((p) => !p.isDeleted);
-        if (valid.length > 0) {
-          setPosts(valid);
-        } else {
-          setPosts(INITIAL_SEED_POSTS);
-        }
+        setPosts(valid);
         setIsLoadingPosts(false);
       }
     );
-
     return () => unsubscribe();
-  }, [INITIAL_SEED_POSTS]);
+  }, []);
 
   const handleToggleFollowTag = async (tag: string) => {
     if (!user?.uid) return;
@@ -509,16 +562,21 @@ export default function FeedsPage() {
     } catch { /* non-critical */ }
   };
 
-  const handleHidePost = useCallback((postId: string) => {
-    setHiddenPostIds((prev) => {
-      const next = new Set(prev);
-      next.add(postId);
-      try { sessionStorage.setItem("fr8x_hidden_posts", JSON.stringify([...next])); } catch { /* ignore */ }
-      return next;
-    });
-  }, []);
+  const handleHidePost = useCallback(async (postId: string) => {
+    if (!user?.uid) return;
+    setHiddenPostIds((prev) => new Set([...prev, postId]));
+    // Persist to Firestore
+    try {
+      const docId = `${user.uid}_${postId}`;
+      await setDocument(COLLECTIONS.FEED_HIDDEN, docId, {
+        userId: user.uid,
+        postId,
+        hiddenAt: serverTimestamp(),
+      });
+    } catch { /* non-critical */ }
+  }, [user?.uid]);
 
-  // Ranked & sorted posts according to sortMode
+  // Ranked & sorted posts
   const filteredPosts = useMemo(() => {
     const filtered = posts.filter(
       (p) =>
@@ -530,15 +588,15 @@ export default function FeedsPage() {
 
     return [...filtered].sort((a, b) => {
       if (sortMode === "newest") {
-        const tA = a.createdAt ? (typeof a.createdAt === "object" ? a.createdAt.seconds : new Date(a.createdAt).getTime() / 1000) : 0;
-        const tB = b.createdAt ? (typeof b.createdAt === "object" ? b.createdAt.seconds : new Date(b.createdAt).getTime() / 1000) : 0;
+        const tA = a.createdAt ? a.createdAt.seconds : 0;
+        const tB = b.createdAt ? b.createdAt.seconds : 0;
         return tB - tA;
       }
       if (sortMode === "trending") {
         return calculateTrendingScore(b) - calculateTrendingScore(a);
       }
       if (sortMode === "most_viewed") {
-        return ((b as any).viewsCount || 0) - ((a as any).viewsCount || 0);
+        return (b.viewsCount || 0) - (a.viewsCount || 0);
       }
       if (sortMode === "most_commented") {
         return (b.commentsCount || 0) - (a.commentsCount || 0);
@@ -565,14 +623,13 @@ export default function FeedsPage() {
       return;
     }
     if (wordCount > 1000) {
-      setPostError("Post content exceeds 1000 words limit.");
+      setPostError("Post content exceeds the 1000-word limit.");
       return;
     }
 
-    // Content moderation safety check
     const modResult = validateContentModeration(postContent);
     if (!modResult.isClean) {
-      setPostError(modResult.flaggedReason || "Post blocked due to prohibited or unsafe content.");
+      setPostError(modResult.flaggedReason || "Post blocked due to prohibited content.");
       return;
     }
 
@@ -581,14 +638,18 @@ export default function FeedsPage() {
     try {
       const sanitized = sanitizePostContent(postContent.trim());
       if (!sanitized) {
-        setPostError("Post content contained invalid HTML or scripts.");
+        setPostError("Post content contained invalid or unsafe markup.");
         setIsPosting(false);
         return;
       }
+
       const docRef = getDocRef(COLLECTIONS.POSTS);
-      const activeAuthorName = profile?.fullName || user.displayName || "User";
-      const activeCompany = profile?.companyName || "Rai Vega Logistics";
-      const activeLocation = profile?.location ? `${profile.location}, ${profile.country || ""}` : "Mumbai, India";
+      const activeAuthorName = profile?.fullName || user.displayName || "Logistics Professional";
+      // No default company fallback — use only real profile data
+      const activeCompany = profile?.companyName || "";
+      const activeLocation = profile?.location
+        ? `${profile.location}${profile.country ? `, ${profile.country}` : ""}`
+        : "";
 
       const newPostPayload = {
         authorId: user.uid,
@@ -602,43 +663,19 @@ export default function FeedsPage() {
         repostsCount: 0,
         bookmarksCount: 0,
         commentsCount: 0,
+        viewsCount: 0,
         isDeleted: false,
         createdAt: serverTimestamp(),
         createdBy: user.uid,
+        updatedAt: serverTimestamp(),
       };
 
-      // 1. Write to Firestore
       await setDocument(COLLECTIONS.POSTS, docRef.id, newPostPayload);
-
-      // 2. Immediate, non-blocking optimistic local update
-      const localPost: PostData = {
-        id: docRef.id,
-        authorId: user.uid,
-        authorName: activeAuthorName,
-        authorCompany: activeCompany,
-        authorLocation: activeLocation,
-        content: sanitized,
-        category: selectedTag === "all" ? "General Logistics" : selectedTag,
-        likesCount: 0,
-        dislikesCount: 0,
-        repostsCount: 0,
-        bookmarksCount: 0,
-        commentsCount: 0,
-        createdAt: { seconds: Math.floor(Date.now() / 1000), nanoseconds: 0 },
-        isDeleted: false,
-      };
-
-      setPosts((prev) => {
-        const updated = [localPost, ...prev];
-        try { sessionStorage.setItem("fr8x_cached_feed_posts", JSON.stringify(updated)); } catch { /* ignore */ }
-        return updated;
-      });
-
       setPostContent("");
-      showToast("Post published to network feed.");
+      showToast("Post published to your network.");
     } catch (err: any) {
       console.error("Error creating post:", err);
-      setPostError(err?.message || "Failed to publish post. Please check connection and try again.");
+      setPostError(err?.message || "Failed to publish post. Please try again.");
     } finally {
       setIsPosting(false);
     }
@@ -647,47 +684,72 @@ export default function FeedsPage() {
   return (
     <div className="min-h-0">
       {/* Header & Toast */}
-      <div className="flex items-center justify-between mb-2">
-        <h1 className="text-[11px] font-semibold text-[var(--fr8x-jet)]">Feeds</h1>
+      <div className="flex items-center justify-between mb-3">
+        <h1 className="text-[13px] font-bold text-[var(--fr8x-jet)] tracking-tight">Network Feed</h1>
         {toastMsg && (
-          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" />
+          <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+            <CheckCircle2 className="h-3.5 w-3.5" />
             {toastMsg}
           </span>
         )}
       </div>
 
       {/* 3-column layout */}
-      <div className="flex gap-3 items-start">
+      <div className="flex gap-4 items-start">
         {/* ═══ LEFT SIDEBAR ═══ */}
-        <aside className="hidden lg:block w-[200px] shrink-0 space-y-2">
-          <div className="fr8x-card p-3 bg-white space-y-2">
-            <div className="flex items-center gap-2.5 border-b border-border pb-2">
+        <aside className="hidden lg:block w-[210px] shrink-0 space-y-3">
+          <div className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-sm space-y-3">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
               <LayeredAvatar personName={displayName} companyName={profile?.companyName} size="lg" />
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-bold text-[var(--fr8x-jet)] truncate">{displayName}</p>
+                <p className="text-[12px] font-bold text-[var(--fr8x-jet)] truncate">{displayName}</p>
                 <p className="text-[10px] text-emerald-600 font-medium truncate flex items-center gap-0.5">
                   <Building2 className="h-2.5 w-2.5" />
-                  {profile?.companyName || "Logistics Network"}
+                  {profile?.companyName || "Freight Network"}
                 </p>
               </div>
             </div>
-            <p className="text-[10px] text-foreground-secondary">
-              {profile?.location ? `${profile.location}, ${profile.country || ""}` : "Verified Member"}
-            </p>
+            {profile?.location && (
+              <p className="text-[10px] text-foreground-secondary">
+                {profile.location}{profile.country ? `, ${profile.country}` : ""}
+              </p>
+            )}
             {profile?.industryTags && profile.industryTags.length > 0 && (
               <p className="text-[9px] text-foreground-muted">
-                {profile.industryTags.slice(0, 3).join(", ")}
+                {profile.industryTags.slice(0, 3).join(" · ")}
               </p>
             )}
           </div>
 
           <ContactsPanel compact maxDisplay={6} />
+
+          {/* Trending Tags */}
+          {trendingTags.length > 0 && (
+            <div className="bg-white rounded-xl border border-slate-200/80 p-3 shadow-sm">
+              <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2">Industry Topics</h3>
+              <div className="space-y-1.5">
+                {trendingTags.slice(0, 5).map((tag) => (
+                  <button
+                    key={tag.name}
+                    onClick={() => handleToggleFollowTag(tag.name)}
+                    className={`block w-full text-left p-1.5 rounded-lg text-[10px] transition-colors ${
+                      followedTags.includes(tag.name)
+                        ? "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] font-semibold"
+                        : "hover:bg-slate-50 text-foreground-secondary"
+                    }`}
+                  >
+                    <span className="font-bold">{tag.name}</span>
+                    <span className="text-foreground-muted ml-1">· {tag.related}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
 
         {/* ═══ CENTER FEED ═══ */}
-        <main className="flex-1 min-w-0 space-y-2">
-          {/* Enhanced Professional Rich Text Post Composer */}
+        <main className="flex-1 min-w-0 space-y-3">
+          {/* Post Composer */}
           <RichPostEditor
             content={postContent}
             onChange={(val) => {
@@ -702,48 +764,22 @@ export default function FeedsPage() {
             categories={FEED_CATEGORIES}
           />
 
-          {/* 5 Primary Feed Sorting Tabs */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 overflow-x-auto no-scrollbar">
-            <button
-              onClick={() => setSortMode("newest")}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
-                sortMode === "newest" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              🔥 Newest Feed
-            </button>
-            <button
-              onClick={() => setSortMode("trending")}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
-                sortMode === "trending" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              📈 Trending Feed
-            </button>
-            <button
-              onClick={() => setSortMode("most_viewed")}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
-                sortMode === "most_viewed" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              👁️ Most Viewed
-            </button>
-            <button
-              onClick={() => setSortMode("most_commented")}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
-                sortMode === "most_commented" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              💬 Most Commented
-            </button>
-            <button
-              onClick={() => setSortMode("most_reposted")}
-              className={`px-2.5 py-1 text-[10px] font-bold rounded transition-colors whitespace-nowrap ${
-                sortMode === "most_reposted" ? "bg-white text-slate-900 shadow-2xs border border-slate-300" : "text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              🔁 Most Reposted
-            </button>
+          {/* Sort Tabs */}
+          <div className="flex items-center gap-1 bg-white border border-slate-200/80 p-1 rounded-xl shadow-sm overflow-x-auto no-scrollbar">
+            {SORT_TABS.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setSortMode(tab.value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-semibold rounded-lg transition-colors whitespace-nowrap ${
+                  sortMode === tab.value
+                    ? "bg-[var(--fr8x-periwinkle)] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-100"
+                }`}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
           </div>
 
           {/* Category Tabs */}
@@ -761,32 +797,33 @@ export default function FeedsPage() {
 
           {/* Feed Posts */}
           {isLoadingPosts ? (
-            <div className="fr8x-card p-6 flex items-center justify-center gap-2 bg-white">
+            <div className="bg-white rounded-xl border border-slate-200 p-8 flex items-center justify-center gap-2 shadow-sm">
               <Loader2 className="h-4 w-4 animate-spin text-foreground-muted" />
-              <span className="text-[11px] text-foreground-muted">Loading posts...</span>
+              <span className="text-[11px] text-foreground-muted">Loading network feed...</span>
             </div>
           ) : filteredPosts.length === 0 ? (
             <EmptyFeed />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filteredPosts.slice(0, visibleCount).map((post, idx) => (
-                <div key={post.id} className="space-y-2">
+                <div key={post.id} className="space-y-3">
                   <PostCard
                     post={post}
                     currentUserId={user?.uid || ""}
                     onHide={handleHidePost}
+                    initialInteraction={interactions[post.id] ?? null}
                   />
                   {(idx + 1) % 4 === 0 && <AdBanner adIndex={Math.floor(idx / 4)} />}
                 </div>
               ))}
 
               {filteredPosts.length > visibleCount && (
-                <div className="pt-2 text-center">
+                <div className="text-center">
                   <button
                     onClick={() => setVisibleCount((prev) => prev + 15)}
-                    className="w-full py-2 bg-white hover:bg-slate-100 border border-slate-300 text-slate-800 font-bold text-xs rounded-xl shadow-2xs transition-colors"
+                    className="w-full py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-[11px] rounded-xl shadow-sm transition-colors"
                   >
-                    Load More Network Updates ({filteredPosts.length - visibleCount} remaining)
+                    Load More Updates ({filteredPosts.length - visibleCount} remaining)
                   </button>
                 </div>
               )}
@@ -795,50 +832,8 @@ export default function FeedsPage() {
         </main>
 
         {/* ═══ RIGHT SIDEBAR ═══ */}
-        <aside className="hidden xl:block w-[220px] shrink-0 space-y-2">
-          {/* Industry Job Posts Section */}
+        <aside className="hidden xl:block w-[220px] shrink-0 space-y-3">
           <JobPostsSection />
-
-          {/* Trending Tags */}
-          <div className="fr8x-card p-2.5 bg-white text-left">
-            <p className="text-[11px] font-semibold text-[var(--fr8x-jet)] mb-1.5 flex items-center gap-1">
-              <TagIcon className="h-3.5 w-3.5 text-amber-500" />
-              <span>Trending Topics</span>
-            </p>
-            <ul className="space-y-2">
-              {trendingTags.map((t) => {
-                const isFollowing = followedTags.includes(t.name);
-                return (
-                  <li key={t.name} className="text-[10px] text-foreground-secondary border-b border-slate-50 pb-1.5 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <span
-                        onClick={() => setPostContent((prev) => `#${t.name} ` + prev)}
-                        className="font-semibold text-[var(--fr8x-jet)] hover:underline cursor-pointer"
-                        title="Append tag to post"
-                      >
-                        #{t.name}
-                      </span>
-                      <button
-                        onClick={() => handleToggleFollowTag(t.name)}
-                        className={`text-[8px] px-1.5 rounded font-semibold transition-all ${
-                          isFollowing
-                            ? "bg-slate-200 text-slate-700"
-                            : "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-dimgrey)]"
-                        }`}
-                      >
-                        {isFollowing ? "Following" : "+ Follow"}
-                      </button>
-                    </div>
-                    <div className="text-[8px] text-foreground-muted mt-0.5">Related: {t.related}</div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          {/* Ads */}
-          <AdBanner adIndex={0} />
-          <AdBanner adIndex={1} />
         </aside>
       </div>
     </div>
