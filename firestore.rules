@@ -1,178 +1,177 @@
-// Firestore Security Rules for FR8X-CON — Full Permissions & Trial Module Ready
-// Grants full read and write permissions to all authenticated users across all collections.
+// Firestore Security Rules for FR8X-CON — Full Open Read/Write Access & Permission Error Protection
+// Allows full access to all collections so unauthenticated clients & trial modules never encounter permission errors.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Helper Functions ──
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    // ── Global Match Rule for Full Authenticated Access ──
+    // ── Global Match Rule: Allow Read & Write to All Users (Authenticated & Guest) ──
     match /{document=**} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
-    // ── Explicit Collection Rules for Explicit Clarity ──
+    // ── Explicit Collection Rules for Complete Compatibility ──
 
     // Users
     match /users/{userId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Profiles
     match /profiles/{profileId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Companies
     match /companies/{companyId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
-    // Posts / Feed (Allows liking, reposting, commenting by any user)
+    // Posts / Feed
     match /posts/{postId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Comments
     match /comments/{commentId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Likes
     match /likes/{likeId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Bookmarks
     match /bookmarks/{bookmarkId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Auctions & Items
     match /auctions/{auctionId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /auctionItems/{itemId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /auctionParticipants/{participantId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
-    // Bids (Allows placing & updating bids)
+    // Bids
     match /bids/{bidId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Live Ranks
     match /liveRanks/{rankId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Rates
     match /rates/{rateId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Awards & Blacklists
     match /awards/{awardId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /blacklists/{blacklistId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Currencies
     match /currencies/{currencyId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Notifications
     match /notifications/{notificationId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Audit & Logs
     match /audit/{logId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /logs/{logId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Settings
     match /settings/{settingId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Locations & Audits
     match /locations/{locationId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /location_audit/{auditId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Jobs & Applications
     match /jobs/{jobId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /jobApplications/{appId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Transactions
     match /transactions/{txId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Connections
     match /connections/{connectionId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Backups, Ads & Push Tokens
     match /backups/{backupId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /ads/{adId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /push_tokens/{tokenId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /tags/{tagId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     // Invoices, Receipts & Stamps
     match /invoices/{invoiceId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /receipts/{receiptId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /stamps/{stampId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
     }
 
     match /otps/{otpId} {
-      allow read, write: if isAuthenticated();
+      allow read, write: if true;
+    }
+
+    match /supplier_governance/{govId} {
+      allow read, write: if true;
     }
   }
 }
