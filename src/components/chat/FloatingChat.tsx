@@ -176,29 +176,29 @@ export function FloatingChat() {
             isMinimized ? "h-14 w-80" : "h-[480px] w-80 sm:w-96"
           }`}
         >
-          {/* Header Bar */}
-          <div className="bg-[var(--fr8x-jet)] text-white px-3 py-2.5 flex items-center justify-between shrink-0">
+          {/* Header Bar — Light Theme & Crisp Outlines */}
+          <div className="bg-white text-slate-900 border-b border-slate-200 px-3 py-2 flex items-center justify-between shrink-0 shadow-2xs">
             <div className="flex items-center gap-2 min-w-0">
               {activeConvId ? (
                 <button
                   onClick={() => setActiveConvId(null)}
-                  className="p-1 rounded hover:bg-white/10 text-white"
+                  className="p-1 rounded hover:bg-slate-100 text-slate-700 transition-colors"
                   title="Back to Contact Search"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
               ) : (
-                <div className="w-6 h-6 rounded bg-[var(--fr8x-periwinkle)] flex items-center justify-center font-bold text-white text-[11px]">
+                <div className="w-5 h-5 rounded bg-[var(--fr8x-periwinkle)] flex items-center justify-center font-bold text-white text-[9px] shadow-2xs">
                   F
                 </div>
               )}
 
               <div className="min-w-0">
-                <p className="text-[11px] font-bold truncate leading-tight">
+                <p className="text-[10px] font-bold text-slate-900 truncate leading-tight">
                   {activeConvId && activePartner ? activePartner.name : "FR8X Enterprise Chat"}
                 </p>
-                <p className="text-[9px] text-emerald-400 font-medium truncate flex items-center gap-1">
-                  <Circle className="h-1.5 w-1.5 fill-emerald-400 text-emerald-400" />
+                <p className="text-[8px] text-emerald-600 font-medium truncate flex items-center gap-1">
+                  <Circle className="h-1.5 w-1.5 fill-emerald-500 text-emerald-500" />
                   {activeConvId && activePartner ? `${activePartner.company} • Online` : "Approved Contacts Only"}
                 </p>
               </div>
@@ -207,7 +207,7 @@ export function FloatingChat() {
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsMinimized(!isMinimized)}
-                className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white"
+                className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                 title={isMinimized ? "Expand" : "Minimize"}
               >
                 <Minus className="h-3.5 w-3.5" />
@@ -217,7 +217,7 @@ export function FloatingChat() {
                   setIsOpen(false);
                   setIsMinimized(false);
                 }}
-                className="p-1 rounded hover:bg-white/10 text-slate-300 hover:text-white"
+                className="p-1 rounded hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
                 title="Close Chat"
               >
                 <X className="h-3.5 w-3.5" />
