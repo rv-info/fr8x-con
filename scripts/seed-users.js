@@ -49,7 +49,7 @@ async function seedUser(user) {
       body: JSON.stringify({ email: user.email, password: user.password, returnSecureToken: true }),
     }
   );
- to 
+
   const signUpData = await signUpRes.json();
 
   if (signUpRes.ok && signUpData.localId) {
