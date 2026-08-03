@@ -79,17 +79,13 @@ export default function AuctionCreatePage() {
   const [isHSModalOpen, setIsHSModalOpen] = useState(false);
   const [activeHSIndex, setActiveHSIndex] = useState(0);
 
-  // Bidder Selection & Stored Presets (+ Bidders) State
+  // Bidder Selection & Stored Presets (+ Bidders) State — DB-backed
   const [biddersSearch, setBiddersSearch] = useState("");
-  const [selectedBidders, setSelectedBidders] = useState<string[]>([
-    "comp_1", "comp_3", "comp_4"
-  ]);
-  const [savedBidderPresets, setSavedBidderPresets] = useState<{ name: string; bidders: string[] }[]>([
-    { name: "Core Ocean Forwarders", bidders: ["comp_1", "comp_2", "comp_3"] },
-    { name: "Air Freight Specialists", bidders: ["comp_4", "comp_5"] },
-  ]);
+  const [selectedBidders, setSelectedBidders] = useState<string[]>([]);
+  const [savedBidderPresets, setSavedBidderPresets] = useState<{ id?: string; name: string; bidders: string[] }[]>([]);
   const [newPresetName, setNewPresetName] = useState("");
   const [showAddPreset, setShowAddPreset] = useState(false);
+
 
   const showNotification = (msg: string) => {
     setStatusMessage(msg);
