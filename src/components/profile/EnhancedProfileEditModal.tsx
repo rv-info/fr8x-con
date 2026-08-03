@@ -28,9 +28,10 @@ import {
   Compass,
   Check,
   FileCheck,
-  ChevronRight,
   ShieldAlert,
-  Info,
+  Palette,
+  FileUp,
+  Anchor,
 } from "lucide-react";
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { compressAndOptimizeImage } from "@/lib/utils/imageOptimizer";
@@ -40,6 +41,7 @@ import { ImageCropModal } from "./ImageCropModal";
 export type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string; roleDescription?: string };
 export type EduItem = { id: string; college: string; stream: string; from: string; to: string };
 export type CertItem = { id: string; title: string; issuer: string; year: string };
+export type KYCDocItem = { id: string; docType: "gstin" | "iec" | "pan" | "iso" | "customs"; title: string; fileName: string; status: "verified" | "pending" | "uploaded" };
 
 export type UserProfileForm = {
   fullName: string;
@@ -55,6 +57,7 @@ export type UserProfileForm = {
   workExperience: WorkExpItem[];
   education: EduItem[];
   certifications?: CertItem[];
+  kycDocuments?: KYCDocItem[];
   gstin?: string;
   iec?: string;
   iataNo?: string;
@@ -65,6 +68,7 @@ export type UserProfileForm = {
   warehouseCapacity?: string;
   keyTradeLanes?: string;
   website?: string;
+  cardTheme?: "slate" | "indigo" | "emerald" | "amber" | "dark";
   privacySetting?: "public" | "connections_only";
 };
 
@@ -86,11 +90,11 @@ const CATEGORIZED_SPECIALIZATIONS = [
     items: ["Air Freight Express", "Charter Flight Ops", "IATA Cargo Agent", "AOG / Urgent Express"],
   },
   {
-    category: "Customs & Compliance",
+    category: "Customs & Clearance",
     items: ["Customs House Brokerage (CHA)", "AEO Certified Clearance", "Bonded Warehousing", "SVB / High-Sea Sales"],
   },
   {
-    category: "Land & Multimodal",
+    category: "Surface & Multimodal",
     items: ["Cross-Border Trucking", "FTL / LTL Surface", "Heavy Lift & Project Cargo", "Dangerous Goods (DG Cargo)"],
   },
   {
@@ -99,7 +103,19 @@ const CATEGORIZED_SPECIALIZATIONS = [
   },
 ];
 
-const ALL_SPECIALIZATIONS = CATEGORIZED_SPECIALIZATIONS.flatMap((c) => c.items);
+const MAJOR_PORTS = [
+  "JNPT Mumbai (INNSA)", "Mundra Port (INMUN)", "Chennai Port (INMAA)",
+  "Dubai Jebel Ali (AEJEA)", "Singapore (SGSIN)", "Shanghai (CNSHA)",
+  "Rotterdam (NLRTM)", "Hamburg (DEHAM)", "Los Angeles (USLAX)",
+];
+
+const CARD_THEMES = [
+  { id: "indigo", name: "Royal Indigo", bg: "from-indigo-950 via-slate-900 to-slate-950", accent: "text-indigo-400", border: "border-indigo-500/30" },
+  { id: "slate", name: "Midnight Slate", bg: "from-slate-900 via-slate-950 to-slate-900", accent: "text-slate-300", border: "border-slate-700" },
+  { id: "emerald", name: "Emerald Gold", bg: "from-emerald-950 via-slate-950 to-slate-900", accent: "text-emerald-400", border: "border-emerald-500/30" },
+  { id: "amber", name: "Enterprise Amber", bg: "from-amber-950 via-slate-950 to-slate-900", accent: "text-amber-400", border: "border-amber-500/30" },
+  { id: "dark", name: "Obsidian Noir", bg: "from-black via-slate-950 to-black", accent: "text-purple-400", border: "border-purple-500/30" },
+];
 
 export function EnhancedProfileEditModal({
   isOpen,
@@ -109,7 +125,12 @@ export function EnhancedProfileEditModal({
   userId,
 }: EnhancedProfileEditModalProps) {
   const [activeSection, setActiveSection] = useState<"basic" | "company" | "branding" | "experience" | "education" | "tags">("basic");
-  const [formData, setFormData] = useState<UserProfileForm>(initialData);
+  const [formData, setFormData] = useState<UserProfileForm>({
+    cardTheme: "indigo",
+    certifications: [],
+    kycDocuments: [],
+    ...initialData,
+  });
   const [isSaving, setIsSaving] = useState(false);
   const [showLivePreview, setShowLivePreview] = useState(true);
   const [previewTab, setPreviewTab] = useState<"card" | "credentials" | "lanes">("card");
@@ -117,6 +138,7 @@ export function EnhancedProfileEditModal({
   // File refs & upload progress
   const photoInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const docInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [photoProgress, setPhotoProgress] = useState(0);
@@ -139,7 +161,12 @@ export function EnhancedProfileEditModal({
   }, [isOpen]);
 
   useEffect(() => {
-    setFormData(initialData);
+    setFormData({
+      cardTheme: "indigo",
+      certifications: [],
+      kycDocuments: [],
+      ...initialData,
+    });
   }, [initialData]);
 
   if (!isOpen) return null;
@@ -147,12 +174,12 @@ export function EnhancedProfileEditModal({
   // Calculate Profile Completion Percentage & Breakdown
   const calculateCompletionDetails = () => {
     const breakdown = [
-      { key: "basic", name: "Personal Bio", met: Boolean(formData.fullName.trim() && formData.designation.trim() && formData.location.trim()), weight: 20 },
-      { key: "company", name: "Enterprise KYC", met: Boolean(formData.companyName.trim() && (formData.gstin || formData.iec)), weight: 20 },
+      { key: "basic", name: "Personal Bio", met: Boolean(formData.fullName?.trim() && formData.designation?.trim() && formData.location?.trim()), weight: 20 },
+      { key: "company", name: "Enterprise KYC", met: Boolean(formData.companyName?.trim() && (formData.gstin || formData.iec)), weight: 20 },
       { key: "branding", name: "Visual Identity", met: Boolean(formData.photoURL || formData.companyLogoURL), weight: 20 },
-      { key: "experience", name: "Work History", met: formData.workExperience.length > 0, weight: 15 },
-      { key: "education", name: "Academic / Certs", met: formData.education.length > 0 || (formData.certifications && formData.certifications.length > 0), weight: 10 },
-      { key: "tags", name: "Trade Tags", met: formData.industryTags.length >= 2, weight: 15 },
+      { key: "experience", name: "Work History", met: Boolean(formData.workExperience && formData.workExperience.length > 0), weight: 15 },
+      { key: "education", name: "Academic / Certs", met: Boolean((formData.education && formData.education.length > 0) || (formData.certifications && formData.certifications.length > 0)), weight: 10 },
+      { key: "tags", name: "Trade Tags", met: Boolean(formData.industryTags && formData.industryTags.length >= 2), weight: 15 },
     ];
 
     const totalScore = breakdown.reduce((acc, curr) => (curr.met ? acc + curr.weight : acc), 0);
@@ -168,6 +195,7 @@ export function EnhancedProfileEditModal({
   };
 
   const strengthBadge = getStrengthBadge(completionScore);
+  const activeThemeConfig = CARD_THEMES.find((t) => t.id === (formData.cardTheme || "indigo")) || CARD_THEMES[0];
 
   // Photo & Logo Upload Handlers
   const handlePhotoSelect = async (file: File) => {
@@ -242,7 +270,7 @@ export function EnhancedProfileEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto text-left font-sans">
+    <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto text-left font-sans">
       {/* Hidden file inputs */}
       <input
         ref={photoInputRef}
@@ -261,16 +289,16 @@ export function EnhancedProfileEditModal({
 
       <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden text-left transition-all">
         {/* Top Header - Sleek Enterprise Studio Theme */}
-        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between border-b border-slate-800 shadow-md shrink-0">
+        <div className="px-6 py-4 bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 text-white flex items-center justify-between border-b border-indigo-500/20 shadow-md shrink-0">
           <div className="flex items-center gap-3.5">
-            <div className="p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl text-white shadow-lg shadow-indigo-500/30 border border-white/20 shrink-0">
+            <div className="p-2.5 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-2xl text-white shadow-lg shadow-indigo-500/30 border border-white/20 shrink-0">
               <Sparkles className="h-6 w-6 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold tracking-tight text-white leading-snug">Enterprise Profile Studio</h2>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  PRO STUDIO v2.0
+                <h2 className="text-xl font-extrabold tracking-tight text-white leading-snug">Enterprise Profile Studio</h2>
+                <span className="text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  PRO STUDIO 3.0
                 </span>
               </div>
               <p className="text-xs text-slate-300 font-medium">Configure your B2B enterprise identity, trade credentials &amp; logistics capabilities</p>
@@ -341,16 +369,16 @@ export function EnhancedProfileEditModal({
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Navigation Sidebar */}
           <div className="w-full lg:w-64 bg-slate-900 text-slate-300 border-r border-slate-800 p-3 space-y-1.5 overflow-y-auto shrink-0">
-            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-extrabold text-slate-400">
+            <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider font-black text-slate-400">
               Studio Configuration
             </div>
             {[
-              { id: "basic", label: "Basic Info & Bio", icon: User, desc: "Personal & contact info" },
+              { id: "basic", label: "Basic Info & Bio", icon: User, desc: "Personal & contact details" },
               { id: "company", label: "Company & KYC", icon: Building2, desc: "GSTIN, IEC, licenses" },
               { id: "branding", label: "Visual Identity", icon: Camera, desc: "Avatar & company logo" },
               { id: "experience", label: "Work Experience", icon: Briefcase, desc: "Career timeline" },
-              { id: "education", label: "Education & Certs", icon: GraduationCap, desc: "Academic credentials" },
-              { id: "tags", label: "Logistics Tags", icon: Tag, desc: "Specializations & lane tags" },
+              { id: "education", label: "Education & Certs", icon: GraduationCap, desc: "Diplomas & accreditation" },
+              { id: "tags", label: "Logistics Tags", icon: Tag, desc: "Specializations & ports" },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeSection === tab.id;
@@ -363,7 +391,7 @@ export function EnhancedProfileEditModal({
                   onClick={() => setActiveSection(tab.id as any)}
                   className={`w-full flex items-center justify-between p-3 rounded-2xl text-left transition-all ${
                     isActive
-                      ? "bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-lg shadow-indigo-600/25 font-bold"
+                      ? "bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white shadow-xl shadow-indigo-600/30 font-bold"
                       : "text-slate-300 hover:bg-slate-800/70 hover:text-white"
                   }`}
                 >
@@ -798,7 +826,7 @@ export function EnhancedProfileEditModal({
                         setFormData({
                           ...formData,
                           workExperience: [
-                            ...formData.workExperience,
+                            ...(formData.workExperience || []),
                             { id: `we_${Date.now()}`, company: "", location: "", designation: "", from: "", to: "" },
                           ],
                         })
@@ -809,7 +837,7 @@ export function EnhancedProfileEditModal({
                     </button>
                   </div>
 
-                  {formData.workExperience.length === 0 ? (
+                  {(!formData.workExperience || formData.workExperience.length === 0) ? (
                     <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500 space-y-2">
                       <Briefcase className="h-8 w-8 text-slate-400 mx-auto" />
                       <p className="text-xs font-semibold">No work experience added yet.</p>
@@ -943,101 +971,185 @@ export function EnhancedProfileEditModal({
                       </h3>
                       <p className="text-xs text-slate-500">Degree, logistics certifications, and industry diplomas.</p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFormData({
-                          ...formData,
-                          education: [
-                            ...formData.education,
-                            { id: `edu_${Date.now()}`, college: "", stream: "", from: "", to: "" },
-                          ],
-                        })
-                      }
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all"
-                    >
-                      <Plus className="h-4 w-4" /> Add Education
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            education: [
+                              ...(formData.education || []),
+                              { id: `edu_${Date.now()}`, college: "", stream: "", from: "", to: "" },
+                            ],
+                          })
+                        }
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl shadow-md transition-all"
+                      >
+                        <Plus className="h-4 w-4" /> Add Degree
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            certifications: [
+                              ...(formData.certifications || []),
+                              { id: `cert_${Date.now()}`, title: "", issuer: "", year: "" },
+                            ],
+                          })
+                        }
+                        className="bg-purple-600 hover:bg-purple-700 text-white flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl shadow-md transition-all"
+                      >
+                        <Award className="h-4 w-4" /> Add Cert
+                      </button>
+                    </div>
                   </div>
 
-                  {formData.education.length === 0 ? (
-                    <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-slate-300 text-slate-500 space-y-2">
-                      <GraduationCap className="h-8 w-8 text-slate-400 mx-auto" />
-                      <p className="text-xs font-semibold">No academic records added yet.</p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {formData.education.map((edu, idx) => (
-                        <div key={edu.id} className="p-5 border border-slate-200 bg-white rounded-2xl shadow-xs space-y-3">
-                          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                            <span className="text-xs font-bold text-indigo-700 flex items-center gap-2">
-                              <span className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[10px] font-extrabold">
-                                {idx + 1}
-                              </span>
-                              Academic Qualification
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setFormData({ ...formData, education: formData.education.filter((item) => item.id !== edu.id) })}
-                              className="text-rose-500 hover:text-rose-700 text-xs font-semibold flex items-center gap-1 p-1 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" /> Remove
-                            </button>
-                          </div>
+                  {/* Academic Degrees */}
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                      <GraduationCap className="h-4 w-4 text-indigo-600" /> University Degrees &amp; Diplomas
+                    </h4>
+                    {(!formData.education || formData.education.length === 0) ? (
+                      <p className="text-xs text-slate-400 bg-white p-4 rounded-xl border border-slate-200">No academic degrees added yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {formData.education.map((edu, idx) => (
+                          <div key={edu.id} className="p-4 border border-slate-200 bg-white rounded-2xl shadow-xs space-y-3">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                              <span className="text-xs font-bold text-indigo-700">Degree #{idx + 1}</span>
+                              <button
+                                type="button"
+                                onClick={() => setFormData({ ...formData, education: formData.education.filter((item) => item.id !== edu.id) })}
+                                className="text-rose-500 hover:text-rose-700 text-xs font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <input
-                              value={edu.college}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  education: formData.education.map((item) => (item.id === edu.id ? { ...item, college: e.target.value } : item)),
-                                })
-                              }
-                              placeholder="University / Institute Name"
-                              className="fr8x-input text-xs"
-                            />
-                            <input
-                              value={edu.stream}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  education: formData.education.map((item) => (item.id === edu.id ? { ...item, stream: e.target.value } : item)),
-                                })
-                              }
-                              placeholder="Degree / Specialization (e.g. MBA International Trade)"
-                              className="fr8x-input text-xs"
-                            />
-                          </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <input
+                                value={edu.college}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, college: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="University / Institute Name"
+                                className="fr8x-input text-xs"
+                              />
+                              <input
+                                value={edu.stream}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, stream: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="Degree / Specialization (e.g. MBA Supply Chain)"
+                                className="fr8x-input text-xs"
+                              />
+                            </div>
 
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <input
-                              value={edu.from}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  education: formData.education.map((item) => (item.id === edu.id ? { ...item, from: e.target.value } : item)),
-                                })
-                              }
-                              placeholder="Start Year (e.g. 2014)"
-                              className="fr8x-input text-xs"
-                            />
-                            <input
-                              value={edu.to}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  education: formData.education.map((item) => (item.id === edu.id ? { ...item, to: e.target.value } : item)),
-                                })
-                              }
-                              placeholder="End Year (e.g. 2018)"
-                              className="fr8x-input text-xs"
-                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <input
+                                value={edu.from}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, from: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="Start Year"
+                                className="fr8x-input text-xs"
+                              />
+                              <input
+                                value={edu.to}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, to: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="End Year"
+                                className="fr8x-input text-xs"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Certifications & Accreditation */}
+                  <div className="space-y-3 pt-3 border-t border-slate-200">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                      <Award className="h-4 w-4 text-purple-600" /> Trade &amp; Professional Certifications
+                    </h4>
+                    {(!formData.certifications || formData.certifications.length === 0) ? (
+                      <p className="text-xs text-slate-400 bg-white p-4 rounded-xl border border-slate-200">No professional certifications added yet.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {formData.certifications.map((cert) => (
+                          <div key={cert.id} className="p-4 border border-purple-100 bg-purple-50/30 rounded-2xl shadow-xs space-y-3">
+                            <div className="flex items-center justify-between border-b border-purple-100 pb-2">
+                              <span className="text-xs font-bold text-purple-700">Certification Item</span>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setFormData({
+                                    ...formData,
+                                    certifications: (formData.certifications || []).filter((item) => item.id !== cert.id),
+                                  })
+                                }
+                                className="text-rose-500 hover:text-rose-700 text-xs font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                              <input
+                                value={cert.title}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, title: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="Cert Title (e.g. Dangerous Goods Cat-6)"
+                                className="fr8x-input text-xs"
+                              />
+                              <input
+                                value={cert.issuer}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, issuer: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="Issuing Body (e.g. IATA / FIATA)"
+                                className="fr8x-input text-xs"
+                              />
+                              <input
+                                value={cert.year}
+                                onChange={(e) =>
+                                  setFormData({
+                                    ...formData,
+                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, year: e.target.value } : item)),
+                                  })
+                                }
+                                placeholder="Year Received"
+                                className="fr8x-input text-xs"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1047,7 +1159,7 @@ export function EnhancedProfileEditModal({
                   <div className="border-b border-slate-200 pb-3 flex items-center justify-between">
                     <div>
                       <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                        <Tag className="h-5 w-5 text-indigo-600" /> Trade Specializations &amp; Service Offerings
+                        <Tag className="h-5 w-5 text-indigo-600" /> Trade Specializations &amp; Port Network
                       </h3>
                       <p className="text-xs text-slate-500">Select all freight modalities and logistics services your company provides.</p>
                     </div>
@@ -1085,6 +1197,33 @@ export function EnhancedProfileEditModal({
                         </div>
                       </div>
                     ))}
+
+                    {/* Major Gateway Ports */}
+                    <div className="space-y-2.5 pt-3 border-t border-slate-200">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+                        <Anchor className="h-4 w-4 text-indigo-600" /> Key Gateway Ports Serviced
+                      </h4>
+                      <div className="flex flex-wrap gap-2">
+                        {MAJOR_PORTS.map((port) => {
+                          const selected = formData.industryTags.includes(port);
+                          return (
+                            <button
+                              key={port}
+                              type="button"
+                              onClick={() => toggleTag(port)}
+                              className={`px-3.5 py-1.5 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 border ${
+                                selected
+                                  ? "bg-slate-900 text-indigo-300 border-slate-800 font-bold"
+                                  : "bg-white text-slate-700 border-slate-300 hover:border-slate-400"
+                              }`}
+                            >
+                              <Anchor className="h-3 w-3 text-slate-400" />
+                              {port}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1143,6 +1282,26 @@ export function EnhancedProfileEditModal({
                 <span className="text-[10px] font-mono text-slate-400 font-bold">{formData.publicId || "@USER"}</span>
               </div>
 
+              {/* Theme Switcher Bar */}
+              <div className="flex items-center gap-1.5 justify-between bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <span className="text-[10px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                  <Palette className="h-3 w-3 text-indigo-400" /> Theme:
+                </span>
+                <div className="flex gap-1">
+                  {CARD_THEMES.map((theme) => (
+                    <button
+                      key={theme.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, cardTheme: theme.id as any })}
+                      className={`w-5 h-5 rounded-full border transition-all ${
+                        (formData.cardTheme || "indigo") === theme.id ? "ring-2 ring-white ring-offset-1 ring-offset-slate-900 scale-110" : "opacity-70 hover:opacity-100"
+                      } bg-gradient-to-tr ${theme.bg}`}
+                      title={theme.name}
+                    />
+                  ))}
+                </div>
+              </div>
+
               {/* Preview Tab Selector */}
               <div className="flex rounded-xl bg-slate-800 p-1 border border-slate-700/80 text-[11px] font-semibold">
                 <button
@@ -1176,13 +1335,13 @@ export function EnhancedProfileEditModal({
 
               {/* Preview Content: Card View */}
               {previewTab === "card" && (
-                <div className="bg-slate-950 rounded-2xl border border-slate-800 overflow-hidden shadow-2xl space-y-0 text-slate-100">
+                <div className={`bg-gradient-to-b ${activeThemeConfig.bg} rounded-2xl border ${activeThemeConfig.border} overflow-hidden shadow-2xl space-y-0 text-slate-100`}>
                   {/* Top Banner / Logo */}
-                  <div className="h-20 bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-900 p-3 relative flex items-end justify-end overflow-hidden border-b border-slate-800/80">
+                  <div className="h-20 bg-black/40 p-3 relative flex items-end justify-end overflow-hidden border-b border-white/10">
                     {formData.companyLogoURL ? (
-                      <img src={formData.companyLogoURL} alt="Logo preview" className="h-10 max-w-[120px] object-contain opacity-90 filter drop-shadow-md" />
+                      <img src={formData.companyLogoURL} alt="Logo preview" className="h-10 max-w-[120px] object-contain opacity-95 filter drop-shadow-md" />
                     ) : (
-                      <Building2 className="h-12 w-12 text-slate-800/80 absolute right-2 bottom-1" />
+                      <Building2 className="h-12 w-12 text-white/10 absolute right-2 bottom-1" />
                     )}
                   </div>
 
@@ -1193,7 +1352,7 @@ export function EnhancedProfileEditModal({
                         {formData.photoURL ? (
                           <img src={formData.photoURL} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
-                          formData.fullName.charAt(0) || "U"
+                          formData.fullName?.charAt(0) || "U"
                         )}
                       </div>
                       <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
@@ -1203,20 +1362,20 @@ export function EnhancedProfileEditModal({
 
                     <div className="space-y-1">
                       <h5 className="font-extrabold text-sm text-white truncate leading-snug">{formData.fullName || "Your Full Name"}</h5>
-                      <p className="text-xs text-indigo-300 truncate leading-tight font-semibold">{formData.designation || "Executive Role"}</p>
+                      <p className={`text-xs ${activeThemeConfig.accent} truncate leading-tight font-semibold`}>{formData.designation || "Executive Role"}</p>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800/80 space-y-1.5 text-xs text-slate-300 font-medium">
+                    <div className="pt-2 border-t border-white/10 space-y-1.5 text-xs text-slate-300 font-medium">
                       <div className="flex items-center gap-2 truncate">
-                        <Building2 className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                        <Building2 className={`h-3.5 w-3.5 ${activeThemeConfig.accent} shrink-0`} />
                         <span className="truncate">{formData.companyName || "Enterprise Name"}</span>
                       </div>
                       <div className="flex items-center gap-2 truncate">
-                        <MapPin className="h-3.5 w-3.5 text-indigo-400 shrink-0" />
+                        <MapPin className={`h-3.5 w-3.5 ${activeThemeConfig.accent} shrink-0`} />
                         <span className="truncate">{formData.location ? `${formData.location}${formData.country ? `, ${formData.country}` : ''}` : "City, Country"}</span>
                       </div>
                       {formData.website && (
-                        <div className="flex items-center gap-2 truncate text-indigo-400 font-mono text-[11px]">
+                        <div className={`flex items-center gap-2 truncate ${activeThemeConfig.accent} font-mono text-[11px]`}>
                           <Globe className="h-3.5 w-3.5 shrink-0" />
                           <span className="truncate">{formData.website}</span>
                         </div>
@@ -1224,20 +1383,20 @@ export function EnhancedProfileEditModal({
                     </div>
 
                     {formData.about && (
-                      <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3 pt-2 border-t border-slate-800/80">
+                      <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3 pt-2 border-t border-white/10">
                         {formData.about}
                       </p>
                     )}
 
-                    {formData.industryTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 pt-2 border-t border-slate-800/80">
+                    {formData.industryTags && formData.industryTags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 pt-2 border-t border-white/10">
                         {formData.industryTags.slice(0, 3).map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded text-[9px] bg-slate-800 text-indigo-300 font-semibold border border-slate-700">
+                          <span key={t} className="px-2 py-0.5 rounded text-[9px] bg-white/10 text-white font-semibold border border-white/15">
                             {t}
                           </span>
                         ))}
                         {formData.industryTags.length > 3 && (
-                          <span className="px-2 py-0.5 rounded text-[9px] bg-indigo-950 text-indigo-400 font-bold border border-indigo-800">
+                          <span className={`px-2 py-0.5 rounded text-[9px] bg-indigo-950 ${activeThemeConfig.accent} font-bold border border-indigo-800`}>
                             +{formData.industryTags.length - 3} more
                           </span>
                         )}
