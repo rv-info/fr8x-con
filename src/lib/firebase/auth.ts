@@ -398,15 +398,20 @@ export async function resetPassword(email: string): Promise<void> {
 export async function signOut(): Promise<void> {
   try {
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("fr8x_active_user");
+      sessionStorage.clear();
       localStorage.removeItem("fr8x_active_user");
       sessionStorage.removeItem("fr8x_godmode_admin");
       document.cookie = "fr8x_godmode_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       window.dispatchEvent(new CustomEvent("fr8x_auth_change", { detail: null }));
     }
     await firebaseSignOut(firebaseAuth);
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
   } catch {
-    // Ignore firebase signout error
+    if (typeof window !== "undefined") {
+      window.location.replace("/login");
+    }
   }
 }
 
