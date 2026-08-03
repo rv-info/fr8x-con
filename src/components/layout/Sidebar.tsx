@@ -60,18 +60,18 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden lg:flex flex-col bg-white border-r border-border transition-[width] duration-200 overflow-hidden contain-layout shrink-0",
+        "hidden lg:flex flex-col bg-white border-r border-slate-200 transition-[width] duration-200 overflow-hidden contain-layout shrink-0 transform-gpu",
         expandedClass
       )}
     >
       {/* Brand Header */}
-      <div className="flex items-center justify-between px-2 py-2 border-b border-border min-h-[40px] overflow-hidden">
+      <div className="flex items-center justify-between px-2.5 py-2 border-b border-slate-200 min-h-[40px] overflow-hidden">
         <Link href={ROUTES.FEEDS} className="flex items-center gap-2 shrink-0">
-          <div className="flex h-6 w-6 items-center justify-center rounded bg-[var(--fr8x-periwinkle)] text-white font-bold text-[11px] shrink-0 shadow-2xs">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-[var(--fr8x-periwinkle)] text-white font-bold text-[9px] shrink-0 shadow-2xs">
             F
           </div>
           {isExpanded && (
-            <span className="text-[11px] text-[var(--fr8x-jet)] font-bold tracking-tight whitespace-nowrap">
+            <span className="text-[12px] text-slate-900 font-bold tracking-tight whitespace-nowrap">
               {APP_NAME}
             </span>
           )}
@@ -89,13 +89,13 @@ export function Sidebar() {
               href={item.href}
               title={!isExpanded ? item.label : undefined}
               className={cn(
-                "flex items-center gap-2.5 rounded px-2 py-1.5 text-[11px] transition-colors duration-150 font-medium",
+                "flex items-center gap-2 rounded px-2 py-1.5 text-[10px] transition-colors duration-150 font-medium",
                 isActive
                   ? "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] font-bold shadow-2xs"
-                  : "text-foreground-secondary hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)]"
+                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
               )}
             >
-              <Icon className="h-4 w-4 shrink-0" />
+              <Icon className="h-3.5 w-3.5 shrink-0" />
               {isExpanded && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
             </Link>
           );
@@ -103,21 +103,21 @@ export function Sidebar() {
       </nav>
 
       {/* Footer controls: Expand/Collapse Toggle Button & Sign Out */}
-      <div className="px-1.5 py-2 border-t border-border space-y-1 bg-slate-50/50">
+      <div className="px-1.5 py-2 border-t border-slate-200 space-y-1 bg-slate-50/50">
         {/* Dedicated Expand/Collapse Toggle Button directly above Sign Out */}
         <button
           onClick={toggleSidebar}
           title={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
           aria-label={isExpanded ? "Collapse Sidebar" : "Expand Sidebar"}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-[11px] font-medium text-foreground-secondary hover:bg-slate-200/70 hover:text-[var(--fr8x-jet)] transition-colors"
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-[10px] font-medium text-slate-600 hover:bg-slate-200/70 hover:text-slate-900 transition-colors"
         >
           {isExpanded ? (
             <>
-              <PanelLeftClose className="h-4 w-4 shrink-0 text-slate-600" />
+              <PanelLeftClose className="h-3.5 w-3.5 shrink-0 text-slate-600" />
               <span className="whitespace-nowrap font-semibold">Collapse</span>
             </>
           ) : (
-            <PanelLeftOpen className="h-4 w-4 shrink-0 text-slate-600 mx-auto" />
+            <PanelLeftOpen className="h-3.5 w-3.5 shrink-0 text-slate-600 mx-auto" />
           )}
         </button>
 
@@ -125,9 +125,9 @@ export function Sidebar() {
         <button
           onClick={signOut}
           title={!isExpanded ? "Sign out" : undefined}
-          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-[11px] font-medium text-foreground-secondary hover:bg-danger-light hover:text-danger-dark transition-colors"
+          className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-[10px] font-medium text-slate-600 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
-          <LogOut className="h-4 w-4 shrink-0" />
+          <LogOut className="h-3.5 w-3.5 shrink-0" />
           {isExpanded && <span>Sign out</span>}
         </button>
       </div>
