@@ -19,6 +19,7 @@ import {
   MapPin,
   ShieldCheck,
   Eye,
+  Crop,
 } from "lucide-react";
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { compressAndOptimizeImage } from "@/lib/utils/imageOptimizer";
@@ -165,7 +166,6 @@ export function EnhancedProfileEditModal({
     if (!file) return;
     setIsUploadingLogo(true);
     try {
-      // Compress image client-side to <40KB WebP and strip EXIF for high performance & privacy
       const compressedDataUrl = await compressAndOptimizeImage(file, 600, 600, 0.75);
       setFormData((prev) => ({ ...prev, companyLogoURL: compressedDataUrl }));
 
@@ -202,7 +202,7 @@ export function EnhancedProfileEditModal({
       setTimeout(() => {
         setIsSavedState(false);
         onClose();
-      }, 1500);
+      }, 1200);
     } catch (err) {
       console.error(err);
     } finally {
@@ -211,32 +211,32 @@ export function EnhancedProfileEditModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto text-left">
+    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-y-auto text-left">
       <input
         ref={photoInputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); e.target.value = ""; }}
       />
       <input
         ref={logoInputRef}
         type="file"
         accept="image/*"
         className="hidden"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoSelect(f); }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoSelect(f); e.target.value = ""; }}
       />
 
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-left">
-        {/* Top Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
+        {/* Top Header - Light Enterprise Theme */}
+        <div className="px-6 py-4 bg-white text-slate-900 flex items-center justify-between border-b border-slate-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[var(--fr8x-periwinkle)]/20 rounded-xl text-[var(--fr8x-periwinkle)]">
+            <div className="p-2.5 bg-[var(--fr8x-periwinkle)]/15 rounded-xl text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-periwinkle)]/20">
               <Sparkles className="h-6 w-6" />
             </div>
             <div>
-              <h2 className="text-xl font-bold">Enterprise Profile Studio</h2>
-              <p className="text-xs text-slate-400">Configure your B2B enterprise identity &amp; trade credentials</p>
+              <h2 className="text-xl font-bold text-slate-900 leading-snug">Enterprise Profile Studio</h2>
+              <p className="text-xs text-slate-500 font-medium">Configure your B2B enterprise identity &amp; trade credentials</p>
             </div>
           </div>
 
@@ -244,33 +244,37 @@ export function EnhancedProfileEditModal({
             <button
               type="button"
               onClick={() => setShowLivePreview(!showLivePreview)}
-              className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-2 border border-slate-200 transition-colors"
             >
-              <Eye className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
+              <Eye className="h-4.5 w-4.5 text-[var(--fr8x-periwinkle)]" />
               {showLivePreview ? "Hide Live Preview" : "Show Live Preview"}
             </button>
-            <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-slate-400 hover:text-slate-700 hover:bg-slate-100 p-1.5 rounded-xl transition-colors"
+            >
               <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
         {/* Completion Progress Bar */}
-        <div className="bg-slate-50 px-6 py-2 border-b border-slate-200 flex items-center justify-between text-xs">
+        <div className="bg-slate-50/80 px-6 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-4 w-4 text-emerald-600" />
+            <ShieldCheck className="h-4.5 w-4.5 text-emerald-600" />
             <span className="font-semibold text-slate-700">Profile Strength:</span>
             <span className="font-bold text-emerald-700">{completionScore}% Complete</span>
           </div>
-          <div className="w-48 h-2 bg-slate-200 rounded-full overflow-hidden">
+          <div className="w-52 h-2.5 bg-slate-200 rounded-full overflow-hidden">
             <div className="h-full bg-emerald-500 rounded-full transition-all duration-300" style={{ width: `${completionScore}%` }} />
           </div>
         </div>
 
-        {/* Main Body with Sidebar Tabs + Form + Live Preview */}
-        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-[480px]">
+        {/* Main Body with Navigation Sidebar + Form Controls + Live Preview */}
+        <div className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-[500px]">
           {/* Navigation Sidebar */}
-          <div className="w-full lg:w-64 bg-slate-50 border-r border-slate-200 p-3 space-y-1 overflow-y-auto">
+          <div className="w-full lg:w-64 bg-slate-50/70 border-r border-slate-200 p-3 space-y-1.5 overflow-y-auto">
             {[
               { id: "basic", label: "Basic Info", icon: User },
               { id: "company", label: "Company & Compliance", icon: Building2 },
@@ -286,13 +290,13 @@ export function EnhancedProfileEditModal({
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveSection(tab.id as any)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-xs transition-all text-left ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm transition-all text-left ${
                     isActive
-                      ? "bg-[var(--fr8x-periwinkle)] text-white shadow-sm"
+                      ? "bg-[var(--fr8x-periwinkle)] text-white shadow-sm font-bold"
                       : "text-slate-600 hover:bg-slate-200/60 hover:text-slate-900"
                   }`}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className="h-5 w-5 shrink-0 text-current" />
                   <span>{tab.label}</span>
                 </button>
               );
@@ -300,12 +304,12 @@ export function EnhancedProfileEditModal({
           </div>
 
           {/* Form Controls Content */}
-          <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-white">
-            <form onSubmit={handleFormSubmit} className="space-y-4">
+          <div className="flex-1 p-6 overflow-y-auto space-y-5 bg-white">
+            <form onSubmit={handleFormSubmit} className="space-y-5">
               {/* TAB 1: BASIC INFO */}
               {activeSection === "basic" && (
                 <div className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 border-b pb-2">Personal &amp; Contact Details</h3>
+                  <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2.5">Personal &amp; Contact Details</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="fr8x-label block mb-1">Full Name</label>
@@ -364,7 +368,7 @@ export function EnhancedProfileEditModal({
               {/* TAB 2: COMPANY & COMPLIANCE */}
               {activeSection === "company" && (
                 <div className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 border-b pb-2">Company Information &amp; Trade Licenses</h3>
+                  <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2.5">Company Information &amp; Trade Licenses</h3>
                   <div>
                     <label className="fr8x-label block mb-1">Registered Enterprise Name</label>
                     <input
@@ -411,11 +415,9 @@ export function EnhancedProfileEditModal({
               {/* TAB 3: LOGO & AVATAR BRANDING */}
               {activeSection === "branding" && (
                 <div className="space-y-5">
-                  <div className="flex items-center justify-between border-b pb-2">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-900">Enterprise Branding &amp; Visual Identity</h3>
-                      <p className="text-xs text-slate-500">Upload, crop, or delete custom logo and avatar images for your enterprise profile.</p>
-                    </div>
+                  <div className="border-b border-slate-200 pb-2.5">
+                    <h3 className="text-base font-bold text-slate-900">Enterprise Branding &amp; Visual Identity</h3>
+                    <p className="text-xs text-slate-500 font-medium">Upload, crop, zoom, or remove custom logo and avatar images for your enterprise profile.</p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -427,40 +429,54 @@ export function EnhancedProfileEditModal({
                         const file = e.dataTransfer.files?.[0];
                         if (file) handlePhotoSelect(file);
                       }}
-                      className="p-5 border-2 border-dashed border-slate-300 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3 bg-slate-50/60 transition-colors"
+                      className="p-5 border-2 border-dashed border-slate-200 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3.5 bg-slate-50/70 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-sm text-slate-800">Profile Avatar Photo</h4>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.photoURL ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${formData.photoURL ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
                           {formData.photoURL ? 'Image Active' : 'Blank / Default'}
                         </span>
                       </div>
 
-                      <div className="relative w-28 h-28 mx-auto rounded-full bg-slate-200 border-2 border-white shadow-md overflow-hidden flex items-center justify-center group">
+                      <div
+                        onClick={() => {
+                          if (formData.photoURL) {
+                            setCropImageSrc(formData.photoURL);
+                            setShowCropModal(true);
+                          } else {
+                            photoInputRef.current?.click();
+                          }
+                        }}
+                        className="relative w-28 h-28 mx-auto rounded-full bg-slate-100 border-2 border-slate-200 shadow-md overflow-hidden flex items-center justify-center group cursor-pointer hover:border-[var(--fr8x-periwinkle)] transition-all"
+                        title={formData.photoURL ? "Click to crop/adjust image" : "Click to upload image"}
+                      >
                         {formData.photoURL ? (
                           <img src={formData.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
                           <User className="h-12 w-12 text-slate-400" />
                         )}
                         {isUploadingPhoto && (
-                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs font-bold">
+                          <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center text-white text-xs font-bold">
                             <Loader2 className="h-5 w-5 animate-spin mb-1 text-white" />
                             {photoProgress}%
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
+                          {formData.photoURL ? "Crop / Adjust" : "Upload"}
+                        </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-500">
-                        Drag &amp; drop an image here or click below (PNG, JPG, WebP)
+                      <p className="text-[11px] text-slate-500 font-medium">
+                        Drag &amp; drop profile picture here or click below (PNG, JPG, WebP)
                       </p>
 
                       <div className="space-y-2 pt-1">
                         <button
                           type="button"
                           onClick={() => photoInputRef.current?.click()}
-                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5 text-xs py-2 font-bold"
+                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-2 text-xs py-2 font-bold"
                         >
-                          <Upload className="h-4 w-4" /> {formData.photoURL ? "Change Avatar Photo" : "Upload Avatar Photo"}
+                          <Upload className="h-4.5 w-4.5 text-slate-500" /> {formData.photoURL ? "Change Avatar Photo" : "Upload Avatar Photo"}
                         </button>
 
                         {formData.photoURL && (
@@ -471,17 +487,17 @@ export function EnhancedProfileEditModal({
                                 setCropImageSrc(formData.photoURL);
                                 setShowCropModal(true);
                               }}
-                              className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1"
+                              className="flex-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 shadow-2xs transition-colors"
                             >
-                              <Camera className="h-3.5 w-3.5" /> Crop / Zoom
+                              <Crop className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Crop &amp; Zoom
                             </button>
                             <button
                               type="button"
                               onClick={() => setFormData((prev) => ({ ...prev, photoURL: null }))}
-                              className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors"
-                              title="Delete avatar image back to blank default upload"
+                              className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors"
+                              title="Delete avatar image"
                             >
-                              <Trash2 className="h-3.5 w-3.5" /> Delete Image
+                              <Trash2 className="h-4 w-4 text-rose-600" /> Remove Image
                             </button>
                           </div>
                         )}
@@ -496,30 +512,37 @@ export function EnhancedProfileEditModal({
                         const file = e.dataTransfer.files?.[0];
                         if (file) handleLogoSelect(file);
                       }}
-                      className="p-5 border-2 border-dashed border-slate-300 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3 bg-slate-50/60 transition-colors"
+                      className="p-5 border-2 border-dashed border-slate-200 hover:border-[var(--fr8x-periwinkle)] rounded-2xl text-center space-y-3.5 bg-slate-50/70 transition-colors"
                     >
                       <div className="flex items-center justify-between">
                         <h4 className="font-bold text-sm text-slate-800">Company Logo Banner</h4>
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.companyLogoURL ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${formData.companyLogoURL ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-200 text-slate-600 border-slate-300'}`}>
                           {formData.companyLogoURL ? 'Logo Active' : 'Blank / Default'}
                         </span>
                       </div>
 
-                      <div className="relative w-28 h-28 mx-auto rounded-2xl bg-slate-900 border-2 border-white shadow-md overflow-hidden flex items-center justify-center p-2 group">
+                      <div
+                        onClick={() => logoInputRef.current?.click()}
+                        className="relative w-28 h-28 mx-auto rounded-2xl bg-slate-100 border-2 border-slate-200 shadow-md overflow-hidden flex items-center justify-center p-2 group cursor-pointer hover:border-[var(--fr8x-periwinkle)] transition-all"
+                        title="Click to upload company logo"
+                      >
                         {formData.companyLogoURL ? (
                           <img src={formData.companyLogoURL} alt="Logo" className="w-full h-full object-contain" />
                         ) : (
                           <Building2 className="h-12 w-12 text-[var(--fr8x-periwinkle)]" />
                         )}
                         {isUploadingLogo && (
-                          <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white text-xs font-bold">
+                          <div className="absolute inset-0 bg-slate-900/60 flex flex-col items-center justify-center text-white text-xs font-bold">
                             <Loader2 className="h-5 w-5 animate-spin mb-1 text-white" />
                             {logoProgress}%
                           </div>
                         )}
+                        <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-xs font-bold transition-opacity">
+                          Upload Logo
+                        </div>
                       </div>
 
-                      <p className="text-[11px] text-slate-500">
+                      <p className="text-[11px] text-slate-500 font-medium">
                         Drag &amp; drop company logo here or click below
                       </p>
 
@@ -527,19 +550,19 @@ export function EnhancedProfileEditModal({
                         <button
                           type="button"
                           onClick={() => logoInputRef.current?.click()}
-                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-1.5 text-xs py-2 font-bold"
+                          className="fr8x-btn-secondary w-full flex items-center justify-center gap-2 text-xs py-2 font-bold"
                         >
-                          <Upload className="h-4 w-4" /> {formData.companyLogoURL ? "Change Company Logo" : "Upload Company Logo"}
+                          <Upload className="h-4.5 w-4.5 text-slate-500" /> {formData.companyLogoURL ? "Change Company Logo" : "Upload Company Logo"}
                         </button>
 
                         {formData.companyLogoURL && (
                           <button
                             type="button"
                             onClick={() => setFormData((prev) => ({ ...prev, companyLogoURL: null }))}
-                            className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-1.5 rounded-lg font-bold flex items-center justify-center gap-1 transition-colors"
-                            title="Delete logo image back to blank default upload"
+                            className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-2 rounded-xl font-bold flex items-center justify-center gap-1.5 transition-colors"
+                            title="Delete logo image"
                           >
-                            <Trash2 className="h-3.5 w-3.5" /> Delete Logo Image
+                            <Trash2 className="h-4 w-4 text-rose-600" /> Remove Logo Image
                           </button>
                         )}
                       </div>
@@ -551,7 +574,7 @@ export function EnhancedProfileEditModal({
               {/* TAB 4: WORK EXPERIENCE */}
               {activeSection === "experience" && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-2">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                     <h3 className="text-base font-bold text-slate-900">Work Experience Timeline</h3>
                     <button
                       type="button"
@@ -564,20 +587,20 @@ export function EnhancedProfileEditModal({
                           ],
                         })
                       }
-                      className="fr8x-btn-primary flex items-center gap-1 text-xs"
+                      className="fr8x-btn-primary flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl"
                     >
                       <Plus className="h-4 w-4" /> Add Experience
                     </button>
                   </div>
 
                   {formData.workExperience.length === 0 && (
-                    <p className="text-xs text-slate-400 py-4 text-center">No work experience added yet. Click &quot;Add Experience&quot; above.</p>
+                    <p className="text-xs text-slate-400 py-6 text-center">No work experience added yet. Click &quot;Add Experience&quot; above.</p>
                   )}
 
                   <div className="space-y-3">
                     {formData.workExperience.map((we) => (
-                      <div key={we.id} className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                      <div key={we.id} className="p-4 border border-slate-200 bg-slate-50/70 rounded-xl space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <input
                             value={we.company}
                             onChange={(e) =>
@@ -601,7 +624,7 @@ export function EnhancedProfileEditModal({
                             className="fr8x-input"
                           />
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                           <input
                             value={we.location}
                             onChange={(e) =>
@@ -645,17 +668,17 @@ export function EnhancedProfileEditModal({
                                 workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, roleDescription: e.target.value } : item)),
                               })
                             }
-                            placeholder="Detailed job profile & key responsibilities (e.g. Managed ocean freight rate negotiations, handled customs clearance for Asia-Europe lanes)..."
+                            placeholder="Detailed job profile & key responsibilities..."
                             rows={2}
-                            className="fr8x-input text-[11px] resize-none"
+                            className="fr8x-input text-xs resize-none"
                           />
                         </div>
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, workExperience: formData.workExperience.filter((item) => item.id !== we.id) })}
-                          className="text-rose-600 hover:underline text-xs font-semibold flex items-center gap-1"
+                          className="text-rose-600 hover:text-rose-800 text-xs font-semibold flex items-center gap-1.5 pt-1"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Remove Position
+                          <Trash2 className="h-4 w-4" /> Remove Position
                         </button>
                       </div>
                     ))}
@@ -666,7 +689,7 @@ export function EnhancedProfileEditModal({
               {/* TAB 5: EDUCATION */}
               {activeSection === "education" && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b pb-2">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
                     <h3 className="text-base font-bold text-slate-900">Education &amp; Academic Credentials</h3>
                     <button
                       type="button"
@@ -679,20 +702,20 @@ export function EnhancedProfileEditModal({
                           ],
                         })
                       }
-                      className="fr8x-btn-primary flex items-center gap-1 text-xs"
+                      className="fr8x-btn-primary flex items-center gap-1.5 text-xs font-bold px-3.5 py-1.5 rounded-xl"
                     >
                       <Plus className="h-4 w-4" /> Add Education
                     </button>
                   </div>
 
                   {formData.education.length === 0 && (
-                    <p className="text-xs text-slate-400 py-4 text-center">No education records added yet.</p>
+                    <p className="text-xs text-slate-400 py-6 text-center">No education records added yet.</p>
                   )}
 
                   <div className="space-y-3">
                     {formData.education.map((edu) => (
-                      <div key={edu.id} className="p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                      <div key={edu.id} className="p-4 border border-slate-200 bg-slate-50/70 rounded-xl space-y-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <input
                             value={edu.college}
                             onChange={(e) =>
@@ -716,7 +739,7 @@ export function EnhancedProfileEditModal({
                             className="fr8x-input"
                           />
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <input
                             value={edu.from}
                             onChange={(e) =>
@@ -743,9 +766,9 @@ export function EnhancedProfileEditModal({
                         <button
                           type="button"
                           onClick={() => setFormData({ ...formData, education: formData.education.filter((item) => item.id !== edu.id) })}
-                          className="text-rose-600 hover:underline text-xs font-semibold flex items-center gap-1"
+                          className="text-rose-600 hover:text-rose-800 text-xs font-semibold flex items-center gap-1.5 pt-1"
                         >
-                          <Trash2 className="h-3.5 w-3.5" /> Remove Education
+                          <Trash2 className="h-4 w-4" /> Remove Education
                         </button>
                       </div>
                     ))}
@@ -756,8 +779,8 @@ export function EnhancedProfileEditModal({
               {/* TAB 6: SPECIALIZATION TAGS */}
               {activeSection === "tags" && (
                 <div className="space-y-4">
-                  <h3 className="text-base font-bold text-slate-900 border-b pb-2">Logistics Specializations &amp; Service Tags</h3>
-                  <p className="text-xs text-slate-500">Select all trade capabilities that apply to your enterprise offerings:</p>
+                  <h3 className="text-base font-bold text-slate-900 border-b border-slate-200 pb-2.5">Logistics Specializations &amp; Service Tags</h3>
+                  <p className="text-xs text-slate-500 font-medium">Select all trade capabilities that apply to your enterprise offerings:</p>
 
                   <div className="flex flex-wrap gap-2 pt-2">
                     {AVAILABLE_SPECIALIZATIONS.map((spec) => {
@@ -767,13 +790,13 @@ export function EnhancedProfileEditModal({
                           key={spec}
                           type="button"
                           onClick={() => toggleTag(spec)}
-                          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all flex items-center gap-1.5 ${
+                          className={`px-4 py-2 rounded-full text-xs font-semibold border transition-all flex items-center gap-2 ${
                             selected
-                              ? "bg-[var(--fr8x-periwinkle)] text-white border-[var(--fr8x-periwinkle)] shadow-sm"
+                              ? "bg-[var(--fr8x-periwinkle)] text-white border-[var(--fr8x-periwinkle)] shadow-sm font-bold"
                               : "bg-slate-100 text-slate-700 border-slate-300 hover:bg-slate-200"
                           }`}
                         >
-                          {selected && <CheckCircle2 className="h-3.5 w-3.5" />}
+                          {selected && <CheckCircle2 className="h-4 w-4" />}
                           {spec}
                         </button>
                       );
@@ -783,23 +806,23 @@ export function EnhancedProfileEditModal({
               )}
 
               {/* Action Buttons */}
-              <div className="pt-4 border-t border-slate-200 flex justify-end gap-3">
-                <button type="button" onClick={onClose} className="fr8x-btn-secondary">
+              <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+                <button type="button" onClick={onClose} className="fr8x-btn-secondary text-xs px-5 py-2 font-bold">
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving || isSavedState}
-                  className={`fr8x-btn-primary flex items-center gap-2 px-5 py-2 transition-all ${
+                  className={`fr8x-btn-primary text-xs flex items-center gap-2 px-6 py-2 transition-all font-bold shadow-sm ${
                     isSavedState ? "bg-emerald-600 hover:bg-emerald-700 text-white" : ""
                   }`}
                 >
                   {isSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4.5 w-4.5 animate-spin" />
                   ) : isSavedState ? (
-                    <CheckCircle2 className="h-4 w-4 text-white" />
+                    <CheckCircle2 className="h-4.5 w-4.5 text-white" />
                   ) : (
-                    <Save className="h-4 w-4" />
+                    <Save className="h-4.5 w-4.5" />
                   )}
                   <span>{isSavedState ? "Saved" : "Save Profile"}</span>
                 </button>
@@ -818,81 +841,83 @@ export function EnhancedProfileEditModal({
 
           {/* Unsaved Changes Prompt Modal on Esc */}
           {showUnsavedPrompt && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-              <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl space-y-3">
-                <h4 className="text-body-md font-bold text-slate-900">Save Unsaved Changes?</h4>
-                <p className="text-caption text-slate-600">
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+              <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl border border-slate-200 space-y-4">
+                <h4 className="text-base font-bold text-slate-900">Save Unsaved Changes?</h4>
+                <p className="text-xs text-slate-600 font-medium leading-relaxed">
                   You pressed Esc. Would you like to save your profile changes before closing?
                 </p>
-                <div className="flex justify-end gap-2 pt-2">
+                <div className="flex items-center justify-end gap-2 pt-2">
                   <button
+                    type="button"
                     onClick={() => {
                       setShowUnsavedPrompt(false);
                       onClose();
                     }}
-                    className="fr8x-btn-secondary text-[11px] px-3 py-1.5"
+                    className="fr8x-btn-secondary text-xs px-4 py-2"
                   >
-                    Discard & Close
+                    Discard &amp; Close
                   </button>
                   <button
+                    type="button"
                     onClick={async (e) => {
                       setShowUnsavedPrompt(false);
                       await handleFormSubmit(e as any);
                     }}
-                    className="fr8x-btn-primary text-[11px] px-4 py-1.5"
+                    className="fr8x-btn-primary text-xs px-5 py-2 font-bold"
                   >
-                    Save & Close
+                    Save &amp; Close
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Side-by-Side Live Card Preview */}
+          {/* Side-by-Side Live Card Preview - Light Enterprise Theme */}
           {showLivePreview && (
-            <div className="w-full lg:w-80 bg-slate-900 text-white p-5 border-l border-slate-800 space-y-4 overflow-y-auto">
-              <h4 className="text-xs uppercase tracking-wider font-bold text-slate-400 flex items-center gap-1.5">
-                <Eye className="h-4 w-4 text-[var(--fr8x-periwinkle)]" /> Real-Time B2B Preview
+            <div className="w-full lg:w-80 bg-slate-50/80 text-slate-900 p-5 border-l border-slate-200 space-y-4 overflow-y-auto">
+              <h4 className="text-xs uppercase tracking-wider font-bold text-slate-500 flex items-center gap-2">
+                <Eye className="h-4.5 w-4.5 text-[var(--fr8x-periwinkle)]" /> Real-Time B2B Preview
               </h4>
 
-              {/* Preview Card */}
-              <div className="bg-slate-800 rounded-2xl border border-slate-700 p-4 space-y-3 shadow-xl">
+              {/* Light Card Preview */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-4 space-y-3.5 shadow-md text-slate-900">
                 <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-full bg-[var(--fr8x-periwinkle)]/20 flex items-center justify-center font-bold text-xl text-[var(--fr8x-periwinkle)] overflow-hidden border border-slate-600 shrink-0">
+                  <div className="w-14 h-14 rounded-full bg-[var(--fr8x-periwinkle)]/15 border border-[var(--fr8x-periwinkle)]/30 flex items-center justify-center font-bold text-xl text-[var(--fr8x-periwinkle)] overflow-hidden shrink-0 shadow-xs">
                     {formData.photoURL ? (
                       <img src={formData.photoURL} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
                       formData.fullName.charAt(0) || "U"
                     )}
                   </div>
-                  <div>
-                    <h5 className="font-bold text-sm text-white truncate max-w-[150px]">{formData.fullName || "Your Full Name"}</h5>
-                    <p className="text-xs text-slate-400 truncate max-w-[150px]">{formData.designation || "Designation"}</p>
-                    <span className="text-[10px] text-[var(--fr8x-periwinkle)] font-mono">{formData.publicId || "@USER"}</span>
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <h5 className="font-bold text-sm text-slate-900 truncate leading-snug">{formData.fullName || "Your Full Name"}</h5>
+                    <p className="text-xs text-slate-500 truncate leading-tight font-medium">{formData.designation || "Designation"}</p>
+                    <span className="text-[11px] font-mono text-[var(--fr8x-periwinkle)] font-semibold truncate block mt-0.5">{formData.publicId || "@USER"}</span>
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-700 space-y-1.5 text-xs text-slate-300">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="font-bold text-white truncate">{formData.companyName || "Company Name"}</span>
+                <div className="pt-2.5 border-t border-slate-100 space-y-2 text-xs">
+                  <div className="flex items-center gap-2 min-w-0 text-slate-800 font-semibold">
+                    <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className="truncate">{formData.companyName || "Company Name"}</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    <span>{formData.location ? `${formData.location}, ${formData.country}` : "Location"}</span>
+                  <div className="flex items-center gap-2 min-w-0 text-slate-600 font-medium">
+                    <MapPin className="h-4 w-4 text-slate-400 shrink-0" />
+                    <span className="truncate">{formData.location ? `${formData.location}${formData.country ? `, ${formData.country}` : ''}` : "Location"}</span>
                   </div>
                 </div>
 
                 {formData.about && (
-                  <p className="text-[11px] text-slate-400 leading-relaxed line-clamp-3 pt-1 border-t border-slate-700/60">
+                  <p className="text-xs text-slate-600 leading-relaxed line-clamp-3 pt-2 border-t border-slate-100">
                     {formData.about}
                   </p>
                 )}
 
                 {formData.industryTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-2">
+                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
                     {formData.industryTags.slice(0, 3).map((t) => (
-                      <span key={t} className="px-2 py-0.5 rounded text-[9px] bg-slate-700 text-slate-200 font-semibold">
+                      <span key={t} className="px-2.5 py-1 rounded-md text-[10px] bg-slate-100 text-slate-700 font-semibold border border-slate-200">
                         {t}
                       </span>
                     ))}
