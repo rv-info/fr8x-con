@@ -1,4 +1,4 @@
-import { LocationDoc, TransportMode, LocationType } from "@/lib/types/location";
+import { LocationDoc, TransportMode } from "@/lib/types/location";
 import { setDocument } from "@/lib/firebase/firestore";
 import { COLLECTIONS } from "@/lib/utils/constants";
 
@@ -25,7 +25,7 @@ export async function fetchExternalAirports(): Promise<LocationDoc[]> {
     const data = await response.json();
     const parsedLocations: LocationDoc[] = [];
 
-    for (const [key, airport] of Object.entries<any>(data)) {
+    for (const [, airport] of Object.entries<any>(data)) {
       if (!airport.iata || airport.iata.trim() === "") continue;
       
       const iata = airport.iata.toUpperCase();
