@@ -7,7 +7,6 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import { ROUTES } from "@/lib/utils/constants";
-import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
 
 export default function RootPage() {
   const { isAuthenticated, isLoading, user } = useAuth();
