@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "deploy:expo": "eas update --branch production --message \"Backend & UI OTA Update\"",
+    "deploy:web": "next build && npx vercel --prod",
+    "deploy:all": "npm run deploy:web && npm run deploy:expo"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
