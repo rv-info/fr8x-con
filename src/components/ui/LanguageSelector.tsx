@@ -2,6 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { Globe } from "lucide-react";
+import { setPreferenceCookie, getPreferenceCookie } from "@/lib/security/cookies";
+import { setDocument, getDocument } from "@/lib/firebase/firestore";
+import { COLLECTIONS } from "@/lib/utils/constants";
+import { firebaseAuth } from "@/lib/firebase/config";
 
 export interface LanguageOption {
   code: string;
@@ -38,54 +42,78 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
   const [currentLanguage, setCurrentLanguage] = useState<LanguageOption>(DEFAULT_LANGUAGE);
 
   useEffect(() => {
-    try {
-      const savedLangCode = localStorage.getItem("fr8x_user_lang");
-      if (savedLangCode) {
-        const found = SUPPORTED_LANGUAGES.find((l) => l.code === savedLangCode);
-        if (found) {
-          setCurrentLanguage(found);
-          return;
+    async function loadLangPreference() {
+      try {
+        // 1. Check user Firestore profile if authenticated
+        const currentUser = firebaseAuth.currentUser;
+        if (currentUser?.uid) {
+          const userDoc = await getDocument<{ preferredLanguage?: string }>(COLLECTIONS.USERS, currentUser.uid);
+          if (userDoc?.preferredLanguage) {
+            const found = SUPPORTED_LANGUAGES.find((l) => l.code === userDoc.preferredLanguage);
+            if (found) {
+              setCurrentLanguage(found);
+              setPreferenceCookie("language", found.code);
+              return;
+            }
+          }
         }
+
+        // 2. Check preference cookie
+        const cookieLangCode = getPreferenceCookie("language");
+        if (cookieLangCode) {
+          const found = SUPPORTED_LANGUAGES.find((l) => l.code === cookieLangCode);
+          if (found) {
+            setCurrentLanguage(found);
+            return;
+          }
+        }
+
+        // 3. Fallback to localStorage / browser language
+        const savedLangCode = localStorage.getItem("fr8x_user_lang");
+        if (savedLangCode) {
+          const found = SUPPORTED_LANGUAGES.find((l) => l.code === savedLangCode);
+          if (found) {
+            setCurrentLanguage(found);
+            return;
+          }
+        }
+
+        // Auto-detect browser device language
+        const navLang = (navigator.language || (navigator.languages && navigator.languages[0]) || "").toLowerCase();
+        let autoSelectedCode = "en";
+        if (navLang.startsWith("hi")) autoSelectedCode = "hi";
+        else if (navLang.startsWith("es")) autoSelectedCode = "es";
+        else if (navLang.startsWith("fr")) autoSelectedCode = "fr";
+        else if (navLang.startsWith("de")) autoSelectedCode = "de";
+        else if (navLang.startsWith("zh")) autoSelectedCode = "zh";
+        else if (navLang.startsWith("ar")) autoSelectedCode = "ar";
+        else if (navLang.startsWith("pt")) autoSelectedCode = "pt";
+        else if (navLang.startsWith("ja")) autoSelectedCode = "ja";
+
+        const match = SUPPORTED_LANGUAGES.find((l) => l.code === autoSelectedCode) || DEFAULT_LANGUAGE;
+        setCurrentLanguage(match);
+      } catch {
+        /* ignore SSR / storage errors */
       }
-
-      // Auto-detect browser device language and regional timezone settings
-      const navLang = (navigator.language || (navigator.languages && navigator.languages[0]) || "").toLowerCase();
-      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
-
-      let autoSelectedCode = "en";
-      if (navLang.startsWith("hi") || timeZone.includes("Kolkata") || timeZone.includes("Calcutta")) {
-        // If system locale explicitly Hindi
-        autoSelectedCode = navLang.startsWith("hi") ? "hi" : "en";
-      } else if (navLang.startsWith("es")) {
-        autoSelectedCode = "es";
-      } else if (navLang.startsWith("fr")) {
-        autoSelectedCode = "fr";
-      } else if (navLang.startsWith("de")) {
-        autoSelectedCode = "de";
-      } else if (navLang.startsWith("zh")) {
-        autoSelectedCode = "zh";
-      } else if (navLang.startsWith("ar")) {
-        autoSelectedCode = "ar";
-      } else if (navLang.startsWith("pt")) {
-        autoSelectedCode = "pt";
-      } else if (navLang.startsWith("ja")) {
-        autoSelectedCode = "ja";
-      }
-
-      const match = SUPPORTED_LANGUAGES.find((l) => l.code === autoSelectedCode) || DEFAULT_LANGUAGE;
-      setCurrentLanguage(match);
-    } catch {
-      /* ignore SSR / storage errors */
     }
+
+    loadLangPreference();
   }, []);
 
-  const handleSetLanguage = (lang: LanguageOption) => {
+  const handleSetLanguage = async (lang: LanguageOption) => {
     setCurrentLanguage(lang);
+    setPreferenceCookie("language", lang.code);
     try {
       localStorage.setItem("fr8x_user_lang", lang.code);
-    } catch {
-      /* ignore */
-    }
+    } catch { /* ignore */ }
+
+    // Save language selection to user profile in Firestore for cross-device persistence
+    try {
+      const currentUser = firebaseAuth.currentUser;
+      if (currentUser?.uid) {
+        await setDocument(COLLECTIONS.USERS, currentUser.uid, { preferredLanguage: lang.code }, true);
+      }
+    } catch { /* ignore non-critical write error */ }
   };
 
   return (
