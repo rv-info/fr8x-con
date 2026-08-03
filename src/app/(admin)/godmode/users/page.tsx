@@ -38,35 +38,8 @@ export default function GodModeUsersPage() {
           queryDocuments<any>(COLLECTIONS.PROFILES, [limit(100)]).catch(() => []),
         ]);
 
-        const seedUsers: UserAdmin[] = [
-          {
-            id: "user_mgt_raivega_2026",
-            uid: "user_mgt_raivega_2026",
-            fullName: "Management (Rai Vega)",
-            email: "mgt@raivega.in",
-            companyName: "Rai Vega Logistics",
-            role: "freight_forwarder",
-            membershipTier: "premium",
-            status: "active",
-            isGodMode: false,
-          },
-          {
-            id: "godmode_admin_dev_uid",
-            uid: "godmode_admin_dev_uid",
-            fullName: "GodMode Administrator",
-            email: "support@fr8x.in",
-            companyName: "FR8X System Admin",
-            role: "admin",
-            membershipTier: "premium",
-            status: "active",
-            isGodMode: true,
-          },
-        ];
-
         const profileMap = new Map(profileData.map((p) => [p.userId || p.id, p]));
         const mergedMap = new Map<string, UserAdmin>();
-
-        seedUsers.forEach((s) => mergedMap.set(s.email?.toLowerCase() || s.id, s));
 
         userData.forEach((u) => {
           const matchedProf = profileMap.get(u.id) || profileMap.get(u.uid || "");
