@@ -76,6 +76,22 @@ export const COLLECTIONS = {
   STAMPS: "stamps",
   PUSH_TOKENS: "push_tokens",
   TAGS: "tags",
+  // — Production collections added for hardening pass —
+  REVIEWS: "reviews",
+  REVIEW_DISPUTES: "reviewDisputes",
+  CONVERSATIONS: "conversations",
+  PROFILE_VIEWS: "profileViews",
+  PRESENCE: "presence",
+  RATE_REVISIONS: "rateRevisions",
+  BIDDER_GROUPS: "bidderGroups",
+  AUCTION_INVITES: "auctionInvites",
+  AD_CAMPAIGNS: "adCampaigns",
+  FEED_INTERACTIONS: "feedInteractions",
+  FEED_HIDDEN: "feedHidden",
+  ASSOCIATIONS: "associations",
+  KYC_DOCS: "kycDocuments",
+  TERMS_CONSENT: "termsConsent",
+  MODERATION: "moderation",
 } as const;
 
 
