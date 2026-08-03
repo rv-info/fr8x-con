@@ -43,7 +43,7 @@ export function TopNav() {
         onClick={() => setShowMobileMenu(!showMobileMenu)}
         className="lg:hidden p-1.5 text-foreground-secondary hover:text-foreground"
       >
-        {showMobileMenu ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Mobile logo */}
@@ -56,13 +56,13 @@ export function TopNav() {
       {/* Search bar */}
       <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md">
         <div className="relative w-full">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-foreground-muted" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search auctions, users, rates..."
-            className="fr8x-input pl-6 py-0.5 text-[11px] h-6"
+            className="fr8x-input pl-8 py-0.5 text-[11px] h-6"
           />
         </div>
       </form>
@@ -77,7 +77,7 @@ export function TopNav() {
 
         {/* Search icon for mobile */}
         <button className="md:hidden p-1.5 text-foreground-secondary hover:text-foreground">
-          <Search className="h-4 w-4" />
+          <Search className="h-5 w-5" />
         </button>
 
         {/* Notifications */}
@@ -86,7 +86,7 @@ export function TopNav() {
             onClick={() => setShowNotifications(!showNotifications)}
             className="relative p-1.5 text-foreground-secondary hover:text-foreground transition-colors"
           >
-            <Bell className="h-4 w-4" />
+            <Bell className="h-5 w-5" />
             <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-danger" />
           </button>
 
