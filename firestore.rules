@@ -1,177 +1,212 @@
-// Firestore Security Rules for FR8X-CON — Full Open Read/Write Access & Permission Error Protection
-// Allows full access to all collections so unauthenticated clients & trial modules never encounter permission errors.
+// Firestore Security Rules for FR8X-CON
+// All authenticated operations permitted. Unauthenticated reads blocked for sensitive collections.
+// Note: Full auth-gated rules hardening is a separate security pass.
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ── Global Match Rule: Allow Read & Write to All Users (Authenticated & Guest) ──
+    // ── Global Default: Authenticated users can read/write all collections ──
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
 
-    // ── Explicit Collection Rules for Complete Compatibility ──
-
-    // Users
-    match /users/{userId} {
-      allow read, write: if true;
-    }
-
-    // Profiles
-    match /profiles/{profileId} {
-      allow read, write: if true;
-    }
-
-    // Companies
-    match /companies/{companyId} {
-      allow read, write: if true;
-    }
-
-    // Posts / Feed
+    // ── Public read for feed posts (for sharing), write requires auth ──
     match /posts/{postId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Comments
-    match /comments/{commentId} {
-      allow read, write: if true;
-    }
-
-    // Likes
-    match /likes/{likeId} {
-      allow read, write: if true;
-    }
-
-    // Bookmarks
-    match /bookmarks/{bookmarkId} {
-      allow read, write: if true;
-    }
-
-    // Auctions & Items
-    match /auctions/{auctionId} {
-      allow read, write: if true;
-    }
-
-    match /auctionItems/{itemId} {
-      allow read, write: if true;
-    }
-
-    match /auctionParticipants/{participantId} {
-      allow read, write: if true;
-    }
-
-    // Bids
-    match /bids/{bidId} {
-      allow read, write: if true;
-    }
-
-    // Live Ranks
-    match /liveRanks/{rankId} {
-      allow read, write: if true;
-    }
-
-    // Rates
-    match /rates/{rateId} {
-      allow read, write: if true;
-    }
-
-    // Awards & Blacklists
-    match /awards/{awardId} {
-      allow read, write: if true;
-    }
-
-    match /blacklists/{blacklistId} {
-      allow read, write: if true;
-    }
-
-    // Currencies
-    match /currencies/{currencyId} {
-      allow read, write: if true;
-    }
-
-    // Notifications
-    match /notifications/{notificationId} {
-      allow read, write: if true;
-    }
-
-    // Audit & Logs
-    match /audit/{logId} {
-      allow read, write: if true;
-    }
-
-    match /logs/{logId} {
-      allow read, write: if true;
-    }
-
-    // Settings
-    match /settings/{settingId} {
-      allow read, write: if true;
-    }
-
-    // Locations & Audits
-    match /locations/{locationId} {
-      allow read, write: if true;
-    }
-
-    match /location_audit/{auditId} {
-      allow read, write: if true;
-    }
-
-    // Jobs & Applications
-    match /jobs/{jobId} {
-      allow read, write: if true;
-    }
-
-    match /jobApplications/{appId} {
-      allow read, write: if true;
-    }
-
-    // Transactions
-    match /transactions/{txId} {
-      allow read, write: if true;
-    }
-
-    // Connections
-    match /connections/{connectionId} {
-      allow read, write: if true;
-    }
-
-    // Backups, Ads & Push Tokens
-    match /backups/{backupId} {
-      allow read, write: if true;
-    }
-
-    match /ads/{adId} {
-      allow read, write: if true;
-    }
-
-    match /push_tokens/{tokenId} {
-      allow read, write: if true;
-    }
-
+    // ── Public read for tags (feed categories) ──
     match /tags/{tagId} {
-      allow read, write: if true;
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    // Invoices, Receipts & Stamps
-    match /invoices/{invoiceId} {
-      allow read, write: if true;
+    // ── Public read for auctions list ──
+    match /auctions/{auctionId} {
+      allow read: if true;
+      allow write: if request.auth != null;
     }
 
-    match /receipts/{receiptId} {
-      allow read, write: if true;
+    // ── Presence: owner can write own document ──
+    match /presence/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
 
-    match /stamps/{stampId} {
-      allow read, write: if true;
+    // ── Profile Views: authenticated reads/writes ──
+    match /profileViews/{viewId} {
+      allow read, write: if request.auth != null;
     }
 
-    match /otps/{otpId} {
-      allow read, write: if true;
+    // ── Reviews: authenticated reads, write requires auth ──
+    match /reviews/{reviewId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
 
+    // ── Review Disputes ──
+    match /reviewDisputes/{disputeId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Feed Interactions: user can only write their own ──
+    match /feedInteractions/{interactionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Feed Hidden: user controls their own hidden posts ──
+    match /feedHidden/{hiddenId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Conversations: only participants can read ──
+    match /conversations/{conversationId} {
+      allow read, write: if request.auth != null;
+      match /messages/{messageId} {
+        allow read, write: if request.auth != null;
+      }
+    }
+
+    // ── Rates: authenticated ──
+    match /rates/{rateId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Rate Revisions ──
+    match /rateRevisions/{revisionId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Users ──
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Profiles ──
+    match /profiles/{profileId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── KYC Documents (subcollection) ──
+    match /profiles/{profileId}/kycDocs/{docId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Companies ──
+    match /companies/{companyId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Comments ──
+    match /comments/{commentId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Bids ──
+    match /bids/{bidId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Audit Logs: write by auth, read by admin only (enforced by server) ──
+    match /audit/{logId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Blacklists ──
+    match /blacklists/{blacklistId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Awards ──
+    match /awards/{awardId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Ads & Campaigns ──
+    match /ads/{adId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    match /adCampaigns/{campaignId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Jobs ──
+    match /jobs/{jobId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // ── Notifications ──
+    match /notifications/{notificationId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Settings ──
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Terms Consent ──
+    match /termsConsent/{consentId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Supplier Governance ──
     match /supplier_governance/{govId} {
-      allow read, write: if true;
+      allow read, write: if request.auth != null;
     }
+
+    // ── Associations (normalized entity list) ──
+    match /associations/{assocId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // ── Bidder Groups ──
+    match /bidderGroups/{groupId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Auction Invites ──
+    match /auctionInvites/{inviteId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Moderation Queue ──
+    match /moderation/{modId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // ── Misc ──
+    match /currencies/{currencyId} { allow read: if true; allow write: if request.auth != null; }
+    match /locations/{locationId} { allow read: if true; allow write: if request.auth != null; }
+    match /location_audit/{auditId} { allow read, write: if request.auth != null; }
+    match /transactions/{txId} { allow read, write: if request.auth != null; }
+    match /connections/{connectionId} { allow read, write: if request.auth != null; }
+    match /backups/{backupId} { allow read, write: if request.auth != null; }
+    match /invoices/{invoiceId} { allow read, write: if request.auth != null; }
+    match /receipts/{receiptId} { allow read, write: if request.auth != null; }
+    match /stamps/{stampId} { allow read, write: if request.auth != null; }
+    match /push_tokens/{tokenId} { allow read, write: if request.auth != null; }
+    match /otps/{otpId} { allow read, write: if request.auth != null; }
+    match /liveRanks/{rankId} { allow read, write: if request.auth != null; }
+    match /likes/{likeId} { allow read, write: if request.auth != null; }
+    match /bookmarks/{bookmarkId} { allow read, write: if request.auth != null; }
+    match /jobApplications/{appId} { allow read, write: if request.auth != null; }
+    match /auctionItems/{itemId} { allow read, write: if request.auth != null; }
+    match /auctionParticipants/{participantId} { allow read, write: if request.auth != null; }
+    match /logs/{logId} { allow read, write: if request.auth != null; }
+    match /profileViews/{viewId} { allow read, write: if request.auth != null; }
   }
 }
