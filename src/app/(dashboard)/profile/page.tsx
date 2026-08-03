@@ -71,11 +71,14 @@ import { formatRelativeTime } from "@/lib/utils/format";
 import { Button } from "@/components/ui/Button";
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { EnhancedProfileEditModal, type UserProfileForm } from "@/components/profile/EnhancedProfileEditModal";
+import { type ChatConversation } from "@/lib/firebase/chat";
 
-function generatePublicId(name: string): string {
-  const prefix = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 5).toUpperCase() || "USER";
-  const num = Math.floor(100 + Math.random() * 900);
-  return `@${prefix}${num}`;
+
+function generatePublicId(uid: string, name: string): string {
+  // Deterministic, UID-based — no Math.random()
+  const prefix = name.replace(/[^a-zA-Z0-9]/g, "").substring(0, 4).toUpperCase() || "USER";
+  const suffix = uid.slice(-4).toUpperCase();
+  return `@${prefix}${suffix}`;
 }
 
 type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string };
@@ -109,6 +112,8 @@ type UserProfile = {
   followedTags?: string[];
   kycStatus?: "unverified" | "pending" | "verified" | "rejected";
   kycDocuments?: KYCDocument[];
+  legalDeclarationConsent?: boolean;
+  legalConsentTimestamp?: string;
 };
 
 type PeerReview = {
@@ -210,53 +215,17 @@ function ProfileContent() {
   const [contactSearchQuery, setContactSearchQuery] = useState("");
   const [contactFilterStatus, setContactFilterStatus] = useState<"all" | "approved" | "pending" | "rejected" | "blocked" | "cancelled">("all");
 
-  // Communications / Email System State
-  const [emailThreads, setEmailThreads] = useState<EmailMessage[]>([
-    {
-      id: "em_101",
-      senderName: "Rahul Sharma",
-      senderEmail: "rahul@maersk-freight.com",
-      senderCompany: "Maersk Line India",
-      subject: "FCL Contract Rate Negotiation — Nhava Sheva to Jebel Ali",
-      body: "Hello Team,\n\nWe have reviewed your RFQ for 50x40HC containers for August shipping. Please find our preliminary allocation rates attached. Let us know if you need extended free time at destination.",
-      timestamp: "Today, 10:45 AM",
-      isUnread: true,
-      isArchived: false,
-    },
-    {
-      id: "em_102",
-      senderName: "Anita Desai",
-      senderEmail: "anita@expresslogistics.ae",
-      senderCompany: "Express Freight Dubai",
-      subject: "Customs Clearance & Handling Confirmation — Dubai South",
-      body: "Dear Partner,\n\nAll documentation for Bill of Lading #MAE98231 has been cleared by Dubai Customs. Freight is ready for delivery at ICD.",
-      timestamp: "Yesterday, 3:15 PM",
-      isUnread: false,
-      isArchived: false,
-    },
-  ]);
-  const [selectedEmail, setSelectedEmail] = useState<EmailMessage | null>(emailThreads[0] || null);
+  // Communications / NEXUS Threads State
+  // Loaded from Firestore conversations collection
+  const [emailThreads, setEmailThreads] = useState<ChatConversation[]>([]);
+  const [selectedEmail, setSelectedEmail] = useState<ChatConversation | null>(null);
   const [emailFilter, setEmailFilter] = useState<"all" | "unread" | "archived">("all");
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
 
-  // Reputation & Peer Reviews State
-  const [peerReviews, setPeerReviews] = useState<PeerReview[]>([
-    {
-      id: "rev_1",
-      reviewerName: "Vikram Malhotra",
-      reviewerCompany: "Apex Logistics India",
-      overallRating: 5.0,
-      qualityScore: 5.0,
-      professionalismScore: 5.0,
-      communicationScore: 4.9,
-      complianceScore: 5.0,
-      reliabilityScore: 5.0,
-      deliveryScore: 4.8,
-      comment: "Outstanding carrier partner. Always adheres to promised transit times and provides complete digital documentation.",
-      createdAt: "2026-07-20",
-    },
-  ]);
+  // Reputation & Peer Reviews — loaded from Firestore reviews collection
+  const [peerReviews, setPeerReviews] = useState<PeerReview[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [newRevName, setNewRevName] = useState("");
   const [newRevCompany, setNewRevCompany] = useState("");
@@ -269,13 +238,10 @@ function ProfileContent() {
   const [entityToBlock, setEntityToBlock] = useState("");
   const [blockReason, setBlockReason] = useState("Non-payment / Default");
 
-  // Profile Insights State (Requirement 11)
+  // Profile Insights — loaded from Firestore profileViews collection
   const [insightsTimeframe, setInsightsTimeframe] = useState<"today" | "7days" | "30days">("7days");
-  const [visitors, setVisitors] = useState<ProfileVisitor[]>([
-    { id: "v1", visitorName: "Sanjay Gupta", organization: "Savant Shipping Lines", role: "Procurement Manager", visitedAt: "Today, 11:20 AM", actionType: "profile_view" },
-    { id: "v2", visitorName: "Elena Rostova", organization: "Global Trans Logistics", role: "Commercial Director", visitedAt: "Yesterday, 4:10 PM", actionType: "search_appearance" },
-    { id: "v3", visitorName: "Tariq Al-Mansoor", organization: "Emirates Ocean Forwarding", role: "Chief Operating Officer", visitedAt: "Jul 28, 2026", actionType: "profile_view" },
-  ]);
+  const [visitors, setVisitors] = useState<ProfileVisitor[]>([]);
+  const [isLoadingVisitors, setIsLoadingVisitors] = useState(false);
 
   // Profile display name prioritizing updated state and profile document
   const activeName = fullName.trim() || profile?.fullName || user?.displayName || "User";
@@ -448,112 +414,163 @@ function ProfileContent() {
     setEducation((prev) => prev.filter((item) => item.id !== id));
   };
 
-  // Fetch Profile and Connections with localStorage caching
+  // Load Profile, Connections, Reviews, and ProfileViews from Firestore
   useEffect(() => {
-    const targetUid = user?.uid || "default_user";
+    if (!user?.uid) return;
+    const targetUid = user.uid;
     setIsLoadingProfile(true);
-
-    // Try loading cached profile first for instant speed
-    try {
-      const cached = localStorage.getItem(`fr8x_profile_${targetUid}`);
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        setProfile(parsed);
-        syncFormWithProfile(parsed);
-      }
-    } catch { /* ignore */ }
 
     getDocument<UserProfile>(COLLECTIONS.PROFILES, targetUid).then((data) => {
       if (data) {
         setProfile(data);
         syncFormWithProfile(data);
-        try { localStorage.setItem(`fr8x_profile_${targetUid}`, JSON.stringify(data)); } catch { /* ignore */ }
       }
       setIsLoadingProfile(false);
     }).catch(() => setIsLoadingProfile(false));
 
+    // Load connections
     queryDocuments<ContactConnection>("contacts", [where("requesterId", "==", targetUid)]).then((c1) => {
       queryDocuments<ContactConnection>("contacts", [where("recipientId", "==", targetUid)]).then((c2) => {
         setConnections([...c1, ...c2]);
       });
     });
+
+    // Load peer reviews from Firestore
+    setIsLoadingReviews(true);
+    queryDocuments<PeerReview>(
+      COLLECTIONS.REVIEWS,
+      [where("recipientId", "==", targetUid), where("moderationStatus", "==", "approved"), orderBy("createdAt", "desc"), limit(50)]
+    ).then((reviews) => {
+      setPeerReviews(reviews);
+    }).catch(() => {
+      // Index may not exist yet — fall through with empty state
+      setPeerReviews([]);
+    }).finally(() => setIsLoadingReviews(false));
+
+    // Load profile visitors
+    setIsLoadingVisitors(true);
+    queryDocuments<ProfileVisitor>(
+      COLLECTIONS.PROFILE_VIEWS,
+      [where("profileUserId", "==", targetUid), orderBy("visitedAt", "desc"), limit(20)]
+    ).then((views) => {
+      setVisitors(views);
+    }).catch(() => {
+      setVisitors([]);
+    }).finally(() => setIsLoadingVisitors(false));
+
+    // Load NEXUS conversations
+    queryDocuments<any>(
+      COLLECTIONS.CONVERSATIONS,
+      [where("participants", "array-contains", targetUid), limit(30)]
+    ).then((convs) => {
+      const sorted = [...convs].sort((a, b) => {
+        const tA = a.lastMessageAt ?? a.createdAt ?? "";
+        const tB = b.lastMessageAt ?? b.createdAt ?? "";
+        return tB.localeCompare(tA);
+      });
+      setEmailThreads(sorted);
+    }).catch(() => setEmailThreads([]));
+
   }, [user?.uid, syncFormWithProfile]);
 
   const handleSaveProfile = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const targetUid = user?.uid || "default_user";
+    if (!user?.uid) {
+      setSaveError("You must be logged in to save your profile.");
+      return;
+    }
+    const targetUid = user.uid;
 
     setIsSaving(true);
     setSaveError(null);
     setSaveSuccess(null);
 
     try {
+      const titleCaseName = (fullName.trim() || user.displayName || "").replace(/\b\w/g, (c) => c.toUpperCase());
+      const titleCaseDesignation = designation.trim().replace(/\b\w/g, (c) => c.toUpperCase());
+
       const updatedProfile: UserProfile = {
         ...profile,
-        fullName: fullName.trim() || displayName,
+        fullName: titleCaseName,
         companyName: companyName.trim(),
-        designation: designation.trim(),
+        designation: titleCaseDesignation,
         location: location.trim(),
         country: country.trim(),
         about: about.trim(),
-        industryTags: selectedTags,
+        industryTags: selectedTags.map((t) => t.replace(/[\.\s]/g, "").toUpperCase()),
         photoURL,
         companyLogoURL,
-        publicId: publicId || generatePublicId(fullName.trim() || displayName || "USER"),
-        kycDocuments: kycDocs,
+        publicId: publicId || generatePublicId(targetUid, titleCaseName || "USER"),
         workExperience,
         education,
+        legalDeclarationConsent: true,
+        legalConsentTimestamp: new Date().toISOString(),
       };
-
-      // Save to localStorage immediately for 100% instant reliability
-      try {
-        localStorage.setItem(`fr8x_profile_${targetUid}`, JSON.stringify(updatedProfile));
-        const authUserPayload = {
-          ...user,
-          uid: targetUid,
-          displayName: updatedProfile.fullName,
-          photoURL: updatedProfile.photoURL,
-        };
-        sessionStorage.setItem("fr8x_active_user", JSON.stringify(authUserPayload));
-        localStorage.setItem("fr8x_active_user", JSON.stringify(authUserPayload));
-        window.dispatchEvent(new CustomEvent("fr8x_auth_change", { detail: authUserPayload }));
-      } catch { /* ignore */ }
 
       await setDocument(COLLECTIONS.PROFILES, targetUid, updatedProfile, true);
       setProfile(updatedProfile);
       setIsEditing(false);
-      setSaveSuccess("Profile details saved successfully.");
+      setSaveSuccess("Profile details saved and legally formatted.");
       setTimeout(() => setSaveSuccess(null), 3000);
     } catch (err: any) {
-      console.warn("Firestore save notice:", err);
-      // Fallback: local save succeeded
-      setIsEditing(false);
-      setSaveSuccess("Profile updated locally and saved.");
-      setTimeout(() => setSaveSuccess(null), 3000);
+      console.error("Profile save error:", err);
+      setSaveError(err?.message || "Failed to save profile. Please try again.");
+      setTimeout(() => setSaveError(null), 5000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Mock Upload KYC Document
-  const handleUploadKycDoc = (docType: KYCDocument["docType"], title: string) => {
+  // Real KYC Document Upload — uses Firebase Storage
+  const handleUploadKycDoc = async (docType: KYCDocument["docType"], title: string, file: File) => {
+    if (!user?.uid) return;
+    if (!file) return;
+
     setIsUploadingDoc(true);
-    setTimeout(() => {
+    try {
+      const path = `kyc/${user.uid}/${docType}_${Date.now()}_${file.name}`;
+      const url = await uploadFileWithProgress(path, file, () => {});
+
       const newDoc: KYCDocument = {
         id: `kyc_${Date.now()}`,
         docType,
         title,
-        fileUrl: "/docs/verified_business_registration.pdf",
+        fileUrl: url,
         uploadedAt: new Date().toISOString().split("T")[0]!,
         status: "pending",
       };
       const nextDocs = [...kycDocs, newDoc];
       setKycDocs(nextDocs);
-      if (user?.uid) {
-        setDocument(COLLECTIONS.PROFILES, user.uid, { kycDocuments: nextDocs, kycStatus: "verified" }, true);
-      }
+
+      // Write KYC doc to Firestore — status starts as 'pending' for GodMode review
+      await setDocument(
+        `${COLLECTIONS.PROFILES}/${user.uid}/kycDocs`,
+        newDoc.id,
+        {
+          ...newDoc,
+          uploadedBy: user.uid,
+          reviewedBy: null,
+          reviewedAt: null,
+          reviewerNotes: null,
+          rejectionReason: null,
+        }
+      );
+
+      // Update profile kycStatus to 'pending' if not already verified
+      await setDocument(COLLECTIONS.PROFILES, user.uid, {
+        kycStatus: "pending",
+        kycDocuments: nextDocs,
+      }, true);
+
+      setSaveSuccess("KYC document uploaded. Pending review by platform administrators.");
+      setTimeout(() => setSaveSuccess(null), 5000);
+    } catch (err: any) {
+      console.error("KYC upload error:", err);
+      setSaveError("Failed to upload KYC document. Please check your file and try again.");
+      setTimeout(() => setSaveError(null), 5000);
+    } finally {
       setIsUploadingDoc(false);
-    }, 1000);
+    }
   };
 
   // Filtered Contacts with explicit states (Awaiting Approval, Cancelled, Accepted, Rejected, Blocked)
@@ -660,7 +677,7 @@ function ProfileContent() {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
-                {profile?.companyName || "Enterprise Profile Central"}
+                {profile?.companyName || fullName || user?.displayName || "Your Company"}
               </h1>
               <span className="text-[9px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded font-bold uppercase tracking-wider flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3" /> {profile?.kycStatus === "verified" ? "KYC Verified" : "KYC Pending"}
@@ -1038,13 +1055,25 @@ function ProfileContent() {
                         <p className="text-[9px] text-slate-500">Date: {existing.uploadedAt}</p>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => handleUploadKycDoc(item.type, item.name)}
-                        disabled={isUploadingDoc}
-                        className="w-full py-1.5 bg-white hover:bg-slate-100 text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-periwinkle)] rounded font-bold text-[11px] flex items-center justify-center gap-1 transition-colors"
-                      >
-                        <Upload className="h-3.5 w-3.5" /> Upload Document
-                      </button>
+                      <>
+                        <input
+                          type="file"
+                          id={`kyc-upload-${item.type}`}
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) handleUploadKycDoc(item.type, item.name, f);
+                            e.target.value = "";
+                          }}
+                        />
+                        <label
+                          htmlFor={`kyc-upload-${item.type}`}
+                          className={`cursor-pointer w-full py-1.5 bg-white hover:bg-slate-100 text-[var(--fr8x-periwinkle)] border border-[var(--fr8x-periwinkle)] rounded font-bold text-[11px] flex items-center justify-center gap-1 transition-colors ${isUploadingDoc ? 'opacity-50 pointer-events-none' : ''}`}
+                        >
+                          <Upload className="h-3.5 w-3.5" /> Upload Document
+                        </label>
+                      </>
                     )}
                   </div>
                 );
@@ -1173,22 +1202,36 @@ function ProfileContent() {
               </div>
 
               <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-                {emailThreads.map((thread) => (
-                  <div
-                    key={thread.id}
-                    onClick={() => setSelectedEmail(thread)}
-                    className={`p-3 cursor-pointer transition-colors ${
-                      selectedEmail?.id === thread.id ? "bg-blue-50/80 border-l-4 border-[var(--fr8x-periwinkle)]" : "hover:bg-slate-100/60"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between text-[10px] mb-1">
-                      <span className="font-bold text-[var(--fr8x-jet)] truncate max-w-[140px]">{thread.senderName}</span>
-                      <span className="text-slate-400">{thread.timestamp}</span>
-                    </div>
-                    <p className="text-[11px] font-semibold text-slate-800 truncate">{thread.subject}</p>
-                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{thread.body}</p>
+                {emailThreads.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <p className="text-[11px] text-foreground-muted">No NEXUS conversations yet.</p>
+                    <a href="/messages" className="text-[10px] text-[var(--fr8x-periwinkle)] font-semibold hover:underline mt-1 block">Open NEXUS to start a thread</a>
                   </div>
-                ))}
+                ) : emailThreads.map((thread) => {
+                  const partner = Object.values(thread.participantDetails || {}).find(
+                    (p) => p && (p as any).id !== user?.uid
+                  ) as any;
+                  const threadTitle = partner?.name || thread.refId || "NEXUS Thread";
+                  const lastAt = thread.lastMessageAt
+                    ? new Date((thread.lastMessageAt as any).seconds * 1000).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+                    : "";
+                  return (
+                    <div
+                      key={thread.id}
+                      onClick={() => setSelectedEmail(thread)}
+                      className={`p-3 cursor-pointer transition-colors ${
+                        selectedEmail?.id === thread.id ? "bg-blue-50/80 border-l-4 border-[var(--fr8x-periwinkle)]" : "hover:bg-slate-100/60"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between text-[10px] mb-1">
+                        <span className="font-bold text-[var(--fr8x-jet)] truncate max-w-[140px]">{threadTitle}</span>
+                        <span className="text-slate-400">{lastAt}</span>
+                      </div>
+                      <p className="text-[11px] font-semibold text-slate-800 truncate">{thread.refId || "NEXUS Conversation"}</p>
+                      <p className="text-[10px] text-slate-500 truncate mt-0.5">{thread.lastMessage || "No messages yet"}</p>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -1198,49 +1241,41 @@ function ProfileContent() {
                 <div className="space-y-4 flex-1 flex flex-col justify-between">
                   <div>
                     <div className="border-b border-slate-200 pb-3">
-                      <h3 className="text-body-md font-bold text-[var(--fr8x-jet)]">{selectedEmail.subject}</h3>
+                      <h3 className="text-body-md font-bold text-[var(--fr8x-jet)]">
+                        {(selectedEmail as any).refId || "NEXUS Conversation"}
+                      </h3>
                       <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
-                        <span>From: <strong className="text-slate-800">{selectedEmail.senderName}</strong> ({selectedEmail.senderCompany}) &lt;{selectedEmail.senderEmail}&gt;</span>
-                        <span>{selectedEmail.timestamp}</span>
+                        <span>
+                          With: <strong className="text-slate-800">
+                            {Object.values((selectedEmail as any).participantDetails || {}).filter((p: any) => p?.id !== user?.uid).map((p: any) => p?.name).join(", ") || "Enterprise Partner"}
+                          </strong>
+                        </span>
+                        <span>
+                          {(selectedEmail as any).lastMessageAt
+                            ? new Date(((selectedEmail as any).lastMessageAt as any).seconds * 1000).toLocaleString()
+                            : ""}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="pt-4 text-xs text-slate-800 leading-relaxed whitespace-pre-line">
-                      {selectedEmail.body}
+                    <div className="pt-4 text-xs text-slate-800 leading-relaxed">
+                      <p className="text-foreground-muted">{(selectedEmail as any).lastMessage || "No messages in this thread yet."}</p>
                     </div>
                   </div>
 
-                  {/* Reply Input Box */}
-                  <div className="pt-3 border-t border-slate-200 space-y-2">
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                      placeholder="Type your threaded response..."
-                      rows={3}
-                      className="fr8x-input text-xs resize-none"
-                    />
-                    <div className="flex justify-end">
-                      <button
-                        onClick={() => {
-                          if (!replyText.trim()) return;
-                          setIsReplying(true);
-                          setTimeout(() => {
-                            setReplyText("");
-                            setIsReplying(false);
-                            alert("Response sent via Threaded Communications system.");
-                          }, 600);
-                        }}
-                        disabled={isReplying || !replyText.trim()}
-                        className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] text-white text-xs px-4 py-1.5 font-bold flex items-center gap-1.5"
-                      >
-                        <Send className="h-3.5 w-3.5" /> Send Reply
-                      </button>
-                    </div>
+                  {/* Quick action to open full conversation */}
+                  <div className="pt-3 border-t border-slate-200">
+                    <a
+                      href={`/messages`}
+                      className="fr8x-btn-primary bg-[var(--fr8x-periwinkle)] text-white text-xs px-4 py-1.5 font-bold flex items-center gap-1.5 w-fit"
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" /> Open in NEXUS
+                    </a>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full text-slate-400 text-xs">
-                  Select a message thread to view conversation details.
+                  Select a conversation to preview it, or open NEXUS for full messaging.
                 </div>
               )}
             </div>
