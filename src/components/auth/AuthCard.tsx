@@ -340,19 +340,19 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
   };
 
   return (
-    <div className="w-full max-w-lg bg-white dark:bg-gray-900 border border-border dark:border-gray-800 rounded-3xl p-6 sm:p-8 shadow-xl dark:shadow-2xl transition-colors">
+    <div className="w-full max-w-lg bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-lg transition-colors">
       {/* Brand Badge */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-[#0b192c] to-[#56C5F0] flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
+          <div className="h-9 w-9 rounded-xl bg-[var(--fr8x-periwinkle)] flex items-center justify-center text-white font-extrabold text-sm shadow-sm">
             F8
           </div>
           <div>
-            <span className="font-extrabold text-lg text-[var(--fr8x-jet)] dark:text-white tracking-wider">FR8X</span>
+            <span className="font-extrabold text-lg text-[var(--fr8x-jet)] tracking-wider">FR8X</span>
             <span className="font-semibold text-lg text-[#56C5F0] tracking-wide">-CON</span>
           </div>
         </div>
-        <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-[var(--fr8x-mist)] dark:bg-gray-800 text-[var(--fr8x-jet)] dark:text-gray-300">
+        <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-jet)] border border-slate-200">
           Enterprise B2B
         </span>
       </div>
