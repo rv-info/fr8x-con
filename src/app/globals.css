@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
+    --background: 0 0% 100%;
     --foreground: 215 28% 17%;
     --card: 0 0% 100%;
     --card-foreground: 215 28% 17%;
@@ -27,15 +27,15 @@
     --ring: 195 85% 64%;
     --radius: 0.375rem;
 
-    /* FR8X-9 Page 13 Theme Tokens */
-    --fr8x-bg: #F7F7FF;
+    /* FR8X-9 Page 13 Light Theme Tokens */
+    --fr8x-bg: #FFFFFF;
     --fr8x-charcoal: #535657;
     --fr8x-lavender: #E5D9F2;
     --fr8x-periwinkle: #A594F9;
-    --fr8x-mist: #EDE6F2;
+    --fr8x-mist: #F8FAFC;
     --fr8x-dimgrey: #746D75;
-    --fr8x-jet: #253031;
-    --fr8x-frozen: #C5E7E2;
+    --fr8x-jet: #1E293B;
+    --fr8x-frozen: #F1F5F9;
   }
 }
 
@@ -47,6 +47,7 @@
 
   html {
     font-size: 10px;
+    font-family: "Eurostile", "Microgramma", "Inter", system-ui, -apple-system, sans-serif;
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -54,32 +55,35 @@
   }
 
   body {
-    @apply bg-[var(--fr8x-bg)] text-[var(--fr8x-jet)] font-sans;
-    font-size: 10px;
+    @apply bg-white text-[var(--fr8x-jet)] font-sans;
+    font-size: 12px;
     line-height: 1.4;
   }
 
-  /* ── 3 STRICT FONT SIZES FOR WHOLE APPLICATION ── */
-  /* 1. HEADING: 12px */
+  /* ── STRICT TYPOGRAPHY HIERARCHY ── */
+  /* 1. Heading text: 14px */
   h1, h2, h3, h4, h5, h6,
-  .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
-  .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm {
-    font-size: 12px !important;
+  .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
+  .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
+  .text-3xl, .text-2xl, .text-xl, .text-lg {
+    font-size: 14px !important;
     line-height: 1.3;
-    font-weight: 600;
+    font-weight: 700;
+    font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
   }
 
-  /* 2. BODY: 10px */
-  p, span, div, label, input, select, textarea, button, a, table, td, th, li,
+  /* 2. Body text: 12px */
+  p, span, div, label, input, select, textarea, button, a, table, td, th, li, nav,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body, .text-base, .text-sm, .text-md {
-    font-size: 10px;
+    font-size: 12px;
     line-height: 1.4;
+    font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
   }
 
-  /* 3. SMALL: 8px */
+  /* 3. General / Helper / Small text: 10px */
   small, sub, sup, caption,
-  .text-caption, .text-small, .text-xs, .text-2xs {
-    font-size: 8px !important;
+  .text-helper, .text-caption, .text-small, .text-xs, .text-2xs {
+    font-size: 10px !important;
     line-height: 1.3;
   }
 
@@ -215,20 +219,23 @@
 }
 
 @layer utilities {
-  /* ── Explicit Font Size Utility Overrides for Strict Enforcing ── */
-  .text-5xl, .text-4xl, .text-3xl, .text-2xl, .text-xl, .text-lg,
+  /* ── Explicit Font Size Utility Overrides ── */
+  /* Heading text: 14px */
+  .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
-  .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading {
+  .text-5xl, .text-4xl, .text-3xl, .text-2xl, .text-xl, .text-lg {
+    font-size: 14px !important;
+  }
+
+  /* Body text: 12px */
+  .text-base, .text-sm, .text-md,
+  .text-body-lg, .text-body-md, .text-body-sm, .text-body {
     font-size: 12px !important;
   }
 
-  .text-base, .text-sm, .text-md,
-  .text-body-lg, .text-body-md, .text-body-sm, .text-body {
+  /* General / Helper / Small text: 10px */
+  .text-helper, .text-xs, .text-2xs, .text-caption, .text-small {
     font-size: 10px !important;
-  }
-
-  .text-xs, .text-2xs, .text-caption, .text-small {
-    font-size: 8px !important;
   }
 
   .fr8x-container {
