@@ -17,7 +17,6 @@ import {
   arrayUnion,
   arrayRemove,
   increment,
-  getDocs,
   limit,
   runTransaction,
 } from "firebase/firestore";
