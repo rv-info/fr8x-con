@@ -189,8 +189,6 @@ function ChatComponent() {
       senderName: user.displayName || "Member",
       senderCompany: (user as any)?.companyName || "Enterprise",
       text,
-      attachmentType: type,
-      attachmentData: data,
     });
   };
 
@@ -215,11 +213,10 @@ function ChatComponent() {
 
     if (searchQuery.trim()) {
       const term = searchQuery.toLowerCase();
-      const titleMatch = c.title?.toLowerCase().includes(term);
       const partnerMatch = Object.values(c.participantDetails || {}).some(
         (p) => p.name.toLowerCase().includes(term) || p.company.toLowerCase().includes(term)
       );
-      return titleMatch || partnerMatch;
+      return partnerMatch;
     }
     return true;
   });
@@ -361,10 +358,12 @@ function ChatComponent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <h4 className="text-body-sm font-bold text-[var(--fr8x-jet)] truncate">
-                        {partner?.name || conv.title || "Enterprise Partner"}
+                        {partner?.name || "Enterprise Partner"}
                       </h4>
                       <span className="text-[10px] text-foreground-muted">
-                        {new Date(conv.lastMessageTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {conv.lastMessageAt
+                          ? new Date((conv.lastMessageAt as any).seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : ""}
                       </span>
                     </div>
 
@@ -447,23 +446,7 @@ function ChatComponent() {
                     >
                       <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
 
-                      {msg.attachmentType === "auction" && (
-                        <div className="mt-2.5 p-2.5 rounded-lg bg-white/10 border border-white/20 text-white space-y-1 text-left">
-                          <p className="font-bold flex items-center gap-1.5 text-caption">
-                            <Gavel className="h-3.5 w-3.5" /> Reverse Auction Card
-                          </p>
-                          <p className="text-[11px] opacity-90">Lowest Bid: {msg.attachmentData?.lowestBid || "$1,450"}</p>
-                        </div>
-                      )}
-
-                      {msg.attachmentType === "quotation" && (
-                        <div className="mt-2.5 p-2.5 rounded-lg bg-white/10 border border-white/20 text-white space-y-1 text-left">
-                          <p className="font-bold flex items-center gap-1.5 text-caption">
-                            <DollarSign className="h-3.5 w-3.5" /> Rate Quote Card
-                          </p>
-                          <p className="text-[11px] opacity-90">Rate: {msg.attachmentData?.rate}</p>
-                        </div>
-                      )}
+                      {/* No file/attachment rendering — production spec: text-only messaging */}
 
                       <div className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isMe ? "text-white/80" : "text-foreground-muted"}`}>
                         <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
