@@ -100,6 +100,8 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          "Eurostile",
+          "Microgramma",
           "Inter",
           "system-ui",
           "-apple-system",
@@ -109,35 +111,41 @@ const config: Config = {
         ],
       },
       fontSize: {
-        // ── 3 STRICT FONT SIZES FOR ENTIRE WEB APPLICATION ──
-        // 1. Heading: 12px font size
-        heading: ["12px", { lineHeight: "1.3", fontWeight: "600" }],
-        "heading-lg": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
-        "heading-md": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
-        "heading-sm": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
-        "display-xl": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
-        "display-lg": ["12px", { lineHeight: "1.3", fontWeight: "700" }],
-        "display-md": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
-        "display-sm": ["12px", { lineHeight: "1.3", fontWeight: "600" }],
-        "3xl": ["12px", { lineHeight: "1.3" }],
-        "2xl": ["12px", { lineHeight: "1.3" }],
-        xl: ["12px", { lineHeight: "1.3" }],
-        lg: ["12px", { lineHeight: "1.3" }],
+        // ── STRICT FONT SIZES ──
+        // 1. Heading text: 14px font size
+        heading: ["14px", { lineHeight: "1.3", fontWeight: "700" }],
+        "heading-main": ["14px", { lineHeight: "1.3", fontWeight: "700" }],
+        "heading-sub": ["14px", { lineHeight: "1.3", fontWeight: "600" }],
+        "heading-lg": ["14px", { lineHeight: "1.3", fontWeight: "700" }],
+        "heading-md": ["14px", { lineHeight: "1.3", fontWeight: "600" }],
+        "heading-sm": ["14px", { lineHeight: "1.3", fontWeight: "600" }],
+        "display-xl": ["14px", { lineHeight: "1.3", fontWeight: "700" }],
+        "display-lg": ["14px", { lineHeight: "1.3", fontWeight: "700" }],
+        "display-md": ["14px", { lineHeight: "1.3", fontWeight: "600" }],
+        "display-sm": ["14px", { lineHeight: "1.3", fontWeight: "600" }],
+        "3xl": ["14px", { lineHeight: "1.3" }],
+        "2xl": ["14px", { lineHeight: "1.3" }],
+        xl: ["14px", { lineHeight: "1.3" }],
+        lg: ["14px", { lineHeight: "1.3" }],
 
-        // 2. Body: 10px font size
-        body: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
-        "body-lg": ["10px", { lineHeight: "1.4", fontWeight: "500" }],
-        "body-md": ["10px", { lineHeight: "1.4", fontWeight: "400" }],
-        "body-sm": ["10px", { lineHeight: "1.4", fontWeight: "400" }],
-        base: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
-        md: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
-        sm: ["10px", { lineHeight: "1.4", fontWeight: "400" }],
+        // 2. Body text: 12px font size
+        body: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        "body-lg": ["12px", { lineHeight: "1.4", fontWeight: "500" }],
+        "body-md": ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        "body-sm": ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        base: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        md: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        sm: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        button: ["12px", { lineHeight: "1.2", fontWeight: "500" }],
+        table: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
+        nav: ["12px", { lineHeight: "1.4", fontWeight: "500" }],
 
-        // 3. Small: 8px font size
-        small: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
-        caption: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
-        xs: ["8px", { lineHeight: "1.3", fontWeight: "400" }],
-        "2xs": ["8px", { lineHeight: "1.3", fontWeight: "400" }],
+        // 3. General / Helper / Small text: 10px font size
+        helper: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
+        small: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
+        caption: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
+        xs: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
+        "2xs": ["10px", { lineHeight: "1.3", fontWeight: "400" }],
       },
       boxShadow: {
         card: "0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
