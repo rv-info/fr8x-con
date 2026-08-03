@@ -106,9 +106,9 @@ export async function provisionUserToFirestore(
         fullName: displayName,
         displayName,
         companyName,
-        role: isRaiVega ? "admin" : "freight_forwarder",
-        isGodMode: isRaiVega ? true : false,
-        membershipTier: "premium",
+        role: "freight_forwarder",
+        isGodMode: false,
+        membershipTier: isRaiVega ? "premium" : membershipTier,
         status: "active",
         emailVerified: true,
         companyId,
@@ -182,19 +182,19 @@ export async function signInWithEmail(
     try {
       const credential = await signInWithEmailAndPassword(firebaseAuth, cleanEmail, password);
       await provisionUserToFirestore(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium");
-      saveActiveUserSession(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", true, "admin");
+      saveActiveUserSession(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", false, "freight_forwarder");
       return credential;
     } catch {
       try {
         const credential = await createUserWithEmailAndPassword(firebaseAuth, cleanEmail, password);
         await updateProfile(credential.user, { displayName: "Management (Rai Vega)" });
         await provisionUserToFirestore(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium");
-        saveActiveUserSession(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", true, "admin");
+        saveActiveUserSession(credential.user.uid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", false, "freight_forwarder");
         return credential;
       } catch {
         const fallbackUid = "user_mgt_raivega_2026";
         await provisionUserToFirestore(fallbackUid, cleanEmail, "Management (Rai Vega)", "premium");
-        saveActiveUserSession(fallbackUid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", true, "admin");
+        saveActiveUserSession(fallbackUid, cleanEmail, "Management (Rai Vega)", "premium", "comp_raivega_001", false, "freight_forwarder");
         return {
           user: {
             uid: fallbackUid,
