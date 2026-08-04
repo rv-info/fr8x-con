@@ -38,7 +38,7 @@ export function EmptyState({
         <div className="pt-2">
           <Button
             onClick={onAction}
-            className="bg-[#56C5F0] hover:bg-[#3ABFF0] text-white font-bold text-caption px-4 py-2"
+            className="fr8x-btn-primary font-bold text-caption px-4 py-2"
           >
             {actionLabel}
           </Button>
