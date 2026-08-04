@@ -199,6 +199,43 @@ function ProfileContent() {
   const [kycDocs, setKycDocs] = useState<KYCDocument[]>([]);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
 
+  // Peer Review Modal States
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [reviewTargetSearch, setReviewTargetSearch] = useState("");
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState("");
+  const [peerReviews, setPeerReviews] = useState<PeerReview[]>([
+    {
+      id: "rev_1",
+      reviewerName: "Amitabh Sharma",
+      reviewerCompany: "Apex Logistics India",
+      overallRating: 5,
+      qualityScore: 5,
+      professionalismScore: 5,
+      communicationScore: 5,
+      complianceScore: 5,
+      reliabilityScore: 5,
+      deliveryScore: 5,
+      comment: "Outstanding ocean freight reliability. All documentation and bills of lading processed promptly without delay.",
+      createdAt: "2026-07-28",
+    },
+    {
+      id: "rev_2",
+      reviewerName: "Sarah Jenkins",
+      reviewerCompany: "Global Cargo Ltd (UK)",
+      overallRating: 4,
+      qualityScore: 4,
+      professionalismScore: 5,
+      communicationScore: 4,
+      complianceScore: 5,
+      reliabilityScore: 4,
+      deliveryScore: 4,
+      comment: "Highly professional partner for FCL import clearance at Nhava Sheva. Transparent handover charges.",
+      createdAt: "2026-07-15",
+    },
+  ]);
+
   // Photo & Logo upload
   const photoInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -223,14 +260,7 @@ function ProfileContent() {
   const [replyText, setReplyText] = useState("");
   const [isReplying, setIsReplying] = useState(false);
 
-  // Reputation & Peer Reviews — loaded from Firestore reviews collection
-  const [peerReviews, setPeerReviews] = useState<PeerReview[]>([]);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [newRevName, setNewRevName] = useState("");
-  const [newRevCompany, setNewRevCompany] = useState("");
-  const [newRevScore, setNewRevScore] = useState(5);
-  const [newRevComment, setNewRevComment] = useState("");
+
 
   // Blacklist Search & Management State
   const [blacklistSearch, setBlacklistSearch] = useState("");
@@ -1304,12 +1334,120 @@ function ProfileContent() {
 
                   <button
                     onClick={() => setShowReviewModal(true)}
-                    className="fr8x-btn-primary bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 flex items-center gap-1"
+                    className="fr8x-btn-primary bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 flex items-center gap-1 cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" /> Submit Peer Review
                   </button>
                 </div>
               </div>
+
+              {/* Peer Review Submission Modal */}
+              {showReviewModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                  <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl border border-border space-y-4 text-left">
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
+                        <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                        Submit Peer Review & Reputation Rating
+                      </h3>
+                      <button onClick={() => setShowReviewModal(false)} className="p-1 text-slate-400 hover:text-slate-600">
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-1">Search Partner Company / User to Review *</label>
+                        <div className="relative">
+                          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                          <input
+                            type="text"
+                            value={reviewTargetSearch}
+                            onChange={(e) => setReviewTargetSearch(e.target.value)}
+                            placeholder="Type partner name or company..."
+                            className="fr8x-input pl-8 py-1.5 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                        <div>
+                          <label className="font-semibold text-slate-600 block mb-1">Overall Rating (1-5)</label>
+                          <select
+                            value={newReviewRating}
+                            onChange={(e) => setNewReviewRating(Number(e.target.value))}
+                            className="fr8x-input py-1 text-xs font-bold"
+                          >
+                            <option value={5}>5 ★ - Exceptional</option>
+                            <option value={4}>4 ★ - Very Good</option>
+                            <option value={3}>3 ★ - Satisfactory</option>
+                            <option value={2}>2 ★ - Below Average</option>
+                            <option value={1}>1 ★ - Poor</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="font-semibold text-slate-600 block mb-1">Reviewer Name</label>
+                          <input
+                            type="text"
+                            value={user?.displayName || "Logistics Reviewer"}
+                            disabled
+                            className="fr8x-input py-1 text-xs bg-slate-100 font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="font-bold text-slate-700 block mb-1">Detailed Feedback / Performance Comment *</label>
+                        <textarea
+                          value={newReviewComment}
+                          onChange={(e) => setNewReviewComment(e.target.value)}
+                          placeholder="Provide specific feedback regarding documentation accuracy, on-time delivery, communication, or ethics..."
+                          rows={3}
+                          className="fr8x-input text-xs py-2 resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                      <button
+                        onClick={() => setShowReviewModal(false)}
+                        className="fr8x-btn-secondary px-4 py-1.5 text-xs font-semibold"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!newReviewComment.trim() || !reviewTargetSearch.trim()) return;
+                          const newRev: PeerReview = {
+                            id: `rev_${Date.now()}`,
+                            reviewerName: user?.displayName || "Verified Member",
+                            reviewerCompany: reviewTargetSearch.trim(),
+                            overallRating: newReviewRating,
+                            qualityScore: newReviewRating,
+                            professionalismScore: newReviewRating,
+                            communicationScore: newReviewRating,
+                            complianceScore: newReviewRating,
+                            reliabilityScore: newReviewRating,
+                            deliveryScore: newReviewRating,
+                            comment: newReviewComment.trim(),
+                            createdAt: new Date().toISOString().split("T")[0] || "2026-08-04",
+                          };
+                          setPeerReviews((prev) => [newRev, ...prev]);
+                          setShowReviewModal(false);
+                          setNewReviewComment("");
+                          setReviewTargetSearch("");
+                          setSaveSuccess("Peer review published to network reputation registry.");
+                          setTimeout(() => setSaveSuccess(null), 3000);
+                        }}
+                        disabled={!newReviewComment.trim() || !reviewTargetSearch.trim()}
+                        className="fr8x-btn-primary bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-1.5 text-xs disabled:opacity-40"
+                      >
+                        Publish Review
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* 6 Category Score Breakdown Bars */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 pt-1 text-xs">
