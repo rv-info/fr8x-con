@@ -10,69 +10,69 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // FR8X-CON Brand Palette
+        // FR8X-CON Brand Palette (Mapped to 2-Color UI/UX + Jet Black & Dark Grey)
         brand: {
-          50: "#EBF8FF",
-          100: "#D1EEFC",
-          200: "#A7D8F0",
-          300: "#7CC1E4",
-          400: "#56C5F0",
-          500: "#3ABFF0",
-          600: "#2B9ED6",
-          700: "#1E7BB0",
-          800: "#15608A",
-          900: "#0D4664",
-          950: "#072D42",
+          50: "#F7F7FF",
+          100: "#F7F7FF",
+          200: "#EDE6F2",
+          300: "#EDE6F2",
+          400: "#EDE6F2",
+          500: "#EDE6F2",
+          600: "#EDE6F2",
+          700: "#EDE6F2",
+          800: "#253031",
+          900: "#253031",
+          950: "#253031",
         },
-        // FR8X-9 Page 13 Theme Colors
+        // FR8X Theme Colors
         fr8x: {
-          bg: "#F7F7FF",
-          charcoal: "#535657",
-          lavender: "#E5D9F2",
-          periwinkle: "#A594F9",
-          mist: "#EDE6F2",
-          dimgrey: "#746D75",
-          jet: "#253031",
-          frozen: "#C5E7E2",
+          bg: "#F7F7FF",       // Ghost White (Background)
+          mist: "#EDE6F2",     // Lavender Mist (Active Button Background)
+          lavender: "#EDE6F2",
+          periwinkle: "#EDE6F2",
+          frozen: "#F7F7FF",
+          jet: "#253031",      // Jet Black Text
+          dimgrey: "#746D75",  // Dark Grey Text
+          charcoal: "#253031",
         },
         // Semantic colors
         primary: {
-          DEFAULT: "#56C5F0",
-          foreground: "#FFFFFF",
-          hover: "#3ABFF0",
-          muted: "#EBF8FF",
+          DEFAULT: "#EDE6F2",
+          foreground: "#253031",
+          hover: "#EDE6F2",
+          muted: "#F7F7FF",
         },
         background: {
-          DEFAULT: "#F8FAFC",
-          card: "#FFFFFF",
-          sidebar: "#FFFFFF",
-          elevated: "#FFFFFF",
+          DEFAULT: "#F7F7FF",
+          card: "#F7F7FF",
+          sidebar: "#F7F7FF",
+          elevated: "#F7F7FF",
         },
         foreground: {
-          DEFAULT: "#1E293B",
-          secondary: "#64748B",
-          muted: "#94A3B8",
-          inverse: "#FFFFFF",
+          DEFAULT: "#253031",
+          secondary: "#746D75",
+          muted: "#746D75",
+          inverse: "#F7F7FF",
         },
         border: {
-          DEFAULT: "#E2E8F0",
-          strong: "#CBD5E1",
-          focus: "#56C5F0",
+          DEFAULT: "#EDE6F2",
+          strong: "#746D75",
+          focus: "#EDE6F2",
         },
         success: {
-          DEFAULT: "#10B981",
-          light: "#D1FAE5",
-          dark: "#065F46",
+          DEFAULT: "#EDE6F2",
+          light: "#F7F7FF",
+          dark: "#253031",
         },
         warning: {
-          DEFAULT: "#F59E0B",
-          light: "#FEF3C7",
-          dark: "#92400E",
+          DEFAULT: "#EDE6F2",
+          light: "#F7F7FF",
+          dark: "#253031",
         },
         danger: {
-          DEFAULT: "#EF4444",
-          light: "#FEE2E2",
-          dark: "#991B1B",
+          DEFAULT: "#EDE6F2",
+          light: "#F7F7FF",
+          dark: "#253031",
         },
         // ShadCN CSS variable mappings
         card: {
