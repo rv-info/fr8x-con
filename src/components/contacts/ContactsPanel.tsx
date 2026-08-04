@@ -1,5 +1,5 @@
-// FR8X-CON Approved Contacts Panel — Real Presence Indicators
-// Replaces hardcoded isOnline=true and "Active now" with real presence from Firestore.
+// FR8X-CON Contact List Panel — Real Presence Indicators
+// Shows accepted contacts with real-time presence from Firestore.
 
 "use client";
 
@@ -138,7 +138,7 @@ export function ContactsPanel({ onSelectChat, compact = false, maxDisplay }: Con
       <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
         <div className="flex items-center gap-1.5">
           <Users className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" />
-          <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)]">Network Contacts</h3>
+          <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)]">Contact List</h3>
         </div>
         <span className="text-[9px] font-semibold bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full">
           {filteredConnections.length}
