@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, X, BookOpen } from "lucide-react";
+import { Search, X, BookOpen, ExternalLink, Plus } from "lucide-react";
 
 export interface HSCodeItem {
   code: string;
@@ -22,6 +22,10 @@ const COMMON_HS_CODES: HSCodeItem[] = [
   { code: "9018.90", description: "Medical, surgical or veterinary instruments & appliances", chapter: "90 - Precision & Medical Instruments" },
   { code: "9403.60", description: "Wooden furniture & commercial fixtures", chapter: "94 - Furniture & Lighting" },
   { code: "2710.19", description: "Medium oils & preparations of petroleum or bituminous minerals", chapter: "27 - Petroleum & Energy" },
+  { code: "4819.10", description: "Cartons, boxes and cases, of corrugated paper or paperboard", chapter: "48 - Paper & Paperboard" },
+  { code: "8504.40", description: "Static converters (inverters, power supplies, battery chargers)", chapter: "85 - Electronics & Electrical" },
+  { code: "2933.99", description: "Heterocyclic compounds with nitrogen hetero-atom(s) only", chapter: "29 - Organic Chemicals" },
+  { code: "4011.10", description: "New pneumatic tyres, of rubber, of a kind used on motor cars", chapter: "40 - Rubber Products" },
 ];
 
 interface HSCodeModalProps {
@@ -32,6 +36,8 @@ interface HSCodeModalProps {
 
 export function HSCodeModal({ isOpen, onClose, onSelect }: HSCodeModalProps) {
   const [search, setSearch] = useState("");
+  const [customCode, setCustomCode] = useState("");
+  const [customDesc, setCustomDesc] = useState("");
 
   if (!isOpen) return null;
 
@@ -42,17 +48,51 @@ export function HSCodeModal({ isOpen, onClose, onSelect }: HSCodeModalProps) {
       item.chapter.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleCustomSubmit = () => {
+    if (!customCode.trim()) return;
+    onSelect(customCode.trim(), customDesc.trim() || undefined);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-2xl border border-border">
         <div className="flex items-center justify-between border-b border-border pb-3">
           <h3 className="text-body-md font-bold text-[var(--fr8x-jet)] flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-[var(--fr8x-periwinkle)]" />
-            Harmonized System (HS Code) Free Lookup Library
+            Free Global HS Code Library & Search
           </h3>
           <button onClick={onClose} className="p-1 text-slate-400 hover:text-slate-600">
             <X className="h-4 w-4" />
           </button>
+        </div>
+
+        {/* Free text manual entry option */}
+        <div className="mt-3 bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px] space-y-2">
+          <p className="font-semibold text-slate-700">Enter Custom / Unlisted HS Code (Unrestricted):</p>
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              value={customCode}
+              onChange={(e) => setCustomCode(e.target.value)}
+              placeholder="e.g. 8471.30.01"
+              className="fr8x-input text-[11px] w-1/3"
+            />
+            <input
+              type="text"
+              value={customDesc}
+              onChange={(e) => setCustomDesc(e.target.value)}
+              placeholder="Description (optional)..."
+              className="fr8x-input text-[11px] flex-1"
+            />
+            <button
+              onClick={handleCustomSubmit}
+              disabled={!customCode.trim()}
+              className="px-3 py-1.5 bg-[var(--fr8x-periwinkle)] text-white font-bold rounded-lg hover:bg-[#3ABFF0] disabled:opacity-40 text-[11px] flex items-center gap-1 shrink-0"
+            >
+              <Plus className="h-3 w-3" /> Add
+            </button>
+          </div>
         </div>
 
         <div className="mt-3">
@@ -68,9 +108,19 @@ export function HSCodeModal({ isOpen, onClose, onSelect }: HSCodeModalProps) {
           </div>
         </div>
 
-        <div className="mt-3 max-h-64 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-100">
+        <div className="mt-3 max-h-56 overflow-y-auto space-y-1.5 pr-1 divide-y divide-slate-100">
           {filtered.length === 0 ? (
-            <p className="text-[11px] text-slate-500 text-center py-6">No matching HS Code found in lookup database.</p>
+            <div className="text-center py-6 space-y-2">
+              <p className="text-[11px] text-slate-500">No matching HS Code found in fast library.</p>
+              <a
+                href={`https://hscode.org/search?q=${encodeURIComponent(search)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-[var(--fr8x-periwinkle)] font-bold hover:underline"
+              >
+                Search World Customs Organization (WCO) Online <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
           ) : (
             filtered.map((item) => (
               <div
@@ -101,3 +151,4 @@ export function HSCodeModal({ isOpen, onClose, onSelect }: HSCodeModalProps) {
     </div>
   );
 }
+
