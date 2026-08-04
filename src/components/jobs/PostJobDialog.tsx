@@ -400,7 +400,7 @@ export default function PostJobDialog({ isOpen, onClose, onSubmit }: PostJobDial
           </button>
           <button
             onClick={() => handleSubmit("publish")}
-            className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] px-6"
+            className="fr8x-btn-primary px-6"
           >
             Pay & Publish (₹{JOB_SUBMISSION_FEE_INR})
           </button>
