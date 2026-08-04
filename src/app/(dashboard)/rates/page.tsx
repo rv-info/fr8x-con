@@ -665,7 +665,7 @@ REMARKS: ${r.remarks}`;
           <div className="flex items-center gap-3">
             <button
               onClick={handleBulkUploadClick}
-              className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] flex items-center gap-1.5 text-caption"
+              className="fr8x-btn-primary flex items-center gap-1.5 text-caption"
             >
               <Upload className="h-3.5 w-3.5" />
               BULK UPLOAD
