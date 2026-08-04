@@ -34,5 +34,30 @@ service firebase.storage {
         isGodMode()
       );
     }
+
+    // Post media uploads (images, videos, documents attached to feed posts)
+    // Path: posts/{userId}/media/{fileName}
+    match /posts/{userId}/media/{fileName} {
+      // Any authenticated user can read post media (posts are public in the network)
+      allow read: if isAuthenticated();
+
+      // Only the owner of the userId segment can write their own media
+      // File size capped at 20 MB; content-type must be image, video, or common doc format
+      allow write: if isOwner(userId)
+        && request.resource.size <= 20 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType.matches('video/.*')
+          || request.resource.contentType == 'application/pdf'
+          || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+          || request.resource.contentType == 'application/vnd.ms-excel'
+          || request.resource.contentType == 'text/csv'
+          || request.resource.contentType == 'application/msword'
+          || request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        );
+
+      // Owners and godmode can delete their own media
+      allow delete: if isOwner(userId) || isGodMode();
+    }
   }
 }
