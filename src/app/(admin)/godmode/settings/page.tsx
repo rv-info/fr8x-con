@@ -758,7 +758,7 @@ export default function GodModeSettingsPage() {
             <Database className="h-5 w-5 text-blue-600" /> 8. Firestore Snapshot Backups & Restore
           </h2>
           <p className="text-body-sm text-foreground-secondary">Daily automated backups at 12:00 AM IST. Trigger manual snapshot creation below.</p>
-          <button className="fr8x-btn-primary bg-blue-600 text-white text-xs py-2 px-4">Trigger Manual Snapshot Backup</button>
+          <button className="fr8x-btn-primary text-xs py-2 px-4">Trigger Manual Snapshot Backup</button>
         </div>
       )}
 
