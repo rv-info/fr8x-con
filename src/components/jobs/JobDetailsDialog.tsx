@@ -105,7 +105,7 @@ export default function JobDetailsDialog({ job, isOpen, onClose }: JobDetailsDia
           </p>
           <button
             onClick={handleSendEmail}
-            className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] px-6 flex items-center gap-2"
+            className="fr8x-btn-primary px-6 flex items-center gap-2"
           >
             <Mail className="h-4 w-4" />
             Send Email
