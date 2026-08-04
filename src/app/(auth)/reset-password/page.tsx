@@ -150,7 +150,7 @@ function ResetPasswordForm() {
             <p className="text-body-sm text-foreground-secondary dark:text-gray-400">{codeError}</p>
             <Link
               href={ROUTES.LOGIN}
-              className="inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-lg bg-[#56C5F0] text-white font-semibold text-body-sm hover:bg-[#3ABFF0] transition-all"
+              className="fr8x-btn-primary inline-flex items-center justify-center gap-2 w-full py-2.5 text-body-sm"
             >
               Back to Sign In
             </Link>
@@ -160,17 +160,17 @@ function ResetPasswordForm() {
         {/* Success State */}
         {!isValidatingCode && !codeError && isSuccess && (
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-6 space-y-4">
-            <div className="mx-auto h-14 w-14 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+            <div className="mx-auto h-14 w-14 rounded-full bg-[#EDE6F2] flex items-center justify-center text-[#253031]">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h2 className="text-display-sm font-bold text-[var(--fr8x-jet)] dark:text-white">Password Updated!</h2>
-            <p className="text-body-sm text-foreground-secondary dark:text-gray-400">
+            <h2 className="text-display-sm font-bold text-[var(--fr8x-jet)]">Password Updated!</h2>
+            <p className="text-body-sm text-foreground-secondary">
               Your password for <strong>{targetEmail || APP_NAME}</strong> has been successfully reset. You can now log in with your new credentials.
             </p>
             <div className="pt-2">
               <Link
                 href={ROUTES.LOGIN}
-                className="inline-flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-[#56C5F0] text-white font-semibold text-body-md hover:bg-[#3ABFF0] shadow-md hover:shadow-lg transition-all"
+                className="fr8x-btn-primary inline-flex items-center justify-center gap-2 w-full py-3 text-body-md"
               >
                 Proceed to Sign In <ArrowRight className="h-4 w-4" />
               </Link>
@@ -323,8 +323,7 @@ function ResetPasswordForm() {
                 type="submit"
                 isLoading={isSubmitting}
                 loadingText="Updating Password..."
-                className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white
-                           transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-2 shadow-md hover:shadow-lg"
+                className="fr8x-btn-primary w-full rounded-xl py-3 text-body-md font-bold mt-2"
               >
                 Update Password
               </Button>
