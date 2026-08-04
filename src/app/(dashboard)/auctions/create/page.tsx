@@ -1188,10 +1188,10 @@ export default function AuctionCreatePage() {
                   <div>
                     <h3 className="text-heading-sm text-foreground font-semibold flex items-center gap-2">
                       <Plus className="h-4 w-4 text-[var(--fr8x-periwinkle)]" />
-                      Target Bidder Selection Workflow
+                      Target Bidder Selection Workflow (Forwarders & NVOCCs)
                     </h3>
                     <p className="text-[11px] text-foreground-secondary mt-0.5">
-                      Primary tick-box selection for Forwarders, NVOCCs, and Carriers. Save lists as reusable presets.
+                      Tick-box selection for Forwarders and NVOCCs. Search DBMS or add custom email contacts.
                     </p>
                   </div>
 
@@ -1215,13 +1215,28 @@ export default function AuctionCreatePage() {
                   </div>
                 </div>
 
+                {/* Subject to space & equipment availability checkbox */}
+                <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-lg space-y-1 text-[11px]">
+                  <label className="flex items-center gap-2 font-semibold text-[var(--fr8x-jet)] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-border text-[var(--fr8x-periwinkle)]"
+                      {...register("modeSpecificDetails.subjectToSpaceAvailability" as any)}
+                    />
+                    <span>Subject to Space and Equipment Availability of Carrier / NVOCC</span>
+                  </label>
+                  <p className="text-[10px] text-slate-500 pl-6">
+                    Allows bidding parties to submit conditional bids subject to vessel space allocation and container equipment availability.
+                  </p>
+                </div>
+
                 {/* Filter and + Bidders Save Panel */}
                 <div className="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
                   <input
                     type="text"
                     value={biddersSearch}
                     onChange={(e) => setBiddersSearch(e.target.value)}
-                    placeholder="Search forwarder, NVOCC, or carrier..."
+                    placeholder="Search forwarder or NVOCC..."
                     className="fr8x-input text-[11px] h-7 max-w-xs"
                   />
 
@@ -1265,15 +1280,15 @@ export default function AuctionCreatePage() {
                 {/* Tick-Box Selection List */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-48 overflow-y-auto p-2 border border-slate-200 rounded-lg bg-white">
                   {[
-                    { id: "comp_1", name: "Maersk Logistics & Forwarding", type: "Carrier / Forwarder" },
-                    { id: "comp_2", name: "Hapag-Lloyd NVOCC Services", type: "NVOCC / Carrier" },
-                    { id: "comp_3", name: "Kuehne+Nagel Global Logistics", type: "Freight Forwarder" },
-                    { id: "comp_4", name: "DHL Global Forwarding", type: "Freight Forwarder" },
-                    { id: "comp_5", name: "DB Schenker Supply Chain", type: "Freight Forwarder" },
-                    { id: "comp_6", name: "CMA CGM Logistics", type: "Carrier / Forwarder" },
-                    { id: "comp_7", name: "MSC Cargo Solutions", type: "Carrier / Forwarder" },
-                    { id: "comp_8", name: "Apex Logistics India", type: "NVOCC / Forwarder" },
-                    { id: "comp_9", name: "TransGlobe Ocean Lines", type: "NVOCC" },
+                    { id: "comp_1", name: "Maersk Forwarding & NVOCC Services", type: "Forwarder / NVOCC" },
+                    { id: "comp_2", name: "Hapag-Lloyd NVOCC Line", type: "NVOCC" },
+                    { id: "comp_3", name: "Kuehne+Nagel Ocean Freight", type: "Freight Forwarder" },
+                    { id: "comp_4", name: "DHL Global Forwarding NVOCC", type: "Freight Forwarder / NVOCC" },
+                    { id: "comp_5", name: "DB Schenker Logistics", type: "Freight Forwarder" },
+                    { id: "comp_6", name: "CMA CGM Freight Forwarding", type: "NVOCC / Forwarder" },
+                    { id: "comp_7", name: "MSC Freight Logistics", type: "Forwarder / NVOCC" },
+                    { id: "comp_8", name: "Apex Logistics India (NVOCC)", type: "NVOCC" },
+                    { id: "comp_9", name: "TransGlobe Ocean Lines (NVOCC)", type: "NVOCC" },
                   ]
                     .filter((b) => b.name.toLowerCase().includes(biddersSearch.toLowerCase()))
                     .map((b) => {
