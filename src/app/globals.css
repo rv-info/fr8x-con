@@ -7,235 +7,274 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 215 28% 17%;
+    --foreground: 187 14% 17%;
     --card: 0 0% 100%;
-    --card-foreground: 215 28% 17%;
+    --card-foreground: 187 14% 17%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 28% 17%;
-    --primary: 195 85% 64%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 215 28% 17%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 215 28% 17%;
+    --popover-foreground: 187 14% 17%;
+    --primary: 250 88% 77%;
+    --primary-foreground: 187 14% 17%;
+    --secondary: 171 39% 84%;
+    --secondary-foreground: 187 14% 17%;
+    --muted: 171 39% 84%;
+    --muted-foreground: 292 4% 45%;
+    --accent: 171 39% 84%;
+    --accent-foreground: 187 14% 17%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 195 85% 64%;
-    --radius: 0.375rem;
+    --border: 292 4% 75%;
+    --input: 171 39% 84%;
+    --ring: 250 88% 77%;
+    --radius: 0.5rem;
 
-    /* FR8X-9 Page 13 Light Theme Tokens */
+    /* ── FR8X Strict 3-Color + Jet Black Text System ── */
     --fr8x-bg: #FFFFFF;
-    --fr8x-charcoal: #535657;
-    --fr8x-lavender: #E5D9F2;
-    --fr8x-periwinkle: #A594F9;
-    --fr8x-mist: #F8FAFC;
-    --fr8x-dimgrey: #746D75;
-    --fr8x-jet: #1E293B;
-    --fr8x-frozen: #F1F5F9;
+    --fr8x-dimgrey: #746D75;       /* Color 1: Dim Grey */
+    --fr8x-frozen: #C5E7E2;        /* Color 2: Frozen Water */
+    --fr8x-periwinkle: #A594F9;    /* Color 3: Soft Periwinkle */
+    --fr8x-jet: #253031;           /* Text Color: Jet Black */
+
+    --fr8x-charcoal: #746D75;
+    --fr8x-lavender: #C5E7E2;
+    --fr8x-mist: #C5E7E2;
+
+    /* ── FR8X Typography Scale (H=16px, Body=14px, Small=12px) ── */
+    --fr8x-font-heading: 16px;
+    --fr8x-font-body:    14px;
+    --fr8x-font-small:   12px;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: var(--fr8x-dimgrey);
     box-sizing: border-box;
+    color: #253031;
   }
 
   html {
-    font-size: 10px;
+    font-size: 14px;
     font-family: "Eurostile", "Microgramma", "Inter", system-ui, -apple-system, sans-serif;
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    color: #253031;
   }
 
   body {
-    @apply bg-white text-[var(--fr8x-jet)] font-sans;
-    font-size: 12px;
-    line-height: 1.4;
+    background-color: #FFFFFF;
+    color: #253031;
+    font-size: var(--fr8x-font-body);
+    line-height: 1.45;
   }
 
-  /* ── STRICT TYPOGRAPHY HIERARCHY ── */
-  /* 1. Heading text: 14px */
+  /* ── STRICT TYPOGRAPHY HIERARCHY & TEXT COLOR ── */
   h1, h2, h3, h4, h5, h6,
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
   .text-3xl, .text-2xl, .text-xl, .text-lg {
-    font-size: 14px !important;
+    font-size: var(--fr8x-font-heading) !important;
     line-height: 1.3;
     font-weight: 700;
+    color: #253031 !important;
     font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
   }
 
-  /* 2. Body text: 12px */
   p, span, div, label, input, select, textarea, button, a, table, td, th, li, nav,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body, .text-base, .text-sm, .text-md {
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: var(--fr8x-font-body);
+    line-height: 1.45;
+    color: #253031;
     font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
   }
 
-  /* 3. General / Helper / Small text: 10px */
   small, sub, sup, caption,
   .text-helper, .text-caption, .text-small, .text-xs, .text-2xs {
-    font-size: 10px !important;
-    line-height: 1.3;
+    font-size: var(--fr8x-font-small) !important;
+    line-height: 1.35;
+    color: #253031;
   }
-
-  /* Compact scrollbar */
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 99px; }
-  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
   /* Focus ring */
   *:focus-visible {
-    @apply outline-none ring-2 ring-[var(--fr8x-periwinkle)] ring-offset-1;
+    @apply outline-none ring-2 ring-[#A594F9] ring-offset-1;
   }
 }
 
 @layer components {
   /* ── Cards ── */
   .fr8x-card {
-    @apply bg-white rounded-xl border border-border shadow-[0_2px_4px_0_rgba(0,0,0,0.06)];
+    background-color: #FFFFFF;
+    border-radius: 0.75rem;
+    border: 1px solid #746D75;
+    color: #253031;
   }
   .fr8x-card-hover {
-    @apply fr8x-card transition-shadow duration-150 hover:shadow-[0_4px_8px_0_rgba(0,0,0,0.08)];
+    @apply fr8x-card transition-shadow duration-150 hover:shadow-md;
   }
   .fr8x-card-compact {
-    @apply bg-white rounded-lg border border-border p-2;
+    background-color: #FFFFFF;
+    border-radius: 0.5rem;
+    border: 1px solid #746D75;
+    padding: 0.5rem;
+    color: #253031;
   }
 
-  /* ── Buttons (10px Body) ── */
+  /* ── Buttons ── */
   .fr8x-btn-primary {
-    @apply bg-[var(--fr8x-periwinkle)] text-white font-medium rounded-lg px-3 py-1.5
-           text-[10px] leading-none transition-all duration-150
-           hover:opacity-90 active:scale-[0.98]
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: #A594F9 !important;
+    color: #253031 !important;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    transition: all 150ms ease-in-out;
   }
+  .fr8x-btn-primary:hover {
+    opacity: 0.9;
+  }
+
   .fr8x-btn-secondary {
-    @apply bg-white text-[var(--fr8x-jet)] border border-[var(--fr8x-dimgrey)] font-medium
-           rounded-lg px-3 py-1.5 text-[10px] leading-none transition-all duration-150
-           hover:bg-[var(--fr8x-mist)] active:scale-[0.98]
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    background-color: #C5E7E2 !important;
+    color: #253031 !important;
+    border: 1px solid #746D75 !important;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    transition: all 150ms ease-in-out;
   }
+
   .fr8x-btn-ghost {
-    @apply text-foreground-secondary font-medium rounded-lg px-3 py-1.5
-           text-[10px] leading-none transition-all duration-150
-           hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)]
-           disabled:opacity-50 disabled:cursor-not-allowed;
+    color: #253031 !important;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+  }
+  .fr8x-btn-ghost:hover {
+    background-color: #C5E7E2 !important;
   }
 
-  /* ── Inputs & Labels (10px Body) ── */
-  .fr8x-input {
-    @apply w-full rounded-lg border border-[var(--fr8x-lavender)] bg-white px-2.5 py-1.5
-           text-[10px] leading-tight text-[var(--fr8x-jet)] placeholder:text-gray-400
-           transition-colors duration-150
-           focus:border-[var(--fr8x-periwinkle)] focus:ring-2 focus:ring-[var(--fr8x-periwinkle)] focus:outline-none
-           disabled:opacity-50 disabled:cursor-not-allowed;
+  /* ── Inputs & Textareas (Frozen Water #C5E7E2 Background) ── */
+  .fr8x-input, input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
+    background-color: #C5E7E2 !important;
+    color: #253031 !important;
+    border: 1px solid #746D75 !important;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: var(--fr8x-font-body);
   }
-  .fr8x-input-frozen { @apply fr8x-input bg-[var(--fr8x-frozen)]; }
-  .fr8x-label { @apply text-[10px] font-medium text-[var(--fr8x-jet)] leading-tight; }
+  .fr8x-input::placeholder, input::placeholder, textarea::placeholder {
+    color: #746D75 !important;
+    opacity: 0.8;
+  }
+  .fr8x-input:focus, input:focus, select:focus, textarea:focus {
+    border-color: #A594F9 !important;
+    box-shadow: 0 0 0 2px #A594F9 !important;
+    outline: none !important;
+  }
 
-  /* ── Section heading (12px Heading) ── */
+  .fr8x-label {
+    font-weight: 600;
+    color: #253031 !important;
+    font-size: var(--fr8x-font-small);
+  }
+
+  /* ── Section heading ── */
   .fr8x-section-heading {
-    @apply text-[12px] font-semibold text-[var(--fr8x-jet)] uppercase tracking-wide;
+    font-weight: 700;
+    color: #253031 !important;
+    text-transform: uppercase;
+    font-size: var(--fr8x-font-heading);
   }
 
-  /* ── Tables (12px Heading, 10px Body) ── */
-  .fr8x-table { @apply w-full text-[10px]; }
+  /* ── Tables ── */
+  .fr8x-table { width: 100%; font-size: var(--fr8x-font-small); }
   .fr8x-table th {
-    @apply text-left text-[12px] font-semibold text-foreground-secondary
-           uppercase tracking-wide px-3 py-2 border-b border-border bg-[#FAFAF9] whitespace-nowrap;
+    text-align: left;
+    font-weight: 700;
+    color: #253031 !important;
+    text-transform: uppercase;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #746D75;
+    background-color: #C5E7E2;
   }
   .fr8x-table td {
-    @apply px-3 py-2 border-b border-border text-[var(--fr8x-jet)] text-[10px] whitespace-nowrap;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #746D75;
+    color: #253031 !important;
   }
-  .fr8x-table tbody tr {
-    @apply transition-colors duration-75 hover:bg-[var(--fr8x-mist)];
+  .fr8x-table tbody tr:hover {
+    background-color: #C5E7E2;
   }
-  .fr8x-table-compact th { @apply px-2 py-1 text-[12px]; }
-  .fr8x-table-compact td { @apply px-2 py-1 text-[10px]; }
 
-  /* ── Status badges (8px Small) ── */
+  /* ── Status badges ── */
   .fr8x-badge {
-    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[8px] font-medium leading-snug;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.125rem 0.5rem;
+    font-weight: 700;
+    font-size: var(--fr8x-font-small);
+    border: 1px solid #746D75;
+    background-color: #C5E7E2;
+    color: #253031 !important;
   }
-  .fr8x-badge-active  { @apply fr8x-badge bg-success-light text-success-dark; }
-  .fr8x-badge-pending { @apply fr8x-badge bg-warning-light text-warning-dark; }
-  .fr8x-badge-danger  { @apply fr8x-badge bg-danger-light text-danger-dark; }
-  .fr8x-badge-info    { @apply fr8x-badge bg-brand-50 text-brand-800; }
+  .fr8x-badge-active  { background-color: #C5E7E2; color: #253031 !important; }
+  .fr8x-badge-pending { background-color: #C5E7E2; color: #253031 !important; }
+  .fr8x-badge-danger  { background-color: #C5E7E2; color: #253031 !important; }
+  .fr8x-badge-info    { background-color: #C5E7E2; color: #253031 !important; }
 
-  /* ── Currency ticker (10px Body) ── */
-  .fr8x-ticker {
-    @apply h-[28px] bg-slate-100 text-slate-800 border-b border-border overflow-hidden
-           flex items-center text-[10px] whitespace-nowrap font-medium;
-  }
-
-  /* ── Sidebar nav (10px Body) ── */
-  .fr8x-nav-item {
-    @apply flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-[10px]
-           text-foreground-secondary transition-colors duration-100
-           hover:bg-[var(--fr8x-mist)] hover:text-[var(--fr8x-jet)];
-  }
-  .fr8x-nav-item-active {
-    @apply fr8x-nav-item bg-[var(--fr8x-mist)] text-[var(--fr8x-jet)] font-medium;
-  }
-
-  /* ── Live rank (12px Heading, 8px Small) ── */
-  .fr8x-rank-display {
-    @apply text-[12px] font-bold text-[var(--fr8x-periwinkle)] tabular-nums;
-  }
-  .fr8x-rank-subtitle { @apply text-[8px] text-foreground-secondary; }
-
-  /* ── Tabs (10px Body) ── */
+  /* ── Tabs ── */
   .fr8x-tab {
-    @apply px-3 py-1 text-[10px] font-medium whitespace-nowrap transition-colors rounded-lg;
+    padding: 0.25rem 0.75rem;
+    font-weight: 700;
+    border-radius: 0.5rem;
+    font-size: var(--fr8x-font-small);
+    border: 1px solid #746D75;
+    transition: all 150ms ease-in-out;
   }
-  .fr8x-tab-active   { @apply fr8x-tab bg-[var(--fr8x-periwinkle)] text-white; }
-  .fr8x-tab-inactive { @apply fr8x-tab text-foreground-secondary hover:text-[var(--fr8x-jet)] hover:bg-[var(--fr8x-mist)]; }
+  .fr8x-tab-active   { background-color: #A594F9 !important; color: #253031 !important; }
+  .fr8x-tab-inactive { background-color: #C5E7E2 !important; color: #253031 !important; }
 
-  /* ── Stat card (12px Heading, 8px Small) ── */
+  /* ── Stat card ── */
   .fr8x-stat {
     @apply fr8x-card-compact flex flex-col items-center justify-center text-center p-3;
   }
   .fr8x-stat-value {
-    @apply text-[12px] font-bold text-[var(--fr8x-jet)] tabular-nums leading-none;
+    @apply font-bold text-[var(--fr8x-jet)] tabular-nums leading-none;
+    font-size: var(--fr8x-font-heading);
   }
   .fr8x-stat-label {
-    @apply text-[8px] text-foreground-secondary uppercase tracking-wide mt-1;
+    @apply text-foreground-secondary uppercase tracking-wide mt-1;
+    font-size: var(--fr8x-font-small);
   }
 
-  /* ── Section divider label (12px Heading) ── */
+  /* ── Section divider label ── */
   .fr8x-section-bar {
-    @apply bg-blue-100 text-[var(--fr8x-jet)] text-[12px] font-semibold px-3 py-1
+    @apply bg-blue-100 text-[var(--fr8x-jet)] font-semibold px-3 py-1
            uppercase tracking-wider border-y border-blue-200;
+    font-size: var(--fr8x-font-heading);
   }
 }
 
 @layer utilities {
   /* ── Explicit Font Size Utility Overrides ── */
-  /* Heading text: 14px */
+  /* Heading text: 16px */
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
   .text-5xl, .text-4xl, .text-3xl, .text-2xl, .text-xl, .text-lg {
-    font-size: 14px !important;
+    font-size: var(--fr8x-font-heading) !important; /* 16px */
   }
 
-  /* Body text: 12px */
+  /* Body text: 14px */
   .text-base, .text-sm, .text-md,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body {
-    font-size: 12px !important;
+    font-size: var(--fr8x-font-body) !important; /* 14px */
   }
 
-  /* General / Helper / Small text: 10px */
+  /* General / Helper / Small text: 12px */
   .text-helper, .text-xs, .text-2xs, .text-caption, .text-small {
-    font-size: 10px !important;
+    font-size: var(--fr8x-font-small) !important; /* 12px */
   }
 
   .fr8x-container {
@@ -265,5 +304,11 @@
     transform: scale(1.25);
     transform-origin: center;
     stroke-width: 2.2px !important;
+  }
+
+  /* ── Shimmer animation for ad skeleton ── */
+  @keyframes shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
   }
 }
