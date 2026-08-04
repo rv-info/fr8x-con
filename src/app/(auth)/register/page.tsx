@@ -424,10 +424,10 @@ export default function RegisterPage() {
                         type="button"
                         className={`mt-4 w-full rounded-md py-2 text-body-sm font-medium transition-colors ${
                           tier.comingSoon
-                            ? "bg-[#56C5F0] text-white cursor-not-allowed"
+                            ? "bg-[#EDE6F2] text-[#253031] opacity-60 cursor-not-allowed border border-[#746D75]"
                             : selectedTier === tier.id
-                            ? "bg-[#56C5F0] text-white"
-                            : "bg-[#56C5F0] text-white hover:bg-[#3ABFF0]"
+                            ? "bg-[#EDE6F2] text-[#253031] font-bold border border-[#253031]"
+                            : "bg-[#EDE6F2] text-[#253031] hover:opacity-90 border border-[#746D75]"
                         }`}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -529,8 +529,7 @@ export default function RegisterPage() {
                   type="submit"
                   isLoading={isSubmitting}
                   loadingText="Verifying Enterprise Domain..."
-                  className="flex-1 rounded-md bg-[#56C5F0] py-2.5 text-body-sm font-semibold text-white
-                             transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98]"
+                  className="fr8x-btn-primary flex-1 rounded-md py-2.5 text-body-sm font-bold"
                 >
                   Create Verified Enterprise Account
                 </Button>
@@ -596,9 +595,9 @@ export default function RegisterPage() {
                     setAgreedToTerms(true);
                     setShowTermsModal(false);
                   }}
-                  className="px-5 py-2 rounded-xl bg-[#56C5F0] hover:bg-[#3ABFF0] text-xs font-bold text-white shadow-md transition-all flex items-center gap-1.5"
+                  className="fr8x-btn-primary text-xs font-bold flex items-center gap-1.5"
                 >
-                  <CheckCircle2 className="h-4 w-4" /> I Agree &amp; Accept Terms
+                  <CheckCircle2 className="h-4 w-4 text-[#253031]" /> I Agree &amp; Accept Terms
                 </button>
               </div>
             </div>
