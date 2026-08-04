@@ -257,7 +257,7 @@ export default function OwnCompanyPage() {
           <div className="flex gap-2">
             <button
               onClick={() => setIsEditing(true)}
-              className="fr8x-btn-primary bg-[#56C5F0] hover:bg-[#3ABFF0] text-[10px] py-1"
+              className="fr8x-btn-primary py-1"
             >
               Edit Business Details
             </button>
