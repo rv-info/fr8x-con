@@ -1106,69 +1106,67 @@ REMARKS: ${r.remarks}`;
                           <td>{r.routing}</td>
                           <td className="truncate max-w-[120px]">{r.remarks}</td>
                           <td onClick={(e) => e.stopPropagation()}>
-                            <div className="flex flex-col gap-1 text-[10px]">
-                              <div className="flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const text = `FR8X Rate: ${r.pol} -> ${r.pod} | 20DV: $${r.rate20dv} | 40HC: $${r.rate40hc} | Carrier: ${r.carrier} | Validity: ${r.validityDate}`;
-                                    navigator.clipboard.writeText(text);
-                                    showNotification("Rate summary copied to clipboard!");
-                                  }}
-                                  className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                                  title="Copy Rate Summary"
-                                >
-                                  <Copy className="h-3.5 w-3.5" />
-                                </button>
+                            <div className="flex items-center gap-1">
+                              {/* COPY (WA) — WhatsApp-style copy */}
+                              <button
+                                type="button"
+                                onClick={() => handleWhatsAppCopy(r)}
+                                className="group flex flex-col items-center p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                                title="Copy for WhatsApp (WA)"
+                                aria-label="Copy rate for WhatsApp"
+                              >
+                                <MessageSquare className="h-3.5 w-3.5" />
+                                <span className="text-[9px] font-bold leading-none mt-0.5">WA</span>
+                              </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleWhatsAppCopy(r)}
-                                  className="p-1 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
-                                  title="Share via WhatsApp (WA)"
-                                >
-                                  <MessageSquare className="h-3.5 w-3.5" />
-                                </button>
+                              {/* DUPLICATE */}
+                              <button
+                                type="button"
+                                onClick={() => handleDuplicateRow(r)}
+                                className="group flex flex-col items-center p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                                title="Duplicate Rate"
+                                aria-label="Duplicate this rate"
+                              >
+                                <CopyPlus className="h-3.5 w-3.5" />
+                                <span className="text-[9px] font-bold leading-none mt-0.5">DUP</span>
+                              </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleDuplicateRow(r)}
-                                  className="p-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
-                                  title="Duplicate Rate Sheet"
-                                >
-                                  <CopyPlus className="h-3.5 w-3.5" />
-                                </button>
+                              {/* EXPIRE */}
+                              <button
+                                type="button"
+                                onClick={() => handleMarkExpired(r.id)}
+                                className="group flex flex-col items-center p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                                title="Mark as Expired"
+                                aria-label="Mark rate as expired"
+                              >
+                                <Clock className="h-3.5 w-3.5" />
+                                <span className="text-[9px] font-bold leading-none mt-0.5">EXP</span>
+                              </button>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleMarkExpired(r.id)}
-                                  className="p-1 rounded bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
-                                  title="Mark as Expired"
-                                >
-                                  <Clock className="h-3.5 w-3.5" />
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDelete(r.id)}
-                                  className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
-                                  title="Delete Rate"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                              {r.isEdited && (
-                                <div className="text-[9px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
-                                  EDITED
-                                </div>
-                              )}
-                              {r.status === "expired" && (
-                                <div className="text-[9px] text-amber-700 font-bold uppercase mt-0.5 tracking-wider">
-                                  EXPIRED
-                                </div>
-                              )}
+                              {/* DELETE */}
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(r.id)}
+                                className="group flex flex-col items-center p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                                title="Delete Rate"
+                                aria-label="Delete this rate permanently"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                                <span className="text-[9px] font-bold leading-none mt-0.5">DEL</span>
+                              </button>
                             </div>
+                            {r.isEdited && (
+                              <div className="text-[9px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
+                                EDITED
+                              </div>
+                            )}
+                            {r.status === "expired" && (
+                              <div className="text-[9px] text-amber-700 font-bold uppercase mt-0.5 tracking-wider">
+                                EXPIRED
+                              </div>
+                            )}
                           </td>
+
                         </tr>
                       ))}
                     </tbody>
