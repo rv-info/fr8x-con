@@ -6,48 +6,47 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 187 14% 17%;
-    --card: 0 0% 100%;
+    --background: 240 100% 98%; /* #F7F7FF Ghost White */
+    --foreground: 187 14% 17%;  /* #253031 Jet Black */
+    --card: 240 100% 98%;        /* #F7F7FF */
     --card-foreground: 187 14% 17%;
-    --popover: 0 0% 100%;
+    --popover: 240 100% 98%;
     --popover-foreground: 187 14% 17%;
-    --primary: 250 88% 77%;
+    --primary: 275 24% 92%;      /* #EDE6F2 Lavender Mist */
     --primary-foreground: 187 14% 17%;
-    --secondary: 171 39% 84%;
+    --secondary: 275 24% 92%;    /* #EDE6F2 */
     --secondary-foreground: 187 14% 17%;
-    --muted: 171 39% 84%;
-    --muted-foreground: 292 4% 45%;
-    --accent: 171 39% 84%;
+    --muted: 275 24% 92%;        /* #EDE6F2 */
+    --muted-foreground: 292 4% 45%; /* #746D75 Dark Grey */
+    --accent: 275 24% 92%;       /* #EDE6F2 */
     --accent-foreground: 187 14% 17%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 292 4% 75%;
-    --input: 171 39% 84%;
-    --ring: 250 88% 77%;
+    --border: 275 24% 92%;       /* #EDE6F2 */
+    --input: 275 24% 92%;        /* #EDE6F2 */
+    --ring: 275 24% 92%;
     --radius: 0.5rem;
 
-    /* ── FR8X Strict 3-Color + Jet Black Text System ── */
-    --fr8x-bg: #FFFFFF;
-    --fr8x-dimgrey: #746D75;       /* Color 1: Dim Grey */
-    --fr8x-frozen: #C5E7E2;        /* Color 2: Frozen Water */
-    --fr8x-periwinkle: #A594F9;    /* Color 3: Soft Periwinkle */
-    --fr8x-jet: #253031;           /* Text Color: Jet Black */
+    /* ── FR8X Strict 2-Color UI/UX + Jet Black & Dark Grey Text System ── */
+    --fr8x-bg: #F7F7FF;          /* Ghost White (Page & Container Background) */
+    --fr8x-mist: #EDE6F2;        /* Lavender Mist (Active Button & Active State Background) */
+    --fr8x-lavender: #EDE6F2;
+    --fr8x-periwinkle: #EDE6F2;
+    --fr8x-frozen: #F7F7FF;
+    --fr8x-jet: #253031;         /* Primary Text: Jet Black */
+    --fr8x-dimgrey: #746D75;     /* Secondary Text / Muted: Dark Grey */
+    --fr8x-charcoal: #253031;
 
-    --fr8x-charcoal: #746D75;
-    --fr8x-lavender: #C5E7E2;
-    --fr8x-mist: #C5E7E2;
-
-    /* ── FR8X Typography Scale (H=16px, Body=14px, Small=12px) ── */
-    --fr8x-font-heading: 16px;
-    --fr8x-font-body:    14px;
-    --fr8x-font-small:   12px;
+    /* ── FR8X Unique Typography Scale (Heading=14px, Body=12px, Small=10px) ── */
+    --fr8x-font-heading: 14px;
+    --fr8x-font-body:    12px;
+    --fr8x-font-small:   10px;
   }
 }
 
 @layer base {
   * {
-    border-color: var(--fr8x-dimgrey);
+    border-color: var(--fr8x-mist);
     box-sizing: border-box;
     color: #253031;
   }
@@ -60,13 +59,14 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     color: #253031;
+    background-color: #F7F7FF;
   }
 
   body {
-    background-color: #FFFFFF;
-    color: #253031;
+    background-color: #F7F7FF !important;
+    color: #253031 !important;
     font-size: var(--fr8x-font-body);
-    line-height: 1.45;
+    line-height: 1.4;
   }
 
   /* ── STRICT TYPOGRAPHY HIERARCHY & TEXT COLOR ── */
@@ -84,7 +84,7 @@
   p, span, div, label, input, select, textarea, button, a, table, td, th, li, nav,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body, .text-base, .text-sm, .text-md {
     font-size: var(--fr8x-font-body);
-    line-height: 1.45;
+    line-height: 1.4;
     color: #253031;
     font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
   }
@@ -93,55 +93,60 @@
   .text-helper, .text-caption, .text-small, .text-xs, .text-2xs {
     font-size: var(--fr8x-font-small) !important;
     line-height: 1.35;
-    color: #253031;
+    color: #746D75;
   }
 
   /* Focus ring */
   *:focus-visible {
-    @apply outline-none ring-2 ring-[#A594F9] ring-offset-1;
+    @apply outline-none ring-2 ring-[#EDE6F2] ring-offset-1;
   }
 }
 
 @layer components {
   /* ── Cards ── */
   .fr8x-card {
-    background-color: #FFFFFF;
+    background-color: #F7F7FF !important;
     border-radius: 0.75rem;
-    border: 1px solid #746D75;
+    border: 1px solid #EDE6F2;
     color: #253031;
   }
   .fr8x-card-hover {
     @apply fr8x-card transition-shadow duration-150 hover:shadow-md;
   }
   .fr8x-card-compact {
-    background-color: #FFFFFF;
+    background-color: #F7F7FF !important;
     border-radius: 0.5rem;
-    border: 1px solid #746D75;
+    border: 1px solid #EDE6F2;
     padding: 0.5rem;
     color: #253031;
   }
 
-  /* ── Buttons ── */
+  /* ── Buttons (Active Button Background: #EDE6F2 Lavender Mist) ── */
   .fr8x-btn-primary {
-    background-color: #A594F9 !important;
+    background-color: #EDE6F2 !important;
     color: #253031 !important;
     font-weight: 700;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
+    border: 1px solid #746D75;
     transition: all 150ms ease-in-out;
   }
   .fr8x-btn-primary:hover {
+    background-color: #EDE6F2 !important;
     opacity: 0.9;
   }
 
   .fr8x-btn-secondary {
-    background-color: #C5E7E2 !important;
+    background-color: #F7F7FF !important;
     color: #253031 !important;
-    border: 1px solid #746D75 !important;
-    font-weight: 700;
+    border: 1px solid #EDE6F2 !important;
+    font-weight: 600;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
     transition: all 150ms ease-in-out;
+  }
+  .fr8x-btn-secondary:hover {
+    background-color: #EDE6F2 !important;
   }
 
   .fr8x-btn-ghost {
@@ -151,14 +156,14 @@
     padding: 0.5rem 0.875rem;
   }
   .fr8x-btn-ghost:hover {
-    background-color: #C5E7E2 !important;
+    background-color: #EDE6F2 !important;
   }
 
-  /* ── Inputs & Textareas (Frozen Water #C5E7E2 Background) ── */
+  /* ── Inputs & Textareas (Ghost White #F7F7FF Background with Lavender Mist #EDE6F2 border) ── */
   .fr8x-input, input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
-    background-color: #C5E7E2 !important;
+    background-color: #F7F7FF !important;
     color: #253031 !important;
-    border: 1px solid #746D75 !important;
+    border: 1px solid #EDE6F2 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.75rem;
     font-size: var(--fr8x-font-body);
@@ -168,8 +173,8 @@
     opacity: 0.8;
   }
   .fr8x-input:focus, input:focus, select:focus, textarea:focus {
-    border-color: #A594F9 !important;
-    box-shadow: 0 0 0 2px #A594F9 !important;
+    border-color: #EDE6F2 !important;
+    box-shadow: 0 0 0 2px #EDE6F2 !important;
     outline: none !important;
   }
 
@@ -195,16 +200,17 @@
     color: #253031 !important;
     text-transform: uppercase;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #746D75;
-    background-color: #C5E7E2;
+    border-bottom: 1px solid #EDE6F2;
+    background-color: #EDE6F2;
   }
   .fr8x-table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #746D75;
+    border-bottom: 1px solid #EDE6F2;
+    background-color: #F7F7FF;
     color: #253031 !important;
   }
   .fr8x-table tbody tr:hover {
-    background-color: #C5E7E2;
+    background-color: #EDE6F2;
   }
 
   /* ── Status badges ── */
@@ -215,14 +221,14 @@
     padding: 0.125rem 0.5rem;
     font-weight: 700;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #746D75;
-    background-color: #C5E7E2;
+    border: 1px solid #EDE6F2;
+    background-color: #EDE6F2;
     color: #253031 !important;
   }
-  .fr8x-badge-active  { background-color: #C5E7E2; color: #253031 !important; }
-  .fr8x-badge-pending { background-color: #C5E7E2; color: #253031 !important; }
-  .fr8x-badge-danger  { background-color: #C5E7E2; color: #253031 !important; }
-  .fr8x-badge-info    { background-color: #C5E7E2; color: #253031 !important; }
+  .fr8x-badge-active  { background-color: #EDE6F2; color: #253031 !important; }
+  .fr8x-badge-pending { background-color: #EDE6F2; color: #746D75 !important; }
+  .fr8x-badge-danger  { background-color: #EDE6F2; color: #253031 !important; }
+  .fr8x-badge-info    { background-color: #EDE6F2; color: #253031 !important; }
 
   /* ── Tabs ── */
   .fr8x-tab {
@@ -230,11 +236,11 @@
     font-weight: 700;
     border-radius: 0.5rem;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #746D75;
+    border: 1px solid #EDE6F2;
     transition: all 150ms ease-in-out;
   }
-  .fr8x-tab-active   { background-color: #A594F9 !important; color: #253031 !important; }
-  .fr8x-tab-inactive { background-color: #C5E7E2 !important; color: #253031 !important; }
+  .fr8x-tab-active   { background-color: #EDE6F2 !important; color: #253031 !important; }
+  .fr8x-tab-inactive { background-color: #F7F7FF !important; color: #746D75 !important; }
 
   /* ── Stat card ── */
   .fr8x-stat {
@@ -251,30 +257,30 @@
 
   /* ── Section divider label ── */
   .fr8x-section-bar {
-    @apply bg-blue-100 text-[var(--fr8x-jet)] font-semibold px-3 py-1
-           uppercase tracking-wider border-y border-blue-200;
+    @apply bg-[#EDE6F2] text-[var(--fr8x-jet)] font-semibold px-3 py-1
+           uppercase tracking-wider border-y border-[#EDE6F2];
     font-size: var(--fr8x-font-heading);
   }
 }
 
 @layer utilities {
   /* ── Explicit Font Size Utility Overrides ── */
-  /* Heading text: 16px */
+  /* Heading text: 14px */
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
   .text-5xl, .text-4xl, .text-3xl, .text-2xl, .text-xl, .text-lg {
-    font-size: var(--fr8x-font-heading) !important; /* 16px */
+    font-size: var(--fr8x-font-heading) !important; /* 14px */
   }
 
-  /* Body text: 14px */
+  /* Body text: 12px */
   .text-base, .text-sm, .text-md,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body {
-    font-size: var(--fr8x-font-body) !important; /* 14px */
+    font-size: var(--fr8x-font-body) !important; /* 12px */
   }
 
-  /* General / Helper / Small text: 12px */
+  /* General / Helper / Small text: 10px */
   .text-helper, .text-xs, .text-2xs, .text-caption, .text-small {
-    font-size: var(--fr8x-font-small) !important; /* 12px */
+    font-size: var(--fr8x-font-small) !important; /* 10px */
   }
 
   .fr8x-container {
@@ -312,3 +318,4 @@
     100% { transform: translateX(200%); }
   }
 }
+
