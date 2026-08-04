@@ -42,11 +42,12 @@ const COMMON_EMOJIS = [
 ];
 
 const POST_TYPES = [
-  { value: "update",    label: "Industry Update",  color: "bg-blue-50 text-blue-700 border-blue-200" },
-  { value: "rate",      label: "Rate Alert",        color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  { value: "market",    label: "Market Intel",      color: "bg-purple-50 text-purple-700 border-purple-200" },
-  { value: "rfq",       label: "RFQ Broadcast",     color: "bg-amber-50 text-amber-700 border-amber-200" },
-  { value: "insight",   label: "Logistics Insight", color: "bg-slate-50 text-slate-700 border-slate-200" },
+  { value: "update",    label: "Industry Update",   color: "bg-blue-50 text-blue-700 border-blue-200" },
+  { value: "rate",      label: "Rate Alert",         color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  { value: "market",    label: "Market Intel",       color: "bg-purple-50 text-purple-700 border-purple-200" },
+  { value: "rfq",       label: "RFQ Broadcast",      color: "bg-amber-50 text-amber-700 border-amber-200" },
+  { value: "insight",   label: "Logistics Insight",  color: "bg-slate-50 text-slate-700 border-slate-200" },
+  // Note: "code block" type removed — not suitable for this platform
 ] as const;
 
 const AUDIENCE_OPTIONS = [
@@ -98,8 +99,8 @@ export function PostComposer({
   userId,
 }: PostComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  // Note: fileInputRef removed — document attachments not allowed in this version
 
   const [mediaUploads, setMediaUploads] = useState<MediaUpload[]>([]);
   const [postType, setPostType] = useState<PostType>("update");
@@ -266,10 +267,10 @@ export function PostComposer({
 
   return (
     <div
-      className={`bg-white rounded-2xl border shadow-sm transition-all duration-200 ${
+      className={`bg-[#C5E7E2] rounded-2xl border transition-all duration-200 ${
         isFocused
-          ? "border-[var(--fr8x-periwinkle)] shadow-[0_0_0_3px_rgba(86,197,240,0.12)]"
-          : "border-slate-200/80"
+          ? "border-[#A594F9] ring-2 ring-[#A594F9]/40"
+          : "border-[#746D75]/40"
       }`}
     >
       {/* ── Error Banner ────────────────────────────────────────────────── */}
@@ -350,7 +351,7 @@ export function PostComposer({
           </div>
         </div>
 
-        {/* ── Textarea ───────────────────────────────────────────────────── */}
+        {/* ── Textarea (Frozen Water #C5E7E2 Background) ─────────────────── */}
         <textarea
           ref={textareaRef}
           value={content}
@@ -360,7 +361,7 @@ export function PostComposer({
           onKeyDown={handleKeyDown}
           placeholder="Share a rate update, market insight, RFQ, or industry news with your network…"
           rows={isFocused ? 5 : 3}
-          className={`w-full text-[12.5px] text-[var(--fr8x-jet)] placeholder:text-slate-400 resize-none focus:outline-none leading-relaxed font-sans transition-all duration-200 ${
+          className={`w-full text-[12.5px] bg-[#C5E7E2] text-[#253031] placeholder:text-[#746D75] resize-none focus:outline-none leading-relaxed font-sans transition-all duration-200 ${
             isOverLimit ? "text-red-600" : ""
           }`}
           style={{ minHeight: isFocused ? 140 : 72 }}
@@ -483,23 +484,7 @@ export function PostComposer({
               className="hidden"
             />
 
-            {/* File attachment */}
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
-              title="Attach document"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.ppt,.pptx"
-              multiple
-              onChange={handleImageSelect}
-              className="hidden"
-            />
+            {/* Document attachments are not supported in feed posts */}
 
             {/* Emoji */}
             <button
