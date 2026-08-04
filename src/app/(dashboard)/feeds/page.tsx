@@ -1200,37 +1200,41 @@ export default function FeedsPage() {
                 {profile.industryTags.slice(0, 3).join(" · ")}
               </p>
             )}
-            <Link
-              href={ROUTES.PROFILE}
-              className="block text-center text-[10px] text-[var(--fr8x-periwinkle)] font-semibold py-1.5 border border-[var(--fr8x-periwinkle)] rounded-xl hover:bg-[var(--fr8x-mist)] transition-colors"
-            >
-              View Profile
-            </Link>
           </div>
 
           <ContactsPanel compact maxDisplay={6} />
 
-          {/* Trending Tags */}
+
+          {/* Trending Tags — with rich post context */}
           {trendingTags.length > 0 && (
             <div className="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
-              <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2">
-                Industry Topics
+              <h3 className="text-[11px] font-bold text-[var(--fr8x-jet)] mb-2 flex items-center gap-1.5">
+                <TrendingUp className="h-3.5 w-3.5 text-[var(--fr8x-periwinkle)]" />
+                Industry Trending Topics
               </h3>
-              <div className="space-y-1.5">
-                {trendingTags.slice(0, 5).map((tag) => (
+              <div className="space-y-2">
+                {trendingTags.slice(0, 5).map((tag, idx) => (
                   <button
                     key={tag.name}
                     onClick={() => handleToggleFollowTag(tag.name)}
-                    className={`block w-full text-left p-1.5 rounded-lg text-[10px] transition-colors ${
+                    className={`block w-full text-left p-2 rounded-lg border transition-colors ${
                       followedTags.includes(tag.name)
-                        ? "bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] font-semibold"
-                        : "hover:bg-slate-50 text-foreground-secondary"
+                        ? "bg-[var(--fr8x-mist)] border-[var(--fr8x-periwinkle)]/30 text-[var(--fr8x-periwinkle)]"
+                        : "hover:bg-slate-50 border-slate-100 text-foreground-secondary"
                     }`}
                   >
-                    <span className="font-bold">{tag.name}</span>
-                    <span className="text-foreground-muted ml-1">
-                      · {tag.related}
-                    </span>
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[11px] flex items-center gap-1">
+                        <span className="text-[10px] text-slate-400 font-normal">#{idx + 1}</span>
+                        {tag.name}
+                      </span>
+                      {followedTags.includes(tag.name) && (
+                        <CheckCircle2 className="h-3 w-3 text-[var(--fr8x-periwinkle)]" />
+                      )}
+                    </div>
+                    <p className="text-[10px] text-foreground-muted mt-0.5 line-clamp-2">
+                      {tag.related}
+                    </p>
                   </button>
                 ))}
               </div>
