@@ -349,7 +349,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
           </div>
           <div>
             <span className="font-extrabold text-lg text-[var(--fr8x-jet)] tracking-wider">FR8X</span>
-            <span className="font-semibold text-lg text-[#56C5F0] tracking-wide">-CON</span>
+            <span className="font-semibold text-lg text-[var(--fr8x-jet)] tracking-wide">-CON</span>
           </div>
         </div>
         <span className="text-[10px] font-semibold px-2.5 py-1 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-jet)] border border-slate-200">
@@ -371,7 +371,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
           >
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <KeyRound className="h-5 w-5 text-[#56C5F0]" />
+                <KeyRound className="h-5 w-5 text-[#253031]" />
                 <h2 className="text-display-sm font-bold text-[var(--fr8x-jet)] dark:text-white">Verify Email</h2>
               </div>
               <p className="text-body-sm text-foreground-secondary dark:text-gray-400">
@@ -419,7 +419,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
               type="submit"
               isLoading={isSubmitting}
               loadingText="Verifying..."
-              className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white transition-all hover:bg-[#3ABFF0] active:scale-[0.98] shadow-md hover:shadow-lg"
+              className="fr8x-btn-primary w-full rounded-xl py-3 text-body-md font-bold"
             >
               Verify OTP & Access Dashboard
             </Button>
@@ -456,8 +456,8 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                     onClick={() => handleTabChange(tab)}
                     className={`py-2 text-body-sm font-semibold rounded-lg transition-all duration-200 ${
                       activeTab === tab
-                        ? "bg-white dark:bg-gray-900 text-[var(--fr8x-jet)] dark:text-white shadow-sm"
-                        : "text-foreground-secondary dark:text-gray-400 hover:text-[var(--fr8x-jet)] dark:hover:text-white"
+                        ? "bg-[#EDE6F2] text-[#253031] font-bold shadow-sm border border-[#EDE6F2]"
+                        : "text-[#746D75] hover:text-[#253031]"
                     }`}
                     aria-selected={activeTab === tab}
                     role="tab"
@@ -511,7 +511,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                     <div className="flex items-center justify-between mb-1.5">
                       <label htmlFor="signin-password" className="fr8x-label block dark:text-gray-300">Password</label>
                       <button type="button" onClick={() => handleTabChange("forgot")}
-                        className="text-body-sm text-[#2B9ED6] hover:underline font-medium">Forgot password?</button>
+                        className="text-body-sm text-[#746D75] hover:text-[#253031] underline font-medium">Forgot password?</button>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted dark:text-gray-500" />
@@ -528,7 +528,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                   </div>
 
                   <Button type="submit" isLoading={isSubmitting} loadingText="Signing In..."
-                    className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-2 shadow-md hover:shadow-lg">
+                    className="fr8x-btn-primary w-full rounded-xl py-3 text-body-md font-bold mt-2">
                     Sign In to Dashboard
                   </Button>
                 </motion.form>
@@ -649,7 +649,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                       <button
                         type="button"
                         onClick={() => setShowTermsModal(true)}
-                        className="text-[#2B9ED6] hover:underline font-semibold"
+                        className="text-[#746D75] hover:text-[#253031] underline font-medium"
                       >
                         Terms &amp; Conditions
                       </button>{" "}
@@ -658,7 +658,7 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                   </div>
 
                   <Button type="submit" isLoading={isSubmitting} loadingText="Creating Account..."
-                    className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-2 shadow-md hover:shadow-lg">
+                    className="fr8x-btn-primary w-full rounded-xl py-3 text-body-md font-bold mt-2">
                     Create Account <ArrowRight className="inline h-4 w-4 ml-1" />
                   </Button>
                 </motion.form>
@@ -686,13 +686,13 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
                   </div>
 
                   <Button type="submit" isLoading={isSubmitting} loadingText="Sending Reset Email..."
-                    className="w-full rounded-xl bg-[#56C5F0] py-3 text-body-md font-semibold text-white transition-all duration-200 hover:bg-[#3ABFF0] active:scale-[0.98] mt-2 shadow-md hover:shadow-lg">
+                    className="fr8x-btn-primary w-full rounded-xl py-3 text-body-md font-bold mt-2">
                     Send Password Reset Email
                   </Button>
 
                   <div className="pt-2 text-center">
                     <button type="button" onClick={() => handleTabChange("signin")}
-                      className="text-body-sm text-[#2B9ED6] hover:underline font-medium">
+                      className="text-body-sm text-[#746D75] hover:text-[#253031] underline font-medium">
                       ← Back to Sign In
                     </button>
                   </div>
