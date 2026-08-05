@@ -27,6 +27,8 @@ import {
 } from "firebase/firestore";
 import { firebaseDb } from "./config";
 
+import { dataStore } from "../services/dataStore";
+
 /**
  * Get a document by collection and ID.
  */
@@ -37,12 +39,19 @@ export async function getDocument<T extends DocumentData>(
   try {
     const docRef = doc(firebaseDb, collectionName, docId);
     const docSnap = await getDoc(docRef);
-    if (!docSnap.exists()) return null;
-    return { id: docSnap.id, ...docSnap.data() } as T & { id: string };
+    if (docSnap.exists()) {
+      return { id: docSnap.id, ...docSnap.data() } as T & { id: string };
+    }
   } catch (error) {
-    console.error("Firestore getDocument error:", error);
-    return null;
+    console.warn("Firestore getDocument fallback engaged:", error);
   }
+
+  // Fallback to supreme data store for zero empty states
+  if (collectionName === "auctions") {
+    const auction = dataStore.getAuctionById(docId);
+    if (auction) return auction as unknown as T & { id: string };
+  }
+  return null;
 }
 
 /**
@@ -56,14 +65,28 @@ export async function queryDocuments<T extends DocumentData>(
     const collectionRef = collection(firebaseDb, collectionName);
     const q = query(collectionRef, ...constraints);
     const snapshot = await getDocs(q);
-    return snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as (T & { id: string })[];
+    if (snapshot.docs.length > 0) {
+      return snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as (T & { id: string })[];
+    }
   } catch (error) {
-    console.error("Firestore queryDocuments error:", error);
-    return [];
+    console.warn("Firestore queryDocuments fallback engaged:", error);
   }
+
+  // Supreme fallback datasets
+  if (collectionName === "auctions") {
+    return dataStore.getAuctions() as unknown as (T & { id: string })[];
+  }
+  if (collectionName === "rates") {
+    return dataStore.getRates() as unknown as (T & { id: string })[];
+  }
+  if (collectionName === "posts") {
+    return dataStore.getPosts() as unknown as (T & { id: string })[];
+  }
+
+  return [];
 }
 
 /**
