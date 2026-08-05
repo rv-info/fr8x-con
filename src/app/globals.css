@@ -171,41 +171,55 @@
     color: #0F172A !important;
   }
 
-  /* ── Buttons (Normal Font Weight, High Contrast Light/Accent Fills) ── */
-  .fr8x-btn-primary {
-    background-color: #F2EEF5 !important;
-    color: #0F172A !important;
+  /* ── REMOVE ALL GRADIENT COLORS (PURE SOLID COLORS ONLY) ── */
+  [class*="bg-gradient-"],
+  [class*="from-"],
+  [class*="via-"],
+  [class*="to-"] {
+    background-image: none !important;
+  }
+
+  /* ── Buttons (SOLID SKYBLUE PRIMARY BUTTONS) ── */
+  .fr8x-btn-primary,
+  button[type="submit"],
+  .btn-primary {
+    background-color: #0EA5E9 !important;
+    color: #FFFFFF !important;
     font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
-    border: 1px solid #CBD5E1;
+    border: 1px solid #0284C7 !important;
     transition: all 150ms ease-in-out;
   }
-  .fr8x-btn-primary:hover {
-    background-color: #E6DFEB !important;
+  .fr8x-btn-primary:hover,
+  button[type="submit"]:hover,
+  .btn-primary:hover {
+    background-color: #0284C7 !important;
+    color: #FFFFFF !important;
   }
 
   .fr8x-btn-secondary {
-    background-color: #FFFFFF !important;
-    color: #0F172A !important;
-    border: 1px solid #E9E4ED !important;
+    background-color: #F0F9FF !important;
+    color: #0369A1 !important;
+    border: 1px solid #BAE6FD !important;
     font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
     transition: all 150ms ease-in-out;
   }
   .fr8x-btn-secondary:hover {
-    background-color: #F2EEF5 !important;
+    background-color: #E0F2FE !important;
+    color: #0284C7 !important;
   }
 
   .fr8x-btn-ghost {
-    color: #0F172A !important;
+    color: #0284C7 !important;
     font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
   }
   .fr8x-btn-ghost:hover {
-    background-color: #F2EEF5 !important;
+    background-color: #F0F9FF !important;
   }
 
   /* ── Inputs & Textareas (Light Fill, Dark Text, Subtle Border) ── */
