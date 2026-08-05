@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from "next";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { CurrencyProvider } from "@/providers/CurrencyProvider";
+import { LanguageProvider } from "@/components/ui/LanguageSelector";
 import BackupScheduler from "@/components/layout/BackupScheduler";
 import "./globals.css";
 
@@ -84,7 +85,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#56C5F0",
+  themeColor: "#F7F7FF",
 };
 
 const jsonLdOrganization = {
@@ -100,8 +101,6 @@ const jsonLdOrganization = {
     contactType: "customer support",
   },
 };
-
-import { LanguageProvider } from "@/components/ui/LanguageSelector";
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
