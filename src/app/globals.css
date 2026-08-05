@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,38 +6,39 @@
 
 @layer base {
   :root {
-    --background: 240 100% 98%; /* #F7F7FF Ghost White */
-    --foreground: 187 14% 17%;  /* #253031 Jet Black */
-    --card: 240 100% 98%;        /* #F7F7FF */
-    --card-foreground: 187 14% 17%;
-    --popover: 240 100% 98%;
-    --popover-foreground: 187 14% 17%;
-    --primary: 275 24% 92%;      /* #EDE6F2 Lavender Mist */
-    --primary-foreground: 187 14% 17%;
-    --secondary: 275 24% 92%;    /* #EDE6F2 */
-    --secondary-foreground: 187 14% 17%;
-    --muted: 275 24% 92%;        /* #EDE6F2 */
-    --muted-foreground: 292 4% 45%; /* #746D75 Dark Grey */
-    --accent: 275 24% 92%;       /* #EDE6F2 */
-    --accent-foreground: 187 14% 17%;
+    --background: 240 20% 99%;   /* #FAFAFE Crisp Light Neutral */
+    --foreground: 222 47% 11%;   /* #0F172A Dark Slate */
+    --card: 0 0% 100%;           /* #FFFFFF Pure White Card */
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 270 20% 95%;      /* #F2EEF5 Soft Lavender Slate */
+    --primary-foreground: 222 47% 11%;
+    --secondary: 270 20% 95%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 240 10% 96%;
+    --muted-foreground: 215 16% 35%; /* #475569 Muted Dark Text */
+    --accent: 270 20% 95%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 275 24% 92%;       /* #EDE6F2 */
-    --input: 275 24% 92%;        /* #EDE6F2 */
-    --ring: 275 24% 92%;
+    --border: 270 15% 92%;       /* #E9E4ED Light Border */
+    --input: 270 15% 92%;
+    --ring: 270 15% 90%;
     --radius: 0.5rem;
 
-    /* ── FR8X Strict 2-Color UI/UX + Jet Black & Dark Grey Text System ── */
-    --fr8x-bg: #F7F7FF;          /* Ghost White (Page & Container Background) */
-    --fr8x-mist: #EDE6F2;        /* Lavender Mist (Active Button & Active State Background) */
-    --fr8x-lavender: #EDE6F2;
-    --fr8x-periwinkle: #EDE6F2;
-    --fr8x-frozen: #F7F7FF;
-    --fr8x-jet: #253031;         /* Primary Text: Jet Black */
-    --fr8x-dimgrey: #746D75;     /* Secondary Text / Muted: Dark Grey */
-    --fr8x-charcoal: #253031;
+    /* ── FR8X Light Theme + Dark Text System ── */
+    --fr8x-bg: #FAFAFE;          /* Page & Container Background */
+    --fr8x-card: #FFFFFF;        /* Card & Panel Background */
+    --fr8x-mist: #F2EEF5;        /* Light Accent Background */
+    --fr8x-lavender: #F2EEF5;
+    --fr8x-periwinkle: #F2EEF5;
+    --fr8x-frozen: #FAFAFE;
+    --fr8x-jet: #0F172A;         /* Primary Text: Dark Slate (#0F172A / #1E293B) */
+    --fr8x-dimgrey: #475569;     /* Secondary Text: Muted Dark Slate */
+    --fr8x-charcoal: #0F172A;
 
-    /* ── FR8X Unique Typography Scale (Heading=14px, Body=12px, Small=10px) ── */
+    /* ── FR8X Typography Scale (Heading=14px, Body=12px, Small=10px) ── */
     --fr8x-font-heading: 14px;
     --fr8x-font-body:    12px;
     --fr8x-font-small:   10px;
@@ -46,220 +47,273 @@
 
 @layer base {
   * {
-    border-color: var(--fr8x-mist);
+    border-color: var(--border);
     box-sizing: border-box;
-    color: #253031;
+    color: var(--fr8x-jet);
   }
 
   html {
     font-size: 14px;
-    font-family: "Eurostile", "Microgramma", "Inter", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: #253031;
-    background-color: #F7F7FF;
+    color: var(--fr8x-jet);
+    background-color: var(--fr8x-bg);
   }
 
   body {
-    background-color: #F7F7FF !important;
-    color: #253031 !important;
+    background-color: var(--fr8x-bg) !important;
+    color: var(--fr8x-jet) !important;
     font-size: var(--fr8x-font-body);
+    font-weight: 400 !important;
     line-height: 1.4;
   }
 
-  /* ── STRICT TYPOGRAPHY HIERARCHY & TEXT COLOR ── */
+  /* ── NORMAL FONT WEIGHT & DARK TEXT FOR ALL HEADINGS & TEXT ── */
   h1, h2, h3, h4, h5, h6,
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
   .text-3xl, .text-2xl, .text-xl, .text-lg {
     font-size: var(--fr8x-font-heading) !important;
     line-height: 1.3;
-    font-weight: 700;
-    color: #253031 !important;
-    font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
+    font-weight: 400 !important;
+    color: var(--fr8x-jet) !important;
+    font-family: "Inter", sans-serif;
   }
 
   p, span, div, label, input, select, textarea, button, a, table, td, th, li, nav,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body, .text-base, .text-sm, .text-md {
     font-size: var(--fr8x-font-body);
     line-height: 1.4;
-    color: #253031;
-    font-family: "Eurostile", "Microgramma", "Inter", sans-serif;
+    font-weight: 400;
+    color: var(--fr8x-jet);
+    font-family: "Inter", sans-serif;
   }
 
   small, sub, sup, caption,
   .text-helper, .text-caption, .text-small, .text-xs, .text-2xs {
     font-size: var(--fr8x-font-small) !important;
     line-height: 1.35;
-    color: #746D75;
+    font-weight: 400;
+    color: var(--fr8x-dimgrey);
+  }
+
+  /* Force normal font weight across ALL font utility classes */
+  .font-thin, .font-extralight, .font-light, .font-normal, .font-medium, .font-semibold, .font-bold, .font-extrabold, .font-black,
+  .font-100, .font-200, .font-300, .font-400, .font-500, .font-600, .font-700, .font-800, .font-900 {
+    font-weight: 400 !important;
+  }
+
+  /* ── CORE POPUP, MODAL, DIALOG, DROPDOWN & OVERLAY STYLING SYSTEM ── */
+  [role="dialog"],
+  [role="popover"],
+  [role="menu"],
+  [role="tooltip"],
+  [role="alertdialog"],
+  .modal,
+  .dialog,
+  .popup,
+  .popover,
+  .dropdown,
+  div[class*="modal"],
+  div[class*="dialog"],
+  div[class*="popup"],
+  div[class*="popover"],
+  div[class*="dropdown"],
+  div[class*="sheet"] {
+    color: #0F172A !important;
+    font-weight: 400 !important;
+  }
+
+  /* Modal Containers: Light Background, Soft Border, Dark Text */
+  [role="dialog"] > div,
+  .modal-content,
+  .dialog-content,
+  div[class*="max-w-"],
+  div[class*="rounded-"] {
+    font-weight: 400;
+  }
+
+  /* Ensure headings and text inside all modals/popups use dark slate text & normal weight */
+  [role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3, [role="dialog"] h4, [role="dialog"] h5, [role="dialog"] h6,
+  [role="dialog"] p, [role="dialog"] span, [role="dialog"] div, [role="dialog"] label, [role="dialog"] button,
+  .modal h1, .modal h2, .modal h3, .modal h4, .modal p, .modal span, .modal label, .modal button,
+  .popup h1, .popup h2, .popup h3, .popup h4, .popup p, .popup span, .popup label, .popup button {
+    color: #0F172A !important;
+    font-weight: 400 !important;
   }
 
   /* Focus ring */
   *:focus-visible {
-    @apply outline-none ring-2 ring-[#EDE6F2] ring-offset-1;
+    @apply outline-none ring-2 ring-[#F2EEF5] ring-offset-1;
   }
 }
 
 @layer components {
-  /* ── Cards ── */
+  /* ── Cards (Clean White Background, Light Border, Dark Text) ── */
   .fr8x-card {
-    background-color: #F7F7FF !important;
+    background-color: #FFFFFF !important;
     border-radius: 0.75rem;
-    border: 1px solid #EDE6F2;
-    color: #253031;
+    border: 1px solid #E9E4ED;
+    color: #0F172A !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   }
   .fr8x-card-hover {
     @apply fr8x-card transition-shadow duration-150 hover:shadow-md;
   }
   .fr8x-card-compact {
-    background-color: #F7F7FF !important;
+    background-color: #FFFFFF !important;
     border-radius: 0.5rem;
-    border: 1px solid #EDE6F2;
+    border: 1px solid #E9E4ED;
     padding: 0.5rem;
-    color: #253031;
+    color: #0F172A !important;
   }
 
-  /* ── Buttons (Active Button Background: #EDE6F2 Lavender Mist) ── */
+  /* ── Buttons (Normal Font Weight, High Contrast Light/Accent Fills) ── */
   .fr8x-btn-primary {
-    background-color: #EDE6F2 !important;
-    color: #253031 !important;
-    font-weight: 700;
+    background-color: #F2EEF5 !important;
+    color: #0F172A !important;
+    font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
-    border: 1px solid #746D75;
+    border: 1px solid #CBD5E1;
     transition: all 150ms ease-in-out;
   }
   .fr8x-btn-primary:hover {
-    background-color: #EDE6F2 !important;
-    opacity: 0.9;
+    background-color: #E6DFEB !important;
   }
 
   .fr8x-btn-secondary {
-    background-color: #F7F7FF !important;
-    color: #253031 !important;
-    border: 1px solid #EDE6F2 !important;
-    font-weight: 600;
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid #E9E4ED !important;
+    font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
     transition: all 150ms ease-in-out;
   }
   .fr8x-btn-secondary:hover {
-    background-color: #EDE6F2 !important;
+    background-color: #F2EEF5 !important;
   }
 
   .fr8x-btn-ghost {
-    color: #253031 !important;
-    font-weight: 600;
+    color: #0F172A !important;
+    font-weight: 400 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.875rem;
   }
   .fr8x-btn-ghost:hover {
-    background-color: #EDE6F2 !important;
+    background-color: #F2EEF5 !important;
   }
 
-  /* ── Inputs & Textareas (Ghost White #F7F7FF Background with Lavender Mist #EDE6F2 border) ── */
+  /* ── Inputs & Textareas (Light Fill, Dark Text, Subtle Border) ── */
   .fr8x-input, input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
-    background-color: #F7F7FF !important;
-    color: #253031 !important;
-    border: 1px solid #EDE6F2 !important;
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid #CBD5E1 !important;
     border-radius: 0.5rem;
     padding: 0.5rem 0.75rem;
     font-size: var(--fr8x-font-body);
+    font-weight: 400;
   }
   .fr8x-input::placeholder, input::placeholder, textarea::placeholder {
-    color: #746D75 !important;
-    opacity: 0.8;
+    color: #64748B !important;
+    opacity: 0.9;
   }
   .fr8x-input:focus, input:focus, select:focus, textarea:focus {
-    border-color: #EDE6F2 !important;
-    box-shadow: 0 0 0 2px #EDE6F2 !important;
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 0 0 2px #F2EEF5 !important;
     outline: none !important;
   }
 
   .fr8x-label {
-    font-weight: 600;
-    color: #253031 !important;
+    font-weight: 400 !important;
+    color: #0F172A !important;
     font-size: var(--fr8x-font-small);
   }
 
   /* ── Section heading ── */
   .fr8x-section-heading {
-    font-weight: 700;
-    color: #253031 !important;
+    font-weight: 400 !important;
+    color: #0F172A !important;
     text-transform: uppercase;
     font-size: var(--fr8x-font-heading);
   }
 
-  /* ── Tables ── */
+  /* ── Tables (Light Row Fills, High Contrast Text, Normal Headers) ── */
   .fr8x-table { width: 100%; font-size: var(--fr8x-font-small); }
   .fr8x-table th {
     text-align: left;
-    font-weight: 700;
-    color: #253031 !important;
+    font-weight: 400 !important;
+    color: #0F172A !important;
     text-transform: uppercase;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #EDE6F2;
-    background-color: #EDE6F2;
+    border-bottom: 1px solid #E9E4ED;
+    background-color: #F2EEF5;
   }
   .fr8x-table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #EDE6F2;
-    background-color: #F7F7FF;
-    color: #253031 !important;
+    border-bottom: 1px solid #E9E4ED;
+    background-color: #FFFFFF;
+    color: #0F172A !important;
+    font-weight: 400;
   }
   .fr8x-table tbody tr:hover {
-    background-color: #EDE6F2;
+    background-color: #F8FAFC;
   }
 
-  /* ── Status badges ── */
+  /* ── Status badges (Normal Font Weight, High Contrast Text) ── */
   .fr8x-badge {
     display: inline-flex;
     align-items: center;
     border-radius: 9999px;
     padding: 0.125rem 0.5rem;
-    font-weight: 700;
+    font-weight: 400 !important;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #EDE6F2;
-    background-color: #EDE6F2;
-    color: #253031 !important;
+    border: 1px solid #E9E4ED;
+    background-color: #F2EEF5;
+    color: #0F172A !important;
   }
-  .fr8x-badge-active  { background-color: #EDE6F2; color: #253031 !important; }
-  .fr8x-badge-pending { background-color: #EDE6F2; color: #746D75 !important; }
-  .fr8x-badge-danger  { background-color: #EDE6F2; color: #253031 !important; }
-  .fr8x-badge-info    { background-color: #EDE6F2; color: #253031 !important; }
+  .fr8x-badge-active  { background-color: #F2EEF5; color: #0F172A !important; }
+  .fr8x-badge-pending { background-color: #F8FAFC; color: #475569 !important; }
+  .fr8x-badge-danger  { background-color: #FEF2F2; color: #991B1B !important; border-color: #FCA5A5; }
+  .fr8x-badge-info    { background-color: #F0F9FF; color: #075985 !important; border-color: #BAE6FD; }
 
   /* ── Tabs ── */
   .fr8x-tab {
     padding: 0.25rem 0.75rem;
-    font-weight: 700;
+    font-weight: 400 !important;
     border-radius: 0.5rem;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #EDE6F2;
+    border: 1px solid #E9E4ED;
     transition: all 150ms ease-in-out;
   }
-  .fr8x-tab-active   { background-color: #EDE6F2 !important; color: #253031 !important; }
-  .fr8x-tab-inactive { background-color: #F7F7FF !important; color: #746D75 !important; }
+  .fr8x-tab-active   { background-color: #F2EEF5 !important; color: #0F172A !important; }
+  .fr8x-tab-inactive { background-color: #FFFFFF !important; color: #475569 !important; }
 
   /* ── Stat card ── */
   .fr8x-stat {
     @apply fr8x-card-compact flex flex-col items-center justify-center text-center p-3;
   }
   .fr8x-stat-value {
-    @apply font-bold text-[var(--fr8x-jet)] tabular-nums leading-none;
+    @apply font-normal text-[var(--fr8x-jet)] tabular-nums leading-none;
     font-size: var(--fr8x-font-heading);
+    font-weight: 400 !important;
   }
   .fr8x-stat-label {
     @apply text-foreground-secondary uppercase tracking-wide mt-1;
     font-size: var(--fr8x-font-small);
+    font-weight: 400 !important;
   }
 
   /* ── Section divider label ── */
   .fr8x-section-bar {
-    @apply bg-[#EDE6F2] text-[var(--fr8x-jet)] font-semibold px-3 py-1
-           uppercase tracking-wider border-y border-[#EDE6F2];
+    @apply bg-[#F2EEF5] text-[var(--fr8x-jet)] font-normal px-3 py-1
+           uppercase tracking-wider border-y border-[#E9E4ED];
     font-size: var(--fr8x-font-heading);
+    font-weight: 400 !important;
   }
 }
 
