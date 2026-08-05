@@ -363,7 +363,7 @@ export default function RegisterPage() {
                       onClick={() => toggleTag(tag)}
                       className={`rounded-md px-3 py-1.5 text-body-sm border transition-colors ${
                         selectedTags.includes(tag)
-                          ? "bg-[var(--fr8x-periwinkle)] text-white border-[var(--fr8x-periwinkle)]"
+                          ? "bg-[var(--fr8x-periwinkle)] text-[#253031] font-bold border-[#746D75]"
                           : "bg-background-card text-[var(--fr8x-jet)] border-[var(--fr8x-lavender)] hover:bg-[var(--fr8x-mist)]"
                       }`}
                     >
