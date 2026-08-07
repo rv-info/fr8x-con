@@ -10,69 +10,78 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // FR8X-CON Brand Palette (Mapped to 2-Color UI/UX + Jet Black & Dark Grey)
+        // FR8X-CON Dark Theme — Strict 4-Color Palette
         brand: {
-          50: "#F7F7FF",
-          100: "#F7F7FF",
-          200: "#EDE6F2",
-          300: "#EDE6F2",
-          400: "#EDE6F2",
-          500: "#EDE6F2",
-          600: "#EDE6F2",
-          700: "#EDE6F2",
-          800: "#253031",
-          900: "#253031",
-          950: "#253031",
+          50: "#2A3038",
+          100: "#2A3038",
+          200: "#252B33",
+          300: "#252B33",
+          400: "#20252B",
+          500: "#20252B",
+          600: "#1E2329",
+          700: "#1E2329",
+          800: "#1E2329",
+          900: "#1E2329",
+          950: "#1E2329",
         },
-        // FR8X Theme Colors
+        // FR8X Theme Colors — Dark Palette
         fr8x: {
-          bg: "#F7F7FF",       // Ghost White (Background)
-          mist: "#EDE6F2",     // Lavender Mist (Active Button Background)
-          lavender: "#EDE6F2",
-          periwinkle: "#EDE6F2",
-          frozen: "#F7F7FF",
-          jet: "#253031",      // Jet Black Text
-          dimgrey: "#746D75",  // Dark Grey Text
-          charcoal: "#253031",
+          bg: "#1E2329",       // Deep Charcoal (Main Background)
+          panel: "#252B33",    // Dark Slate (Secondary Panels)
+          nav: "#20252B",      // Graphite (Navigation)
+          grid: "#2A3038",     // Dark Grey (Grid / Table)
+          mist: "#2A3038",
+          lavender: "#2A3038",
+          periwinkle: "#0EA5E9",
+          frozen: "#1E2329",
+          jet: "#E2E8F0",      // Primary Text
+          dimgrey: "#94A3B8",  // Muted Text
+          charcoal: "#E2E8F0",
+          accent: "#0EA5E9",
+          "accent-hover": "#0284C7",
+          border: "#333B44",
+          text: "#E2E8F0",
+          "text-muted": "#94A3B8",
+          "text-label": "#CBD5E1",
         },
         // Semantic colors
         primary: {
-          DEFAULT: "#EDE6F2",
-          foreground: "#253031",
-          hover: "#EDE6F2",
-          muted: "#F7F7FF",
+          DEFAULT: "#0EA5E9",
+          foreground: "#FFFFFF",
+          hover: "#0284C7",
+          muted: "#2A3038",
         },
         background: {
-          DEFAULT: "#F7F7FF",
-          card: "#F7F7FF",
-          sidebar: "#F7F7FF",
-          elevated: "#F7F7FF",
+          DEFAULT: "#1E2329",
+          card: "#252B33",
+          sidebar: "#20252B",
+          elevated: "#2A3038",
         },
         foreground: {
-          DEFAULT: "#253031",
-          secondary: "#746D75",
-          muted: "#746D75",
-          inverse: "#F7F7FF",
+          DEFAULT: "#E2E8F0",
+          secondary: "#94A3B8",
+          muted: "#94A3B8",
+          inverse: "#1E2329",
         },
         border: {
-          DEFAULT: "#EDE6F2",
-          strong: "#746D75",
-          focus: "#EDE6F2",
+          DEFAULT: "#333B44",
+          strong: "#4A5568",
+          focus: "#0EA5E9",
         },
         success: {
-          DEFAULT: "#EDE6F2",
-          light: "#F7F7FF",
-          dark: "#253031",
+          DEFAULT: "#22C55E",
+          light: "rgba(34, 197, 94, 0.15)",
+          dark: "#16A34A",
         },
         warning: {
-          DEFAULT: "#EDE6F2",
-          light: "#F7F7FF",
-          dark: "#253031",
+          DEFAULT: "#EAB308",
+          light: "rgba(234, 179, 8, 0.15)",
+          dark: "#CA8A04",
         },
         danger: {
-          DEFAULT: "#EDE6F2",
-          light: "#F7F7FF",
-          dark: "#253031",
+          DEFAULT: "#EF4444",
+          light: "rgba(239, 68, 68, 0.15)",
+          dark: "#DC2626",
         },
         // ShadCN CSS variable mappings
         card: {
@@ -100,8 +109,6 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
-          "Eurostile",
-          "Microgramma",
           "Inter",
           "system-ui",
           "-apple-system",
@@ -112,7 +119,6 @@ const config: Config = {
       },
       fontSize: {
         // ── FONT SIZES (All using Normal Font Weight 400) ──
-        // 1. Heading text: 14px font size
         heading: ["14px", { lineHeight: "1.3", fontWeight: "400" }],
         "heading-main": ["14px", { lineHeight: "1.3", fontWeight: "400" }],
         "heading-sub": ["14px", { lineHeight: "1.3", fontWeight: "400" }],
@@ -128,7 +134,6 @@ const config: Config = {
         xl: ["14px", { lineHeight: "1.3", fontWeight: "400" }],
         lg: ["14px", { lineHeight: "1.3", fontWeight: "400" }],
 
-        // 2. Body text: 12px font size
         body: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
         "body-lg": ["12px", { lineHeight: "1.4", fontWeight: "400" }],
         "body-md": ["12px", { lineHeight: "1.4", fontWeight: "400" }],
@@ -140,7 +145,6 @@ const config: Config = {
         table: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
         nav: ["12px", { lineHeight: "1.4", fontWeight: "400" }],
 
-        // 3. General / Helper / Small text: 10px font size
         helper: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
         small: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
         caption: ["10px", { lineHeight: "1.3", fontWeight: "400" }],
@@ -148,20 +152,20 @@ const config: Config = {
         "2xs": ["10px", { lineHeight: "1.3", fontWeight: "400" }],
       },
       boxShadow: {
-        card: "0 1px 3px 0 rgba(0, 0, 0, 0.08), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
+        card: "0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2)",
         "card-hover":
-          "0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04)",
+          "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)",
         elevated:
-          "0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04)",
+          "0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2)",
         sidebar:
-          "2px 0 8px -2px rgba(0, 0, 0, 0.06)",
+          "2px 0 8px -2px rgba(0, 0, 0, 0.3)",
         dropdown:
-          "0 10px 20px -5px rgba(0, 0, 0, 0.1), 0 4px 8px -4px rgba(0, 0, 0, 0.06)",
+          "0 10px 20px -5px rgba(0, 0, 0, 0.4), 0 4px 8px -4px rgba(0, 0, 0, 0.3)",
       },
       borderRadius: {
         lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        md: "calc(var(--radius) - 1px)",
+        sm: "calc(var(--radius) - 2px)",
       },
       spacing: {
         "sidebar-width": "200px",
