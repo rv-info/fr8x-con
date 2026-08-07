@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Download, Upload, Loader2, CheckCircle2, AlertCircle, Save, RefreshCw, XCircle, Copy, CopyPlus, MessageSquare, Clock, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Share2 } from "lucide-react";
+import { RateDetailPanel } from "@/components/rates/RateDetailPanel";
 import { useAuth } from "@/providers/AuthProvider";
 import { COLLECTIONS } from "@/lib/utils/constants";
 import {
@@ -54,6 +55,7 @@ export default function RateCenterPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [editingRateId, setEditingRateId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [selectedDetailRate, setSelectedDetailRate] = useState<RateData | null>(null);
 
   // Collapsible Rate Editor State
   const [isRateEditorOpen, setIsRateEditorOpen] = useState(true);
@@ -610,7 +612,7 @@ REMARKS: ${r.remarks}`;
   };
 
   return (
-    <div className="min-h-screen bg-[var(--fr8x-bg)] py-6 w-full">
+    <div className="min-h-screen bg-[#1E2329] py-6 w-full">
       {/* Hidden Bulk File Input */}
       <input
         type="file"
@@ -623,9 +625,9 @@ REMARKS: ${r.remarks}`;
       <div className="w-full max-w-full px-4 lg:px-8 space-y-5">
         {/* Header & Status Banner */}
         <div className="flex items-center justify-between">
-          <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)]">RATE CENTER</h1>
+          <h1 className="text-display-sm text-[#E2E8F0]">RATE CENTER</h1>
           {statusMessage && (
-            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 px-3 py-1 rounded-md text-caption">
+            <div className="flex items-center gap-1.5 bg-[rgba(14,165,233,0.15)] border border-[rgba(14,165,233,0.3)] text-[#7DD3FC] px-3 py-1 rounded-[3px] text-caption">
               <CheckCircle2 className="h-3.5 w-3.5" />
               {statusMessage}
             </div>
@@ -633,7 +635,7 @@ REMARKS: ${r.remarks}`;
         </div>
 
         {/* Top Navigation / Tabs & Bulk Action Buttons */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-border pb-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#333B44] pb-3">
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => { setActiveTab("active"); setCurrentPage(1); }}
@@ -684,20 +686,20 @@ REMARKS: ${r.remarks}`;
         <div className="flex flex-col lg:flex-row gap-5">
           {/* ═══ LEFT SIDEBAR: Rate Editor Form (Collapsible Horizontally) ═══ */}
           {isRateEditorOpen ? (
-            <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-white self-start transition-all duration-300 ease-in-out">
-              <div className="flex items-center justify-between border-b border-border pb-2">
+            <aside className="w-full lg:w-[320px] shrink-0 fr8x-card p-4 space-y-3 bg-[#252B33] self-start transition-all duration-300 ease-in-out">
+              <div className="flex items-center justify-between border-b border-[#333B44] pb-2">
                 <div>
-                  <h2 className="text-body font-bold text-[var(--fr8x-jet)]">
+                  <h2 className="text-body text-[#E2E8F0]">
                     RATE EDITOR
                   </h2>
-                  <span className="text-[10px] text-gray-500 font-semibold tracking-wide uppercase">
+                  <span className="text-[10px] text-[#94A3B8] tracking-wide uppercase">
                     CREATE OR UPDATE RATE
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsRateEditorOpen(false)}
-                  className="p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                  className="p-1 rounded-[3px] text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#2A3038] transition-colors"
                   title="Collapse Rate Editor (Expand Table)"
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -880,17 +882,17 @@ REMARKS: ${r.remarks}`;
                 </div>
 
                 {/* Actions */}
-                <div className="pt-2 border-t border-border space-y-2">
+                <div className="pt-2 border-t border-[#333B44] space-y-2">
                   <div className="grid grid-cols-3 gap-2">
                     <button
                       onClick={handleSave}
-                      className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                      className="bg-[#0EA5E9] hover:bg-[#0284C7] text-white flex items-center justify-center gap-1 py-1 px-2 rounded-[3px] text-caption"
                     >
                       <Save className="h-3 w-3" /> SAVE
                     </button>
                     <button
                       onClick={handleUpdate}
-                      className="bg-[#1E293B] hover:bg-[#334155] text-white flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                      className="bg-[#2A3038] hover:bg-[#333B44] text-[#E2E8F0] flex items-center justify-center gap-1 py-1 px-2 rounded-[3px] text-caption border border-[#333B44]"
                     >
                       <RefreshCw className="h-3 w-3" /> UPDATE
                     </button>
@@ -912,7 +914,7 @@ REMARKS: ${r.remarks}`;
                           handleDuplicateRow(rates[0]);
                         }
                       }}
-                      className="bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
+                      className="bg-[#2A3038] hover:bg-[#333B44] border border-[#333B44] text-[#E2E8F0] w-full flex items-center justify-center gap-1 py-1 rounded-[3px] text-caption"
                     >
                       <Copy className="h-3 w-3" /> DUPLICATE
                     </button>
@@ -920,7 +922,7 @@ REMARKS: ${r.remarks}`;
                     {editingRateId ? (
                       <button
                         onClick={() => handleMarkExpired(editingRateId)}
-                        className="bg-amber-100 hover:bg-amber-200 text-amber-800 border border-amber-300 flex items-center justify-center gap-1 py-1 px-2 rounded text-caption font-bold"
+                        className="bg-[rgba(234,179,8,0.15)] hover:bg-[rgba(234,179,8,0.25)] text-[#FDE68A] border border-[rgba(234,179,8,0.3)] flex items-center justify-center gap-1 py-1 px-2 rounded-[3px] text-caption"
                       >
                         <Clock className="h-3 w-3" /> EXPIRE
                       </button>
@@ -930,7 +932,7 @@ REMARKS: ${r.remarks}`;
                   {editingRateId && (
                     <button
                       onClick={() => handleDelete(editingRateId)}
-                      className="bg-red-600 hover:bg-red-700 text-white w-full flex items-center justify-center gap-1 py-1 rounded text-caption font-bold"
+                      className="bg-[rgba(239,68,68,0.8)] hover:bg-[rgba(239,68,68,1)] text-white w-full flex items-center justify-center gap-1 py-1 rounded-[3px] text-caption"
                     >
                       <Trash2 className="h-3 w-3" /> DELETE RATE
                     </button>
@@ -941,7 +943,7 @@ REMARKS: ${r.remarks}`;
           ) : (
             <aside
               onClick={() => setIsRateEditorOpen(true)}
-              className="w-full lg:w-12 shrink-0 fr8x-card p-2 bg-white self-start transition-all duration-300 ease-in-out cursor-pointer hover:bg-slate-50 border border-slate-200 hover:border-slate-300 flex lg:flex-col items-center justify-between lg:justify-start gap-3 select-none py-3"
+              className="w-full lg:w-12 shrink-0 fr8x-card p-2 bg-[#252B33] self-start transition-all duration-300 ease-in-out cursor-pointer hover:bg-[#2A3038] border border-[#333B44] hover:border-[#4A5568] flex lg:flex-col items-center justify-between lg:justify-start gap-3 select-none py-3"
               title="Click to Expand Rate Editor"
             >
               <div className="flex items-center gap-2 lg:flex-col">
@@ -951,17 +953,17 @@ REMARKS: ${r.remarks}`;
                     e.stopPropagation();
                     setIsRateEditorOpen(true);
                   }}
-                  className="p-1.5 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                  className="p-1.5 rounded-[3px] text-[#E2E8F0] bg-[#2A3038] hover:bg-[#333B44] transition-colors"
                   title="Expand Rate Editor"
                 >
                   <ChevronRight className="h-4 w-4" />
                 </button>
-                <span className="text-caption font-bold text-slate-700 lg:hidden">
+                <span className="text-caption text-[#94A3B8] lg:hidden">
                   EXPAND RATE EDITOR
                 </span>
               </div>
               <div className="hidden lg:flex items-center justify-center pt-4">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest [writing-mode:vertical-lr] rotate-180 whitespace-nowrap">
+                <span className="text-[11px] text-[#94A3B8] uppercase tracking-widest [writing-mode:vertical-lr] rotate-180 whitespace-nowrap">
                   RATE EDITOR
                 </span>
               </div>
@@ -970,13 +972,13 @@ REMARKS: ${r.remarks}`;
 
           {/* ═══ MAIN CONTENT: Rates Table ═══ */}
           <main className="flex-1 min-w-0 space-y-4">
-            <div className="fr8x-card bg-white overflow-hidden">
-              <div className="px-4 py-3 border-b border-border bg-gray-50 flex items-center justify-between">
-                <h2 className="text-body-sm font-bold text-[var(--fr8x-jet)] uppercase tracking-wider">
+            <div className="fr8x-card bg-[#252B33] overflow-hidden">
+              <div className="px-4 py-3 border-b border-[#333B44] bg-[#20252B] flex items-center justify-between">
+                <h2 className="text-body-sm text-[#E2E8F0] uppercase tracking-wider">
                   {activeTab === "active" ? "ACTIVE RATES" : activeTab === "expired" ? "EXPIRED RATES" : "ALL RATES"}
                 </h2>
-                <span className="text-[9px] text-gray-500 font-semibold uppercase">
-                  CLICK ANY CELL TO REFLECT IT. HOVER TO VIEW FULL TEXT.
+                <span className="text-[9px] text-[#94A3B8] uppercase">
+                  CLICK ROW TO VIEW DETAILS · CLICK CELL TO EDIT
                 </span>
               </div>
 
@@ -1020,7 +1022,7 @@ REMARKS: ${r.remarks}`;
                         <th className="w-48">ACTION</th>
                       </tr>
                       {/* Per-column search boxes row */}
-                      <tr className="bg-gray-50 border-b border-border">
+                      <tr className="bg-[#20252B] border-b border-[#333B44]">
                         <td className="p-1"></td>
                         <td className="p-1">
                           <input type="text" value={columnFilters.seq} onChange={(e) => handleColumnFilterChange("seq", e.target.value)} placeholder="Filter" className="fr8x-input text-[9px] py-0 px-1 h-5 w-12" />
@@ -1076,15 +1078,15 @@ REMARKS: ${r.remarks}`;
                         <td className="p-1"></td>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border">
+                    <tbody className="divide-y divide-[#333B44]">
                       {paginatedRates.map((r) => (
                         <tr
                           key={r.id}
-                          onClick={() => handleEditClick(r)}
-                          className={`hover:bg-[var(--fr8x-mist)] cursor-pointer transition-colors ${
-                            r.isEdited ? "text-blue-600 font-medium" : ""
+                          onClick={() => setSelectedDetailRate(r)}
+                          className={`hover:bg-[#20252B] cursor-pointer transition-colors ${
+                            r.isEdited ? "text-[#7DD3FC]" : ""
                           } ${
-                            editingRateId === r.id ? "bg-[var(--fr8x-mist)] font-medium border-l-2 border-l-[var(--fr8x-periwinkle)]" : ""
+                            editingRateId === r.id ? "bg-[#20252B] border-l-2 border-l-[#0EA5E9]" : ""
                           }`}
                         >
                           <td onClick={(e) => e.stopPropagation()}><input type="checkbox" /></td>
@@ -1111,7 +1113,7 @@ REMARKS: ${r.remarks}`;
                               <button
                                 type="button"
                                 onClick={() => handleWhatsAppCopy(r)}
-                                className="group flex flex-col items-center p-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                                className="group flex flex-col items-center p-1.5 rounded-[3px] bg-[rgba(34,197,94,0.15)] hover:bg-[rgba(34,197,94,0.25)] text-[#86EFAC] transition-colors"
                                 title="Copy for WhatsApp (WA)"
                                 aria-label="Copy rate for WhatsApp"
                               >
@@ -1123,7 +1125,7 @@ REMARKS: ${r.remarks}`;
                               <button
                                 type="button"
                                 onClick={() => handleDuplicateRow(r)}
-                                className="group flex flex-col items-center p-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 transition-colors"
+                                className="group flex flex-col items-center p-1.5 rounded-[3px] bg-[rgba(14,165,233,0.15)] hover:bg-[rgba(14,165,233,0.25)] text-[#7DD3FC] transition-colors"
                                 title="Duplicate Rate"
                                 aria-label="Duplicate this rate"
                               >
@@ -1135,7 +1137,7 @@ REMARKS: ${r.remarks}`;
                               <button
                                 type="button"
                                 onClick={() => handleMarkExpired(r.id)}
-                                className="group flex flex-col items-center p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors"
+                                className="group flex flex-col items-center p-1.5 rounded-[3px] bg-[rgba(234,179,8,0.15)] hover:bg-[rgba(234,179,8,0.25)] text-[#FDE68A] transition-colors"
                                 title="Mark as Expired"
                                 aria-label="Mark rate as expired"
                               >
@@ -1147,7 +1149,7 @@ REMARKS: ${r.remarks}`;
                               <button
                                 type="button"
                                 onClick={() => handleDelete(r.id)}
-                                className="group flex flex-col items-center p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 transition-colors"
+                                className="group flex flex-col items-center p-1.5 rounded-[3px] bg-[rgba(239,68,68,0.15)] hover:bg-[rgba(239,68,68,0.25)] text-[#FCA5A5] transition-colors"
                                 title="Delete Rate"
                                 aria-label="Delete this rate permanently"
                               >
@@ -1156,12 +1158,12 @@ REMARKS: ${r.remarks}`;
                               </button>
                             </div>
                             {r.isEdited && (
-                              <div className="text-[9px] text-blue-600 font-bold uppercase mt-0.5 tracking-wider">
+                              <div className="text-[9px] text-[#7DD3FC] uppercase mt-0.5 tracking-wider">
                                 EDITED
                               </div>
                             )}
                             {r.status === "expired" && (
-                              <div className="text-[9px] text-amber-700 font-bold uppercase mt-0.5 tracking-wider">
+                              <div className="text-[9px] text-[#FDE68A] uppercase mt-0.5 tracking-wider">
                                 EXPIRED
                               </div>
                             )}
@@ -1205,8 +1207,8 @@ REMARKS: ${r.remarks}`;
       {/* BULK UPLOAD PREVIEW & VALIDATION MODAL */}
       {showUploadPreview && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl space-y-4 text-left">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="bg-[#252B33] rounded-[3px] p-6 w-full max-w-4xl max-h-[85vh] flex flex-col shadow-2xl space-y-4 text-left border border-[#333B44]">
+            <div className="flex items-center justify-between border-b border-[#333B44] pb-3">
               <div>
                 <h3 className="text-heading-md font-bold text-[var(--fr8x-jet)]">
                   Bulk Rate Upload Validation & Preview Screen
@@ -1215,14 +1217,14 @@ REMARKS: ${r.remarks}`;
                   Verified rows will automatically associate with your service provider account.
                 </p>
               </div>
-              <button onClick={() => setShowUploadPreview(false)} className="text-slate-400 hover:text-slate-700">
+              <button onClick={() => setShowUploadPreview(false)} className="text-[#94A3B8] hover:text-[#E2E8F0]">
                 <XCircle className="h-5 w-5" />
               </button>
             </div>
 
             {/* Validation summary chips */}
             <div className="flex items-center gap-3 text-xs">
-              <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-3 py-1 rounded-lg font-bold">
+              <span className="bg-[rgba(34,197,94,0.15)] text-[#86EFAC] border border-[rgba(34,197,94,0.3)] px-3 py-1 rounded-[3px]">
                 ✓ {parsedRows.length} Valid Rows Ready to Import
               </span>
               {invalidRows.length > 0 && (
@@ -1236,7 +1238,7 @@ REMARKS: ${r.remarks}`;
             </div>
 
             {/* Preview Table */}
-            <div className="flex-1 overflow-y-auto border border-slate-200 rounded-xl">
+            <div className="flex-1 overflow-y-auto border border-[#333B44] rounded-[3px]">
               <table className="fr8x-table text-[10px]">
                 <thead>
                   <tr>
@@ -1275,7 +1277,7 @@ REMARKS: ${r.remarks}`;
             </div>
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-3 border-t border-border">
+            <div className="flex items-center justify-between pt-3 border-t border-[#333B44]">
               <button
                 onClick={() => setShowUploadPreview(false)}
                 className="fr8x-btn-secondary text-xs px-4 py-2 font-bold"
@@ -1295,6 +1297,11 @@ REMARKS: ${r.remarks}`;
           </div>
         </div>
       )}
+      {/* Rate Detail Slide Panel */}
+      <RateDetailPanel
+        rate={selectedDetailRate}
+        onClose={() => setSelectedDetailRate(null)}
+      />
     </div>
   );
 }
