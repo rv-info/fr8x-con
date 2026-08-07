@@ -202,29 +202,29 @@ export function FloatingChat() {
       {/* Expanded Panel */}
       {isOpen && (
         <div
-          className={`bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col transition-all duration-200 mb-3 ${
+          className={`bg-[#252B33] border border-[#333B44] rounded-[3px] shadow-2xl overflow-hidden flex flex-col transition-all duration-200 mb-3 ${
             isMinimized ? "h-14 w-80" : "h-[500px] w-80 sm:w-96"
           }`}
         >
           {/* Header Bar */}
-          <div className="bg-white text-slate-900 border-b border-slate-200 px-3 py-2 flex items-center justify-between shrink-0 shadow-sm">
+          <div className="bg-[#20252B] text-[#E2E8F0] border-b border-[#333B44] px-3 py-2 flex items-center justify-between shrink-0 shadow-sm">
             <div className="flex items-center gap-2 min-w-0">
               {activeConvId ? (
                 <button
                   onClick={() => setActiveConvId(null)}
-                  className="p-1 rounded hover:bg-slate-100 text-slate-600 transition-colors"
+                  className="p-1 rounded-[3px] hover:bg-[#2A3038] text-[#94A3B8] transition-colors"
                   title="Back to contacts"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
               ) : (
-                <div className="w-6 h-6 rounded-lg bg-[var(--fr8x-periwinkle)] flex items-center justify-center font-bold text-white text-[10px] shadow-sm shrink-0">
+                <div className="w-6 h-6 rounded-[3px] bg-[#0EA5E9] flex items-center justify-center font-bold text-white text-[10px] shrink-0">
                   N
                 </div>
               )}
 
               <div className="min-w-0">
-                <p className="text-[11px] font-bold text-slate-900 truncate leading-tight">
+                <p className="text-[11px] font-bold text-[#E2E8F0] truncate leading-tight">
                   {activeConvId && activePartner ? activePartner.name : "NEXUS"}
                 </p>
                 <div className="flex items-center gap-1 text-[9px] truncate">
@@ -275,12 +275,12 @@ export function FloatingChat() {
           </div>
 
           {!isMinimized && (
-            <div className="flex-1 flex flex-col min-h-0 bg-slate-50">
+            <div className="flex-1 flex flex-col min-h-0 bg-[#252B33]">
               {/* Active Conversation */}
               {activeConvId ? (
-                <div className="flex-1 flex flex-col min-h-0 bg-white">
+                <div className="flex-1 flex flex-col min-h-0 bg-[#252B33]">
                   {/* Messages */}
-                  <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-[#F8FAFC]">
+                  <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-[#1E2329]">
                     {messages.length === 0 ? (
                       <div className="py-10 text-center text-[10px] text-foreground-muted">
                         <p className="font-medium text-slate-600 mb-1">
@@ -299,10 +299,10 @@ export function FloatingChat() {
                             className={`flex flex-col ${isMe ? "items-end" : "items-start"}`}
                           >
                             <div
-                              className={`max-w-[82%] px-3 py-2 rounded-xl text-[11px] leading-relaxed shadow-sm ${
+                              className={`max-w-[82%] px-3 py-2 rounded-[3px] text-[11px] leading-relaxed shadow-sm ${
                                 isMe
-                                  ? "bg-[var(--fr8x-periwinkle)] text-white rounded-br-none"
-                                  : "bg-white text-[var(--fr8x-jet)] border border-slate-200 rounded-bl-none"
+                                  ? "bg-[#0EA5E9] text-white"
+                                  : "bg-[#2A3038] text-[#E2E8F0] border border-[#333B44]"
                               }`}
                             >
                               <p className="whitespace-pre-wrap">{msg.text}</p>
@@ -328,21 +328,21 @@ export function FloatingChat() {
                   </div>
 
                   {/* Input */}
-                  <div className="p-2 border-t border-slate-200 bg-white shrink-0">
+                  <div className="p-2 border-t border-[#333B44] bg-[#20252B] shrink-0">
                     <form onSubmit={handleSendText} className="flex items-center gap-1.5">
                       <input
                         type="text"
                         value={messageInput}
                         onChange={(e) => setMessageInput(e.target.value)}
                         placeholder="Write a message..."
-                        className="fr8x-input flex-1 py-1 px-2.5 text-[11px] h-8"
+                        className="fr8x-input flex-1 py-1 px-2.5 text-[11px] h-8 bg-[#2A3038] text-[#E2E8F0] border border-[#333B44]"
                         maxLength={2000}
                         autoFocus
                       />
                       <button
                         type="submit"
                         disabled={!messageInput.trim() || isSending}
-                        className="bg-[var(--fr8x-periwinkle)] text-white p-2 rounded-lg hover:bg-[#3ABFF0] disabled:opacity-40 transition-colors shrink-0"
+                        className="bg-[#0EA5E9] text-white p-2 rounded-[3px] hover:bg-[#0284C7] disabled:opacity-40 transition-colors shrink-0"
                       >
                         <Send className="h-3.5 w-3.5" />
                       </button>
@@ -351,9 +351,9 @@ export function FloatingChat() {
                 </div>
               ) : (
                 /* Contact Search / Conversation List */
-                <div className="flex-1 flex flex-col min-h-0 bg-white">
+                <div className="flex-1 flex flex-col min-h-0 bg-[#252B33]">
                   {/* Search */}
-                  <div className="p-2 border-b border-slate-100 bg-slate-50 shrink-0">
+                  <div className="p-2 border-b border-[#333B44] bg-[#20252B] shrink-0">
                     <div className="relative">
                       <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                       <input
@@ -478,12 +478,12 @@ export function FloatingChat() {
             setIsOpen(true);
             setIsMinimized(false);
           }}
-          className="relative group flex items-center justify-center w-12 h-12 rounded-full bg-[var(--fr8x-periwinkle)] text-white shadow-xl hover:bg-[#3ABFF0] active:scale-95 transition-all duration-150 border-2 border-white"
+          className="relative group flex items-center justify-center w-11 h-11 rounded-[3px] bg-[#0EA5E9] text-white shadow-xl hover:bg-[#0284C7] active:scale-95 transition-all duration-150 border border-[#333B44]"
           title="Open NEXUS Messaging"
         >
           <MessageSquare className="h-5 w-5" />
           {totalUnread > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-white">
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-[#333B44]">
               {totalUnread > 9 ? "9+" : totalUnread}
             </span>
           )}
