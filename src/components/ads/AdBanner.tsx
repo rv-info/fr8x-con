@@ -149,13 +149,13 @@ export function AdBanner({
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-[348px] min-h-[254px] rounded-xl bg-slate-100 animate-pulse p-4 flex flex-col justify-between border border-slate-200 shadow-2xs mx-auto">
+      <div className="w-full max-w-[348px] min-h-[254px] rounded-[3px] bg-[#252B33] animate-pulse p-4 flex flex-col justify-between border border-[#333B44] shadow-2xs mx-auto">
         <div className="space-y-2">
-          <div className="h-4 w-20 bg-slate-200 rounded" />
-          <div className="h-6 w-3/4 bg-slate-200 rounded" />
-          <div className="h-4 w-full bg-slate-200 rounded" />
+          <div className="h-4 w-20 bg-[#2A3038] rounded-[3px]" />
+          <div className="h-6 w-3/4 bg-[#2A3038] rounded-[3px]" />
+          <div className="h-4 w-full bg-[#2A3038] rounded-[3px]" />
         </div>
-        <div className="h-8 w-28 bg-slate-200 rounded" />
+        <div className="h-8 w-28 bg-[#2A3038] rounded-[3px]" />
       </div>
     );
   }
@@ -164,22 +164,22 @@ export function AdBanner({
   if (!activeAd || activeAd.status !== "active") {
     return (
       <>
-        <div className="w-full max-w-[348px] min-h-[254px] rounded-xl border-2 border-dashed border-[var(--fr8x-periwinkle)]/40 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50 p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-2xs transition-all hover:border-[var(--fr8x-periwinkle)] mx-auto">
+        <div className="w-full max-w-[348px] min-h-[254px] rounded-[3px] border border-dashed border-[#333B44] bg-[#252B33] p-5 flex flex-col items-center justify-center text-center relative overflow-hidden group shadow-2xs transition-all hover:border-[#0EA5E9] mx-auto">
           {/* Animated Skeleton Wave Effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#2A3038]/40 to-transparent -translate-x-full animate-[shimmer_2.5s_infinite]" />
           
-          <div className="w-12 h-12 rounded-full bg-[var(--fr8x-mist)] text-[var(--fr8x-periwinkle)] flex items-center justify-center mb-3 shadow-2xs group-hover:scale-105 transition-transform">
-            <Megaphone className="h-6 w-6" />
+          <div className="w-10 h-10 rounded-full bg-[#2A3038] text-[#0EA5E9] flex items-center justify-center mb-3 border border-[#333B44]">
+            <Megaphone className="h-5 w-5" />
           </div>
 
-          <h4 className="text-body-md font-bold text-[var(--fr8x-jet)]">Advertise Here</h4>
-          <p className="text-[11px] text-foreground-secondary mt-1 max-w-[260px] leading-snug">
+          <h4 className="text-body-md font-bold text-[#E2E8F0]">Advertise Here</h4>
+          <p className="text-[11px] text-[#94A3B8] mt-1 max-w-[260px] leading-snug">
             Reach thousands of verified freight forwarders, carriers, and shippers across the global logistics network.
           </p>
 
           <button
             onClick={() => setIsAdRequestOpen(true)}
-            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[var(--fr8x-periwinkle)] hover:bg-[#3ABFF0] text-white text-[11px] font-bold rounded-lg shadow-sm transition-all active:scale-95"
+            className="mt-4 inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#0EA5E9] hover:bg-[#0284C7] text-white text-[11px] font-bold rounded-[3px] transition-all"
           >
             Promote Your Services <ExternalLink className="h-3 w-3" />
           </button>
@@ -196,12 +196,8 @@ export function AdBanner({
 
   const content = (
     <div
-      className={`w-full max-w-[348px] min-h-[254px] rounded-xl text-white shadow-sm overflow-hidden relative group transition-all flex flex-col justify-between mx-auto ${
+      className={`w-full max-w-[348px] min-h-[254px] rounded-[3px] text-[#E2E8F0] bg-[#252B33] border border-[#333B44] shadow-sm overflow-hidden relative group transition-all flex flex-col justify-between mx-auto ${
         activeAd.isPortrait ? "max-w-xs flex-col" : ""
-      } ${
-        resolvedDevice === "mobile"
-          ? "bg-gradient-to-r from-[#0b192c] to-[#1e7bb0] text-xs"
-          : "bg-gradient-to-br from-[#0b192c] via-[#1e7bb0] to-[#56C5F0]"
       } ${className}`}
     >
       {/* Media Image / GIF if present */}
@@ -243,7 +239,7 @@ export function AdBanner({
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={handleCTAClick}
-                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-[11px] px-3 py-1 rounded-md hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                className="inline-flex items-center gap-1.5 bg-[#0EA5E9] text-white font-bold text-[11px] px-3 py-1 rounded-[3px] hover:bg-[#0284C7] transition-all shadow-md active:scale-95"
                 aria-label={`${activeAd.ctaText || "Visit Link"} — opens in new tab`}
               >
                 {activeAd.ctaText || "Visit Link"} <ExternalLink className="h-3 w-3" />
@@ -252,7 +248,7 @@ export function AdBanner({
               <Link
                 href={activeAd.destinationUrl}
                 onClick={handleCTAClick}
-                className="inline-flex items-center gap-1.5 bg-white text-[#0b192c] font-bold text-[11px] px-3 py-1 rounded-md hover:bg-blue-50 transition-all shadow-md active:scale-95"
+                className="inline-flex items-center gap-1.5 bg-[#0EA5E9] text-white font-bold text-[11px] px-3 py-1 rounded-[3px] hover:bg-[#0284C7] transition-all shadow-md active:scale-95"
                 aria-label={activeAd.ctaText || "Learn More"}
               >
                 {activeAd.ctaText || "Learn More"}
