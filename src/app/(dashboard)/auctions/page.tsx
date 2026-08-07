@@ -1,4 +1,4 @@
-// FR8X-CON Reverse Auctions Portal — Support General & Selective Procurement Models + Booking Draft Generator
+// FR8X-CON Reverse Auctions Portal — Dark Theme, Support General & Selective Procurement Models + Booking Draft Generator
 
 "use client";
 
@@ -8,14 +8,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import {
   Plus,
   Search,
-  Filter,
   Eye,
-  ArrowUpDown,
   Loader2,
   Mail,
-  Shield,
-  Award,
-  CheckCircle2,
   Lock,
 } from "lucide-react";
 
@@ -30,14 +25,14 @@ type AuctionData = {
   referenceNumber: string;
   title: string;
   auctionType?: "general" | "selective" | "premium";
-  invitedParticipantIds?: string[]; // Selective / Premium privacy filter
+  invitedParticipantIds?: string[];
   customerName?: string;
   shipmentDetails: {
     mode: string;
-    origin: string; // POL
-    destination: string; // POD
-    placeOfReceipt?: string; // POR
-    finalDelivery?: string; // FPOD
+    origin: string;
+    destination: string;
+    placeOfReceipt?: string;
+    finalDelivery?: string;
     poNumber?: string;
     invoiceNumber?: string;
     validity?: string;
@@ -75,7 +70,7 @@ export default function AuctionsPage() {
   const { user } = useAuth();
 
   const [activeModelTab, setActiveModelTab] = useState<"all" | "general" | "selective">("all");
-  const [activeStatusTab, setActiveStatusTab] = useState<AuctionStatus | "all">("all");
+  const [activeStatusTab] = useState<AuctionStatus | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [auctions, setAuctions] = useState<AuctionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,19 +78,32 @@ export default function AuctionsPage() {
   // Booking Request Email Draft State
   const [selectedBookingShipment, setSelectedBookingShipment] = useState<BookingShipmentData | null>(null);
 
-  // Fetch auctions from Firestore
+  // Fetch auctions from Firestore + localStorage cache
   useEffect(() => {
     async function fetchAuctions() {
       setIsLoading(true);
+      // Cache-first read
+      try {
+        const cached = localStorage.getItem("fr8x_cache_auctions");
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed?.data) setAuctions(parsed.data);
+        }
+      } catch { /* ignore */ }
+
       try {
         const data = await queryDocuments<AuctionData>(COLLECTIONS.AUCTIONS, [
           orderBy("createdAt", "desc"),
           limit(50),
         ]);
-        setAuctions(data);
+        if (data.length > 0) {
+          setAuctions(data);
+          try {
+            localStorage.setItem("fr8x_cache_auctions", JSON.stringify({ data, ts: Date.now() }));
+          } catch { /* ignore */ }
+        }
       } catch (err) {
         console.error("Error fetching auctions:", err);
-        setAuctions([]);
       } finally {
         setIsLoading(false);
       }
@@ -106,24 +114,20 @@ export default function AuctionsPage() {
   // Filter auctions by visibility (General vs Selective) and Status
   const filtered = useMemo(() => {
     return auctions.filter((a) => {
-      // Selective Auction Security Filter: Premium/Selective auctions are visible only to invited participants or creator
       const isSelective = a.auctionType === "selective" || a.auctionType === "premium";
       if (isSelective && user) {
         const isCreator = a.creatorName === user.displayName || a.creatorEmail === user.email;
         const isInvited = a.invitedParticipantIds?.includes(user.uid);
         if (!isCreator && !isInvited) {
-          return false; // Hide selective auction if not invited
+          return false;
         }
       }
 
-      // Filter by Model Tab
       if (activeModelTab === "general" && isSelective) return false;
       if (activeModelTab === "selective" && !isSelective) return false;
 
-      // Filter by Status Tab
       if (activeStatusTab !== "all" && a.status !== activeStatusTab) return false;
 
-      // Search Query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matchTitle = (a.title || "").toLowerCase().includes(q);
@@ -162,71 +166,71 @@ export default function AuctionsPage() {
   };
 
   return (
-    <div className="space-y-4 max-w-[100%] mx-auto">
+    <div className="space-y-4 max-w-[100%] mx-auto py-3">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-display-sm font-bold text-[var(--fr8x-jet)]">Reverse Auctions Governance Portal</h1>
-          <p className="text-body-sm text-foreground-secondary mt-0.5">
-            Enterprise reverse auction procurement engine supporting General & Premium Selective auctions.
+          <h1 className="text-display-sm font-bold text-[#E2E8F0]">Reverse Auctions Governance Portal</h1>
+          <p className="text-body-sm text-[#94A3B8] mt-0.5">
+            Enterprise reverse auction procurement engine supporting General &amp; Premium Selective auctions.
           </p>
         </div>
         <Link
           href={ROUTES.AUCTION_CREATE}
-          className="fr8x-btn-primary px-4 py-2 text-body-sm flex items-center gap-1.5 shadow-sm"
+          className="fr8x-btn-primary px-4 py-1.5 text-[11px] flex items-center gap-1.5 shadow-sm"
         >
           <Plus className="h-4 w-4" /> Create Reverse Auction
         </Link>
       </div>
 
-      {/* Model Procurement Tabs (General vs Premium/Selective) */}
-      <div className="flex items-center gap-2 border-b border-border pb-2">
+      {/* Model Procurement Tabs */}
+      <div className="flex items-center gap-2 border-b border-[#333B44] pb-2">
         {MODEL_TABS.map((m) => (
           <button
             key={m.value}
             onClick={() => setActiveModelTab(m.value)}
-            className={`px-3.5 py-1.5 rounded-lg text-body-sm font-semibold transition-colors flex items-center gap-1.5 ${
+            className={`px-3.5 py-1.5 rounded-[3px] text-[11px] font-medium transition-colors flex items-center gap-1.5 border ${
               activeModelTab === m.value
-                ? "bg-[var(--fr8x-periwinkle)] text-white shadow-xs"
-                : "bg-white text-foreground-secondary hover:bg-[var(--fr8x-mist)]"
+                ? "bg-[#0EA5E9] text-white border-[#0EA5E9]"
+                : "bg-[#252B33] text-[#94A3B8] border-[#333B44] hover:bg-[#2A3038] hover:text-[#E2E8F0]"
             }`}
           >
-            {m.value === "selective" && <Lock className="h-3.5 w-3.5 text-amber-300" />}
+            {m.value === "selective" && <Lock className="h-3.5 w-3.5 text-[#EAB308]" />}
             {m.label}
           </button>
         ))}
       </div>
 
-      {/* Search & Lifecycle Filters */}
+      {/* Search Filter */}
       <div className="flex flex-col sm:flex-row gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-foreground-muted" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#94A3B8]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by Auction #, Customer Name, POL, POD, PO #, Invoice #..."
-            className="fr8x-input pl-9 h-8 text-body-sm"
+            className="fr8x-input pl-9 h-8 text-[11px] w-full"
           />
         </div>
       </div>
 
-      {/* Enhanced Auctions Listing Table */}
-      <div className="fr8x-card overflow-hidden shadow-xs">
-        {isLoading ? (
+      {/* Auctions Listing Table */}
+      <div className="fr8x-card overflow-hidden bg-[#252B33] border border-[#333B44]">
+        {isLoading && auctions.length === 0 ? (
           <div className="flex items-center justify-center gap-2 py-12">
-            <Loader2 className="h-5 w-5 animate-spin text-[var(--fr8x-periwinkle)]" />
-            <span className="text-body-sm text-foreground-muted">Loading auction registry...</span>
+            <Loader2 className="h-5 w-5 animate-spin text-[#0EA5E9]" />
+            <span className="text-body-sm text-[#94A3B8]">Loading auction registry...</span>
           </div>
         ) : filtered.length === 0 ? (
-          <div className="py-12 text-center text-body-sm text-foreground-muted">
+          <div className="py-12 text-center text-body-sm text-[#94A3B8]">
             No reverse auctions matching the selected criteria.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="fr8x-table w-full text-left border-collapse">
               <thead>
-                <tr className="bg-[#FAFAF9] text-[10px] uppercase font-bold text-foreground-secondary border-b border-border">
+                <tr className="bg-[#20252B] text-[10px] uppercase font-bold text-[#94A3B8] border-b border-[#333B44]">
                   <th className="px-3 py-2">Auction #</th>
                   <th className="px-3 py-2">Customer Name</th>
                   <th className="px-3 py-2">POL</th>
@@ -240,49 +244,49 @@ export default function AuctionsPage() {
                   <th className="px-3 py-2">Mode</th>
                   <th className="px-3 py-2">Validity</th>
                   <th className="px-3 py-2">Status</th>
-                  <th className="px-3 py-2">Bid Count</th>
+                  <th className="px-3 py-2">Bids</th>
                   <th className="px-3 py-2">Lowest Bid</th>
                   <th className="px-3 py-2">Award Status</th>
                   <th className="px-3 py-2 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border text-[11px]">
+              <tbody className="divide-y divide-[#333B44] text-[11px]">
                 {filtered.map((a) => {
                   const isSelective = a.auctionType === "selective" || a.auctionType === "premium";
                   return (
-                    <tr key={a.id} className="hover:bg-[var(--fr8x-mist)] transition-colors">
-                      <td className="px-3 py-2.5 font-bold font-mono text-[var(--fr8x-periwinkle)] whitespace-nowrap">
+                    <tr key={a.id} className="hover:bg-[#20252B] transition-colors">
+                      <td className="px-3 py-2.5 font-mono text-[#0EA5E9] whitespace-nowrap">
                         <div className="flex items-center gap-1">
-                          {isSelective && <span title="Selective / Invited Only"><Lock className="h-3 w-3 text-amber-500" /></span>}
+                          {isSelective && <span title="Selective / Invited Only"><Lock className="h-3 w-3 text-[#EAB308]" /></span>}
                           <span>{a.referenceNumber || "AUC-2026-01"}</span>
                         </div>
                       </td>
 
-                      <td className="px-3 py-2.5 font-semibold text-[var(--fr8x-jet)] whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-[#E2E8F0] whitespace-nowrap">
                         {a.customerName || a.creatorName || "Enterprise Shipper"}
                       </td>
 
-                      <td className="px-3 py-2.5 font-medium whitespace-nowrap">{a.shipmentDetails?.origin || "INNSA"}</td>
-                      <td className="px-3 py-2.5 font-medium whitespace-nowrap">{a.shipmentDetails?.destination || "NLRTM"}</td>
-                      <td className="px-3 py-2.5 text-foreground-muted whitespace-nowrap">{a.shipmentDetails?.placeOfReceipt || a.shipmentDetails?.origin || "INNSA"}</td>
-                      <td className="px-3 py-2.5 text-foreground-muted whitespace-nowrap">{a.shipmentDetails?.finalDelivery || a.shipmentDetails?.destination || "NLRTM"}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">{a.shipmentDetails?.origin || "INNSA"}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">{a.shipmentDetails?.destination || "NLRTM"}</td>
+                      <td className="px-3 py-2.5 text-[#94A3B8] whitespace-nowrap">{a.shipmentDetails?.placeOfReceipt || a.shipmentDetails?.origin || "INNSA"}</td>
+                      <td className="px-3 py-2.5 text-[#94A3B8] whitespace-nowrap">{a.shipmentDetails?.finalDelivery || a.shipmentDetails?.destination || "NLRTM"}</td>
 
-                      <td className="px-3 py-2.5 font-mono text-caption whitespace-nowrap">{a.shipmentDetails?.poNumber || "PO-8812"}</td>
-                      <td className="px-3 py-2.5 font-mono text-caption whitespace-nowrap">{a.shipmentDetails?.invoiceNumber || "INV-3310"}</td>
+                      <td className="px-3 py-2.5 font-mono text-caption text-[#94A3B8] whitespace-nowrap">{a.shipmentDetails?.poNumber || "PO-8812"}</td>
+                      <td className="px-3 py-2.5 font-mono text-caption text-[#94A3B8] whitespace-nowrap">{a.shipmentDetails?.invoiceNumber || "INV-3310"}</td>
 
-                      <td className="px-3 py-2.5 text-foreground-secondary whitespace-nowrap truncate max-w-[120px]">
+                      <td className="px-3 py-2.5 text-[#94A3B8] whitespace-nowrap truncate max-w-[120px]">
                         {a.commodityDetails?.[0]?.description || "General Cargo"}
                       </td>
 
-                      <td className="px-3 py-2.5 text-foreground-secondary whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-[#94A3B8] whitespace-nowrap">
                         {a.containerDetails?.[0]?.containerSize ? `${a.containerDetails[0].containerSize} × ${a.containerDetails[0].numberOfContainers}` : "40'HC × 1"}
                       </td>
 
-                      <td className="px-3 py-2.5 font-semibold whitespace-nowrap">
+                      <td className="px-3 py-2.5 font-semibold text-[#E2E8F0] whitespace-nowrap">
                         {a.shipmentDetails?.mode?.toUpperCase() || "OCEAN"}
                       </td>
 
-                      <td className="px-3 py-2.5 text-caption text-foreground-muted whitespace-nowrap">
+                      <td className="px-3 py-2.5 text-caption text-[#94A3B8] whitespace-nowrap">
                         {a.shipmentDetails?.validity || "14 Days"}
                       </td>
 
@@ -292,16 +296,16 @@ export default function AuctionsPage() {
                         </span>
                       </td>
 
-                      <td className="px-3 py-2.5 font-bold tabular-nums text-center whitespace-nowrap">
+                      <td className="px-3 py-2.5 tabular-nums text-center whitespace-nowrap">
                         {a.bidsCount || 0}
                       </td>
 
-                      <td className="px-3 py-2.5 font-bold text-emerald-700 tabular-nums whitespace-nowrap">
+                      <td className="px-3 py-2.5 font-bold text-[#86EFAC] tabular-nums whitespace-nowrap">
                         {a.lowestBidAmount ? `${a.evaluationCurrency || "USD"} ${a.lowestBidAmount.toLocaleString()}` : "—"}
                       </td>
 
                       <td className="px-3 py-2.5 whitespace-nowrap">
-                        <span className={a.awardStatus === "awarded" || a.status === "awarded" ? "fr8x-badge-active font-bold" : "fr8x-badge-info"}>
+                        <span className={a.awardStatus === "awarded" || a.status === "awarded" ? "fr8x-badge-active" : "fr8x-badge-info"}>
                           {a.awardStatus === "awarded" || a.status === "awarded" ? "Awarded" : "Unawarded"}
                         </span>
                       </td>
@@ -310,7 +314,7 @@ export default function AuctionsPage() {
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => handleOpenBookingDraft(a)}
-                            className="px-2 py-1 rounded bg-blue-50 text-blue-800 text-[10px] font-bold border border-blue-200 hover:bg-blue-100 flex items-center gap-1"
+                            className="px-2 py-1 rounded-[3px] bg-[rgba(14,165,233,0.15)] text-[#7DD3FC] text-[10px] border border-[rgba(14,165,233,0.3)] hover:bg-[rgba(14,165,233,0.25)] flex items-center gap-1 transition-colors"
                             title="Generate Booking Request Email Draft"
                           >
                             <Mail className="h-3 w-3" /> Booking Draft
@@ -318,7 +322,7 @@ export default function AuctionsPage() {
 
                           <Link
                             href={ROUTES.AUCTION_DETAIL(a.id)}
-                            className="p-1 rounded text-foreground-secondary hover:text-[var(--fr8x-periwinkle)]"
+                            className="p-1 rounded-[3px] text-[#94A3B8] hover:text-[#0EA5E9] hover:bg-[#2A3038] transition-colors"
                             title="Inspect Auction"
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -334,7 +338,7 @@ export default function AuctionsPage() {
         )}
       </div>
 
-      {/* System-Generated Booking Request Email Draft Modal */}
+      {/* Booking Request Email Draft Modal */}
       {selectedBookingShipment && (
         <BookingRequestModal
           shipment={selectedBookingShipment}
