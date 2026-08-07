@@ -1,4 +1,4 @@
-// FR8X-CON Currency Ticker Strip — Compact (28px)
+// FR8X-CON Currency Ticker Strip — Dark Theme, Compact (28px)
 
 "use client";
 
@@ -18,15 +18,17 @@ const TICKER_PAIRS: [string, string][] = [
   ["USD", "SGD"],
 ];
 
+const tickerBaseClass = "h-[28px] flex items-center overflow-hidden bg-[#1E2329] border-b border-[#333B44] text-[9px]";
+
 export function CurrencyTicker() {
   const { getRate, isLoading } = useCurrency();
 
   if (isLoading) {
     return (
-      <div className="fr8x-ticker">
+      <div className={tickerBaseClass}>
         <div className="flex items-center gap-2 px-3">
-          <div className="h-1.5 w-1.5 rounded-full bg-brand-400 animate-pulse-soft" />
-          <span className="text-brand-300">Loading rates...</span>
+          <div className="h-1.5 w-1.5 rounded-full bg-[#0EA5E9] animate-pulse-soft" />
+          <span className="text-[#94A3B8]">Loading rates...</span>
         </div>
       </div>
     );
@@ -46,10 +48,10 @@ export function CurrencyTicker() {
 
   if (tickerItems.length === 0) {
     return (
-      <div className="fr8x-ticker">
+      <div className={tickerBaseClass}>
         <div className="flex items-center gap-2 px-3">
-          <div className="h-1.5 w-1.5 rounded-full bg-warning" />
-          <span className="text-brand-300">
+          <div className="h-1.5 w-1.5 rounded-full bg-[#EAB308]" />
+          <span className="text-[#94A3B8]">
             Rates unavailable — retrying
           </span>
         </div>
@@ -58,17 +60,17 @@ export function CurrencyTicker() {
   }
 
   return (
-    <div className="fr8x-ticker">
+    <div className={tickerBaseClass}>
       <div className="flex animate-ticker-scroll">
         {[...tickerItems, ...tickerItems].map((item, idx) =>
           item ? (
             <div key={idx} className="flex items-center gap-3 px-4 whitespace-nowrap">
-              <span className="text-brand-300 font-medium">{item.pair}</span>
-              <span className="text-white font-semibold tabular-nums">
+              <span className="text-[#94A3B8]">{item.pair}</span>
+              <span className="text-[#E2E8F0] tabular-nums">
                 {item.symbol}{item.rate}
               </span>
               {item.isStale && (
-                <span className="text-warning text-[8px]">●</span>
+                <span className="text-[#EAB308] text-[8px]">●</span>
               )}
             </div>
           ) : null
