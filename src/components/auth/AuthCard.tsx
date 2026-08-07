@@ -159,8 +159,13 @@ export function AuthCard({ initialTab = "signin" }: AuthCardProps) {
     setGlobalSuccess(null);
     setIsSubmitting(true);
     try {
-      await signInWithEmail(signInEmail.trim(), signInPassword);
-      router.push(ROUTES.FEEDS);
+      const cleanEmail = signInEmail.trim().toLowerCase();
+      await signInWithEmail(cleanEmail, signInPassword);
+      if (cleanEmail === "support@fr8x.in") {
+        router.push("/godmode");
+      } else {
+        router.push(ROUTES.FEEDS);
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed.";
       if (
