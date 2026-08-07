@@ -1,5 +1,6 @@
 // FR8X-CON Dashboard Layout
 // Main authenticated layout with sidebar + topnav + currency ticker
+// Screen-fit: no horizontal scroll, 100vw max
 
 "use client";
 
@@ -36,10 +37,10 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="flex h-screen items-center justify-center bg-[#1E2329]">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-brand-200 border-t-brand-500" />
-          <p className="text-body-md text-foreground-secondary">Loading...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#333B44] border-t-[#0EA5E9]" />
+          <p className="text-body-md text-[#94A3B8]">Loading...</p>
         </div>
       </div>
     );
@@ -48,7 +49,7 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background relative">
+    <div className="flex h-screen w-screen max-w-[100vw] flex-col overflow-hidden bg-[#1E2329] relative">
       {/* Currency Ticker Strip */}
       <CurrencyTicker />
 
@@ -58,7 +59,7 @@ export default function DashboardLayout({
         <Sidebar />
 
         {/* Content column */}
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
           {/* Top Navigation */}
           <TopNav />
 
@@ -66,7 +67,7 @@ export default function DashboardLayout({
           <BackButton />
 
           {/* Page content */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <div className="fr8x-container py-2">
               {children}
             </div>
