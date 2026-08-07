@@ -1,4 +1,5 @@
-// FR8X-CON Top Navigation Bar — Compact (48px)
+// FR8X-CON Top Navigation Bar — Dark Theme, Compact (48px)
+// Profile image click: opens dropdown only, NOT file picker
 
 "use client";
 
@@ -37,18 +38,18 @@ export function TopNav() {
   };
 
   return (
-    <header className="flex h-9 items-center justify-between border-b border-border bg-white px-2 lg:px-3">
+    <header className="flex h-9 items-center justify-between border-b border-[#333B44] bg-[#20252B] px-2 lg:px-3">
       {/* Mobile menu button */}
       <button
         onClick={() => setShowMobileMenu(!showMobileMenu)}
-        className="lg:hidden p-1.5 text-foreground-secondary hover:text-foreground"
+        className="lg:hidden p-1.5 text-[#94A3B8] hover:text-[#E2E8F0]"
       >
         {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>
 
       {/* Mobile logo */}
       <div className="lg:hidden">
-        <Link href={ROUTES.FEEDS} className="text-body-sm font-bold text-[var(--fr8x-periwinkle)]">
+        <Link href={ROUTES.FEEDS} className="text-body-sm font-bold text-[#0EA5E9]">
           {APP_NAME}
         </Link>
       </div>
@@ -56,27 +57,27 @@ export function TopNav() {
       {/* Search bar */}
       <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-md">
         <div className="relative w-full">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground-muted" />
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#94A3B8]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search auctions, users, rates..."
-            className="fr8x-input pl-8 py-0.5 text-[11px] h-6"
+            className="w-full bg-[#2A3038] border border-[#333B44] text-[#E2E8F0] rounded-[3px] pl-8 py-0.5 text-[11px] h-6 placeholder:text-[#94A3B8]/70 focus:border-[#0EA5E9] focus:ring-1 focus:ring-[#0EA5E9]/30 outline-none"
           />
         </div>
       </form>
 
       {/* Right section */}
       <div className="flex items-center gap-1.5">
-        {/* Global Translation & Language Selector (positioned before Currency Selector) */}
+        {/* Language Selector */}
         <LanguageSelector />
 
         {/* Live Currency Selector */}
         <CurrencySelector />
 
         {/* Search icon for mobile */}
-        <button className="md:hidden p-1.5 text-foreground-secondary hover:text-foreground">
+        <button className="md:hidden p-1.5 text-[#94A3B8] hover:text-[#E2E8F0]">
           <Search className="h-5 w-5" />
         </button>
 
@@ -84,10 +85,10 @@ export function TopNav() {
         <div className="relative">
           <button
             onClick={() => setShowNotifications(!showNotifications)}
-            className="relative p-1.5 text-foreground-secondary hover:text-foreground transition-colors"
+            className="relative p-1.5 text-[#94A3B8] hover:text-[#E2E8F0] transition-colors"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-danger" />
+            <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
           </button>
 
           {showNotifications && (
@@ -96,12 +97,12 @@ export function TopNav() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowNotifications(false)}
               />
-              <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-md bg-background-card border border-border shadow-dropdown">
-                <div className="p-3 border-b border-border">
-                  <h3 className="text-body-sm font-semibold text-foreground">Notifications</h3>
+              <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-[3px] bg-[#252B33] border border-[#333B44] shadow-dropdown">
+                <div className="p-3 border-b border-[#333B44]">
+                  <h3 className="text-body-sm text-[#E2E8F0]">Notifications</h3>
                 </div>
                 <div className="p-3">
-                  <p className="text-caption text-foreground-muted text-center py-4">
+                  <p className="text-caption text-[#94A3B8] text-center py-4">
                     No new notifications
                   </p>
                 </div>
@@ -110,26 +111,26 @@ export function TopNav() {
           )}
         </div>
 
-        {/* Profile dropdown */}
+        {/* Profile dropdown — Click opens menu ONLY, not file picker */}
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-1.5 rounded-md px-1.5 py-1 hover:bg-[var(--fr8x-mist)] transition-colors"
+            className="flex items-center gap-1.5 rounded-[3px] px-1.5 py-1 hover:bg-[#2A3038] transition-colors"
           >
-            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-[10px] font-semibold shrink-0">
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#2A3038] text-[#0EA5E9] text-[10px] font-semibold shrink-0 border border-[#333B44]">
               {user?.displayName
                 ? getInitials(user.displayName)
                 : user?.email?.[0]?.toUpperCase() || "U"}
             </div>
             <div className="hidden md:block text-left">
-              <p className="text-[11px] font-medium text-foreground leading-none">
+              <p className="text-[11px] text-[#E2E8F0] leading-none">
                 {user?.displayName || "User"}
               </p>
-              <p className="text-[10px] text-foreground-muted leading-none mt-0.5">
+              <p className="text-[10px] text-[#94A3B8] leading-none mt-0.5">
                 {user?.role?.replace(/_/g, " ")}
               </p>
             </div>
-            <ChevronDown className="hidden md:block h-2.5 w-2.5 text-foreground-muted" />
+            <ChevronDown className="hidden md:block h-2.5 w-2.5 text-[#94A3B8]" />
           </button>
 
           {showProfileMenu && (
@@ -138,23 +139,23 @@ export function TopNav() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowProfileMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-0.5 z-50 w-44 rounded border bg-white border-border shadow-dropdown py-0.5">
+              <div className="absolute right-0 top-full mt-0.5 z-50 w-44 rounded-[3px] border bg-[#252B33] border-[#333B44] shadow-dropdown py-0.5">
                 <Link
                   href={ROUTES.PROFILE}
-                  className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-foreground hover:bg-[var(--fr8x-mist)] transition-colors"
+                  className="flex items-center gap-2 px-2.5 py-1 text-[11px] text-[#E2E8F0] hover:bg-[#2A3038] transition-colors"
                   onClick={() => setShowProfileMenu(false)}
                 >
-                  <User className="h-3 w-3 text-foreground-secondary" />
+                  <User className="h-3 w-3 text-[#94A3B8]" />
                   My Profile
                 </Link>
 
-                <div className="my-0.5 h-px bg-border" />
+                <div className="my-0.5 h-px bg-[#333B44]" />
                 <button
                   onClick={() => {
                     setShowProfileMenu(false);
                     signOut();
                   }}
-                  className="flex w-full items-center gap-2 px-2.5 py-1 text-[11px] text-danger hover:bg-danger-light transition-colors"
+                  className="flex w-full items-center gap-2 px-2.5 py-1 text-[11px] text-[#FCA5A5] hover:bg-[rgba(239,68,68,0.15)] transition-colors"
                 >
                   <LogOut className="h-3 w-3" />
                   Sign out
@@ -169,15 +170,15 @@ export function TopNav() {
       {showMobileMenu && (
         <>
           <div
-            className="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-40 lg:hidden"
+            className="fixed inset-0 bg-[#1E2329]/70 backdrop-blur-xs z-40 lg:hidden"
             onClick={() => setShowMobileMenu(false)}
           />
-          <div className="fixed top-0 left-0 bottom-0 w-64 bg-white border-r border-slate-200 z-50 shadow-xl lg:hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/50">
-              <span className="text-[12px] font-bold text-[var(--fr8x-periwinkle)] tracking-wide">{APP_NAME} Navigation</span>
+          <div className="fixed top-0 left-0 bottom-0 w-64 bg-[#20252B] border-r border-[#333B44] z-50 shadow-xl lg:hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-[#333B44] bg-[#1E2329]/50">
+              <span className="text-[12px] font-bold text-[#0EA5E9] tracking-wide">{APP_NAME} Navigation</span>
               <button
                 onClick={() => setShowMobileMenu(false)}
-                className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-[3px] text-[#94A3B8] hover:text-[#E2E8F0] hover:bg-[#2A3038] transition-colors"
                 aria-label="Close mobile menu"
               >
                 <X className="h-4 w-4" />
@@ -198,13 +199,13 @@ export function TopNav() {
                   key={item.label}
                   href={item.href}
                   onClick={() => setShowMobileMenu(false)}
-                  className="flex items-center justify-between rounded-md px-3 py-2 text-[10px] font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors border border-transparent hover:border-slate-200"
+                  className="flex items-center justify-between rounded-[3px] px-3 py-2 text-[10px] text-[#94A3B8] hover:bg-[#2A3038] hover:text-[#E2E8F0] transition-colors border border-transparent hover:border-[#333B44]"
                 >
                   <span>{item.label}</span>
                 </Link>
               ))}
             </nav>
-            <div className="p-3 border-t border-slate-200 bg-slate-50 text-[8px] text-slate-500 text-center">
+            <div className="p-3 border-t border-[#333B44] bg-[#1E2329] text-[8px] text-[#94A3B8] text-center">
               FR8X-CON Mobile Platform v1.0
             </div>
           </div>
