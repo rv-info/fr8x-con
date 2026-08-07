@@ -1,8 +1,8 @@
 // FR8X-CON GodMode Layout — Light Theme & Mobile/Tablet Optimized
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
 import { ADMIN_ROUTES } from "@/lib/utils/admin-routes";
@@ -73,15 +73,22 @@ const topTabs = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isAuthenticated, signOut } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   const isLoginPage = pathname === ADMIN_ROUTES.GODMODE_LOGIN || pathname === "/godmode/login";
 
-  if (isLoginPage || !isAuthenticated || !user?.isGodMode) {
+  useEffect(() => {
+    if (!isLoading && !isLoginPage && (!isAuthenticated || !user?.isGodMode)) {
+      router.replace(ADMIN_ROUTES.GODMODE_LOGIN);
+    }
+  }, [isLoading, isLoginPage, isAuthenticated, user, router]);
+
+  if (isLoginPage) {
     return <div className="w-full min-h-screen bg-slate-50 text-slate-900">{children}</div>;
   }
 
-  if (isLoading) {
+  if (isLoading || (!isAuthenticated || !user?.isGodMode)) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
         <div className="h-8 w-8 animate-spin rounded-full border-3 border-slate-300 border-t-[#56C5F0]" />
