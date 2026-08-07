@@ -15,33 +15,18 @@ import {
   Trash2,
   Save,
   Loader2,
-  Upload,
   MapPin,
   ShieldCheck,
   Eye,
-  Crop,
-  Globe,
-  FileText,
-  Award,
-  Truck,
-  Warehouse,
-  Compass,
-  Check,
   FileCheck,
-  ShieldAlert,
-  Anchor,
-  Layers,
   BadgeCheck,
 } from "lucide-react";
 import { uploadFileWithProgress } from "@/lib/firebase/storage";
 import { compressAndOptimizeImage } from "@/lib/utils/imageOptimizer";
 
-import { ImageCropModal } from "./ImageCropModal";
-
 export type WorkExpItem = { id: string; company: string; location: string; designation: string; from: string; to: string; roleDescription?: string };
 export type EduItem = { id: string; college: string; stream: string; from: string; to: string };
 export type CertItem = { id: string; title: string; issuer: string; year: string };
-export type KYCDocItem = { id: string; docType: "gstin" | "iec" | "pan" | "iso" | "customs"; title: string; fileName: string; status: "verified" | "pending" | "uploaded" };
 
 export type UserProfileForm = {
   fullName: string;
@@ -57,18 +42,10 @@ export type UserProfileForm = {
   workExperience: WorkExpItem[];
   education: EduItem[];
   certifications?: CertItem[];
-  kycDocuments?: KYCDocItem[];
   gstin?: string;
   iec?: string;
-  iataNo?: string;
-  fiataNo?: string;
-  fmcNo?: string;
-  aeoStatus?: string;
-  fleetSize?: string;
-  warehouseCapacity?: string;
-  keyTradeLanes?: string;
-  website?: string;
-  privacySetting?: "public" | "connections_only";
+  pan?: string;
+  chaNo?: string;
 };
 
 interface EnhancedProfileEditModalProps {
@@ -79,33 +56,9 @@ interface EnhancedProfileEditModalProps {
   userId: string;
 }
 
-const CATEGORIZED_SPECIALIZATIONS = [
-  {
-    category: "Ocean & Sea Freight",
-    items: ["Ocean Freight (FCL)", "Ocean Freight (LCL)", "NVOCC Services", "Breakbulk & Chartering", "Reefer / Cold Chain Sea"],
-  },
-  {
-    category: "Air Freight & Express",
-    items: ["Air Freight Express", "Charter Flight Ops", "IATA Cargo Agent", "AOG / Urgent Express"],
-  },
-  {
-    category: "Customs & Clearance",
-    items: ["Customs House Brokerage (CHA)", "AEO Certified Clearance", "Bonded Warehousing", "SVB / High-Sea Sales"],
-  },
-  {
-    category: "Surface & Multimodal",
-    items: ["Cross-Border Trucking", "FTL / LTL Surface", "Heavy Lift & Project Cargo", "Dangerous Goods (DG Cargo)"],
-  },
-  {
-    category: "Warehousing & Supply Chain",
-    items: ["Warehousing & Fulfillment", "3PL / 4PL Contract Logistics", "Inventory Management", "Reverse Logistics"],
-  },
-];
-
-const MAJOR_PORTS = [
-  "JNPT Mumbai (INNSA)", "Mundra Port (INMUN)", "Chennai Port (INMAA)",
-  "Dubai Jebel Ali (AEJEA)", "Singapore (SGSIN)", "Shanghai (CNSHA)",
-  "Rotterdam (NLRTM)", "Hamburg (DEHAM)", "Los Angeles (USLAX)",
+const COMMON_LOGISTICS_TAGS = [
+  "Ocean Freight (FCL)", "Ocean Freight (LCL)", "Air Freight", "Customs Brokerage (CHA)",
+  "Cross-Border Trucking", "3PL Warehousing", "Cold Chain", "Project Cargo", "Dangerous Goods (DG)"
 ];
 
 export function EnhancedProfileEditModal({
@@ -115,96 +68,64 @@ export function EnhancedProfileEditModal({
   onSave,
   userId,
 }: EnhancedProfileEditModalProps) {
-  const [activeSection, setActiveSection] = useState<"basic" | "company" | "branding" | "experience" | "education" | "tags">("basic");
+  const [activeSection, setActiveSection] = useState<"basic" | "kyc" | "branding" | "experience" | "education" | "tags">("basic");
   const [formData, setFormData] = useState<UserProfileForm>({
     certifications: [],
-    kycDocuments: [],
+    gstin: "",
+    iec: "",
+    pan: "",
+    chaNo: "",
     ...initialData,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showLivePreview, setShowLivePreview] = useState(true);
-  const [previewTab, setPreviewTab] = useState<"card" | "credentials" | "lanes">("card");
 
   // File refs & upload progress
   const photoInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-  const [photoProgress, setPhotoProgress] = useState(0);
-  const [logoProgress, setLogoProgress] = useState(0);
 
-  const [isSavedState, setIsSavedState] = useState(false);
-  const [showCropModal, setShowCropModal] = useState(false);
-  const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-  const [showUnsavedPrompt, setShowUnsavedPrompt] = useState(false);
-
-  // Esc key listener with unsaved changes prompt
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape" && isOpen) {
-        setShowUnsavedPrompt(true);
+        onClose();
       }
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     setFormData({
       certifications: [],
-      kycDocuments: [],
+      gstin: "",
+      iec: "",
+      pan: "",
+      chaNo: "",
       ...initialData,
     });
   }, [initialData]);
 
   if (!isOpen) return null;
 
-  // Calculate Profile Completion Percentage & Breakdown
-  const calculateCompletionDetails = () => {
-    const breakdown = [
-      { key: "basic", name: "Personal Bio", met: Boolean(formData.fullName?.trim() && formData.designation?.trim() && formData.location?.trim()), weight: 20 },
-      { key: "company", name: "Enterprise KYC", met: Boolean(formData.companyName?.trim() && (formData.gstin || formData.iec)), weight: 20 },
-      { key: "branding", name: "Visual Identity", met: Boolean(formData.photoURL || formData.companyLogoURL), weight: 20 },
-      { key: "experience", name: "Work History", met: Boolean(formData.workExperience && formData.workExperience.length > 0), weight: 15 },
-      { key: "education", name: "Academic / Certs", met: Boolean((formData.education && formData.education.length > 0) || (formData.certifications && formData.certifications.length > 0)), weight: 10 },
-      { key: "tags", name: "Trade Tags", met: Boolean(formData.industryTags && formData.industryTags.length >= 2), weight: 15 },
-    ];
-
-    const totalScore = breakdown.reduce((acc, curr) => (curr.met ? acc + curr.weight : acc), 0);
-    return { score: Math.min(100, totalScore), breakdown };
-  };
-
-  const { score: completionScore, breakdown: completionBreakdown } = calculateCompletionDetails();
-
-  const getStrengthBadge = (score: number) => {
-    if (score >= 80) return { label: "Elite Enterprise Identity", color: "bg-[#C5E7E2] text-[#253031] border-[#A594F9]" };
-    if (score >= 50) return { label: "Verified Partner Profile", color: "bg-[#EDE6F2] text-[#253031] border-[#A594F9]" };
-    return { label: "Basic Profile", color: "bg-[#E5D9F2] text-[#253031] border-[#746D75]" };
-  };
-
-  const strengthBadge = getStrengthBadge(completionScore);
-
-  // Photo & Logo Upload Handlers
   const handlePhotoSelect = async (file: File) => {
     if (!file) return;
     setIsUploadingPhoto(true);
     try {
       const compressedDataUrl = await compressAndOptimizeImage(file, 600, 600, 0.75);
-      setCropImageSrc(compressedDataUrl);
-      setShowCropModal(true);
-      
+      setFormData((prev) => ({ ...prev, photoURL: compressedDataUrl }));
       try {
         const path = `profiles/${userId}/photo_${Date.now()}`;
-        const url = await uploadFileWithProgress(path, file, (p) => setPhotoProgress(Math.round(p)));
-        setCropImageSrc(url);
+        const url = await uploadFileWithProgress(path, file, () => {});
+        setFormData((prev) => ({ ...prev, photoURL: url }));
       } catch {
         /* Keep compressed data URL fallback */
       }
     } catch (err) {
-      console.warn("Photo compression warning:", err);
+      console.warn("Photo upload warning:", err);
     } finally {
       setIsUploadingPhoto(false);
-      setPhotoProgress(0);
     }
   };
 
@@ -214,19 +135,17 @@ export function EnhancedProfileEditModal({
     try {
       const compressedDataUrl = await compressAndOptimizeImage(file, 600, 600, 0.75);
       setFormData((prev) => ({ ...prev, companyLogoURL: compressedDataUrl }));
-
       try {
         const path = `companies/${userId}/logo_${Date.now()}`;
-        const url = await uploadFileWithProgress(path, file, (p) => setLogoProgress(Math.round(p)));
+        const url = await uploadFileWithProgress(path, file, () => {});
         setFormData((prev) => ({ ...prev, companyLogoURL: url }));
       } catch {
         /* Keep compressed data URL fallback */
       }
     } catch (err) {
-      console.warn("Logo compression warning:", err);
+      console.warn("Logo upload warning:", err);
     } finally {
       setIsUploadingLogo(false);
-      setLogoProgress(0);
     }
   };
 
@@ -244,20 +163,16 @@ export function EnhancedProfileEditModal({
     setIsSaving(true);
     try {
       await onSave(formData);
-      setIsSavedState(true);
-      setTimeout(() => {
-        setIsSavedState(false);
-        onClose();
-      }, 1200);
+      onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Save error:", err);
     } finally {
       setIsSaving(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#253031]/40 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto text-left font-sans">
+    <div className="fixed inset-0 z-50 bg-[#1E2329]/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 overflow-y-auto text-left font-sans">
       {/* Hidden file inputs */}
       <input
         ref={photoInputRef}
@@ -274,1220 +189,479 @@ export function EnhancedProfileEditModal({
         onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoSelect(f); e.target.value = ""; }}
       />
 
-      <div className="bg-[#F7F7FF] rounded-3xl shadow-2xl border border-[#E5D9F2] w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden text-left text-[#253031] transition-all">
-        {/* Top Header - Soft Periwinkle Light Enterprise Theme */}
-        <div className="px-6 py-5 bg-[#A594F9] text-white flex items-center justify-between border-b border-[#E5D9F2] shadow-sm shrink-0">
-          <div className="flex items-center gap-4">
-            <div className="p-3.5 bg-white/25 rounded-2xl text-white shadow-sm border border-white/40 shrink-0">
-              <Sparkles className="h-7 w-7" />
+      <div className="bg-[#252B33] rounded-[3px] border border-[#333B44] w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden text-left text-[#E2E8F0]">
+        {/* Top Header - Graphite Bar */}
+        <div className="px-5 py-3.5 bg-[#20252B] text-[#E2E8F0] flex items-center justify-between border-b border-[#333B44] shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-[#2A3038] rounded-[3px] text-[#0EA5E9] border border-[#333B44] shrink-0">
+              <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2.5">
-                <h2 className="text-2xl font-black tracking-tight text-white leading-snug">Enterprise Profile Studio</h2>
-                <span className="text-xs uppercase tracking-wider font-black px-3 py-1 rounded-full bg-[#EDE6F2] text-[#253031] border border-white/50 flex items-center gap-1 shadow-xs">
-                  <BadgeCheck className="h-4.5 w-4.5 text-[#A594F9]" /> PRO EDITION
+              <div className="flex items-center gap-2">
+                <h2 className="text-[14px] font-bold text-[#E2E8F0]">Profile Studio &amp; Settings</h2>
+                <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-[3px] bg-[#2A3038] text-[#0EA5E9] border border-[#333B44] flex items-center gap-1">
+                  <BadgeCheck className="h-3 w-3 text-[#0EA5E9]" /> PRO
                 </span>
               </div>
-              <p className="text-sm text-white/95 font-semibold mt-0.5">Configure your B2B enterprise identity, trade credentials &amp; logistics capabilities</p>
+              <p className="text-[10px] text-[#94A3B8]">Configure your B2B enterprise identity, credentials &amp; trade profile</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowLivePreview(!showLivePreview)}
-              className={`px-4 py-2.5 rounded-xl text-sm font-black flex items-center gap-2 border transition-all shadow-xs ${
-                showLivePreview
-                  ? "bg-white text-[#253031] border-white shadow-md font-black"
-                  : "bg-white/20 hover:bg-white/30 text-white border-white/40"
-              }`}
+              className="px-3 py-1.5 rounded-[3px] text-[10px] bg-[#2A3038] text-[#E2E8F0] border border-[#333B44] hover:bg-[#333B44] transition-colors"
             >
-              <Eye className="h-5 w-5" />
-              <span className="hidden sm:inline">{showLivePreview ? "Hide Card Preview" : "Show Card Preview"}</span>
+              <Eye className="h-3.5 w-3.5 inline mr-1" />
+              {showLivePreview ? "Hide Preview" : "Show Preview"}
             </button>
 
             <button
               type="button"
               onClick={onClose}
-              className="text-white hover:bg-white/25 p-2.5 rounded-xl transition-all"
-              title="Close Profile Studio"
+              className="text-[#94A3B8] hover:text-[#E2E8F0] p-1.5 rounded-[3px] hover:bg-[#2A3038] transition-colors"
+              title="Close (Esc)"
             >
-              <X className="h-7 w-7" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        {/* Completion Progress & Strength Bar - Lavender Mist */}
-        <div className="bg-[#EDE6F2] text-[#253031] px-6 py-4 border-b border-[#E5D9F2] flex flex-wrap items-center justify-between gap-3 text-sm shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-6 w-6 text-[#253031]" />
-              <span className="font-black text-[#253031] text-base">Profile Strength:</span>
-              <span className="font-black text-[#253031] text-base">{completionScore}% Complete</span>
-            </div>
-            <span className={`text-xs font-black px-3.5 py-1 rounded-full border shadow-xs ${strengthBadge.color}`}>
-              {strengthBadge.label}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3 min-w-[260px] flex-1 max-w-md">
-            <div className="w-full h-3.5 bg-[#E5D9F2] rounded-full overflow-hidden border border-[#A594F9]/50 p-0.5 shadow-inner">
-              <div
-                className="h-full bg-[#A594F9] rounded-full transition-all duration-500 shadow-sm"
-                style={{ width: `${completionScore}%` }}
-              />
-            </div>
-          </div>
-
-          <div className="hidden xl:flex items-center gap-4 text-xs text-[#535657]">
-            {completionBreakdown.map((item) => (
-              <span
-                key={item.key}
-                className={`flex items-center gap-1.5 font-bold ${item.met ? "text-[#253031] font-black" : "text-[#746D75] opacity-80"}`}
-              >
-                {item.met ? <CheckCircle2 className="h-4.5 w-4.5 text-[#253031]" /> : <div className="h-2.5 w-2.5 rounded-full bg-[#746D75]" />}
-                {item.name}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Main Body: Navigation Sidebar + Form Controls + Live Card Preview */}
+        {/* Main Body */}
         <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
           {/* Navigation Sidebar */}
-          <div className="w-full lg:w-72 bg-[#EDE6F2]/70 text-[#253031] border-r border-[#E5D9F2] p-4 space-y-2.5 overflow-y-auto shrink-0">
-            <div className="px-3 py-1.5 text-xs uppercase tracking-wider font-black text-[#535657] flex items-center gap-2">
-              <Layers className="h-4.5 w-4.5 text-[#A594F9]" /> Studio Modules
+          <div className="w-full lg:w-60 bg-[#20252B] text-[#E2E8F0] border-r border-[#333B44] p-3 space-y-1 overflow-y-auto shrink-0">
+            <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-[#94A3B8] font-bold">
+              Modules
             </div>
             {[
-              { id: "basic", label: "Basic Info & Bio", icon: User, desc: "Personal & contact details" },
-              { id: "company", label: "Company & KYC", icon: Building2, desc: "GSTIN, IEC, licenses" },
-              { id: "branding", label: "Visual Identity", icon: Camera, desc: "Avatar & company logo" },
-              { id: "experience", label: "Work Experience", icon: Briefcase, desc: "Career timeline" },
-              { id: "education", label: "Education & Certs", icon: GraduationCap, desc: "Diplomas & accreditation" },
-              { id: "tags", label: "Logistics Tags", icon: Tag, desc: "Specializations & ports" },
+              { id: "basic", label: "Basic Info", icon: User },
+              { id: "kyc", label: "KYC Numbers", icon: FileCheck },
+              { id: "branding", label: "Visual Identity", icon: Camera },
+              { id: "experience", label: "Work History", icon: Briefcase },
+              { id: "education", label: "Education", icon: GraduationCap },
+              { id: "tags", label: "Logistics Tags", icon: Tag },
             ].map((tab) => {
               const Icon = tab.icon;
               const isActive = activeSection === tab.id;
-              const isSectionMet = completionBreakdown.find((b) => b.key === tab.id)?.met;
-
               return (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setActiveSection(tab.id as any)}
-                  className={`w-full flex items-center justify-between p-3.5 rounded-2xl text-left transition-all ${
+                  className={`w-full flex items-center gap-2.5 p-2.5 rounded-[3px] text-left transition-colors text-[11px] ${
                     isActive
-                      ? "bg-[#A594F9] text-white shadow-md font-black ring-2 ring-[#A594F9]/40"
-                      : "text-[#253031] hover:bg-[#E5D9F2] hover:text-[#253031]"
+                      ? "bg-[#0EA5E9] text-white font-bold"
+                      : "text-[#94A3B8] hover:bg-[#2A3038] hover:text-[#E2E8F0]"
                   }`}
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className={`p-2.5 rounded-xl shrink-0 ${isActive ? "bg-white/30 text-white" : "bg-[#E5D9F2] text-[#253031]"}`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black leading-snug">{tab.label}</p>
-                      <p className={`text-xs font-bold leading-tight mt-0.5 ${isActive ? "text-white/95" : "text-[#535657]"}`}>{tab.desc}</p>
-                    </div>
-                  </div>
-                  {isSectionMet && (
-                    <CheckCircle2 className={`h-5 w-5 shrink-0 ${isActive ? "text-white" : "text-[#253031]"}`} />
-                  )}
+                  <Icon className="h-4 w-4 shrink-0" />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
           </div>
 
-          {/* Form Content Area - Ghost White Background */}
-          <div className="flex-1 p-6 sm:p-7 overflow-y-auto space-y-6 bg-[#F7F7FF]">
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              {/* TAB 1: BASIC INFO */}
+          {/* Form Content Area */}
+          <div className="flex-1 p-5 overflow-y-auto bg-[#252B33]">
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {/* BASIC INFO */}
               {activeSection === "basic" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="border-b border-[#E5D9F2] pb-3.5 flex items-center gap-3">
-                    <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                      <User className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black text-[#253031]">Executive &amp; Personal Profile</h3>
-                      <p className="text-sm text-[#535657] font-semibold">Provide your personal enterprise details for trade partners.</p>
-                    </div>
-                  </div>
+                <div className="space-y-4">
+                  <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider border-b border-[#333B44] pb-2">
+                    Executive Profile
+                  </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Full Name *</label>
-                      <div className="relative">
-                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.fullName}
-                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                          placeholder="e.g. Rajat Kumar Rai"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
+                      <label className="fr8x-label block mb-1">Full Name</label>
+                      <input
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="Full Name"
+                        className="fr8x-input text-[11px] w-full"
+                      />
                     </div>
                     <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Professional Designation *</label>
-                      <div className="relative">
-                        <Briefcase className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.designation}
-                          onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                          placeholder="e.g. Managing Director / VP Freight Ops"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">City / Base Station *</label>
-                      <div className="relative">
-                        <MapPin className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.location}
-                          onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                          placeholder="e.g. Mumbai / JNPT Region"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Country</label>
-                      <div className="relative">
-                        <Globe className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.country}
-                          onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                          placeholder="e.g. India"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Executive Bio &amp; Capability Summary</label>
-                    <div className="relative">
-                      <FileText className="absolute left-3.5 top-4 h-5 w-5 text-[#A594F9]" />
-                      <textarea
-                        value={formData.about}
-                        onChange={(e) => setFormData({ ...formData, about: e.target.value })}
-                        rows={4}
-                        placeholder="Highlight your trade experience, key trade lanes handled, and specialized freight solutions..."
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-extrabold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75] resize-none"
+                      <label className="fr8x-label block mb-1">Designation</label>
+                      <input
+                        value={formData.designation}
+                        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                        placeholder="Role / Title"
+                        className="fr8x-input text-[11px] w-full"
                       />
                     </div>
                   </div>
-                </div>
-              )}
 
-              {/* TAB 2: COMPANY & COMPLIANCE */}
-              {activeSection === "company" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="border-b border-[#E5D9F2] pb-3.5 flex items-center gap-3">
-                    <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                      <Building2 className="h-6 w-6" />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <h3 className="text-lg font-black text-[#253031]">Enterprise &amp; Trade KYC Compliance</h3>
-                      <p className="text-sm text-[#535657] font-semibold">Add corporate tax IDs and international trade licenses to boost B2B trust.</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Registered Corporate Enterprise Name *</label>
-                    <div className="relative">
-                      <Building2 className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
+                      <label className="fr8x-label block mb-1">Company Name</label>
                       <input
                         value={formData.companyName}
                         onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                        placeholder="e.g. Cogoport Logistics Private Limited"
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
+                        placeholder="Company"
+                        className="fr8x-input text-[11px] w-full"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">GSTIN / Tax ID</label>
-                      <div className="relative">
-                        <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.gstin || ""}
-                          onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-                          placeholder="e.g. 27AAAAA0000A1Z5"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-mono uppercase font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Import Export Code (IEC)</label>
-                      <div className="relative">
-                        <FileCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.iec || ""}
-                          onChange={(e) => setFormData({ ...formData, iec: e.target.value })}
-                          placeholder="e.g. 0512345678"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-mono uppercase font-black outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">IATA Reg. No.</label>
+                      <label className="fr8x-label block mb-1">Location / Base City</label>
                       <input
-                        value={formData.iataNo || ""}
-                        onChange={(e) => setFormData({ ...formData, iataNo: e.target.value })}
-                        placeholder="e.g. 14-3 9999"
-                        className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-mono font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
+                        value={formData.location}
+                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        placeholder="City, Country"
+                        className="fr8x-input text-[11px] w-full"
                       />
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">FIATA License No.</label>
-                      <input
-                        value={formData.fiataNo || ""}
-                        onChange={(e) => setFormData({ ...formData, fiataNo: e.target.value })}
-                        placeholder="e.g. FIATA-IN-889"
-                        className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-mono font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                      />
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">FMC / NVOCC Bond</label>
-                      <input
-                        value={formData.fmcNo || ""}
-                        onChange={(e) => setFormData({ ...formData, fmcNo: e.target.value })}
-                        placeholder="e.g. FMC Org #02941"
-                        className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-mono font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Official Web Address</label>
-                      <div className="relative">
-                        <Globe className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.website || ""}
-                          onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                          placeholder="e.g. https://www.enterprise-freight.com"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">AEO Certification Status</label>
-                      <select
-                        value={formData.aeoStatus || "None"}
-                        onChange={(e) => setFormData({ ...formData, aeoStatus: e.target.value })}
-                        className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all"
-                      >
-                        <option value="None">None / In Process</option>
-                        <option value="AEO-T1">AEO-T1 (Tier 1 Verified)</option>
-                        <option value="AEO-T2">AEO-T2 (Tier 2 Certified)</option>
-                        <option value="AEO-LO">AEO-LO (Logistics Operator)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Fleet / Container Asset Capacity</label>
-                      <div className="relative">
-                        <Truck className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.fleetSize || ""}
-                          onChange={(e) => setFormData({ ...formData, fleetSize: e.target.value })}
-                          placeholder="e.g. 150+ Heavy Trailers, 500+ TEUs"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Warehousing Space (SQFT)</label>
-                      <div className="relative">
-                        <Warehouse className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
-                        <input
-                          value={formData.warehouseCapacity || ""}
-                          onChange={(e) => setFormData({ ...formData, warehouseCapacity: e.target.value })}
-                          placeholder="e.g. 250,000 SQFT Bonded Warehouse"
-                          className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                        />
-                      </div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="fr8x-label block mb-2 text-[#253031] font-black text-sm">Primary Global Trade Lanes</label>
-                    <div className="relative">
-                      <Compass className="absolute left-3.5 top-3.5 h-5 w-5 text-[#A594F9]" />
+                    <label className="fr8x-label block mb-1">About Organization / Bio</label>
+                    <textarea
+                      value={formData.about}
+                      onChange={(e) => setFormData({ ...formData, about: e.target.value })}
+                      placeholder="Company summary and logistics operations..."
+                      className="fr8x-input text-[11px] w-full min-h-[80px] resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* KYC NUMBERS */}
+              {activeSection === "kyc" && (
+                <div className="space-y-4">
+                  <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider border-b border-[#333B44] pb-2">
+                    Corporate Compliance Numbers
+                  </h3>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="fr8x-label block mb-1">GSTIN Number</label>
                       <input
-                        value={formData.keyTradeLanes || ""}
-                        onChange={(e) => setFormData({ ...formData, keyTradeLanes: e.target.value })}
-                        placeholder="e.g. India-Middle East, Asia-US West Coast, Europe-ISC"
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
+                        value={formData.gstin || ""}
+                        onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+                        placeholder="GSTIN Code"
+                        className="fr8x-input text-[11px] w-full font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Import Export Code (IEC)</label>
+                      <input
+                        value={formData.iec || ""}
+                        onChange={(e) => setFormData({ ...formData, iec: e.target.value })}
+                        placeholder="IEC Code"
+                        className="fr8x-input text-[11px] w-full font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">PAN Number</label>
+                      <input
+                        value={formData.pan || ""}
+                        onChange={(e) => setFormData({ ...formData, pan: e.target.value })}
+                        placeholder="PAN Card Number"
+                        className="fr8x-input text-[11px] w-full font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="fr8x-label block mb-1">Customs / CHA License No.</label>
+                      <input
+                        value={formData.chaNo || ""}
+                        onChange={(e) => setFormData({ ...formData, chaNo: e.target.value })}
+                        placeholder="CHA License No."
+                        className="fr8x-input text-[11px] w-full font-mono"
                       />
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 3: LOGO & AVATAR BRANDING */}
+              {/* VISUAL IDENTITY */}
               {activeSection === "branding" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="border-b border-[#E5D9F2] pb-3.5 flex items-center gap-3">
-                    <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                      <Camera className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-black text-[#253031]">Visual Identity &amp; Branding Studio</h3>
-                      <p className="text-sm text-[#535657] font-semibold">Upload high-resolution corporate logo and executive avatar image.</p>
-                    </div>
-                  </div>
+                <div className="space-y-4">
+                  <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider border-b border-[#333B44] pb-2">
+                    Avatars &amp; Branding Images
+                  </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {/* Executive Avatar Uploader */}
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
-                        if (file) handlePhotoSelect(file);
-                      }}
-                      className="p-6 border-2 border-dashed border-[#E5D9F2] hover:border-[#A594F9] rounded-3xl text-center space-y-4 bg-white shadow-xs transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-sm uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                          <User className="h-5 w-5 text-[#A594F9]" /> Avatar Picture
-                        </span>
-                        <span className={`text-xs font-black px-3 py-1 rounded-full border ${formData.photoURL ? 'bg-[#C5E7E2] text-[#253031] border-[#A594F9]' : 'bg-[#EDE6F2] text-[#253031] border-[#E5D9F2]'}`}>
-                          {formData.photoURL ? 'Custom Active' : 'Default'}
-                        </span>
-                      </div>
-
-                      <div
-                        onClick={() => {
-                          if (formData.photoURL) {
-                            setCropImageSrc(formData.photoURL);
-                            setShowCropModal(true);
-                          } else {
-                            photoInputRef.current?.click();
-                          }
-                        }}
-                        className="relative w-36 h-36 mx-auto rounded-full bg-[#F7F7FF] border-4 border-white shadow-xl overflow-hidden flex items-center justify-center group cursor-pointer hover:scale-105 transition-all ring-4 ring-[#A594F9]/40 shrink-0"
-                      >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-[#2A3038] p-4 rounded-[3px] border border-[#333B44] flex flex-col items-center space-y-3">
+                      <span className="text-[10px] text-[#94A3B8] font-bold uppercase">Profile Avatar</span>
+                      <div className="w-20 h-20 rounded-full bg-[#20252B] border border-[#333B44] flex items-center justify-center overflow-hidden">
                         {formData.photoURL ? (
                           <img src={formData.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                          <User className="h-16 w-16 text-[#746D75]" />
-                        )}
-                        {isUploadingPhoto && (
-                          <div className="absolute inset-0 bg-[#253031]/80 flex flex-col items-center justify-center text-white text-xs font-bold">
-                            <Loader2 className="h-8 w-8 animate-spin mb-1 text-[#A594F9]" />
-                            {photoProgress}%
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-[#253031]/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-xs font-bold transition-opacity gap-1.5">
-                          <Crop className="h-6 w-6 text-white" />
-                          <span>{formData.photoURL ? "Crop / Adjust" : "Upload Picture"}</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#535657] font-semibold">
-                        Drag &amp; drop profile image here or click below (PNG, JPG, WebP)
-                      </p>
-
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => photoInputRef.current?.click()}
-                          className="w-full py-3 px-4 rounded-xl bg-[#EDE6F2] hover:bg-[#E5D9F2] text-[#253031] text-sm font-black flex items-center justify-center gap-2 border border-[#E5D9F2] transition-all shadow-xs"
-                        >
-                          <Upload className="h-5 w-5 text-[#535657]" /> {formData.photoURL ? "Change Avatar Image" : "Upload Avatar Image"}
-                        </button>
-
-                        {formData.photoURL && (
-                          <div className="flex gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setCropImageSrc(formData.photoURL);
-                                setShowCropModal(true);
-                              }}
-                              className="flex-1 bg-[#E5D9F2] hover:bg-[#A594F9] hover:text-white border border-[#A594F9]/40 text-[#253031] text-xs py-2.5 rounded-xl font-black flex items-center justify-center gap-1.5 transition-colors"
-                            >
-                              <Crop className="h-4 w-4" /> Crop / Zoom
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFormData((prev) => ({ ...prev, photoURL: null }))}
-                              className="flex-1 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-2.5 rounded-xl font-black flex items-center justify-center gap-1.5 transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4 text-rose-600" /> Remove
-                            </button>
-                          </div>
+                          <User className="h-8 w-8 text-[#94A3B8]" />
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="fr8x-btn-secondary text-[10px] py-1 px-3"
+                      >
+                        {isUploadingPhoto ? "Uploading..." : "Upload Photo"}
+                      </button>
                     </div>
 
-                    {/* Company Logo Uploader */}
-                    <div
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        const file = e.dataTransfer.files?.[0];
-                        if (file) handleLogoSelect(file);
-                      }}
-                      className="p-6 border-2 border-dashed border-[#E5D9F2] hover:border-[#A594F9] rounded-3xl text-center space-y-4 bg-white shadow-xs transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-sm uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                          <Building2 className="h-5 w-5 text-[#A594F9]" /> Company Logo Banner
-                        </span>
-                        <span className={`text-xs font-black px-3 py-1 rounded-full border ${formData.companyLogoURL ? 'bg-[#C5E7E2] text-[#253031] border-[#A594F9]' : 'bg-[#EDE6F2] text-[#253031] border-[#E5D9F2]'}`}>
-                          {formData.companyLogoURL ? 'Logo Active' : 'Default'}
-                        </span>
-                      </div>
-
-                      <div
-                        onClick={() => logoInputRef.current?.click()}
-                        className="relative w-36 h-36 mx-auto rounded-3xl bg-[#F7F7FF] border-2 border-[#E5D9F2] shadow-md overflow-hidden flex items-center justify-center p-3 group cursor-pointer hover:scale-105 transition-all ring-4 ring-[#A594F9]/40 shrink-0"
-                      >
+                    <div className="bg-[#2A3038] p-4 rounded-[3px] border border-[#333B44] flex flex-col items-center space-y-3">
+                      <span className="text-[10px] text-[#94A3B8] font-bold uppercase">Company Logo</span>
+                      <div className="w-20 h-20 rounded-[3px] bg-[#20252B] border border-[#333B44] flex items-center justify-center overflow-hidden">
                         {formData.companyLogoURL ? (
-                          <img src={formData.companyLogoURL} alt="Logo" className="w-full h-full object-contain" />
+                          <img src={formData.companyLogoURL} alt="Logo" className="w-full h-full object-contain p-1" />
                         ) : (
-                          <Building2 className="h-16 w-16 text-[#A594F9]" />
-                        )}
-                        {isUploadingLogo && (
-                          <div className="absolute inset-0 bg-[#253031]/80 flex flex-col items-center justify-center text-white text-xs font-bold">
-                            <Loader2 className="h-8 w-8 animate-spin mb-1 text-[#A594F9]" />
-                            {logoProgress}%
-                          </div>
-                        )}
-                        <div className="absolute inset-0 bg-[#253031]/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-xs font-bold transition-opacity gap-1.5">
-                          <Upload className="h-6 w-6 text-white" />
-                          <span>Upload Corporate Logo</span>
-                        </div>
-                      </div>
-
-                      <p className="text-xs text-[#535657] font-semibold">
-                        Drag &amp; drop official company logo here or click below
-                      </p>
-
-                      <div className="space-y-2">
-                        <button
-                          type="button"
-                          onClick={() => logoInputRef.current?.click()}
-                          className="w-full py-3 px-4 rounded-xl bg-[#EDE6F2] hover:bg-[#E5D9F2] text-[#253031] text-sm font-black flex items-center justify-center gap-2 border border-[#E5D9F2] transition-all shadow-xs"
-                        >
-                          <Upload className="h-5 w-5 text-[#535657]" /> {formData.companyLogoURL ? "Change Corporate Logo" : "Upload Corporate Logo"}
-                        </button>
-
-                        {formData.companyLogoURL && (
-                          <button
-                            type="button"
-                            onClick={() => setFormData((prev) => ({ ...prev, companyLogoURL: null }))}
-                            className="w-full bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 text-xs py-2.5 rounded-xl font-black flex items-center justify-center gap-1.5 transition-colors"
-                          >
-                            <Trash2 className="h-4 w-4 text-rose-600" /> Remove Corporate Logo
-                          </button>
+                          <Building2 className="h-8 w-8 text-[#94A3B8]" />
                         )}
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => logoInputRef.current?.click()}
+                        className="fr8x-btn-secondary text-[10px] py-1 px-3"
+                      >
+                        {isUploadingLogo ? "Uploading..." : "Upload Logo"}
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* TAB 4: WORK EXPERIENCE */}
+              {/* WORK EXPERIENCE */}
               {activeSection === "experience" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-[#E5D9F2] pb-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                        <Briefcase className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-black text-[#253031]">Professional Experience Timeline</h3>
-                        <p className="text-sm text-[#535657] font-semibold">Document your career history in global freight and logistics.</p>
-                      </div>
-                    </div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#333B44] pb-2">
+                    <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider">
+                      Work Experience
+                    </h3>
                     <button
                       type="button"
                       onClick={() =>
-                        setFormData({
-                          ...formData,
+                        setFormData((prev) => ({
+                          ...prev,
                           workExperience: [
-                            ...(formData.workExperience || []),
+                            ...(prev.workExperience || []),
                             { id: `we_${Date.now()}`, company: "", location: "", designation: "", from: "", to: "" },
                           ],
-                        })
+                        }))
                       }
-                      className="bg-[#A594F9] hover:bg-[#8e7be5] text-white flex items-center gap-2 text-sm font-black px-5 py-3 rounded-xl shadow-md transition-all"
+                      className="text-[10px] text-[#0EA5E9] font-bold hover:underline flex items-center gap-1"
                     >
-                      <Plus className="h-5 w-5" /> Add Position
+                      <Plus className="h-3 w-3" /> Add Item
                     </button>
                   </div>
 
-                  {(!formData.workExperience || formData.workExperience.length === 0) ? (
-                    <div className="p-8 text-center bg-white rounded-2xl border border-dashed border-[#E5D9F2] text-[#535657] space-y-2">
-                      <Briefcase className="h-10 w-10 text-[#A594F9] mx-auto" />
-                      <p className="text-sm font-black">No work experience added yet.</p>
-                      <p className="text-xs text-[#746D75] font-semibold">Click &quot;Add Position&quot; above to list your career background.</p>
+                  {(formData.workExperience || []).map((exp, idx) => (
+                    <div key={exp.id || idx} className="bg-[#2A3038] p-3 rounded-[3px] border border-[#333B44] space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={exp.company}
+                          onChange={(e) => {
+                            const updated = [...formData.workExperience];
+                            updated[idx] = { ...updated[idx]!, company: e.target.value };
+                            setFormData({ ...formData, workExperience: updated });
+                          }}
+                          placeholder="Company Name"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                        <input
+                          value={exp.designation}
+                          onChange={(e) => {
+                            const updated = [...formData.workExperience];
+                            updated[idx] = { ...updated[idx]!, designation: e.target.value };
+                            setFormData({ ...formData, workExperience: updated });
+                          }}
+                          placeholder="Designation"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          value={exp.location}
+                          onChange={(e) => {
+                            const updated = [...formData.workExperience];
+                            updated[idx] = { ...updated[idx]!, location: e.target.value };
+                            setFormData({ ...formData, workExperience: updated });
+                          }}
+                          placeholder="Location"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                        <input
+                          value={exp.from}
+                          onChange={(e) => {
+                            const updated = [...formData.workExperience];
+                            updated[idx] = { ...updated[idx]!, from: e.target.value };
+                            setFormData({ ...formData, workExperience: updated });
+                          }}
+                          placeholder="From (Year)"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                        <input
+                          value={exp.to}
+                          onChange={(e) => {
+                            const updated = [...formData.workExperience];
+                            updated[idx] = { ...updated[idx]!, to: e.target.value };
+                            setFormData({ ...formData, workExperience: updated });
+                          }}
+                          placeholder="To (Year)"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const updated = formData.workExperience.filter((_, i) => i !== idx);
+                          setFormData({ ...formData, workExperience: updated });
+                        }}
+                        className="text-[9px] text-[#FCA5A5] hover:underline flex items-center gap-1"
+                      >
+                        <Trash2 className="h-3 w-3" /> Remove
+                      </button>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {formData.workExperience.map((we, idx) => (
-                        <div key={we.id} className="p-5 border border-[#E5D9F2] bg-white rounded-2xl shadow-xs space-y-4 relative group">
-                          <div className="flex items-center justify-between border-b border-[#EDE6F2] pb-2">
-                            <span className="text-sm font-black text-[#253031] flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-full bg-[#EDE6F2] text-[#253031] flex items-center justify-center text-xs font-black">
-                                {idx + 1}
-                              </span>
-                              Career Position
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setFormData({ ...formData, workExperience: formData.workExperience.filter((item) => item.id !== we.id) })}
-                              className="text-rose-500 hover:text-rose-700 text-xs font-black flex items-center gap-1.5 p-1.5 hover:bg-rose-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="h-4 w-4" /> Remove Position
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div>
-                              <label className="text-xs font-black text-[#253031] block mb-1">Company / Enterprise</label>
-                              <input
-                                value={we.company}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, company: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="e.g. DHL Global Forwarding"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-black text-[#253031] block mb-1">Designation / Role</label>
-                              <input
-                                value={we.designation}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, designation: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="e.g. Senior Ocean Freight Manager"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                              />
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            <div>
-                              <label className="text-xs font-black text-[#253031] block mb-1">Location</label>
-                              <input
-                                value={we.location}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, location: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="e.g. Singapore"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-black text-[#253031] block mb-1">From Year</label>
-                              <input
-                                value={we.from}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, from: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="e.g. 2020"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                              />
-                            </div>
-                            <div>
-                              <label className="text-xs font-black text-[#253031] block mb-1">To Year</label>
-                              <input
-                                value={we.to}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, to: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="e.g. Present"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75]"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label className="text-xs font-black text-[#253031] block mb-1">Role Description</label>
-                            <textarea
-                              value={we.roleDescription || ""}
-                              onChange={(e) =>
-                                setFormData({
-                                  ...formData,
-                                  workExperience: formData.workExperience.map((item) => (item.id === we.id ? { ...item, roleDescription: e.target.value } : item)),
-                                })
-                              }
-                              placeholder="Key achievements, volume handled (TEUs/tons), team size..."
-                              rows={2}
-                              className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none focus:ring-2 focus:ring-[#A594F9]/40 transition-all placeholder-[#746D75] resize-none"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  ))}
                 </div>
               )}
 
-              {/* TAB 5: EDUCATION & CERTS */}
+              {/* EDUCATION */}
               {activeSection === "education" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="flex items-center justify-between border-b border-[#E5D9F2] pb-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                        <GraduationCap className="h-6 w-6" />
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-[#333B44] pb-2">
+                    <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider">
+                      Education Records
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          education: [
+                            ...(prev.education || []),
+                            { id: `edu_${Date.now()}`, college: "", stream: "", from: "", to: "" },
+                          ],
+                        }))
+                      }
+                      className="text-[10px] text-[#0EA5E9] font-bold hover:underline flex items-center gap-1"
+                    >
+                      <Plus className="h-3 w-3" /> Add Record
+                    </button>
+                  </div>
+
+                  {(formData.education || []).map((edu, idx) => (
+                    <div key={edu.id || idx} className="bg-[#2A3038] p-3 rounded-[3px] border border-[#333B44] space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          value={edu.college}
+                          onChange={(e) => {
+                            const updated = [...formData.education];
+                            updated[idx] = { ...updated[idx]!, college: e.target.value };
+                            setFormData({ ...formData, education: updated });
+                          }}
+                          placeholder="University / College"
+                          className="fr8x-input text-[10px] py-1"
+                        />
+                        <input
+                          value={edu.stream}
+                          onChange={(e) => {
+                            const updated = [...formData.education];
+                            updated[idx] = { ...updated[idx]!, stream: e.target.value };
+                            setFormData({ ...formData, education: updated });
+                          }}
+                          placeholder="Degree / Stream"
+                          className="fr8x-input text-[10px] py-1"
+                        />
                       </div>
-                      <div>
-                        <h3 className="text-lg font-black text-[#253031]">Academic &amp; Trade Qualifications</h3>
-                        <p className="text-sm text-[#535657] font-semibold">Degree, logistics certifications, and industry diplomas.</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
                       <button
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            education: [
-                              ...(formData.education || []),
-                              { id: `edu_${Date.now()}`, college: "", stream: "", from: "", to: "" },
-                            ],
-                          })
-                        }
-                        className="bg-[#A594F9] hover:bg-[#8e7be5] text-white flex items-center gap-2 text-sm font-black px-4 py-2.5 rounded-xl shadow-md transition-all"
+                        onClick={() => {
+                          const updated = formData.education.filter((_, i) => i !== idx);
+                          setFormData({ ...formData, education: updated });
+                        }}
+                        className="text-[9px] text-[#FCA5A5] hover:underline flex items-center gap-1"
                       >
-                        <Plus className="h-5 w-5" /> Add Degree
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            certifications: [
-                              ...(formData.certifications || []),
-                              { id: `cert_${Date.now()}`, title: "", issuer: "", year: "" },
-                            ],
-                          })
-                        }
-                        className="bg-[#EDE6F2] hover:bg-[#E5D9F2] text-[#253031] border border-[#A594F9]/40 flex items-center gap-2 text-sm font-black px-4 py-2.5 rounded-xl shadow-sm transition-all"
-                      >
-                        <Award className="h-5 w-5 text-[#A594F9]" /> Add Cert
+                        <Trash2 className="h-3 w-3" /> Remove
                       </button>
                     </div>
-                  </div>
-
-                  {/* Academic Degrees */}
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-[#A594F9]" /> University Degrees &amp; Diplomas
-                    </h4>
-                    {(!formData.education || formData.education.length === 0) ? (
-                      <p className="text-sm text-[#535657] bg-white p-4 rounded-xl border border-[#E5D9F2] font-semibold">No academic degrees added yet.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {formData.education.map((edu, idx) => (
-                          <div key={edu.id} className="p-4 border border-[#E5D9F2] bg-white rounded-2xl shadow-xs space-y-3">
-                            <div className="flex items-center justify-between border-b border-[#EDE6F2] pb-2">
-                              <span className="text-xs font-black text-[#253031]">Degree #{idx + 1}</span>
-                              <button
-                                type="button"
-                                onClick={() => setFormData({ ...formData, education: formData.education.filter((item) => item.id !== edu.id) })}
-                                className="text-rose-500 hover:text-rose-700 text-xs font-black"
-                              >
-                                Remove
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <input
-                                value={edu.college}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, college: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="University / Institute Name"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                              <input
-                                value={edu.stream}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, stream: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="Degree / Specialization (e.g. MBA Supply Chain)"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <input
-                                value={edu.from}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, from: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="Start Year"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                              <input
-                                value={edu.to}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    education: formData.education.map((item) => (item.id === edu.id ? { ...item, to: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="End Year"
-                                className="w-full px-4 py-3 bg-[#F7F7FF] border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Certifications & Accreditation */}
-                  <div className="space-y-3 pt-3 border-t border-[#E5D9F2]">
-                    <h4 className="text-xs font-black uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                      <Award className="h-5 w-5 text-[#A594F9]" /> Trade &amp; Professional Certifications
-                    </h4>
-                    {(!formData.certifications || formData.certifications.length === 0) ? (
-                      <p className="text-sm text-[#535657] bg-white p-4 rounded-xl border border-[#E5D9F2] font-semibold">No professional certifications added yet.</p>
-                    ) : (
-                      <div className="space-y-3">
-                        {formData.certifications.map((cert) => (
-                          <div key={cert.id} className="p-4 border border-[#E5D9F2] bg-[#EDE6F2]/40 rounded-2xl shadow-xs space-y-3">
-                            <div className="flex items-center justify-between border-b border-[#E5D9F2] pb-2">
-                              <span className="text-xs font-black text-[#253031]">Certification Item</span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setFormData({
-                                    ...formData,
-                                    certifications: (formData.certifications || []).filter((item) => item.id !== cert.id),
-                                  })
-                                }
-                                className="text-rose-500 hover:text-rose-700 text-xs font-black"
-                              >
-                                Remove
-                              </button>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                              <input
-                                value={cert.title}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, title: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="Cert Title (e.g. Dangerous Goods Cat-6)"
-                                className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                              <input
-                                value={cert.issuer}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, issuer: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="Issuing Body (e.g. IATA / FIATA)"
-                                className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                              <input
-                                value={cert.year}
-                                onChange={(e) =>
-                                  setFormData({
-                                    ...formData,
-                                    certifications: (formData.certifications || []).map((item) => (item.id === cert.id ? { ...item, year: e.target.value } : item)),
-                                  })
-                                }
-                                placeholder="Year Received"
-                                className="w-full px-4 py-3 bg-white border border-[#E5D9F2] focus:border-[#A594F9] rounded-xl text-sm text-[#253031] font-bold outline-none"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  ))}
                 </div>
               )}
 
-              {/* TAB 6: SPECIALIZATIONS */}
+              {/* LOGISTICS TAGS */}
               {activeSection === "tags" && (
-                <div className="space-y-6 animate-fadeIn">
-                  <div className="border-b border-[#E5D9F2] pb-3.5 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-[#EDE6F2] text-[#A594F9] rounded-xl border border-[#E5D9F2]">
-                        <Tag className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-black text-[#253031]">Trade Specializations &amp; Port Network</h3>
-                        <p className="text-sm text-[#535657] font-semibold">Select all freight modalities and logistics services your company provides.</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-black px-4 py-2 bg-[#EDE6F2] text-[#253031] border border-[#E5D9F2] rounded-full shadow-xs">
-                      {formData.industryTags.length} Selected
-                    </span>
-                  </div>
+                <div className="space-y-4">
+                  <h3 className="text-[12px] font-bold text-[#E2E8F0] uppercase tracking-wider border-b border-[#333B44] pb-2">
+                    Industry Specialization Tags
+                  </h3>
 
-                  <div className="space-y-6">
-                    {CATEGORIZED_SPECIALIZATIONS.map((cat) => (
-                      <div key={cat.category} className="space-y-3">
-                        <h4 className="text-xs font-black uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                          <span className="w-2.5 h-4.5 bg-[#A594F9] rounded-full" />
-                          {cat.category}
-                        </h4>
-                        <div className="flex flex-wrap gap-2.5">
-                          {cat.items.map((spec) => {
-                            const selected = formData.industryTags.includes(spec);
-                            return (
-                              <button
-                                key={spec}
-                                type="button"
-                                onClick={() => toggleTag(spec)}
-                                className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2 border ${
-                                  selected
-                                    ? "bg-[#A594F9] text-white border-[#A594F9] shadow-md font-black"
-                                    : "bg-white text-[#253031] border-[#E5D9F2] hover:bg-[#EDE6F2]"
-                                }`}
-                              >
-                                {selected ? <Check className="h-4.5 w-4.5 text-white stroke-[3]" /> : <Plus className="h-4.5 w-4.5 text-[#746D75]" />}
-                                {spec}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Major Gateway Ports */}
-                    <div className="space-y-3 pt-3 border-t border-[#E5D9F2]">
-                      <h4 className="text-xs font-black uppercase tracking-wider text-[#253031] flex items-center gap-2">
-                        <Anchor className="h-5 w-5 text-[#A594F9]" /> Key Gateway Ports Serviced
-                      </h4>
-                      <div className="flex flex-wrap gap-2.5">
-                        {MAJOR_PORTS.map((port) => {
-                          const selected = formData.industryTags.includes(port);
-                          return (
-                            <button
-                              key={port}
-                              type="button"
-                              onClick={() => toggleTag(port)}
-                              className={`px-4 py-2 rounded-lg text-sm font-mono transition-all flex items-center gap-2 border ${
-                                selected
-                                  ? "bg-[#253031] text-[#C5E7E2] border-[#253031] font-black"
-                                  : "bg-white text-[#253031] border-[#E5D9F2] hover:border-[#A594F9]"
-                              }`}
-                            >
-                              <Anchor className="h-4 w-4 text-[#A594F9]" />
-                              {port}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+                  <div className="flex flex-wrap gap-2">
+                    {COMMON_LOGISTICS_TAGS.map((tag) => {
+                      const isSelected = formData.industryTags?.includes(tag);
+                      return (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className={`px-3 py-1 rounded-[3px] text-[10px] border transition-colors ${
+                            isSelected
+                              ? "bg-[#0EA5E9] text-white border-[#0EA5E9]"
+                              : "bg-[#2A3038] text-[#94A3B8] border-[#333B44] hover:text-[#E2E8F0]"
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
 
-              {/* Action Buttons Footer */}
-              <div className="pt-6 border-t border-[#E5D9F2] flex flex-wrap items-center justify-between gap-4">
-                <div className="text-sm text-[#535657] font-semibold">
-                  {isSavedState ? (
-                    <span className="text-[#253031] font-black flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-[#A594F9]" /> Enterprise Profile Updated!
-                    </span>
-                  ) : (
-                    <span>Changes will update across your B2B profile card instantly.</span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="px-6 py-3 rounded-xl border border-[#746D75]/40 bg-[#EDE6F2] hover:bg-[#E5D9F2] text-[#253031] text-sm font-black transition-all"
-                  >
-                    Cancel
-                  </button>
-
-                  <button
-                    type="submit"
-                    disabled={isSaving || isSavedState}
-                    className={`px-7 py-3 rounded-xl text-sm font-black text-white flex items-center gap-2.5 transition-all shadow-md ${
-                      isSavedState
-                        ? "bg-[#C5E7E2] text-[#253031] border border-[#A594F9]"
-                        : "bg-[#A594F9] hover:bg-[#8e7be5]"
-                    }`}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-5 w-5 animate-spin text-white" />
-                    ) : isSavedState ? (
-                      <CheckCircle2 className="h-5 w-5 text-[#253031]" />
-                    ) : (
-                      <Save className="h-5 w-5" />
-                    )}
-                    <span>{isSavedState ? "Saved Successfully!" : "Save Profile Studio Changes"}</span>
-                  </button>
-                </div>
+              {/* Save Footer */}
+              <div className="pt-3 border-t border-[#333B44] flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="fr8x-btn-secondary text-[11px] px-4 py-1.5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="fr8x-btn-primary text-[11px] px-6 py-1.5 flex items-center gap-1.5"
+                >
+                  {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  Save Profile Settings
+                </button>
               </div>
             </form>
           </div>
 
-          {/* Side-by-Side Live B2B Preview Card - Light Palette */}
+          {/* Right Panel: Live Preview (Optional) */}
           {showLivePreview && (
-            <div className="w-full lg:w-80 bg-[#EDE6F2]/50 text-[#253031] p-5 border-l border-[#E5D9F2] space-y-4 overflow-y-auto shrink-0">
-              <div className="flex items-center justify-between border-b border-[#E5D9F2] pb-3">
-                <h4 className="text-sm uppercase tracking-wider font-black text-[#253031] flex items-center gap-2">
-                  <Eye className="h-5 w-5 text-[#A594F9]" /> Real-Time B2B Preview
-                </h4>
-                <span className="text-xs font-mono text-[#535657] font-extrabold">{formData.publicId || "@USER"}</span>
+            <div className="w-full lg:w-72 bg-[#20252B] border-l border-[#333B44] p-4 hidden md:flex flex-col space-y-3 shrink-0">
+              <div className="text-[10px] uppercase text-[#94A3B8] font-bold tracking-wider">
+                Live Card Preview
               </div>
 
-              {/* Preview Tab Selector */}
-              <div className="flex rounded-xl bg-[#E5D9F2] p-1 border border-[#A594F9]/40 text-xs font-bold">
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab("card")}
-                  className={`flex-1 py-2 rounded-lg transition-all text-center ${
-                    previewTab === "card" ? "bg-[#A594F9] text-white font-black shadow-xs" : "text-[#253031] hover:text-black"
-                  }`}
-                >
-                  Card
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab("credentials")}
-                  className={`flex-1 py-2 rounded-lg transition-all text-center ${
-                    previewTab === "credentials" ? "bg-[#A594F9] text-white font-black shadow-xs" : "text-[#253031] hover:text-black"
-                  }`}
-                >
-                  KYC
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewTab("lanes")}
-                  className={`flex-1 py-2 rounded-lg transition-all text-center ${
-                    previewTab === "lanes" ? "bg-[#A594F9] text-white font-black shadow-xs" : "text-[#253031] hover:text-black"
-                  }`}
-                >
-                  Lanes
-                </button>
-              </div>
-
-              {/* Preview Content: Card View (Light Theme) */}
-              {previewTab === "card" && (
-                <div className="bg-white rounded-2xl border border-[#E5D9F2] overflow-hidden shadow-lg space-y-0 text-[#253031]">
-                  {/* Top Banner / Logo */}
-                  <div className="h-20 bg-gradient-to-r from-[#A594F9] via-[#E5D9F2] to-[#C5E7E2] p-3 relative flex items-end justify-end overflow-hidden border-b border-[#E5D9F2]">
-                    {formData.companyLogoURL ? (
-                      <img src={formData.companyLogoURL} alt="Logo preview" className="h-10 max-w-[120px] object-contain opacity-95 filter drop-shadow-md" />
+              <div className="bg-[#252B33] p-4 rounded-[3px] border border-[#333B44] space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#2A3038] border border-[#333B44] overflow-hidden flex items-center justify-center text-[12px] font-bold text-[#E2E8F0]">
+                    {formData.photoURL ? (
+                      <img src={formData.photoURL} alt="Preview" className="w-full h-full object-cover" />
                     ) : (
-                      <Building2 className="h-12 w-12 text-[#253031]/20 absolute right-2 bottom-1" />
+                      formData.fullName?.[0] || "U"
                     )}
                   </div>
-
-                  <div className="p-4 space-y-3.5 relative pt-0">
-                    {/* Avatar Overlap */}
-                    <div className="-mt-10 flex items-end justify-between">
-                      <div className="w-16 h-16 rounded-full bg-white border-4 border-white shadow-xl flex items-center justify-center font-black text-xl text-[#A594F9] overflow-hidden shrink-0 ring-2 ring-[#A594F9]/40">
-                        {formData.photoURL ? (
-                          <img src={formData.photoURL} alt="Preview" className="w-full h-full object-cover" />
-                        ) : (
-                          formData.fullName?.charAt(0) || "U"
-                        )}
-                      </div>
-                      <span className="text-xs font-black px-3 py-1 rounded-full bg-[#C5E7E2] text-[#253031] border border-[#A594F9]/40 flex items-center gap-1 shadow-xs">
-                        <CheckCircle2 className="h-4 w-4 text-[#253031]" /> B2B Verified
-                      </span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <h5 className="font-black text-base text-[#253031] truncate leading-snug">{formData.fullName || "Your Full Name"}</h5>
-                      <p className="text-sm text-[#535657] truncate leading-tight font-bold">{formData.designation || "Executive Role"}</p>
-                    </div>
-
-                    <div className="pt-2 border-t border-[#E5D9F2] space-y-2 text-xs text-[#253031] font-bold">
-                      <div className="flex items-center gap-2.5 truncate">
-                        <Building2 className="h-4 w-4 text-[#A594F9] shrink-0" />
-                        <span className="truncate">{formData.companyName || "Enterprise Name"}</span>
-                      </div>
-                      <div className="flex items-center gap-2.5 truncate">
-                        <MapPin className="h-4 w-4 text-[#A594F9] shrink-0" />
-                        <span className="truncate">{formData.location ? `${formData.location}${formData.country ? `, ${formData.country}` : ''}` : "City, Country"}</span>
-                      </div>
-                      {formData.website && (
-                        <div className="flex items-center gap-2.5 truncate text-[#253031] font-mono text-xs">
-                          <Globe className="h-4 w-4 text-[#A594F9] shrink-0" />
-                          <span className="truncate">{formData.website}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {formData.about && (
-                      <p className="text-xs text-[#535657] leading-relaxed line-clamp-3 pt-2 border-t border-[#E5D9F2] font-semibold">
-                        {formData.about}
-                      </p>
-                    )}
-
-                    {formData.industryTags && formData.industryTags.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-[#E5D9F2]">
-                        {formData.industryTags.slice(0, 3).map((t) => (
-                          <span key={t} className="px-2.5 py-1 rounded text-xs bg-[#EDE6F2] text-[#253031] font-bold border border-[#E5D9F2]">
-                            {t}
-                          </span>
-                        ))}
-                        {formData.industryTags.length > 3 && (
-                          <span className="px-2.5 py-1 rounded text-xs bg-[#A594F9] text-white font-black">
-                            +{formData.industryTags.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-bold text-[#E2E8F0] truncate">{formData.fullName || "User Name"}</p>
+                    <p className="text-[10px] text-[#94A3B8] truncate">{formData.designation || "Title"}</p>
                   </div>
                 </div>
-              )}
 
-              {/* Preview Content: Credentials View */}
-              {previewTab === "credentials" && (
-                <div className="bg-white p-4 rounded-2xl border border-[#E5D9F2] space-y-3 text-xs text-[#253031]">
-                  <h6 className="font-black text-[#253031] uppercase text-xs tracking-wider text-[#535657]">Trade KYC badging</h6>
-                  <div className="space-y-2">
-                    <div className="p-3 rounded-xl bg-[#F7F7FF] border border-[#E5D9F2] flex items-center justify-between">
-                      <span className="text-[#535657] font-bold text-xs">GSTIN Tax ID</span>
-                      <span className="font-mono text-[#253031] font-black text-xs">{formData.gstin || "Not Added"}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#F7F7FF] border border-[#E5D9F2] flex items-center justify-between">
-                      <span className="text-[#535657] font-bold text-xs">IEC Code</span>
-                      <span className="font-mono text-[#253031] font-black text-xs">{formData.iec || "Not Added"}</span>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#F7F7FF] border border-[#E5D9F2] flex items-center justify-between">
-                      <span className="text-[#535657] font-bold text-xs">AEO Status</span>
-                      <span className="font-black text-[#253031] text-xs">{formData.aeoStatus || "None"}</span>
-                    </div>
-                    {formData.iataNo && (
-                      <div className="p-3 rounded-xl bg-[#F7F7FF] border border-[#E5D9F2] flex items-center justify-between">
-                        <span className="text-[#535657] font-bold text-xs">IATA Agent</span>
-                        <span className="font-mono text-[#253031] font-black text-xs">{formData.iataNo}</span>
-                      </div>
-                    )}
-                  </div>
+                <div className="border-t border-[#333B44] pt-2 text-[10px] text-[#94A3B8] space-y-1">
+                  <p><span className="text-[#E2E8F0]">Company:</span> {formData.companyName || "N/A"}</p>
+                  <p><span className="text-[#E2E8F0]">Location:</span> {formData.location || "N/A"}</p>
+                  {formData.gstin && <p><span className="text-[#E2E8F0]">GSTIN:</span> {formData.gstin}</p>}
                 </div>
-              )}
-
-              {/* Preview Content: Lanes & Capacity View */}
-              {previewTab === "lanes" && (
-                <div className="bg-white p-4 rounded-2xl border border-[#E5D9F2] space-y-3 text-xs text-[#253031]">
-                  <h6 className="font-black text-[#253031] uppercase text-xs tracking-wider text-[#535657]">Capacity &amp; Network</h6>
-                  <div className="space-y-3">
-                    <div>
-                      <span className="text-[#535657] text-xs uppercase font-bold block">Trade Lanes</span>
-                      <p className="text-[#253031] font-black text-xs mt-0.5">{formData.keyTradeLanes || "Not Specified"}</p>
-                    </div>
-                    <div>
-                      <span className="text-[#535657] text-xs uppercase font-bold block">Fleet Asset Size</span>
-                      <p className="text-[#253031] font-bold text-xs mt-0.5">{formData.fleetSize || "Not Specified"}</p>
-                    </div>
-                    <div>
-                      <span className="text-[#535657] text-xs uppercase font-bold block">Warehouse Space</span>
-                      <p className="text-[#253031] font-bold text-xs mt-0.5">{formData.warehouseCapacity || "Not Specified"}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              </div>
             </div>
           )}
         </div>
       </div>
-
-      {/* Image Crop Modal */}
-      <ImageCropModal
-        isOpen={showCropModal}
-        imageSrc={cropImageSrc || formData.photoURL}
-        onClose={() => setShowCropModal(false)}
-        onSaveCrop={(cropped) => setFormData((prev) => ({ ...prev, photoURL: cropped }))}
-        onRemovePicture={() => setFormData((prev) => ({ ...prev, photoURL: null }))}
-      />
-
-      {/* Unsaved Changes Prompt Modal on Esc */}
-      {showUnsavedPrompt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#253031]/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-2xl border border-[#E5D9F2] space-y-4 text-[#253031]">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#EDE6F2] text-[#253031] rounded-xl border border-[#E5D9F2]">
-                <ShieldAlert className="h-7 w-7 text-[#A594F9]" />
-              </div>
-              <h4 className="text-lg font-black text-[#253031]">Save Profile Studio Changes?</h4>
-            </div>
-            <p className="text-sm text-[#535657] font-semibold leading-relaxed">
-              You pressed Esc. Would you like to save your enterprise profile studio changes before closing?
-            </p>
-            <div className="flex items-center justify-end gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowUnsavedPrompt(false);
-                  onClose();
-                }}
-                className="px-5 py-2.5 rounded-xl bg-[#EDE6F2] hover:bg-[#E5D9F2] text-[#253031] text-xs font-black transition-all border border-[#E5D9F2]"
-              >
-                Discard &amp; Close
-              </button>
-              <button
-                type="button"
-                onClick={async (e) => {
-                  setShowUnsavedPrompt(false);
-                  await handleFormSubmit(e as any);
-                }}
-                className="px-6 py-2.5 rounded-xl bg-[#A594F9] hover:bg-[#8e7be5] text-white text-xs font-black transition-all shadow-md"
-              >
-                Save &amp; Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
