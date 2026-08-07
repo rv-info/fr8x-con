@@ -6,50 +6,67 @@
 
 @layer base {
   :root {
-    --background: 240 20% 99%;   /* #FAFAFE Crisp Light Neutral */
-    --foreground: 222 47% 11%;   /* #0F172A Dark Slate */
-    --card: 0 0% 100%;           /* #FFFFFF Pure White Card */
-    --card-foreground: 222 47% 11%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 270 20% 95%;      /* #F2EEF5 Soft Lavender Slate */
-    --primary-foreground: 222 47% 11%;
-    --secondary: 270 20% 95%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 240 10% 96%;
-    --muted-foreground: 215 16% 35%; /* #475569 Muted Dark Text */
-    --accent: 270 20% 95%;
-    --accent-foreground: 222 47% 11%;
+    /* ── FR8X Dark Theme — Strict 4-Color Palette ── */
+    --fr8x-bg: #1E2329;          /* Main Background — Deep Charcoal */
+    --fr8x-panel: #252B33;       /* Secondary Panels — Dark Slate */
+    --fr8x-nav: #20252B;         /* Navigation / Sidebar / Tab Panels — Graphite */
+    --fr8x-grid: #2A3038;        /* Grid / Table / Input Backgrounds — Dark Grey */
+
+    /* Text Colors */
+    --fr8x-text: #E2E8F0;        /* Primary Text — Light Slate */
+    --fr8x-text-muted: #94A3B8;  /* Secondary / Muted Text */
+    --fr8x-text-label: #CBD5E1;  /* Labels */
+
+    /* Accent */
+    --fr8x-accent: #0EA5E9;      /* Sky Blue CTA */
+    --fr8x-accent-hover: #0284C7; /* Sky Blue Hover */
+
+    /* Borders */
+    --fr8x-border: #333B44;
+
+    /* Legacy variable mappings (for shadcn/radix compatibility) */
+    --background: 216 16% 14%;
+    --foreground: 215 25% 91%;
+    --card: 216 14% 17%;
+    --card-foreground: 215 25% 91%;
+    --popover: 216 14% 17%;
+    --popover-foreground: 215 25% 91%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 216 14% 17%;
+    --secondary-foreground: 215 25% 91%;
+    --muted: 215 16% 20%;
+    --muted-foreground: 215 16% 65%;
+    --accent: 216 14% 17%;
+    --accent-foreground: 215 25% 91%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 270 15% 92%;       /* #E9E4ED Light Border */
-    --input: 270 15% 92%;
-    --ring: 270 15% 90%;
-    --radius: 0.5rem;
+    --border: 213 12% 24%;
+    --input: 213 12% 24%;
+    --ring: 199 89% 48%;
+    --radius: 3px;
 
-    /* ── FR8X Light Theme + Dark Text System ── */
-    --fr8x-bg: #FAFAFE;          /* Page & Container Background */
-    --fr8x-card: #FFFFFF;        /* Card & Panel Background */
-    --fr8x-mist: #F2EEF5;        /* Light Accent Background */
-    --fr8x-lavender: #F2EEF5;
-    --fr8x-periwinkle: #F2EEF5;
-    --fr8x-frozen: #FAFAFE;
-    --fr8x-jet: #0F172A;         /* Primary Text: Dark Slate (#0F172A / #1E293B) */
-    --fr8x-dimgrey: #475569;     /* Secondary Text: Muted Dark Slate */
-    --fr8x-charcoal: #0F172A;
-
-    /* ── FR8X Typography Scale (Heading=14px, Body=12px, Small=10px) ── */
+    /* ── FR8X Typography Scale ── */
     --fr8x-font-heading: 14px;
     --fr8x-font-body:    12px;
     --fr8x-font-small:   10px;
+
+    /* Legacy aliases */
+    --fr8x-card: var(--fr8x-panel);
+    --fr8x-mist: var(--fr8x-grid);
+    --fr8x-lavender: var(--fr8x-grid);
+    --fr8x-periwinkle: var(--fr8x-accent);
+    --fr8x-frozen: var(--fr8x-bg);
+    --fr8x-jet: var(--fr8x-text);
+    --fr8x-dimgrey: var(--fr8x-text-muted);
+    --fr8x-charcoal: var(--fr8x-text);
   }
 }
 
 @layer base {
   * {
-    border-color: var(--border);
+    border-color: var(--fr8x-border);
     box-sizing: border-box;
-    color: var(--fr8x-jet);
   }
 
   html {
@@ -59,19 +76,23 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    color: var(--fr8x-jet);
+    color: var(--fr8x-text);
     background-color: var(--fr8x-bg);
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
   body {
     background-color: var(--fr8x-bg) !important;
-    color: var(--fr8x-jet) !important;
+    color: var(--fr8x-text) !important;
     font-size: var(--fr8x-font-body);
     font-weight: 400 !important;
     line-height: 1.4;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
-  /* ── NORMAL FONT WEIGHT & DARK TEXT FOR ALL HEADINGS & TEXT ── */
+  /* ── HEADINGS — Light text on dark ── */
   h1, h2, h3, h4, h5, h6,
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
@@ -79,25 +100,27 @@
     font-size: var(--fr8x-font-heading) !important;
     line-height: 1.3;
     font-weight: 400 !important;
-    color: var(--fr8x-jet) !important;
+    color: var(--fr8x-text) !important;
     font-family: "Inter", sans-serif;
   }
 
+  /* ── BODY TEXT — Light text on dark ── */
   p, span, div, label, input, select, textarea, button, a, table, td, th, li, nav,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body, .text-base, .text-sm, .text-md {
     font-size: var(--fr8x-font-body);
     line-height: 1.4;
     font-weight: 400;
-    color: var(--fr8x-jet);
+    color: var(--fr8x-text);
     font-family: "Inter", sans-serif;
   }
 
+  /* ── SMALL TEXT — Muted on dark ── */
   small, sub, sup, caption,
   .text-helper, .text-caption, .text-small, .text-xs, .text-2xs {
     font-size: var(--fr8x-font-small) !important;
     line-height: 1.35;
     font-weight: 400;
-    color: var(--fr8x-dimgrey);
+    color: var(--fr8x-text-muted);
   }
 
   /* Force normal font weight across ALL font utility classes */
@@ -106,7 +129,7 @@
     font-weight: 400 !important;
   }
 
-  /* ── CORE POPUP, MODAL, DIALOG, DROPDOWN & OVERLAY STYLING SYSTEM ── */
+  /* ── MODAL, DIALOG, POPUP, DROPDOWN STYLING — All Dark ── */
   [role="dialog"],
   [role="popover"],
   [role="menu"],
@@ -123,55 +146,72 @@
   div[class*="popover"],
   div[class*="dropdown"],
   div[class*="sheet"] {
-    color: #0F172A !important;
+    background-color: var(--fr8x-panel) !important;
+    color: var(--fr8x-text) !important;
     font-weight: 400 !important;
+    border-color: var(--fr8x-border) !important;
   }
 
-  /* Modal Containers: Light Background, Soft Border, Dark Text */
+  /* Modal Containers */
   [role="dialog"] > div,
   .modal-content,
-  .dialog-content,
-  div[class*="max-w-"],
-  div[class*="rounded-"] {
+  .dialog-content {
     font-weight: 400;
+    color: var(--fr8x-text);
   }
 
-  /* Ensure headings and text inside all modals/popups use dark slate text & normal weight */
+  /* Ensure all text inside modals/popups uses light text */
   [role="dialog"] h1, [role="dialog"] h2, [role="dialog"] h3, [role="dialog"] h4, [role="dialog"] h5, [role="dialog"] h6,
   [role="dialog"] p, [role="dialog"] span, [role="dialog"] div, [role="dialog"] label, [role="dialog"] button,
   .modal h1, .modal h2, .modal h3, .modal h4, .modal p, .modal span, .modal label, .modal button,
   .popup h1, .popup h2, .popup h3, .popup h4, .popup p, .popup span, .popup label, .popup button {
-    color: #0F172A !important;
+    color: var(--fr8x-text) !important;
     font-weight: 400 !important;
   }
 
-  /* Focus ring */
+  /* Focus ring — dark-friendly */
   *:focus-visible {
-    @apply outline-none ring-2 ring-[#F2EEF5] ring-offset-1;
+    @apply outline-none ring-2 ring-[#0EA5E9]/40 ring-offset-1 ring-offset-[#1E2329];
+  }
+
+  /* ── Dark Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--fr8x-bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--fr8x-border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4A5568;
   }
 }
 
 @layer components {
-  /* ── Cards (Clean White Background, Light Border, Dark Text) ── */
+  /* ── Cards — Dark Panel Background ── */
   .fr8x-card {
-    background-color: #FFFFFF !important;
-    border-radius: 0.75rem;
-    border: 1px solid #E9E4ED;
-    color: #0F172A !important;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
+    background-color: var(--fr8x-panel) !important;
+    border-radius: 3px;
+    border: 1px solid var(--fr8x-border);
+    color: var(--fr8x-text) !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
   }
   .fr8x-card-hover {
     @apply fr8x-card transition-shadow duration-150 hover:shadow-md;
   }
   .fr8x-card-compact {
-    background-color: #FFFFFF !important;
-    border-radius: 0.5rem;
-    border: 1px solid #E9E4ED;
+    background-color: var(--fr8x-panel) !important;
+    border-radius: 3px;
+    border: 1px solid var(--fr8x-border);
     padding: 0.5rem;
-    color: #0F172A !important;
+    color: var(--fr8x-text) !important;
   }
 
-  /* ── REMOVE ALL GRADIENT COLORS (PURE SOLID COLORS ONLY) ── */
+  /* ── REMOVE ALL GRADIENT COLORS ── */
   [class*="bg-gradient-"],
   [class*="from-"],
   [class*="via-"],
@@ -179,14 +219,14 @@
     background-image: none !important;
   }
 
-  /* ── Buttons (SOLID SKYBLUE PRIMARY BUTTONS) ── */
+  /* ── Buttons — Sky Blue Primary on Dark ── */
   .fr8x-btn-primary,
   button[type="submit"],
   .btn-primary {
     background-color: #0EA5E9 !important;
     color: #FFFFFF !important;
     font-weight: 400 !important;
-    border-radius: 0.5rem;
+    border-radius: 3px;
     padding: 0.5rem 0.875rem;
     border: 1px solid #0284C7 !important;
     transition: all 150ms ease-in-out;
@@ -199,160 +239,165 @@
   }
 
   .fr8x-btn-secondary {
-    background-color: #F0F9FF !important;
-    color: #0369A1 !important;
-    border: 1px solid #BAE6FD !important;
+    background-color: var(--fr8x-grid) !important;
+    color: var(--fr8x-accent) !important;
+    border: 1px solid var(--fr8x-border) !important;
     font-weight: 400 !important;
-    border-radius: 0.5rem;
+    border-radius: 3px;
     padding: 0.5rem 0.875rem;
     transition: all 150ms ease-in-out;
   }
   .fr8x-btn-secondary:hover {
-    background-color: #E0F2FE !important;
-    color: #0284C7 !important;
+    background-color: var(--fr8x-nav) !important;
+    color: var(--fr8x-accent-hover) !important;
   }
 
   .fr8x-btn-ghost {
-    color: #0284C7 !important;
+    color: var(--fr8x-accent) !important;
     font-weight: 400 !important;
-    border-radius: 0.5rem;
+    border-radius: 3px;
     padding: 0.5rem 0.875rem;
   }
   .fr8x-btn-ghost:hover {
-    background-color: #F0F9FF !important;
+    background-color: var(--fr8x-grid) !important;
   }
 
-  /* ── Inputs & Textareas (Light Fill, Dark Text, Subtle Border) ── */
+  /* ── Inputs & Textareas — Dark Grid Background ── */
   .fr8x-input, input[type="text"], input[type="number"], input[type="email"], input[type="date"], input[type="time"], select, textarea {
-    background-color: #FFFFFF !important;
-    color: #0F172A !important;
-    border: 1px solid #CBD5E1 !important;
-    border-radius: 0.5rem;
+    background-color: var(--fr8x-grid) !important;
+    color: var(--fr8x-text) !important;
+    border: 1px solid var(--fr8x-border) !important;
+    border-radius: 3px;
     padding: 0.5rem 0.75rem;
     font-size: var(--fr8x-font-body);
     font-weight: 400;
   }
   .fr8x-input::placeholder, input::placeholder, textarea::placeholder {
-    color: #64748B !important;
-    opacity: 0.9;
+    color: var(--fr8x-text-muted) !important;
+    opacity: 0.7;
   }
   .fr8x-input:focus, input:focus, select:focus, textarea:focus {
-    border-color: #CBD5E1 !important;
-    box-shadow: 0 0 0 2px #F2EEF5 !important;
+    border-color: var(--fr8x-accent) !important;
+    box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2) !important;
     outline: none !important;
   }
 
   .fr8x-label {
     font-weight: 400 !important;
-    color: #0F172A !important;
+    color: var(--fr8x-text-label) !important;
     font-size: var(--fr8x-font-small);
   }
 
   /* ── Section heading ── */
   .fr8x-section-heading {
     font-weight: 400 !important;
-    color: #0F172A !important;
+    color: var(--fr8x-text) !important;
     text-transform: uppercase;
     font-size: var(--fr8x-font-heading);
   }
 
-  /* ── Tables (Light Row Fills, High Contrast Text, Normal Headers) ── */
+  /* ── Tables — Dark Grid Rows ── */
   .fr8x-table { width: 100%; font-size: var(--fr8x-font-small); }
   .fr8x-table th {
     text-align: left;
     font-weight: 400 !important;
-    color: #0F172A !important;
+    color: var(--fr8x-text-label) !important;
     text-transform: uppercase;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #E9E4ED;
-    background-color: #F2EEF5;
+    border-bottom: 1px solid var(--fr8x-border);
+    background-color: var(--fr8x-nav);
   }
   .fr8x-table td {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #E9E4ED;
-    background-color: #FFFFFF;
-    color: #0F172A !important;
+    border-bottom: 1px solid var(--fr8x-border);
+    background-color: var(--fr8x-grid);
+    color: var(--fr8x-text) !important;
     font-weight: 400;
   }
   .fr8x-table tbody tr:hover {
-    background-color: #F8FAFC;
+    background-color: var(--fr8x-nav);
+  }
+  .fr8x-table tbody tr:hover td {
+    background-color: var(--fr8x-nav);
   }
 
-  /* ── Status badges (Normal Font Weight, High Contrast Text) ── */
+  /* ── Status badges — Dark Theme ── */
   .fr8x-badge {
     display: inline-flex;
     align-items: center;
-    border-radius: 9999px;
+    border-radius: 3px;
     padding: 0.125rem 0.5rem;
     font-weight: 400 !important;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #E9E4ED;
-    background-color: #F2EEF5;
-    color: #0F172A !important;
+    border: 1px solid var(--fr8x-border);
+    background-color: var(--fr8x-grid);
+    color: var(--fr8x-text) !important;
   }
-  .fr8x-badge-active  { background-color: #F2EEF5; color: #0F172A !important; }
-  .fr8x-badge-pending { background-color: #F8FAFC; color: #475569 !important; }
-  .fr8x-badge-danger  { background-color: #FEF2F2; color: #991B1B !important; border-color: #FCA5A5; }
-  .fr8x-badge-info    { background-color: #F0F9FF; color: #075985 !important; border-color: #BAE6FD; }
+  .fr8x-badge-active  { background-color: rgba(14, 165, 233, 0.15); color: #7DD3FC !important; border-color: rgba(14, 165, 233, 0.3); }
+  .fr8x-badge-pending { background-color: rgba(234, 179, 8, 0.15); color: #FDE68A !important; border-color: rgba(234, 179, 8, 0.3); }
+  .fr8x-badge-danger  { background-color: rgba(239, 68, 68, 0.15); color: #FCA5A5 !important; border-color: rgba(239, 68, 68, 0.3); }
+  .fr8x-badge-info    { background-color: rgba(14, 165, 233, 0.1); color: #7DD3FC !important; border-color: rgba(14, 165, 233, 0.2); }
 
-  /* ── Tabs ── */
+  /* ── Tabs — Dark Theme ── */
   .fr8x-tab {
     padding: 0.25rem 0.75rem;
     font-weight: 400 !important;
-    border-radius: 0.5rem;
+    border-radius: 3px;
     font-size: var(--fr8x-font-small);
-    border: 1px solid #E9E4ED;
+    border: 1px solid var(--fr8x-border);
     transition: all 150ms ease-in-out;
   }
-  .fr8x-tab-active   { background-color: #F2EEF5 !important; color: #0F172A !important; }
-  .fr8x-tab-inactive { background-color: #FFFFFF !important; color: #475569 !important; }
+  .fr8x-tab-active   { background-color: var(--fr8x-accent) !important; color: #FFFFFF !important; border-color: var(--fr8x-accent) !important; }
+  .fr8x-tab-inactive { background-color: var(--fr8x-grid) !important; color: var(--fr8x-text-muted) !important; }
 
   /* ── Stat card ── */
   .fr8x-stat {
     @apply fr8x-card-compact flex flex-col items-center justify-center text-center p-3;
   }
   .fr8x-stat-value {
-    @apply font-normal text-[var(--fr8x-jet)] tabular-nums leading-none;
+    @apply font-normal tabular-nums leading-none;
+    color: var(--fr8x-text);
     font-size: var(--fr8x-font-heading);
     font-weight: 400 !important;
   }
   .fr8x-stat-label {
-    @apply text-foreground-secondary uppercase tracking-wide mt-1;
+    @apply uppercase tracking-wide mt-1;
+    color: var(--fr8x-text-muted);
     font-size: var(--fr8x-font-small);
     font-weight: 400 !important;
   }
 
   /* ── Section divider label ── */
   .fr8x-section-bar {
-    @apply bg-[#F2EEF5] text-[var(--fr8x-jet)] font-normal px-3 py-1
-           uppercase tracking-wider border-y border-[#E9E4ED];
+    @apply font-normal px-3 py-1 uppercase tracking-wider border-y;
+    background-color: var(--fr8x-nav);
+    color: var(--fr8x-text);
+    border-color: var(--fr8x-border);
     font-size: var(--fr8x-font-heading);
     font-weight: 400 !important;
   }
 }
 
 @layer utilities {
-  /* ── Explicit Font Size Utility Overrides ── */
-  /* Heading text: 14px */
+  /* ── Font Size Utility Overrides ── */
   .text-heading-main, .text-heading-sub, .text-heading-lg, .text-heading-md, .text-heading-sm, .text-heading,
   .text-display-xl, .text-display-lg, .text-display-md, .text-display-sm,
   .text-5xl, .text-4xl, .text-3xl, .text-2xl, .text-xl, .text-lg {
-    font-size: var(--fr8x-font-heading) !important; /* 14px */
+    font-size: var(--fr8x-font-heading) !important;
   }
 
-  /* Body text: 12px */
   .text-base, .text-sm, .text-md,
   .text-body-lg, .text-body-md, .text-body-sm, .text-body {
-    font-size: var(--fr8x-font-body) !important; /* 12px */
+    font-size: var(--fr8x-font-body) !important;
   }
 
-  /* General / Helper / Small text: 10px */
   .text-helper, .text-xs, .text-2xs, .text-caption, .text-small {
-    font-size: var(--fr8x-font-small) !important; /* 10px */
+    font-size: var(--fr8x-font-small) !important;
   }
 
   .fr8x-container {
     @apply w-full max-w-full px-3 sm:px-4 lg:px-5;
+    overflow-x: hidden;
   }
 
   .sr-only {
@@ -385,5 +430,13 @@
     0%   { transform: translateX(-100%); }
     100% { transform: translateX(200%); }
   }
-}
 
+  /* ── Slide-in-right for rate detail panel ── */
+  @keyframes slideInFromRight {
+    0%   { transform: translateX(100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  .animate-slide-in-right {
+    animation: slideInFromRight 0.3s ease-out forwards;
+  }
+}
