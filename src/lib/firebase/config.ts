@@ -1,9 +1,15 @@
 // FR8X-CON Firebase Configuration
-// Initializes Firebase app, auth, firestore, storage, and app check
+// Initializes Firebase app, auth, firestore (with persistent IndexedDB cache), storage
 
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  getFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -29,7 +35,20 @@ function initializeFirebase() {
     app = getApps()[0]!;
   }
   auth = getAuth(app);
-  db = getFirestore(app);
+
+  // Initialize Firestore with persistent IndexedDB cache
+  // This ensures data survives page refresh, logout, and re-login
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  } catch {
+    // If already initialized (e.g. HMR), fall back to existing instance
+    db = getFirestore(app);
+  }
+
   storage = getStorage(app);
 
   return { app, auth, db, storage };
