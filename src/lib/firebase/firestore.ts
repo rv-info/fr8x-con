@@ -1,5 +1,5 @@
 // FR8X-CON Firestore Helpers
-// Generic CRUD operations and query builders
+// Generic CRUD operations and query builders with localStorage cache layer
 
 import {
   collection,
@@ -27,10 +27,32 @@ import {
 } from "firebase/firestore";
 import { firebaseDb } from "./config";
 
-import { dataStore } from "../services/dataStore";
+// ── localStorage Cache Helpers ──────────────────────────────────────────────
+function cacheKey(collection: string, id?: string): string {
+  return id ? `fr8x_cache_${collection}_${id}` : `fr8x_cache_${collection}`;
+}
+
+function writeCache(key: string, data: unknown): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
+  } catch { /* ignore quota errors */ }
+}
+
+function readCache<T>(key: string, maxAgeMs: number = 24 * 60 * 60 * 1000): T | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Date.now() - parsed.ts > maxAgeMs) return null;
+    return parsed.data as T;
+  } catch { return null; }
+}
 
 /**
  * Get a document by collection and ID.
+ * Uses Firestore first, then falls back to localStorage cache.
  */
 export async function getDocument<T extends DocumentData>(
   collectionName: string,
@@ -40,22 +62,22 @@ export async function getDocument<T extends DocumentData>(
     const docRef = doc(firebaseDb, collectionName, docId);
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
-      return { id: docSnap.id, ...docSnap.data() } as T & { id: string };
+      const result = { id: docSnap.id, ...docSnap.data() } as T & { id: string };
+      writeCache(cacheKey(collectionName, docId), result);
+      return result;
     }
   } catch (error) {
-    console.warn("Firestore getDocument fallback engaged:", error);
-  }
-
-  // Fallback to supreme data store for zero empty states
-  if (collectionName === "auctions") {
-    const auction = dataStore.getAuctionById(docId);
-    if (auction) return auction as unknown as T & { id: string };
+    console.warn("Firestore getDocument cache fallback:", error);
+    // Fall back to localStorage cache
+    const cached = readCache<T & { id: string }>(cacheKey(collectionName, docId));
+    if (cached) return cached;
   }
   return null;
 }
 
 /**
  * Query documents with constraints.
+ * Uses Firestore first, then falls back to localStorage cache.
  */
 export async function queryDocuments<T extends DocumentData>(
   collectionName: string,
@@ -65,25 +87,20 @@ export async function queryDocuments<T extends DocumentData>(
     const collectionRef = collection(firebaseDb, collectionName);
     const q = query(collectionRef, ...constraints);
     const snapshot = await getDocs(q);
-    if (snapshot.docs.length > 0) {
-      return snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (T & { id: string })[];
+    const results = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as (T & { id: string })[];
+    // Cache results for offline resilience
+    if (results.length > 0) {
+      writeCache(cacheKey(collectionName), results);
     }
+    return results;
   } catch (error) {
-    console.warn("Firestore queryDocuments fallback engaged:", error);
-  }
-
-  // Supreme fallback datasets
-  if (collectionName === "auctions") {
-    return dataStore.getAuctions() as unknown as (T & { id: string })[];
-  }
-  if (collectionName === "rates") {
-    return dataStore.getRates() as unknown as (T & { id: string })[];
-  }
-  if (collectionName === "posts") {
-    return dataStore.getPosts() as unknown as (T & { id: string })[];
+    console.warn("Firestore queryDocuments cache fallback:", error);
+    // Fall back to localStorage cache
+    const cached = readCache<(T & { id: string })[]>(cacheKey(collectionName));
+    if (cached) return cached;
   }
 
   return [];
