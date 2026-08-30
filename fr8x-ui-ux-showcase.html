@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FR8X - Global Container Freight Sourcing & B2B Reverse Auction Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', Consolas, monospace;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --ink: #0f172a;
+      --ink-secondary: #1e293b;
+      --mut: #334155;
+      --faint: #475569;
+      --line: #cbd5e1;
+      --line-light: #e2e8f0;
+      --brand: #0284c7;
+      --brand-hover: #0369a1;
+      --brand-soft: #e0f2fe;
+      --teal: #0d9488;
+      --teal-soft: #ccfbf1;
+      --green: #15803d;
+      --green-soft: #dcfce7;
+      --amber: #b45309;
+      --amber-soft: #fef3c7;
+      --red: #b91c1c;
+      --red-soft: #fee2e2;
+      --gold: #d97706;
+      --gold-gradient: linear-gradient(135deg, #f59e0b, #d97706);
+      --sh: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --sh-md: 0 4px 6px -1px rgba(0,0,0,0.07), 0 2px 4px -1px rgba(0,0,0,0.04);
+      --sh-lg: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -2px rgba(0,0,0,0.04);
+      --r: 10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .app-container {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    aside.sidebar {
+      background: #ffffff;
+      border-right: 1px solid var(--line);
+      padding: 20px 14px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--ink);
+      margin-bottom: 20px;
+      padding: 0 6px;
+    }
+    .brand-badge {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--brand), var(--teal));
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+    }
+    .brand-logo span { color: var(--teal); }
+
+    .org-pill {
+      background: #f1f5f9;
+      border: 1px solid var(--line-light);
+      border-radius: 8px;
+      padding: 8px 10px;
+      margin-bottom: 18px;
+    }
+    .org-pill small { display: block; font-size: 9px; font-weight: 800; color: var(--faint); text-transform: uppercase; letter-spacing: 0.5px; }
+    .org-pill b { font-size: 12px; color: var(--ink); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .nav-section-title {
+      font-size: 9.5px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--faint);
+      padding: 10px 8px 4px;
+    }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 16px;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--mut);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .nav-item:hover {
+      background: #f1f5f9;
+      color: var(--ink);
+    }
+    .nav-item.active {
+      background: var(--brand-soft);
+      color: var(--brand);
+      border-left-color: var(--brand);
+      font-weight: 700;
+    }
+    .nav-item .count {
+      margin-left: auto;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #e2e8f0;
+      color: var(--ink);
+    }
+    .nav-item.active .count {
+      background: var(--brand);
+      color: white;
+    }
+
+    .sidebar-user {
+      margin-top: auto;
+      border-top: 1px solid var(--line-light);
+      padding-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--brand), var(--brand-hover));
+      color: white;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    /* Main Area */
+    main.main-content {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* Top Bar */
+    header.top-bar {
+      height: 58px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .live-fx-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-family: var(--font-mono);
+    }
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Standard Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 7px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: var(--brand); color: white; }
+    .btn-primary:hover { background: var(--brand-hover); }
+    .btn-secondary { background: white; border-color: var(--line); color: var(--ink); }
+    .btn-secondary:hover { background: #f8fafc; border-color: #94a3b8; }
+    .btn-danger { background: var(--red-soft); border-color: #fecaca; color: var(--red); }
+    .btn-sm { height: 28px; padding: 0 10px; font-size: 11.5px; }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+    }
+    .badge-blue { background: var(--brand-soft); color: var(--brand); }
+    .badge-green { background: var(--green-soft); color: var(--green); }
+    .badge-amber { background: var(--amber-soft); color: var(--amber); }
+    .badge-red { background: var(--red-soft); color: var(--red); }
+    .badge-grey { background: #f1f5f9; color: var(--mut); }
+
+    .golden-tick {
+      width: 15px;
+      height: 15px;
+      background: var(--gold-gradient);
+      color: white;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 900;
+      box-shadow: 0 1px 4px rgba(217, 119, 6, 0.4);
+    }
+
+    /* Page Container */
+    .view-content {
+      padding: 24px 28px 80px;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    /* Cards */
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      padding: 20px;
+      box-shadow: var(--sh);
+      margin-bottom: 16px;
+    }
+
+    /* Grids */
+    .grid { display: grid; gap: 14px; }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+    /* Tables */
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--r);
+      background: white;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      color: var(--ink);
+      font-weight: 800;
+      padding: 10px 14px;
+      border-bottom: 1.5px solid var(--line);
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line-light);
+      color: var(--ink);
+    }
+    tr:hover { background: #f8fafc; }
+
+    /* Key Value Pairs */
+    .kv-box {
+      background: #f8fafc;
+      border: 1px solid var(--line-light);
+      border-radius: 8px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .kv-box span { font-size: 11.5px; color: var(--mut); font-weight: 600; }
+    .kv-box b { font-size: 13px; color: var(--ink); font-weight: 700; }
+
+    /* Modal Styling */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(3px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: var(--sh-lg);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-logo">
+        <div class="brand-badge">FX</div>
+        FR8X <span>CON</span>
+      </div>
+
+      <div class="org-pill">
+        <small>Enterprise Hub</small>
+        <b>Cogoport / Atlas Logistics</b>
+      </div>
+
+      <div class="nav-section-title">Core Operations</div>
+      <ul class="nav-menu">
+        <li><a class="nav-item active" onclick="switchSection('auctions')"><span>🔨</span> Reverse Auctions <span class="count">4 Active</span></a></li>
+        <li><a class="nav-item" onclick="switchSection('profile')"><span>🛡️</span> Corporate KYC & Profile</a></li>
+        <li><a class="nav-item" onclick="switchSection('nexus')"><span>🌐</span> Nexus Intelligence <span class="count">Verified</span></a></li>
+      </ul>
+
+      <div class="sidebar-user">
+        <div class="user-avatar">RR</div>
+        <div>
+          <b style="font-size: 12.5px; color: var(--ink); display: block;">Rajat Kumar Rai <span class="golden-tick">✓</span></b>
+          <small style="font-size: 11px; color: var(--mut);">Director of Ocean Freight</small>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- TopBar Header -->
+      <header class="top-bar">
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <h2 id="section-title" style="font-size: 16px; font-weight: 800; color: var(--ink);">Reverse Auctions · Live Bid Rooms</h2>
+          <div class="live-fx-badge">
+            <div class="pulse-dot"></div>
+            <span>LIVE INTERBANK FX: 1 USD = 87.42 INR</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="btn btn-secondary btn-sm" onclick="alert('Forex interbank rates synchronized with European Central Bank.');">⚡ Sync Live FX</button>
+          <button class="btn btn-primary btn-sm" onclick="openModal('modal-posting-fee')">+ Create Reverse Auction</button>
+        </div>
+      </header>
+
+      <!-- Dynamic View Container -->
+      <div class="view-content">
+
+        <!-- SECTION 1: REVERSE AUCTIONS (Default) -->
+        <div id="sec-auctions">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; color: var(--ink);">Live Reverse Auction Rooms</h1>
+              <p style="font-size: 12.5px; color: var(--mut); margin-top: 2px;">
+                Forwarder bidding participation is <b>100% FREE (₹0 Fee)</b>. Spot freight procurement with SAP Ariba rank algorithm.
+              </p>
+            </div>
+            <span class="badge badge-green" style="font-size: 11px; padding: 4px 10px;">🛡️ Level-3 Verified Anonymized Protocol</span>
+          </div>
+
+          <!-- Auction Metrics -->
+          <div class="grid grid-4" style="margin-bottom: 18px;">
+            <div class="card" style="padding: 14px;">
+              <small style="font-size: 10px; font-weight: 800; color: var(--mut); text-transform: uppercase;">Active Auctions</small>
+              <b style="font-size: 22px; color: var(--ink); display: block; margin-top: 2px;">4 Live Rooms</b>
+              <span class="badge badge-blue">Real-Time Rank Active</span>
+            </div>
+            <div class="card" style="padding: 14px;">
+              <small style="font-size: 10px; font-weight: 800; color: var(--mut); text-transform: uppercase;">Participation Fee</small>
+              <b style="font-size: 22px; color: var(--green); display: block; margin-top: 2px;">FREE / ₹0</b>
+              <span class="badge badge-green">0% Commission on Quotes</span>
+            </div>
+            <div class="card" style="padding: 14px;">
+              <small style="font-size: 10px; font-weight: 800; color: var(--mut); text-transform: uppercase;">Posting Fee (Shipper)</small>
+              <b style="font-size: 22px; color: var(--brand); display: block; margin-top: 2px;">₹180 / ₹300</b>
+              <span class="badge badge-amber">40% Premium Discount</span>
+            </div>
+            <div class="card" style="padding: 14px;">
+              <small style="font-size: 10px; font-weight: 800; color: var(--mut); text-transform: uppercase;">Est. Freight Savings</small>
+              <b style="font-size: 22px; color: var(--ink); display: block; margin-top: 2px;">14.2%</b>
+              <span class="badge badge-green">Avg vs Liner Baseline</span>
+            </div>
+          </div>
+
+          <!-- Live Bidding Room Card -->
+          <div class="card" style="border: 2px solid var(--brand); background: #ffffff;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--line-light); padding-bottom: 14px; margin-bottom: 14px;">
+              <div>
+                <span class="badge badge-blue">AUC-2026-9021</span>
+                <b style="font-size: 16px; color: var(--ink); margin-left: 8px;">Nhava Sheva (INNSA) → Rotterdam (NLRTM) Spot Container Allocation</b>
+                <p style="font-size: 12px; color: var(--mut); margin-top: 4px;">Commodity: Heavy Engineering Parts · Total: 10x 40HC + 5x 20DV · Incoterm: FOB</p>
+              </div>
+              <div style="text-align: right;">
+                <span style="font-size: 11px; color: var(--red); font-weight: 800; font-family: var(--font-mono);">⏱️ ENDS IN: 28m 42s</span>
+                <span class="badge badge-green" style="display: block; margin-top: 4px;">YOUR CURRENT RANK: #1</span>
+              </div>
+            </div>
+
+            <!-- Table of Equipment Charges -->
+            <div class="table-wrap" style="margin-bottom: 14px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Equipment</th>
+                    <th>Qty</th>
+                    <th>Ocean Freight ($)</th>
+                    <th>Origin Local ($)</th>
+                    <th>Dest Local ($)</th>
+                    <th>Unit Total</th>
+                    <th>Item Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><b>40HC High Cube</b></td>
+                    <td>10 Units</td>
+                    <td><input type="number" value="1850" style="width: 80px; padding: 4px; border: 1.5px solid var(--line); border-radius: 4px; font-weight: 700;" /></td>
+                    <td>$140.00</td>
+                    <td>$180.00</td>
+                    <td><b>$2,170.00</b></td>
+                    <td><b style="color: var(--brand);">$21,700.00</b></td>
+                  </tr>
+                  <tr>
+                    <td><b>20DV Standard Dry</b></td>
+                    <td>5 Units</td>
+                    <td><input type="number" value="1150" style="width: 80px; padding: 4px; border: 1.5px solid var(--line); border-radius: 4px; font-weight: 700;" /></td>
+                    <td>$110.00</td>
+                    <td>$140.00</td>
+                    <td><b>$1,400.00</b></td>
+                    <td><b style="color: var(--brand);">$7,000.00</b></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--line-light);">
+              <div>
+                <small style="color: var(--mut); font-size: 11px; display: block;">COMPETITION CEILING: $31,500.00 USD (L1 Lowest Offer)</small>
+                <span style="font-size: 12px; color: var(--green); font-weight: 700;">Margin Spread: $2,800.00 below ceiling (Rank #1 Leader)</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="text-align: right;">
+                  <small style="font-size: 10px; color: var(--faint); display: block;">GRAND TOTAL BID (USD)</small>
+                  <b style="font-size: 18px; color: var(--ink); font-family: var(--font-mono);">$28,700.00 USD</b>
+                </div>
+                <button class="btn btn-primary" onclick="alert('Spot Bid of $28,700.00 USD submitted successfully. Bidding Participation is 100% Free!');">
+                  🔨 Confirm &amp; Submit Bid
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: PROFILE & CORPORATE KYC -->
+        <div id="sec-profile" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; color: var(--ink);">Enterprise Member Identity & KYC</h1>
+              <p style="font-size: 12.5px; color: var(--mut); margin-top: 2px;">
+                Statutory Trade Filings, Accredited Credentials, and Operational Experience Ledger.
+              </p>
+            </div>
+          </div>
+
+          <!-- Hero Profile Card -->
+          <div class="card" style="display: flex; justify-content: space-between; align-items: center; padding: 22px;">
+            <div style="display: flex; align-items: center; gap: 18px;">
+              <div style="width: 72px; height: 72px; border-radius: 14px; background: linear-gradient(135deg, var(--brand), var(--brand-hover)); color: white; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 900;">
+                RR
+              </div>
+              <div>
+                <h2 style="font-size: 20px; font-weight: 800; color: var(--ink);">Rajat Kumar Rai <span class="golden-tick">✓</span></h2>
+                <div style="font-size: 13.5px; font-weight: 600; color: var(--brand);">Director of Freight Procurement at Atlas Logistics Pvt. Ltd.</div>
+                <small style="color: var(--mut); font-size: 12px; display: block; margin-top: 2px;">📍 Mumbai, India (Nhava Sheva Hub) · IATA: 14-3-8821 · MTO: MTO/DGS/2024/9912</small>
+              </div>
+            </div>
+            <div style="background: #eff6ff; border: 1.5px solid #bfdbfe; padding: 12px 20px; border-radius: 10px; text-align: center;">
+              <small style="color: var(--brand); font-size: 10px; font-weight: 800; text-transform: uppercase;">FR8X TRUST SCORE</small>
+              <div style="font-size: 26px; font-weight: 900; color: var(--brand);">98/100</div>
+              <span class="badge badge-green" style="font-size: 9px;">Tier-1 Verified Forwarder</span>
+            </div>
+          </div>
+
+          <!-- Card 4: Corporate KYC & Statutory Trade Filings -->
+          <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line-light); padding-bottom: 12px; margin-bottom: 14px;">
+              <b style="font-size: 15px; color: var(--ink);">Statutory Trade Filings & KYC Identifiers</b>
+              <span class="badge badge-green">100% REGULATORY COMPLIANT</span>
+            </div>
+            <div class="grid grid-2">
+              <div class="kv-box">
+                <span>GSTN Identification</span>
+                <b style="font-family: var(--font-mono);">27AABCA1234F1Z5 <span class="badge badge-green">ACTIVE</span></b>
+              </div>
+              <div class="kv-box">
+                <span>Income Tax PAN</span>
+                <b style="font-family: var(--font-mono);">AABCA1234F <span class="badge badge-green">VERIFIED</span></b>
+              </div>
+              <div class="kv-box">
+                <span>Import Export Code (IEC)</span>
+                <b style="font-family: var(--font-mono);">0388129941 <span class="badge badge-green">DGFT VALID</span></b>
+              </div>
+              <div class="kv-box">
+                <span>MTO License Number</span>
+                <b style="font-family: var(--font-mono);">MTO/DGS/2024/9912 <span class="badge badge-green">RECOGNISED</span></b>
+              </div>
+              <div class="kv-box">
+                <span>IATA Cargo Numeric Code</span>
+                <b style="font-family: var(--font-mono);">14-3-8821</b>
+              </div>
+              <div class="kv-box">
+                <span>Authorized Economic Operator</span>
+                <b style="color: var(--brand);">AEO-T2 Certified (CBIC)</b>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: NEXUS INTELLIGENCE & MONITORED BLACKLIST -->
+        <div id="sec-nexus" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+              <h1 style="font-size: 20px; font-weight: 800; color: var(--ink);">Nexus Trade Intelligence Hub</h1>
+              <p style="font-size: 12.5px; color: var(--mut); margin-top: 2px;">
+                Peer freight reviews, community forums, and auditable Monitored Blacklist verification dossiers.
+              </p>
+            </div>
+            <button class="btn btn-danger" onclick="openModal('modal-dossier')">🛡️ Inspect Blacklist Dossier</button>
+          </div>
+
+          <div class="grid grid-2">
+            <!-- Community Topic Card with Reactions -->
+            <div class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <span class="badge badge-blue">Routing Strategy</span>
+                <small style="color: var(--mut); font-size: 11px;">2 hours ago</small>
+              </div>
+              <b style="font-size: 15px; color: var(--ink); display: block; margin-bottom: 6px;">
+                Demurrage evasion strategies for Rotterdam ECT Delta terminal transshipments
+              </b>
+              <p style="font-size: 12.5px; color: var(--ink-secondary); line-height: 1.5; margin-bottom: 14px;">
+                Reviewing 14-day vs 21-day carrier detention packages across MSC and Ocean Alliance lines for inland barge transit...
+              </p>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--line-light); padding-top: 10px;">
+                <span style="font-size: 12px; color: var(--mut);">By <b>Atlas Procurement</b></span>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-secondary btn-sm" onclick="alert('Liked topic!');">👍 24</button>
+                  <button class="btn btn-secondary btn-sm" onclick="alert('Disliked topic!');">👎 1</button>
+                  <button class="btn btn-secondary btn-sm" onclick="alert('Report submitted to moderation board.');">🚩 Report</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monitored Blacklist Card -->
+            <div class="card" style="border: 1.5px solid #fca5a5; background: #fffdfd;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <b style="font-size: 15px; color: var(--red);">Apex Maritime Trans NV</b>
+                <span class="badge badge-red">CRITICAL RISK</span>
+              </div>
+              <div style="background: #fef2f2; padding: 10px 12px; border-radius: 6px; border: 1px solid #fee2e2; margin-bottom: 12px;">
+                <b style="font-size: 12px; color: var(--red); display: block;">Infraction: Unpaid Ocean Demurrage Default</b>
+                <p style="font-size: 12px; color: var(--ink-secondary); margin-top: 4px;">
+                  Overdue default of $34,200 USD on 18 containers for over 180 days with no proof of remittance.
+                </p>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <small style="color: var(--mut); font-size: 11px;">Evidence: <b>INV-2026-9081 / OBL-8812</b></small>
+                <button class="btn btn-danger btn-sm" onclick="openModal('modal-dossier')">Inspect Dossier</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: Blacklist Due Diligence Dossier -->
+  <div id="modal-dossier" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 12px; margin-bottom: 14px;">
+        <h3 style="font-size: 16px; color: var(--red); font-weight: 800;">🛡️ Blacklist Verification Dossier: Apex Maritime Trans NV</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-dossier')">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12.5px;">
+        <div style="padding: 12px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px;">
+          <b style="color: var(--red);">Case Docket #BLK-2026-8819 · Verified Default</b>
+          <p style="margin-top: 4px; color: var(--ink-secondary);">
+            Default Exposure: <b>$34,200.00 USD</b> · Days Overdue: <b>184 Days</b> · Notice Window Expired Without Settlement.
+          </p>
+        </div>
+        <b style="color: var(--ink);">Auditable Evidentiary Ledger:</b>
+        <div class="kv-box">
+          <span>📄 Commercial Freight Invoices & Demurrage Statement</span>
+          <span class="badge badge-green">AUTHENTICATED</span>
+        </div>
+        <div class="kv-box">
+          <span>📜 Original Ocean Master Bill of Lading (OBL-8812)</span>
+          <span class="badge badge-green">FILED</span>
+        </div>
+        <div class="kv-box">
+          <span>⚖️ Registered Legal Demand Notice & Speedpost Postal AD Proof</span>
+          <span class="badge badge-green">SERVED</span>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+          <button class="btn btn-secondary" onclick="closeModal('modal-dossier')">Close Dossier</button>
+          <button class="btn btn-danger" onclick="alert('Dispute counter-evidence submitted to review queue.'); closeModal('modal-dossier');">Submit Counter Dispute</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Auction Posting Fee -->
+  <div id="modal-posting-fee" class="modal-backdrop">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1.5px solid var(--line); padding-bottom: 12px; margin-bottom: 14px;">
+        <h3 style="font-size: 16px; color: var(--ink); font-weight: 800;">Create & Publish Reverse Auction</h3>
+        <button class="btn btn-secondary btn-sm" onclick="closeModal('modal-posting-fee')">✕</button>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12.5px;">
+        <div style="padding: 14px; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <b style="color: var(--green); font-size: 14px; display: block;">Auction Publication Posting Fee</b>
+              <small style="color: var(--mut);">Covers verified bidder dispatch & live room orchestration</small>
+            </div>
+            <div style="text-align: right;">
+              <b style="font-size: 18px; color: var(--green);">₹180 INR</b>
+              <span class="badge badge-green" style="display: block; font-size: 9px;">40% Premium Discount</span>
+            </div>
+          </div>
+        </div>
+        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--line);">
+          <b style="display: block; margin-bottom: 4px;">💡 Fee Model Rules:</b>
+          <ul style="padding-left: 18px; color: var(--ink-secondary);">
+            <li>Posting Fee is paid once by creator upon publishing the RFQ.</li>
+            <li><b>Bidding Participation is 100% FREE (₹0)</b> for all participating freight forwarders.</li>
+          </ul>
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+          <button class="btn btn-secondary" onclick="closeModal('modal-posting-fee')">Cancel</button>
+          <button class="btn btn-primary" onclick="alert('Auction published live! Bidders notified.'); closeModal('modal-posting-fee');">Pay ₹180 & Publish Auction</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function switchSection(secId) {
+      document.getElementById('sec-auctions').style.display = secId === 'auctions' ? 'block' : 'none';
+      document.getElementById('sec-profile').style.display = secId === 'profile' ? 'block' : 'none';
+      document.getElementById('sec-nexus').style.display = secId === 'nexus' ? 'block' : 'none';
+      
+      const titles = {
+        auctions: 'Reverse Auctions · Live Bid Rooms',
+        profile: 'Enterprise Member Identity & KYC Filings',
+        nexus: 'Nexus Trade Intelligence Hub'
+      };
+      if (titles[secId]) {
+        document.getElementById('section-title').innerText = titles[secId];
+      }
+
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+  </script>
+</body>
+</html>

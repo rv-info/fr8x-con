@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_FIREBASE_EMULATOR=true
+      - NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_URL=http://localhost:9099
+      - NEXT_PUBLIC_FIRESTORE_EMULATOR_HOST=localhost:8080
+      - NEXT_PUBLIC_FIREBASE_STORAGE_EMULATOR_HOST=localhost:9199
+    depends_on:
+      - firebase-emulators
+
+  firebase-emulators:
+    image: spine3/firebase-tools:latest
+    ports:
+      - "4000:4000" # Emulator Suite UI
+      - "8080:8080" # Cloud Firestore
+      - "9099:9099" # Firebase Auth
+      - "9199:9199" # Firebase Storage
+      - "5001:5001" # Cloud Functions
+    volumes:
+      - ./:/app
+    command: firebase emulators:start --project=fr8x-local
