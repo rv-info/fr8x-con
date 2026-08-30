@@ -2,13 +2,8 @@
   "framework": "nextjs",
   "redirects": [
     {
-      "source": "/godfatheron",
-      "destination": "/GODFATHERON",
-      "permanent": true
-    },
-    {
       "source": "/godfather/login",
-      "destination": "/GODFATHERON",
+      "destination": "/godfatheron",
       "permanent": true
     }
   ],
@@ -43,7 +38,7 @@
       ]
     },
     {
-      "source": "/GODFATHERON",
+      "source": "/godfatheron",
       "headers": [
         {
           "key": "X-Robots-Tag",

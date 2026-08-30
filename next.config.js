@@ -8,13 +8,9 @@ const nextConfig = {
   async redirects() {
     return [
       {
-        source: '/godfatheron',
-        destination: '/GODFATHERON',
-        permanent: true,
-      },
-      {
+        // /godfather/login is an alias — redirect to the actual login page
         source: '/godfather/login',
-        destination: '/GODFATHERON',
+        destination: '/godfatheron',
         permanent: true,
       },
     ];
@@ -22,7 +18,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/GODFATHERON',
+        source: '/godfatheron',
         headers: [
           {
             key: 'X-Robots-Tag',

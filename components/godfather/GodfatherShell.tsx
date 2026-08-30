@@ -17,7 +17,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
   const { isAuthenticated } = useGodfatherAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const isLoginPage = pathname === '/godfather/login' || pathname === '/GODFATHERON' || pathname === '/godfatheron';
+  const isLoginPage = pathname.toLowerCase() === '/godfatheron' || pathname === '/godfather/login';
 
   // If visiting login page, render standalone high-security login shell
   if (isLoginPage) {

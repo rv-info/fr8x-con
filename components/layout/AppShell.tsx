@@ -22,7 +22,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
-  const isGodfather = pathname.startsWith('/godfather') || pathname.startsWith('/GODFATHERON') || pathname.startsWith('/godfatheron');
+  const isGodfather = pathname.toLowerCase().startsWith('/godfather') || pathname.toLowerCase().startsWith('/godfatheron');
 
   if (isGodfather || isAuthPage) {
     return <main style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}>{children}</main>;
