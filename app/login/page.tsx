@@ -41,7 +41,7 @@ export default function LoginPage() {
       const success = login(email, password);
       if (success) {
         toast('Logged in successfully to FR8X Workspace.');
-        router.push('/auctions');
+        router.push('/feeds');
       } else {
         setErrorMessage('Invalid credentials or account locked.');
       }

@@ -30,6 +30,9 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
 
   return (
     <>
+      {/* Italian Flag Luxury Top Ribbon */}
+      <div className="gf-tricolore-ribbon" />
+
       <header className="gf-topbar">
         {/* Left: Mobile Toggle & Breadcrumbs */}
         <div className="flex items-center gap-3">
@@ -43,7 +46,10 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
             </button>
           )}
           <div className="gf-topbar-breadcrumb flex items-center gap-2">
-            <span className="text-slate-400 font-mono text-xs hidden sm:inline">GODFATHER /</span>
+            <span className="text-emerald-400 font-mono font-bold text-xs hidden sm:inline flex items-center gap-1">
+              <span>🇮🇹</span>
+              <span>IL PADRINO /</span>
+            </span>
             <h1 className="text-sm font-bold text-slate-100 tracking-wide">{activeTitle}</h1>
           </div>
         </div>

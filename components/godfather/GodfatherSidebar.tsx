@@ -122,20 +122,23 @@ export function GodfatherSidebar() {
             <ShieldCheck className="lucide w-5 h-5 text-white" />
           </div>
           <div>
-            <div className="gf-brand-title font-mono font-bold tracking-wider text-sm text-slate-100 flex items-center gap-1.5">
-              GODFATHER
-              <span className="text-[10px] text-teal-400 font-sans font-bold bg-teal-950 px-1 py-0.5 rounded border border-teal-800">
-                PRO
+            <div className="gf-brand-title font-mono font-black tracking-wider text-sm text-slate-100 flex items-center gap-1.5">
+              IL PADRINO
+              <span className="text-[9px] text-amber-300 font-sans font-black bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-600/60 tracking-normal shadow-sm">
+                SOVRANO
               </span>
             </div>
-            <div className="text-[10px] text-slate-400 font-medium">FR8X CONTROL · CON.FR8X.IN</div>
+            <div className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
+              <span>🇮🇹</span>
+              <span>ITALIAN SUPER ADMIN · CON.FR8X.IN</span>
+            </div>
           </div>
         </Link>
 
         {/* Environment Badge & Switcher */}
-        <div className="gf-env-select-wrap mt-2 flex items-center justify-between">
+        <div className="gf-env-select-wrap mt-2.5 flex items-center justify-between">
           <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
             {environment}
           </span>
           <select

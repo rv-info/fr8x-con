@@ -83,6 +83,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
   canManageRoles: boolean;
   canViewAudit: boolean;
   canManageTemplates: boolean;
+  canManageEmail: boolean;
   canManageSupport: boolean;
 }> = {
   godfather_owner: {
@@ -99,6 +100,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: true,
     canViewAudit: true,
     canManageTemplates: true,
+    canManageEmail: true,
     canManageSupport: true,
   },
   godfather_operations: {
@@ -115,6 +117,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: false,
     canViewAudit: true,
     canManageTemplates: true,
+    canManageEmail: true,
     canManageSupport: true,
   },
   godfather_moderator: {
@@ -131,6 +134,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: false,
     canViewAudit: true,
     canManageTemplates: false,
+    canManageEmail: false,
     canManageSupport: false,
   },
   godfather_finance: {
@@ -147,6 +151,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: false,
     canViewAudit: true,
     canManageTemplates: false,
+    canManageEmail: false,
     canManageSupport: false,
   },
   godfather_compliance: {
@@ -163,6 +168,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: false,
     canViewAudit: true,
     canManageTemplates: false,
+    canManageEmail: false,
     canManageSupport: true,
   },
   godfather_support: {
@@ -179,6 +185,7 @@ export const ROLE_PERMISSIONS: Record<GodfatherRole, {
     canManageRoles: false,
     canViewAudit: true,
     canManageTemplates: false,
+    canManageEmail: false,
     canManageSupport: true,
   },
 };
