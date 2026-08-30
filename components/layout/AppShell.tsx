@@ -22,9 +22,10 @@ function ShellLayout({ children }: { children: ReactNode }) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const isGodfather = pathname.startsWith('/godfather');
 
-  if (isAuthPage) {
-    return <main>{children}</main>;
+  if (isGodfather || isAuthPage) {
+    return <main style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}>{children}</main>;
   }
 
   // Get active page title for header breadcrumb
