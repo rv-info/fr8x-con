@@ -29,7 +29,7 @@ export default function DedicatedGodfatherLoginPage() {
   const [stage, setStage] = useState<'credentials' | 'mfa_challenge' | 'hardware_key' | 'success'>('credentials');
 
   // Form Fields
-  const [email, setEmail] = useState('admin.security@con.fr8x.in');
+  const [email, setEmail] = useState('tech@fr8x.in');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState('');

@@ -386,3 +386,96 @@ export interface SecurityEvent {
   correlationId: string;
 }
 
+export interface SensitiveWordRule {
+  id: string;
+  wordOrPattern: string;
+  category: 'fraud' | 'circumvention' | 'abusive' | 'competitor' | 'illegal';
+  severity: 'quarantine' | 'mask' | 'block' | 'flag';
+  matchType: 'exact' | 'contains' | 'regex';
+  active: boolean;
+  hitsCount: number;
+  description: string;
+  createdAt: string;
+  updatedBy: string;
+}
+
+export interface TermsAgreement {
+  id: string;
+  code: 'membership_tac' | 'auction_bidding_rules' | 'job_posting_tac' | 'ad_posting_policy' | 'ip_copyright_policy' | 'commercial_fee_policy';
+  title: string;
+  version: string;
+  effectiveDate: string;
+  summary: string;
+  fullText: string;
+  enforceAtRegistration: boolean;
+  enforceAtAuctionCreate: boolean;
+  enforceAtBidSubmit: boolean;
+  enforceAtJobPost: boolean;
+  enforceAtAdPost: boolean;
+  mandatoryClickwrap: boolean;
+  updatedAt: string;
+  updatedBy: string;
+  totalAcceptances: number;
+}
+
+export interface ComplianceRecord {
+  id: string;
+  entityId: string;
+  entityName: string;
+  entityType: 'company' | 'individual_forwarder';
+  type: 'gstin_audit' | 'pan_verification' | 'aml_sanctions' | 'dpdp_compliance' | 'mto_license';
+  status: 'compliant' | 'flagged' | 'remediation_required' | 'under_investigation';
+  riskScore: number;
+  lastAuditedAt: string;
+  auditedBy: string;
+  details: string;
+  validUntil?: string;
+  certificateRef?: string;
+}
+
+export interface PaymentGatewayConfig {
+  gatewayId: string;
+  provider: 'Razorpay' | 'PayPal' | 'Stripe' | 'Cashfree' | 'UPI_Direct' | 'Bank_Wire';
+  title: string;
+  logo: string;
+  environment: 'production' | 'sandbox';
+  enabled: boolean;
+  currencies: string[];
+  publicIdentifier: string;
+  secretKeyVaultRef: string;
+  webhookUrl: string;
+  webhookStatus: 'healthy' | 'degraded' | 'failing';
+  transactionFee: string;
+  settlementTimeline: string;
+  allowedModules: {
+    registration: boolean;
+    auctions: boolean;
+    jobPosts: boolean;
+    adPosts: boolean;
+    kycVerification: boolean;
+  };
+  commercialUtilityNote: string;
+  lastTestedAt: string;
+}
+
+export interface MonthlyAccountingSummary {
+  monthId: string;
+  monthName: string;
+  year: number;
+  grossRevenue: number;
+  subscriptionRevenue: number;
+  auctionBiddingRevenue: number;
+  jobPostRevenue: number;
+  adPostingRevenue: number;
+  kycVerificationRevenue: number;
+  cgst: number;
+  sgst: number;
+  igst: number;
+  totalTax: number;
+  gatewayDeductions: number;
+  netSettledRevenue: number;
+  totalTransactions: number;
+  currency: 'INR';
+  status: 'settled' | 'auditing' | 'in_progress';
+}
+

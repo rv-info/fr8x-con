@@ -3252,37 +3252,44 @@ textarea.input {
 }
 
 /* ==========================================================================
-   FR8X GODFATHER SUPER ADMIN CONSOLE - ITALIAN LUXURY & TRICOLORE THEME
-   Palette: Verde Italiano (#008C45), Bianco Puro (#FFFFFF), Rosso Corsa (#CD212A), Oro (#D4AF37)
+   FR8X GODFATHER SUPER ADMIN CONSOLE - LIGHT GREEN ITALIAN LUXURY THEME
+   Palette: Verde Italiano (#008C45), Verde Chiaro (#eaf4ee), Bianco Puro (#FFFFFF),
+            Rosso Corsa (#CD212A), Sovereign Oro (#D4AF37), Forest Ink (#0d2b1d)
    ========================================================================== */
 
 :root {
   --gf-verde: #008C45;
   --gf-verde-light: #00b359;
   --gf-verde-dark: #005a2c;
+  --gf-verde-soft: #e1f4e9;
+  --gf-verde-bg: #f2f7f4;
   --gf-bianco: #ffffff;
   --gf-rosso: #CD212A;
   --gf-rosso-light: #e63946;
-  --gf-rosso-dark: #8b0000;
+  --gf-rosso-soft: #fde8e9;
   --gf-oro: #D4AF37;
-  --gf-oro-light: #f3c64c;
-  --gf-notte: #070d18;
-  --gf-notte-card: #0d1627;
-  --gf-notte-border: #1a2a46;
+  --gf-oro-dark: #b45309;
+  --gf-oro-soft: #fef3c7;
+  --gf-border: #cfe0d6;
+  --gf-border-light: #e0eee6;
+  --gf-ink: #0d2b1d;
+  --gf-ink-secondary: #1e4a34;
+  --gf-mut: #49755f;
+  --gf-faint: #6b9581;
 }
 
 .gf-app-layout {
   display: flex;
   min-height: 100vh;
-  background: #070d18;
-  color: #f8fafc;
+  background: var(--gf-verde-bg);
+  color: var(--gf-ink);
   font-family: var(--font);
   position: relative;
 }
 
 /* Italian Tricolore Top Ribbon */
 .gf-tricolore-ribbon {
-  height: 3px;
+  height: 3.5px;
   width: 100%;
   background: linear-gradient(90deg, #008C45 0%, #008C45 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #CD212A 66.66%, #CD212A 100%);
   position: fixed;
@@ -3290,14 +3297,14 @@ textarea.input {
   left: 0;
   right: 0;
   z-index: 100;
-  box-shadow: 0 0 10px rgba(0, 140, 69, 0.4);
+  box-shadow: 0 1px 8px rgba(0, 140, 69, 0.35);
 }
 
 .gf-sidebar-container {
-  width: 268px;
+  width: 272px;
   flex-shrink: 0;
-  background: #060b14;
-  border-right: 1px solid #16243b;
+  background: #eaf4ee;
+  border-right: 1.5px solid var(--gf-border);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -3314,8 +3321,8 @@ textarea.input {
 
 .gf-sidebar-header {
   padding: 16px 18px;
-  border-bottom: 1px solid #16243b;
-  background: #050912;
+  border-bottom: 1.5px solid var(--gf-border);
+  background: #e1eee6;
   position: relative;
 }
 
@@ -3325,20 +3332,20 @@ textarea.input {
   top: 0;
   left: 0;
   right: 0;
-  height: 2.5px;
+  height: 3px;
   background: linear-gradient(90deg, #008C45 0%, #008C45 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #CD212A 66.66%, #CD212A 100%);
 }
 
 .gf-brand-logo-badge {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   background: linear-gradient(135deg, #008C45 0%, #005a2c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 10px rgba(0, 140, 69, 0.45);
-  border: 1px solid rgba(212, 175, 55, 0.4);
+  box-shadow: 0 3px 10px rgba(0, 140, 69, 0.35);
+  border: 1.5px solid rgba(212, 175, 55, 0.6);
 }
 
 .gf-sidebar-nav {
@@ -3352,27 +3359,27 @@ textarea.input {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  border-radius: 6px;
-  color: #94a3b8;
+  border-radius: 7px;
+  color: var(--gf-ink-secondary);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.15s ease;
   text-decoration: none;
-  border-left: 2px solid transparent;
+  border-left: 3px solid transparent;
 }
 
 .gf-nav-link:hover {
-  background: #101b2e;
-  color: #f8fafc;
+  background: #d8eee0;
+  color: #005a2c;
   border-left-color: #008C45;
 }
 
 .gf-nav-link.active {
-  background: linear-gradient(135deg, rgba(0, 140, 69, 0.25) 0%, rgba(13, 22, 39, 0.9) 100%);
-  color: #ffffff;
-  font-weight: 700;
+  background: linear-gradient(135deg, #d8eee0 0%, #c4e5cf 100%);
+  color: #005a2c;
+  font-weight: 800;
   border-left-color: #008C45;
-  box-shadow: inset 0 0 12px rgba(0, 140, 69, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 140, 69, 0.12);
 }
 
 .gf-nav-section-header {
@@ -3385,20 +3392,20 @@ textarea.input {
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #526786;
+  color: #2d6a4f;
   background: none;
   border: none;
   cursor: pointer;
 }
 
 .gf-nav-section-header:hover {
-  color: #D4AF37;
+  color: #008C45;
 }
 
 .gf-sidebar-footer {
   padding: 12px 14px;
-  border-top: 1px solid #16243b;
-  background: #04070e;
+  border-top: 1.5px solid var(--gf-border);
+  background: #e1eee6;
 }
 
 .gf-main-container {
@@ -3406,13 +3413,13 @@ textarea.input {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  background: #070d18;
+  background: var(--gf-verde-bg);
 }
 
 .gf-topbar {
   height: 54px;
-  background: #060b14;
-  border-bottom: 1px solid #16243b;
+  background: #ffffff;
+  border-bottom: 1.5px solid var(--gf-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3420,14 +3427,14 @@ textarea.input {
   position: sticky;
   top: 0;
   z-index: 30;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 10px rgba(0, 140, 69, 0.05);
 }
 
 .gf-content-viewport {
   flex: 1;
   padding: 24px;
   overflow-y: auto;
-  background: #070d18;
+  background: var(--gf-verde-bg);
 }
 
 /* Common Card & Workspace Elements with Italian Luxury Accents */
@@ -3441,29 +3448,30 @@ textarea.input {
 }
 
 .gf-page-title {
-  font-size: 20px;
-  font-weight: 800;
-  color: #f8fafc;
+  font-size: 21px;
+  font-weight: 900;
+  color: var(--gf-ink);
   letter-spacing: -0.02em;
 }
 
 .gf-page-subtitle {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 12.5px;
+  color: var(--gf-mut);
   margin-top: 2px;
+  font-weight: 500;
 }
 
 .gf-card {
-  background: #0d1627;
-  border: 1px solid #1a2a46;
-  border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-radius: 11px;
+  box-shadow: 0 3px 14px rgba(0, 140, 69, 0.05);
   position: relative;
   overflow: hidden;
 }
 
 .gf-card-italy {
-  border-top: 2px solid #008C45;
+  border-top: 3px solid #008C45;
 }
 
 .gf-metric-grid {
@@ -3474,9 +3482,9 @@ textarea.input {
 }
 
 .gf-metric-card {
-  background: #0d1627;
-  border: 1px solid #1a2a46;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-radius: 11px;
   padding: 16px 18px;
   display: flex;
   flex-direction: column;
@@ -3484,45 +3492,47 @@ textarea.input {
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
   text-decoration: none;
   color: inherit;
+  box-shadow: 0 3px 12px rgba(0, 140, 69, 0.05);
 }
 
 .gf-metric-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   border-color: #008C45;
-  box-shadow: 0 6px 20px rgba(0, 140, 69, 0.2);
+  box-shadow: 0 6px 20px rgba(0, 140, 69, 0.12);
 }
 
 .gf-metric-title {
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #94a3b8;
+  color: var(--gf-mut);
 }
 
 .gf-metric-value {
   font-size: 26px;
   font-weight: 900;
-  color: #ffffff;
+  color: var(--gf-ink);
   font-family: var(--font-mono);
   margin: 6px 0 2px 0;
 }
 
 .gf-metric-foot {
   font-size: 11px;
-  color: #00b359;
+  color: #008C45;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 /* Dense SaaS Tables with Italian Header Highlights */
 .gf-table-container {
-  background: #0d1627;
-  border: 1px solid #1a2a46;
-  border-radius: 10px;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-radius: 11px;
   overflow: hidden;
+  box-shadow: 0 3px 14px rgba(0, 140, 69, 0.05);
 }
 
 .gf-table {
@@ -3533,28 +3543,28 @@ textarea.input {
 }
 
 .gf-table th {
-  background: #070d18;
-  color: #94a3b8;
-  font-weight: 700;
+  background: #eef6f1;
+  color: #0d2b1d;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   font-size: 10.5px;
   padding: 11px 16px;
-  border-bottom: 1px solid #1a2a46;
+  border-bottom: 1.5px solid var(--gf-border);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
 .gf-table td {
-  padding: 11px 16px;
-  border-bottom: 1px solid #142036;
-  color: #cbd5e1;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--gf-border-light);
+  color: var(--gf-ink);
   vertical-align: middle;
 }
 
 .gf-table tr:hover td {
-  background: #111d33;
+  background: #f4fbf6;
 }
 
 /* Italian Status Badges */
@@ -3564,45 +3574,45 @@ textarea.input {
   padding: 3px 8px;
   border-radius: 5px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.3;
   letter-spacing: 0.02em;
 }
 
 .gf-badge-green, .gf-badge-italy-green {
-  background: #022c15;
-  color: #4ade80;
+  background: #e1f4e9;
+  color: #005a2c;
   border: 1px solid #008C45;
 }
 
 .gf-badge-red, .gf-badge-italy-red {
-  background: #36070a;
-  color: #f87171;
+  background: #fde8e9;
+  color: #990f17;
   border: 1px solid #CD212A;
 }
 
 .gf-badge-blue {
-  background: #082f49;
-  color: #38bdf8;
+  background: #e0f2fe;
+  color: #0369a1;
   border: 1px solid #0284c7;
 }
 
 .gf-badge-amber {
-  background: #3b1904;
-  color: #fbbf24;
+  background: #fef3c7;
+  color: #92400e;
   border: 1px solid #b45309;
 }
 
 .gf-badge-gold, .gf-badge-italy-gold {
-  background: #342204;
-  color: #fde047;
+  background: #fef9c3;
+  color: #854d0e;
   border: 1px solid #D4AF37;
 }
 
 .gf-badge-gray {
-  background: #16243b;
-  color: #94a3b8;
-  border: 1px solid #233857;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
 }
 
 /* Italian Luxury Buttons */
@@ -3612,9 +3622,9 @@ textarea.input {
   justify-content: center;
   gap: 6px;
   padding: 7px 14px;
-  border-radius: 6px;
+  border-radius: 7px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.15s ease;
   border: 1px solid transparent;
@@ -3622,57 +3632,59 @@ textarea.input {
 }
 
 .gf-btn-primary, .gf-btn-italy-green {
-  background: linear-gradient(135deg, #008C45 0%, #006030 100%);
+  background: linear-gradient(135deg, #008C45 0%, #005a2c 100%);
   color: #ffffff;
-  border: 1px solid #00a854;
-  box-shadow: 0 2px 8px rgba(0, 140, 69, 0.35);
+  border: 1px solid #005a2c;
+  box-shadow: 0 2px 8px rgba(0, 140, 69, 0.25);
 }
 
 .gf-btn-primary:hover, .gf-btn-italy-green:hover {
-  background: linear-gradient(135deg, #00a854 0%, #00753a 100%);
-  box-shadow: 0 4px 12px rgba(0, 140, 69, 0.5);
+  background: linear-gradient(135deg, #00a854 0%, #006b35 100%);
+  box-shadow: 0 4px 12px rgba(0, 140, 69, 0.35);
   color: #ffffff;
 }
 
 .gf-btn-danger, .gf-btn-italy-red {
   background: linear-gradient(135deg, #CD212A 0%, #900f16 100%);
   color: #ffffff;
-  border: 1px solid #e63946;
-  box-shadow: 0 2px 8px rgba(205, 33, 42, 0.35);
+  border: 1px solid #900f16;
+  box-shadow: 0 2px 8px rgba(205, 33, 42, 0.25);
 }
 
 .gf-btn-danger:hover, .gf-btn-italy-red:hover {
   background: linear-gradient(135deg, #e63946 0%, #a8121a 100%);
-  box-shadow: 0 4px 12px rgba(205, 33, 42, 0.5);
+  box-shadow: 0 4px 12px rgba(205, 33, 42, 0.35);
   color: #ffffff;
 }
 
 .gf-btn-secondary {
-  background: #131f36;
-  color: #cbd5e1;
-  border: 1px solid #233758;
+  background: #ffffff;
+  color: var(--gf-ink);
+  border: 1.5px solid var(--gf-border);
 }
 
 .gf-btn-secondary:hover {
-  background: #1c2e4f;
-  color: #ffffff;
-  border-color: #385587;
+  background: #eef6f1;
+  color: #005a2c;
+  border-color: #008C45;
 }
 
 .gf-btn-gold {
-  background: linear-gradient(135deg, #D4AF37 0%, #997819 100%);
-  color: #000000;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #ffffff;
   font-weight: 800;
-  border: 1px solid #f3c64c;
+  border: 1px solid #b45309;
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
 }
 
 .gf-btn-gold:hover {
-  background: linear-gradient(135deg, #e8c454 0%, #b38c20 100%);
+  background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
 }
 
 .gf-btn-success {
-  background: #022c15;
-  color: #4ade80;
+  background: #e1f4e9;
+  color: #005a2c;
   border: 1px solid #008C45;
 }
 
@@ -3685,7 +3697,7 @@ textarea.input {
 .gf-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.75);
+  background: rgba(13, 43, 29, 0.55);
   backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
@@ -3695,13 +3707,13 @@ textarea.input {
 }
 
 .gf-modal-card {
-  background: #0d1627;
-  border: 1px solid #1a2a46;
-  border-top: 3px solid #008C45;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-top: 4px solid #008C45;
   border-radius: 12px;
   width: 100%;
-  max-width: 520px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+  max-width: 540px;
+  box-shadow: 0 20px 50px rgba(13, 43, 29, 0.25);
   overflow: hidden;
   animation: modalScaleUp 0.2s ease-out;
 }
@@ -3717,8 +3729,8 @@ textarea.input {
 
 .gf-modal-header {
   padding: 16px 20px;
-  background: #070d18;
-  border-bottom: 1px solid #1a2a46;
+  background: #eef6f1;
+  border-bottom: 1.5px solid var(--gf-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3727,17 +3739,17 @@ textarea.input {
 .gf-modal-title {
   font-size: 15px;
   font-weight: 800;
-  color: #f8fafc;
+  color: var(--gf-ink);
 }
 
 .gf-modal-subtitle {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--gf-mut);
   margin-top: 2px;
 }
 
 .gf-modal-close-btn {
-  color: #94a3b8;
+  color: var(--gf-mut);
   background: none;
   border: none;
   cursor: pointer;
@@ -3746,20 +3758,21 @@ textarea.input {
 }
 
 .gf-modal-close-btn:hover {
-  color: #ffffff;
-  background: #1a2a46;
+  color: var(--gf-ink);
+  background: #d8eee0;
 }
 
 .gf-modal-body {
   padding: 20px;
   max-height: 75vh;
   overflow-y: auto;
+  color: var(--gf-ink);
 }
 
 .gf-modal-footer {
   padding: 14px 20px;
-  background: #070d18;
-  border-top: 1px solid #1a2a46;
+  background: #eef6f1;
+  border-top: 1.5px solid var(--gf-border);
 }
 
 /* Command Palette */
@@ -3769,11 +3782,11 @@ textarea.input {
 }
 
 .gf-command-box {
-  background: #0d1627;
-  border: 1px solid #233758;
-  border-top: 3px solid #008C45;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-top: 4px solid #008C45;
   border-radius: 12px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 25px 70px rgba(13, 43, 29, 0.3);
   width: 100%;
   max-width: 640px;
   overflow: hidden;
@@ -3783,8 +3796,8 @@ textarea.input {
   display: flex;
   align-items: center;
   padding: 14px 18px;
-  border-bottom: 1px solid #1a2a46;
-  background: #070d18;
+  border-bottom: 1.5px solid var(--gf-border);
+  background: #eef6f1;
 }
 
 .gf-command-input {
@@ -3792,9 +3805,10 @@ textarea.input {
   background: none;
   border: none;
   outline: none;
-  color: #f8fafc;
+  color: var(--gf-ink);
   padding: 0 12px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .gf-command-results {
@@ -3807,7 +3821,7 @@ textarea.input {
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
-  color: #D4AF37;
+  color: #b45309;
   padding: 6px 10px;
   letter-spacing: 0.08em;
 }
@@ -3817,39 +3831,41 @@ textarea.input {
   align-items: center;
   justify-content: space-between;
   padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.1s ease;
+  color: var(--gf-ink);
 }
 
 .gf-command-item:hover {
-  background: #142036;
+  background: #eaf4ee;
 }
 
 .gf-command-footer {
   padding: 8px 16px;
-  background: #050912;
-  border-top: 1px solid #1a2a46;
+  background: #eef6f1;
+  border-top: 1.5px solid var(--gf-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .gf-kbd {
-  background: #142036;
-  border: 1px solid #233758;
+  background: #ffffff;
+  border: 1px solid var(--gf-border);
   border-radius: 4px;
   padding: 2px 5px;
   font-family: var(--font-mono);
   font-size: 9.5px;
-  color: #cbd5e1;
+  color: var(--gf-ink-secondary);
+  font-weight: 700;
 }
 
 /* Slide-over Drawers */
 .gf-drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(13, 43, 29, 0.45);
   backdrop-filter: blur(3px);
   display: flex;
   justify-content: flex-end;
@@ -3860,9 +3876,9 @@ textarea.input {
   width: 100%;
   max-width: 580px;
   height: 100vh;
-  background: #0d1627;
-  border-left: 1px solid #1a2a46;
-  box-shadow: -10px 0 50px rgba(0, 0, 0, 0.65);
+  background: #ffffff;
+  border-left: 1.5px solid var(--gf-border);
+  box-shadow: -10px 0 50px rgba(13, 43, 29, 0.2);
   display: flex;
   flex-direction: column;
   animation: drawerSlideIn 0.2s ease-out;
@@ -3879,8 +3895,8 @@ textarea.input {
 
 .gf-drawer-header {
   padding: 18px 22px;
-  background: #070d18;
-  border-bottom: 1px solid #1a2a46;
+  background: #eef6f1;
+  border-bottom: 1.5px solid var(--gf-border);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -3889,12 +3905,12 @@ textarea.input {
 .gf-drawer-title {
   font-size: 16px;
   font-weight: 800;
-  color: #f8fafc;
+  color: var(--gf-ink);
 }
 
 .gf-drawer-subtitle {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--gf-mut);
   margin-top: 2px;
 }
 
@@ -3902,12 +3918,13 @@ textarea.input {
   flex: 1;
   padding: 22px;
   overflow-y: auto;
+  color: var(--gf-ink);
 }
 
 /* JSON Diff Viewer */
 .gf-diff-container {
-  background: #050912;
-  border: 1px solid #1a2a46;
+  background: #f8fbf9;
+  border: 1.5px solid var(--gf-border);
   border-radius: 8px;
   overflow: hidden;
   font-size: 11px;
@@ -3917,18 +3934,18 @@ textarea.input {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1.2fr;
   padding: 7px 12px;
-  background: #070d18;
-  border-bottom: 1px solid #1a2a46;
+  background: #eef6f1;
+  border-bottom: 1.5px solid var(--gf-border);
   font-weight: 800;
   text-transform: uppercase;
-  color: #94a3b8;
+  color: var(--gf-ink);
 }
 
 .gf-diff-row {
   display: grid;
   grid-template-columns: 1fr 1.2fr 1.2fr;
   padding: 7px 12px;
-  border-bottom: 1px solid #101b2e;
+  border-bottom: 1px solid var(--gf-border-light);
 }
 
 .gf-diff-row:last-child {
@@ -3936,18 +3953,20 @@ textarea.input {
 }
 
 .gf-diff-field {
-  color: #38bdf8;
-  font-weight: 600;
+  color: #0284c7;
+  font-weight: 700;
 }
 
 .gf-diff-val-old {
-  color: #f87171;
+  color: #b91c1c;
   word-break: break-all;
+  font-weight: 600;
 }
 
 .gf-diff-val-new {
-  color: #4ade80;
+  color: #008C45;
   word-break: break-all;
+  font-weight: 700;
 }
 
 /* Form Styles */
@@ -3958,42 +3977,50 @@ textarea.input {
 .gf-form-label {
   display: block;
   font-size: 12px;
-  font-weight: 700;
-  color: #cbd5e1;
+  font-weight: 800;
+  color: var(--gf-ink);
   margin-bottom: 6px;
 }
 
 .gf-input, .gf-textarea, .gf-select {
-  background: #060b14;
-  border: 1px solid #233758;
-  border-radius: 6px;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-radius: 7px;
   padding: 8px 12px;
-  color: #f8fafc;
+  color: var(--gf-ink);
   outline: none;
   font-family: inherit;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .gf-input:focus, .gf-textarea:focus, .gf-select:focus {
   border-color: #008C45;
-  box-shadow: 0 0 0 2px rgba(0, 140, 69, 0.25);
+  box-shadow: 0 0 0 3px rgba(0, 140, 69, 0.18);
 }
 
 .gf-callout {
   padding: 12px 14px;
   border-radius: 8px;
   font-size: 12px;
+  line-height: 1.45;
 }
 
 .gf-callout-amber {
-  background: #331602;
-  border: 1px solid #78350f;
-  color: #fde68a;
+  background: #fef3c7;
+  border: 1px solid #d97706;
+  color: #92400e;
 }
 
 .gf-callout-blue {
-  background: #052033;
-  border: 1px solid #0369a1;
-  color: #bae6fd;
+  background: #e0f2fe;
+  border: 1px solid #0284c7;
+  color: #075985;
+}
+
+.gf-callout-green {
+  background: #e1f4e9;
+  border: 1px solid #008C45;
+  color: #005a2c;
 }
 
 .gf-icon-badge {
@@ -4007,24 +4034,24 @@ textarea.input {
 }
 
 .gf-icon-badge-amber {
-  background: #381904;
-  border: 1px solid #78350f;
+  background: #fef3c7;
+  border: 1px solid #d97706;
 }
 
 .gf-icon-badge-blue {
-  background: #052033;
-  border: 1px solid #0369a1;
+  background: #e0f2fe;
+  border: 1px solid #0284c7;
 }
 
 .gf-icon-badge-red {
-  background: #36070a;
+  background: #fde8e9;
   border: 1px solid #CD212A;
 }
 
-/* Standalone Super Admin Login Page with Italian Flag Luxury Styling */
+/* Standalone Super Admin Login Page with Italian Light Luxury Styling */
 .gf-login-root {
   min-height: 100vh;
-  background: radial-gradient(circle at 50% 15%, #101b2e 0%, #050912 100%);
+  background: radial-gradient(circle at 50% 20%, #e8f5ec 0%, #d5ebd9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4035,12 +4062,12 @@ textarea.input {
 
 .gf-login-card {
   width: 100%;
-  max-width: 450px;
-  background: #0d1627;
-  border: 1px solid #233758;
-  border-top: 3px solid #008C45;
+  max-width: 460px;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-top: 4px solid #008C45;
   border-radius: 14px;
-  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.85);
+  box-shadow: 0 25px 70px rgba(13, 43, 29, 0.2);
   overflow: hidden;
   padding: 28px;
   position: relative;
@@ -4052,7 +4079,7 @@ textarea.input {
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 3.5px;
   background: linear-gradient(90deg, #008C45 0%, #008C45 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #CD212A 66.66%, #CD212A 100%);
 }
 
@@ -4061,10 +4088,42 @@ textarea.input {
   margin-bottom: 20px;
 }
 
+.gf-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1.5px solid var(--gf-border);
+  background: #f9fcf9;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gf-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #ffffff;
+  border: 1.5px solid var(--gf-border);
+  border-radius: 7px;
+  padding: 6px 12px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.gf-search-input {
+  border: none;
+  background: none;
+  outline: none;
+  font-size: 12px;
+  color: var(--gf-ink);
+  width: 100%;
+}
+
 @media (max-width: 1024px) {
   .gf-sidebar-container {
     position: fixed;
-    left: -268px;
+    left: -272px;
     transition: left 0.2s ease-out;
   }
   .gf-sidebar-container.mobile-visible {
@@ -4073,7 +4132,8 @@ textarea.input {
   .gf-mobile-backdrop {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(13, 43, 29, 0.6);
     z-index: 35;
   }
 }
+

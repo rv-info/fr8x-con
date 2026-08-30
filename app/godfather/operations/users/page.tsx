@@ -33,11 +33,18 @@ export default function UsersGovernancePage() {
     updateUserProfileAudited,
     blockUserScoped,
     forceUserLogout,
+    grantFreeTrial,
   } = useGodfatherData();
   const { requestStepUpVerification, checkPermission } = useGodfatherAuth();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+
+  // Free trial modal state
+  const [trialUserTarget, setTrialUserTarget] = useState<UserProfile | null>(null);
+  const [trialDuration, setTrialDuration] = useState(30);
+  const [trialReason, setTrialReason] = useState('Promotional enterprise onboarding approved by Godfather');
+  const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
 
   // Modal states
   const [modalConfig, setModalConfig] = useState<{
@@ -297,7 +304,7 @@ export default function UsersGovernancePage() {
 
                     {/* Privileges */}
                     <td>
-                      <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                      <span className="text-[11px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                         {u.role}
                       </span>
                     </td>
@@ -305,6 +312,20 @@ export default function UsersGovernancePage() {
                     {/* Actions */}
                     <td className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
+                        {/* Grant 1-Month Free Trial */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTrialUserTarget(u);
+                            setTrialReason('1-Month Complete Free Trial approved by Godfather Controller');
+                            setIsTrialModalOpen(true);
+                          }}
+                          className="gf-btn text-[11px] py-1 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 font-bold"
+                          title="Grant 1-Month Complete Free Trial"
+                        >
+                          🎁 1-Mo Trial
+                        </button>
+
                         {/* Edit Profile */}
                         <button
                           type="button"
@@ -547,6 +568,87 @@ export default function UsersGovernancePage() {
                 </button>
                 <button type="submit" className="gf-btn gf-btn-danger">
                   Execute Step-Up & Apply Block
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Free Trial Modal */}
+      {isTrialModalOpen && trialUserTarget && (
+        <div className="gf-modal-overlay">
+          <div className="gf-modal-card">
+            <div className="gf-modal-header">
+              <div>
+                <h3 className="gf-modal-title flex items-center gap-1.5 text-emerald-800">
+                  <span>🎁</span> Grant 1-Month Free Trial (Sovereign Exemption)
+                </h3>
+                <p className="gf-modal-subtitle">
+                  Member: {trialUserTarget.displayName} · {trialUserTarget.company} ({trialUserTarget.email})
+                </p>
+              </div>
+              <button onClick={() => setIsTrialModalOpen(false)} className="gf-modal-close-btn">
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await grantFreeTrial(trialUserTarget.uid, trialDuration, trialReason);
+                setIsTrialModalOpen(false);
+              }}
+              className="gf-modal-body space-y-4"
+            >
+              <div className="p-3 rounded bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs leading-relaxed">
+                <strong className="block font-bold mb-1 text-emerald-950">Privilege & Exemption Details:</strong>
+                Granting this complete trial upgrades the organization to <strong>Premium Enterprise tier</strong>, enables full reverse freight auction creation & bidding with <strong>₹0 fees</strong>, grants immediate <strong>Gold Verification tick</strong>, and registers an immutable timestamped audit receipt.
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="gf-form-group">
+                  <label className="gf-form-label font-bold">Trial Duration</label>
+                  <select
+                    value={trialDuration}
+                    onChange={(e) => setTrialDuration(Number(e.target.value))}
+                    className="gf-select w-full text-xs font-bold"
+                  >
+                    <option value={30}>30 Days (1 Full Month - Standard)</option>
+                    <option value={60}>60 Days (2 Months - Strategic Partner)</option>
+                    <option value={90}>90 Days (Quarterly Waiver)</option>
+                    <option value={14}>14 Days (Short Sprint)</option>
+                  </select>
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label font-bold">Upgraded Plan Tier</label>
+                  <input
+                    type="text"
+                    disabled
+                    value="Premium Gold Enterprise"
+                    className="gf-input w-full text-xs font-bold bg-slate-100 text-slate-700"
+                  />
+                </div>
+              </div>
+
+              <div className="gf-form-group">
+                <label className="gf-form-label font-bold">Godfather Approval Rationale (Audit Record)</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={trialReason}
+                  onChange={(e) => setTrialReason(e.target.value)}
+                  className="gf-textarea w-full text-xs"
+                />
+              </div>
+
+              <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setIsTrialModalOpen(false)} className="gf-btn gf-btn-secondary">
+                  Cancel
+                </button>
+                <button type="submit" className="gf-btn gf-btn-primary font-bold">
+                  Authorize & Provision 30-Day Trial
                 </button>
               </div>
             </form>

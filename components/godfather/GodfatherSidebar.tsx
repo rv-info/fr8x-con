@@ -30,6 +30,9 @@ import {
   LogOut,
   ShieldCheck,
   Zap,
+  Filter,
+  Scale,
+  BadgeCheck,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -58,23 +61,26 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Trust & Safety',
     items: [
       { label: 'Content Moderation', href: '/godfather/trust-safety/moderation', icon: AlertOctagon },
-      { label: 'Nexus Reviews', href: '/godfather/trust-safety/nexus', icon: MessageSquare },
+      { label: 'Sensitive Words Filter', href: '/godfather/trust-safety/sensitive-words', icon: Filter },
+      { label: 'Compliance & Regulations', href: '/godfather/trust-safety/compliance', icon: BadgeCheck },
       { label: 'Blacklist & Blocks', href: '/godfather/trust-safety/blacklist', icon: Shield },
+      { label: 'Nexus Reviews', href: '/godfather/trust-safety/nexus', icon: MessageSquare },
       { label: 'Reports & Appeals', href: '/godfather/trust-safety/reports', icon: FileCheck },
     ],
   },
   {
-    title: 'Commerce',
+    title: 'Commerce & Accounting',
     items: [
       { label: 'Plans & Subscriptions', href: '/godfather/commerce/plans', icon: DollarSign },
-      { label: 'Payment Configuration', href: '/godfather/commerce/payments', icon: CreditCard },
-      { label: 'Invoices, GST & Taxes', href: '/godfather/commerce/invoices', icon: Receipt },
-      { label: 'Fees, Discounts & Credits', href: '/godfather/commerce/fees', icon: Percent },
+      { label: 'Payment Gateways & Methods', href: '/godfather/commerce/payments', icon: CreditCard },
+      { label: 'Accounting & Monthly Taxes', href: '/godfather/commerce/invoices', icon: Receipt },
+      { label: 'Fees & Commercial Benefits', href: '/godfather/commerce/fees', icon: Percent },
     ],
   },
   {
-    title: 'Platform',
+    title: 'Platform & Governance',
     items: [
+      { label: 'Terms & Safety Agreements', href: '/godfather/platform/terms', icon: Scale },
       { label: 'Notifications & Templates', href: '/godfather/platform/templates', icon: Bell },
       { label: 'Email Service (Zoho)', href: '/godfather/platform/email', icon: Mail },
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },

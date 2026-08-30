@@ -16,6 +16,11 @@ import {
   BlockScope,
   EmailLog,
   MailboxStatus,
+  SensitiveWordRule,
+  TermsAgreement,
+  ComplianceRecord,
+  PaymentGatewayConfig,
+  MonthlyAccountingSummary,
 } from '../types';
 import {
   UserProfile,
@@ -1092,21 +1097,502 @@ const SEED_EMAIL_LOGS: EmailLog[] = [
     provider: 'Zoho_SMTP',
     sentAt: '2026-08-28T16:30:00Z',
     deliveredAt: '2026-08-28T16:30:04Z',
-    entityContext: { entityType: 'company', entityId: 'CMP-00104' },
+    entityContext: { entityType: 'blacklist', entityId: 'BLK-009' },
+  },
+];
+
+const SEED_SENSITIVE_WORDS: SensitiveWordRule[] = [
+  {
+    id: 'sw-001',
+    wordOrPattern: 'western union',
+    category: 'fraud',
+    severity: 'quarantine',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 19,
+    description: 'Off-platform wire transfer method frequently associated with cargo fraud',
+    createdAt: '2026-08-01T10:00:00Z',
+    updatedBy: 'tech@fr8x.in',
   },
   {
-    logId: 'EML-2026-0887',
-    recipient: 'tech@fr8x.in',
-    sender: 'FR8X Security Monitor <password@fr8x.in>',
-    subject: '🚨 [SECURITY ALERT] High-Risk Action Executed: Blacklist Entry Published',
-    templateId: 'TMPL_SECURITY_ALERT',
-    templateName: 'Platform Security Alert Notification',
-    correlationId: 'GF-EML-5521-9988',
-    status: 'delivered',
-    provider: 'Zoho_SMTP',
-    sentAt: '2026-08-28T14:10:00Z',
-    deliveredAt: '2026-08-28T14:10:01Z',
-    entityContext: { entityType: 'blacklist', entityId: 'BLK-009' },
+    id: 'sw-002',
+    wordOrPattern: 'personal bank account',
+    category: 'fraud',
+    severity: 'quarantine',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 14,
+    description: 'Solicitation to pay into unverified personal accounts rather than corporate escrow',
+    createdAt: '2026-08-01T10:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-003',
+    wordOrPattern: 'fake bl',
+    category: 'fraud',
+    severity: 'block',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 8,
+    description: 'Direct mention or discussion of forged Ocean Bills of Lading',
+    createdAt: '2026-08-02T11:30:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-004',
+    wordOrPattern: 'whatsapp me',
+    category: 'circumvention',
+    severity: 'mask',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 86,
+    description: 'Attempts to move freight tender communications and price discovery off-platform',
+    createdAt: '2026-08-05T09:15:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-005',
+    wordOrPattern: 'wire money advance',
+    category: 'fraud',
+    severity: 'block',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 11,
+    description: 'Demands for 100% advance wire without carrier verification or escrow protection',
+    createdAt: '2026-08-06T14:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-006',
+    wordOrPattern: 'hawala',
+    category: 'illegal',
+    severity: 'block',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 4,
+    description: 'Illegal parallel money transfer scheme strictly forbidden under FEMA/AML rules',
+    createdAt: '2026-08-08T12:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-007',
+    wordOrPattern: 'evade gst',
+    category: 'fraud',
+    severity: 'quarantine',
+    matchType: 'contains',
+    active: true,
+    hitsCount: 6,
+    description: 'Soliciting cash or unauthorized off-book tax avoidance transactions',
+    createdAt: '2026-08-10T16:45:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+  {
+    id: 'sw-008',
+    wordOrPattern: '(\\+?[0-9]{10,12})',
+    category: 'circumvention',
+    severity: 'mask',
+    matchType: 'regex',
+    active: true,
+    hitsCount: 142,
+    description: 'Automated regex masking of unverified phone numbers in public feed threads',
+    createdAt: '2026-08-12T18:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+  },
+];
+
+const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
+  {
+    id: 'tac-001',
+    code: 'membership_tac',
+    title: 'FR8X Master Membership & Commercial Safety Agreement',
+    version: '3.2',
+    effectiveDate: '2026-08-01',
+    summary: 'Governs platform access, corporate entity verification, anti-fraud rules, and binding reverse freight auction participation.',
+    fullText: `FR8X PLATFORM TERMS OF SERVICE & COMMERCIAL GOVERNANCE (V3.2)
+1. Eligibility & Corporate Verification: Only registered freight forwarders, NVOCCs, direct cargo owners, and custom house agents with valid GSTIN/IEC/Company Registration may access live auction bid rooms.
+2. Anti-Circumvention: Commercial negotiations initiated on FR8X must conclude through verified platform documentation to maintain cargo insurance eligibility.
+3. Zero Tolerance for Fraud: Forged Bills of Lading, falsified tax invoices, or unauthorized cargo diversion result in immediate global blacklist and reporting to Indian Port Authorities / FIU.
+4. Security & Sovereign Auditing: All transactions, rate imports, and admin interactions are cryptographically signed and permanently logged in the immutable audit ledger.`,
+    enforceAtRegistration: true,
+    enforceAtAuctionCreate: false,
+    enforceAtBidSubmit: false,
+    enforceAtJobPost: false,
+    enforceAtAdPost: false,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-08-01T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 1420,
+  },
+  {
+    id: 'tac-002',
+    code: 'auction_bidding_rules',
+    title: 'Reverse Freight Tender & Bidding Commercial Commitment',
+    version: '2.1',
+    effectiveDate: '2026-07-15',
+    summary: 'Rules ensuring bids placed in reverse auctions are legally binding quotations with guaranteed carrier container slot validity.',
+    fullText: `REVERSE FREIGHT AUCTION & BIDDING COMMITMENT POLICY (V2.1)
+1. Legally Binding Bids: All rate quotations submitted during reverse auctions constitute binding offers valid for 48 hours post-award.
+2. Bid Posting Fee: Standard fee of ₹300 (or ₹180 for Premium Gold members) applies to ensure serious quotations and prevent tender spam.
+3. No Phantom Bidding: Collusive, shill, or non-fulfillable bids trigger immediate account suspension and forfeiture of platform credits.
+4. Carrier Space Guarantee: Awarded freight forwarders must confirm vessel space allocations within 24 hours of auction conclusion.`,
+    enforceAtRegistration: false,
+    enforceAtAuctionCreate: true,
+    enforceAtBidSubmit: true,
+    enforceAtJobPost: false,
+    enforceAtAdPost: false,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-07-15T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 840,
+  },
+  {
+    id: 'tac-003',
+    code: 'job_posting_tac',
+    title: 'Logistics Recruitment & Verified Job Posting Agreement',
+    version: '1.4',
+    effectiveDate: '2026-06-01',
+    summary: 'Ensures all job advertisements are legitimate freight and logistics hiring opportunities without misleading compensation.',
+    fullText: `LOGISTICS RECRUITMENT & TALENT NETWORK POLICY (V1.4)
+1. Legitimate Employment: Job posts must represent bona fide vacancies within freight forwarding, customs brokerage, or supply chain domains.
+2. No Placement Fees from Candidates: Charging job seekers application or processing fees is strictly prohibited and results in immediate ban.
+3. Non-Discrimination: All listings must comply with equal opportunity standards and Indian Labour Laws.`,
+    enforceAtRegistration: false,
+    enforceAtAuctionCreate: false,
+    enforceAtBidSubmit: false,
+    enforceAtJobPost: true,
+    enforceAtAdPost: false,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-06-01T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 195,
+  },
+  {
+    id: 'tac-004',
+    code: 'ad_posting_policy',
+    title: 'Commercial Advertisement, Banner Media & Sponsor Rights Policy',
+    version: '2.0',
+    effectiveDate: '2026-08-10',
+    summary: 'Governs commercial promotional spots, sponsored feed banners, rate announcements, and advertising copyright standards.',
+    fullText: `SPONSORED MEDIA & ADVERTISEMENT GOVERNANCE (V2.0)
+1. Advertising Authenticity: Advertised freight rates, container services, and logistics software must be accurate and directly available.
+2. Prohibited Content: No deceptive marketing, unauthorized competitor comparisons, or unverified maritime service claims.
+3. Display Rights: FR8X reserves the right to modify placement or suspend non-compliant commercial media without refund.`,
+    enforceAtRegistration: false,
+    enforceAtAuctionCreate: false,
+    enforceAtBidSubmit: false,
+    enforceAtJobPost: false,
+    enforceAtAdPost: true,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-08-10T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 72,
+  },
+  {
+    id: 'tac-005',
+    code: 'ip_copyright_policy',
+    title: 'Intellectual Property, Copyright Protection & Non-Infringement Policy',
+    version: '1.8',
+    effectiveDate: '2026-05-20',
+    summary: 'Protects proprietary rate algorithms, brand assets, trade logos, and intellectual property across the FR8X network.',
+    fullText: `INTELLECTUAL PROPERTY & COPYRIGHT PROTECTION POLICY (V1.8)
+1. Ownership of Platform Data: FR8X analytics, aggregation algorithms, and user interface designs are protected under Indian and International Copyright Law.
+2. Third-Party Trademarks: Company logos, carrier marks, and shipping line emblems uploaded by users remain property of their respective owners.
+3. DMCA / Infringement Notices: Reported copyright infringements will be audited by the Godfather Legal Compliance team within 24 hours.`,
+    enforceAtRegistration: true,
+    enforceAtAuctionCreate: false,
+    enforceAtBidSubmit: false,
+    enforceAtJobPost: true,
+    enforceAtAdPost: true,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-05-20T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 1420,
+  },
+  {
+    id: 'tac-006',
+    code: 'commercial_fee_policy',
+    title: 'Commercial Fee Schedule, GST Accounting & Dispute Disclaimer',
+    version: '3.0',
+    effectiveDate: '2026-08-01',
+    summary: 'Details subscription pricing, reverse tender fees, GST (SAC 998431) tax breakdown, payment gateway processing, and refund terms.',
+    fullText: `COMMERCIAL FEE SCHEDULE & TAX COMPLIANCE POLICY (V3.0)
+1. Subscription Plans: Trial (Free 30-Day access via Godfather approval), Professional (₹1,500/mo), Premium Enterprise Gold (₹3,000/mo).
+2. Reverse Tender Fees: ₹300 per standard bid / ₹180 for Premium Gold members (40% discount applied automatically).
+3. Tax Breakdown: All Indian domestic payments include 18% GST under SAC Code 998431 (CGST 9% + SGST 9% or IGST 18%).
+4. Refund & Credits: Gateway refunds or commercial credit adjustments require Godfather Dual-Officer approval and step-up authentication.`,
+    enforceAtRegistration: true,
+    enforceAtAuctionCreate: true,
+    enforceAtBidSubmit: false,
+    enforceAtJobPost: true,
+    enforceAtAdPost: true,
+    mandatoryClickwrap: true,
+    updatedAt: '2026-08-01T00:00:00Z',
+    updatedBy: 'tech@fr8x.in',
+    totalAcceptances: 1420,
+  },
+];
+
+const SEED_COMPLIANCE_RECORDS: ComplianceRecord[] = [
+  {
+    id: 'cmp-rec-001',
+    entityId: 'CMP-00101',
+    entityName: 'Atlas Logistics Pvt. Ltd.',
+    entityType: 'company',
+    type: 'gstin_audit',
+    status: 'compliant',
+    riskScore: 5,
+    lastAuditedAt: '2026-08-28T10:00:00Z',
+    auditedBy: 'tech@fr8x.in',
+    details: 'GSTIN 27AABCA1234F1Z5 active and verified via GST portal API with 100% filing compliance.',
+    validUntil: '2027-08-28',
+    certificateRef: 'GST-AUDIT-2026-8812',
+  },
+  {
+    id: 'cmp-rec-002',
+    entityId: 'CMP-00102',
+    entityName: 'Rotterdam Freight NV',
+    entityType: 'company',
+    type: 'aml_sanctions',
+    status: 'compliant',
+    riskScore: 8,
+    lastAuditedAt: '2026-08-27T14:30:00Z',
+    auditedBy: 'tech@fr8x.in',
+    details: 'Screened against EU & UN maritime sanctions list. No PEP or high-risk entity matches.',
+    validUntil: '2027-02-27',
+    certificateRef: 'AML-EU-2026-1049',
+  },
+  {
+    id: 'cmp-rec-003',
+    entityId: 'CMP-00104',
+    entityName: 'Apex Global Forwarders LLP',
+    entityType: 'company',
+    type: 'mto_license',
+    status: 'remediation_required',
+    riskScore: 45,
+    lastAuditedAt: '2026-08-25T11:00:00Z',
+    auditedBy: 'legal.compliance@con.fr8x.in',
+    details: 'MTO registration document expired on 2026-07-31. Formal request sent for updated DGS certificate.',
+    validUntil: '2026-07-31',
+    certificateRef: 'MTO-EXP-2026-004',
+  },
+  {
+    id: 'cmp-rec-004',
+    entityId: 'CMP-00105',
+    entityName: 'OceanStar Maritime Forwarding Ltd.',
+    entityType: 'company',
+    type: 'aml_sanctions',
+    status: 'under_investigation',
+    riskScore: 92,
+    lastAuditedAt: '2026-08-20T09:00:00Z',
+    auditedBy: 'tech@fr8x.in',
+    details: 'Unresolved commercial fraud claim (USD $42,500) and unauthorized Bill of Lading release at Jebel Ali.',
+    certificateRef: 'FRAUD-DISPUTE-2026-04',
+  },
+];
+
+const SEED_PAYMENT_GATEWAYS: PaymentGatewayConfig[] = [
+  {
+    gatewayId: 'gw-rzp-01',
+    provider: 'Razorpay',
+    title: 'Razorpay Enterprise Payments (India)',
+    logo: '💳',
+    environment: 'production',
+    enabled: true,
+    currencies: ['INR'],
+    publicIdentifier: 'rzp_live_8842Fr8xInd99',
+    secretKeyVaultRef: 'kms://gcp/projects/fr8x-con/secrets/rzp_live_sec_***',
+    webhookUrl: 'https://con.fr8x.in/api/v1/webhooks/razorpay',
+    webhookStatus: 'healthy',
+    transactionFee: '2.0% + 18% GST',
+    settlementTimeline: 'T+1 Daily Auto-Settlement',
+    allowedModules: {
+      registration: true,
+      auctions: true,
+      jobPosts: true,
+      adPosts: true,
+      kycVerification: true,
+    },
+    commercialUtilityNote: 'Primary domestic settlement rail supporting Net Banking, Corporate Cards, UPI, and automated GST e-Invoicing.',
+    lastTestedAt: '2026-08-30T17:40:00Z',
+  },
+  {
+    gatewayId: 'gw-pp-02',
+    provider: 'PayPal',
+    title: 'PayPal Global Merchant Commerce',
+    logo: '🌐',
+    environment: 'production',
+    enabled: true,
+    currencies: ['USD', 'EUR', 'GBP', 'AED', 'SGD'],
+    publicIdentifier: 'client_id_live_FR8X_GLOBAL_441',
+    secretKeyVaultRef: 'kms://gcp/projects/fr8x-con/secrets/paypal_sec_***',
+    webhookUrl: 'https://con.fr8x.in/api/v1/webhooks/paypal',
+    webhookStatus: 'healthy',
+    transactionFee: '3.9% + $0.30 USD',
+    settlementTimeline: 'T+2 Cross-Border Settlement',
+    allowedModules: {
+      registration: true,
+      auctions: true,
+      jobPosts: true,
+      adPosts: true,
+      kycVerification: true,
+    },
+    commercialUtilityNote: 'Global international currency gateway enabling overseas freight forwarders in Europe, Americas & Middle East to subscribe and bid.',
+    lastTestedAt: '2026-08-30T16:15:00Z',
+  },
+  {
+    gatewayId: 'gw-str-03',
+    provider: 'Stripe',
+    title: 'Stripe International (SCA & 3D Secure)',
+    logo: '⚡',
+    environment: 'production',
+    enabled: true,
+    currencies: ['USD', 'EUR', 'INR'],
+    publicIdentifier: 'pk_live_51M7Fr8xGlobalSovereign99',
+    secretKeyVaultRef: 'kms://gcp/projects/fr8x-con/secrets/stripe_sec_***',
+    webhookUrl: 'https://con.fr8x.in/api/v1/webhooks/stripe',
+    webhookStatus: 'healthy',
+    transactionFee: '2.9% + ₹3 / $0.30',
+    settlementTimeline: 'T+2 Rolling Settlement',
+    allowedModules: {
+      registration: true,
+      auctions: true,
+      jobPosts: true,
+      adPosts: true,
+      kycVerification: false,
+    },
+    commercialUtilityNote: 'Automated recurring billing engine with built-in Strong Customer Authentication (SCA) for multi-currency corporate credit cards.',
+    lastTestedAt: '2026-08-29T19:00:00Z',
+  },
+  {
+    gatewayId: 'gw-cf-04',
+    provider: 'Cashfree',
+    title: 'Cashfree & UPI Instant Rail (0% Fee)',
+    logo: '📱',
+    environment: 'production',
+    enabled: true,
+    currencies: ['INR'],
+    publicIdentifier: 'cf_app_id_991823_fr8x',
+    secretKeyVaultRef: 'kms://gcp/projects/fr8x-con/secrets/cashfree_sec_***',
+    webhookUrl: 'https://con.fr8x.in/api/v1/webhooks/cashfree',
+    webhookStatus: 'healthy',
+    transactionFee: '0% UPI / 1.75% Cards',
+    settlementTimeline: 'Instant Real-Time Bank Settlement',
+    allowedModules: {
+      registration: true,
+      auctions: true,
+      jobPosts: true,
+      adPosts: true,
+      kycVerification: true,
+    },
+    commercialUtilityNote: 'Zero-fee instant UPI dynamic QR codes and virtual bank collections tailored for Indian freight operators.',
+    lastTestedAt: '2026-08-30T14:30:00Z',
+  },
+  {
+    gatewayId: 'gw-wire-05',
+    provider: 'Bank_Wire',
+    title: 'Direct Corporate NEFT / RTGS & SWIFT Wire',
+    logo: '🏛️',
+    environment: 'production',
+    enabled: true,
+    currencies: ['INR', 'USD'],
+    publicIdentifier: 'HDFC-CURRENT-00991823004561 (IFSC: HDFC0000060)',
+    secretKeyVaultRef: 'kms://gcp/projects/fr8x-con/secrets/bank_wire_***',
+    webhookUrl: 'https://con.fr8x.in/api/v1/webhooks/bank-reconcile',
+    webhookStatus: 'healthy',
+    transactionFee: '₹0 (Zero Gateway Fee)',
+    settlementTimeline: 'Same-Day Manual KYC Reconciliation',
+    allowedModules: {
+      registration: true,
+      auctions: false,
+      jobPosts: false,
+      adPosts: true,
+      kycVerification: true,
+    },
+    commercialUtilityNote: 'Direct corporate banking channel for large enterprise annual subscriptions and freight escrow deposits.',
+    lastTestedAt: '2026-08-30T10:00:00Z',
+  },
+];
+
+const SEED_MONTHLY_ACCOUNTING: MonthlyAccountingSummary[] = [
+  {
+    monthId: '2026-08',
+    monthName: 'August 2026',
+    year: 2026,
+    grossRevenue: 482500,
+    subscriptionRevenue: 285000,
+    auctionBiddingRevenue: 87000,
+    jobPostRevenue: 45500,
+    adPostingRevenue: 65000,
+    kycVerificationRevenue: 0,
+    cgst: 36750,
+    sgst: 36750,
+    igst: 0,
+    totalTax: 73500,
+    gatewayDeductions: 9650,
+    netSettledRevenue: 399350,
+    totalTransactions: 184,
+    currency: 'INR',
+    status: 'in_progress',
+  },
+  {
+    monthId: '2026-07',
+    monthName: 'July 2026',
+    year: 2026,
+    grossRevenue: 421000,
+    subscriptionRevenue: 260000,
+    auctionBiddingRevenue: 78000,
+    jobPostRevenue: 38000,
+    adPostingRevenue: 45000,
+    kycVerificationRevenue: 0,
+    cgst: 32110,
+    sgst: 32110,
+    igst: 0,
+    totalTax: 64220,
+    gatewayDeductions: 8420,
+    netSettledRevenue: 348360,
+    totalTransactions: 162,
+    currency: 'INR',
+    status: 'settled',
+  },
+  {
+    monthId: '2026-06',
+    monthName: 'June 2026',
+    year: 2026,
+    grossRevenue: 389000,
+    subscriptionRevenue: 245000,
+    auctionBiddingRevenue: 69000,
+    jobPostRevenue: 32000,
+    adPostingRevenue: 43000,
+    kycVerificationRevenue: 0,
+    cgst: 29670,
+    sgst: 29670,
+    igst: 0,
+    totalTax: 59340,
+    gatewayDeductions: 7780,
+    netSettledRevenue: 321880,
+    totalTransactions: 149,
+    currency: 'INR',
+    status: 'settled',
+  },
+  {
+    monthId: '2026-05',
+    monthName: 'May 2026',
+    year: 2026,
+    grossRevenue: 342000,
+    subscriptionRevenue: 220000,
+    auctionBiddingRevenue: 62000,
+    jobPostRevenue: 28000,
+    adPostingRevenue: 32000,
+    kycVerificationRevenue: 0,
+    cgst: 26085,
+    sgst: 26085,
+    igst: 0,
+    totalTax: 52170,
+    gatewayDeductions: 6840,
+    netSettledRevenue: 282990,
+    totalTransactions: 131,
+    currency: 'INR',
+    status: 'settled',
   },
 ];
 
@@ -1127,6 +1613,11 @@ interface GodfatherDataContextType {
   auditLogs: AdminAction[];
   emailLogs: EmailLog[];
   mailboxes: MailboxStatus[];
+  sensitiveWords: SensitiveWordRule[];
+  termsAgreements: TermsAgreement[];
+  complianceRecords: ComplianceRecord[];
+  paymentGateways: PaymentGatewayConfig[];
+  monthlyAccounting: MonthlyAccountingSummary[];
   
   // Controlled Actions (Backend Executed with Reason & Step-Up)
   executeAction: (params: {
@@ -1152,6 +1643,7 @@ interface GodfatherDataContextType {
   blockUserScoped: (params: { uid: string; name: string; email: string; scopes: BlockScope[]; reasonCode: BlockAction['reasonCode']; reasonText: string; expiresAt?: string }) => Promise<boolean>;
   unblockUser: (blockId: string, reason: string) => Promise<boolean>;
   forceUserLogout: (uid: string, reason: string) => Promise<boolean>;
+  grantFreeTrial: (uid: string, days: number, reason: string) => Promise<boolean>;
 
   // Company Actions
   verifyCompany: (companyId: string, reason: string) => Promise<boolean>;
@@ -1171,11 +1663,21 @@ interface GodfatherDataContextType {
   resolveReport: (reportId: string, action: 'dismiss' | 'hide_content' | 'warn_author' | 'escalate', reason: string) => Promise<boolean>;
   publishBlacklistEntry: (caseId: string, reason: string) => Promise<boolean>;
   revokeBlacklistEntry: (caseId: string, reason: string) => Promise<boolean>;
+  addSensitiveWordRule: (rule: Partial<SensitiveWordRule>, reason: string) => Promise<boolean>;
+  deleteSensitiveWordRule: (id: string, reason: string) => Promise<boolean>;
+  toggleSensitiveWordRule: (id: string, reason: string) => Promise<boolean>;
+  updateComplianceStatus: (id: string, status: ComplianceRecord['status'], reason: string) => Promise<boolean>;
 
   // Commerce & Pricing
   createPlanVersion: (newPlan: Partial<PlanVersion>, reason: string) => Promise<boolean>;
   requestPaymentConfigChange: (configId: string, changeDetails: string, reason: string) => Promise<boolean>;
   processRefundOrCredit: (invoiceId: string, amount: number, type: 'refund' | 'credit', reason: string) => Promise<boolean>;
+  togglePaymentGateway: (gatewayId: string, enabled: boolean, reason: string) => Promise<boolean>;
+  updatePaymentGateway: (gatewayId: string, updates: Partial<PaymentGatewayConfig>, reason: string) => Promise<boolean>;
+
+  // Terms & Clickwrap
+  updateTermsAgreement: (code: TermsAgreement['code'], updates: Partial<TermsAgreement>, reason: string) => Promise<boolean>;
+  toggleTermsEnforcement: (code: TermsAgreement['code'], field: 'enforceAtRegistration' | 'enforceAtAuctionCreate' | 'enforceAtBidSubmit' | 'enforceAtJobPost' | 'enforceAtAdPost', enabled: boolean, reason: string) => Promise<boolean>;
 
   // Templates
   saveNotificationTemplate: (template: NotificationTemplate, reason: string) => Promise<boolean>;
@@ -1205,6 +1707,11 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
   const [auditLogs, setAuditLogs] = useState<AdminAction[]>(SEED_ADMIN_ACTIONS);
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>(SEED_EMAIL_LOGS);
   const [mailboxes, setMailboxes] = useState<MailboxStatus[]>(SEED_MAILBOXES);
+  const [sensitiveWords, setSensitiveWords] = useState<SensitiveWordRule[]>(SEED_SENSITIVE_WORDS);
+  const [termsAgreements, setTermsAgreements] = useState<TermsAgreement[]>(SEED_TERMS_AGREEMENTS);
+  const [complianceRecords, setComplianceRecords] = useState<ComplianceRecord[]>(SEED_COMPLIANCE_RECORDS);
+  const [paymentGateways, setPaymentGateways] = useState<PaymentGatewayConfig[]>(SEED_PAYMENT_GATEWAYS);
+  const [monthlyAccounting, setMonthlyAccounting] = useState<MonthlyAccountingSummary[]>(SEED_MONTHLY_ACCOUNTING);
 
   // Persistence to local storage
   useEffect(() => {
@@ -2011,6 +2518,197 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  const grantFreeTrial = async (uid: string, days: number = 30, reason: string): Promise<boolean> => {
+    const user = users.find((u) => u.uid === uid);
+    if (!user) return false;
+    const before = { ...user };
+    const expiryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const after: UserProfile = {
+      ...user,
+      plan: 'premium',
+      isVerified: true,
+      hasGoldenTick: true,
+    };
+
+    await executeAction({
+      targetType: 'user',
+      targetId: uid,
+      targetLabel: `${user.displayName} (${user.company})`,
+      actionType: 'MEMBER_FREE_TRIAL_GRANTED',
+      reason: reason || `Granted complete 30-Day Free Trial with sovereign platform privileges (Expires ${expiryDate.split('T')[0]})`,
+      beforeSnapshot: before,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setUsers((prev) => prev.map((u) => (u.uid === uid ? after : u)));
+      },
+    });
+    return true;
+  };
+
+  const addSensitiveWordRule = async (ruleData: Partial<SensitiveWordRule>, reason: string): Promise<boolean> => {
+    const newRule: SensitiveWordRule = {
+      id: `sw-${Date.now()}`,
+      wordOrPattern: ruleData.wordOrPattern || '',
+      category: ruleData.category || 'fraud',
+      severity: ruleData.severity || 'quarantine',
+      matchType: ruleData.matchType || 'contains',
+      active: true,
+      hitsCount: 0,
+      description: ruleData.description || 'Automated moderation rule',
+      createdAt: new Date().toISOString(),
+      updatedBy: operator.email,
+    };
+
+    await executeAction({
+      targetType: 'config',
+      targetId: newRule.id,
+      targetLabel: `Sensitive Keyword: "${newRule.wordOrPattern}"`,
+      actionType: 'SENSITIVE_WORD_RULE_ADDED',
+      reason,
+      afterSnapshot: newRule,
+      mutationFn: () => {
+        setSensitiveWords((prev) => [newRule, ...prev]);
+      },
+    });
+    return true;
+  };
+
+  const deleteSensitiveWordRule = async (id: string, reason: string): Promise<boolean> => {
+    const target = sensitiveWords.find((s) => s.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'config',
+      targetId: id,
+      targetLabel: `Sensitive Keyword: "${target.wordOrPattern}"`,
+      actionType: 'SENSITIVE_WORD_RULE_DELETED',
+      reason,
+      beforeSnapshot: target,
+      mutationFn: () => {
+        setSensitiveWords((prev) => prev.filter((s) => s.id !== id));
+      },
+    });
+    return true;
+  };
+
+  const toggleSensitiveWordRule = async (id: string, reason: string): Promise<boolean> => {
+    const target = sensitiveWords.find((s) => s.id === id);
+    if (!target) return false;
+    const after = { ...target, active: !target.active };
+    await executeAction({
+      targetType: 'config',
+      targetId: id,
+      targetLabel: `Sensitive Keyword: "${target.wordOrPattern}"`,
+      actionType: target.active ? 'SENSITIVE_WORD_RULE_DEACTIVATED' : 'SENSITIVE_WORD_RULE_ACTIVATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setSensitiveWords((prev) => prev.map((s) => (s.id === id ? after : s)));
+      },
+    });
+    return true;
+  };
+
+  const updateTermsAgreement = async (code: TermsAgreement['code'], updates: Partial<TermsAgreement>, reason: string): Promise<boolean> => {
+    const target = termsAgreements.find((t) => t.code === code);
+    if (!target) return false;
+    const after = { ...target, ...updates, updatedAt: new Date().toISOString(), updatedBy: operator.email };
+    await executeAction({
+      targetType: 'config',
+      targetId: target.id,
+      targetLabel: target.title,
+      actionType: 'TERMS_AGREEMENT_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setTermsAgreements((prev) => prev.map((t) => (t.code === code ? after : t)));
+      },
+    });
+    return true;
+  };
+
+  const toggleTermsEnforcement = async (
+    code: TermsAgreement['code'],
+    field: 'enforceAtRegistration' | 'enforceAtAuctionCreate' | 'enforceAtBidSubmit' | 'enforceAtJobPost' | 'enforceAtAdPost',
+    enabled: boolean,
+    reason: string
+  ): Promise<boolean> => {
+    const target = termsAgreements.find((t) => t.code === code);
+    if (!target) return false;
+    const after = { ...target, [field]: enabled, updatedAt: new Date().toISOString(), updatedBy: operator.email };
+    await executeAction({
+      targetType: 'config',
+      targetId: target.id,
+      targetLabel: `${target.title} -> ${field}`,
+      actionType: 'CLICKWRAP_ENFORCEMENT_TOGGLED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setTermsAgreements((prev) => prev.map((t) => (t.code === code ? after : t)));
+      },
+    });
+    return true;
+  };
+
+  const togglePaymentGateway = async (gatewayId: string, enabled: boolean, reason: string): Promise<boolean> => {
+    const target = paymentGateways.find((g) => g.gatewayId === gatewayId);
+    if (!target) return false;
+    const after = { ...target, enabled };
+    await executeAction({
+      targetType: 'payment_config',
+      targetId: gatewayId,
+      targetLabel: target.title,
+      actionType: enabled ? 'PAYMENT_GATEWAY_ACTIVATED' : 'PAYMENT_GATEWAY_DEACTIVATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setPaymentGateways((prev) => prev.map((g) => (g.gatewayId === gatewayId ? after : g)));
+      },
+    });
+    return true;
+  };
+
+  const updatePaymentGateway = async (gatewayId: string, updates: Partial<PaymentGatewayConfig>, reason: string): Promise<boolean> => {
+    const target = paymentGateways.find((g) => g.gatewayId === gatewayId);
+    if (!target) return false;
+    const after = { ...target, ...updates, lastTestedAt: new Date().toISOString() };
+    await executeAction({
+      targetType: 'payment_config',
+      targetId: gatewayId,
+      targetLabel: target.title,
+      actionType: 'PAYMENT_GATEWAY_SETTINGS_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setPaymentGateways((prev) => prev.map((g) => (g.gatewayId === gatewayId ? after : g)));
+      },
+    });
+    return true;
+  };
+
+  const updateComplianceStatus = async (id: string, status: ComplianceRecord['status'], reason: string): Promise<boolean> => {
+    const target = complianceRecords.find((c) => c.id === id);
+    if (!target) return false;
+    const after = { ...target, status, lastAuditedAt: new Date().toISOString(), auditedBy: operator.email };
+    await executeAction({
+      targetType: 'case',
+      targetId: id,
+      targetLabel: `${target.entityName} (${target.type})`,
+      actionType: 'COMPLIANCE_STATUS_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setComplianceRecords((prev) => prev.map((c) => (c.id === id ? after : c)));
+      },
+    });
+    return true;
+  };
+
   return (
     <GodfatherDataContext.Provider
       value={{
@@ -2029,6 +2727,11 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         auditLogs,
         emailLogs,
         mailboxes,
+        sensitiveWords,
+        termsAgreements,
+        complianceRecords,
+        paymentGateways,
+        monthlyAccounting,
         executeAction,
         sendTestEmail,
         checkEmailHealth,
@@ -2038,6 +2741,7 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         blockUserScoped,
         unblockUser,
         forceUserLogout,
+        grantFreeTrial,
         verifyCompany,
         rejectCompany,
         requestCompanyInfo,
@@ -2049,9 +2753,17 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         resolveReport,
         publishBlacklistEntry,
         revokeBlacklistEntry,
+        addSensitiveWordRule,
+        deleteSensitiveWordRule,
+        toggleSensitiveWordRule,
+        updateComplianceStatus,
         createPlanVersion,
         requestPaymentConfigChange,
         processRefundOrCredit,
+        togglePaymentGateway,
+        updatePaymentGateway,
+        updateTermsAgreement,
+        toggleTermsEnforcement,
         saveNotificationTemplate,
         searchAllRecords,
         getCustomerDossier,

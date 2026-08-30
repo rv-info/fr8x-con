@@ -6,11 +6,25 @@ import { ROLE_PERMISSIONS } from '../utils/audit';
 
 export const INITIAL_GODFATHER_OPERATORS: GodfatherOperator[] = [
   {
+    uid: 'gf-op-godfather',
+    email: 'tech@fr8x.in',
+    displayName: 'IL PADRINO (tech@fr8x.in)',
+    role: 'godfather_owner',
+    roleTitle: 'Godfather Supreme Administrator & Chief Controller',
+    mfaEnabled: true,
+    mfaVerified: true,
+    lastStepUpAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
+    lastLoginAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+    ipAddress: '103.21.144.90 (Sovereign Secured Root Node)',
+    location: 'Sovereign Controller Node',
+    activeSessionExpiry: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+  },
+  {
     uid: 'gf-op-001',
     email: 'admin.security@con.fr8x.in',
     displayName: 'Vikramaditya Singhania',
     role: 'godfather_owner',
-    roleTitle: 'Chief Platform Controller & Owner',
+    roleTitle: 'Platform Security Officer',
     mfaEnabled: true,
     mfaVerified: true,
     lastStepUpAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
