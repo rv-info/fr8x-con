@@ -19,6 +19,7 @@ import {
   Receipt,
   Percent,
   Bell,
+  Mail,
   FileText,
   Key,
   Sliders,
@@ -75,6 +76,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Platform',
     items: [
       { label: 'Notifications & Templates', href: '/godfather/platform/templates', icon: Bell },
+      { label: 'Email Service (Zoho)', href: '/godfather/platform/email', icon: Mail },
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },
       { label: 'Access Control & Roles', href: '/godfather/platform/access', icon: Key },
       { label: 'Feature Flags & Config', href: '/godfather/platform/config', icon: Sliders },

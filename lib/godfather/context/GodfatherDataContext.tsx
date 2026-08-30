@@ -14,6 +14,8 @@ import {
   CustomerDossier,
   GlobalSearchResult,
   BlockScope,
+  EmailLog,
+  MailboxStatus,
 } from '../types';
 import {
   UserProfile,
@@ -999,6 +1001,115 @@ const SEED_CASES: AdminCase[] = [
   },
 ];
 
+const SEED_MAILBOXES: MailboxStatus[] = [
+  {
+    mailbox: 'password@fr8x.in',
+    roleDescription: 'System OTP, Password Reset, Verification & Account Security (SMTP Engine)',
+    status: 'healthy',
+    mfaEnforced: true,
+    smtpHealth: 'connected',
+    lastSuccessfulSend: '2026-08-30T17:15:00Z',
+    aliases: ['noreply@fr8x.in'],
+    sentToday: 142,
+    dailyLimit: 1000,
+  },
+  {
+    mailbox: 'support@fr8x.in',
+    roleDescription: 'General Customer & Freight Member Support Operations',
+    status: 'healthy',
+    mfaEnforced: true,
+    smtpHealth: 'connected',
+    lastSuccessfulSend: '2026-08-30T16:40:00Z',
+    aliases: ['billing@fr8x.in'],
+    sentToday: 89,
+    dailyLimit: 1000,
+  },
+  {
+    mailbox: 'tech@fr8x.in',
+    roleDescription: 'GODFATHER Operator Identity, Security Alert & Lockout Recipient',
+    status: 'healthy',
+    mfaEnforced: true,
+    smtpHealth: 'connected',
+    lastSuccessfulSend: '2026-08-30T17:05:00Z',
+    aliases: ['alerts@fr8x.in'],
+    sentToday: 18,
+    dailyLimit: 1000,
+  },
+];
+
+const SEED_EMAIL_LOGS: EmailLog[] = [
+  {
+    logId: 'EML-2026-0891',
+    recipient: 'arjun@atlaslogistics.com',
+    sender: 'FR8X Platform Security <password@fr8x.in>',
+    subject: '[FR8X GODFATHER] Login Verification Code: 884210',
+    templateId: 'TMPL_OTP_CHALLENGE',
+    templateName: 'Godfather Operator OTP Challenge',
+    correlationId: 'GF-EML-9921-8842',
+    status: 'delivered',
+    provider: 'Zoho_SMTP',
+    sentAt: '2026-08-30T17:15:00Z',
+    deliveredAt: '2026-08-30T17:15:02Z',
+    entityContext: { entityType: 'user', entityId: 'u-arjun' },
+  },
+  {
+    logId: 'EML-2026-0890',
+    recipient: 'sarah.lewis@rotterdamfreight.nl',
+    sender: 'FR8X Platform <password@fr8x.in>',
+    subject: 'Action Required: Tender Invitation for Reverse Freight Auction RA-2026-0842',
+    templateId: 'TMPL_AUCTION_INVITE',
+    templateName: 'Reverse Auction Tender Invitation',
+    correlationId: 'GF-EML-8842-1092',
+    status: 'delivered',
+    provider: 'Zoho_SMTP',
+    sentAt: '2026-08-30T16:20:00Z',
+    deliveredAt: '2026-08-30T16:20:03Z',
+    entityContext: { entityType: 'auction', entityId: 'RA-2026-0842' },
+  },
+  {
+    logId: 'EML-2026-0889',
+    recipient: 'kiran.mehta@indoocean.com',
+    sender: 'FR8X Commerce <password@fr8x.in>',
+    subject: 'Tender Concluded: Winning Award Confirmation for RA-2026-0842',
+    templateId: 'TMPL_BID_RESULT',
+    templateName: 'Auction Winning Award Notification',
+    correlationId: 'GF-EML-7741-0091',
+    status: 'delivered',
+    provider: 'Zoho_SMTP',
+    sentAt: '2026-08-30T15:00:00Z',
+    deliveredAt: '2026-08-30T15:00:02Z',
+    entityContext: { entityType: 'auction', entityId: 'RA-2026-0842' },
+  },
+  {
+    logId: 'EML-2026-0888',
+    recipient: 'vikas.dubey@apexforwarders.in',
+    sender: 'FR8X Compliance <password@fr8x.in>',
+    subject: 'Action Required: Additional Corporate Verification Documents Needed',
+    templateId: 'TMPL_KYC_INFO_REQ',
+    templateName: 'KYC Additional Information Notice',
+    correlationId: 'GF-EML-6612-4412',
+    status: 'delivered',
+    provider: 'Zoho_SMTP',
+    sentAt: '2026-08-28T16:30:00Z',
+    deliveredAt: '2026-08-28T16:30:04Z',
+    entityContext: { entityType: 'company', entityId: 'CMP-00104' },
+  },
+  {
+    logId: 'EML-2026-0887',
+    recipient: 'tech@fr8x.in',
+    sender: 'FR8X Security Monitor <password@fr8x.in>',
+    subject: '🚨 [SECURITY ALERT] High-Risk Action Executed: Blacklist Entry Published',
+    templateId: 'TMPL_SECURITY_ALERT',
+    templateName: 'Platform Security Alert Notification',
+    correlationId: 'GF-EML-5521-9988',
+    status: 'delivered',
+    provider: 'Zoho_SMTP',
+    sentAt: '2026-08-28T14:10:00Z',
+    deliveredAt: '2026-08-28T14:10:01Z',
+    entityContext: { entityType: 'blacklist', entityId: 'BLK-009' },
+  },
+];
+
 interface GodfatherDataContextType {
   // State lists
   users: UserProfile[];
@@ -1014,6 +1125,8 @@ interface GodfatherDataContextType {
   templates: NotificationTemplate[];
   cases: AdminCase[];
   auditLogs: AdminAction[];
+  emailLogs: EmailLog[];
+  mailboxes: MailboxStatus[];
   
   // Controlled Actions (Backend Executed with Reason & Step-Up)
   executeAction: (params: {
@@ -1027,6 +1140,10 @@ interface GodfatherDataContextType {
     stepUpVerified?: boolean;
     mutationFn: () => void;
   }) => Promise<{ success: boolean; correlationId: string }>;
+
+  // Email Actions
+  sendTestEmail: (recipient: string, templateId: string, reason: string) => Promise<{ success: boolean; correlationId: string }>;
+  checkEmailHealth: () => Promise<any>;
 
   // User Actions
   toggleUserVerification: (uid: string, isVerified: boolean, reason: string) => Promise<boolean>;
@@ -1086,6 +1203,8 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
   const [templates, setTemplates] = useState<NotificationTemplate[]>(SEED_TEMPLATES);
   const [cases, setCases] = useState<AdminCase[]>(SEED_CASES);
   const [auditLogs, setAuditLogs] = useState<AdminAction[]>(SEED_ADMIN_ACTIONS);
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>(SEED_EMAIL_LOGS);
+  const [mailboxes, setMailboxes] = useState<MailboxStatus[]>(SEED_MAILBOXES);
 
   // Persistence to local storage
   useEffect(() => {
@@ -1840,6 +1959,58 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     };
   };
 
+  const sendTestEmail = async (recipient: string, templateId: string, reason: string): Promise<{ success: boolean; correlationId: string }> => {
+    const logId = `EML-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    const newLog: EmailLog = {
+      logId,
+      recipient,
+      sender: 'FR8X Platform Security <password@fr8x.in>',
+      subject: `[FR8X TEST] Zoho Mail Diagnostic Verification — ${templateId}`,
+      templateId,
+      templateName: 'Godfather SMTP Diagnostic Test',
+      correlationId: `GF-EML-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Date.now().toString().slice(-4)}`,
+      status: 'delivered',
+      provider: 'Zoho_SMTP',
+      sentAt: new Date().toISOString(),
+      deliveredAt: new Date(Date.now() + 1500).toISOString(),
+      actorUid: operator.uid,
+    };
+
+    const actionRes = await executeAction({
+      targetType: 'email',
+      targetId: logId,
+      targetLabel: `${recipient} (${templateId})`,
+      actionType: 'ZOHO_SMTP_TEST_EMAIL_SENT',
+      reason,
+      afterSnapshot: newLog,
+      mutationFn: () => {
+        setEmailLogs((prev) => [newLog, ...prev]);
+        setMailboxes((prev) =>
+          prev.map((m) =>
+            m.mailbox === 'password@fr8x.in'
+              ? { ...m, sentToday: m.sentToday + 1, lastSuccessfulSend: new Date().toISOString() }
+              : m
+          )
+        );
+      },
+    });
+
+    return { success: true, correlationId: actionRes.correlationId };
+  };
+
+  const checkEmailHealth = async () => {
+    return {
+      connected: true,
+      host: 'smtp.zoho.in',
+      port: 465,
+      secure: true,
+      user: 'password@fr8x.in',
+      tlsVersion: 'TLS 1.3 / TLS 1.2 Enforced',
+      lastChecked: new Date().toISOString(),
+      latencyMs: 18,
+    };
+  };
+
   return (
     <GodfatherDataContext.Provider
       value={{
@@ -1856,7 +2027,11 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         templates,
         cases,
         auditLogs,
+        emailLogs,
+        mailboxes,
         executeAction,
+        sendTestEmail,
+        checkEmailHealth,
         toggleUserVerification,
         toggleUserGoldTick,
         updateUserProfileAudited,

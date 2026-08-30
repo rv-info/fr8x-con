@@ -17,7 +17,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
   const { isAuthenticated } = useGodfatherAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const isLoginPage = pathname === '/godfather/login';
+  const isLoginPage = pathname === '/godfather/login' || pathname === '/GODFATHERON' || pathname === '/godfatheron';
 
   // If visiting login page, render standalone high-security login shell
   if (isLoginPage) {
@@ -41,6 +41,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
   else if (pathname.startsWith('/godfather/commerce/invoices')) activeTitle = 'Invoices, GST & Tax Breakdown';
   else if (pathname.startsWith('/godfather/commerce/fees')) activeTitle = 'Fees, Discounts & Commercial Credits';
   else if (pathname.startsWith('/godfather/platform/templates')) activeTitle = 'System Notifications & Message Templates';
+  else if (pathname.startsWith('/godfather/platform/email')) activeTitle = 'Zoho Email Service & Delivery Logs';
   else if (pathname.startsWith('/godfather/platform/audit')) activeTitle = 'Immutable Platform Audit Ledger';
   else if (pathname.startsWith('/godfather/platform/access')) activeTitle = 'Access Control & Operator Subroles';
   else if (pathname.startsWith('/godfather/platform/config')) activeTitle = 'Feature Flags & System Configuration';

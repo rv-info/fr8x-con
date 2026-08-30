@@ -77,6 +77,7 @@ export interface AdminAction {
     | 'payment_config'
     | 'fee'
     | 'template'
+    | 'email'
     | 'config'
     | 'role'
     | 'report'
@@ -325,3 +326,63 @@ export interface GlobalSearchResult {
   metadata?: Record<string, any>;
   rawObject: any;
 }
+
+export interface EmailLog {
+  logId: string;
+  recipient: string;
+  sender: string;
+  subject: string;
+  templateId: string;
+  templateName: string;
+  correlationId: string;
+  status: 'queued' | 'sent' | 'delivered' | 'bounced' | 'failed';
+  provider: 'Zoho_SMTP' | 'Zoho_ZeptoMail';
+  sentAt: string;
+  deliveredAt?: string;
+  errorDetails?: string;
+  entityContext?: {
+    entityType: string;
+    entityId: string;
+  };
+  actorUid?: string;
+}
+
+export interface MailboxStatus {
+  mailbox: string;
+  roleDescription: string;
+  status: 'healthy' | 'degraded' | 'error';
+  mfaEnforced: boolean;
+  smtpHealth: 'connected' | 'unreachable' | 'auth_failure';
+  lastSuccessfulSend: string;
+  aliases: string[];
+  sentToday: number;
+  dailyLimit: number;
+}
+
+export interface AdminSession {
+  sessionId: string;
+  operatorUid: string;
+  operatorEmail: string;
+  operatorRole: GodfatherRole;
+  ipHash: string;
+  userAgent: string;
+  loginAt: string;
+  expiresAt: string;
+  mfaVerified: boolean;
+  correlationId: string;
+  status: 'active' | 'revoked' | 'expired';
+}
+
+export interface SecurityEvent {
+  eventId: string;
+  eventType: 'LOGIN_FAILED' | 'ACCOUNT_LOCKED' | 'SUSPICIOUS_IP' | 'UNAUTHORIZED_ACCESS_ATTEMPT' | 'STEPUP_FAILED';
+  targetEmail: string;
+  ipAddress: string;
+  deviceInfo: string;
+  details: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  timestamp: string;
+  alertSentTo: string;
+  correlationId: string;
+}
+

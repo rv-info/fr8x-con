@@ -68,6 +68,25 @@ service cloud.firestore {
       allow delete: if hasGodfatherRole('godfather_owner');
     }
 
+    // Zoho Outbound Email Delivery Logs (Append-Only)
+    match /emailLogs/{logId} {
+      allow read: if isGodfather();
+      allow create: if isGodfather();
+      allow update, delete: if false; // Strict Cryptographic Immutability
+    }
+
+    // Privileged Admin Operator Sessions
+    match /adminSessions/{sessionId} {
+      allow read, write: if isGodfather();
+    }
+
+    // Platform Security & Lockout Event Ledger (Append-Only)
+    match /securityEvents/{eventId} {
+      allow read: if isGodfather();
+      allow create: if isAuthenticated() || isGodfather();
+      allow update, delete: if false; // Strict Cryptographic Immutability
+    }
+
     // =========================================================================
     // PLATFORM USER & ENTITY COLLECTIONS
     // =========================================================================
