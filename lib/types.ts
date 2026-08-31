@@ -567,3 +567,137 @@ export interface AppNotification {
   relatedId?: string;
   actionLabel?: string;
 }
+
+// Global Sovereign Master Data Definitions for CON.FR8X.IN
+
+export type LocationType =
+  | 'Seaport'
+  | 'Inland Container Depot (ICD)'
+  | 'Container Freight Station (CFS)'
+  | 'Airport'
+  | 'Land Border'
+  | 'River Port'
+  | 'Dry Port';
+
+export interface LocationMasterItem {
+  id: string;
+  unLocode: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  region: string;
+  type: LocationType;
+  capabilities: {
+    isPOR: boolean; // Place of Receipt
+    isPOL: boolean; // Port of Loading
+    isPOD: boolean; // Port of Discharge
+    isFPOD: boolean; // Final Place of Delivery
+  };
+  terminals: string[];
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  customsZoneCode?: string;
+  status: 'active' | 'maintenance' | 'restricted' | 'inactive';
+  remarks?: string;
+}
+
+export type CarrierType =
+  | 'MLO' // Main Line Operator / Vessel Operating Common Carrier
+  | 'NVOCC' // Non-Vessel Operating Common Carrier
+  | 'Feeder Operator'
+  | 'Air Freight Carrier'
+  | 'Rail / Intermodal';
+
+export type CarrierAlliance =
+  | 'Gemini Cooperation'
+  | 'Ocean Alliance'
+  | 'THE Alliance / Premier'
+  | 'Independent'
+  | 'Global Forwarder'
+  | 'Regional Feeder'
+  | 'National Rail';
+
+export interface CarrierMasterItem {
+  id: string;
+  name: string;
+  scacCode: string;
+  carrierCode: string;
+  type: CarrierType;
+  alliance: CarrierAlliance;
+  country: string;
+  fleetTEU?: string;
+  bookingEmail: string;
+  trackingApiEndpoint?: string;
+  supportedEquipment: string[];
+  status: 'active' | 'suspended' | 'under_review';
+  remarks?: string;
+}
+
+export type EquipmentCategory =
+  | 'Dry Standard'
+  | 'High Cube'
+  | 'Reefer'
+  | 'Open Top'
+  | 'Flat Rack'
+  | 'ISO Tank'
+  | 'Special Bulk';
+
+export interface EquipmentMasterItem {
+  id: string;
+  isoCode: string;
+  isoGroup: string;
+  name: string;
+  category: EquipmentCategory;
+  lengthFt: number;
+  heightFt: number;
+  maxGrossKg: number;
+  tareWeightKg: number;
+  maxPayloadKg: number;
+  volumeCbm: number;
+  isHazardousAllowed: boolean;
+  isReefer: boolean;
+  isOogAllowed: boolean;
+  status: 'active' | 'deprecated';
+  remarks?: string;
+}
+
+export interface CommodityMasterItem {
+  id: string;
+  hsCode: string;
+  chapter: string;
+  heading: string;
+  name: string;
+  isHazardous: boolean;
+  imoClass?: string;
+  unNumber?: string;
+  storageReqs?: string;
+  status: 'active' | 'restricted' | 'prohibited';
+}
+
+export interface IncotermMasterItem {
+  id: string;
+  code: string;
+  name: string;
+  category: 'Sea & Inland Waterway' | 'Any Transport Mode';
+  riskTransferPoint: string;
+  costFreight: 'Seller' | 'Buyer';
+  costOriginTHC: 'Seller' | 'Buyer';
+  costDestTHC: 'Seller' | 'Buyer';
+  costCustomsExport: 'Seller' | 'Buyer';
+  costCustomsImport: 'Seller' | 'Buyer';
+  costInsurance: 'Seller' | 'Buyer' | 'Optional';
+  status: 'active' | 'inactive';
+}
+
+export interface TaxSACMasterItem {
+  id: string;
+  sacCode: string;
+  description: string;
+  standardGSTRate: number;
+  rcmApplicable: boolean;
+  category: string;
+  status: 'active' | 'inactive';
+}
+

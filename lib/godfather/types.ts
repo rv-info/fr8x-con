@@ -81,7 +81,13 @@ export interface AdminAction {
     | 'config'
     | 'role'
     | 'report'
-    | 'case';
+    | 'case'
+    | 'master_location'
+    | 'master_carrier'
+    | 'master_equipment'
+    | 'master_commodity'
+    | 'master_incoterm'
+    | 'master_tax';
   targetId: string;
   targetLabel?: string;
   actionType: string;
@@ -478,4 +484,142 @@ export interface MonthlyAccountingSummary {
   currency: 'INR';
   status: 'settled' | 'auditing' | 'in_progress';
 }
+
+// Master Data Management Models (for Locations/POR/POL/POD/FPOD, Carriers MLO/NVOCC, Equipment, HS Codes, Incoterms, Tax)
+
+export type LocationType =
+  | 'Seaport'
+  | 'Inland Container Depot (ICD)'
+  | 'Container Freight Station (CFS)'
+  | 'Airport'
+  | 'Land Border'
+  | 'River Port'
+  | 'Dry Port';
+
+export interface MasterLocation {
+  id: string;
+  unLocode: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  region: string;
+  type: LocationType;
+  capabilities: {
+    isPOR: boolean; // Place of Receipt
+    isPOL: boolean; // Port of Loading
+    isPOD: boolean; // Port of Discharge
+    isFPOD: boolean; // Final Place of Delivery
+  };
+  terminals: string[];
+  coordinates: {
+    lat: number;
+    lng: number;
+  };
+  customsZoneCode?: string;
+  status: 'active' | 'maintenance' | 'restricted' | 'inactive';
+  remarks?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CarrierType =
+  | 'MLO' // Main Line Operator / Vessel Operating Common Carrier
+  | 'NVOCC' // Non-Vessel Operating Common Carrier
+  | 'Feeder Operator'
+  | 'Air Freight Carrier'
+  | 'Rail / Intermodal';
+
+export type CarrierAlliance =
+  | 'Gemini Cooperation'
+  | 'Ocean Alliance'
+  | 'THE Alliance / Premier'
+  | 'Independent'
+  | 'Global Forwarder'
+  | 'Regional Feeder'
+  | 'National Rail';
+
+export interface MasterCarrier {
+  id: string;
+  name: string;
+  scacCode: string;
+  carrierCode: string;
+  type: CarrierType;
+  alliance: CarrierAlliance;
+  country: string;
+  fleetTEU?: string;
+  bookingEmail: string;
+  trackingApiEndpoint?: string;
+  supportedEquipment: string[];
+  status: 'active' | 'suspended' | 'under_review';
+  remarks?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EquipmentCategory =
+  | 'Dry Standard'
+  | 'High Cube'
+  | 'Reefer'
+  | 'Open Top'
+  | 'Flat Rack'
+  | 'ISO Tank'
+  | 'Special Bulk';
+
+export interface MasterEquipment {
+  id: string;
+  isoCode: string;
+  isoGroup: string;
+  name: string;
+  category: EquipmentCategory;
+  lengthFt: number;
+  heightFt: number;
+  maxGrossKg: number;
+  tareWeightKg: number;
+  maxPayloadKg: number;
+  volumeCbm: number;
+  isHazardousAllowed: boolean;
+  isReefer: boolean;
+  isOogAllowed: boolean;
+  status: 'active' | 'deprecated';
+  remarks?: string;
+}
+
+export interface MasterCommodity {
+  id: string;
+  hsCode: string;
+  chapter: string;
+  heading: string;
+  name: string;
+  isHazardous: boolean;
+  imoClass?: string;
+  unNumber?: string;
+  storageReqs?: string;
+  status: 'active' | 'restricted' | 'prohibited';
+}
+
+export interface MasterIncoterm {
+  id: string;
+  code: string;
+  name: string;
+  category: 'Sea & Inland Waterway' | 'Any Transport Mode';
+  riskTransferPoint: string;
+  costFreight: 'Seller' | 'Buyer';
+  costOriginTHC: 'Seller' | 'Buyer';
+  costDestTHC: 'Seller' | 'Buyer';
+  costCustomsExport: 'Seller' | 'Buyer';
+  costCustomsImport: 'Seller' | 'Buyer';
+  costInsurance: 'Seller' | 'Buyer' | 'Optional';
+  status: 'active' | 'inactive';
+}
+
+export interface MasterTaxSAC {
+  id: string;
+  sacCode: string;
+  description: string;
+  standardGSTRate: number;
+  rcmApplicable: boolean;
+  category: string;
+  status: 'active' | 'inactive';
+}
+
 

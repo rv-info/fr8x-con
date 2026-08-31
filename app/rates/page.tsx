@@ -33,10 +33,15 @@ import {
   History,
   TrendingUp,
 } from 'lucide-react';
-import { formatNumber } from '@/lib/utils';
+import {
+  formatNumber,
+  getLocationTypeIcon,
+  getCarrierTypeIcon,
+  getEquipmentCategoryIcon,
+} from '@/lib/utils';
 
 export default function RatesPage() {
-  const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates } = useData();
+  const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -798,13 +803,19 @@ Generated via FR8X Reverse Auction & Freight Exchange
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>CARRIER</label>
                 <select className="input" style={{ fontSize: '11.5px', height: '32px', padding: '0 6px' }} value={carrier} onChange={(e) => setCarrier(e.target.value)}>
-                  <option value="Maersk">Maersk</option>
-                  <option value="Hapag-Lloyd">Hapag-Lloyd</option>
-                  <option value="CMA CGM">CMA CGM</option>
-                  <option value="MSC">MSC</option>
-                  <option value="ONE Line">ONE Line</option>
-                  <option value="Evergreen">Evergreen</option>
-                  <option value="COSCO">COSCO</option>
+                  {(masterCarriers && masterCarriers.length > 0 ? masterCarriers : [
+                    { id: '1', name: 'Maersk', carrierCode: 'MSK', type: 'MLO' },
+                    { id: '2', name: 'Hapag-Lloyd', carrierCode: 'HAP', type: 'MLO' },
+                    { id: '3', name: 'CMA CGM', carrierCode: 'CMA', type: 'MLO' },
+                    { id: '4', name: 'MSC', carrierCode: 'MSC', type: 'MLO' },
+                    { id: '5', name: 'ONE Line', carrierCode: 'ONE', type: 'MLO' },
+                    { id: '6', name: 'Evergreen', carrierCode: 'EVG', type: 'MLO' },
+                    { id: '7', name: 'COSCO', carrierCode: 'COS', type: 'MLO' },
+                  ]).map((c: any) => (
+                    <option key={c.id || c.name} value={c.name}>
+                      {c.name} ({c.type})
+                    </option>
+                  ))}
                 </select>
               </div>
               {/* Row 2: POR + POL */}
@@ -1053,11 +1064,36 @@ Generated via FR8X Reverse Auction & Freight Exchange
                         <span style={{ fontSize: '11px', fontWeight: isOwner ? 700 : 400 }}>{rate.sp}</span>
                         {isOwner && <span style={{ fontSize: '9px', color: 'var(--brand)', display: 'block' }}>i-Rate</span>}
                       </td>
-                      <td style={{ padding: '5px 4px', fontWeight: 600, fontSize: '11px' }}>{rate.carrier}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>{rate.por || rate.pol}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>{rate.pol}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>{rate.pod}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>{rate.fpod || rate.pod}</td>
+                      <td style={{ padding: '5px 4px', fontWeight: 600, fontSize: '11px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <span>🚢</span>
+                          <span>{rate.carrier}</span>
+                        </span>
+                      </td>
+                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <span>🗺️</span>
+                          <span>{rate.por || rate.pol}</span>
+                        </span>
+                      </td>
+                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <span>⚓</span>
+                          <span>{rate.pol}</span>
+                        </span>
+                      </td>
+                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <span>⚓</span>
+                          <span>{rate.pod}</span>
+                        </span>
+                      </td>
+                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <span>🗺️</span>
+                          <span>{rate.fpod || rate.pod}</span>
+                        </span>
+                      </td>
                       <td style={{ padding: '5px 4px', textAlign: 'right', fontWeight: 700, color: 'var(--brand)', fontSize: '11.5px' }}>${rate.d20.toLocaleString()}</td>
                       <td style={{ padding: '5px 4px', fontSize: '10.5px', color: 'var(--mut)' }}>{rate.d20Type || 'Dry Std'}</td>
                       <td style={{ padding: '5px 4px', textAlign: 'right', fontWeight: 700, color: 'var(--teal)', fontSize: '11.5px' }}>${rate.h40.toLocaleString()}</td>

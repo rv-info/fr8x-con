@@ -15,10 +15,23 @@ import {
   SubmittedBid,
   RateItem,
   ContainerEquipmentRow,
-  SelectedBidder,
   PostReport,
   AppNotification,
+  LocationMasterItem,
+  CarrierMasterItem,
+  EquipmentMasterItem,
+  CommodityMasterItem,
+  IncotermMasterItem,
+  TaxSACMasterItem,
 } from '@/lib/types';
+import {
+  MASTER_LOCATIONS,
+  MASTER_CARRIERS,
+  MASTER_EQUIPMENT,
+  MASTER_COMMODITIES,
+  MASTER_INCOTERMS,
+  MASTER_TAX_SAC,
+} from '@/lib/utils';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 
@@ -1413,6 +1426,13 @@ interface DataContextType {
   notifications: AppNotification[];
   markNotificationRead: (notifId: string) => void;
   markAllNotificationsRead: () => void;
+  // Master Data
+  masterLocations: LocationMasterItem[];
+  masterCarriers: CarrierMasterItem[];
+  masterEquipment: EquipmentMasterItem[];
+  masterCommodities: CommodityMasterItem[];
+  masterIncoterms: IncotermMasterItem[];
+  masterTaxCodes: TaxSACMasterItem[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -1431,6 +1451,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [rates] = useState<RateItem[]>(SEED_RATES);
   const [myRates, setMyRates] = useState<RateItem[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
+
+  // Master Data States with Live Synchronizer
+  const [masterLocations, setMasterLocations] = useState<LocationMasterItem[]>(MASTER_LOCATIONS);
+  const [masterCarriers, setMasterCarriers] = useState<CarrierMasterItem[]>(MASTER_CARRIERS);
+  const [masterEquipment, setMasterEquipment] = useState<EquipmentMasterItem[]>(MASTER_EQUIPMENT);
+  const [masterCommodities, setMasterCommodities] = useState<CommodityMasterItem[]>(MASTER_COMMODITIES);
+  const [masterIncoterms, setMasterIncoterms] = useState<IncotermMasterItem[]>(MASTER_INCOTERMS);
+  const [masterTaxCodes, setMasterTaxCodes] = useState<TaxSACMasterItem[]>(MASTER_TAX_SAC);
+
+  useEffect(() => {
+    try {
+      const savedLocs = localStorage.getItem('fr8x_gf_master_locations');
+      if (savedLocs) setMasterLocations(JSON.parse(savedLocs));
+      const savedCars = localStorage.getItem('fr8x_gf_master_carriers');
+      if (savedCars) setMasterCarriers(JSON.parse(savedCars));
+    } catch {}
+  }, []);
   const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([
     {
       id: 'bid-2',
@@ -2226,6 +2263,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         notifications,
         markNotificationRead,
         markAllNotificationsRead,
+        masterLocations,
+        masterCarriers,
+        masterEquipment,
+        masterCommodities,
+        masterIncoterms,
+        masterTaxCodes,
       }}
     >
       {children}

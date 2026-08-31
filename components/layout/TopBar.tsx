@@ -5,7 +5,12 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useCurrency } from '@/lib/context/CurrencyContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
-import { convertAmount, CURRENCY_RATES } from '@/lib/utils';
+import {
+  convertAmount,
+  CURRENCY_RATES,
+  getLocationTypeIcon,
+  getCarrierTypeIcon,
+} from '@/lib/utils';
 import Link from 'next/link';
 import {
   MapPin,
@@ -24,6 +29,8 @@ import {
   Globe2,
   Briefcase,
   CheckCheck,
+  Anchor,
+  Ship,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -34,7 +41,7 @@ interface TopBarProps {
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { user, allUsers, switchUser } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates } = useCurrency();
-  const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics } = useData();
+  const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -56,15 +63,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
   // Live search calculations
   const query = globalSearchQuery.trim().toLowerCase();
-  const matchedAuctions = query.length >= 2 ? auctions.filter((a) => a.title.toLowerCase().includes(query) || a.id.toLowerCase().includes(query) || a.shipment.pol.toLowerCase().includes(query) || a.shipment.pod.toLowerCase().includes(query) || a.shipment.commodity.toLowerCase().includes(query)).slice(0, 4) : [];
+  const matchedLocations = query.length >= 2 ? (masterLocations || []).filter((l) => l.unLocode.toLowerCase().includes(query) || l.name.toLowerCase().includes(query) || l.country.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedCarriers = query.length >= 2 ? (masterCarriers || []).filter((c) => c.name.toLowerCase().includes(query) || c.scacCode.toLowerCase().includes(query) || c.type.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedAuctions = query.length >= 2 ? auctions.filter((a) => a.title.toLowerCase().includes(query) || a.id.toLowerCase().includes(query) || a.shipment.pol.toLowerCase().includes(query) || a.shipment.pod.toLowerCase().includes(query) || a.shipment.commodity.toLowerCase().includes(query)).slice(0, 3) : [];
   const allRates = [...rates, ...(myRates || [])];
-  const matchedRates = query.length >= 2 ? allRates.filter((r) => r.id.toLowerCase().includes(query) || r.carrier.toLowerCase().includes(query) || r.sp.toLowerCase().includes(query) || r.pol.toLowerCase().includes(query) || r.pod.toLowerCase().includes(query)).slice(0, 4) : [];
-  const matchedJobs = query.length >= 2 ? jobs.filter((j) => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query) || j.location.toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedPosts = query.length >= 2 ? posts.filter((p) => p.text.toLowerCase().includes(query) || p.author.toLowerCase().includes(query) || (p.authorCompany || '').toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedTopics = query.length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(query) || t.author.toLowerCase().includes(query) || t.category.toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => u.displayName.toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedRates = query.length >= 2 ? allRates.filter((r) => r.id.toLowerCase().includes(query) || r.carrier.toLowerCase().includes(query) || r.sp.toLowerCase().includes(query) || r.pol.toLowerCase().includes(query) || r.pod.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedJobs = query.length >= 2 ? jobs.filter((j) => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query) || j.location.toLowerCase().includes(query)).slice(0, 2) : [];
+  const matchedPosts = query.length >= 2 ? posts.filter((p) => p.text.toLowerCase().includes(query) || p.author.toLowerCase().includes(query) || (p.authorCompany || '').toLowerCase().includes(query)).slice(0, 2) : [];
+  const matchedTopics = query.length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(query) || t.author.toLowerCase().includes(query) || t.category.toLowerCase().includes(query)).slice(0, 2) : [];
+  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => u.displayName.toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 2) : [];
 
-  const totalResultsCount = matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
+  const totalResultsCount = matchedLocations.length + matchedCarriers.length + matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
 
   // Keyboard shortcut: Cmd/Ctrl+K for global search
   useEffect(() => {
@@ -148,6 +157,44 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {matchedLocations.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Ports & Terminals ({matchedLocations.length})</div>
+                      {matchedLocations.map((l) => (
+                        <Link key={l.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ fontSize: '13px' }}>{getLocationTypeIcon(l.type)}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                              {getLocationTypeIcon(l.type)} {l.unLocode} · {l.name}
+                            </div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>
+                              {l.country} ({l.region}) · {l.type} · {Object.entries(l.capabilities).filter(([_, v]) => v).map(([k]) => k.replace('is', '')).join('/')}
+                            </small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedCarriers.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Ocean Carriers ({matchedCarriers.length})</div>
+                      {matchedCarriers.map((c) => (
+                        <Link key={c.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ fontSize: '13px' }}>{getCarrierTypeIcon(c.type)}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                              {getCarrierTypeIcon(c.type)} {c.name} ({c.scacCode} · {c.type})
+                            </div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>
+                              {c.alliance} · Fleet: {c.fleetTEU || 'N/A'} · {c.country}
+                            </small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
                   {matchedAuctions.length > 0 && (
                     <div>
                       <div className="gs-section-label">Auctions ({matchedAuctions.length})</div>

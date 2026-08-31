@@ -21,6 +21,12 @@ import {
   ComplianceRecord,
   PaymentGatewayConfig,
   MonthlyAccountingSummary,
+  MasterLocation,
+  MasterCarrier,
+  MasterEquipment,
+  MasterCommodity,
+  MasterIncoterm,
+  MasterTaxSAC,
 } from '../types';
 import {
   UserProfile,
@@ -1596,6 +1602,1022 @@ const SEED_MONTHLY_ACCOUNTING: MonthlyAccountingSummary[] = [
   },
 ];
 
+const SEED_MASTER_LOCATIONS: MasterLocation[] = [
+  {
+    id: 'loc-INNSA',
+    unLocode: 'INNSA',
+    name: 'Nhava Sheva (JNPT)',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Maharashtra / West Coast',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['NSICT', 'NSIGT', 'BMCT', 'APMT Mumbai', 'JNPCT'],
+    coordinates: { lat: 18.9499, lng: 72.9515 },
+    customsZoneCode: 'INNSA1',
+    status: 'active',
+    remarks: 'Premier container port handling ~55% of India containerized ocean cargo.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-INMUN',
+    unLocode: 'INMUN',
+    name: 'Mundra',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Gujarat / Gulf of Kutch',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['MICT (DP World)', 'AMCT (Adani)', 'CT3 (CMA CGM Terminals)', 'CT4 (MSC JV)'],
+    coordinates: { lat: 22.7544, lng: 69.7047 },
+    customsZoneCode: 'INMUN1',
+    status: 'active',
+    remarks: 'Deep draft private port with direct rail connectivity to Northern hinterlands.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-INMAA',
+    unLocode: 'INMAA',
+    name: 'Chennai',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Tamil Nadu / East Coast',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['CCTL (DP World)', 'CITPL (PSA Chennai)'],
+    coordinates: { lat: 13.0827, lng: 80.2707 },
+    customsZoneCode: 'INMAA1',
+    status: 'active',
+    remarks: 'Key automotive and electronics export gateway for South India.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-INPAV',
+    unLocode: 'INPAV',
+    name: 'Pipavav',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Gujarat / Saurashtra',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['APM Terminals Pipavav'],
+    coordinates: { lat: 20.9167, lng: 71.5000 },
+    customsZoneCode: 'INPAV1',
+    status: 'active',
+    remarks: 'Direct double-stack rail container corridor gateway.',
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'loc-INHAZ',
+    unLocode: 'INHAZ',
+    name: 'Hazira',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Gujarat / Surat',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Adani Hazira Port (AHPPL)'],
+    coordinates: { lat: 21.1000, lng: 72.6333 },
+    customsZoneCode: 'INHAZ1',
+    status: 'active',
+    remarks: 'Industrial chemicals, textiles and engineering export hub.',
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'loc-INTKD',
+    unLocode: 'INTKD',
+    name: 'Tughlakabad ICD',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Delhi NCR',
+    type: 'Inland Container Depot (ICD)',
+    capabilities: { isPOR: true, isPOL: false, isPOD: false, isFPOD: true },
+    terminals: ['CONCOR ICD TKD Hub'],
+    coordinates: { lat: 28.5089, lng: 77.2831 },
+    customsZoneCode: 'INTKD6',
+    status: 'active',
+    remarks: 'Largest dry port and inland customs bonded terminal in Asia.',
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'loc-INCOK',
+    unLocode: 'INCOK',
+    name: 'Cochin (Vallarpadam)',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'Kerala / South Coast',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['ICTT Vallarpadam (DP World)'],
+    coordinates: { lat: 9.9667, lng: 76.2667 },
+    customsZoneCode: 'INCOK1',
+    status: 'active',
+    remarks: 'International container transshipment hub close to major global trunk sea lanes.',
+    createdAt: '2026-02-01T00:00:00Z',
+    updatedAt: '2026-08-15T00:00:00Z',
+  },
+  {
+    id: 'loc-INCCU',
+    unLocode: 'INCCU',
+    name: 'Kolkata (SMP Port)',
+    country: 'India',
+    countryCode: 'IN',
+    region: 'West Bengal / East Coast',
+    type: 'River Port',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Netaji Subhash Dock (NSD)', 'Khidderpore Docks (KPD)'],
+    coordinates: { lat: 22.5447, lng: 88.3194 },
+    customsZoneCode: 'INCCU1',
+    status: 'active',
+    remarks: 'Riverine hub catering to Eastern India and landlocked neighbors Nepal and Bhutan.',
+    createdAt: '2026-02-01T00:00:00Z',
+    updatedAt: '2026-08-15T00:00:00Z',
+  },
+  {
+    id: 'loc-NLRTM',
+    unLocode: 'NLRTM',
+    name: 'Rotterdam',
+    country: 'Netherlands',
+    countryCode: 'NL',
+    region: 'South Holland / Rhine-Meuse',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['ECT Delta', 'ECT Euromax', 'APM Terminals Maasvlakte II', 'Rotterdam World Gateway (RWG)'],
+    coordinates: { lat: 51.9244, lng: 4.4777 },
+    customsZoneCode: 'NL0001',
+    status: 'active',
+    remarks: 'Largest seaport in Europe with seamless Rhine barge, rail and feeder network.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-BEANR',
+    unLocode: 'BEANR',
+    name: 'Antwerp-Bruges',
+    country: 'Belgium',
+    countryCode: 'BE',
+    region: 'Flanders / Scheldt',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Antwerp Gateway (Q1700)', 'MPET (Deurganckdock Q1742)', 'Europa Terminal (Q869)'],
+    coordinates: { lat: 51.2194, lng: 4.4025 },
+    customsZoneCode: 'BE0002',
+    status: 'active',
+    remarks: 'Premier chemical cluster and European transshipment gateway.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-DEHAM',
+    unLocode: 'DEHAM',
+    name: 'Hamburg',
+    country: 'Germany',
+    countryCode: 'DE',
+    region: 'Hamburg / Elbe',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['CTA Altenwerder', 'CTB Burchardkai', 'CTT Tollerort', 'Eurogate CT Hamburg'],
+    coordinates: { lat: 53.5511, lng: 9.9937 },
+    customsZoneCode: 'DE0003',
+    status: 'active',
+    remarks: 'Major rail port connection hub for Central & Eastern Europe and the Baltic.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-GBFXT',
+    unLocode: 'GBFXT',
+    name: 'Felixstowe',
+    country: 'United Kingdom',
+    countryCode: 'GB',
+    region: 'Suffolk / East England',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Trinity Terminal', 'Berths 8 & 9 (Deepwater)'],
+    coordinates: { lat: 51.9622, lng: 1.3511 },
+    customsZoneCode: 'GB0001',
+    status: 'active',
+    remarks: 'Handles ~48% of Britain containerized trade with dedicated intermodal rail.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-AEJEA',
+    unLocode: 'AEJEA',
+    name: 'Jebel Ali',
+    country: 'United Arab Emirates',
+    countryCode: 'AE',
+    region: 'Dubai / Persian Gulf',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['DP World Jebel Ali T1', 'Terminal 2', 'Terminal 3', 'Terminal 4 (Automated)'],
+    coordinates: { lat: 24.9857, lng: 55.0273 },
+    customsZoneCode: 'AE0001',
+    status: 'active',
+    remarks: 'Flagship mega-hub of the Middle East connecting South Asia, Africa and Europe.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-OMSLL',
+    unLocode: 'OMSLL',
+    name: 'Salalah',
+    country: 'Oman',
+    countryCode: 'OM',
+    region: 'Dhofar / Arabian Sea',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['APM Terminals Salalah Port'],
+    coordinates: { lat: 16.9458, lng: 54.0044 },
+    customsZoneCode: 'OM0001',
+    status: 'active',
+    remarks: 'Strategic Red Sea bypassing hub with zero route detour for Asia-Europe lines.',
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'loc-SGSIN',
+    unLocode: 'SGSIN',
+    name: 'Singapore',
+    country: 'Singapore',
+    countryCode: 'SG',
+    region: 'Singapore Straits',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['PSA Tanjong Pagar', 'Keppel', 'Brani', 'Pasir Panjang', 'Tuas Port (Phase 1/2)'],
+    coordinates: { lat: 1.29027, lng: 103.851959 },
+    customsZoneCode: 'SG0001',
+    status: 'active',
+    remarks: 'World top container transshipment hub connecting over 600 global ports.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-MYPKG',
+    unLocode: 'MYPKG',
+    name: 'Port Klang',
+    country: 'Malaysia',
+    countryCode: 'MY',
+    region: 'Selangor / Malacca Straits',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Westports Malaysia', 'Northport (Klang)'],
+    coordinates: { lat: 2.9999, lng: 101.3928 },
+    customsZoneCode: 'MY0001',
+    status: 'active',
+    remarks: 'Major ASEAN transshipment and national trade gateway.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-CNSHA',
+    unLocode: 'CNSHA',
+    name: 'Shanghai (Yangshan & Waigaoqiao)',
+    country: 'China',
+    countryCode: 'CN',
+    region: 'East China / Yangtze River Delta',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Yangshan Deepwater Phase I-IV', 'Waigaoqiao Phase 1-6', 'Pudong Container'],
+    coordinates: { lat: 31.2304, lng: 121.4737 },
+    customsZoneCode: 'CN0001',
+    status: 'active',
+    remarks: 'World busiest container port handling over 49M TEUs annually.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-CNNGB',
+    unLocode: 'CNNGB',
+    name: 'Ningbo-Zhoushan',
+    country: 'China',
+    countryCode: 'CN',
+    region: 'Zhejiang Province',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Beilun Container Terminal', 'Chuanshan Port Area', 'Meishan Island Terminal'],
+    coordinates: { lat: 29.8683, lng: 121.5440 },
+    customsZoneCode: 'CN0002',
+    status: 'active',
+    remarks: 'Super-hub for heavy manufacturing and Yangtze economic belt.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-USLAX',
+    unLocode: 'USLAX',
+    name: 'Los Angeles',
+    country: 'United States',
+    countryCode: 'US',
+    region: 'California / San Pedro Bay',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Pier 400 (APMT)', 'Fenix Marine Services (Pier 300)', 'Trapac (Berths 136-147)', 'WBCT'],
+    coordinates: { lat: 33.7432, lng: -118.2673 },
+    customsZoneCode: 'US2704',
+    status: 'active',
+    remarks: 'Leading seaport in North America for container volume and Transpacific commerce.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+  {
+    id: 'loc-USNYC',
+    unLocode: 'USNYC',
+    name: 'New York / New Jersey',
+    country: 'United States',
+    countryCode: 'US',
+    region: 'New York / East Coast',
+    type: 'Seaport',
+    capabilities: { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+    terminals: ['Maher Terminals', 'Port Newark Container Terminal (PNCT)', 'APM Terminals Port Elizabeth'],
+    coordinates: { lat: 40.7128, lng: -74.0060 },
+    customsZoneCode: 'US1001',
+    status: 'active',
+    remarks: 'Largest East Coast maritime gateway serving the major US consuming centers.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T09:00:00Z',
+  },
+];
+
+const SEED_MASTER_CARRIERS: MasterCarrier[] = [
+  {
+    id: 'car-MAEU',
+    name: 'A.P. Moller - Maersk',
+    scacCode: 'MAEU',
+    carrierCode: 'MSK',
+    type: 'MLO',
+    alliance: 'Gemini Cooperation',
+    country: 'Denmark',
+    fleetTEU: '4,250,000 TEU',
+    bookingEmail: 'bookings.apac@maersk.com',
+    trackingApiEndpoint: 'https://api.maersk.com/track-and-trace/v2',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'Integrated logistics integrator with extensive inland haulage and terminal ownership.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-MSCU',
+    name: 'Mediterranean Shipping Company (MSC)',
+    scacCode: 'MSCU',
+    carrierCode: 'MSC',
+    type: 'MLO',
+    alliance: 'Independent',
+    country: 'Switzerland',
+    fleetTEU: '5,850,000 TEU',
+    bookingEmail: 'ocean.desk@msc.com',
+    trackingApiEndpoint: 'https://api.msc.com/v1/tracking',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR', 'ISO Tank'],
+    status: 'active',
+    remarks: 'World largest container ocean carrier with direct services across all major corridors.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-CMDU',
+    name: 'CMA CGM Group',
+    scacCode: 'CMDU',
+    carrierCode: 'CMA',
+    type: 'MLO',
+    alliance: 'Ocean Alliance',
+    country: 'France',
+    fleetTEU: '3,720,000 TEU',
+    bookingEmail: 'bookings@cma-cgm.com',
+    trackingApiEndpoint: 'https://api.cma-cgm.com/shipment/v3',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR', 'ISO Tank'],
+    status: 'active',
+    remarks: 'Strong presence on Asia-Europe, Transpacific, and Latin American lanes with LNG vessel leadership.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-HLCU',
+    name: 'Hapag-Lloyd AG',
+    scacCode: 'HLCU',
+    carrierCode: 'HAP',
+    type: 'MLO',
+    alliance: 'Gemini Cooperation',
+    country: 'Germany',
+    fleetTEU: '2,150,000 TEU',
+    bookingEmail: 'orders.india@hapag-lloyd.com',
+    trackingApiEndpoint: 'https://api.hlag.com/tracking/v1',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'Known for high schedule reliability, Reefer Plus fleet, and North European services.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-ONEY',
+    name: 'Ocean Network Express (ONE)',
+    scacCode: 'ONEY',
+    carrierCode: 'ONE',
+    type: 'MLO',
+    alliance: 'THE Alliance / Premier',
+    country: 'Singapore / Japan',
+    fleetTEU: '1,920,000 TEU',
+    bookingEmail: 'customer.care@one-line.com',
+    trackingApiEndpoint: 'https://api.one-line.com/tracking/v2',
+    supportedEquipment: ['20DV', '40DV', '40HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'Joint venture of NYK, MOL, and K-Line with magenta fleet and strong Far East connectivity.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-COSU',
+    name: 'COSCO Shipping Lines',
+    scacCode: 'COSU',
+    carrierCode: 'COS',
+    type: 'MLO',
+    alliance: 'Ocean Alliance',
+    country: 'China',
+    fleetTEU: '3,100,000 TEU',
+    bookingEmail: 'booking.service@coscon.com',
+    trackingApiEndpoint: 'https://api.coscoshipping.com/track/v1',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'State-owned shipping giant with dominant market share on Asia-Indian Subcontinent routes.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-EGLV',
+    name: 'Evergreen Marine Corp',
+    scacCode: 'EGLV',
+    carrierCode: 'EVG',
+    type: 'MLO',
+    alliance: 'Ocean Alliance',
+    country: 'Taiwan',
+    fleetTEU: '1,710,000 TEU',
+    bookingEmail: 'cs.inbound@evergreen-marine.com',
+    trackingApiEndpoint: 'https://api.evergreen-marine.com/v1/trace',
+    supportedEquipment: ['20DV', '40DV', '40HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'Pioneer of round-the-world services and high capacity ultra large container vessels.',
+    createdAt: '2026-01-15T00:00:00Z',
+    updatedAt: '2026-08-25T00:00:00Z',
+  },
+  {
+    id: 'car-UNIF',
+    name: 'Unifeeder Group (DP World)',
+    scacCode: 'UNIF',
+    carrierCode: 'UNF',
+    type: 'Feeder Operator',
+    alliance: 'Regional Feeder',
+    country: 'Denmark / UAE',
+    fleetTEU: '165,000 TEU',
+    bookingEmail: 'feeder.charter@unifeeder.com',
+    supportedEquipment: ['20DV', '40DV', '40HC', '20RF', '40HR'],
+    status: 'active',
+    remarks: 'Largest feeder and shortsea network across Europe, Middle East and Indian Subcontinent.',
+    createdAt: '2026-02-01T00:00:00Z',
+    updatedAt: '2026-08-20T00:00:00Z',
+  },
+  {
+    id: 'car-BANQ',
+    name: 'Kuehne + Nagel (Blue Anchor Line)',
+    scacCode: 'BANQ',
+    carrierCode: 'KN',
+    type: 'NVOCC',
+    alliance: 'Global Forwarder',
+    country: 'Switzerland',
+    fleetTEU: '4,300,000 TEU (Managed)',
+    bookingEmail: 'seafreight.global@kuehne-nagel.com',
+    trackingApiEndpoint: 'https://api.kuehne-nagel.com/sea/track/v1',
+    supportedEquipment: ['20DV', '40DV', '40HC', '45HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR', 'ISO Tank'],
+    status: 'active',
+    remarks: 'World #1 global ocean freight forwarder operating tier-1 NVOCC services.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+  {
+    id: 'car-DMLI',
+    name: 'DHL Global Forwarding (Danmar Lines)',
+    scacCode: 'DMLI',
+    carrierCode: 'DHL',
+    type: 'NVOCC',
+    alliance: 'Global Forwarder',
+    country: 'Germany',
+    fleetTEU: '3,200,000 TEU (Managed)',
+    bookingEmail: 'oceanfreight.inquiry@dhl.com',
+    trackingApiEndpoint: 'https://api.dhl.com/dgf/tracking/v1',
+    supportedEquipment: ['20DV', '40DV', '40HC', '20RF', '40HR', '20OT', '40OT', '20FR', '40FR'],
+    status: 'active',
+    remarks: 'Global NVOCC carrier backed by DHL multi-modal air and ocean network.',
+    createdAt: '2026-01-10T00:00:00Z',
+    updatedAt: '2026-08-28T00:00:00Z',
+  },
+];
+
+const SEED_MASTER_EQUIPMENT: MasterEquipment[] = [
+  {
+    id: 'eq-20DV',
+    isoCode: '20DV',
+    isoGroup: '22G1',
+    name: "20' Standard Dry (20DV)",
+    category: 'Dry Standard',
+    lengthFt: 20,
+    heightFt: 8.5,
+    maxGrossKg: 30480,
+    tareWeightKg: 2280,
+    maxPayloadKg: 28200,
+    volumeCbm: 33.2,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'Standard general purpose ISO dry box for dense and heavy weight cargo.',
+  },
+  {
+    id: 'eq-40DV',
+    isoCode: '40DV',
+    isoGroup: '42G1',
+    name: "40' Standard Dry (40DV)",
+    category: 'Dry Standard',
+    lengthFt: 40,
+    heightFt: 8.5,
+    maxGrossKg: 30480,
+    tareWeightKg: 3780,
+    maxPayloadKg: 26700,
+    volumeCbm: 67.7,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'General cargo ISO box for volumetric dry items.',
+  },
+  {
+    id: 'eq-40HC',
+    isoCode: '40HC',
+    isoGroup: '45G1',
+    name: "40' High Cube (40HC)",
+    category: 'High Cube',
+    lengthFt: 40,
+    heightFt: 9.5,
+    maxGrossKg: 32500,
+    tareWeightKg: 3900,
+    maxPayloadKg: 28600,
+    volumeCbm: 76.4,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'Most widely demanded container type with 1 foot extra vertical clearance.',
+  },
+  {
+    id: 'eq-45HC',
+    isoCode: '45HC',
+    isoGroup: '45U1',
+    name: "45' High Cube (45HC)",
+    category: 'High Cube',
+    lengthFt: 45,
+    heightFt: 9.5,
+    maxGrossKg: 32500,
+    tareWeightKg: 4700,
+    maxPayloadKg: 27800,
+    volumeCbm: 86.0,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'High cube container optimized for light bulky items on intra-Europe & Transpacific.',
+  },
+  {
+    id: 'eq-20RF',
+    isoCode: '20RF',
+    isoGroup: '22R1',
+    name: "20' Refrigerated Container (20RF)",
+    category: 'Reefer',
+    lengthFt: 20,
+    heightFt: 8.5,
+    maxGrossKg: 30480,
+    tareWeightKg: 3080,
+    maxPayloadKg: 27400,
+    volumeCbm: 28.3,
+    isHazardousAllowed: false,
+    isReefer: true,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'Built-in refrigeration unit maintaining temperatures from -30°C to +30°C.',
+  },
+  {
+    id: 'eq-40HR',
+    isoCode: '40HR',
+    isoGroup: '45R1',
+    name: "40' Reefer High Cube (40HR)",
+    category: 'Reefer',
+    lengthFt: 40,
+    heightFt: 9.5,
+    maxGrossKg: 34000,
+    tareWeightKg: 4500,
+    maxPayloadKg: 29500,
+    volumeCbm: 67.8,
+    isHazardousAllowed: false,
+    isReefer: true,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'Primary reefer equipment for perishable agricultural and pharmaceutical exports.',
+  },
+  {
+    id: 'eq-20OT',
+    isoCode: '20OT',
+    isoGroup: '22U1',
+    name: "20' Open Top (20OT)",
+    category: 'Open Top',
+    lengthFt: 20,
+    heightFt: 8.5,
+    maxGrossKg: 30480,
+    tareWeightKg: 2350,
+    maxPayloadKg: 28130,
+    volumeCbm: 32.5,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: true,
+    status: 'active',
+    remarks: 'Removable roof bow and tarpaulin for top-loading of heavy machinery.',
+  },
+  {
+    id: 'eq-40OT',
+    isoCode: '40OT',
+    isoGroup: '42U1',
+    name: "40' Open Top (40OT)",
+    category: 'Open Top',
+    lengthFt: 40,
+    heightFt: 8.5,
+    maxGrossKg: 30480,
+    tareWeightKg: 3850,
+    maxPayloadKg: 26630,
+    volumeCbm: 66.5,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: true,
+    status: 'active',
+    remarks: 'Open top container for tall project cargo.',
+  },
+  {
+    id: 'eq-20FR',
+    isoCode: '20FR',
+    isoGroup: '22P1',
+    name: "20' Flat Rack (20FR)",
+    category: 'Flat Rack',
+    lengthFt: 20,
+    heightFt: 8.5,
+    maxGrossKg: 31000,
+    tareWeightKg: 2750,
+    maxPayloadKg: 28250,
+    volumeCbm: 27.9,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: true,
+    status: 'active',
+    remarks: 'End-wall flat rack container for out-of-gauge (OOG) and breakbulk cargo.',
+  },
+  {
+    id: 'eq-40FR',
+    isoCode: '40FR',
+    isoGroup: '42P1',
+    name: "40' Flat Rack (40FR)",
+    category: 'Flat Rack',
+    lengthFt: 40,
+    heightFt: 8.5,
+    maxGrossKg: 45000,
+    tareWeightKg: 5300,
+    maxPayloadKg: 39700,
+    volumeCbm: 54.8,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: true,
+    status: 'active',
+    remarks: 'Heavy capacity flat rack for oversized industrial plant equipment.',
+  },
+  {
+    id: 'eq-ISOTank',
+    isoCode: 'ISO Tank',
+    isoGroup: '22T1',
+    name: "20' ISO Tank Container",
+    category: 'ISO Tank',
+    lengthFt: 20,
+    heightFt: 8.5,
+    maxGrossKg: 36000,
+    tareWeightKg: 3800,
+    maxPayloadKg: 32200,
+    volumeCbm: 26.0,
+    isHazardousAllowed: true,
+    isReefer: false,
+    isOogAllowed: false,
+    status: 'active',
+    remarks: 'Cylindrical pressure vessel for hazardous and non-hazardous bulk liquid cargo.',
+  },
+];
+
+const SEED_MASTER_COMMODITIES: MasterCommodity[] = [
+  {
+    id: 'cmd-870829',
+    hsCode: '8708.29',
+    chapter: '87',
+    heading: '8708',
+    name: 'Automotive Components, Body Parts & Accessories',
+    isHazardous: false,
+    status: 'active',
+  },
+  {
+    id: 'cmd-847989',
+    hsCode: '8479.89',
+    chapter: '84',
+    heading: '8479',
+    name: 'Industrial Machinery & Mechanical Processing Appliances',
+    isHazardous: false,
+    status: 'active',
+  },
+  {
+    id: 'cmd-854140',
+    hsCode: '8541.40',
+    chapter: '85',
+    heading: '8541',
+    name: 'Solar PV Modules, Photovoltaic Cells & Inverters',
+    isHazardous: false,
+    storageReqs: 'Keep dry, do not double-stack pallets beyond 2 levels',
+    status: 'active',
+  },
+  {
+    id: 'cmd-381400',
+    hsCode: '3814.00',
+    chapter: '38',
+    heading: '3814',
+    name: 'Organic Composite Solvents & Chemical Thinners',
+    isHazardous: true,
+    imoClass: 'Class 3 (Flammable Liquid)',
+    unNumber: 'UN1263',
+    storageReqs: 'Away from heat sources, certified UN drums only',
+    status: 'active',
+  },
+  {
+    id: 'cmd-520811',
+    hsCode: '5208.11',
+    chapter: '52',
+    heading: '5208',
+    name: 'Woven Organic Cotton Fabrics & Garments',
+    isHazardous: false,
+    status: 'active',
+  },
+  {
+    id: 'cmd-847130',
+    hsCode: '8471.30',
+    chapter: '84',
+    heading: '8471',
+    name: 'Portable Automatic Data Processing Machines / Laptops',
+    isHazardous: true,
+    imoClass: 'Class 9 (Miscellaneous Dangerous Goods - Lithium Battery)',
+    unNumber: 'UN3481',
+    storageReqs: 'IMO Section II packed with equipment compliance',
+    status: 'active',
+  },
+  {
+    id: 'cmd-290511',
+    hsCode: '2905.11',
+    chapter: '29',
+    heading: '2905',
+    name: 'Methanol (Methyl Alcohol) Technical Grade',
+    isHazardous: true,
+    imoClass: 'Class 3 + 6.1 (Flammable Toxic Liquid)',
+    unNumber: 'UN1230',
+    storageReqs: 'Dedicated ISO tank with vapor recovery system',
+    status: 'active',
+  },
+  {
+    id: 'cmd-090111',
+    hsCode: '0901.11',
+    chapter: '09',
+    heading: '0901',
+    name: 'Coffee Beans, Not Roasted, Not Decaffeinated',
+    isHazardous: false,
+    storageReqs: 'Food grade clean container, desiccants mandatory',
+    status: 'active',
+  },
+];
+
+const SEED_MASTER_INCOTERMS: MasterIncoterm[] = [
+  {
+    id: 'inc-FOB',
+    code: 'FOB',
+    name: 'Free on Board',
+    category: 'Sea & Inland Waterway',
+    riskTransferPoint: 'When goods are loaded on board the vessel at port of origin',
+    costFreight: 'Buyer',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+  {
+    id: 'inc-CIF',
+    code: 'CIF',
+    name: 'Cost, Insurance and Freight',
+    category: 'Sea & Inland Waterway',
+    riskTransferPoint: 'When goods are on board vessel (cost paid by seller till destination port)',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Seller',
+    status: 'active',
+  },
+  {
+    id: 'inc-CFR',
+    code: 'CFR',
+    name: 'Cost and Freight',
+    category: 'Sea & Inland Waterway',
+    riskTransferPoint: 'When goods are on board vessel (seller pays ocean freight to destination port)',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+  {
+    id: 'inc-EXW',
+    code: 'EXW',
+    name: 'Ex Works',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'At seller factory / warehouse before loading',
+    costFreight: 'Buyer',
+    costOriginTHC: 'Buyer',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Buyer',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+  {
+    id: 'inc-FCA',
+    code: 'FCA',
+    name: 'Free Carrier',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'When delivered to named carrier at agreed origin location',
+    costFreight: 'Buyer',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+  {
+    id: 'inc-CPT',
+    code: 'CPT',
+    name: 'Carriage Paid To',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'When handed to first carrier (carriage paid by seller to destination)',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+  {
+    id: 'inc-CIP',
+    code: 'CIP',
+    name: 'Carriage and Insurance Paid To',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'When handed to first carrier (seller pays carriage and Institute Cargo Clause A insurance)',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Seller',
+    status: 'active',
+  },
+  {
+    id: 'inc-DAP',
+    code: 'DAP',
+    name: 'Delivered at Place',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'At named place of destination ready for unloading',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Seller',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Seller',
+    status: 'active',
+  },
+  {
+    id: 'inc-DPU',
+    code: 'DPU',
+    name: 'Delivered at Place Unloaded',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'At named place of destination unloaded from arriving conveyance',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Seller',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Seller',
+    status: 'active',
+  },
+  {
+    id: 'inc-DDP',
+    code: 'DDP',
+    name: 'Delivered Duty Paid',
+    category: 'Any Transport Mode',
+    riskTransferPoint: 'At destination with import customs clearance completed and duties paid by seller',
+    costFreight: 'Seller',
+    costOriginTHC: 'Seller',
+    costDestTHC: 'Seller',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Seller',
+    costInsurance: 'Seller',
+    status: 'active',
+  },
+  {
+    id: 'inc-FAS',
+    code: 'FAS',
+    name: 'Free Alongside Ship',
+    category: 'Sea & Inland Waterway',
+    riskTransferPoint: 'Alongside the ship at named port of loading',
+    costFreight: 'Buyer',
+    costOriginTHC: 'Buyer',
+    costDestTHC: 'Buyer',
+    costCustomsExport: 'Seller',
+    costCustomsImport: 'Buyer',
+    costInsurance: 'Buyer',
+    status: 'active',
+  },
+];
+
+const SEED_MASTER_TAX_CODES: MasterTaxSAC[] = [
+  {
+    id: 'sac-998431',
+    sacCode: '998431',
+    description: 'Transportation of goods by inland waterways and coastal shipping',
+    standardGSTRate: 5,
+    rcmApplicable: true,
+    category: 'Maritime Freight Transport',
+    status: 'active',
+  },
+  {
+    id: 'sac-998439',
+    sacCode: '998439',
+    description: 'Other maritime and international sea freight transport services',
+    standardGSTRate: 5,
+    rcmApplicable: false,
+    category: 'International Ocean Transport',
+    status: 'active',
+  },
+  {
+    id: 'sac-998540',
+    sacCode: '998540',
+    description: 'Packaging, cargo handling, container stuffing and destuffing services',
+    standardGSTRate: 18,
+    rcmApplicable: false,
+    category: 'Terminal Handling (THC)',
+    status: 'active',
+  },
+  {
+    id: 'sac-998511',
+    sacCode: '998511',
+    description: 'Customs brokerage, clearance and freight forwarding agency fees',
+    standardGSTRate: 18,
+    rcmApplicable: false,
+    category: 'Customs Brokerage',
+    status: 'active',
+  },
+  {
+    id: 'sac-998412',
+    sacCode: '998412',
+    description: 'Container haulage and multimodal transportation by rail',
+    standardGSTRate: 5,
+    rcmApplicable: true,
+    category: 'Inland Rail Haulage',
+    status: 'active',
+  },
+  {
+    id: 'sac-998421',
+    sacCode: '998421',
+    description: 'Freight transportation by road in specialized container trailers',
+    standardGSTRate: 5,
+    rcmApplicable: true,
+    category: 'Port Drayage & Road Haulage',
+    status: 'active',
+  },
+];
+
 interface GodfatherDataContextType {
   // State lists
   users: UserProfile[];
@@ -1618,6 +2640,14 @@ interface GodfatherDataContextType {
   complianceRecords: ComplianceRecord[];
   paymentGateways: PaymentGatewayConfig[];
   monthlyAccounting: MonthlyAccountingSummary[];
+  
+  // Master Data State Lists
+  masterLocations: MasterLocation[];
+  masterCarriers: MasterCarrier[];
+  masterEquipment: MasterEquipment[];
+  masterCommodities: MasterCommodity[];
+  masterIncoterms: MasterIncoterm[];
+  masterTaxCodes: MasterTaxSAC[];
   
   // Controlled Actions (Backend Executed with Reason & Step-Up)
   executeAction: (params: {
@@ -1682,6 +2712,35 @@ interface GodfatherDataContextType {
   // Templates
   saveNotificationTemplate: (template: NotificationTemplate, reason: string) => Promise<boolean>;
 
+  // Master Data Actions
+  addMasterLocation: (loc: Omit<MasterLocation, 'id' | 'createdAt' | 'updatedAt'>, reason: string) => Promise<boolean>;
+  updateMasterLocation: (id: string, updates: Partial<MasterLocation>, reason: string) => Promise<boolean>;
+  deleteMasterLocation: (id: string, reason: string) => Promise<boolean>;
+  toggleMasterLocationStatus: (id: string, reason: string) => Promise<boolean>;
+  bulkImportMasterLocations: (imported: Partial<MasterLocation>[], reason: string) => Promise<{ count: number; errors: string[] }>;
+  
+  addMasterCarrier: (carrier: Omit<MasterCarrier, 'id' | 'createdAt' | 'updatedAt'>, reason: string) => Promise<boolean>;
+  updateMasterCarrier: (id: string, updates: Partial<MasterCarrier>, reason: string) => Promise<boolean>;
+  deleteMasterCarrier: (id: string, reason: string) => Promise<boolean>;
+  toggleMasterCarrierStatus: (id: string, reason: string) => Promise<boolean>;
+  bulkImportMasterCarriers: (imported: Partial<MasterCarrier>[], reason: string) => Promise<{ count: number; errors: string[] }>;
+
+  addMasterEquipment: (eq: Omit<MasterEquipment, 'id'>, reason: string) => Promise<boolean>;
+  updateMasterEquipment: (id: string, updates: Partial<MasterEquipment>, reason: string) => Promise<boolean>;
+  deleteMasterEquipment: (id: string, reason: string) => Promise<boolean>;
+
+  addMasterCommodity: (com: Omit<MasterCommodity, 'id'>, reason: string) => Promise<boolean>;
+  updateMasterCommodity: (id: string, updates: Partial<MasterCommodity>, reason: string) => Promise<boolean>;
+  deleteMasterCommodity: (id: string, reason: string) => Promise<boolean>;
+
+  addMasterIncoterm: (inc: Omit<MasterIncoterm, 'id'>, reason: string) => Promise<boolean>;
+  updateMasterIncoterm: (id: string, updates: Partial<MasterIncoterm>, reason: string) => Promise<boolean>;
+  deleteMasterIncoterm: (id: string, reason: string) => Promise<boolean>;
+
+  addMasterTaxCode: (tax: Omit<MasterTaxSAC, 'id'>, reason: string) => Promise<boolean>;
+  updateMasterTaxCode: (id: string, updates: Partial<MasterTaxSAC>, reason: string) => Promise<boolean>;
+  deleteMasterTaxCode: (id: string, reason: string) => Promise<boolean>;
+
   // Global Search Engine
   searchAllRecords: (query: string, filters?: { type?: string; status?: string; country?: string }) => GlobalSearchResult[];
   getCustomerDossier: (query: string) => CustomerDossier | null;
@@ -1713,11 +2772,23 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
   const [paymentGateways, setPaymentGateways] = useState<PaymentGatewayConfig[]>(SEED_PAYMENT_GATEWAYS);
   const [monthlyAccounting, setMonthlyAccounting] = useState<MonthlyAccountingSummary[]>(SEED_MONTHLY_ACCOUNTING);
 
+  // Master Data States
+  const [masterLocations, setMasterLocations] = useState<MasterLocation[]>(SEED_MASTER_LOCATIONS);
+  const [masterCarriers, setMasterCarriers] = useState<MasterCarrier[]>(SEED_MASTER_CARRIERS);
+  const [masterEquipment, setMasterEquipment] = useState<MasterEquipment[]>(SEED_MASTER_EQUIPMENT);
+  const [masterCommodities, setMasterCommodities] = useState<MasterCommodity[]>(SEED_MASTER_COMMODITIES);
+  const [masterIncoterms, setMasterIncoterms] = useState<MasterIncoterm[]>(SEED_MASTER_INCOTERMS);
+  const [masterTaxCodes, setMasterTaxCodes] = useState<MasterTaxSAC[]>(SEED_MASTER_TAX_CODES);
+
   // Persistence to local storage
   useEffect(() => {
     try {
       const savedAudit = localStorage.getItem('fr8x_gf_audit_logs');
       if (savedAudit) setAuditLogs(JSON.parse(savedAudit));
+      const savedLocations = localStorage.getItem('fr8x_gf_master_locations');
+      if (savedLocations) setMasterLocations(JSON.parse(savedLocations));
+      const savedCarriers = localStorage.getItem('fr8x_gf_master_carriers');
+      if (savedCarriers) setMasterCarriers(JSON.parse(savedCarriers));
     } catch {}
   }, []);
 
@@ -2709,6 +3780,489 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
+  // Master Location Actions
+  const addMasterLocation = async (loc: Omit<MasterLocation, 'id' | 'createdAt' | 'updatedAt'>, reason: string): Promise<boolean> => {
+    const newLoc: MasterLocation = {
+      ...loc,
+      id: `loc-${loc.unLocode || Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await executeAction({
+      targetType: 'master_location',
+      targetId: newLoc.id,
+      targetLabel: `${newLoc.name} (${newLoc.unLocode})`,
+      actionType: 'MASTER_LOCATION_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newLoc,
+      mutationFn: () => {
+        setMasterLocations((prev) => {
+          const updated = [newLoc, ...prev];
+          try { localStorage.setItem('fr8x_gf_master_locations', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const updateMasterLocation = async (id: string, updates: Partial<MasterLocation>, reason: string): Promise<boolean> => {
+    const target = masterLocations.find((l) => l.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates, updatedAt: new Date().toISOString() };
+    await executeAction({
+      targetType: 'master_location',
+      targetId: id,
+      targetLabel: `${target.name} (${target.unLocode})`,
+      actionType: 'MASTER_LOCATION_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterLocations((prev) => {
+          const updated = prev.map((l) => (l.id === id ? after : l));
+          try { localStorage.setItem('fr8x_gf_master_locations', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterLocation = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterLocations.find((l) => l.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_location',
+      targetId: id,
+      targetLabel: `${target.name} (${target.unLocode})`,
+      actionType: 'MASTER_LOCATION_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterLocations((prev) => {
+          const updated = prev.filter((l) => l.id !== id);
+          try { localStorage.setItem('fr8x_gf_master_locations', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const toggleMasterLocationStatus = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterLocations.find((l) => l.id === id);
+    if (!target) return false;
+    const nextStatus = target.status === 'active' ? 'inactive' : 'active';
+    return updateMasterLocation(id, { status: nextStatus }, reason);
+  };
+
+  const bulkImportMasterLocations = async (imported: Partial<MasterLocation>[], reason: string): Promise<{ count: number; errors: string[] }> => {
+    const newItems: MasterLocation[] = [];
+    const errors: string[] = [];
+    imported.forEach((item, idx) => {
+      if (!item.name || !item.unLocode) {
+        errors.push(`Row ${idx + 1}: Missing location name or UN/LOCODE.`);
+        return;
+      }
+      newItems.push({
+        id: `loc-${item.unLocode}-${Date.now()}-${idx}`,
+        unLocode: item.unLocode.toUpperCase(),
+        name: item.name,
+        country: item.country || 'Global',
+        countryCode: item.countryCode || 'GL',
+        region: item.region || 'International',
+        type: item.type || 'Seaport',
+        capabilities: item.capabilities || { isPOR: true, isPOL: true, isPOD: true, isFPOD: true },
+        terminals: item.terminals || ['Main Commercial Terminal'],
+        coordinates: item.coordinates || { lat: 0, lng: 0 },
+        customsZoneCode: item.customsZoneCode || '',
+        status: item.status || 'active',
+        remarks: item.remarks || 'Bulk ingested via Master Data Console',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+    if (newItems.length > 0) {
+      await executeAction({
+        targetType: 'master_location',
+        targetId: `bulk-loc-${Date.now()}`,
+        targetLabel: `Bulk Ingested ${newItems.length} Master Locations`,
+        actionType: 'MASTER_LOCATIONS_BULK_IMPORTED',
+        reason,
+        beforeSnapshot: { existingCount: masterLocations.length },
+        afterSnapshot: { addedCount: newItems.length, newTotal: masterLocations.length + newItems.length },
+        mutationFn: () => {
+          setMasterLocations((prev) => {
+            const updated = [...newItems, ...prev];
+            try { localStorage.setItem('fr8x_gf_master_locations', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        },
+      });
+    }
+
+    return { count: newItems.length, errors };
+  };
+
+  // Master Carrier Actions
+  const addMasterCarrier = async (carrier: Omit<MasterCarrier, 'id' | 'createdAt' | 'updatedAt'>, reason: string): Promise<boolean> => {
+    const newCarrier: MasterCarrier = {
+      ...carrier,
+      id: `car-${carrier.scacCode || Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await executeAction({
+      targetType: 'master_carrier',
+      targetId: newCarrier.id,
+      targetLabel: `${newCarrier.name} (${newCarrier.type} · ${newCarrier.scacCode})`,
+      actionType: 'MASTER_CARRIER_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newCarrier,
+      mutationFn: () => {
+        setMasterCarriers((prev) => {
+          const updated = [newCarrier, ...prev];
+          try { localStorage.setItem('fr8x_gf_master_carriers', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const updateMasterCarrier = async (id: string, updates: Partial<MasterCarrier>, reason: string): Promise<boolean> => {
+    const target = masterCarriers.find((c) => c.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates, updatedAt: new Date().toISOString() };
+    await executeAction({
+      targetType: 'master_carrier',
+      targetId: id,
+      targetLabel: `${target.name} (${target.scacCode})`,
+      actionType: 'MASTER_CARRIER_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterCarriers((prev) => {
+          const updated = prev.map((c) => (c.id === id ? after : c));
+          try { localStorage.setItem('fr8x_gf_master_carriers', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterCarrier = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterCarriers.find((c) => c.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_carrier',
+      targetId: id,
+      targetLabel: `${target.name} (${target.scacCode})`,
+      actionType: 'MASTER_CARRIER_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterCarriers((prev) => {
+          const updated = prev.filter((c) => c.id !== id);
+          try { localStorage.setItem('fr8x_gf_master_carriers', JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+      },
+    });
+    return true;
+  };
+
+  const toggleMasterCarrierStatus = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterCarriers.find((c) => c.id === id);
+    if (!target) return false;
+    const nextStatus = target.status === 'active' ? 'suspended' : 'active';
+    return updateMasterCarrier(id, { status: nextStatus }, reason);
+  };
+
+  const bulkImportMasterCarriers = async (imported: Partial<MasterCarrier>[], reason: string): Promise<{ count: number; errors: string[] }> => {
+    const newItems: MasterCarrier[] = [];
+    const errors: string[] = [];
+
+    imported.forEach((item, idx) => {
+      if (!item.name || !item.scacCode) {
+        errors.push(`Row ${idx + 1}: Name and SCAC code are required.`);
+        return;
+      }
+      const scac = item.scacCode.toUpperCase().trim();
+      const existing = masterCarriers.find((c) => c.scacCode === scac);
+      if (existing) {
+        errors.push(`Row ${idx + 1}: Carrier SCAC ${scac} already exists.`);
+        return;
+      }
+      newItems.push({
+        id: `car-${scac}`,
+        name: item.name.trim(),
+        scacCode: scac,
+        carrierCode: (item.carrierCode || scac.slice(0, 3)).toUpperCase().trim(),
+        type: item.type || 'MLO',
+        alliance: item.alliance || 'Independent',
+        country: item.country || 'Global',
+        fleetTEU: item.fleetTEU || '',
+        bookingEmail: item.bookingEmail || `bookings@${scac.toLowerCase()}.com`,
+        trackingApiEndpoint: item.trackingApiEndpoint || '',
+        supportedEquipment: item.supportedEquipment || ['20DV', '40DV', '40HC', '20RF', '40HR'],
+        status: item.status || 'active',
+        remarks: item.remarks || 'Bulk imported carrier profile',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
+
+    if (newItems.length > 0) {
+      await executeAction({
+        targetType: 'master_carrier',
+        targetId: `bulk-car-${Date.now()}`,
+        targetLabel: `Bulk Ingested ${newItems.length} Master Carriers`,
+        actionType: 'MASTER_CARRIERS_BULK_IMPORTED',
+        reason,
+        beforeSnapshot: { existingCount: masterCarriers.length },
+        afterSnapshot: { addedCount: newItems.length, newTotal: masterCarriers.length + newItems.length },
+        mutationFn: () => {
+          setMasterCarriers((prev) => {
+            const updated = [...newItems, ...prev];
+            try { localStorage.setItem('fr8x_gf_master_carriers', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        },
+      });
+    }
+
+    return { count: newItems.length, errors };
+  };
+
+  // Master Equipment Actions
+  const addMasterEquipment = async (eq: Omit<MasterEquipment, 'id'>, reason: string): Promise<boolean> => {
+    const newEq: MasterEquipment = { ...eq, id: `eq-${eq.isoCode}` };
+    await executeAction({
+      targetType: 'master_equipment',
+      targetId: newEq.id,
+      targetLabel: `${newEq.name} (${newEq.isoCode})`,
+      actionType: 'MASTER_EQUIPMENT_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newEq,
+      mutationFn: () => {
+        setMasterEquipment((prev) => [newEq, ...prev]);
+      },
+    });
+    return true;
+  };
+
+  const updateMasterEquipment = async (id: string, updates: Partial<MasterEquipment>, reason: string): Promise<boolean> => {
+    const target = masterEquipment.find((e) => e.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates };
+    await executeAction({
+      targetType: 'master_equipment',
+      targetId: id,
+      targetLabel: `${target.name} (${target.isoCode})`,
+      actionType: 'MASTER_EQUIPMENT_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterEquipment((prev) => prev.map((e) => (e.id === id ? after : e)));
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterEquipment = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterEquipment.find((e) => e.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_equipment',
+      targetId: id,
+      targetLabel: `${target.name} (${target.isoCode})`,
+      actionType: 'MASTER_EQUIPMENT_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterEquipment((prev) => prev.filter((e) => e.id !== id));
+      },
+    });
+    return true;
+  };
+
+  // Master Commodity Actions
+  const addMasterCommodity = async (com: Omit<MasterCommodity, 'id'>, reason: string): Promise<boolean> => {
+    const newCom: MasterCommodity = { ...com, id: `cmd-${com.hsCode.replace(/\./g, '')}` };
+    await executeAction({
+      targetType: 'master_commodity',
+      targetId: newCom.id,
+      targetLabel: `${newCom.name} (HS ${newCom.hsCode})`,
+      actionType: 'MASTER_COMMODITY_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newCom,
+      mutationFn: () => {
+        setMasterCommodities((prev) => [newCom, ...prev]);
+      },
+    });
+    return true;
+  };
+
+  const updateMasterCommodity = async (id: string, updates: Partial<MasterCommodity>, reason: string): Promise<boolean> => {
+    const target = masterCommodities.find((c) => c.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates };
+    await executeAction({
+      targetType: 'master_commodity',
+      targetId: id,
+      targetLabel: `${target.name} (HS ${target.hsCode})`,
+      actionType: 'MASTER_COMMODITY_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterCommodities((prev) => prev.map((c) => (c.id === id ? after : c)));
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterCommodity = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterCommodities.find((c) => c.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_commodity',
+      targetId: id,
+      targetLabel: `${target.name} (HS ${target.hsCode})`,
+      actionType: 'MASTER_COMMODITY_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterCommodities((prev) => prev.filter((c) => c.id !== id));
+      },
+    });
+    return true;
+  };
+
+  // Master Incoterm Actions
+  const addMasterIncoterm = async (inc: Omit<MasterIncoterm, 'id'>, reason: string): Promise<boolean> => {
+    const newInc: MasterIncoterm = { ...inc, id: `inc-${inc.code}` };
+    await executeAction({
+      targetType: 'master_incoterm',
+      targetId: newInc.id,
+      targetLabel: `${newInc.code} - ${newInc.name}`,
+      actionType: 'MASTER_INCOTERM_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newInc,
+      mutationFn: () => {
+        setMasterIncoterms((prev) => [newInc, ...prev]);
+      },
+    });
+    return true;
+  };
+
+  const updateMasterIncoterm = async (id: string, updates: Partial<MasterIncoterm>, reason: string): Promise<boolean> => {
+    const target = masterIncoterms.find((i) => i.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates };
+    await executeAction({
+      targetType: 'master_incoterm',
+      targetId: id,
+      targetLabel: `${target.code} - ${target.name}`,
+      actionType: 'MASTER_INCOTERM_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterIncoterms((prev) => prev.map((i) => (i.id === id ? after : i)));
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterIncoterm = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterIncoterms.find((i) => i.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_incoterm',
+      targetId: id,
+      targetLabel: `${target.code} - ${target.name}`,
+      actionType: 'MASTER_INCOTERM_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterIncoterms((prev) => prev.filter((i) => i.id !== id));
+      },
+    });
+    return true;
+  };
+
+  // Master Tax Code Actions
+  const addMasterTaxCode = async (tax: Omit<MasterTaxSAC, 'id'>, reason: string): Promise<boolean> => {
+    const newTax: MasterTaxSAC = { ...tax, id: `sac-${tax.sacCode}` };
+    await executeAction({
+      targetType: 'master_tax',
+      targetId: newTax.id,
+      targetLabel: `SAC ${newTax.sacCode} (${newTax.description})`,
+      actionType: 'MASTER_TAX_CODE_CREATED',
+      reason,
+      beforeSnapshot: null,
+      afterSnapshot: newTax,
+      mutationFn: () => {
+        setMasterTaxCodes((prev) => [newTax, ...prev]);
+      },
+    });
+    return true;
+  };
+
+  const updateMasterTaxCode = async (id: string, updates: Partial<MasterTaxSAC>, reason: string): Promise<boolean> => {
+    const target = masterTaxCodes.find((t) => t.id === id);
+    if (!target) return false;
+    const after = { ...target, ...updates };
+    await executeAction({
+      targetType: 'master_tax',
+      targetId: id,
+      targetLabel: `SAC ${target.sacCode}`,
+      actionType: 'MASTER_TAX_CODE_UPDATED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setMasterTaxCodes((prev) => prev.map((t) => (t.id === id ? after : t)));
+      },
+    });
+    return true;
+  };
+
+  const deleteMasterTaxCode = async (id: string, reason: string): Promise<boolean> => {
+    const target = masterTaxCodes.find((t) => t.id === id);
+    if (!target) return false;
+    await executeAction({
+      targetType: 'master_tax',
+      targetId: id,
+      targetLabel: `SAC ${target.sacCode}`,
+      actionType: 'MASTER_TAX_CODE_DELETED',
+      reason,
+      beforeSnapshot: target,
+      afterSnapshot: null,
+      mutationFn: () => {
+        setMasterTaxCodes((prev) => prev.filter((t) => t.id !== id));
+      },
+    });
+    return true;
+  };
+
   return (
     <GodfatherDataContext.Provider
       value={{
@@ -2732,6 +4286,34 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         complianceRecords,
         paymentGateways,
         monthlyAccounting,
+        masterLocations,
+        masterCarriers,
+        masterEquipment,
+        masterCommodities,
+        masterIncoterms,
+        masterTaxCodes,
+        addMasterLocation,
+        updateMasterLocation,
+        deleteMasterLocation,
+        toggleMasterLocationStatus,
+        bulkImportMasterLocations,
+        addMasterCarrier,
+        updateMasterCarrier,
+        deleteMasterCarrier,
+        toggleMasterCarrierStatus,
+        bulkImportMasterCarriers,
+        addMasterEquipment,
+        updateMasterEquipment,
+        deleteMasterEquipment,
+        addMasterCommodity,
+        updateMasterCommodity,
+        deleteMasterCommodity,
+        addMasterIncoterm,
+        updateMasterIncoterm,
+        deleteMasterIncoterm,
+        addMasterTaxCode,
+        updateMasterTaxCode,
+        deleteMasterTaxCode,
         executeAction,
         sendTestEmail,
         checkEmailHealth,

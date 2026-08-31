@@ -26,6 +26,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     { title: 'Companies & KYC Verification', url: '/godfather/operations/companies', icon: Building, category: 'Operations' },
     { title: 'Auctions & Bids Administration', url: '/godfather/operations/auctions', icon: Gavel, category: 'Operations' },
     { title: 'Rates & Bulk Import Batches', url: '/godfather/operations/rates', icon: DollarSign, category: 'Operations' },
+    { title: 'Master Data Management (Locations, Carriers, Equipment)', url: '/godfather/operations/master-data', icon: DollarSign, category: 'Operations' },
     { title: 'Trust & Content Moderation', url: '/godfather/trust-safety/moderation', icon: AlertOctagon, category: 'Trust & Safety' },
     { title: 'Blacklist & Member Blocks', url: '/godfather/trust-safety/blacklist', icon: Shield, category: 'Trust & Safety' },
     { title: 'Plans & Versioned Pricing', url: '/godfather/commerce/plans', icon: DollarSign, category: 'Commerce' },

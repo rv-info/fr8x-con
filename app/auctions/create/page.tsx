@@ -12,6 +12,8 @@ import {
   PORT_SUGGESTIONS,
   FREIGHT_EQUIPMENT,
   INCOTERMS_2020,
+  getLocationTypeIcon,
+  getIncotermIcon,
 } from '@/lib/utils';
 import { ContainerEquipmentRow } from '@/lib/types';
 import {
@@ -79,7 +81,7 @@ const VERIFIED_BIDDERS_LIST: VerifiedBidderCandidate[] = [
 
 export default function CreateReverseAuctionPage() {
   const router = useRouter();
-  const { addAuction } = useData();
+  const { addAuction, masterLocations, masterEquipment, masterCommodities, masterIncoterms } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -224,11 +226,21 @@ export default function CreateReverseAuctionPage() {
     else if (field === 'por') setPor(val);
     else if (field === 'finalDest') setFinalDest(val);
 
-    if (val.trim().length >= 3) {
-      const matches = PORT_SUGGESTIONS.filter((p) =>
-        p.toLowerCase().includes(val.toLowerCase())
-      );
-      setSuggestMatches(matches);
+    if (val.trim().length >= 2) {
+      const q = val.toLowerCase().trim();
+      const locList = (masterLocations || []).filter(
+        (l) =>
+          l.unLocode.toLowerCase().includes(q) ||
+          l.name.toLowerCase().includes(q) ||
+          l.country.toLowerCase().includes(q)
+      ).map((l) => `${getLocationTypeIcon(l.type)} ${l.name} (${l.unLocode}), ${l.country}`);
+
+      const stringMatches = PORT_SUGGESTIONS.filter((p) =>
+        p.toLowerCase().includes(q)
+      ).map((p) => `⚓ ${p}`);
+
+      const combined = Array.from(new Set([...locList, ...stringMatches])).slice(0, 8);
+      setSuggestMatches(combined);
       setActiveSuggestField(field);
     } else {
       setSuggestMatches([]);
@@ -237,10 +249,11 @@ export default function CreateReverseAuctionPage() {
   };
 
   const selectPort = (port: string) => {
-    if (activeSuggestField === 'pol') setPol(port);
-    else if (activeSuggestField === 'pod') setPod(port);
-    else if (activeSuggestField === 'por') setPor(port);
-    else if (activeSuggestField === 'finalDest') setFinalDest(port);
+    const cleanPort = port.replace(/^[^\w\s]+\s*/, '');
+    if (activeSuggestField === 'pol') setPol(cleanPort);
+    else if (activeSuggestField === 'pod') setPod(cleanPort);
+    else if (activeSuggestField === 'por') setPor(cleanPort);
+    else if (activeSuggestField === 'finalDest') setFinalDest(cleanPort);
     setActiveSuggestField(null);
     setSuggestMatches([]);
   };

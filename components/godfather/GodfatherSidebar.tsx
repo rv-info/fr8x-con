@@ -33,6 +33,7 @@ import {
   Filter,
   Scale,
   BadgeCheck,
+  Database,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -55,6 +56,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Auctions & Bids', href: '/godfather/operations/auctions', icon: Gavel },
       { label: 'Rates & Imports', href: '/godfather/operations/rates', icon: DollarSign },
       { label: 'Jobs & Advertisements', href: '/godfather/operations/jobs', icon: Briefcase },
+      { label: 'Master Data Management', href: '/godfather/operations/master-data', icon: Database },
     ],
   },
   {
