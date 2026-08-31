@@ -188,12 +188,56 @@ export default function LoginPage() {
               fontSize: '11px',
             }}
           >
-            <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '4px' }}>
-              Demo Enterprise Accounts:
+            <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '6px' }}>
+              Quick Login with Verified Enterprise Accounts:
             </b>
-            <div style={{ color: 'var(--mut)' }}>
-              • <code>arjun@atlaslogistics.com</code> (Premium Verified)
-              <br />• <code>sarah.lewis@rotterdamfreight.nl</code> (Professional)
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('arjun@atlaslogistics.com');
+                  setPassword('••••••••••••');
+                }}
+                style={{
+                  textAlign: 'left',
+                  background: email === 'arjun@atlaslogistics.com' ? '#eff6ff' : '#ffffff',
+                  border: email === 'arjun@atlaslogistics.com' ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '5px 8px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  color: 'var(--ink)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span>• <b>Arjun Rao</b> (Atlas Logistics Pvt. Ltd.)</span>
+                <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 5px' }}>PREMIUM</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEmail('sarah.lewis@rotterdamfreight.nl');
+                  setPassword('••••••••••••');
+                }}
+                style={{
+                  textAlign: 'left',
+                  background: email === 'sarah.lewis@rotterdamfreight.nl' ? '#eff6ff' : '#ffffff',
+                  border: email === 'sarah.lewis@rotterdamfreight.nl' ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                  borderRadius: '6px',
+                  padding: '5px 8px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  color: 'var(--ink)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <span>• <b>Sarah Lewis</b> (Rotterdam Freight NV)</span>
+                <span className="badge blue" style={{ fontSize: '8.5px', padding: '1px 5px' }}>PRO</span>
+              </button>
             </div>
           </div>
         </div>

@@ -38,7 +38,7 @@ export default function ContentModerationPage() {
     {
       id: 'post-088',
       author: 'Ramesh Cargo Agent',
-      authorCompany: 'Fake Cargo Services Ltd',
+      authorCompany: 'Transoceanic Express Logistics Ltd',
       text: 'Direct carrier contract slots available at $400/40HC. WhatsApp urgently on +91 99999 00000 for immediate booking.',
       status: 'hidden',
       reportsCount: 4,

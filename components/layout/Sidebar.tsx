@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import {
   LayoutDashboard,
+  Rss,
   Globe2,
   Gavel,
   BarChart3,
@@ -28,7 +29,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/feeds', label: 'Feeds', icon: LayoutDashboard },
+    { href: '/feeds', label: 'Feeds', icon: Rss },
     { href: '/nexus', label: 'Nexus', icon: Globe2, badge: '12' },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },

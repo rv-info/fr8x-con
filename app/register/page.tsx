@@ -100,8 +100,8 @@ export default function RegisterPage() {
 
   const handleVerifyOtp = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp !== '492815' && otp.length !== 6) {
-      setErrorMessage('Invalid or expired OTP. Please use the 6-digit code 492815.');
+    if (!otp || otp.trim().length !== 6) {
+      setErrorMessage('Please enter a valid 6-digit verification code.');
       return;
     }
 
@@ -502,8 +502,11 @@ export default function RegisterPage() {
                     onChange={(e) => setOtp(e.target.value)}
                     required
                   />
-                  <small style={{ color: 'var(--mut)', fontSize: '10px', marginTop: '4px' }}>
-                    Demo code: <b>492815</b>
+                  <small
+                    onClick={() => setOtp('492815')}
+                    style={{ color: 'var(--brand)', fontSize: '11px', marginTop: '4px', cursor: 'pointer', display: 'inline-block' }}
+                  >
+                    Click to auto-fill test code: <b>492815</b>
                   </small>
                 </div>
 

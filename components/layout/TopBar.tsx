@@ -34,7 +34,7 @@ interface TopBarProps {
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { user, allUsers, switchUser } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates } = useCurrency();
-  const { notifications, markNotificationRead, markAllNotificationsRead } = useData();
+  const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -53,6 +53,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const directRate = convertAmount(1, calcSourceCurrency, calcTargetCurrency);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Live search calculations
+  const query = globalSearchQuery.trim().toLowerCase();
+  const matchedAuctions = query.length >= 2 ? auctions.filter((a) => a.title.toLowerCase().includes(query) || a.id.toLowerCase().includes(query) || a.shipment.pol.toLowerCase().includes(query) || a.shipment.pod.toLowerCase().includes(query) || a.shipment.commodity.toLowerCase().includes(query)).slice(0, 4) : [];
+  const allRates = [...rates, ...(myRates || [])];
+  const matchedRates = query.length >= 2 ? allRates.filter((r) => r.id.toLowerCase().includes(query) || r.carrier.toLowerCase().includes(query) || r.sp.toLowerCase().includes(query) || r.pol.toLowerCase().includes(query) || r.pod.toLowerCase().includes(query)).slice(0, 4) : [];
+  const matchedJobs = query.length >= 2 ? jobs.filter((j) => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query) || j.location.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedPosts = query.length >= 2 ? posts.filter((p) => p.text.toLowerCase().includes(query) || p.author.toLowerCase().includes(query) || (p.authorCompany || '').toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedTopics = query.length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(query) || t.author.toLowerCase().includes(query) || t.category.toLowerCase().includes(query)).slice(0, 3) : [];
+  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => u.displayName.toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 3) : [];
+
+  const totalResultsCount = matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
 
   // Keyboard shortcut: Cmd/Ctrl+K for global search
   useEffect(() => {
@@ -84,7 +96,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   // Group notifications by category
   const categories = ['auctions', 'bids', 'chat', 'feeds', 'jobs', 'system'] as const;
 
-  // Quick search results (mock)
+  // Quick search results
   const quickSearchLinks = [
     { label: 'Active Auctions', href: '/auctions', icon: <Gavel size={13} /> },
     { label: 'Rate Intelligence', href: '/rates', icon: <BarChart3 size={13} /> },
@@ -123,19 +135,108 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <span>{link.label}</span>
                     </Link>
                   ))}
-                  <div style={{ padding: '10px 14px', fontSize: '10px', color: 'var(--faint)', textAlign: 'center' }}>
-                    Type to search across all modules
+                  <div style={{ padding: '10px 14px', fontSize: '11px', color: 'var(--faint)', textAlign: 'center' }}>
+                    Type at least 2 characters to search live across all modules
                   </div>
                 </div>
+              ) : totalResultsCount === 0 ? (
+                <div style={{ padding: '24px 14px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
+                  <Search size={22} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.35 }} />
+                  No records matching &ldquo;{globalSearchQuery}&rdquo;
+                  <br />
+                  <small style={{ fontSize: '11px', color: 'var(--faint)' }}>Try searching by UN/LOCODE (INNSA, NLRTM), commodity, carrier, or company</small>
+                </div>
               ) : (
-                <div>
-                  <div className="gs-section-label">Search Results for "{globalSearchQuery}"</div>
-                  <div style={{ padding: '14px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
-                    <Search size={20} style={{ display: 'block', margin: '0 auto 6px', opacity: 0.4 }} />
-                    Live search results will appear here
-                    <br />
-                    <small style={{ fontSize: '10px', color: 'var(--faint)' }}>Searching: Auctions · Rates · People · Companies · Posts</small>
-                  </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {matchedAuctions.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Auctions ({matchedAuctions.length})</div>
+                      {matchedAuctions.map((a) => (
+                        <Link key={a.id} href={`/auctions/${a.id}`} className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#1168d7' }}><Gavel size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{a.id} · {a.title}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{a.shipment.pol} → {a.shipment.pod} · Status: {a.status}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedRates.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Rates ({matchedRates.length})</div>
+                      {matchedRates.map((r) => (
+                        <Link key={r.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#099889' }}><BarChart3 size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{r.carrier} ({r.sp}) · 40HC: ${r.h40} USD</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.pol} → {r.pod} · Valid till {r.valid}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedJobs.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Jobs ({matchedJobs.length})</div>
+                      {matchedJobs.map((j) => (
+                        <Link key={j.id} href="/jobs" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#d97706' }}><Briefcase size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{j.title} · {j.company}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{j.location} · {j.packageDetails}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedTopics.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Nexus Topics ({matchedTopics.length})</div>
+                      {matchedTopics.map((t) => (
+                        <Link key={t.id} href="/nexus" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#7c3aed' }}><Globe2 size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{t.title}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{t.category} · by {t.author}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedUsers.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Network & Organizations ({matchedUsers.length})</div>
+                      {matchedUsers.map((u) => (
+                        <Link key={u.uid} href="/profile" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#059669' }}><Users size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{u.displayName} · {u.company}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{u.designation} · {u.city}, {u.country}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {matchedPosts.length > 0 && (
+                    <div>
+                      <div className="gs-section-label">Feed Posts ({matchedPosts.length})</div>
+                      {matchedPosts.map((p) => (
+                        <Link key={p.id} href="/feeds" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                          <span className="gs-icon" style={{ color: '#64748b' }}><MessageSquare size={13} /></span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{p.author} ({p.authorCompany})</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.text}</small>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
