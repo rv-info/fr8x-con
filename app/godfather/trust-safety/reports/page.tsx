@@ -82,13 +82,13 @@ export default function ReportsAppealsPage() {
                   <span className="gf-badge gf-badge-red text-[10px] uppercase font-bold font-mono">
                     {rep.id}
                   </span>
-                  <h3 className="font-bold text-slate-100 text-sm">{rep.category}</h3>
+                  <h3 className="font-bold text-slate-900 text-sm">{rep.category}</h3>
                   <span className={`gf-badge gf-badge-${rep.severity === 'critical' ? 'red' : 'amber'} text-[10px] uppercase font-bold`}>
                     {rep.severity}
                   </span>
                 </div>
-                <div className="text-xs text-mut mt-0.5">
-                  Filed by: <strong className="text-slate-300">{rep.reporterName}</strong> · Target: <span className="font-mono text-sky-400">{rep.targetType} ({rep.targetId})</span>
+                <div className="text-xs text-slate-500 mt-1">
+                  Filed by: <strong className="text-slate-800">{rep.reporterName}</strong> · Target: <span className="font-mono text-sky-700 font-bold">{rep.targetType} ({rep.targetId})</span>
                 </div>
               </div>
 
@@ -110,7 +110,7 @@ export default function ReportsAppealsPage() {
               </div>
             </div>
 
-            <div className="p-3 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed font-normal">
               {rep.description}
             </div>
           </div>

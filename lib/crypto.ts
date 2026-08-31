@@ -123,3 +123,7 @@ export function recordFailedAttempt(identifier: string): { locked: boolean; rema
 export function clearRateLimit(identifier: string): void {
   loginAttemptStore.delete(identifier);
 }
+
+// In-memory store for active OTP salted hashes
+// In a distributed production cluster, this is stored in Redis / Firestore with TTL
+export const activeOtpStore = new Map<string, { salt: string; hash: string; expiresAt: string }>();

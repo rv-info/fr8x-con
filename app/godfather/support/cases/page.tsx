@@ -75,9 +75,9 @@ export default function CaseManagementPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Cases List (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="gf-card p-3 font-bold text-xs text-slate-300 flex items-center justify-between">
+          <div className="gf-card p-3 font-bold text-xs text-slate-800 flex items-center justify-between bg-slate-50 border-slate-200">
             <span>Investigation Cases ({cases.length})</span>
-            <span className="text-[11px] font-mono text-faint">CASE QUEUE</span>
+            <span className="text-[11px] font-mono text-slate-500 font-bold">CASE QUEUE</span>
           </div>
 
           <div className="space-y-2">
@@ -87,17 +87,17 @@ export default function CaseManagementPage() {
                 <div
                   key={c.caseId}
                   onClick={() => setSelectedCase(c)}
-                  className={`gf-card p-3.5 cursor-pointer transition-all ${
-                    isSelected ? 'border-sky-500 bg-slate-850 shadow-md' : 'hover:border-slate-700'
+                  className={`gf-card p-4 cursor-pointer transition-all ${
+                    isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                        <FolderLock className="lucide w-3.5 h-3.5 text-sky-400" />
+                      <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <FolderLock className="lucide w-3.5 h-3.5 text-sky-600" />
                         {c.caseId} · {c.title}
                       </div>
-                      <div className="text-[11px] text-mut mt-0.5">Subject: {c.subjectLabel}</div>
+                      <div className="text-[11px] text-slate-500 mt-0.5">Subject: {c.subjectLabel}</div>
                     </div>
                     <span
                       className={`gf-badge ${
@@ -112,9 +112,9 @@ export default function CaseManagementPage() {
                     </span>
                   </div>
 
-                  <div className="mt-2 text-[11px] flex items-center justify-between text-slate-400 border-t border-slate-800 pt-2 font-mono">
+                  <div className="mt-2.5 text-[11px] flex items-center justify-between text-slate-600 border-t border-slate-100 pt-2 font-mono">
                     <span>Officer: {c.assignedToName.split(' ')[0]}</span>
-                    <span>Status: {c.status.toUpperCase()}</span>
+                    <span className="font-semibold text-slate-700">Status: {c.status.toUpperCase()}</span>
                   </div>
                 </div>
               );
@@ -125,17 +125,17 @@ export default function CaseManagementPage() {
         {/* Case Detail on Right (7 cols) */}
         <div className="lg:col-span-7">
           {selectedCase ? (
-            <div className="gf-card divide-y divide-slate-800">
-              <div className="p-4 bg-slate-900 flex items-start justify-between flex-wrap gap-2">
+            <div className="gf-card divide-y divide-slate-100">
+              <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-100">{selectedCase.title}</h2>
+                    <h2 className="text-base font-extrabold text-slate-900">{selectedCase.title}</h2>
                     <span className="gf-badge gf-badge-blue text-[10px] uppercase font-mono font-bold">
                       {selectedCase.caseId}
                     </span>
                   </div>
-                  <p className="text-xs text-mut mt-0.5">
-                    Assigned Officer: <strong className="text-slate-200">{selectedCase.assignedToName}</strong> · Type: {selectedCase.type}
+                  <p className="text-xs text-slate-600 mt-1">
+                    Assigned Officer: <strong className="text-slate-900">{selectedCase.assignedToName}</strong> · Type: {selectedCase.type}
                   </p>
                 </div>
 
@@ -153,15 +153,15 @@ export default function CaseManagementPage() {
 
               {/* Notes Timeline */}
               <div className="p-4 space-y-3">
-                <span className="text-xs font-bold text-slate-300 block">Investigation Timeline & Notes</span>
+                <span className="text-xs font-bold text-slate-800 block">Investigation Timeline & Notes</span>
                 <div className="space-y-2">
                   {selectedCase.notes.map((note) => (
-                    <div key={note.id} className="p-3 rounded bg-slate-900 border border-slate-800 text-xs">
+                    <div key={note.id} className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-slate-200">{note.authorName} ({note.authorRole})</span>
-                        <span className="text-[10px] text-faint font-mono">{new Date(note.createdAt).toLocaleString()}</span>
+                        <span className="font-bold text-slate-900">{note.authorName} ({note.authorRole})</span>
+                        <span className="text-[10px] text-slate-500 font-mono">{new Date(note.createdAt).toLocaleString()}</span>
                       </div>
-                      <p className="text-slate-300 leading-relaxed">{note.text}</p>
+                      <p className="text-slate-700 leading-relaxed font-normal">{note.text}</p>
                     </div>
                   ))}
                 </div>
@@ -175,8 +175,8 @@ export default function CaseManagementPage() {
                     placeholder="Append internal operator note to case log..."
                     className="gf-textarea w-full text-xs"
                   />
-                  <div className="flex justify-end mt-1.5">
-                    <button type="submit" className="gf-btn gf-btn-secondary text-xs">
+                  <div className="flex justify-end mt-2">
+                    <button type="submit" className="gf-btn gf-btn-secondary text-xs font-semibold">
                       Add Case Note
                     </button>
                   </div>
@@ -184,7 +184,7 @@ export default function CaseManagementPage() {
               </div>
             </div>
           ) : (
-            <div className="gf-card p-12 text-center text-xs text-mut">
+            <div className="gf-card p-12 text-center text-xs text-slate-500">
               Select an open case to inspect details and record investigation notes.
             </div>
           )}

@@ -73,8 +73,8 @@ export default function CustomerLookupPage() {
         </div>
 
         {/* Quick links */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-mut flex-wrap">
-          <span className="font-semibold text-slate-400">Quick Profiles:</span>
+        <div className="flex items-center gap-2 mt-3 text-xs text-slate-600 flex-wrap">
+          <span className="font-semibold text-slate-700">Quick Profiles:</span>
           {['arjun@atlaslogistics.com', 'sarah.lewis@rotterdamfreight.nl', 'kiran.mehta@indoocean.com', 'chen.wei@orientfreight.cn'].map((em) => (
             <button
               key={em}
@@ -83,7 +83,7 @@ export default function CustomerLookupPage() {
                 setSearchQuery(em);
                 setDossier(getCustomerDossier(em));
               }}
-              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition-colors border border-slate-700"
+              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-[11px] transition-colors border border-slate-200 font-semibold"
             >
               {em.split('@')[0]}
             </button>
@@ -100,14 +100,14 @@ export default function CustomerLookupPage() {
             <div className="lg:col-span-8 gf-card p-5 space-y-4">
               <div className="flex items-start justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-600 to-teal-500 text-white font-bold flex items-center justify-center text-lg shadow-md">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-600 to-teal-500 text-white font-bold flex items-center justify-center text-lg shadow-xs">
                     {dossier.user.displayName.charAt(0)}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-100 flex items-center gap-2">
+                    <h2 className="text-lg font-extrabold text-slate-900 flex items-center gap-2">
                       {dossier.user.displayName}
                       {dossier.user.hasGoldenTick && (
-                        <span className="text-amber-400" title="Premium Gold Tick Verified">
+                        <span className="text-amber-500 font-bold" title="Premium Gold Tick Verified">
                           ★
                         </span>
                       )}
@@ -115,7 +115,7 @@ export default function CustomerLookupPage() {
                         {dossier.user.isVerified ? 'Verified Account' : 'Pending Verification'}
                       </span>
                     </h2>
-                    <div className="text-xs text-mut font-mono mt-0.5">
+                    <div className="text-xs text-slate-500 font-mono mt-0.5">
                       {dossier.user.email} · UID: {dossier.user.uid}
                     </div>
                   </div>
@@ -127,22 +127,22 @@ export default function CustomerLookupPage() {
               </div>
 
               {/* Identity & Company Metadata */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-3 border-t border-slate-800">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-3 border-t border-slate-100">
                 <div>
-                  <span className="text-mut block text-[10px] uppercase font-bold">Company Legal Entity</span>
-                  <span className="font-semibold text-slate-200">{dossier.user.company}</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Company Legal Entity</span>
+                  <span className="font-semibold text-slate-900">{dossier.user.company}</span>
                 </div>
                 <div>
-                  <span className="text-mut block text-[10px] uppercase font-bold">GST Identification</span>
-                  <span className="font-mono text-sky-400 font-bold">{dossier.user.gstn || 'N/A'}</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">GST Identification</span>
+                  <span className="font-mono text-sky-700 font-bold">{dossier.user.gstn || 'N/A'}</span>
                 </div>
                 <div>
-                  <span className="text-mut block text-[10px] uppercase font-bold">Designation</span>
-                  <span className="text-slate-300">{dossier.user.designation}</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Designation</span>
+                  <span className="text-slate-700">{dossier.user.designation}</span>
                 </div>
                 <div>
-                  <span className="text-mut block text-[10px] uppercase font-bold">Local Timezone</span>
-                  <span className="font-mono text-slate-300">{dossier.user.timezone}</span>
+                  <span className="text-slate-500 block text-[10px] uppercase font-bold">Local Timezone</span>
+                  <span className="font-mono text-slate-700">{dossier.user.timezone}</span>
                 </div>
               </div>
             </div>
@@ -151,30 +151,30 @@ export default function CustomerLookupPage() {
             <div className="lg:col-span-4 gf-card p-5 space-y-3 flex flex-col justify-between">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-mut uppercase">Platform Risk Score</span>
+                  <span className="text-xs font-bold text-slate-500 uppercase">Platform Risk Score</span>
                   <span className={`gf-badge gf-badge-${getRiskColor(dossier.riskScore)} text-xs font-mono font-bold`}>
                     {dossier.riskScore < 30 ? 'LOW RISK' : dossier.riskScore < 60 ? 'MODERATE RISK' : 'HIGH RISK'}
                   </span>
                 </div>
-                <div className="text-3xl font-extrabold text-white font-mono">{dossier.riskScore} / 100</div>
+                <div className="text-3xl font-black text-slate-900 font-mono">{dossier.riskScore} / 100</div>
 
                 {/* Progress Bar */}
-                <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden mt-3">
+                <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden mt-3">
                   <div
-                    className={`h-full bg-${getRiskColor(dossier.riskScore)}-500 transition-all`}
+                    className={`h-full ${dossier.riskScore < 30 ? 'bg-emerald-500' : dossier.riskScore < 60 ? 'bg-amber-500' : 'bg-rose-500'} transition-all`}
                     style={{ width: `${dossier.riskScore}%` }}
                   />
                 </div>
               </div>
 
-              <div className="text-xs space-y-1 pt-2 border-t border-slate-800">
-                <span className="font-bold text-slate-400 text-[10px] uppercase block">Risk Factor Signals</span>
+              <div className="text-xs space-y-1 pt-2 border-t border-slate-100">
+                <span className="font-bold text-slate-500 text-[10px] uppercase block">Risk Factor Signals</span>
                 {dossier.riskFactors.length === 0 ? (
-                  <div className="text-emerald-400 text-[11px]">✅ Zero risk anomalies detected. Clean standing.</div>
+                  <div className="text-emerald-700 text-[11px] font-semibold">✅ Zero risk anomalies detected. Clean standing.</div>
                 ) : (
                   dossier.riskFactors.map((f, i) => (
-                    <div key={i} className="text-red-300 text-[11px] flex items-center gap-1.5">
-                      <span className="text-red-400 font-bold">•</span>
+                    <div key={i} className="text-rose-800 text-[11px] flex items-center gap-1.5 font-medium">
+                      <span className="text-rose-600 font-bold">•</span>
                       <span>{f}</span>
                     </div>
                   ))
@@ -187,34 +187,34 @@ export default function CustomerLookupPage() {
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs">
             <div className="gf-card p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-mut font-bold text-[10px] uppercase">Auctions Created</span>
-                <Gavel className="lucide w-4 h-4 text-sky-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase">Auctions Created</span>
+                <Gavel className="lucide w-4 h-4 text-sky-600" />
               </div>
-              <div className="text-xl font-bold text-white font-mono">{dossier.auctionsCreated.length}</div>
+              <div className="text-xl font-black text-slate-900 font-mono">{dossier.auctionsCreated.length}</div>
             </div>
 
             <div className="gf-card p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-mut font-bold text-[10px] uppercase">Rates Posted</span>
-                <DollarSign className="lucide w-4 h-4 text-emerald-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase">Rates Posted</span>
+                <DollarSign className="lucide w-4 h-4 text-emerald-600" />
               </div>
-              <div className="text-xl font-bold text-white font-mono">{dossier.ratesPosted.length}</div>
+              <div className="text-xl font-black text-slate-900 font-mono">{dossier.ratesPosted.length}</div>
             </div>
 
             <div className="gf-card p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-mut font-bold text-[10px] uppercase">Invoices Paid</span>
-                <FileText className="lucide w-4 h-4 text-sky-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase">Invoices Paid</span>
+                <FileText className="lucide w-4 h-4 text-sky-600" />
               </div>
-              <div className="text-xl font-bold text-white font-mono">{dossier.invoices.length}</div>
+              <div className="text-xl font-black text-slate-900 font-mono">{dossier.invoices.length}</div>
             </div>
 
             <div className="gf-card p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-mut font-bold text-[10px] uppercase">Open Cases</span>
-                <AlertTriangle className="lucide w-4 h-4 text-amber-400" />
+                <span className="text-slate-500 font-bold text-[10px] uppercase">Open Cases</span>
+                <AlertTriangle className="lucide w-4 h-4 text-amber-600" />
               </div>
-              <div className="text-xl font-bold text-white font-mono">{dossier.activeCases.length}</div>
+              <div className="text-xl font-black text-slate-900 font-mono">{dossier.activeCases.length}</div>
             </div>
           </div>
         </div>

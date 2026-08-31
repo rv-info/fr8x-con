@@ -123,38 +123,37 @@ export function GodfatherSidebar() {
     <aside className="gf-sidebar">
       {/* Brand Header */}
       <div className="gf-sidebar-header">
-        <Link href="/godfather" className="gf-brand-wrap flex items-center gap-2.5">
+        <Link href="/godfather" className="gf-brand-wrap">
           <div className="gf-brand-logo-badge">
-            <ShieldCheck className="lucide w-5 h-5 text-white" />
+            <ShieldCheck className="lucide w-5 h-5 text-sky-400" />
           </div>
           <div>
-            <div className="gf-brand-title font-mono font-black tracking-wider text-sm text-slate-100 flex items-center gap-1.5">
-              IL PADRINO
-              <span className="text-[9px] text-amber-300 font-sans font-black bg-amber-950/80 px-1.5 py-0.5 rounded border border-amber-600/60 tracking-normal shadow-sm">
-                SOVRANO
+            <div className="gf-brand-title">
+              <span>GODFATHER</span>
+              <span className="gf-badge gf-badge-gold text-[9px] uppercase font-mono py-0 px-1">
+                SOVEREIGN
               </span>
             </div>
-            <div className="text-[10px] text-emerald-400 font-semibold flex items-center gap-1 mt-0.5">
-              <span>🇮🇹</span>
-              <span>ITALIAN SUPER ADMIN · CON.FR8X.IN</span>
+            <div className="gf-brand-subtitle">
+              FR8X PLATFORM SUPER ADMIN
             </div>
           </div>
         </Link>
 
         {/* Environment Badge & Switcher */}
-        <div className="gf-env-select-wrap mt-2.5 flex items-center justify-between">
-          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse" />
+        <div className="gf-env-select-wrap">
+          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1.5`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
             {environment}
           </span>
           <select
             value={environment}
             onChange={(e) => setEnvironment(e.target.value as PlatformEnvironment)}
-            className="gf-env-dropdown text-[10px] bg-slate-900 text-slate-300 border border-slate-700 rounded px-1.5 py-0.5"
+            className="gf-env-dropdown"
           >
-            <option value="Production">Prod</option>
-            <option value="Staging">Staging</option>
-            <option value="Local Emulator">Emulator</option>
+            <option value="Production">Prod Node</option>
+            <option value="Staging">Staging Node</option>
+            <option value="Local Emulator">Emulator Node</option>
           </select>
         </div>
       </div>
@@ -183,7 +182,7 @@ export function GodfatherSidebar() {
         {NAV_SECTIONS.map((section) => {
           const isOpen = openSections[section.title] ?? true;
           return (
-            <div key={section.title} className="gf-nav-section mt-3">
+            <div key={section.title} className="gf-nav-section">
               <button
                 type="button"
                 onClick={() => toggleSection(section.title)}
@@ -191,14 +190,14 @@ export function GodfatherSidebar() {
               >
                 <span>{section.title}</span>
                 {isOpen ? (
-                  <ChevronDown className="lucide w-3.5 h-3.5 text-slate-500" />
+                  <ChevronDown className="lucide w-3.5 h-3.5 text-slate-400" />
                 ) : (
-                  <ChevronRight className="lucide w-3.5 h-3.5 text-slate-500" />
+                  <ChevronRight className="lucide w-3.5 h-3.5 text-slate-400" />
                 )}
               </button>
 
               {isOpen && (
-                <div className="gf-nav-items-list space-y-0.5 mt-0.5">
+                <div className="gf-nav-items-list space-y-0.5 mt-1">
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || (item.href !== '/godfather' && pathname.startsWith(item.href));
@@ -226,15 +225,15 @@ export function GodfatherSidebar() {
           <button
             type="button"
             onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            className="gf-operator-pill w-full flex items-center justify-between p-2 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 transition-colors text-left"
+            className="gf-operator-pill"
           >
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded bg-teal-900 border border-teal-700 text-teal-300 font-bold flex items-center justify-center text-xs flex-shrink-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 border border-sky-200 font-bold flex items-center justify-center text-xs flex-shrink-0">
                 {operator.displayName.charAt(0)}
               </div>
               <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-200 truncate">{operator.displayName}</div>
-                <div className="text-[10px] text-teal-400 font-mono truncate">{operator.roleTitle}</div>
+                <div className="text-xs font-bold text-slate-900 truncate">{operator.displayName}</div>
+                <div className="text-[10px] text-sky-700 font-mono font-semibold truncate">{operator.roleTitle}</div>
               </div>
             </div>
             <ChevronDown className="lucide w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
@@ -242,8 +241,8 @@ export function GodfatherSidebar() {
 
           {/* Role Switcher Menu for Testing & Least Privilege Verification */}
           {isRoleDropdownOpen && (
-            <div className="gf-role-dropdown-menu absolute bottom-full left-0 w-full mb-1 bg-slate-950 border border-slate-700 rounded shadow-xl p-1 z-50">
-              <div className="px-2 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+            <div className="gf-role-dropdown-menu">
+              <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
                 Switch Subrole Profile (Testing)
               </div>
               {operatorsList.map((op) => (
@@ -254,27 +253,29 @@ export function GodfatherSidebar() {
                     switchOperator(op.uid);
                     setIsRoleDropdownOpen(false);
                   }}
-                  className={`w-full text-left p-2 rounded text-xs flex items-center justify-between hover:bg-slate-800 transition-colors ${
-                    operator.uid === op.uid ? 'bg-slate-900 text-teal-300 font-bold' : 'text-slate-300'
+                  className={`w-full text-left p-2 rounded-md text-xs flex items-center justify-between transition-colors ${
+                    operator.uid === op.uid
+                      ? 'bg-sky-50 text-sky-900 font-bold'
+                      : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
                   <div className="min-w-0">
                     <div className="truncate">{op.displayName}</div>
                     <div className="text-[10px] text-slate-500 font-mono">{op.role}</div>
                   </div>
-                  {operator.uid === op.uid && <Zap className="lucide w-3 h-3 text-teal-400 flex-shrink-0" />}
+                  {operator.uid === op.uid && <Zap className="lucide w-3.5 h-3.5 text-sky-600 flex-shrink-0" />}
                 </button>
               ))}
             </div>
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800 text-[10px] text-slate-500">
-          <span className="font-mono">MFA: ENFORCED</span>
+        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-500">
+          <span className="font-mono font-semibold text-emerald-700">MFA: ENFORCED</span>
           <button
             type="button"
             onClick={logoutOperator}
-            className="text-slate-400 hover:text-red-400 flex items-center gap-1 font-semibold transition-colors"
+            className="text-slate-600 hover:text-rose-600 flex items-center gap-1 font-semibold transition-colors"
           >
             <LogOut className="lucide w-3 h-3" />
             Sign Out
@@ -284,3 +285,4 @@ export function GodfatherSidebar() {
     </aside>
   );
 }
+

@@ -97,12 +97,12 @@ export default function RatesManagementPage() {
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-lg">
           <button
             type="button"
             onClick={() => setActiveTab('imports')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'imports' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'imports' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Bulk Import Pipeline ({rateImports.length})
@@ -110,8 +110,8 @@ export default function RatesManagementPage() {
           <button
             type="button"
             onClick={() => setActiveTab('inventory')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'inventory' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'inventory' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Active Rate Inventory ({rates.length})
@@ -124,9 +124,9 @@ export default function RatesManagementPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Batches List on Left (5 cols) */}
           <div className="lg:col-span-5 space-y-3">
-            <div className="gf-card p-3 font-bold text-xs text-slate-300 flex items-center justify-between">
+            <div className="gf-card p-3 font-bold text-xs text-slate-800 flex items-center justify-between bg-slate-50 border-slate-200">
               <span>Tariff Upload Batches</span>
-              <span className="text-[11px] font-mono text-faint">ETL PIPELINE</span>
+              <span className="text-[11px] font-mono text-slate-500 font-bold">ETL PIPELINE</span>
             </div>
 
             <div className="space-y-2">
@@ -136,17 +136,17 @@ export default function RatesManagementPage() {
                   <div
                     key={batch.importId}
                     onClick={() => setSelectedBatch(batch)}
-                    className={`gf-card p-3.5 cursor-pointer transition-all ${
-                      isSelected ? 'border-sky-500 bg-slate-850 shadow-md' : 'hover:border-slate-700'
+                    className={`gf-card p-4 cursor-pointer transition-all ${
+                      isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
                     }`}
                   >
                     <div className="flex items-start justify-between">
                       <div>
-                        <div className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                          <FileSpreadsheet className="lucide w-3.5 h-3.5 text-sky-400" />
+                        <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                          <FileSpreadsheet className="lucide w-3.5 h-3.5 text-sky-600" />
                           {batch.batchCode}
                         </div>
-                        <div className="text-[11px] text-mut font-mono mt-0.5">{batch.filename}</div>
+                        <div className="text-[11px] text-slate-500 font-mono mt-0.5">{batch.filename}</div>
                       </div>
                       <span
                         className={`gf-badge gf-badge-${
@@ -157,9 +157,9 @@ export default function RatesManagementPage() {
                       </span>
                     </div>
 
-                    <div className="mt-2 text-[11px] flex items-center justify-between text-slate-400 border-t border-slate-800 pt-2 font-mono">
+                    <div className="mt-2.5 text-[11px] flex items-center justify-between text-slate-600 border-t border-slate-100 pt-2 font-mono">
                       <span>Uploader: {batch.uploaderName}</span>
-                      <span>{batch.validRows}/{batch.totalRows} Valid Rows</span>
+                      <span className="font-semibold text-slate-700">{batch.validRows}/{batch.totalRows} Valid Rows</span>
                     </div>
                   </div>
                 );
@@ -170,18 +170,18 @@ export default function RatesManagementPage() {
           {/* Batch Detail Inspector on Right (7 cols) */}
           <div className="lg:col-span-7">
             {selectedBatch ? (
-              <div className="gf-card divide-y divide-slate-800">
+              <div className="gf-card divide-y divide-slate-100">
                 {/* Header */}
-                <div className="p-4 bg-slate-900 flex items-start justify-between flex-wrap gap-2">
+                <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-bold text-slate-100">{selectedBatch.batchCode}</h2>
+                      <h2 className="text-base font-extrabold text-slate-900">{selectedBatch.batchCode}</h2>
                       <span className="gf-badge gf-badge-blue text-[10px] uppercase font-mono font-bold">
                         {selectedBatch.importId}
                       </span>
                     </div>
-                    <p className="text-xs text-mut mt-0.5">
-                      File: <strong className="text-slate-200">{selectedBatch.filename}</strong> · Uploader: {selectedBatch.uploaderCompany}
+                    <p className="text-xs text-slate-600 mt-1">
+                      File: <strong className="text-slate-900">{selectedBatch.filename}</strong> · Uploader: {selectedBatch.uploaderCompany}
                     </p>
                   </div>
 
@@ -198,34 +198,34 @@ export default function RatesManagementPage() {
                 </div>
 
                 {/* Batch Metrics */}
-                <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/40 text-xs">
-                  <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-mut text-[10px] uppercase font-bold block">Total Rows</span>
-                    <span className="font-mono text-slate-200 font-bold text-sm">{selectedBatch.totalRows}</span>
+                <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 text-xs">
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Total Rows</span>
+                    <span className="font-mono text-slate-900 font-bold text-sm block mt-0.5">{selectedBatch.totalRows}</span>
                   </div>
-                  <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-mut text-[10px] uppercase font-bold block">Valid Rows</span>
-                    <span className="font-mono text-emerald-400 font-bold text-sm">{selectedBatch.validRows}</span>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Valid Rows</span>
+                    <span className="font-mono text-emerald-700 font-bold text-sm block mt-0.5">{selectedBatch.validRows}</span>
                   </div>
-                  <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-mut text-[10px] uppercase font-bold block">Invalid Flags</span>
-                    <span className="font-mono text-red-400 font-bold text-sm">{selectedBatch.invalidRows}</span>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Invalid Flags</span>
+                    <span className="font-mono text-rose-700 font-bold text-sm block mt-0.5">{selectedBatch.invalidRows}</span>
                   </div>
-                  <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                    <span className="text-mut text-[10px] uppercase font-bold block">Duplicates</span>
-                    <span className="font-mono text-amber-400 font-bold text-sm">{selectedBatch.duplicateRows}</span>
+                  <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Duplicates</span>
+                    <span className="font-mono text-amber-700 font-bold text-sm block mt-0.5">{selectedBatch.duplicateRows}</span>
                   </div>
                 </div>
 
                 {/* Validation Anomaly Report */}
                 <div className="p-4 space-y-2">
-                  <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                  <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
                     <span>Validation Anomaly & Error Report ({selectedBatch.validationReport.length})</span>
-                    <span className="text-[10px] font-mono text-red-400 font-bold">AUTOMATED GATEWAY SCAN</span>
+                    <span className="text-[10px] font-mono text-rose-700 font-bold">AUTOMATED GATEWAY SCAN</span>
                   </div>
 
                   {selectedBatch.validationReport.length === 0 ? (
-                    <div className="p-3 bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs rounded">
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg font-medium">
                       ✅ Clean batch: All rows conform to UN/LOCODE, positive pricing, and valid Gregorian date ranges.
                     </div>
                   ) : (
@@ -233,15 +233,15 @@ export default function RatesManagementPage() {
                       {selectedBatch.validationReport.map((err: any, idx: number) => (
                         <div
                           key={idx}
-                          className="p-2.5 rounded bg-slate-900 border border-slate-800 text-xs flex items-start gap-2.5"
+                          className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-start gap-2.5"
                         >
                           <span className="gf-badge gf-badge-red text-[9px] font-mono font-bold mt-0.5">
                             ROW #{err.rowNumber}
                           </span>
                           <div className="min-w-0">
-                            <span className="font-mono font-bold text-red-300">{err.errorType}: </span>
-                            <span className="text-slate-300">{err.message}</span>
-                            <span className="text-mut text-[10px] block font-mono">Field: {err.field}</span>
+                            <span className="font-mono font-bold text-rose-800">{err.errorType}: </span>
+                            <span className="text-slate-800">{err.message}</span>
+                            <span className="text-slate-500 text-[10px] block font-mono mt-0.5">Field: {err.field}</span>
                           </div>
                         </div>
                       ))}
@@ -250,7 +250,7 @@ export default function RatesManagementPage() {
                 </div>
               </div>
             ) : (
-              <div className="gf-card p-12 text-center text-xs text-mut">
+              <div className="gf-card p-12 text-center text-xs text-slate-500">
                 Select an import batch from the left to inspect validation reports and approve row insertion.
               </div>
             )}
@@ -261,13 +261,13 @@ export default function RatesManagementPage() {
         <div className="gf-card">
           <div className="gf-filter-bar">
             <div className="gf-search-input-wrap">
-              <Search className="lucide w-4 h-4" />
+              <Search className="lucide w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={rateSearch}
                 onChange={(e) => setRateSearch(e.target.value)}
                 placeholder="Search active rates by RT-ID, carrier, port..."
-                className="gf-search-input"
+                className="gf-search-input font-medium"
               />
             </div>
           </div>
@@ -290,23 +290,23 @@ export default function RatesManagementPage() {
                 {filteredRates.map((r) => (
                   <tr key={r.id}>
                     <td>
-                      <span className="font-mono font-bold text-sky-400">{r.id}</span>
-                      <div className="text-[10px] text-mut">{r.id.startsWith('IRT') ? 'Self-Posted' : 'Market Rate'}</div>
+                      <span className="font-mono font-bold text-sky-700">{r.id}</span>
+                      <div className="text-[10px] text-slate-500 font-medium">{r.id.startsWith('IRT') ? 'Self-Posted' : 'Market Rate'}</div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-200">{r.carrier}</div>
-                      <div className="text-[11px] text-mut">{r.sp}</div>
+                      <div className="font-bold text-slate-900">{r.carrier}</div>
+                      <div className="text-[11px] text-slate-500">{r.sp}</div>
                     </td>
-                    <td className="font-semibold text-slate-300">{r.route}</td>
-                    <td className="font-mono font-bold text-emerald-400">${r.d20}</td>
-                    <td className="font-mono font-bold text-emerald-400">${r.h40}</td>
-                    <td className="text-slate-400">{r.ft}</td>
-                    <td className="font-mono text-slate-300">{r.valid}</td>
+                    <td className="font-semibold text-slate-800">{r.route}</td>
+                    <td className="font-mono font-bold text-emerald-700">${r.d20}</td>
+                    <td className="font-mono font-bold text-emerald-700">${r.h40}</td>
+                    <td className="text-slate-600">{r.ft}</td>
+                    <td className="font-mono text-slate-700">{r.valid}</td>
                     <td className="text-right">
                       <button
                         type="button"
                         onClick={() => handleModerateRate(r, 'hide')}
-                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 text-red-400 hover:bg-red-950"
+                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 text-rose-700 hover:bg-rose-50 border-slate-200 hover:border-rose-300 font-semibold"
                       >
                         Moderate / Hide
                       </button>

@@ -101,18 +101,18 @@ export default function ContentModerationPage() {
           <div key={post.id} className="gf-card p-4 space-y-3">
             <div className="flex items-start justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-slate-300 font-bold flex items-center justify-center text-xs">
+                <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-300 text-slate-700 font-bold flex items-center justify-center text-xs">
                   {post.author.charAt(0)}
                 </div>
                 <div>
-                  <div className="font-bold text-slate-100 text-xs flex items-center gap-2">
+                  <div className="font-bold text-slate-900 text-xs flex items-center gap-2">
                     {post.author}
-                    <span className="text-[11px] text-mut font-normal">({post.authorCompany})</span>
+                    <span className="text-[11px] text-slate-500 font-normal">({post.authorCompany})</span>
                     <span className={`gf-badge gf-badge-${post.status === 'active' ? 'green' : 'red'} text-[10px] uppercase font-bold`}>
                       {post.status}
                     </span>
                   </div>
-                  <div className="text-[10px] text-faint font-mono mt-0.5">Post ID: {post.id} · {post.createdAt}</div>
+                  <div className="text-[10px] text-slate-500 font-mono mt-0.5">Post ID: {post.id} · {post.createdAt}</div>
                 </div>
               </div>
 
@@ -122,7 +122,7 @@ export default function ContentModerationPage() {
                   <button
                     type="button"
                     onClick={() => handleAction(post, 'hide_content')}
-                    className="gf-btn gf-btn-danger text-[11px] py-1 px-2.5 flex items-center gap-1"
+                    className="gf-btn gf-btn-danger text-[11px] py-1 px-2.5 flex items-center gap-1 font-bold"
                   >
                     <EyeOff className="lucide w-3 h-3" />
                     Hide Content
@@ -131,7 +131,7 @@ export default function ContentModerationPage() {
                   <button
                     type="button"
                     onClick={() => handleAction(post, 'restore')}
-                    className="gf-btn gf-btn-success text-[11px] py-1 px-2.5 flex items-center gap-1"
+                    className="gf-btn gf-btn-success text-[11px] py-1 px-2.5 flex items-center gap-1 font-bold"
                   >
                     <Eye className="lucide w-3 h-3" />
                     Restore Content
@@ -140,27 +140,27 @@ export default function ContentModerationPage() {
                 <button
                   type="button"
                   onClick={() => handleAction(post, 'warn_author')}
-                  className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1"
+                  className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 font-semibold"
                 >
-                  <ShieldAlert className="lucide w-3 h-3 text-amber-400" />
+                  <ShieldAlert className="lucide w-3 h-3 text-amber-600" />
                   Issue Warning
                 </button>
               </div>
             </div>
 
             {/* Content Text Box */}
-            <div className="p-3 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed font-sans font-normal">
               {post.text}
             </div>
 
             {/* Reports Notice if Flagged */}
             {post.reportsCount > 0 && (
-              <div className="p-2.5 rounded bg-red-950/60 border border-red-800 text-red-300 text-xs flex items-center justify-between">
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <AlertOctagon className="lucide w-4 h-4 text-red-400" />
+                  <AlertOctagon className="lucide w-4 h-4 text-rose-600" />
                   <span>Flagged by {post.reportsCount} users: <strong>{post.reportCategory}</strong></span>
                 </div>
-                <span className="text-[10px] font-mono uppercase bg-red-900 px-1.5 py-0.5 rounded font-bold">
+                <span className="text-[10px] font-mono uppercase bg-rose-200/80 text-rose-900 border border-rose-300 px-2 py-0.5 rounded-full font-bold">
                   HIGH SEVERITY
                 </span>
               </div>

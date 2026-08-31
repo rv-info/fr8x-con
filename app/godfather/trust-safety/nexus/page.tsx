@@ -69,12 +69,12 @@ export default function NexusModerationPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-lg">
           <button
             type="button"
             onClick={() => setActiveTab('reviews')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'reviews' ? 'bg-sky-600 text-white' : 'text-slate-400'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'reviews' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Company Reviews ({reviews.length})
@@ -82,8 +82,8 @@ export default function NexusModerationPage() {
           <button
             type="button"
             onClick={() => setActiveTab('topics')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'topics' ? 'bg-sky-600 text-white' : 'text-slate-400'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'topics' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Community Topics (8)
@@ -97,9 +97,9 @@ export default function NexusModerationPage() {
             <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
                 <div className="flex items-center gap-2">
-                  <Building className="lucide w-4 h-4 text-sky-400" />
-                  <span className="font-bold text-slate-100 text-sm">{rev.companyName}</span>
-                  <div className="flex items-center text-amber-400 text-xs">
+                  <Building className="lucide w-4 h-4 text-sky-600" />
+                  <span className="font-bold text-slate-900 text-sm">{rev.companyName}</span>
+                  <div className="flex items-center text-amber-500 text-xs font-bold">
                     {'★'.repeat(rev.rating)}
                     {'☆'.repeat(5 - rev.rating)}
                   </div>
@@ -107,8 +107,8 @@ export default function NexusModerationPage() {
                     {rev.status.replace('_', ' ')}
                   </span>
                 </div>
-                <div className="text-xs text-mut mt-0.5">
-                  Review by: <strong className="text-slate-300">{rev.author}</strong> · Date: {rev.date}
+                <div className="text-xs text-slate-600 mt-1">
+                  Review by: <strong className="text-slate-900">{rev.author}</strong> · Date: {rev.date}
                 </div>
               </div>
 
@@ -116,7 +116,7 @@ export default function NexusModerationPage() {
                 <button
                   type="button"
                   onClick={() => handleModerateReview(rev, 'hide')}
-                  className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 text-red-400"
+                  className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 text-rose-700 hover:bg-rose-50 border-slate-200 hover:border-rose-300 font-semibold"
                 >
                   <EyeOff className="lucide w-3 h-3 mr-1" />
                   Hide Review
@@ -124,14 +124,14 @@ export default function NexusModerationPage() {
                 <button
                   type="button"
                   onClick={() => handleModerateReview(rev, 'approve')}
-                  className="gf-btn gf-btn-success text-[11px] py-1 px-2 font-bold"
+                  className="gf-btn gf-btn-success text-[11px] py-1 px-2.5 font-bold"
                 >
                   Approve / Verify
                 </button>
               </div>
             </div>
 
-            <div className="p-3 rounded bg-slate-900 border border-slate-800 text-xs text-slate-200">
+            <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed italic">
               &ldquo;{rev.text}&rdquo;
             </div>
           </div>

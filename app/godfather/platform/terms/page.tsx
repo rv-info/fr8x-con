@@ -103,8 +103,8 @@ export default function TermsAndSafetyPage() {
       <div className="gf-page-header">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="gf-badge gf-badge-green text-[11px] font-bold">PLATFORM & GOVERNANCE</span>
-            <span className="gf-badge gf-badge-gold text-[11px]">Clickwrap Enforcement Active</span>
+            <span className="gf-badge gf-badge-blue text-[11px] font-bold">LEGAL & GOVERNANCE</span>
+            <span className="gf-badge gf-badge-gold text-[11px] font-mono font-bold">CLICKWRAP ACTIVE</span>
           </div>
           <h1 className="gf-page-title">Terms & Conditions, Safety Agreements & Clickwrap Governance</h1>
           <p className="gf-page-subtitle">
@@ -117,9 +117,9 @@ export default function TermsAndSafetyPage() {
       <div className="gf-metric-grid">
         <div className="gf-metric-card">
           <div className="gf-metric-title">Master Legal Contracts</div>
-          <div className="gf-metric-value text-emerald-700">{termsAgreements.length}</div>
-          <div className="gf-metric-foot">
-            <Scale className="lucide w-3.5 h-3.5" /> Versioned & Cryptographically Audited
+          <div className="gf-metric-value text-slate-900">{termsAgreements.length}</div>
+          <div className="gf-metric-foot text-slate-600">
+            <Scale className="lucide w-3.5 h-3.5 text-sky-600" /> Versioned & Cryptographically Audited
           </div>
         </div>
 
@@ -135,10 +135,10 @@ export default function TermsAndSafetyPage() {
 
         <div className="gf-metric-card">
           <div className="gf-metric-title">Active Clickwrap Enforcements</div>
-          <div className="gf-metric-value text-amber-700">
+          <div className="gf-metric-value text-emerald-700">
             {termsAgreements.filter((t) => t.mandatoryClickwrap).length}
           </div>
-          <div className="gf-metric-foot text-amber-700">
+          <div className="gf-metric-foot text-emerald-700">
             <ShieldCheck className="lucide w-3.5 h-3.5" /> Mandatory Checkbox Gates Active
           </div>
         </div>
@@ -148,7 +148,7 @@ export default function TermsAndSafetyPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Agreement Selector */}
         <div className="lg:col-span-1 space-y-3">
-          <h3 className="font-bold text-xs uppercase tracking-wider text-emerald-900 px-1">
+          <h3 className="font-bold text-xs uppercase tracking-wider text-slate-700 px-1">
             Standard Governance Agreements
           </h3>
 
@@ -158,21 +158,21 @@ export default function TermsAndSafetyPage() {
               <div
                 key={t.id}
                 onClick={() => setSelectedAgreement(t)}
-                className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-emerald-50/80 border-emerald-400 shadow-md ring-1 ring-emerald-400'
-                    : 'bg-white border-slate-200 hover:border-emerald-300'
+                    ? 'bg-sky-50/70 border-sky-400 shadow-sm ring-1 ring-sky-300'
+                    : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-bold text-xs text-emerald-950 truncate max-w-[180px]">{t.title}</span>
-                  <span className="gf-badge gf-badge-green text-[10px] font-mono font-bold">v{t.version}</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-xs text-slate-900 truncate max-w-[180px]">{t.title}</span>
+                  <span className="gf-badge gf-badge-blue text-[10px] font-mono font-bold">v{t.version}</span>
                 </div>
 
-                <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed mb-2">{t.summary}</p>
+                <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed mb-3">{t.summary}</p>
 
                 <div className="flex items-center justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-100 font-mono">
-                  <span>{t.totalAcceptances} signed</span>
+                  <span className="font-semibold text-slate-700">{t.totalAcceptances} signed</span>
                   <span>{t.effectiveDate}</span>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function TermsAndSafetyPage() {
                       VERSION {selectedAgreement.version}
                     </span>
                   </div>
-                  <h2 className="text-base font-black text-emerald-950">{selectedAgreement.title}</h2>
+                  <h2 className="text-base font-extrabold text-slate-900">{selectedAgreement.title}</h2>
                   <p className="text-xs text-slate-600 mt-1">{selectedAgreement.summary}</p>
                 </div>
 
@@ -211,7 +211,7 @@ export default function TermsAndSafetyPage() {
 
               {/* Clickwrap Enforcement Gates Switchboard */}
               <div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-950 mb-2">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-2">
                   Mandatory Clickwrap Enforcement Checkpoints
                 </h4>
                 <p className="text-xs text-slate-600 mb-3">
@@ -308,7 +308,7 @@ export default function TermsAndSafetyPage() {
 
               {/* Full Contract Preview */}
               <div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-emerald-950 mb-2">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-2">
                   Active Legal Contract Clauses
                 </h4>
                 <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
@@ -319,7 +319,7 @@ export default function TermsAndSafetyPage() {
               {/* Audit Meta */}
               <div className="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-200">
                 <span>Last Updated: {selectedAgreement.updatedAt}</span>
-                <span>Audited By: <strong className="text-emerald-900">{selectedAgreement.updatedBy}</strong></span>
+                <span>Audited By: <strong className="text-slate-800">{selectedAgreement.updatedBy}</strong></span>
               </div>
             </div>
           )}
@@ -332,8 +332,8 @@ export default function TermsAndSafetyPage() {
           <div className="gf-modal-card max-w-2xl">
             <div className="gf-modal-header">
               <div>
-                <h3 className="gf-modal-title flex items-center gap-1.5 text-emerald-950">
-                  <Scale className="lucide w-4 h-4 text-emerald-700" />
+                <h3 className="gf-modal-title flex items-center gap-1.5 text-slate-900">
+                  <Scale className="lucide w-4 h-4 text-sky-600" />
                   Edit Legal Agreement & Bump Version
                 </h3>
                 <p className="gf-modal-subtitle">{selectedAgreement.title} ({selectedAgreement.code})</p>

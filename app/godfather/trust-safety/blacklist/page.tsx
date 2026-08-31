@@ -106,12 +106,12 @@ export default function BlacklistManagementPage() {
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-lg">
           <button
             type="button"
             onClick={() => setActiveTab('blacklist')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'blacklist' ? 'bg-sky-600 text-white' : 'text-slate-400'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'blacklist' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Company Blacklist Registry ({blacklist.length})
@@ -119,8 +119,8 @@ export default function BlacklistManagementPage() {
           <button
             type="button"
             onClick={() => setActiveTab('blocks')}
-            className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-              activeTab === 'blocks' ? 'bg-sky-600 text-white' : 'text-slate-400'
+            className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+              activeTab === 'blocks' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             Scoped Member Blocks ({blocks.length})
@@ -136,8 +136,8 @@ export default function BlacklistManagementPage() {
               <div className="flex items-start justify-between flex-wrap gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <Building className="lucide w-4 h-4 text-red-400" />
-                    <h3 className="font-bold text-slate-100 text-sm">{item.companyName}</h3>
+                    <Building className="lucide w-4 h-4 text-rose-600" />
+                    <h3 className="font-bold text-slate-900 text-sm">{item.companyName}</h3>
                     <span className="gf-badge gf-badge-red text-[10px] uppercase font-bold font-mono">
                       {item.id}
                     </span>
@@ -145,8 +145,8 @@ export default function BlacklistManagementPage() {
                       SEVERITY: {item.severity}
                     </span>
                   </div>
-                  <div className="text-xs text-mut mt-0.5">
-                    Location: <strong className="text-slate-300">{item.location}</strong> · Reported by: {item.reporter} ({item.reportedDate})
+                  <div className="text-xs text-slate-500 mt-1">
+                    Location: <strong className="text-slate-800">{item.location}</strong> · Reported by: {item.reporter} ({item.reportedDate})
                   </div>
                 </div>
 
@@ -170,21 +170,21 @@ export default function BlacklistManagementPage() {
               </div>
 
               {/* Case Findings Box */}
-              <div className="p-3 rounded bg-red-950/40 border border-red-900/60 text-xs text-red-200 leading-relaxed">
-                <span className="font-bold text-red-300 block mb-1">Commercial Violation Claim:</span>
+              <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-900 leading-relaxed">
+                <span className="font-bold text-rose-950 block mb-1">Commercial Violation Claim:</span>
                 {item.reason} — {item.description}
               </div>
 
               {/* Evidence and Dispute Status */}
-              <div className="flex items-center justify-between text-xs text-slate-400 border-t border-slate-800 pt-2 flex-wrap gap-2">
+              <div className="flex items-center justify-between text-xs text-slate-500 border-t border-slate-100 pt-2 flex-wrap gap-2">
                 <div className="flex items-center gap-3">
-                  <span className="font-mono text-slate-300 flex items-center gap-1">
-                    <FileText className="lucide w-3.5 h-3.5 text-sky-400" />
+                  <span className="font-mono text-slate-700 font-semibold flex items-center gap-1">
+                    <FileText className="lucide w-3.5 h-3.5 text-sky-600" />
                     Evidence: {item.evidenceRef}
                   </span>
                   <span>{item.agreedCount || 0} Operators Corroborated</span>
                 </div>
-                <span className="gf-badge gf-badge-gray text-[10px]">
+                <span className="gf-badge gf-badge-gray text-[10px] font-bold">
                   Status: {item.status.toUpperCase()}
                 </span>
               </div>
@@ -210,10 +210,10 @@ export default function BlacklistManagementPage() {
               <tbody>
                 {blocks.map((b) => (
                   <tr key={b.blockId}>
-                    <td className="font-mono font-bold text-sky-400">{b.blockId}</td>
+                    <td className="font-mono font-bold text-sky-700">{b.blockId}</td>
                     <td>
-                      <div className="font-bold text-slate-200">{b.subjectName}</div>
-                      <div className="text-[10px] text-mut font-mono">{b.subjectEmail}</div>
+                      <div className="font-bold text-slate-900">{b.subjectName}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{b.subjectEmail}</div>
                     </td>
                     <td>
                       <div className="flex flex-wrap gap-1">
@@ -225,12 +225,12 @@ export default function BlacklistManagementPage() {
                       </div>
                     </td>
                     <td>
-                      <span className="font-semibold text-red-300 block">[{b.reasonCode}]</span>
-                      <span className="text-[11px] text-slate-300">{b.reasonText}</span>
+                      <span className="font-semibold text-rose-800 block">[{b.reasonCode}]</span>
+                      <span className="text-[11px] text-slate-700">{b.reasonText}</span>
                     </td>
                     <td>
-                      <div className="text-slate-300 font-semibold">{b.createdByName}</div>
-                      <div className="text-[10px] text-faint">{new Date(b.createdAt).toLocaleDateString()}</div>
+                      <div className="text-slate-800 font-semibold">{b.createdByName}</div>
+                      <div className="text-[10px] text-slate-500">{new Date(b.createdAt).toLocaleDateString()}</div>
                     </td>
                     <td>
                       <span className={`gf-badge gf-badge-${b.status === 'active' ? 'red' : 'green'} text-[10px] uppercase font-bold`}>
@@ -248,7 +248,7 @@ export default function BlacklistManagementPage() {
                           Lift Block
                         </button>
                       ) : (
-                        <span className="text-mut text-xs italic">Lifted</span>
+                        <span className="text-slate-400 text-xs italic">Lifted</span>
                       )}
                     </td>
                   </tr>

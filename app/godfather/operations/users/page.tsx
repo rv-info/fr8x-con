@@ -213,7 +213,7 @@ export default function UsersGovernancePage() {
       <div className="gf-card">
         <div className="gf-filter-bar">
           <div className="gf-search-input-wrap">
-            <Search className="lucide w-4 h-4" />
+            <Search className="lucide w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
@@ -223,8 +223,8 @@ export default function UsersGovernancePage() {
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-mut">
-            <span>Showing <strong className="text-slate-200">{filteredUsers.length}</strong> operators</span>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <span>Showing <strong className="text-slate-900">{filteredUsers.length}</strong> operators</span>
           </div>
         </div>
 
@@ -247,36 +247,36 @@ export default function UsersGovernancePage() {
                   <tr key={u.uid}>
                     {/* Identity */}
                     <td>
-                      <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
                         {u.displayName}
                         {u.hasGoldenTick && (
-                          <span className="text-amber-400" title="Premium Gold Tick Verified">
+                          <span className="text-amber-500 font-bold" title="Premium Gold Tick Verified">
                             ★
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-mut font-mono">{u.email}</div>
-                      <div className="text-[10px] text-faint">{u.designation}</div>
+                      <div className="text-[11px] text-slate-500 font-mono">{u.email}</div>
+                      <div className="text-[10px] text-slate-400">{u.designation}</div>
                     </td>
 
                     {/* Company */}
                     <td>
-                      <div className="font-semibold text-slate-200">{u.company}</div>
-                      <div className="text-[11px] text-mut font-mono">
-                        GST: {u.gstn ? <span className="text-sky-400 font-bold">{u.gstn}</span> : 'Not Provided'}
+                      <div className="font-semibold text-slate-800">{u.company}</div>
+                      <div className="text-[11px] text-slate-500 font-mono">
+                        GST: {u.gstn ? <span className="text-sky-700 font-bold">{u.gstn}</span> : 'Not Provided'}
                       </div>
-                      {u.pan && <div className="text-[10px] text-faint font-mono">PAN: {u.pan}</div>}
+                      {u.pan && <div className="text-[10px] text-slate-400 font-mono">PAN: {u.pan}</div>}
                     </td>
 
                     {/* Location & Timezone Clock */}
                     <td>
-                      <div className="flex items-center gap-1 text-slate-300">
-                        <MapPin className="lucide w-3 h-3 text-slate-500" />
+                      <div className="flex items-center gap-1 text-slate-700">
+                        <MapPin className="lucide w-3 h-3 text-slate-400" />
                         <span>{u.city}, {u.country}</span>
                       </div>
-                      <div className="flex items-center gap-1 text-[11px] text-mut mt-0.5">
-                        <Clock className="lucide w-3 h-3 text-slate-500" />
-                        <span className="font-mono text-slate-300 px-1 py-0.2 rounded border border-red-700/60 bg-red-950/40 text-red-300 text-[10px]">
+                      <div className="flex items-center gap-1 text-[11px] text-slate-500 mt-0.5">
+                        <Clock className="lucide w-3 h-3 text-slate-400" />
+                        <span className="font-mono text-slate-600 px-1 py-0.5 rounded border border-slate-200 bg-slate-100 text-[10px]">
                           {u.timezone}
                         </span>
                       </div>
@@ -320,7 +320,7 @@ export default function UsersGovernancePage() {
                             setTrialReason('1-Month Complete Free Trial approved by Godfather Controller');
                             setIsTrialModalOpen(true);
                           }}
-                          className="gf-btn text-[11px] py-1 px-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 font-bold"
+                          className="gf-btn text-[11px] py-1 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold"
                           title="Grant 1-Month Complete Free Trial"
                         >
                           🎁 1-Mo Trial
@@ -333,7 +333,7 @@ export default function UsersGovernancePage() {
                           className="gf-btn gf-btn-secondary text-[11px] py-1 px-2"
                           title="Correct Profile Data"
                         >
-                          <Edit className="lucide w-3 h-3" />
+                          <Edit className="lucide w-3 h-3 text-slate-600" />
                         </button>
 
                         {/* Toggle Verification */}
@@ -370,7 +370,7 @@ export default function UsersGovernancePage() {
                         <button
                           type="button"
                           onClick={() => handleForceLogout(u)}
-                          className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 text-slate-400 hover:text-red-400"
+                          className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 text-slate-500 hover:text-rose-600 hover:border-rose-300"
                           title="Force Session Revocation"
                         >
                           <LogOut className="lucide w-3 h-3" />

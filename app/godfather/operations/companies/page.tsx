@@ -117,26 +117,28 @@ export default function CompaniesKYCPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Filter & Companies List (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="gf-card p-3 space-y-2">
-            <div className="gf-search-input-wrap w-full">
-              <Search className="lucide w-4 h-4" />
+          <div className="gf-card p-3 space-y-2 bg-slate-50 border-slate-200">
+            <div className="gf-search-input-wrap w-full bg-white border-slate-300">
+              <Search className="lucide w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by legal name, GSTN, PAN, ID..."
-                className="gf-search-input"
+                className="gf-search-input font-medium"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1">
               {['all', 'pending', 'verified', 'additional_info_required', 'rejected'].map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2 py-1 rounded capitalize font-semibold transition-colors ${
-                    statusFilter === st ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  className={`px-2.5 py-1 rounded-md capitalize font-bold transition-colors whitespace-nowrap ${
+                    statusFilter === st
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   {st.replace('_', ' ')}
@@ -152,17 +154,17 @@ export default function CompaniesKYCPage() {
                 <div
                   key={comp.companyId}
                   onClick={() => setSelectedCompany(comp)}
-                  className={`gf-card p-3.5 cursor-pointer transition-all ${
-                    isSelected ? 'border-sky-500 bg-slate-850 shadow-md' : 'hover:border-slate-700'
+                  className={`gf-card p-4 cursor-pointer transition-all ${
+                    isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                        <Building className="lucide w-3.5 h-3.5 text-sky-400" />
+                      <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <Building className="lucide w-3.5 h-3.5 text-sky-600" />
                         {comp.legalName}
                       </div>
-                      <div className="text-[11px] text-mut font-mono mt-0.5">{comp.companyId} · {comp.city}, {comp.country}</div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">{comp.companyId} · {comp.city}, {comp.country}</div>
                     </div>
                     <span
                       className={`gf-badge gf-badge-${
@@ -179,9 +181,9 @@ export default function CompaniesKYCPage() {
                     </span>
                   </div>
 
-                  <div className="mt-2 text-[11px] flex items-center justify-between text-slate-400 border-t border-slate-800 pt-2 font-mono">
+                  <div className="mt-2.5 text-[11px] flex items-center justify-between text-slate-600 border-t border-slate-100 pt-2 font-mono">
                     <span>GSTN: {comp.gstn || 'N/A'}</span>
-                    <span>{comp.documents.length} Docs</span>
+                    <span className="font-semibold text-slate-700">{comp.documents.length} Docs</span>
                   </div>
                 </div>
               );
@@ -192,18 +194,18 @@ export default function CompaniesKYCPage() {
         {/* Right Column: Detailed Document & KYC Review Panel (7 cols) */}
         <div className="lg:col-span-7">
           {selectedCompany ? (
-            <div className="gf-card divide-y divide-slate-800">
+            <div className="gf-card divide-y divide-slate-100">
               {/* Review Panel Header */}
-              <div className="p-4 bg-slate-900 flex items-start justify-between flex-wrap gap-2">
+              <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-100">{selectedCompany.legalName}</h2>
-                    <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold">
+                    <h2 className="text-base font-extrabold text-slate-900">{selectedCompany.legalName}</h2>
+                    <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold font-mono">
                       {selectedCompany.companyId}
                     </span>
                   </div>
-                  <p className="text-xs text-mut mt-0.5">
-                    Primary Contact: <strong className="text-slate-200">{selectedCompany.primaryContactName}</strong> ({selectedCompany.primaryContactEmail})
+                  <p className="text-xs text-slate-600 mt-1">
+                    Primary Contact: <strong className="text-slate-900">{selectedCompany.primaryContactName}</strong> ({selectedCompany.primaryContactEmail})
                   </p>
                 </div>
 
@@ -235,48 +237,48 @@ export default function CompaniesKYCPage() {
               </div>
 
               {/* Tax & Registration Cross-Check Box */}
-              <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/40 text-xs">
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">GST Registration</span>
-                  <span className="font-mono text-sky-400 font-bold">{selectedCompany.gstn || 'N/A'}</span>
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 text-xs">
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">GST Registration</span>
+                  <span className="font-mono text-sky-700 font-bold block mt-0.5">{selectedCompany.gstn || 'N/A'}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">PAN Card Number</span>
-                  <span className="font-mono text-slate-200 font-bold">{selectedCompany.pan || 'N/A'}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">PAN Card Number</span>
+                  <span className="font-mono text-slate-800 font-bold block mt-0.5">{selectedCompany.pan || 'N/A'}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">DGFT IEC Code</span>
-                  <span className="font-mono text-slate-200 font-bold">{selectedCompany.iec || 'N/A'}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">DGFT IEC Code</span>
+                  <span className="font-mono text-slate-800 font-bold block mt-0.5">{selectedCompany.iec || 'N/A'}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">MTO Registration</span>
-                  <span className="font-mono text-slate-200 font-bold">{selectedCompany.mto || 'N/A'}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">MTO Registration</span>
+                  <span className="font-mono text-slate-800 font-bold block mt-0.5">{selectedCompany.mto || 'N/A'}</span>
                 </div>
               </div>
 
               {/* Uploaded Documents Review List */}
               <div className="p-4 space-y-3">
-                <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
                   <span>Attached Compliance Documents ({selectedCompany.documents.length})</span>
-                  <span className="text-[11px] text-faint font-mono">Secured Cloud Vault</span>
+                  <span className="text-[11px] text-slate-500 font-mono font-semibold">Secured Cloud Vault</span>
                 </div>
 
                 <div className="space-y-2">
                   {selectedCompany.documents.map((doc) => (
                     <div
                       key={doc.docId}
-                      className="p-3 rounded bg-slate-900 border border-slate-800 flex items-center justify-between text-xs"
+                      className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded bg-slate-800 text-sky-400">
+                        <div className="p-2 rounded-md bg-white border border-slate-200 text-sky-600">
                           <FileText className="lucide w-4 h-4" />
                         </div>
                         <div>
-                          <div className="font-bold text-slate-200 flex items-center gap-2">
+                          <div className="font-bold text-slate-900 flex items-center gap-2">
                             {doc.name}
                             <span className="gf-badge gf-badge-gray text-[9px] uppercase font-mono">{doc.type}</span>
                           </div>
-                          <div className="text-[10px] text-faint">
+                          <div className="text-[10px] text-slate-500">
                             Uploaded on {new Date(doc.uploadedAt).toLocaleDateString()}
                           </div>
                         </div>
@@ -298,17 +300,17 @@ export default function CompaniesKYCPage() {
 
               {/* Admin Compliance Notes */}
               <div className="p-4 space-y-2">
-                <div className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <MessageSquare className="lucide w-3.5 h-3.5 text-sky-400" />
+                <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <MessageSquare className="lucide w-3.5 h-3.5 text-sky-600" />
                   <span>Internal Compliance Review Notes (Confidential)</span>
                 </div>
                 {selectedCompany.adminNotes.length === 0 ? (
-                  <div className="text-xs text-mut italic">No compliance notes logged yet.</div>
+                  <div className="text-xs text-slate-400 italic">No compliance notes logged yet.</div>
                 ) : (
                   <div className="space-y-1.5">
                     {selectedCompany.adminNotes.map((note, idx) => (
-                      <div key={idx} className="p-2.5 rounded bg-slate-900/80 border border-slate-800 text-xs text-slate-300 flex items-start gap-2">
-                        <span className="text-sky-400 font-bold">•</span>
+                      <div key={idx} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 flex items-start gap-2">
+                        <span className="text-sky-600 font-bold">•</span>
                         <span>{note}</span>
                       </div>
                     ))}
@@ -317,7 +319,7 @@ export default function CompaniesKYCPage() {
               </div>
             </div>
           ) : (
-            <div className="gf-card p-12 text-center text-xs text-mut">
+            <div className="gf-card p-12 text-center text-xs text-slate-500">
               Select a company from the queue on the left to inspect documents and record a compliance decision.
             </div>
           )}

@@ -81,13 +81,13 @@ export default function JobsModerationPage() {
       <div className="gf-card">
         <div className="gf-filter-bar">
           <div className="gf-search-input-wrap">
-            <Search className="lucide w-4 h-4" />
+            <Search className="lucide w-4 h-4 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search jobs by title, company, location..."
-              className="gf-search-input"
+              className="gf-search-input font-medium"
             />
           </div>
         </div>
@@ -108,18 +108,18 @@ export default function JobsModerationPage() {
               {jobs.map((job) => (
                 <tr key={job.id}>
                   <td>
-                    <div className="font-bold text-slate-100">{job.title}</div>
-                    <div className="text-[10px] text-mut font-mono">{job.id} · Exp: {job.experience}</div>
+                    <div className="font-bold text-slate-900">{job.title}</div>
+                    <div className="text-[10px] text-slate-500 font-mono">{job.id} · Exp: {job.experience}</div>
                   </td>
                   <td>
-                    <div className="font-semibold text-slate-200">{job.company}</div>
-                    <div className="text-[10px] text-faint">Posted by: {job.postedBy}</div>
+                    <div className="font-semibold text-slate-800">{job.company}</div>
+                    <div className="text-[10px] text-slate-500">Posted by: {job.postedBy}</div>
                   </td>
                   <td>
-                    <div className="text-slate-300">{job.location}</div>
-                    <div className="text-[10px] text-mut">{job.employmentType}</div>
+                    <div className="text-slate-700 font-medium">{job.location}</div>
+                    <div className="text-[10px] text-slate-500">{job.employmentType}</div>
                   </td>
-                  <td className="font-mono text-emerald-400 font-bold">{job.packageDetails}</td>
+                  <td className="font-mono text-emerald-700 font-bold">{job.packageDetails}</td>
                   <td>
                     <span className={`gf-badge gf-badge-${job.status === 'active' ? 'green' : 'gray'} text-[10px] uppercase font-bold`}>
                       {job.status}
@@ -129,7 +129,7 @@ export default function JobsModerationPage() {
                     <button
                       type="button"
                       onClick={() => handleToggleJob(job)}
-                      className={`gf-btn text-[11px] py-1 px-2 ${job.status === 'active' ? 'gf-btn-danger' : 'gf-btn-success'}`}
+                      className={`gf-btn text-[11px] py-1 px-2.5 font-bold ${job.status === 'active' ? 'gf-btn-danger' : 'gf-btn-success'}`}
                     >
                       {job.status === 'active' ? 'Close Job' : 'Reactivate'}
                     </button>

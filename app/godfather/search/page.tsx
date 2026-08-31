@@ -73,14 +73,14 @@ export default function GodfatherSearchPage() {
         </div>
 
         {/* Quick query tags */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-mut flex-wrap">
-          <span className="font-semibold text-slate-400">Quick Test Searches:</span>
+        <div className="flex items-center gap-2 mt-3 text-xs text-slate-600 flex-wrap">
+          <span className="font-semibold text-slate-700">Quick Test Searches:</span>
           {['Atlas Logistics', '27AABCA1234F1Z5', 'RA-2026-0842', 'RT-884210', 'sarah.lewis', 'OceanStar'].map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() => setQuery(tag)}
-              className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-[11px] transition-colors border border-slate-700"
+              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-[11px] transition-colors border border-slate-200 font-semibold"
             >
               {tag}
             </button>
@@ -89,18 +89,18 @@ export default function GodfatherSearchPage() {
       </div>
 
       {/* Search Results Summary */}
-      <div className="flex items-center justify-between text-xs text-mut">
+      <div className="flex items-center justify-between text-xs text-slate-500">
         <div>
-          Showing <strong className="text-slate-200">{results.length}</strong> matching records for &ldquo;{query}&rdquo;
+          Showing <strong className="text-slate-900">{results.length}</strong> matching records for &ldquo;{query}&rdquo;
         </div>
-        <span className="font-mono text-[11px]">IMMUTABLE FIRESTORE SEARCH INDEX</span>
+        <span className="font-mono text-[11px] font-bold">IMMUTABLE FIRESTORE SEARCH INDEX</span>
       </div>
 
       {/* Results List */}
       {results.length === 0 ? (
-        <div className="gf-card p-12 text-center text-xs text-mut">
-          <Search className="lucide w-8 h-8 mx-auto text-slate-600 mb-2" />
-          <div className="font-bold text-slate-300 text-sm">No records match the current query</div>
+        <div className="gf-card p-12 text-center text-xs text-slate-500">
+          <Search className="lucide w-8 h-8 mx-auto text-slate-400 mb-2" />
+          <div className="font-bold text-slate-800 text-sm">No records match the current query</div>
           <p className="mt-1 text-slate-500">Try searching by corporate legal name, verified email address, GSTN, or auction reference ID.</p>
         </div>
       ) : (
@@ -108,24 +108,24 @@ export default function GodfatherSearchPage() {
           {/* Operations Category */}
           {operationsResults.length > 0 && (
             <div className="gf-card overflow-hidden">
-              <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+              <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
                 <div className="flex items-center gap-2">
-                  <Layers className="lucide w-3.5 h-3.5 text-sky-400" />
+                  <Layers className="lucide w-3.5 h-3.5 text-sky-600" />
                   <span>Operations Domain Records ({operationsResults.length})</span>
                 </div>
               </div>
-              <div className="divide-y divide-slate-800">
+              <div className="divide-y divide-slate-100">
                 {operationsResults.map((r) => (
                   <div
                     key={r.id}
                     onClick={() => setSelectedRecord(r)}
-                    className="p-3.5 flex items-center justify-between hover:bg-slate-850 cursor-pointer transition-colors text-xs"
+                    className="p-3.5 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors text-xs"
                   >
                     <div className="flex items-start gap-3 min-w-0">
                       <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold mt-0.5">{r.type}</span>
                       <div>
-                        <div className="font-bold text-slate-100 text-sm">{r.title}</div>
-                        <div className="text-mut text-xs mt-0.5">{r.subtitle}</div>
+                        <div className="font-bold text-slate-900 text-sm">{r.title}</div>
+                        <div className="text-slate-500 text-xs mt-0.5">{r.subtitle}</div>
                       </div>
                     </div>
 
@@ -141,7 +141,7 @@ export default function GodfatherSearchPage() {
                           e.stopPropagation();
                           setSelectedRecord(r);
                         }}
-                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1"
+                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 font-semibold"
                       >
                         <Eye className="lucide w-3 h-3" />
                         Inspect
@@ -156,24 +156,24 @@ export default function GodfatherSearchPage() {
           {/* Trust & Safety Category */}
           {trustResults.length > 0 && (
             <div className="gf-card overflow-hidden">
-              <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+              <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="lucide w-3.5 h-3.5 text-red-400" />
+                  <ShieldCheck className="lucide w-3.5 h-3.5 text-rose-600" />
                   <span>Trust, Safety & Blacklist Records ({trustResults.length})</span>
                 </div>
               </div>
-              <div className="divide-y divide-slate-800">
+              <div className="divide-y divide-slate-100">
                 {trustResults.map((r) => (
                   <div
                     key={r.id}
                     onClick={() => setSelectedRecord(r)}
-                    className="p-3.5 flex items-center justify-between hover:bg-slate-850 cursor-pointer transition-colors text-xs"
+                    className="p-3.5 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors text-xs"
                   >
                     <div className="flex items-start gap-3 min-w-0">
                       <span className="gf-badge gf-badge-red text-[10px] uppercase font-bold mt-0.5">{r.type}</span>
                       <div>
-                        <div className="font-bold text-slate-100 text-sm">{r.title}</div>
-                        <div className="text-mut text-xs mt-0.5">{r.subtitle}</div>
+                        <div className="font-bold text-slate-900 text-sm">{r.title}</div>
+                        <div className="text-slate-500 text-xs mt-0.5">{r.subtitle}</div>
                       </div>
                     </div>
 
@@ -187,7 +187,7 @@ export default function GodfatherSearchPage() {
                           e.stopPropagation();
                           setSelectedRecord(r);
                         }}
-                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1"
+                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 font-semibold"
                       >
                         <Eye className="lucide w-3 h-3" />
                         Inspect
@@ -202,24 +202,24 @@ export default function GodfatherSearchPage() {
           {/* Commerce Category */}
           {commerceResults.length > 0 && (
             <div className="gf-card overflow-hidden">
-              <div className="p-3 bg-slate-900 border-b border-slate-800 flex items-center justify-between text-xs font-bold text-slate-300">
+              <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between text-xs font-bold text-slate-800">
                 <div className="flex items-center gap-2">
-                  <FileText className="lucide w-3.5 h-3.5 text-emerald-400" />
+                  <FileText className="lucide w-3.5 h-3.5 text-emerald-600" />
                   <span>Commerce & Financial Records ({commerceResults.length})</span>
                 </div>
               </div>
-              <div className="divide-y divide-slate-800">
+              <div className="divide-y divide-slate-100">
                 {commerceResults.map((r) => (
                   <div
                     key={r.id}
                     onClick={() => setSelectedRecord(r)}
-                    className="p-3.5 flex items-center justify-between hover:bg-slate-850 cursor-pointer transition-colors text-xs"
+                    className="p-3.5 flex items-center justify-between hover:bg-slate-50 cursor-pointer transition-colors text-xs"
                   >
                     <div className="flex items-start gap-3 min-w-0">
                       <span className="gf-badge gf-badge-green text-[10px] uppercase font-bold mt-0.5">{r.type}</span>
                       <div>
-                        <div className="font-bold text-slate-100 text-sm">{r.title}</div>
-                        <div className="text-mut text-xs mt-0.5">{r.subtitle}</div>
+                        <div className="font-bold text-slate-900 text-sm">{r.title}</div>
+                        <div className="text-slate-500 text-xs mt-0.5">{r.subtitle}</div>
                       </div>
                     </div>
 
@@ -233,7 +233,7 @@ export default function GodfatherSearchPage() {
                           e.stopPropagation();
                           setSelectedRecord(r);
                         }}
-                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 flex items-center gap-1"
+                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 flex items-center gap-1 font-semibold"
                       >
                         <Eye className="lucide w-3 h-3" />
                         Inspect

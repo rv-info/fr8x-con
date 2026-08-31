@@ -69,7 +69,7 @@ export default function GodfatherDashboardPage() {
       subtitle: 'Active reverse tenders with binding bid rooms',
       href: '/godfather/operations/auctions',
       badge: 'Live Operations',
-      badgeVariant: 'green',
+      badgeVariant: 'blue',
       icon: Gavel,
     },
     {
@@ -78,7 +78,7 @@ export default function GodfatherDashboardPage() {
       subtitle: `${blocks.length} member restrictions · ${blacklist.length} public cases`,
       href: '/godfather/trust-safety/blacklist',
       badge: 'Trust & Safety',
-      badgeVariant: activeBlocks > 0 ? 'red' : 'green',
+      badgeVariant: activeBlocks > 0 ? 'rose' : 'green',
       icon: ShieldAlert,
     },
     {
@@ -116,22 +116,22 @@ export default function GodfatherDashboardPage() {
       <div className="gf-page-header">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="gf-badge gf-badge-green text-[11px] font-bold">🇮🇹 IL PADRINO SOVRANO</span>
-            <span className="gf-badge gf-badge-gold text-[11px] font-mono">SUPREME SUPER ADMIN</span>
+            <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM SUPER ADMIN</span>
+            <span className="gf-badge gf-badge-gold text-[11px] font-mono font-bold">SOVEREIGN ROOT</span>
           </div>
-          <h1 className="gf-page-title">Executive Operations & Governance Overview</h1>
+          <h1 className="gf-page-title">Executive Operations & Governance Console</h1>
           <p className="gf-page-subtitle">
-            Authenticated as <strong className="text-emerald-950 font-bold">{operator.displayName}</strong> ({operator.roleTitle}) · Session verified via Con.FR8X.IN VPN
+            Authenticated as <strong className="text-slate-900 font-bold">{operator.displayName}</strong> ({operator.roleTitle}) · Node: <span className="font-mono font-semibold text-sky-700">{environment}</span>
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Link href="/godfather/operations/users" className="gf-btn gf-btn-secondary text-xs flex items-center gap-1.5 font-bold">
-            <Gift className="lucide w-3.5 h-3.5 text-emerald-700" />
+            <Gift className="lucide w-3.5 h-3.5 text-sky-600" />
             Grant 1-Mo Trial
           </Link>
           <Link href="/godfather/platform/terms" className="gf-btn gf-btn-secondary text-xs flex items-center gap-1.5 font-bold">
-            <Scale className="lucide w-3.5 h-3.5 text-emerald-700" />
+            <Scale className="lucide w-3.5 h-3.5 text-slate-600" />
             Terms & Clickwrap
           </Link>
           <Link href="/godfather/commerce/invoices" className="gf-btn gf-btn-primary text-xs flex items-center gap-1.5 font-bold">
@@ -150,19 +150,19 @@ export default function GodfatherDashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="gf-metric-title">{widget.title}</span>
-                  <div className="p-1.5 rounded-lg bg-emerald-100/70 text-emerald-800 border border-emerald-200">
+                  <div className="p-2 rounded-lg bg-sky-50 text-sky-700 border border-sky-200">
                     <Icon className="lucide w-4 h-4" />
                   </div>
                 </div>
                 <div className="gf-metric-value">{widget.value}</div>
-                <p className="text-xs text-mut mt-1 leading-snug">{widget.subtitle}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-snug">{widget.subtitle}</p>
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
                 <span className={`gf-badge gf-badge-${widget.badgeVariant} text-[10px]`}>
                   {widget.badge}
                 </span>
-                <div className="gf-metric-foot text-xs">
+                <div className="gf-metric-foot text-xs text-sky-700 font-bold">
                   Inspect <ArrowRight className="lucide w-3 h-3" />
                 </div>
               </div>
@@ -175,12 +175,12 @@ export default function GodfatherDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Pending KYC & Compliance Queue */}
         <div className="gf-card">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-emerald-50/50">
-            <div className="flex items-center gap-2">
-              <Building className="lucide w-4 h-4 text-emerald-700" />
-              <h3 className="text-sm font-bold text-emerald-950">Pending Corporate KYC Queue</h3>
+          <div className="gf-card-header">
+            <div className="gf-card-title">
+              <Building className="lucide w-4 h-4 text-sky-600" />
+              <span>Pending Corporate KYC Queue</span>
             </div>
-            <Link href="/godfather/operations/companies" className="text-xs text-emerald-800 hover:underline font-bold">
+            <Link href="/godfather/operations/companies" className="text-xs text-sky-700 hover:text-sky-900 font-bold">
               View All ({companies.length}) →
             </Link>
           </div>
@@ -195,7 +195,7 @@ export default function GodfatherDashboardPage() {
                       {comp.status.toUpperCase()}
                     </span>
                   </div>
-                  <div className="text-mut text-[11px] mt-0.5">
+                  <div className="text-slate-500 text-[11px] mt-0.5">
                     GST: <span className="font-mono text-slate-800 font-bold">{comp.gstn || 'N/A'}</span> · City: {comp.city}, {comp.country}
                   </div>
                 </div>
@@ -213,12 +213,12 @@ export default function GodfatherDashboardPage() {
 
         {/* Right: Recent Immutable Audit Trail */}
         <div className="gf-card">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-emerald-50/50">
-            <div className="flex items-center gap-2">
-              <FileText className="lucide w-4 h-4 text-emerald-700" />
-              <h3 className="text-sm font-bold text-emerald-950">Live Immutable Audit Feed</h3>
+          <div className="gf-card-header">
+            <div className="gf-card-title">
+              <FileText className="lucide w-4 h-4 text-sky-600" />
+              <span>Live Platform Audit Feed</span>
             </div>
-            <Link href="/godfather/platform/audit" className="text-xs text-emerald-800 hover:underline font-bold">
+            <Link href="/godfather/platform/audit" className="text-xs text-sky-700 hover:text-sky-900 font-bold">
               Full Ledger ({auditLogs.length}) →
             </Link>
           </div>
@@ -228,17 +228,17 @@ export default function GodfatherDashboardPage() {
               <div key={log.actionId} className="p-3.5 flex items-start justify-between hover:bg-slate-50 transition-colors text-xs">
                 <div className="min-w-0 pr-2">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-[10px] text-emerald-900 font-bold bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200">
+                    <span className="font-mono text-[10px] text-sky-800 font-bold bg-sky-100 px-1.5 py-0.5 rounded border border-sky-200">
                       {log.actionType}
                     </span>
-                    <span className="text-[10px] text-mut font-mono">{log.correlationId}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{log.correlationId}</span>
                   </div>
                   <div className="font-semibold text-slate-900 truncate">{log.targetLabel || log.targetId}</div>
                   <p className="text-[11px] text-slate-600 truncate mt-0.5">{log.reason}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-[10px] text-faint block">{new Date(log.createdAt).toLocaleTimeString()}</span>
-                  <span className="text-[10px] text-emerald-800 font-mono font-bold">{log.actorRole.replace('godfather_', '')}</span>
+                  <span className="text-[10px] text-slate-500 block font-mono">{new Date(log.createdAt).toLocaleTimeString()}</span>
+                  <span className="text-[10px] text-sky-700 font-mono font-bold">{log.actorRole.replace('godfather_', '')}</span>
                 </div>
               </div>
             ))}
@@ -248,3 +248,4 @@ export default function GodfatherDashboardPage() {
     </div>
   );
 }
+

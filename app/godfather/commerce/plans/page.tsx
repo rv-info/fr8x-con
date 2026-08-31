@@ -118,7 +118,7 @@ export default function PlansConfigurationPage() {
               key={p.planVersionId}
               onClick={() => setSelectedPlan(p)}
               className={`gf-card p-5 cursor-pointer transition-all ${
-                isSelected ? 'border-sky-500 bg-slate-850 shadow-xl ring-1 ring-sky-500' : 'hover:border-slate-700'
+                isSelected ? 'border-sky-500 bg-sky-50/50 shadow-md ring-2 ring-sky-400' : 'hover:border-slate-300 hover:bg-slate-50'
               }`}
             >
               <div className="flex items-center justify-between mb-3">
@@ -129,38 +129,38 @@ export default function PlansConfigurationPage() {
                 >
                   {p.plan} · V{p.version}.0
                 </span>
-                <span className="text-[10px] text-faint font-mono">{p.countryScope}</span>
+                <span className="text-[10px] text-slate-500 font-mono font-bold">{p.countryScope}</span>
               </div>
 
-              <h3 className="text-base font-bold text-slate-100">{p.planName}</h3>
+              <h3 className="text-base font-extrabold text-slate-900">{p.planName}</h3>
               <div className="my-3 font-mono">
-                <span className="text-2xl font-extrabold text-white">
+                <span className="text-2xl font-black text-slate-900">
                   {p.currency === 'INR' ? '₹' : '$'}{p.monthlyPrice.toLocaleString()}
                 </span>
-                <span className="text-xs text-mut"> / month ({p.taxPolicy.replace('_', ' ')})</span>
+                <span className="text-xs text-slate-500 font-sans"> / month ({p.taxPolicy.replace('_', ' ')})</span>
               </div>
 
               {/* Core Features */}
-              <div className="space-y-1.5 text-xs text-slate-300 border-t border-slate-800 pt-3">
+              <div className="space-y-2 text-xs text-slate-700 border-t border-slate-100 pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-mut">Bid Posting Fee:</span>
-                  <span className="font-mono font-bold text-sky-400">
+                  <span className="text-slate-500">Bid Posting Fee:</span>
+                  <span className="font-mono font-bold text-sky-700">
                     {p.currency === 'INR' ? '₹' : '$'}{p.bidFee} {p.bidDiscountPercent > 0 && `(${p.bidDiscountPercent}% Off)`}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-mut">Monthly Auctions Limit:</span>
-                  <span className="font-mono text-slate-200">{p.limits.monthlyAuctions} tenders</span>
+                  <span className="text-slate-500">Monthly Auctions Limit:</span>
+                  <span className="font-mono font-bold text-slate-800">{p.limits.monthlyAuctions} tenders</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-mut">Gold Tick Verification:</span>
-                  <span className="font-bold text-slate-200">{p.featureFlags.goldVerification ? 'Included' : 'None'}</span>
+                  <span className="text-slate-500">Gold Tick Verification:</span>
+                  <span className="font-bold text-slate-900">{p.featureFlags.goldVerification ? 'Included' : 'None'}</span>
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-faint font-mono">
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500 font-mono">
                 <span>Effective: {new Date(p.effectiveFrom).toLocaleDateString()}</span>
-                <span className="text-sky-400 font-semibold">Active Model</span>
+                <span className="text-sky-700 font-bold">Active Model</span>
               </div>
             </div>
           );
@@ -168,10 +168,10 @@ export default function PlansConfigurationPage() {
       </div>
 
       {/* Grandfathering & Pricing Integrity Notice */}
-      <div className="gf-card p-4 bg-slate-900 border-slate-800 text-xs text-slate-300 flex items-start gap-3">
-        <Shield className="lucide w-5 h-5 text-sky-400 flex-shrink-0 mt-0.5" />
+      <div className="gf-card p-4 bg-slate-50 border-slate-200 text-xs text-slate-700 flex items-start gap-3">
+        <Shield className="lucide w-5 h-5 text-sky-600 flex-shrink-0 mt-0.5" />
         <div>
-          <strong className="text-slate-100 block mb-1">Commercial Billing Immutability Guarantee</strong>
+          <strong className="text-slate-900 block mb-1">Commercial Billing Immutability Guarantee</strong>
           In accordance with Con.FR8X.IN commercial governance rules, updating a plan configuration creates an append-only version with a forward effective date. Existing paid subscribers and historical tax invoices remain completely immutable.
         </div>
       </div>

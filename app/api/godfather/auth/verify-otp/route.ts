@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { verifyOtpHash, recordFailedAttempt, clearRateLimit, checkRateLimit } from '@/lib/crypto';
+import { verifyOtpHash, recordFailedAttempt, clearRateLimit, checkRateLimit, activeOtpStore } from '@/lib/crypto';
 import { sendSecurityAlertEmail } from '@/lib/mailer';
-import { activeOtpStore } from '../send-otp/route';
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();

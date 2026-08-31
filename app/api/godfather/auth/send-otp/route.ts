@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { hashOtp, checkRateLimit } from '@/lib/crypto';
+import { hashOtp, checkRateLimit, activeOtpStore } from '@/lib/crypto';
 import { sendOtpEmail } from '@/lib/mailer';
-
-// In-memory store for active OTP salted hashes
-// In a distributed production cluster, this is stored in Redis / Firestore with TTL
-export const activeOtpStore = new Map<string, { salt: string; hash: string; expiresAt: string }>();
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();

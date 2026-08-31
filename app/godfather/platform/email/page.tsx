@@ -169,15 +169,15 @@ export default function EmailServicePage() {
             className="gf-btn gf-btn-primary text-xs font-bold flex items-center gap-1.5"
           >
             <Send className="lucide w-3.5 h-3.5" />
-            Send Test Diagnostic
+            Send Diagnostic Test
           </button>
 
-          <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+          <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-lg">
             <button
               type="button"
               onClick={() => setActiveTab('mailboxes')}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-                activeTab === 'mailboxes' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                activeTab === 'mailboxes' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Mailboxes ({mailboxes.length})
@@ -185,8 +185,8 @@ export default function EmailServicePage() {
             <button
               type="button"
               onClick={() => setActiveTab('logs')}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-                activeTab === 'logs' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                activeTab === 'logs' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Delivery Logs ({emailLogs.length})
@@ -194,8 +194,8 @@ export default function EmailServicePage() {
             <button
               type="button"
               onClick={() => setActiveTab('templates')}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors ${
-                activeTab === 'templates' ? 'bg-sky-600 text-white' : 'text-slate-400 hover:text-slate-200'
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
+                activeTab === 'templates' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Email Templates ({templates.length})
@@ -206,22 +206,22 @@ export default function EmailServicePage() {
 
       {/* SMTP Health Card (If Checked) */}
       {smtpHealthData && (
-        <div className="gf-card p-4 bg-slate-900 border-slate-800 text-xs text-slate-200 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="gf-card p-4 text-xs text-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-sky-50/50 border-sky-200">
           <div>
-            <span className="text-mut block text-[10px] uppercase font-bold">SMTP Endpoint</span>
-            <span className="font-mono text-slate-100 font-bold">{smtpHealthData.host}:{smtpHealthData.port}</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">SMTP Endpoint</span>
+            <span className="font-mono text-slate-900 font-bold">{smtpHealthData.host}:{smtpHealthData.port}</span>
           </div>
           <div>
-            <span className="text-mut block text-[10px] uppercase font-bold">Transport Layer</span>
-            <span className="font-mono text-emerald-400 font-bold">{smtpHealthData.tlsVersion} (SSL)</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Transport Layer</span>
+            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.tlsVersion} (SSL)</span>
           </div>
           <div>
-            <span className="text-mut block text-[10px] uppercase font-bold">Authenticated Mailbox</span>
-            <span className="font-mono text-sky-400">{smtpHealthData.user}</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Authenticated Mailbox</span>
+            <span className="font-mono text-sky-700 font-bold">{smtpHealthData.user}</span>
           </div>
           <div>
-            <span className="text-mut block text-[10px] uppercase font-bold">Handshake Latency</span>
-            <span className="font-mono text-emerald-400 font-bold">{smtpHealthData.latencyMs} ms (Healthy)</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Handshake Latency</span>
+            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.latencyMs} ms (Healthy)</span>
           </div>
         </div>
       )}
@@ -244,50 +244,50 @@ export default function EmailServicePage() {
                   </div>
 
                   <div>
-                    <h3 className="text-base font-bold text-slate-100 font-mono flex items-center gap-1.5">
-                      <Mail className="lucide w-4 h-4 text-sky-400" />
+                    <h3 className="text-base font-bold text-slate-900 font-mono flex items-center gap-1.5">
+                      <Mail className="lucide w-4 h-4 text-sky-600" />
                       {mb.mailbox}
                     </h3>
-                    <p className="text-xs text-mut mt-1 leading-relaxed">{mb.roleDescription}</p>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">{mb.roleDescription}</p>
                   </div>
 
-                  <div className="space-y-2 text-xs border-t border-slate-800 pt-3">
+                  <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-mut">Hardware MFA / FIDO2:</span>
+                      <span className="text-slate-500">Hardware MFA / FIDO2:</span>
                       <span className="gf-badge gf-badge-green text-[9px] font-mono font-bold">MANDATORY</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-mut">SMTP Health:</span>
-                      <span className="font-mono font-bold text-emerald-400">Connected (SSL 465)</span>
+                      <span className="text-slate-500">SMTP Health:</span>
+                      <span className="font-mono font-bold text-emerald-700">Connected (SSL 465)</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-mut">Configured Aliases:</span>
-                      <span className="font-mono text-slate-300">
+                      <span className="text-slate-500">Configured Aliases:</span>
+                      <span className="font-mono text-slate-800">
                         {mb.aliases.length > 0 ? mb.aliases.join(', ') : 'None'}
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-mut">Sent Volume Today:</span>
-                      <span className="font-mono text-sky-400 font-bold">{mb.sentToday} / {mb.dailyLimit}</span>
+                      <span className="text-slate-500">Sent Volume Today:</span>
+                      <span className="font-mono text-sky-700 font-bold">{mb.sentToday} / {mb.dailyLimit}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="border-t border-slate-800 pt-3 text-[11px] text-faint font-mono flex items-center justify-between">
+                <div className="border-t border-slate-100 pt-3 text-[11px] text-slate-500 font-mono flex items-center justify-between">
                   <span>Last Send:</span>
-                  <span className="text-slate-300">{new Date(mb.lastSuccessfulSend).toLocaleTimeString()}</span>
+                  <span className="text-slate-800 font-semibold">{new Date(mb.lastSuccessfulSend).toLocaleTimeString()}</span>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Infrastructure Setup Callout */}
-          <div className="gf-card p-4 bg-slate-900 border-slate-800 text-xs text-slate-300 flex items-start gap-3">
-            <ShieldCheck className="lucide w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+          <div className="gf-card p-4 bg-sky-50/50 border-sky-200 text-xs text-slate-700 flex items-start gap-3">
+            <ShieldCheck className="lucide w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <strong className="text-slate-100 block">DNS & Deliverability Alignment</strong>
+              <strong className="text-slate-900 block font-bold">DNS & Deliverability Alignment</strong>
               <p className="leading-relaxed">
-                SPF (<code className="text-sky-300">v=spf1 include:zohomail.com -all</code>), DKIM (<code className="text-sky-300">selector=zoho</code>), and DMARC (<code className="text-sky-300">p=quarantine; rua=mailto:tech@fr8x.in</code>) are active. App passwords are cryptographic and stored strictly in Vercel KMS Environment Secrets.
+                SPF (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">v=spf1 include:zohomail.com -all</code>), DKIM (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">selector=zoho</code>), and DMARC (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">p=quarantine; rua=mailto:tech@fr8x.in</code>) are active. App passwords are cryptographic and stored strictly in Vercel KMS Environment Secrets.
               </p>
             </div>
           </div>
@@ -299,7 +299,7 @@ export default function EmailServicePage() {
         <div className="gf-card">
           <div className="gf-filter-bar">
             <div className="gf-search-input-wrap">
-              <Search className="lucide w-4 h-4" />
+              <Search className="lucide w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={logSearch}
@@ -310,11 +310,11 @@ export default function EmailServicePage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-mut">Status:</span>
+              <span className="text-xs text-slate-500 font-bold">Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="gf-select text-xs font-mono"
+                className="gf-select text-xs font-mono font-bold"
               >
                 <option value="ALL">ALL STATUSES</option>
                 <option value="DELIVERED">DELIVERED</option>
@@ -341,13 +341,13 @@ export default function EmailServicePage() {
                 {filteredLogs.map((log) => (
                   <tr key={log.logId}>
                     <td>
-                      <div className="font-mono font-bold text-sky-400">{log.logId}</div>
-                      <div className="text-[10px] text-faint font-mono">{new Date(log.sentAt).toLocaleString()}</div>
+                      <div className="font-mono font-bold text-sky-700">{log.logId}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">{new Date(log.sentAt).toLocaleString()}</div>
                     </td>
                     <td>
-                      <div className="font-semibold text-slate-200">{log.recipient}</div>
+                      <div className="font-semibold text-slate-900">{log.recipient}</div>
                       {log.entityContext && (
-                        <div className="text-[10px] text-mut font-mono">
+                        <div className="text-[10px] text-slate-500 font-mono">
                           {log.entityContext.entityType}: {log.entityContext.entityId}
                         </div>
                       )}
@@ -356,15 +356,15 @@ export default function EmailServicePage() {
                       <span className="gf-badge gf-badge-gray text-[10px] font-mono font-bold">
                         {log.templateId}
                       </span>
-                      <div className="text-slate-300 truncate max-w-[280px] mt-0.5">{log.subject}</div>
+                      <div className="text-slate-800 truncate max-w-[280px] mt-0.5 font-medium">{log.subject}</div>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-300 text-[11px] bg-slate-800 px-1.5 py-0.5 rounded">
+                      <span className="font-mono text-slate-700 text-[11px] bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">
                         {log.provider}
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-400 text-[11px]">{log.correlationId}</span>
+                      <span className="font-mono text-slate-600 text-[11px]">{log.correlationId}</span>
                     </td>
                     <td>
                       <span
@@ -396,19 +396,19 @@ export default function EmailServicePage() {
                 <span className="gf-badge gf-badge-blue text-[10px] font-mono font-bold">
                   {tmpl.code}
                 </span>
-                <span className="text-[10px] text-faint font-mono">V{tmpl.version}.0 · {tmpl.category.toUpperCase()}</span>
+                <span className="text-[10px] text-slate-500 font-mono font-semibold">V{tmpl.version}.0 · {tmpl.category.toUpperCase()}</span>
               </div>
 
               <div>
-                <h3 className="text-sm font-bold text-slate-100">{tmpl.name}</h3>
-                <p className="text-xs text-mut font-mono mt-0.5">Subject: {tmpl.subject}</p>
+                <h3 className="text-sm font-bold text-slate-900">{tmpl.name}</h3>
+                <p className="text-xs text-slate-600 font-mono mt-0.5">Subject: {tmpl.subject}</p>
               </div>
 
-              <div className="p-2.5 rounded bg-slate-900 border border-slate-800 text-xs text-slate-300 font-mono whitespace-pre-line line-clamp-3">
+              <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 font-mono whitespace-pre-line line-clamp-3 leading-relaxed">
                 {tmpl.bodyTemplate}
               </div>
 
-              <div className="flex flex-wrap gap-1 pt-1 border-t border-slate-800">
+              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
                 {tmpl.variables.map((v) => (
                   <span key={v} className="gf-badge gf-badge-gray text-[9px] font-mono">
                     {`{{ ${v} }}`}
@@ -436,9 +436,9 @@ export default function EmailServicePage() {
 
             {testSuccessMessage ? (
               <div className="p-6 text-center space-y-2">
-                <CheckCircle2 className="lucide w-8 h-8 text-emerald-400 mx-auto" />
-                <h4 className="font-bold text-slate-100 text-sm">Diagnostic Dispatched</h4>
-                <p className="text-xs text-mut">{testSuccessMessage}</p>
+                <CheckCircle2 className="lucide w-8 h-8 text-emerald-600 mx-auto" />
+                <h4 className="font-bold text-slate-900 text-sm">Diagnostic Dispatched</h4>
+                <p className="text-xs text-slate-600">{testSuccessMessage}</p>
               </div>
             ) : (
               <form onSubmit={handleExecuteTestSend} className="gf-modal-body space-y-4">
@@ -459,7 +459,7 @@ export default function EmailServicePage() {
                   <select
                     value={testTemplate}
                     onChange={(e) => setTestTemplate(e.target.value)}
-                    className="gf-select w-full text-xs font-mono"
+                    className="gf-select w-full text-xs font-mono font-bold"
                   >
                     <option value="TMPL_OTP_CHALLENGE">TMPL_OTP_CHALLENGE (Operator Verification)</option>
                     <option value="TMPL_AUCTION_INVITE">TMPL_AUCTION_INVITE (Tender Broadcast)</option>

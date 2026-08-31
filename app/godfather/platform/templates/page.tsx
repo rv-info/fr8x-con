@@ -101,8 +101,8 @@ export default function TemplatesManagementPage() {
       <div className="gf-page-header">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM</span>
-            <span className="gf-badge gf-badge-green text-[11px]">Versioned Message Templates</span>
+            <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM GOVERNANCE</span>
+            <span className="gf-badge gf-badge-green text-[11px] font-mono">LIVE COMPILER ACTIVE</span>
           </div>
           <h1 className="gf-page-title">Notification & Email Message Templates</h1>
           <p className="gf-page-subtitle">
@@ -115,9 +115,9 @@ export default function TemplatesManagementPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Templates List (5 cols) */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="gf-card p-3 font-bold text-xs text-slate-300 flex items-center justify-between">
+          <div className="gf-card p-3 font-bold text-xs text-slate-800 flex items-center justify-between bg-slate-50 border-slate-200">
             <span>Communication Templates ({templates.length})</span>
-            <span className="text-[11px] font-mono text-faint">VARIABLE INTERPOLATION</span>
+            <span className="text-[11px] font-mono text-slate-500 font-bold">VARIABLE INTERPOLATION</span>
           </div>
 
           <div className="space-y-2">
@@ -127,26 +127,26 @@ export default function TemplatesManagementPage() {
                 <div
                   key={tmpl.templateId}
                   onClick={() => setSelectedTemplate(tmpl)}
-                  className={`gf-card p-3.5 cursor-pointer transition-all ${
-                    isSelected ? 'border-sky-500 bg-slate-850 shadow-md' : 'hover:border-slate-700'
+                  className={`gf-card p-4 cursor-pointer transition-all ${
+                    isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                        <Bell className="lucide w-3.5 h-3.5 text-sky-400" />
+                      <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <Bell className="lucide w-3.5 h-3.5 text-sky-600" />
                         {tmpl.name}
                       </div>
-                      <div className="text-[11px] text-mut font-mono mt-0.5">{tmpl.code}</div>
+                      <div className="text-[11px] text-slate-500 font-mono mt-0.5">{tmpl.code}</div>
                     </div>
                     <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold font-mono">
                       V{tmpl.version}.0
                     </span>
                   </div>
 
-                  <div className="mt-2 text-[11px] flex items-center justify-between text-slate-400 border-t border-slate-800 pt-2 font-mono">
-                    <span>Category: {tmpl.category}</span>
-                    <span>{tmpl.variables.length} Dynamic Vars</span>
+                  <div className="mt-2.5 text-[11px] flex items-center justify-between text-slate-600 border-t border-slate-100 pt-2 font-mono">
+                    <span className="font-medium">Category: {tmpl.category}</span>
+                    <span className="font-semibold text-slate-700">{tmpl.variables.length} Dynamic Vars</span>
                   </div>
                 </div>
               );
@@ -156,13 +156,13 @@ export default function TemplatesManagementPage() {
 
         {/* Live Preview & Compiler on Right (7 cols) */}
         <div className="lg:col-span-7">
-          <div className="gf-card divide-y divide-slate-800">
+          <div className="gf-card divide-y divide-slate-100">
             {/* Header */}
-            <div className="p-4 bg-slate-900 flex items-start justify-between flex-wrap gap-2">
+            <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
               <div>
-                <h2 className="text-base font-bold text-slate-100">{selectedTemplate.name}</h2>
-                <div className="text-xs text-mut font-mono mt-0.5">
-                  Code: <strong className="text-sky-400">{selectedTemplate.code}</strong> · Version: {selectedTemplate.version}.0
+                <h2 className="text-base font-extrabold text-slate-900">{selectedTemplate.name}</h2>
+                <div className="text-xs text-slate-600 font-mono mt-0.5">
+                  Code: <strong className="text-sky-700">{selectedTemplate.code}</strong> · Version: {selectedTemplate.version}.0
                 </div>
               </div>
 
@@ -177,11 +177,11 @@ export default function TemplatesManagementPage() {
             </div>
 
             {/* Interpolation Variables Box */}
-            <div className="p-4 space-y-1.5 bg-slate-950/40">
-              <span className="text-[10px] uppercase font-bold text-mut block">Declared Template Variables</span>
+            <div className="p-4 space-y-1.5 bg-white">
+              <span className="text-[10px] uppercase font-bold text-slate-500 block">Declared Template Variables</span>
               <div className="flex flex-wrap gap-1.5">
                 {selectedTemplate.variables.map((v) => (
-                  <span key={v} className="gf-badge gf-badge-gray text-[10px] font-mono">
+                  <span key={v} className="gf-badge gf-badge-gray text-[10px] font-mono font-semibold">
                     {`{{ ${v} }}`}
                   </span>
                 ))}
@@ -189,21 +189,21 @@ export default function TemplatesManagementPage() {
             </div>
 
             {/* Live Rendered Preview */}
-            <div className="p-4 space-y-3">
-              <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+            <div className="p-4 space-y-3 bg-slate-50/50">
+              <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
                 <span>Compiled Live Preview (Rendered Sample)</span>
-                <span className="text-[10px] font-mono text-emerald-400">SIMULATED INBOX DISPATCH</span>
+                <span className="text-[10px] font-mono text-emerald-700 font-bold">SIMULATED INBOX DISPATCH</span>
               </div>
 
-              <div className="p-4 rounded-lg bg-slate-900 border border-slate-800 space-y-3 font-sans text-xs">
-                <div className="border-b border-slate-800 pb-2">
-                  <span className="text-mut block text-[10px]">Subject Line:</span>
-                  <span className="font-bold text-slate-100 text-sm">{previewCompiledSubject}</span>
+              <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-3 font-sans text-xs shadow-xs">
+                <div className="border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 block text-[10px] font-bold uppercase">Subject Line:</span>
+                  <span className="font-bold text-slate-900 text-sm">{previewCompiledSubject}</span>
                 </div>
 
                 <div>
-                  <span className="text-mut block text-[10px] mb-1">Message Body:</span>
-                  <div className="whitespace-pre-line text-slate-200 leading-relaxed font-sans bg-slate-950 p-3 rounded border border-slate-800/80">
+                  <span className="text-slate-500 block text-[10px] font-bold uppercase mb-1">Message Body:</span>
+                  <div className="whitespace-pre-line text-slate-800 leading-relaxed font-sans bg-slate-50 p-3.5 rounded-lg border border-slate-200">
                     {previewCompiledBody}
                   </div>
                 </div>

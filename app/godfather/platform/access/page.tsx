@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Key, ShieldCheck, UserCheck, ShieldAlert, Check, X, Lock } from 'lucide-react';
+import { Key, ShieldCheck, UserCheck, ShieldAlert, Check, X, Lock, Shield } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { ROLE_PERMISSIONS } from '@/lib/godfather/utils/audit';
 
@@ -29,10 +29,10 @@ export default function AccessControlPage() {
       <div className="gf-page-header">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM</span>
-            <span className="gf-badge gf-badge-green text-[11px]">Least-Privilege RBAC Matrix</span>
+            <span className="gf-badge gf-badge-blue text-[11px] font-bold">SECURITY & RBAC</span>
+            <span className="gf-badge gf-badge-green text-[11px] font-mono">LEAST-PRIVILEGE MATRIX</span>
           </div>
-          <h1 className="gf-page-title">Access Control, Operator Subroles & Governance Matrix</h1>
+          <h1 className="gf-page-title">Access Control, Operator Subroles & RBAC Matrix</h1>
           <p className="gf-page-subtitle">
             Configure granular subrole delegation, hardware token enforcement, and privilege scopes across Con.FR8X.IN operators
           </p>
@@ -41,12 +41,14 @@ export default function AccessControlPage() {
 
       {/* Operator Accounts Card */}
       <div className="gf-card">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <UserCheck className="lucide w-4 h-4 text-sky-400" />
-            <h3 className="text-sm font-bold text-slate-100">Authorized Super-Admin Operator Profiles</h3>
+        <div className="gf-card-header">
+          <div className="gf-card-title">
+            <UserCheck className="lucide w-4 h-4 text-sky-600" />
+            <span>Authorized Super-Admin Operator Profiles</span>
           </div>
-          <span className="text-xs text-mut font-mono">ENFORCED VIA FIREBASE CUSTOM CLAIMS</span>
+          <span className="text-xs text-slate-500 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+            ENFORCED VIA FIREBASE CUSTOM CLAIMS
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -65,34 +67,36 @@ export default function AccessControlPage() {
               {operatorsList.map((op) => {
                 const isActive = operator.uid === op.uid;
                 return (
-                  <tr key={op.uid} className={isActive ? 'bg-sky-950/20' : ''}>
+                  <tr key={op.uid} className={isActive ? 'bg-sky-50/70 font-medium' : ''}>
                     <td>
-                      <div className="font-bold text-slate-100 flex items-center gap-1.5">
+                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
                         {op.displayName}
                         {isActive && (
                           <span className="gf-badge gf-badge-green text-[9px] uppercase font-mono">
-                            ACTIVE OPERATOR
+                            ACTIVE
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] text-mut font-mono">{op.email}</div>
+                      <div className="text-[11px] text-slate-500 font-mono">{op.email}</div>
                     </td>
                     <td>
                       <span className="gf-badge gf-badge-blue text-[10px] uppercase font-mono font-bold">
                         {op.role}
                       </span>
-                      <div className="text-[10px] text-slate-300 mt-0.5">{op.roleTitle}</div>
+                      <div className="text-[11px] text-slate-600 mt-0.5">{op.roleTitle}</div>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-300 text-[11px]">{op.ipAddress}</span>
-                    </td>
-                    <td>
-                      <span className="gf-badge gf-badge-green text-[10px] font-mono">
-                        TOTP-MFA ENABLED
+                      <span className="font-mono text-slate-700 text-[11px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                        {op.ipAddress}
                       </span>
                     </td>
                     <td>
-                      <span className="font-mono text-slate-400 text-[10px]">
+                      <span className="gf-badge gf-badge-green text-[10px] font-mono">
+                        TOTP-MFA ACTIVE
+                      </span>
+                    </td>
+                    <td>
+                      <span className="font-mono text-slate-600 text-[11px]">
                         {new Date(op.activeSessionExpiry).toLocaleTimeString()}
                       </span>
                     </td>
@@ -106,7 +110,7 @@ export default function AccessControlPage() {
                           Switch Role
                         </button>
                       ) : (
-                        <span className="text-emerald-400 font-bold text-xs font-mono">Current</span>
+                        <span className="text-emerald-700 font-bold text-xs font-mono">Current Session</span>
                       )}
                     </td>
                   </tr>
@@ -118,13 +122,15 @@ export default function AccessControlPage() {
       </div>
 
       {/* Granular Least Privilege Matrix */}
-      <div className="gf-card p-4 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="lucide w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-bold text-slate-100">Granular Subrole Permission Matrix</h3>
+      <div className="gf-card">
+        <div className="gf-card-header">
+          <div className="gf-card-title">
+            <ShieldCheck className="lucide w-4 h-4 text-emerald-600" />
+            <span>Granular Subrole Permission Matrix</span>
           </div>
-          <span className="text-xs text-mut font-mono">ROLE-BASED ACCESS CONTROL (RBAC)</span>
+          <span className="text-xs text-slate-500 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+            ROLE-BASED ACCESS CONTROL (RBAC)
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -143,7 +149,7 @@ export default function AccessControlPage() {
             <tbody>
               {permissionsList.map((perm) => (
                 <tr key={perm.key}>
-                  <td className="font-semibold text-slate-200">{perm.label}</td>
+                  <td className="font-semibold text-slate-900">{perm.label}</td>
                   {(
                     [
                       'godfather_owner',
@@ -158,11 +164,11 @@ export default function AccessControlPage() {
                     return (
                       <td key={role} className="text-center">
                         {isGranted ? (
-                          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800">
+                          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 border border-emerald-300">
                             <Check className="lucide w-3 h-3" />
                           </div>
                         ) : (
-                          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-900 text-slate-600 border border-slate-800">
+                          <div className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-400 border border-slate-200">
                             <X className="lucide w-3 h-3" />
                           </div>
                         )}
@@ -178,3 +184,4 @@ export default function AccessControlPage() {
     </div>
   );
 }
+

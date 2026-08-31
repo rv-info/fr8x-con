@@ -123,26 +123,28 @@ export default function AuctionsAdministrationPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: List & Filters */}
         <div className="lg:col-span-5 space-y-3">
-          <div className="gf-card p-3 space-y-2">
-            <div className="gf-search-input-wrap w-full">
-              <Search className="lucide w-4 h-4" />
+          <div className="gf-card p-3 space-y-2 bg-slate-50 border-slate-200">
+            <div className="gf-search-input-wrap w-full bg-white border-slate-300">
+              <Search className="lucide w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search auctions by ID, RFQ, route, company..."
-                className="gf-search-input"
+                className="gf-search-input font-medium"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px]">
+            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1">
               {['all', 'Live', 'Awarded', 'Draft', 'Cancelled'].map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2 py-1 rounded capitalize font-semibold transition-colors ${
-                    statusFilter === st ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  className={`px-2.5 py-1 rounded-md capitalize font-bold transition-colors whitespace-nowrap ${
+                    statusFilter === st
+                      ? 'bg-sky-600 text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   {st}
@@ -158,18 +160,18 @@ export default function AuctionsAdministrationPage() {
                 <div
                   key={auc.id}
                   onClick={() => setSelectedAuction(auc)}
-                  className={`gf-card p-3.5 cursor-pointer transition-all ${
-                    isSelected ? 'border-sky-500 bg-slate-850 shadow-md' : 'hover:border-slate-700'
+                  className={`gf-card p-4 cursor-pointer transition-all ${
+                    isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
                   }`}
                 >
                   <div className="flex items-start justify-between">
                     <div>
-                      <div className="font-bold text-slate-100 text-xs flex items-center gap-1.5">
-                        <Gavel className="lucide w-3.5 h-3.5 text-sky-400" />
+                      <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                        <Gavel className="lucide w-3.5 h-3.5 text-sky-600" />
                         {auc.id} · {auc.title}
                       </div>
-                      <div className="text-[11px] text-mut mt-0.5">
-                        Issuer: <strong className="text-slate-300">{auc.creatorCompany}</strong> · RFQ: {auc.rfqId}
+                      <div className="text-[11px] text-slate-500 mt-0.5">
+                        Issuer: <strong className="text-slate-800">{auc.creatorCompany}</strong> · RFQ: {auc.rfqId}
                       </div>
                     </div>
                     <span
@@ -181,9 +183,9 @@ export default function AuctionsAdministrationPage() {
                     </span>
                   </div>
 
-                  <div className="mt-2 text-[11px] flex items-center justify-between text-slate-400 border-t border-slate-800 pt-2 font-mono">
+                  <div className="mt-2.5 text-[11px] flex items-center justify-between text-slate-600 border-t border-slate-100 pt-2 font-mono">
                     <span>{auc.shipment.pol.split('(')[0]} → {auc.shipment.pod.split('(')[0]}</span>
-                    <span>{auc.bidsSubmittedCount} Bids Submitted</span>
+                    <span className="font-semibold text-slate-700">{auc.bidsSubmittedCount} Bids Submitted</span>
                   </div>
                 </div>
               );
@@ -194,12 +196,12 @@ export default function AuctionsAdministrationPage() {
         {/* Right Column: Detailed Auction Tender Inspector */}
         <div className="lg:col-span-7">
           {selectedAuction ? (
-            <div className="gf-card divide-y divide-slate-800">
+            <div className="gf-card divide-y divide-slate-100">
               {/* Header & Controls */}
-              <div className="p-4 bg-slate-900 flex items-start justify-between flex-wrap gap-2">
+              <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="text-base font-bold text-slate-100">{selectedAuction.id}</h2>
+                    <h2 className="text-base font-extrabold text-slate-900">{selectedAuction.id}</h2>
                     <span className="gf-badge gf-badge-blue text-[10px] uppercase font-mono font-bold">
                       {selectedAuction.rfqId}
                     </span>
@@ -207,8 +209,8 @@ export default function AuctionsAdministrationPage() {
                       {selectedAuction.auctionType}
                     </span>
                   </div>
-                  <p className="text-xs text-mut mt-0.5">
-                    {selectedAuction.title} · Issuer: <strong className="text-slate-200">{selectedAuction.creatorCompany}</strong>
+                  <p className="text-xs text-slate-600 mt-1">
+                    {selectedAuction.title} · Issuer: <strong className="text-slate-900">{selectedAuction.creatorCompany}</strong>
                   </p>
                 </div>
 
@@ -243,39 +245,39 @@ export default function AuctionsAdministrationPage() {
 
               {/* Notification confirmation toast */}
               {notificationDispatched && (
-                <div className="p-2.5 bg-emerald-950/80 border-b border-emerald-800 text-emerald-300 text-xs font-semibold flex items-center gap-2">
-                  <Check className="lucide w-4 h-4 text-emerald-400" />
+                <div className="p-3 bg-emerald-50 border-b border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <Check className="lucide w-4 h-4 text-emerald-600" />
                   Structured tender table notification successfully generated & dispatched to all assigned bidders!
                 </div>
               )}
 
               {/* Route & Schedule */}
-              <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-950/40 text-xs">
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">Port of Loading</span>
-                  <span className="font-semibold text-slate-200">{selectedAuction.shipment.pol}</span>
+              <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 text-xs">
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Port of Loading</span>
+                  <span className="font-semibold text-slate-900 block mt-0.5">{selectedAuction.shipment.pol}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">Port of Discharge</span>
-                  <span className="font-semibold text-slate-200">{selectedAuction.shipment.pod}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Port of Discharge</span>
+                  <span className="font-semibold text-slate-900 block mt-0.5">{selectedAuction.shipment.pod}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">Cargo Ready Date</span>
-                  <span className="font-mono text-slate-300">{selectedAuction.shipment.cargoReadyDate}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Cargo Ready Date</span>
+                  <span className="font-mono text-slate-700 font-bold block mt-0.5">{selectedAuction.shipment.cargoReadyDate}</span>
                 </div>
-                <div className="p-2 rounded bg-slate-900 border border-slate-800">
-                  <span className="text-mut text-[10px] uppercase font-bold block">Incoterm / Scope</span>
-                  <span className="font-mono text-sky-400 font-bold">{selectedAuction.shipment.incoterm}</span>
+                <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
+                  <span className="text-slate-500 text-[10px] uppercase font-bold block">Incoterm / Scope</span>
+                  <span className="font-mono text-sky-700 font-bold block mt-0.5">{selectedAuction.shipment.incoterm}</span>
                 </div>
               </div>
 
               {/* Container & Equipment Manifest (Read-Only) */}
               <div className="p-4 space-y-2">
-                <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
                   <span>Equipment & Container Cargo Rows</span>
-                  <span className="text-[10px] font-mono text-faint">COMMERCIAL MANIFEST (IMMUTABLE)</span>
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">COMMERCIAL MANIFEST (IMMUTABLE)</span>
                 </div>
-                <div className="border border-slate-800 rounded overflow-hidden">
+                <div className="border border-slate-200 rounded-lg overflow-hidden">
                   <table className="gf-table text-[11px]">
                     <thead>
                       <tr>
@@ -290,8 +292,8 @@ export default function AuctionsAdministrationPage() {
                     <tbody>
                       {selectedAuction.containers.map((c) => (
                         <tr key={c.id}>
-                          <td className="font-mono font-bold text-sky-400">{c.equipmentType}</td>
-                          <td>{c.quantity}</td>
+                          <td className="font-mono font-bold text-sky-700">{c.equipmentType}</td>
+                          <td className="font-semibold text-slate-800">{c.quantity}</td>
                           <td>{c.containerType}</td>
                           <td>{c.commodity}</td>
                           <td>{c.grossWeight} {c.weightUnit || 'KG'}</td>
@@ -305,17 +307,17 @@ export default function AuctionsAdministrationPage() {
 
               {/* Submitted Bids & Rank Snapshot (Strictly Read-Only Snapshot) */}
               <div className="p-4 space-y-2">
-                <div className="text-xs font-bold text-slate-300 flex items-center justify-between">
+                <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
                   <span>Authoritative Submitted Bids & Rank History ({selectedAuction.bids?.length || 0})</span>
-                  <span className="text-[10px] font-mono text-emerald-400">READ-ONLY AUDIT SNAPSHOT</span>
+                  <span className="text-[10px] font-mono text-emerald-700 font-bold">READ-ONLY AUDIT SNAPSHOT</span>
                 </div>
 
                 {!selectedAuction.bids || selectedAuction.bids.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-mut italic bg-slate-900 rounded border border-slate-800">
+                  <div className="p-4 text-center text-xs text-slate-500 italic bg-slate-50 rounded-lg border border-slate-200">
                     No bids submitted yet for this tender window.
                   </div>
                 ) : (
-                  <div className="border border-slate-800 rounded overflow-hidden">
+                  <div className="border border-slate-200 rounded-lg overflow-hidden">
                     <table className="gf-table text-[11px]">
                       <thead>
                         <tr>
@@ -330,18 +332,18 @@ export default function AuctionsAdministrationPage() {
                       <tbody>
                         {selectedAuction.bids.map((bid) => (
                           <tr key={bid.id}>
-                            <td className="font-mono font-bold text-amber-400">#{bid.rank}</td>
+                            <td className="font-mono font-bold text-amber-600">#{bid.rank}</td>
                             <td>
-                              <div className="font-bold text-slate-200">{bid.bidderCompany}</div>
-                              <div className="text-[10px] text-mut">{bid.bidderName}</div>
+                              <div className="font-bold text-slate-900">{bid.bidderCompany}</div>
+                              <div className="text-[10px] text-slate-500">{bid.bidderName}</div>
                             </td>
-                            <td className="font-mono font-bold text-emerald-400 text-xs">
+                            <td className="font-mono font-bold text-emerald-700 text-xs">
                               ${bid.grandTotalUSD.toLocaleString()} USD
                             </td>
-                            <td className="font-mono text-slate-400">
-                              ₹{bid.feePaid} {bid.bidderHasGoldenTick && <span className="text-amber-400 text-[10px]">(40% Disc)</span>}
+                            <td className="font-mono text-slate-600">
+                              ₹{bid.feePaid} {bid.bidderHasGoldenTick && <span className="text-amber-600 font-bold text-[10px]">(40% Disc)</span>}
                             </td>
-                            <td className="font-mono text-faint text-[10px]">
+                            <td className="font-mono text-slate-500 text-[10px]">
                               {new Date(bid.submittedAt).toLocaleTimeString()}
                             </td>
                             <td>
@@ -359,21 +361,21 @@ export default function AuctionsAdministrationPage() {
 
               {/* Assigned Bidders List */}
               <div className="p-4 space-y-2">
-                <div className="text-xs font-bold text-slate-300">
+                <div className="text-xs font-bold text-slate-800">
                   Assigned Selected Bidders ({selectedAuction.selectedBidders.length})
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {selectedAuction.selectedBidders.map((b) => (
-                    <div key={b.id} className="p-2 rounded bg-slate-900 border border-slate-800 text-xs">
-                      <div className="font-bold text-slate-200">{b.name}</div>
-                      <div className="text-[11px] text-mut">{b.company} · {b.location}</div>
+                    <div key={b.id} className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs">
+                      <div className="font-bold text-slate-900">{b.name}</div>
+                      <div className="text-[11px] text-slate-500">{b.company} · {b.location}</div>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="gf-card p-12 text-center text-xs text-mut">
+            <div className="gf-card p-12 text-center text-xs text-slate-500">
               Select an auction tender from the left to inspect bid ranks and trigger formal notifications.
             </div>
           )}
