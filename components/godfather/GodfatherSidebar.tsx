@@ -116,13 +116,13 @@ export function GodfatherSidebar() {
     Operations: true,
     'Trust & Safety': true,
     Security: true,
-    Commerce: true,
-    Platform: true,
+    'Commerce & Accounting': true,
+    'Platform & Governance': true,
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   const toggleSection = (title: string) => {
-    setOpenSections((prev) => ({ ...prev, [title]: !prev[title] }));
+    setOpenSections((prev) => ({ ...prev, [title]: prev[title] === false }));
   };
 
   const getEnvBadgeClass = (env: PlatformEnvironment) => {
@@ -151,6 +151,18 @@ export function GodfatherSidebar() {
             </div>
           </div>
         </Link>
+
+        {/* Dedicated OTP ON / Secure Access Quick Link */}
+        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
+          <Link
+            href="/GODFATHERON"
+            className="w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9.5px] uppercase tracking-wider transition-colors shadow-xs"
+            title="Open Dedicated Godfather Access Portal & OTP Challenge"
+          >
+            <KeyRound className="lucide w-3 h-3" />
+            <span>GODFATHER ON (OTP)</span>
+          </Link>
+        </div>
 
         {/* Environment Badge & Switcher */}
         <div className="gf-env-select-wrap">

@@ -71,8 +71,26 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
           </button>
         </div>
 
-        {/* Right: Security Pill, Alert Centre, Session Status & Logout */}
+        {/* Right Section */}
         <div className="flex items-center gap-2">
+          {/* Quick Shortcuts: OTP ON & Reports */}
+          <a
+            href="/GODFATHERON"
+            className="hidden sm:inline-flex items-center gap-1 text-[9.5px] font-bold px-2 py-0.5 rounded bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-2xs uppercase tracking-wide"
+            title="Godfather Login & OTP Challenge Terminal"
+          >
+            <KeyRound className="lucide w-3 h-3" />
+            <span>OTP ON</span>
+          </a>
+
+          <a
+            href="/godfather/trust-safety/reports"
+            className="hidden md:inline-flex items-center gap-1 text-[9.5px] font-bold px-2 py-0.5 rounded bg-rose-50 border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors uppercase"
+            title="Platform Grievance & Reports Queue"
+          >
+            <span>REPORTS</span>
+          </a>
+
           {/* Session Status indicator */}
           <div className="hidden md:flex items-center gap-1 text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
             <Radio className="lucide w-2.5 h-2.5 animate-pulse text-emerald-600" />

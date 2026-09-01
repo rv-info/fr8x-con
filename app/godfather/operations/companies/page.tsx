@@ -227,7 +227,7 @@ export default function CompaniesKYCPage() {
 
       {/* Enterprise Data Table */}
       <div className="gf-card">
-        <div className="gf-table-container">
+        <div className="gf-table-container border-0 rounded-none">
           <table className="gf-table">
             <thead>
               <tr>
