@@ -21,7 +21,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
 
   // If visiting login page, render standalone high-security login shell
   if (isLoginPage) {
-    return <div className="gf-login-root" style={{ fontFamily: "Calibri, 'Segoe UI', Candara, Arial, sans-serif", fontSize: '10px' }}>{children}</div>;
+    return <div className="gf-login-root">{children}</div>;
   }
 
   // Get active title based on route
@@ -52,7 +52,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
   else if (pathname.startsWith('/godfather/support/cases')) activeTitle = 'Support Case Management & Remediation';
 
   return (
-    <div className="gf-app-layout" style={{ fontFamily: "Calibri, 'Segoe UI', Candara, Arial, sans-serif", fontSize: '10px' }}>
+    <div className="gf-app-layout">
       {/* Mobile Backdrop */}
       {isMobileSidebarOpen && (
         <div

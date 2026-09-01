@@ -4,36 +4,32 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Search,
   Users,
   Building,
   Gavel,
   DollarSign,
   Briefcase,
-  AlertOctagon,
-  MessageSquare,
+  Database,
+  Filter,
+  BadgeCheck,
   Shield,
+  MessageSquare,
   FileCheck,
   CreditCard,
   Receipt,
   Percent,
+  Scale,
   Bell,
   Mail,
   FileText,
   Key,
   Sliders,
-  HelpCircle,
-  FolderLock,
   ChevronDown,
   ChevronRight,
-  LogOut,
   ShieldCheck,
-  Zap,
-  Filter,
-  Scale,
-  BadgeCheck,
-  Database,
+  AlertOctagon,
+  LayoutDashboard,
+  Search,
   Lock,
   UserX,
   KeyRound,
@@ -82,9 +78,9 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Authentication Security', href: '/godfather/security', icon: Lock },
       { label: 'Blocked Accounts', href: '/godfather/security/blocked-accounts', icon: UserX },
       { label: 'Password Reset Requests', href: '/godfather/security/password-resets', icon: KeyRound },
-      { label: 'OTP Activity', href: '/godfather/security/otp-activity', icon: Smartphone },
-      { label: 'Security Events', href: '/godfather/security/events', icon: ShieldAlert },
-      { label: 'Audit Trail', href: '/godfather/security/audit', icon: History },
+      { label: 'OTP Activity & Limits', href: '/godfather/security/otp-activity', icon: Smartphone },
+      { label: 'Security Incident Stream', href: '/godfather/security/events', icon: ShieldAlert },
+      { label: 'Cryptographic Audit Trail', href: '/godfather/security/audit', icon: History },
     ],
   },
   {
@@ -132,17 +128,17 @@ export function GodfatherSidebar() {
   };
 
   return (
-    <aside className="gf-sidebar" style={{ fontFamily: "Calibri, 'Segoe UI', Candara, Arial, sans-serif" }}>
+    <aside className="gf-sidebar">
       {/* Brand Header */}
       <div className="gf-sidebar-header">
         <Link href="/godfather" className="gf-brand-wrap">
           <div className="gf-brand-logo-badge">
-            <ShieldCheck className="lucide w-4 h-4 text-sky-400" />
+            <ShieldCheck className="lucide w-5 h-5 text-sky-400" />
           </div>
           <div>
             <div className="gf-brand-title">
               <span>GODFATHER</span>
-              <span className="gf-badge gf-badge-gold text-[8.5px] uppercase font-mono py-0 px-1">
+              <span className="gf-badge gf-badge-gold text-[9px] uppercase font-mono py-0 px-1.5">
                 SOVEREIGN
               </span>
             </div>
@@ -153,21 +149,21 @@ export function GodfatherSidebar() {
         </Link>
 
         {/* Dedicated OTP ON / Secure Access Quick Link */}
-        <div className="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
+        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
           <Link
             href="/GODFATHERON"
-            className="w-full flex items-center justify-center gap-1.5 py-1 px-2 rounded bg-amber-500 hover:bg-amber-600 text-white font-bold text-[9.5px] uppercase tracking-wider transition-colors shadow-xs"
+            className="w-full flex items-center justify-center gap-2 py-1.5 px-2.5 rounded-md bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs uppercase tracking-wider transition-colors shadow-xs"
             title="Open Dedicated Godfather Access Portal & OTP Challenge"
           >
-            <KeyRound className="lucide w-3 h-3" />
+            <KeyRound className="lucide w-3.5 h-3.5" />
             <span>GODFATHER ON (OTP)</span>
           </Link>
         </div>
 
         {/* Environment Badge & Switcher */}
         <div className="gf-env-select-wrap">
-          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[8.5px] uppercase font-bold flex items-center gap-1`}>
-            <span className="w-1 h-1 rounded-full bg-current inline-block animate-pulse" />
+          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1.5`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
             {environment}
           </span>
           <select
@@ -231,7 +227,7 @@ export function GodfatherSidebar() {
                         href={item.href}
                         className={`gf-nav-link ${isActive ? 'active' : ''}`}
                       >
-                        <Icon className="lucide w-3.5 h-3.5" />
+                        <Icon className="lucide w-4 h-4 text-slate-500" />
                         <span>{item.label}</span>
                       </Link>
                     );
@@ -257,17 +253,17 @@ export function GodfatherSidebar() {
               </div>
               <div className="min-w-0">
                 <div className="text-xs font-bold text-slate-900 truncate">{operator.displayName}</div>
-                <div className="text-[10px] text-sky-700 font-mono font-semibold truncate">{operator.roleTitle}</div>
+                <div className="text-[10.5px] text-sky-700 font-mono font-semibold truncate">{operator.roleTitle}</div>
               </div>
             </div>
             <ChevronDown className="lucide w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
           </button>
 
-          {/* Role Switcher Menu for Testing & Least Privilege Verification */}
+          {/* Quick Operator Switcher Popover */}
           {isRoleDropdownOpen && (
             <div className="gf-role-dropdown-menu">
-              <div className="px-2.5 py-1.5 text-[10px] font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">
-                Switch Subrole Profile (Testing)
+              <div className="px-2 py-1 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+                Switch Authorized Persona
               </div>
               {operatorsList.map((op) => (
                 <button
@@ -277,36 +273,25 @@ export function GodfatherSidebar() {
                     switchOperator(op.uid);
                     setIsRoleDropdownOpen(false);
                   }}
-                  className={`w-full text-left p-2 rounded-md text-xs flex items-center justify-between transition-colors ${
-                    operator.uid === op.uid
+                  className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
+                    op.uid === operator.uid
                       ? 'bg-sky-50 text-sky-900 font-bold'
                       : 'text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="min-w-0">
-                    <div className="truncate">{op.displayName}</div>
-                    <div className="text-[10px] text-slate-500 font-mono">{op.role}</div>
+                  <div className="truncate">
+                    <div>{op.displayName}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">{op.roleTitle}</div>
                   </div>
-                  {operator.uid === op.uid && <Zap className="lucide w-3.5 h-3.5 text-sky-600 flex-shrink-0" />}
+                  {op.uid === operator.uid && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-sky-600 flex-shrink-0" />
+                  )}
                 </button>
               ))}
             </div>
           )}
         </div>
-
-        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 text-[10px] text-slate-500">
-          <span className="font-mono font-semibold text-emerald-700">MFA: ENFORCED</span>
-          <button
-            type="button"
-            onClick={logoutOperator}
-            className="text-slate-600 hover:text-rose-600 flex items-center gap-1 font-semibold transition-colors"
-          >
-            <LogOut className="lucide w-3 h-3" />
-            Sign Out
-          </button>
-        </div>
       </div>
     </aside>
   );
 }
-
