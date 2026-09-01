@@ -757,7 +757,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
       <div className="gf-page-header">
         <div>
@@ -774,15 +774,15 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
 
         <div className="gf-page-actions">
           <button onClick={handleSyncStatics} className="gf-btn gf-btn-secondary" title="Sync memory caches">
-            <RefreshCw className="lucide w-4 h-4" />
+            <RefreshCw className="lucide w-3.5 h-3.5" />
             <span>Sync Statics</span>
           </button>
           <button onClick={handleExportJSON} className="gf-btn gf-btn-secondary" title="Export complete dictionary">
-            <Download className="lucide w-4 h-4" />
+            <Download className="lucide w-3.5 h-3.5" />
             <span>Export JSON</span>
           </button>
           <button onClick={() => setIsBulkModalOpen(true)} className="gf-btn gf-btn-secondary" title="Bulk CSV/JSON Import">
-            <Upload className="lucide w-4 h-4" />
+            <Upload className="lucide w-3.5 h-3.5" />
             <span>Bulk Ingest</span>
           </button>
           <button
@@ -794,7 +794,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
             }}
             className="gf-btn gf-btn-primary"
           >
-            <Plus className="lucide w-4 h-4" />
+            <Plus className="lucide w-3.5 h-3.5" />
             <span>
               {activeTab === 'locations' && 'Add Location'}
               {activeTab === 'carriers' && 'Add Carrier'}
@@ -809,159 +809,195 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
 
       {/* Sync Status Banner */}
       {syncStatus && (
-        <div className="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl flex items-center justify-between text-emerald-300 text-xs animate-fadeIn">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-center justify-between text-emerald-800 text-xs animate-fadeIn">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="lucide w-4 h-4 text-emerald-400" />
-            <span>{syncStatus}</span>
+            <CheckCircle2 className="lucide w-4 h-4 text-emerald-600" />
+            <span className="font-medium">{syncStatus}</span>
           </div>
-          <button onClick={() => setSyncStatus(null)} className="text-emerald-400 hover:text-emerald-200">
+          <button onClick={() => setSyncStatus(null)} className="text-emerald-600 hover:text-emerald-800">
             <X className="lucide w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
       {/* Statistics Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
         <div
           onClick={() => setActiveTab('locations')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-sky-500/50 ${activeTab === 'locations' ? 'border-sky-500/80 bg-sky-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'locations'
+              ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">Locations</span>
-            <Anchor className="lucide w-4 h-4 text-sky-400" />
+            <Anchor className="lucide w-4 h-4 text-sky-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterLocations.length}</div>
-          <div className="text-[10px] text-slate-400">POR / POL / POD / FPOD</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterLocations.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">POR / POL / POD / FPOD</div>
         </div>
 
         <div
           onClick={() => setActiveTab('carriers')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-indigo-500/50 ${activeTab === 'carriers' ? 'border-indigo-500/80 bg-indigo-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'carriers'
+              ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">Carriers</span>
-            <Ship className="lucide w-4 h-4 text-indigo-400" />
+            <Ship className="lucide w-4 h-4 text-indigo-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterCarriers.length}</div>
-          <div className="text-[10px] text-slate-400">MLO · NVOCC · Feeder</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterCarriers.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">MLO · NVOCC · Feeder</div>
         </div>
 
         <div
           onClick={() => setActiveTab('equipment')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-emerald-500/50 ${activeTab === 'equipment' ? 'border-emerald-500/80 bg-emerald-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'equipment'
+              ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">Equipment</span>
-            <Box className="lucide w-4 h-4 text-emerald-400" />
+            <Box className="lucide w-4 h-4 text-emerald-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterEquipment.length}</div>
-          <div className="text-[10px] text-slate-400">ISO Dry · Reefer · OOG</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterEquipment.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">ISO Dry · Reefer · OOG</div>
         </div>
 
         <div
           onClick={() => setActiveTab('commodities')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-amber-500/50 ${activeTab === 'commodities' ? 'border-amber-500/80 bg-amber-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'commodities'
+              ? 'border-amber-500 bg-amber-50/50 ring-1 ring-amber-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">HS Codes</span>
-            <FileCode2 className="lucide w-4 h-4 text-amber-400" />
+            <FileCode2 className="lucide w-4 h-4 text-amber-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterCommodities.length}</div>
-          <div className="text-[10px] text-slate-400">Harmonized Tariff & Haz</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterCommodities.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">Harmonized Tariff & Haz</div>
         </div>
 
         <div
           onClick={() => setActiveTab('incoterms')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-purple-500/50 ${activeTab === 'incoterms' ? 'border-purple-500/80 bg-purple-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'incoterms'
+              ? 'border-purple-500 bg-purple-50/50 ring-1 ring-purple-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">Incoterms</span>
-            <Scale className="lucide w-4 h-4 text-purple-400" />
+            <Scale className="lucide w-4 h-4 text-purple-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterIncoterms.length}</div>
-          <div className="text-[10px] text-slate-400">Incoterms 2020 Rules</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterIncoterms.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">Incoterms 2020 Rules</div>
         </div>
 
         <div
           onClick={() => setActiveTab('tax')}
-          className={`gf-card p-3 cursor-pointer transition-all hover:border-rose-500/50 ${activeTab === 'tax' ? 'border-rose-500/80 bg-rose-950/20' : ''}`}
+          className={`gf-card p-3 cursor-pointer transition-all ${
+            activeTab === 'tax'
+              ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-500/30'
+              : 'hover:border-slate-300'
+          }`}
         >
-          <div className="flex items-center justify-between text-slate-400 mb-1">
+          <div className="flex items-center justify-between text-slate-500 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider">Tax & SAC</span>
-            <Receipt className="lucide w-4 h-4 text-rose-400" />
+            <Receipt className="lucide w-4 h-4 text-rose-600" />
           </div>
-          <div className="text-xl font-bold text-white font-mono">{masterTaxCodes.length}</div>
-          <div className="text-[10px] text-slate-400">Statutory GST & RCM</div>
+          <div className="text-xl font-black text-slate-900 font-mono">{masterTaxCodes.length}</div>
+          <div className="text-[10.5px] text-slate-500 font-medium">Statutory GST & RCM</div>
         </div>
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center gap-1 border-b border-slate-800 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2 overflow-x-auto">
         <button
           onClick={() => { setActiveTab('locations'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'locations' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'locations'
+              ? 'bg-sky-50 text-sky-800 border border-sky-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Anchor className="lucide w-3.5 h-3.5" />
+          <Anchor className="lucide w-3.5 h-3.5 text-sky-600" />
           <span>Locations & Ports ({masterLocations.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('carriers'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'carriers' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'carriers'
+              ? 'bg-indigo-50 text-indigo-800 border border-indigo-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Ship className="lucide w-3.5 h-3.5" />
+          <Ship className="lucide w-3.5 h-3.5 text-indigo-600" />
           <span>Carriers & Liners ({masterCarriers.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('equipment'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'equipment' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'equipment'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Box className="lucide w-3.5 h-3.5" />
+          <Box className="lucide w-3.5 h-3.5 text-emerald-600" />
           <span>Container Equipment ({masterEquipment.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('commodities'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'commodities' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'commodities'
+              ? 'bg-amber-50 text-amber-800 border border-amber-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <FileCode2 className="lucide w-3.5 h-3.5" />
+          <FileCode2 className="lucide w-3.5 h-3.5 text-amber-600" />
           <span>Commodities & HS Codes ({masterCommodities.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('incoterms'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'incoterms' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'incoterms'
+              ? 'bg-purple-50 text-purple-800 border border-purple-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Scale className="lucide w-3.5 h-3.5" />
+          <Scale className="lucide w-3.5 h-3.5 text-purple-600" />
           <span>Incoterms 2020 Matrix ({masterIncoterms.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('tax'); setSearchQuery(''); }}
-          className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'tax' ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
+            activeTab === 'tax'
+              ? 'bg-rose-50 text-rose-800 border border-rose-300 shadow-xs'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
-          <Receipt className="lucide w-3.5 h-3.5" />
+          <Receipt className="lucide w-3.5 h-3.5 text-rose-600" />
           <span>Tax SAC Classification ({masterTaxCodes.length})</span>
         </button>
       </div>
 
       {/* Filter / Search Bar */}
-      <div className="gf-card p-3 flex flex-wrap items-center gap-3">
-        <div className="relative flex-1 min-w-[240px]">
-          <Search className="lucide w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+      <div className="gf-filter-bar">
+        <div className="gf-search-input-wrap">
+          <Search className="lucide w-4 h-4 text-slate-400" />
           <input
             type="text"
             value={searchQuery}
@@ -979,12 +1015,12 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                 ? 'Search Incoterm rule code or title...'
                 : 'Search SAC code, tax description...'
             }
-            className="gf-input pl-9 text-xs"
+            className="gf-search-input"
           />
         </div>
 
         {activeTab === 'locations' && (
-          <>
+          <div className="flex items-center gap-2">
             <select
               value={filterCountry}
               onChange={(e) => setFilterCountry(e.target.value)}
@@ -1021,11 +1057,11 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               <option value="POD">Port of Discharge (POD)</option>
               <option value="FPOD">Final Delivery (FPOD)</option>
             </select>
-          </>
+          </div>
         )}
 
         {activeTab === 'carriers' && (
-          <>
+          <div className="flex items-center gap-2">
             <select
               value={filterCarrierType}
               onChange={(e) => setFilterCarrierType(e.target.value)}
@@ -1051,7 +1087,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               <option value="Global Forwarder">Global Forwarder</option>
               <option value="Regional Feeder">Regional Feeder</option>
             </select>
-          </>
+          </div>
         )}
       </div>
 
@@ -1074,17 +1110,17 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredLocations.map((loc) => (
-                  <tr key={loc.id} className="hover:bg-slate-800/30">
+                  <tr key={loc.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="flex items-center gap-1.5 font-mono font-bold text-sky-400 text-xs">
+                      <div className="flex items-center gap-1.5 font-mono font-bold text-sky-700 text-xs">
                         <span className="text-sm">{getLocationTypeIcon(loc.type)}</span>
                         <span>{loc.unLocode}</span>
                       </div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-100 text-xs">{loc.name}</div>
-                      <div className="text-[11px] text-slate-400 flex items-center gap-1">
-                        <span className="font-mono text-[10px] text-slate-500 uppercase">{loc.countryCode}</span>
+                      <div className="font-bold text-slate-900 text-xs">{loc.name}</div>
+                      <div className="text-[11px] text-slate-500 flex items-center gap-1">
+                        <span className="font-mono text-[10px] text-slate-600 uppercase font-semibold">{loc.countryCode}</span>
                         <span>·</span>
                         <span>{loc.country} ({loc.region})</span>
                       </div>
@@ -1104,17 +1140,17 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       </div>
                     </td>
                     <td>
-                      <div className="text-xs text-slate-300 max-w-[220px] truncate" title={loc.terminals.join(', ')}>
+                      <div className="text-xs text-slate-700 max-w-[220px] truncate font-medium" title={loc.terminals.join(', ')}>
                         {loc.terminals.join(', ')}
                       </div>
-                      <div className="text-[10px] text-slate-500">{loc.terminals.length} terminal berths</div>
+                      <div className="text-[10.5px] text-slate-500">{loc.terminals.length} terminal berths</div>
                     </td>
                     <td>
-                      <div className="font-mono text-[10px] text-slate-400">
+                      <div className="font-mono text-[10.5px] text-slate-600">
                         {loc.coordinates?.lat?.toFixed(4)}, {loc.coordinates?.lng?.toFixed(4)}
                       </div>
                       {loc.customsZoneCode && (
-                        <div className="font-mono text-[9px] text-sky-400">Zone: {loc.customsZoneCode}</div>
+                        <div className="font-mono text-[9.5px] text-sky-700 font-bold">Zone: {loc.customsZoneCode}</div>
                       )}
                     </td>
                     <td>
@@ -1132,7 +1168,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleOpenLocationModal(loc)}
-                          className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-sky-400 rounded-lg"
+                          className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-sky-700 rounded-md transition-colors"
                           title="Edit Location"
                         >
                           <Edit2 className="lucide w-3.5 h-3.5" />
@@ -1148,7 +1184,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                               onConfirm: (reason) => deleteMasterLocation(loc.id, reason),
                             })
                           }
-                          className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg"
+                          className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-md transition-colors"
                           title="Delete Location"
                         >
                           <Trash2 className="lucide w-3.5 h-3.5" />
@@ -1183,17 +1219,17 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredCarriers.map((car) => (
-                  <tr key={car.id} className="hover:bg-slate-800/30">
+                  <tr key={car.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="flex items-center gap-1.5 font-mono font-bold text-indigo-400 text-xs">
+                      <div className="flex items-center gap-1.5 font-mono font-bold text-indigo-700 text-xs">
                         <span className="text-sm">{getCarrierTypeIcon(car.type)}</span>
                         <span>{car.scacCode}</span>
-                        <span className="text-[10px] text-slate-500">({car.carrierCode})</span>
+                        <span className="text-[10.5px] text-slate-500">({car.carrierCode})</span>
                       </div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-100 text-xs">{car.name}</div>
-                      <div className="text-[11px] text-slate-400">{car.country}</div>
+                      <div className="font-bold text-slate-900 text-xs">{car.name}</div>
+                      <div className="text-[11px] text-slate-500">{car.country}</div>
                     </td>
                     <td>
                       <span
@@ -1215,19 +1251,19 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       <span className="gf-badge gf-badge-gray text-[10px]">{car.alliance}</span>
                     </td>
                     <td>
-                      <div className="font-mono text-xs text-slate-200">{car.fleetTEU || 'N/A'}</div>
+                      <div className="font-mono text-xs text-slate-800 font-semibold">{car.fleetTEU || 'N/A'}</div>
                     </td>
                     <td>
-                      <div className="text-xs text-slate-300 font-mono">{car.bookingEmail}</div>
+                      <div className="text-xs text-slate-700 font-mono">{car.bookingEmail}</div>
                       {car.trackingApiEndpoint && (
-                        <div className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
+                        <div className="text-[10.5px] text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
                           <CheckCircle2 className="lucide w-3 h-3" />
                           <span>Live API Webhook</span>
                         </div>
                       )}
                     </td>
                     <td>
-                      <div className="text-xs text-slate-300 max-w-[160px] truncate" title={car.supportedEquipment.join(', ')}>
+                      <div className="text-xs text-slate-700 max-w-[160px] truncate" title={car.supportedEquipment.join(', ')}>
                         {car.supportedEquipment.join(', ')}
                       </div>
                     </td>
@@ -1245,7 +1281,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       <div className="flex items-center justify-end gap-1">
                         <button
                           onClick={() => handleOpenCarrierModal(car)}
-                          className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-indigo-400 rounded-lg"
+                          className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-indigo-700 rounded-md transition-colors"
                           title="Edit Carrier"
                         >
                           <Edit2 className="lucide w-3.5 h-3.5" />
@@ -1261,7 +1297,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                               onConfirm: (reason) => deleteMasterCarrier(car.id, reason),
                             })
                           }
-                          className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg"
+                          className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-md transition-colors"
                           title="Delete Carrier"
                         >
                           <Trash2 className="lucide w-3.5 h-3.5" />
@@ -1296,17 +1332,17 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredEquipment.map((eq) => (
-                  <tr key={eq.id} className="hover:bg-slate-800/30">
+                  <tr key={eq.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="flex items-center gap-1.5 font-mono font-bold text-emerald-400 text-xs">
+                      <div className="flex items-center gap-1.5 font-mono font-bold text-emerald-700 text-xs">
                         <span className="text-sm">{getEquipmentCategoryIcon(eq.category)}</span>
                         <span>{eq.isoCode}</span>
                         <span className="text-[10px] text-slate-500 font-normal">({eq.isoGroup})</span>
                       </div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-100 text-xs">{eq.name}</div>
-                      <div className="text-[11px] text-slate-400 max-w-[260px] truncate">{eq.remarks}</div>
+                      <div className="font-bold text-slate-900 text-xs">{eq.name}</div>
+                      <div className="text-[11px] text-slate-500 max-w-[260px] truncate">{eq.remarks}</div>
                     </td>
                     <td>
                       <span className="gf-badge gf-badge-gray text-[10px] flex items-center gap-1">
@@ -1315,7 +1351,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       </span>
                     </td>
                     <td>
-                      <div className="font-mono text-xs text-slate-200">
+                      <div className="font-mono text-xs text-slate-900">
                         <b>{eq.maxPayloadKg.toLocaleString()} kg</b> payload
                       </div>
                       <div className="font-mono text-[10px] text-slate-500">
@@ -1323,10 +1359,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       </div>
                     </td>
                     <td>
-                      <div className="font-mono font-bold text-xs text-slate-200">{eq.volumeCbm} CBM</div>
+                      <div className="font-mono font-bold text-xs text-slate-900">{eq.volumeCbm} CBM</div>
                     </td>
                     <td>
-                      <div className="font-mono text-xs text-slate-300">{eq.lengthFt} ft × {eq.heightFt} ft</div>
+                      <div className="font-mono text-xs text-slate-700">{eq.lengthFt} ft × {eq.heightFt} ft</div>
                     </td>
                     <td>
                       <div className="flex items-center gap-1 flex-wrap">
@@ -1350,7 +1386,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                             onConfirm: (reason) => deleteMasterEquipment(eq.id, reason),
                           })
                         }
-                        className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg"
+                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-md transition-colors"
                       >
                         <Trash2 className="lucide w-3.5 h-3.5" />
                       </button>
@@ -1381,18 +1417,18 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredCommodities.map((cmd) => (
-                  <tr key={cmd.id} className="hover:bg-slate-800/30">
+                  <tr key={cmd.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="font-mono font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                      <div className="font-mono font-bold text-amber-700 text-xs flex items-center gap-1.5">
                         <span className="text-sm">{cmd.isHazardous ? '⚠️' : '📦'}</span>
                         <span>{cmd.hsCode}</span>
                       </div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-100 text-xs">{cmd.name}</div>
+                      <div className="font-bold text-slate-900 text-xs">{cmd.name}</div>
                     </td>
                     <td>
-                      <div className="font-mono text-xs text-slate-400">
+                      <div className="font-mono text-xs text-slate-500">
                         Ch. {cmd.chapter} · {cmd.heading}
                       </div>
                     </td>
@@ -1404,7 +1440,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                             <span>{cmd.imoClass || 'Hazardous Cargo'}</span>
                           </span>
                           {cmd.unNumber && (
-                            <div className="font-mono text-[10px] text-amber-400 mt-0.5">{cmd.unNumber}</div>
+                            <div className="font-mono text-[10px] text-amber-700 mt-0.5">{cmd.unNumber}</div>
                           )}
                         </div>
                       ) : (
@@ -1412,7 +1448,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       )}
                     </td>
                     <td>
-                      <div className="text-xs text-slate-300 max-w-[240px] truncate" title={cmd.storageReqs}>
+                      <div className="text-xs text-slate-700 max-w-[240px] truncate" title={cmd.storageReqs}>
                         {cmd.storageReqs || 'Standard dry cargo container stowage'}
                       </div>
                     </td>
@@ -1431,7 +1467,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                             onConfirm: (reason) => deleteMasterCommodity(cmd.id, reason),
                           })
                         }
-                        className="p-1.5 hover:bg-slate-800 text-slate-400 hover:text-rose-400 rounded-lg"
+                        className="p-1.5 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-md transition-colors"
                       >
                         <Trash2 className="lucide w-3.5 h-3.5" />
                       </button>
@@ -1464,15 +1500,15 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredIncoterms.map((inc) => (
-                  <tr key={inc.id} className="hover:bg-slate-800/30">
+                  <tr key={inc.id} className="hover:bg-slate-50">
                     <td>
-                      <span className="font-mono font-bold text-purple-400 text-xs px-2 py-1 bg-purple-950/40 rounded border border-purple-800/50 flex items-center gap-1 w-fit">
+                      <span className="font-mono font-bold text-purple-800 text-xs px-2 py-1 bg-purple-50 rounded border border-purple-200 flex items-center gap-1 w-fit">
                         <span>⚖️</span>
                         <span>{inc.code}</span>
                       </span>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-100 text-xs">{inc.name}</div>
+                      <div className="font-bold text-slate-900 text-xs">{inc.name}</div>
                     </td>
                     <td>
                       <span className="gf-badge gf-badge-gray text-[10px]">{inc.category}</span>
@@ -1483,18 +1519,18 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       </span>
                     </td>
                     <td>
-                      <span className="text-xs text-slate-300 font-mono">{inc.costOriginTHC}</span>
+                      <span className="text-xs text-slate-700 font-mono">{inc.costOriginTHC}</span>
                     </td>
                     <td>
-                      <span className="text-xs text-slate-300 font-mono">{inc.costDestTHC}</span>
+                      <span className="text-xs text-slate-700 font-mono">{inc.costDestTHC}</span>
                     </td>
                     <td>
-                      <div className="text-[11px] text-slate-300 font-mono">
+                      <div className="text-[11px] text-slate-600 font-mono">
                         Exp: {inc.costCustomsExport} · Imp: {inc.costCustomsImport}
                       </div>
                     </td>
                     <td>
-                      <div className="text-xs text-slate-300 max-w-[220px] truncate" title={inc.riskTransferPoint}>
+                      <div className="text-xs text-slate-700 max-w-[220px] truncate" title={inc.riskTransferPoint}>
                         {inc.riskTransferPoint}
                       </div>
                     </td>
@@ -1526,10 +1562,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </thead>
               <tbody>
                 {filteredTax.map((tax) => (
-                  <tr key={tax.id} className="hover:bg-slate-800/30">
+                  <tr key={tax.id} className="hover:bg-slate-50">
                     <td>
-                      <div className="font-mono font-bold text-rose-400 text-xs flex items-center gap-1.5">
-                        <Receipt className="lucide w-3.5 h-3.5 text-rose-500" />
+                      <div className="font-mono font-bold text-rose-700 text-xs flex items-center gap-1.5">
+                        <Receipt className="lucide w-3.5 h-3.5 text-rose-600" />
                         <span>SAC {tax.sacCode}</span>
                       </div>
                     </td>
@@ -1537,10 +1573,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       <span className="gf-badge gf-badge-gray text-[10px]">{tax.category}</span>
                     </td>
                     <td>
-                      <div className="text-xs text-slate-200 max-w-[320px]">{tax.description}</div>
+                      <div className="text-xs text-slate-800 max-w-[320px]">{tax.description}</div>
                     </td>
                     <td>
-                      <span className="font-mono font-bold text-xs text-white px-2 py-0.5 bg-rose-950/50 border border-rose-800/50 rounded">
+                      <span className="font-mono font-bold text-xs text-rose-800 px-2 py-0.5 bg-rose-50 border border-rose-200 rounded">
                         {tax.standardGSTRate}% GST
                       </span>
                     </td>
@@ -1565,10 +1601,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
       {/* MODAL: ADD / EDIT LOCATION */}
       {isLocationModalOpen && (
         <div className="gf-modal-overlay" onClick={() => setIsLocationModalOpen(false)}>
-          <div className="gf-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="gf-modal-header">
               <div className="flex items-center gap-2">
-                <Anchor className="lucide w-5 h-5 text-sky-400" />
+                <Anchor className="lucide w-5 h-5 text-sky-600" />
                 <h3 className="gf-modal-title">{editingLocation ? 'Edit Master Location' : 'Add Master Location'}</h3>
               </div>
               <button onClick={() => setIsLocationModalOpen(false)} className="gf-modal-close-btn">
@@ -1577,29 +1613,29 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
             </div>
 
             <form onSubmit={handleSaveLocation}>
-              <div className="gf-modal-body space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="gf-modal-body space-y-3.5 max-h-[72vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">UN/LOCODE (e.g. INNSA, NLRTM) *</label>
+                    <label className="gf-form-label">UN/LOCODE (e.g. INNSA, NLRTM) *</label>
                     <input
                       type="text"
                       required
                       maxLength={5}
                       value={locationForm.unLocode}
                       onChange={(e) => setLocationForm({ ...locationForm, unLocode: e.target.value.toUpperCase() })}
-                      className="gf-input font-mono font-bold text-xs uppercase"
+                      className="gf-input font-mono font-bold uppercase"
                       placeholder="INNSA"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Location / Port Name *</label>
+                    <label className="gf-form-label">Location / Port Name *</label>
                     <input
                       type="text"
                       required
                       value={locationForm.name}
                       onChange={(e) => setLocationForm({ ...locationForm, name: e.target.value })}
-                      className="gf-input text-xs"
+                      className="gf-input"
                       placeholder="Nhava Sheva (JNPT)"
                     />
                   </div>
@@ -1607,98 +1643,98 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Country *</label>
+                    <label className="gf-form-label">Country *</label>
                     <input
                       type="text"
                       required
                       value={locationForm.country}
                       onChange={(e) => setLocationForm({ ...locationForm, country: e.target.value })}
-                      className="gf-input text-xs"
+                      className="gf-input"
                       placeholder="India"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">2-Letter ISO Code *</label>
+                    <label className="gf-form-label">2-Letter ISO Code *</label>
                     <input
                       type="text"
                       required
                       maxLength={2}
                       value={locationForm.countryCode}
                       onChange={(e) => setLocationForm({ ...locationForm, countryCode: e.target.value.toUpperCase() })}
-                      className="gf-input font-mono text-xs uppercase"
+                      className="gf-input font-mono uppercase"
                       placeholder="IN"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Location Type *</label>
+                    <label className="gf-form-label">Location Type *</label>
                     <select
                       value={locationForm.type}
                       onChange={(e) => setLocationForm({ ...locationForm, type: e.target.value as LocationType })}
-                      className="gf-select text-xs"
+                      className="gf-select"
                     >
-                      <option value="Seaport">Seaport</option>
-                      <option value="Inland Container Depot (ICD)">Inland Depot (ICD)</option>
-                      <option value="Container Freight Station (CFS)">CFS</option>
-                      <option value="River Port">River Port</option>
-                      <option value="Airport">Airport</option>
-                      <option value="Land Border">Land Border</option>
+                      <option value="Seaport">⚓ Seaport</option>
+                      <option value="Inland Container Depot (ICD)">🗺️ Inland Depot (ICD)</option>
+                      <option value="Container Freight Station (CFS)">🗺️ CFS Station</option>
+                      <option value="River Port">⚓ River Port</option>
+                      <option value="Airport">✈️ Airport</option>
+                      <option value="Land Border">🛣️ Land Border</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Region / State / Hinterland</label>
+                  <label className="gf-form-label">Region / State / Hinterland</label>
                   <input
                     type="text"
                     value={locationForm.region}
                     onChange={(e) => setLocationForm({ ...locationForm, region: e.target.value })}
-                    className="gf-input text-xs"
+                    className="gf-input"
                     placeholder="Maharashtra / West Coast"
                   />
                 </div>
 
                 {/* Capabilities Checkboxes */}
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Operational Capabilities (POR/POL/POD/FPOD)</label>
-                  <div className="grid grid-cols-4 gap-2 bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-                    <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                  <label className="gf-form-label">Operational Capabilities (POR/POL/POD/FPOD)</label>
+                  <div className="grid grid-cols-4 gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={locationForm.isPOR}
                         onChange={(e) => setLocationForm({ ...locationForm, isPOR: e.target.checked })}
-                        className="rounded border-slate-700 text-sky-500"
+                        className="rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                       />
                       <span>POR (Receipt)</span>
                     </label>
 
-                    <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={locationForm.isPOL}
                         onChange={(e) => setLocationForm({ ...locationForm, isPOL: e.target.checked })}
-                        className="rounded border-slate-700 text-emerald-500"
+                        className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                       />
                       <span>POL (Loading)</span>
                     </label>
 
-                    <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={locationForm.isPOD}
                         onChange={(e) => setLocationForm({ ...locationForm, isPOD: e.target.checked })}
-                        className="rounded border-slate-700 text-amber-500"
+                        className="rounded border-slate-300 text-amber-600 focus:ring-amber-500"
                       />
                       <span>POD (Discharge)</span>
                     </label>
 
-                    <label className="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={locationForm.isFPOD}
                         onChange={(e) => setLocationForm({ ...locationForm, isFPOD: e.target.checked })}
-                        className="rounded border-slate-700 text-purple-500"
+                        className="rounded border-slate-300 text-purple-600 focus:ring-purple-500"
                       />
                       <span>FPOD (Delivery)</span>
                     </label>
@@ -1706,72 +1742,72 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Terminal Berths (Comma separated)</label>
+                  <label className="gf-form-label">Terminal Berths (Comma separated)</label>
                   <input
                     type="text"
                     value={locationForm.terminals}
                     onChange={(e) => setLocationForm({ ...locationForm, terminals: e.target.value })}
-                    className="gf-input text-xs"
+                    className="gf-input"
                     placeholder="NSICT, NSIGT, BMCT, APMT Mumbai"
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Latitude</label>
+                    <label className="gf-form-label">Latitude</label>
                     <input
                       type="number"
                       step="any"
                       value={locationForm.lat}
                       onChange={(e) => setLocationForm({ ...locationForm, lat: parseFloat(e.target.value) || 0 })}
-                      className="gf-input font-mono text-xs"
+                      className="gf-input font-mono"
                       placeholder="18.9499"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Longitude</label>
+                    <label className="gf-form-label">Longitude</label>
                     <input
                       type="number"
                       step="any"
                       value={locationForm.lng}
                       onChange={(e) => setLocationForm({ ...locationForm, lng: parseFloat(e.target.value) || 0 })}
-                      className="gf-input font-mono text-xs"
+                      className="gf-input font-mono"
                       placeholder="72.9515"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Customs Zone Code</label>
+                    <label className="gf-form-label">Customs Zone Code</label>
                     <input
                       type="text"
                       value={locationForm.customsZoneCode}
                       onChange={(e) => setLocationForm({ ...locationForm, customsZoneCode: e.target.value })}
-                      className="gf-input font-mono text-xs"
+                      className="gf-input font-mono"
                       placeholder="INNSA1"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Remarks & Maritime Notes</label>
+                  <label className="gf-form-label">Remarks & Maritime Notes</label>
                   <textarea
                     rows={2}
                     value={locationForm.remarks}
                     onChange={(e) => setLocationForm({ ...locationForm, remarks: e.target.value })}
-                    className="gf-textarea text-xs"
+                    className="gf-textarea"
                     placeholder="Premier Indian container gateway with direct rail links..."
                   />
                 </div>
 
-                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-lg">
-                  <label className="text-xs font-bold text-amber-300 block mb-1">Audited Justification Reason *</label>
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <label className="text-xs font-bold text-amber-900 block mb-1">Audited Justification Reason *</label>
                   <input
                     type="text"
                     required
                     value={locationForm.auditReason}
                     onChange={(e) => setLocationForm({ ...locationForm, auditReason: e.target.value })}
-                    className="gf-input text-xs"
+                    className="gf-input"
                     placeholder="Statutory update of master port registry"
                   />
                 </div>
@@ -1793,10 +1829,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
       {/* MODAL: ADD / EDIT CARRIER */}
       {isCarrierModalOpen && (
         <div className="gf-modal-overlay" onClick={() => setIsCarrierModalOpen(false)}>
-          <div className="gf-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="gf-modal-header">
               <div className="flex items-center gap-2">
-                <Ship className="lucide w-5 h-5 text-indigo-400" />
+                <Ship className="lucide w-5 h-5 text-indigo-600" />
                 <h3 className="gf-modal-title">{editingCarrier ? 'Edit Master Carrier' : 'Add Master Carrier'}</h3>
               </div>
               <button onClick={() => setIsCarrierModalOpen(false)} className="gf-modal-close-btn">
@@ -1805,29 +1841,29 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
             </div>
 
             <form onSubmit={handleSaveCarrier}>
-              <div className="gf-modal-body space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="gf-modal-body space-y-3.5 max-h-[72vh] overflow-y-auto">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Carrier Name *</label>
+                    <label className="gf-form-label">Carrier Name *</label>
                     <input
                       type="text"
                       required
                       value={carrierForm.name}
                       onChange={(e) => setCarrierForm({ ...carrierForm, name: e.target.value })}
-                      className="gf-input text-xs"
+                      className="gf-input"
                       placeholder="Mediterranean Shipping Company (MSC)"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">SCAC Code *</label>
+                    <label className="gf-form-label">SCAC Code *</label>
                     <input
                       type="text"
                       required
                       maxLength={4}
                       value={carrierForm.scacCode}
                       onChange={(e) => setCarrierForm({ ...carrierForm, scacCode: e.target.value.toUpperCase() })}
-                      className="gf-input font-mono text-xs uppercase font-bold"
+                      className="gf-input font-mono uppercase font-bold"
                       placeholder="MSCU"
                     />
                   </div>
@@ -1835,25 +1871,25 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
 
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Carrier Type *</label>
+                    <label className="gf-form-label">Carrier Type *</label>
                     <select
                       value={carrierForm.type}
                       onChange={(e) => setCarrierForm({ ...carrierForm, type: e.target.value as CarrierType })}
-                      className="gf-select text-xs"
+                      className="gf-select"
                     >
-                      <option value="MLO">MLO (Main Line Operator)</option>
-                      <option value="NVOCC">NVOCC</option>
-                      <option value="Feeder Operator">Feeder Operator</option>
-                      <option value="Rail / Intermodal">Rail / Intermodal</option>
+                      <option value="MLO">🚢 MLO (Main Line Operator)</option>
+                      <option value="NVOCC">📦 NVOCC</option>
+                      <option value="Feeder Operator">🛥️ Feeder Operator</option>
+                      <option value="Rail / Intermodal">🚆 Rail / Intermodal</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Carrier Alliance *</label>
+                    <label className="gf-form-label">Carrier Alliance *</label>
                     <select
                       value={carrierForm.alliance}
                       onChange={(e) => setCarrierForm({ ...carrierForm, alliance: e.target.value as CarrierAlliance })}
-                      className="gf-select text-xs"
+                      className="gf-select"
                     >
                       <option value="Gemini Cooperation">Gemini Cooperation</option>
                       <option value="Ocean Alliance">Ocean Alliance</option>
@@ -1865,13 +1901,13 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Headquarters Country *</label>
+                    <label className="gf-form-label">Headquarters Country *</label>
                     <input
                       type="text"
                       required
                       value={carrierForm.country}
                       onChange={(e) => setCarrierForm({ ...carrierForm, country: e.target.value })}
-                      className="gf-input text-xs"
+                      className="gf-input"
                       placeholder="Switzerland"
                     />
                   </div>
@@ -1879,59 +1915,59 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Fleet / Managed TEU</label>
+                    <label className="gf-form-label">Fleet / Managed TEU</label>
                     <input
                       type="text"
                       value={carrierForm.fleetTEU}
                       onChange={(e) => setCarrierForm({ ...carrierForm, fleetTEU: e.target.value })}
-                      className="gf-input text-xs font-mono"
+                      className="gf-input font-mono"
                       placeholder="5,850,000 TEU"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-slate-300 block mb-1">Booking Desk Email *</label>
+                    <label className="gf-form-label">Booking Desk Email *</label>
                     <input
                       type="email"
                       required
                       value={carrierForm.bookingEmail}
                       onChange={(e) => setCarrierForm({ ...carrierForm, bookingEmail: e.target.value })}
-                      className="gf-input text-xs font-mono"
+                      className="gf-input font-mono"
                       placeholder="ocean.desk@msc.com"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Live Tracking Webhook / API URL</label>
+                  <label className="gf-form-label">Live Tracking Webhook / API URL</label>
                   <input
                     type="url"
                     value={carrierForm.trackingApiEndpoint}
                     onChange={(e) => setCarrierForm({ ...carrierForm, trackingApiEndpoint: e.target.value })}
-                    className="gf-input text-xs font-mono"
+                    className="gf-input font-mono"
                     placeholder="https://api.msc.com/v1/tracking"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-300 block mb-1">Supported Equipment Types</label>
+                  <label className="gf-form-label">Supported Equipment Types</label>
                   <input
                     type="text"
                     value={carrierForm.supportedEquipment}
                     onChange={(e) => setCarrierForm({ ...carrierForm, supportedEquipment: e.target.value })}
-                    className="gf-input text-xs"
+                    className="gf-input"
                     placeholder="20DV, 40DV, 40HC, 45HC, 20RF, 40HR, ISO Tank"
                   />
                 </div>
 
-                <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-lg">
-                  <label className="text-xs font-bold text-amber-300 block mb-1">Audited Justification Reason *</label>
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <label className="text-xs font-bold text-amber-900 block mb-1">Audited Justification Reason *</label>
                   <input
                     type="text"
                     required
                     value={carrierForm.auditReason}
                     onChange={(e) => setCarrierForm({ ...carrierForm, auditReason: e.target.value })}
-                    className="gf-input text-xs"
+                    className="gf-input"
                     placeholder="Master liner registration for spot rate benchmark"
                   />
                 </div>
@@ -1953,10 +1989,10 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
       {/* MODAL: BULK INGESTION */}
       {isBulkModalOpen && (
         <div className="gf-modal-overlay" onClick={() => setIsBulkModalOpen(false)}>
-          <div className="gf-modal max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="gf-modal-header">
               <div className="flex items-center gap-2">
-                <Upload className="lucide w-5 h-5 text-sky-400" />
+                <Upload className="lucide w-5 h-5 text-sky-600" />
                 <h3 className="gf-modal-title">Bulk Ingest Master Data (Locations & Carriers)</h3>
               </div>
               <button onClick={() => setIsBulkModalOpen(false)} className="gf-modal-close-btn">
@@ -1964,52 +2000,56 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
               </button>
             </div>
 
-            <div className="gf-modal-body space-y-4">
+            <div className="gf-modal-body space-y-3.5">
               {/* Entity Selector Tabs */}
-              <div className="flex items-center gap-2 p-1 bg-slate-900 border border-slate-800 rounded-lg">
+              <div className="flex items-center gap-1.5 p-1 bg-slate-100 border border-slate-200 rounded-lg">
                 <button
                   type="button"
                   onClick={() => { setBulkTemplateType('locations'); setBulkText(''); }}
-                  className={`flex-1 py-1.5 px-3 rounded text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    bulkTemplateType === 'locations' ? 'bg-sky-500/20 text-sky-400 border border-sky-500/40' : 'text-slate-400 hover:text-slate-200'
+                  className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    bulkTemplateType === 'locations'
+                      ? 'bg-white text-sky-800 border border-slate-200 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Anchor className="lucide w-3.5 h-3.5" />
+                  <Anchor className="lucide w-3.5 h-3.5 text-sky-600" />
                   <span>Locations & Ports (POR / POL / POD / FPOD)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => { setBulkTemplateType('carriers'); setBulkText(''); }}
-                  className={`flex-1 py-1.5 px-3 rounded text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    bulkTemplateType === 'carriers' ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/40' : 'text-slate-400 hover:text-slate-200'
+                  className={`flex-1 py-2 px-3 rounded-md text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    bulkTemplateType === 'carriers'
+                      ? 'bg-white text-indigo-800 border border-slate-200 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  <Ship className="lucide w-3.5 h-3.5" />
+                  <Ship className="lucide w-3.5 h-3.5 text-indigo-600" />
                   <span>Carriers & Liners (MLO / NVOCC / Feeder)</span>
                 </button>
               </div>
 
               {/* Template Download & File Upload Strip */}
-              <div className="flex items-center justify-between gap-2 p-2.5 bg-slate-900/60 border border-slate-800 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold text-slate-300">Templates:</span>
+              <div className="flex flex-wrap items-center justify-between gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-slate-700">Templates:</span>
                   <button
                     type="button"
                     onClick={() => handleDownloadTemplate(bulkTemplateType, 'csv')}
-                    className="gf-btn gf-btn-secondary py-1 px-2.5 text-[11px]"
+                    className="gf-btn gf-btn-secondary text-xs"
                     title="Download ready-to-fill CSV template"
                   >
-                    <Download className="lucide w-3.5 h-3.5 text-emerald-400" />
+                    <Download className="lucide w-3.5 h-3.5 text-emerald-600" />
                     <span>Download CSV Template</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleDownloadTemplate(bulkTemplateType, 'json')}
-                    className="gf-btn gf-btn-secondary py-1 px-2.5 text-[11px]"
+                    className="gf-btn gf-btn-secondary text-xs"
                     title="Download ready-to-fill JSON template"
                   >
-                    <Download className="lucide w-3.5 h-3.5 text-sky-400" />
+                    <Download className="lucide w-3.5 h-3.5 text-sky-600" />
                     <span>Download JSON Template</span>
                   </button>
                 </div>
@@ -2025,24 +2065,24 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                   <button
                     type="button"
                     onClick={() => document.getElementById('bulk-file-upload-input')?.click()}
-                    className="gf-btn gf-btn-secondary py-1 px-2.5 text-[11px]"
+                    className="gf-btn gf-btn-secondary text-xs"
                     title="Choose CSV or JSON file from computer"
                   >
-                    <FileSpreadsheet className="lucide w-3.5 h-3.5 text-amber-400" />
+                    <FileSpreadsheet className="lucide w-3.5 h-3.5 text-amber-600" />
                     <span>Upload File (.csv / .json)</span>
                   </button>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs text-slate-300 block mb-1">
+                <label className="gf-form-label">
                   Paste records (CSV or JSON Array) for <b>{bulkTemplateType === 'locations' ? 'Master Locations' : 'Master Carriers'}</b>:
                 </label>
                 <textarea
-                  rows={7}
+                  rows={6}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
-                  className="gf-textarea font-mono text-xs"
+                  className="gf-textarea font-mono text-xs w-full"
                   placeholder={
                     bulkTemplateType === 'locations'
                       ? `UNLOCODE,Port Name,Country,CountryCode,Type,Region,isPOR,isPOL,isPOD,isFPOD,Terminals,Latitude,Longitude,CustomsZone,Remarks\nINNSA,Nhava Sheva (JNPT),India,IN,Seaport,Maharashtra,true,true,true,true,"NSICT; NSIGT; BMCT",18.9499,72.9515,INNSA1,Premier container gateway\nINTKD,Tughlakabad ICD,India,IN,Inland Container Depot (ICD),Delhi NCR,true,false,false,true,"CONCOR Hub",28.5089,77.2831,INTKD6,Asia largest dry port`
@@ -2051,20 +2091,20 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                 />
               </div>
 
-              <div className="p-3 bg-amber-950/30 border border-amber-800/40 rounded-lg">
-                <label className="text-xs font-bold text-amber-300 block mb-1">Audit Ledger Reason *</label>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <label className="text-xs font-bold text-amber-900 block mb-1">Audit Ledger Reason *</label>
                 <input
                   type="text"
                   required
                   value={bulkReason}
                   onChange={(e) => setBulkReason(e.target.value)}
-                  className="gf-input text-xs"
+                  className="gf-input"
                   placeholder={`Bulk ingestion of ${bulkTemplateType === 'locations' ? 'UN/LOCODE location' : 'carrier profile'} records`}
                 />
               </div>
 
               {bulkReport && (
-                <div className="p-3 bg-slate-900 border border-slate-700 rounded-lg text-xs text-sky-300">
+                <div className="p-3 bg-sky-50 border border-sky-200 rounded-lg text-xs font-semibold text-sky-900">
                   {bulkReport}
                 </div>
               )}

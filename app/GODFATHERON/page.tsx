@@ -19,7 +19,7 @@ import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 
 export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
-  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
+  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator, operatorsList } = useGodfatherAuth();
 
   // Stage flow: credentials → mfa_challenge → success
   const [stage, setStage] = useState<'credentials' | 'mfa_challenge' | 'success'>('credentials');
@@ -317,6 +317,57 @@ export default function DedicatedGodfatherLoginPage() {
               <span>Authenticate &amp; Request MFA Token</span>
               <ArrowRight className="lucide w-4 h-4" />
             </button>
+
+            {/* Quick Test Operators */}
+            <div className="pt-3 border-t border-slate-800">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  Quick Switch Test Operators
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono">1-Click Fast Login</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {operatorsList.slice(0, 4).map((op) => (
+                  <div
+                    key={op.uid}
+                    className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px]"
+                  >
+                    <div className="font-bold text-slate-200 truncate">{op.displayName.split(' ')[0]}</div>
+                    <div className="text-[9.5px] text-slate-400 font-mono truncate mb-1.5">{op.email}</div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEmail(op.email);
+                          setPassword('SuperSecretPass2026!');
+                          setErrorMessage('');
+                        }}
+                        className="flex-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[9.5px] text-slate-300 font-medium"
+                      >
+                        Fill
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setEmail(op.email);
+                          setPassword('SuperSecretPass2026!');
+                          loginOperator(op.email, 'SuperSecretPass2026!', '884210');
+                          await fetch('/api/godfather/session', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ operatorEmail: op.email, operatorUid: op.uid, role: 'godfather_owner' }),
+                          }).catch(() => {});
+                          router.push('/godfather');
+                        }}
+                        className="flex-1 py-0.5 rounded bg-sky-600 hover:bg-sky-500 text-[9.5px] text-white font-bold"
+                      >
+                        Enter ⚡
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </form>
         )}
 

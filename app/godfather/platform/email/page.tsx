@@ -17,6 +17,9 @@ import {
   ShieldCheck,
   Server,
   Layers,
+  Edit2,
+  X,
+  Settings,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
@@ -37,6 +40,18 @@ export default function EmailServicePage() {
   const [testTemplate, setTestTemplate] = useState('TMPL_OTP_CHALLENGE');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
+
+  // SMTP Settings Modal
+  const [isSmtpConfigModalOpen, setIsSmtpConfigModalOpen] = useState(false);
+  const [smtpForm, setSmtpForm] = useState({
+    host: 'smtp.zoho.in',
+    port: 465,
+    encryption: 'SSL/TLS (Enforced)',
+    senderMailbox: 'password@fr8x.in',
+    supportMailbox: 'support@fr8x.in',
+    dailyQuota: 5000,
+    retryPolicy: '3 Exponential Backoff Retries',
+  });
 
   // SMTP Health Check State
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
@@ -99,6 +114,7 @@ export default function EmailServicePage() {
       alert('Forbidden: Test email send is restricted to godfather_owner and godfather_operations.');
       return;
     }
+    setTestSuccessMessage(null);
     setIsTestEmailOpen(true);
   };
 
@@ -106,7 +122,6 @@ export default function EmailServicePage() {
     e.preventDefault();
     if (!testRecipient || !testRecipient.includes('@')) return;
 
-    // High-risk action: Requires Step-up verification
     const verified = await requestStepUpVerification(`Dispatch Zoho SMTP Test Email to ${testRecipient}`);
     if (!verified) return;
 
@@ -120,15 +135,29 @@ export default function EmailServicePage() {
         setIsSendingTest(true);
         try {
           const res = await sendTestEmail(testRecipient, testTemplate, reason);
-          setTestSuccessMessage(`Test email dispatched successfully! Correlation ID: ${res.correlationId}`);
-          setTimeout(() => {
-            setIsTestEmailOpen(false);
-            setTestSuccessMessage(null);
-          }, 3000);
+          setTestSuccessMessage(`✓ Test email dispatched successfully! Correlation ID: ${res.correlationId}`);
         } finally {
           setIsSendingTest(false);
           setModalConfig(null);
         }
+      },
+    });
+  };
+
+  const handleSaveSmtpConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const verified = await requestStepUpVerification('Update Zoho SMTP Dispatch Parameters');
+    if (!verified) return;
+
+    setModalConfig({
+      isOpen: true,
+      title: 'Save Zoho Email Relay Configuration',
+      actionType: 'ZOHO_SMTP_CONFIG_UPDATED',
+      targetLabel: `${smtpForm.host}:${smtpForm.port}`,
+      targetId: 'CFG-ZOHO-SMTP',
+      onConfirm: () => {
+        setIsSmtpConfigModalOpen(false);
+        setModalConfig(null);
       },
     });
   };
@@ -140,14 +169,14 @@ export default function EmailServicePage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM INFRASTRUCTURE</span>
-            <span className="gf-badge gf-badge-green text-[11px] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              Zoho Mail Connected (smtp.zoho.in:465)
+            <span className="gf-badge gf-badge-green text-[11px] flex items-center gap-1 font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Zoho Mail Active (smtp.zoho.in:465)
             </span>
           </div>
           <h1 className="gf-page-title">Zoho Email Service & Delivery Governance</h1>
           <p className="gf-page-subtitle">
-            Manage official mailboxes (password@, support@, tech@), inspect SMTP delivery logs, test deliverability, and audit versioned templates
+            Manage official mailboxes (password@, support@, tech@), inspect delivery logs, test SMTP handshake, and audit email templates.
           </p>
         </div>
 
@@ -155,12 +184,21 @@ export default function EmailServicePage() {
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
+            onClick={() => setIsSmtpConfigModalOpen(true)}
+            className="gf-btn gf-btn-secondary text-xs font-bold flex items-center gap-1.5 text-slate-700"
+          >
+            <Settings className="lucide w-3.5 h-3.5" />
+            <span>SMTP Settings</span>
+          </button>
+
+          <button
+            type="button"
             onClick={handleRunHealthCheck}
             disabled={isCheckingHealth}
-            className="gf-btn gf-btn-secondary text-xs font-bold flex items-center gap-1.5"
+            className="gf-btn gf-btn-secondary text-xs font-bold flex items-center gap-1.5 text-sky-700"
           >
             <RefreshCw className={`lucide w-3.5 h-3.5 ${isCheckingHealth ? 'animate-spin' : ''}`} />
-            Check SMTP Health
+            <span>Ping SMTP Health</span>
           </button>
 
           <button
@@ -169,7 +207,7 @@ export default function EmailServicePage() {
             className="gf-btn gf-btn-primary text-xs font-bold flex items-center gap-1.5"
           >
             <Send className="lucide w-3.5 h-3.5" />
-            Send Diagnostic Test
+            <span>Send Test Email</span>
           </button>
 
           <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-lg">
@@ -177,7 +215,9 @@ export default function EmailServicePage() {
               type="button"
               onClick={() => setActiveTab('mailboxes')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                activeTab === 'mailboxes' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
+                activeTab === 'mailboxes'
+                  ? 'bg-white text-sky-900 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Mailboxes ({mailboxes.length})
@@ -186,7 +226,9 @@ export default function EmailServicePage() {
               type="button"
               onClick={() => setActiveTab('logs')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                activeTab === 'logs' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
+                activeTab === 'logs'
+                  ? 'bg-white text-sky-900 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Delivery Logs ({emailLogs.length})
@@ -195,7 +237,9 @@ export default function EmailServicePage() {
               type="button"
               onClick={() => setActiveTab('templates')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
-                activeTab === 'templates' ? 'bg-white text-sky-900 shadow-xs border border-slate-200' : 'text-slate-600 hover:text-slate-900'
+                activeTab === 'templates'
+                  ? 'bg-white text-sky-900 shadow-xs border border-slate-200'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Email Templates ({templates.length})
@@ -209,15 +253,17 @@ export default function EmailServicePage() {
         <div className="gf-card p-4 text-xs text-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-sky-50/50 border-sky-200">
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-bold">SMTP Endpoint</span>
-            <span className="font-mono text-slate-900 font-bold">{smtpHealthData.host}:{smtpHealthData.port}</span>
+            <span className="font-mono text-slate-900 font-bold">
+              {smtpHealthData.host}:{smtpHealthData.port}
+            </span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-bold">Transport Layer</span>
-            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.tlsVersion} (SSL)</span>
+            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.tlsVersion}</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-bold">Authenticated Mailbox</span>
-            <span className="font-mono text-sky-700 font-bold">{smtpHealthData.user}</span>
+            <span className="font-mono text-sky-800 font-bold">{smtpHealthData.user}</span>
           </div>
           <div>
             <span className="text-slate-500 block text-[10px] uppercase font-bold">Handshake Latency</span>
@@ -237,7 +283,11 @@ export default function EmailServicePage() {
                     <span className="gf-badge gf-badge-blue text-[10px] font-mono font-bold">
                       OFFICIAL MAILBOX
                     </span>
-                    <span className={`gf-badge ${mb.status === 'healthy' ? 'gf-badge-green' : 'gf-badge-amber'} text-[10px] uppercase font-bold flex items-center gap-1`}>
+                    <span
+                      className={`gf-badge ${
+                        mb.status === 'healthy' ? 'gf-badge-green' : 'gf-badge-amber'
+                      } text-[10px] uppercase font-bold flex items-center gap-1`}
+                    >
                       <span className="w-1.5 h-1.5 rounded-full bg-current" />
                       {mb.status}
                     </span>
@@ -268,14 +318,18 @@ export default function EmailServicePage() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500">Sent Volume Today:</span>
-                      <span className="font-mono text-sky-700 font-bold">{mb.sentToday} / {mb.dailyLimit}</span>
+                      <span className="font-mono text-sky-800 font-bold">
+                        {mb.sentToday} / {mb.dailyLimit}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t border-slate-100 pt-3 text-[11px] text-slate-500 font-mono flex items-center justify-between">
                   <span>Last Send:</span>
-                  <span className="text-slate-800 font-semibold">{new Date(mb.lastSuccessfulSend).toLocaleTimeString()}</span>
+                  <span className="text-slate-800 font-semibold">
+                    {new Date(mb.lastSuccessfulSend).toLocaleTimeString()}
+                  </span>
                 </div>
               </div>
             ))}
@@ -285,9 +339,9 @@ export default function EmailServicePage() {
           <div className="gf-card p-4 bg-sky-50/50 border-sky-200 text-xs text-slate-700 flex items-start gap-3">
             <ShieldCheck className="lucide w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div className="space-y-1">
-              <strong className="text-slate-900 block font-bold">DNS & Deliverability Alignment</strong>
+              <strong className="text-slate-900 block font-bold">DNS &amp; Deliverability Alignment</strong>
               <p className="leading-relaxed">
-                SPF (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">v=spf1 include:zohomail.com -all</code>), DKIM (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">selector=zoho</code>), and DMARC (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">p=quarantine; rua=mailto:tech@fr8x.in</code>) are active. App passwords are cryptographic and stored strictly in Vercel KMS Environment Secrets.
+                SPF (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">v=spf1 include:zohomail.com -all</code>), DKIM (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">selector=zoho</code>), and DMARC (<code className="text-sky-800 font-mono bg-sky-100 px-1 py-0.5 rounded">p=quarantine; rua=mailto:tech@fr8x.in</code>) are active. App passwords reside strictly in secure server environment variables.
               </p>
             </div>
           </div>
@@ -329,9 +383,9 @@ export default function EmailServicePage() {
             <table className="gf-table text-xs">
               <thead>
                 <tr>
-                  <th>Log ID & Time</th>
-                  <th>Recipient & Entity Context</th>
-                  <th>Template ID & Subject</th>
+                  <th>Log ID &amp; Time</th>
+                  <th>Recipient &amp; Entity Context</th>
+                  <th>Template ID &amp; Subject</th>
                   <th>Delivery Provider</th>
                   <th>Correlation ID</th>
                   <th>Status</th>
@@ -339,10 +393,12 @@ export default function EmailServicePage() {
               </thead>
               <tbody>
                 {filteredLogs.map((log) => (
-                  <tr key={log.logId}>
+                  <tr key={log.logId} className="hover:bg-slate-50">
                     <td>
-                      <div className="font-mono font-bold text-sky-700">{log.logId}</div>
-                      <div className="text-[10px] text-slate-500 font-mono">{new Date(log.sentAt).toLocaleString()}</div>
+                      <div className="font-mono font-bold text-sky-800">{log.logId}</div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        {new Date(log.sentAt).toLocaleString()}
+                      </div>
                     </td>
                     <td>
                       <div className="font-semibold text-slate-900">{log.recipient}</div>
@@ -396,7 +452,9 @@ export default function EmailServicePage() {
                 <span className="gf-badge gf-badge-blue text-[10px] font-mono font-bold">
                   {tmpl.code}
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono font-semibold">V{tmpl.version}.0 · {tmpl.category.toUpperCase()}</span>
+                <span className="text-[10px] text-slate-500 font-mono font-semibold">
+                  V{tmpl.version}.0 · {tmpl.category.toUpperCase()}
+                </span>
               </div>
 
               <div>
@@ -420,69 +478,184 @@ export default function EmailServicePage() {
         </div>
       )}
 
-      {/* Test Send Modal */}
-      {isTestEmailOpen && (
-        <div className="gf-modal-overlay">
-          <div className="gf-modal-card">
+      {/* SMTP SETTINGS MODAL */}
+      {isSmtpConfigModalOpen && (
+        <div className="gf-modal-overlay" onClick={() => setIsSmtpConfigModalOpen(false)}>
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="gf-modal-header">
-              <div>
-                <h3 className="gf-modal-title">Send Diagnostic Test Email</h3>
-                <p className="gf-modal-subtitle">Direct dispatch via Zoho Secure SMTP (password@fr8x.in)</p>
+              <div className="flex items-center gap-2">
+                <Settings className="lucide w-5 h-5 text-sky-600" />
+                <h3 className="gf-modal-title">Configure Zoho SMTP Dispatch Settings</h3>
               </div>
-              <button onClick={() => setIsTestEmailOpen(false)} className="gf-modal-close-btn">
-                ✕
+              <button onClick={() => setIsSmtpConfigModalOpen(false)} className="gf-modal-close-btn">
+                <X className="lucide w-4 h-4" />
               </button>
             </div>
 
-            {testSuccessMessage ? (
-              <div className="p-6 text-center space-y-2">
-                <CheckCircle2 className="lucide w-8 h-8 text-emerald-600 mx-auto" />
-                <h4 className="font-bold text-slate-900 text-sm">Diagnostic Dispatched</h4>
-                <p className="text-xs text-slate-600">{testSuccessMessage}</p>
+            <form onSubmit={handleSaveSmtpConfig}>
+              <div className="gf-modal-body space-y-3.5 max-h-[72vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="gf-form-label">SMTP Host Server *</label>
+                    <input
+                      type="text"
+                      required
+                      value={smtpForm.host}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, host: e.target.value })}
+                      className="gf-input font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="gf-form-label">Port &amp; Encryption *</label>
+                    <input
+                      type="number"
+                      required
+                      value={smtpForm.port}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, port: Number(e.target.value) })}
+                      className="gf-input font-mono font-bold"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="gf-form-label">Primary Password Mailbox *</label>
+                    <input
+                      type="email"
+                      required
+                      value={smtpForm.senderMailbox}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, senderMailbox: e.target.value })}
+                      className="gf-input font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="gf-form-label">Support Dispatch Mailbox *</label>
+                    <input
+                      type="email"
+                      required
+                      value={smtpForm.supportMailbox}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, supportMailbox: e.target.value })}
+                      className="gf-input font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="gf-form-label">Daily Outbound Quota</label>
+                    <input
+                      type="number"
+                      value={smtpForm.dailyQuota}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, dailyQuota: Number(e.target.value) })}
+                      className="gf-input font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="gf-form-label">Retry Backoff Strategy</label>
+                    <input
+                      type="text"
+                      value={smtpForm.retryPolicy}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, retryPolicy: e.target.value })}
+                      className="gf-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700">
+                  <span className="font-bold text-slate-900 block mb-1">Zoho Secret Key Management:</span>
+                  Application specific passwords are encrypted via Google Cloud KMS and injected into process runtime environment variables.
+                </div>
               </div>
-            ) : (
-              <form onSubmit={handleExecuteTestSend} className="gf-modal-body space-y-4">
-                <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Destination Recipient</label>
+
+              <div className="gf-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setIsSmtpConfigModalOpen(false)}
+                  className="gf-btn gf-btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="gf-btn gf-btn-primary">
+                  Save SMTP Settings
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* TEST SEND MODAL */}
+      {isTestEmailOpen && (
+        <div className="gf-modal-overlay" onClick={() => setIsTestEmailOpen(false)}>
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="gf-modal-header">
+              <div className="flex items-center gap-2">
+                <Send className="lucide w-5 h-5 text-sky-600" />
+                <div>
+                  <h3 className="gf-modal-title">Send Diagnostic Test Email</h3>
+                  <p className="gf-modal-subtitle font-mono">
+                    Outbound Zoho Secure SMTP Relay (password@fr8x.in)
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setIsTestEmailOpen(false)} className="gf-modal-close-btn">
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleExecuteTestSend}>
+              <div className="gf-modal-body space-y-3.5">
+                <div>
+                  <label className="gf-form-label">Destination Recipient Mailbox *</label>
                   <input
                     type="email"
                     required
                     value={testRecipient}
                     onChange={(e) => setTestRecipient(e.target.value)}
-                    placeholder="tech@fr8x.in or operator@fr8x.in"
-                    className="gf-input w-full text-xs font-mono"
+                    placeholder="tech@fr8x.in"
+                    className="gf-input font-mono"
                   />
                 </div>
 
-                <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Template Profile</label>
+                <div>
+                  <label className="gf-form-label">Template Profile *</label>
                   <select
                     value={testTemplate}
                     onChange={(e) => setTestTemplate(e.target.value)}
-                    className="gf-select w-full text-xs font-mono font-bold"
+                    className="gf-select font-mono font-bold"
                   >
-                    <option value="TMPL_OTP_CHALLENGE">TMPL_OTP_CHALLENGE (Operator Verification)</option>
+                    <option value="TMPL_OTP_CHALLENGE">TMPL_OTP_CHALLENGE (Operator Verification OTP)</option>
                     <option value="TMPL_AUCTION_INVITE">TMPL_AUCTION_INVITE (Tender Broadcast)</option>
                     <option value="TMPL_BID_RESULT">TMPL_BID_RESULT (Award Notification)</option>
-                    <option value="TMPL_SECURITY_ALERT">TMPL_SECURITY_ALERT (Critical Alert)</option>
+                    <option value="TMPL_SECURITY_ALERT">TMPL_SECURITY_ALERT (Critical Security Alert)</option>
                   </select>
                 </div>
 
-                <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
-                  <button type="button" onClick={() => setIsTestEmailOpen(false)} className="gf-btn gf-btn-secondary text-xs">
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={isSendingTest}
-                    className="gf-btn gf-btn-primary text-xs font-bold flex items-center gap-1.5"
-                  >
-                    <Send className="lucide w-3.5 h-3.5" />
-                    <span>{isSendingTest ? 'Dispatching...' : 'Authorize & Send Test'}</span>
-                  </button>
-                </div>
-              </form>
-            )}
+                {testSuccessMessage && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-bold text-emerald-900 font-mono">
+                    {testSuccessMessage}
+                  </div>
+                )}
+              </div>
+
+              <div className="gf-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => setIsTestEmailOpen(false)}
+                  className="gf-btn gf-btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSendingTest}
+                  className="gf-btn gf-btn-primary font-bold flex items-center gap-1.5"
+                >
+                  <Send className="lucide w-3.5 h-3.5" />
+                  <span>{isSendingTest ? 'Relaying Message...' : 'Send Live Test Email'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

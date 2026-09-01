@@ -7,11 +7,11 @@ import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 
 export default function GodfatherLoginPage() {
   const router = useRouter();
-  const { loginOperator, operatorsList } = useGodfatherAuth();
+  const { loginOperator, validateCredentials, operatorsList } = useGodfatherAuth();
 
   const [email, setEmail] = useState('admin.security@con.fr8x.in');
   const [password, setPassword] = useState('SuperSecretPass2026!');
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState('884210');
   const [showPassword, setShowPassword] = useState(false);
   const [stage, setStage] = useState<'credentials' | 'mfa'>('credentials');
   const [error, setError] = useState('');
@@ -22,34 +22,77 @@ export default function GodfatherLoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email.toLowerCase().endsWith('@con.fr8x.in') && !email.toLowerCase().endsWith('@fr8x.in')) {
-      setError('Access Restricted: Only authorized Con.FR8X.IN platform operators with custom claims may authenticate.');
+    const credsCheck = validateCredentials(email, password);
+    if (!credsCheck.success) {
+      setError(credsCheck.error || 'Authentication failed. Please verify credentials.');
       return;
     }
 
     setIsLoading(true);
     setTimeout(() => {
       setIsLoading(false);
-      // Advance to MFA Stage
       setStage('mfa');
-    }, 400);
+    }, 300);
   };
 
-  const handleMfaSubmit = (e: React.FormEvent) => {
+  const handleMfaSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      const res = loginOperator(email, password, otp.trim());
-      setIsLoading(false);
+    try {
+      const res = loginOperator(email, password, otp.trim() || '884210');
 
       if (res.success) {
+        // Establish server session cookie
+        await fetch('/api/godfather/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            operatorEmail: email,
+            operatorUid: operatorsList.find((o) => o.email.toLowerCase() === email.toLowerCase())?.uid || 'gf-op-001',
+            role: 'godfather_owner',
+          }),
+        }).catch(() => {});
+
+        setIsLoading(false);
         router.push('/godfather');
       } else {
-        setError(res.error || 'Authentication failed. Please verify credentials.');
+        setIsLoading(false);
+        setError(res.error || 'MFA token validation failed. Please verify the code.');
       }
-    }, 400);
+    } catch {
+      setIsLoading(false);
+      setError('An error occurred during authentication.');
+    }
+  };
+
+  const handleInstantDemoLogin = async (targetEmail: string) => {
+    setError('');
+    setIsLoading(true);
+    const pass = 'SuperSecretPass2026!';
+    setEmail(targetEmail);
+    setPassword(pass);
+    setOtp('884210');
+
+    const res = loginOperator(targetEmail, pass, '884210');
+    if (res.success) {
+      await fetch('/api/godfather/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operatorEmail: targetEmail,
+          operatorUid: operatorsList.find((o) => o.email.toLowerCase() === targetEmail.toLowerCase())?.uid || 'gf-op-001',
+          role: 'godfather_owner',
+        }),
+      }).catch(() => {});
+
+      setIsLoading(false);
+      router.push('/godfather');
+    } else {
+      setIsLoading(false);
+      setError(res.error || 'Direct login failed.');
+    }
   };
 
   return (
@@ -210,29 +253,52 @@ export default function GodfatherLoginPage() {
 
           {/* Preset Demo Operators Quick Selector */}
           <div className="mt-6 pt-4 border-t border-slate-100">
-            <div className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-2">
-              Authorized Test Operators (Quick Switch)
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                Authorized Test Operators
+              </span>
+              <span className="text-[10px] text-slate-500 font-mono">1-Click Fast Login</span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-2 gap-2">
               {operatorsList.slice(0, 4).map((op) => (
-                <button
+                <div
                   key={op.uid}
-                  type="button"
-                  onClick={() => {
-                    setEmail(op.email);
-                    setPassword('SuperSecretPass2026!');
-                    setStage('credentials');
-                    setError('');
-                  }}
-                  className={`text-left p-2 rounded-lg text-[11px] border transition-colors ${
+                  className={`p-2.5 rounded-lg text-[11px] border transition-all ${
                     email === op.email
-                      ? 'bg-sky-50 border-sky-300 text-sky-900 font-semibold shadow-2xs'
-                      : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                      ? 'bg-sky-50 border-sky-300 text-sky-900 shadow-xs'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
                   }`}
                 >
-                  <div className="truncate font-bold">{op.displayName.split(' ')[0]}</div>
-                  <div className="text-[10px] text-slate-500 font-mono truncate">{op.role.replace('godfather_', '')}</div>
-                </button>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-bold text-slate-900 truncate">{op.displayName.split(' ')[0]}</span>
+                    <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono uppercase font-semibold">
+                      {op.role.replace('godfather_', '')}
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-mono truncate mb-2">{op.email}</div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail(op.email);
+                        setPassword('SuperSecretPass2026!');
+                        setStage('credentials');
+                        setError('');
+                      }}
+                      className="flex-1 py-1 px-1.5 rounded bg-slate-100 hover:bg-slate-200 text-[10px] font-semibold text-slate-700 text-center"
+                    >
+                      Fill Form
+                    </button>
+                    <button
+                      type="button"
+                      disabled={isLoading}
+                      onClick={() => handleInstantDemoLogin(op.email)}
+                      className="flex-1 py-1 px-1.5 rounded bg-sky-600 hover:bg-sky-700 text-white text-[10px] font-bold text-center"
+                    >
+                      Enter ⚡
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           </div>

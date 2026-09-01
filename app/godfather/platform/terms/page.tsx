@@ -13,8 +13,10 @@ import {
   Lock,
   ArrowRight,
   Sparkles,
-  ToggleLeft,
-  ToggleRight,
+  Plus,
+  X,
+  FileCheck,
+  Eye,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
@@ -25,13 +27,26 @@ export default function TermsAndSafetyPage() {
   const { termsAgreements, updateTermsAgreement, toggleTermsEnforcement } = useGodfatherData();
   const { requestStepUpVerification } = useGodfatherAuth();
 
-  const [selectedAgreement, setSelectedAgreement] = useState<TermsAgreement | null>(termsAgreements[0]);
+  const [selectedAgreement, setSelectedAgreement] = useState<TermsAgreement | null>(termsAgreements[0] || null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editTitle, setEditTitle] = useState('');
-  const [editVersion, setEditVersion] = useState('');
-  const [editSummary, setEditSummary] = useState('');
-  const [editText, setEditText] = useState('');
-  const [editReason, setEditReason] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Form State
+  const [termForm, setTermForm] = useState({
+    title: '',
+    code: '',
+    version: '',
+    summary: '',
+    fullText: '',
+    effectiveDate: '',
+    mandatoryClickwrap: true,
+    enforceAtRegistration: true,
+    enforceAtAuctionCreate: true,
+    enforceAtBidSubmit: true,
+    enforceAtJobPost: false,
+    enforceAtAdPost: false,
+    editReason: '',
+  });
 
   // Confirmation modal
   const [modalConfig, setModalConfig] = useState<{
@@ -46,39 +61,73 @@ export default function TermsAndSafetyPage() {
 
   const handleOpenEdit = (agreement: TermsAgreement) => {
     setSelectedAgreement(agreement);
-    setEditTitle(agreement.title);
-    setEditVersion(agreement.version);
-    setEditSummary(agreement.summary);
-    setEditText(agreement.fullText);
-    setEditReason(`Updated terms clauses to reflect enhanced platform cargo insurance and anti-circumvention standards`);
+    setTermForm({
+      title: agreement.title,
+      code: agreement.code,
+      version: agreement.version,
+      summary: agreement.summary,
+      fullText: agreement.fullText,
+      effectiveDate: agreement.effectiveDate || new Date().toISOString().split('T')[0],
+      mandatoryClickwrap: agreement.mandatoryClickwrap,
+      enforceAtRegistration: agreement.enforceAtRegistration,
+      enforceAtAuctionCreate: agreement.enforceAtAuctionCreate,
+      enforceAtBidSubmit: agreement.enforceAtBidSubmit,
+      enforceAtJobPost: agreement.enforceAtJobPost,
+      enforceAtAdPost: agreement.enforceAtAdPost,
+      editReason: `Updated terms clauses to reflect enhanced platform cargo insurance and compliance standards`,
+    });
     setIsEditModalOpen(true);
   };
 
-  const handleSaveTerms = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedAgreement || !editReason.trim()) return;
+  const handleOpenCreate = () => {
+    setTermForm({
+      title: 'Ocean Cargo Escrow & Dispute Resolution Agreement',
+      code: 'AGREEMENT_ESCROW_DISPUTE',
+      version: '1.0.0',
+      summary: 'Binding terms for digital freight escrow settlement, container detention disputes, and arbitration.',
+      fullText: `# Ocean Cargo Escrow & Dispute Resolution Agreement\n\n1. Scope of Escrow Protection\nAll ocean freight booking transactions initiated through the Con.FR8X.IN platform are safeguarded under sovereign digital escrow protocols.\n\n2. Container Slot Commitments\nCarriers must honor published departure dates. Shipper detention fees shall be capped pursuant to FMC and Indian Major Port Authority regulations.\n\n3. Anti-Circumvention\nPlatform operators and participants agree not to solicit offline direct settlement for tenders discovered via Con.FR8X.IN.`,
+      effectiveDate: new Date().toISOString().split('T')[0],
+      mandatoryClickwrap: true,
+      enforceAtRegistration: false,
+      enforceAtAuctionCreate: true,
+      enforceAtBidSubmit: true,
+      enforceAtJobPost: false,
+      enforceAtAdPost: false,
+      editReason: 'Creation of new digital escrow dispute agreement',
+    });
+    setIsCreateModalOpen(true);
+  };
 
-    const verified = await requestStepUpVerification(`Publish Updated Terms Version for ${selectedAgreement.title}`);
+  const handleSaveTerms = async (e: React.FormEvent, isCreatingNew: boolean) => {
+    e.preventDefault();
+    if (!termForm.editReason.trim()) return;
+
+    const verified = await requestStepUpVerification(
+      isCreatingNew
+        ? `Publish New Legal Agreement: ${termForm.title}`
+        : `Publish Updated Terms Version for ${termForm.title}`
+    );
     if (!verified) return;
 
     setModalConfig({
       isOpen: true,
-      title: 'Publish Versioned Legal Terms & Commercial Contract',
-      actionType: 'TERMS_AGREEMENT_VERSION_BUMPED',
-      targetLabel: `${selectedAgreement.title} (v${editVersion})`,
-      targetId: selectedAgreement.id,
+      title: isCreatingNew ? 'Publish New Governance Agreement' : 'Publish Versioned Legal Terms & Contract',
+      actionType: isCreatingNew ? 'TERMS_AGREEMENT_CREATED' : 'TERMS_AGREEMENT_VERSION_BUMPED',
+      targetLabel: `${termForm.title} (v${termForm.version})`,
+      targetId: termForm.code,
       onConfirm: async (reason) => {
         await updateTermsAgreement(
-          selectedAgreement.code,
+          termForm.code as any,
           {
-            title: editTitle,
-            version: editVersion,
-            summary: editSummary,
-            fullText: editText,
+            title: termForm.title,
+            version: termForm.version,
+            summary: termForm.summary,
+            fullText: termForm.fullText,
           },
           reason
         );
         setIsEditModalOpen(false);
+        setIsCreateModalOpen(false);
         setModalConfig(null);
       },
     });
@@ -104,13 +153,22 @@ export default function TermsAndSafetyPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="gf-badge gf-badge-blue text-[11px] font-bold">LEGAL & GOVERNANCE</span>
-            <span className="gf-badge gf-badge-gold text-[11px] font-mono font-bold">CLICKWRAP ACTIVE</span>
+            <span className="gf-badge gf-badge-gold text-[11px] font-mono font-bold">CLICKWRAP ENFORCED</span>
           </div>
           <h1 className="gf-page-title">Terms & Conditions, Safety Agreements & Clickwrap Governance</h1>
           <p className="gf-page-subtitle">
-            Configure versioned legal contracts, reverse tender commercial commitments, copyright protection, and mandatory user acceptance gates
+            Configure versioned legal contracts, reverse tender commercial commitments, copyright protection, and mandatory user acceptance gates.
           </p>
         </div>
+
+        <button
+          type="button"
+          onClick={handleOpenCreate}
+          className="gf-btn gf-btn-primary text-xs flex items-center gap-1.5 font-bold"
+        >
+          <Plus className="lucide w-4 h-4" />
+          <span>Create New Agreement</span>
+        </button>
       </div>
 
       {/* KPI Overview */}
@@ -119,14 +177,14 @@ export default function TermsAndSafetyPage() {
           <div className="gf-metric-title">Master Legal Contracts</div>
           <div className="gf-metric-value text-slate-900">{termsAgreements.length}</div>
           <div className="gf-metric-foot text-slate-600">
-            <Scale className="lucide w-3.5 h-3.5 text-sky-600" /> Versioned & Cryptographically Audited
+            <Scale className="lucide w-3.5 h-3.5 text-sky-600" /> Versioned &amp; Cryptographically Audited
           </div>
         </div>
 
         <div className="gf-metric-card">
           <div className="gf-metric-title">Total User Acceptances Logged</div>
           <div className="gf-metric-value text-sky-700">
-            {termsAgreements.reduce((sum, t) => sum + t.totalAcceptances, 0).toLocaleString()}
+            {termsAgreements.reduce((sum, t) => sum + (t.totalAcceptances || 0), 0).toLocaleString()}
           </div>
           <div className="gf-metric-foot text-sky-700">
             <CheckCircle2 className="lucide w-3.5 h-3.5" /> Immutable User Consent Proofs
@@ -144,7 +202,7 @@ export default function TermsAndSafetyPage() {
         </div>
       </div>
 
-      {/* Agreements List & Switchboard */}
+      {/* Agreements Selector & Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Agreement Selector */}
         <div className="lg:col-span-1 space-y-3">
@@ -205,7 +263,7 @@ export default function TermsAndSafetyPage() {
                   className="gf-btn gf-btn-primary text-xs flex items-center gap-1.5 font-bold"
                 >
                   <Edit className="lucide w-3.5 h-3.5" />
-                  Edit & Bump Version
+                  <span>Edit &amp; Bump Version</span>
                 </button>
               </div>
 
@@ -223,7 +281,7 @@ export default function TermsAndSafetyPage() {
                   <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
                     <div>
                       <strong className="block text-slate-900">Member Registration</strong>
-                      <span className="text-[11px] text-slate-500">Sign-up & company onboarding</span>
+                      <span className="text-[11px] text-slate-500">Sign-up &amp; company onboarding</span>
                     </div>
                     <button
                       type="button"
@@ -274,7 +332,7 @@ export default function TermsAndSafetyPage() {
                   <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
                     <div>
                       <strong className="block text-slate-900">Post Job Vacancies</strong>
-                      <span className="text-[11px] text-slate-500">Recruitment & talent posting</span>
+                      <span className="text-[11px] text-slate-500">Recruitment &amp; talent posting</span>
                     </div>
                     <button
                       type="button"
@@ -291,7 +349,7 @@ export default function TermsAndSafetyPage() {
                   <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between">
                     <div>
                       <strong className="block text-slate-900">Post Commercial Ads</strong>
-                      <span className="text-[11px] text-slate-500">Sponsored media & banners</span>
+                      <span className="text-[11px] text-slate-500">Sponsored media &amp; banners</span>
                     </div>
                     <button
                       type="button"
@@ -306,107 +364,158 @@ export default function TermsAndSafetyPage() {
                 </div>
               </div>
 
-              {/* Full Contract Preview */}
+              {/* Full Legal Text View */}
               <div>
-                <h4 className="font-bold text-xs uppercase tracking-wider text-slate-900 mb-2">
-                  Active Legal Contract Clauses
-                </h4>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 font-mono text-xs text-slate-800 whitespace-pre-wrap leading-relaxed max-h-72 overflow-y-auto">
+                <label className="text-xs font-bold text-slate-800 block mb-1">
+                  Full Contract &amp; Safety Clauses Text
+                </label>
+                <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg text-xs leading-relaxed text-slate-700 font-mono max-h-60 overflow-y-auto whitespace-pre-wrap">
                   {selectedAgreement.fullText}
                 </div>
-              </div>
-
-              {/* Audit Meta */}
-              <div className="flex items-center justify-between text-[11px] text-slate-500 pt-3 border-t border-slate-200">
-                <span>Last Updated: {selectedAgreement.updatedAt}</span>
-                <span>Audited By: <strong className="text-slate-800">{selectedAgreement.updatedBy}</strong></span>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Edit Terms Modal */}
-      {isEditModalOpen && selectedAgreement && (
-        <div className="gf-modal-overlay">
-          <div className="gf-modal-card max-w-2xl">
+      {/* EDIT / CREATE AGREEMENT MODAL */}
+      {(isEditModalOpen || isCreateModalOpen) && (
+        <div
+          className="gf-modal-overlay"
+          onClick={() => {
+            setIsEditModalOpen(false);
+            setIsCreateModalOpen(false);
+          }}
+        >
+          <div className="gf-modal-card max-w-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="gf-modal-header">
-              <div>
-                <h3 className="gf-modal-title flex items-center gap-1.5 text-slate-900">
-                  <Scale className="lucide w-4 h-4 text-sky-600" />
-                  Edit Legal Agreement & Bump Version
-                </h3>
-                <p className="gf-modal-subtitle">{selectedAgreement.title} ({selectedAgreement.code})</p>
+              <div className="flex items-center gap-2">
+                <Scale className="lucide w-5 h-5 text-sky-600" />
+                <div>
+                  <h3 className="gf-modal-title">
+                    {isCreateModalOpen ? 'Create New Legal Agreement' : `Edit Agreement: ${termForm.title}`}
+                  </h3>
+                  <p className="gf-modal-subtitle font-mono">
+                    Clickwrap Legal Engine · Append-Only Consent Ledger
+                  </p>
+                </div>
               </div>
-              <button onClick={() => setIsEditModalOpen(false)} className="gf-modal-close-btn">
-                ✕
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setIsCreateModalOpen(false);
+                }}
+                className="gf-modal-close-btn"
+              >
+                <X className="lucide w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveTerms} className="gf-modal-body space-y-4">
-              <div className="grid grid-cols-3 gap-3">
-                <div className="gf-form-group col-span-2">
-                  <label className="gf-form-label font-bold">Agreement Title</label>
+            <form onSubmit={(e) => handleSaveTerms(e, isCreateModalOpen)}>
+              <div className="gf-modal-body space-y-3.5 max-h-[72vh] overflow-y-auto">
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="col-span-2">
+                    <label className="gf-form-label">Agreement Title *</label>
+                    <input
+                      type="text"
+                      required
+                      value={termForm.title}
+                      onChange={(e) => setTermForm({ ...termForm, title: e.target.value })}
+                      className="gf-input font-bold"
+                      placeholder="e.g. Ocean Freight Booking Terms & Escrow Policy"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="gf-form-label">Version Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={termForm.version}
+                      onChange={(e) => setTermForm({ ...termForm, version: e.target.value })}
+                      className="gf-input font-mono font-bold"
+                      placeholder="2.4.0"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="gf-form-label">Agreement Code *</label>
+                    <input
+                      type="text"
+                      required
+                      value={termForm.code}
+                      onChange={(e) => setTermForm({ ...termForm, code: e.target.value.toUpperCase() })}
+                      className="gf-input font-mono uppercase"
+                      placeholder="AGREEMENT_OCEAN_TERMS"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="gf-form-label">Effective Date *</label>
+                    <input
+                      type="date"
+                      required
+                      value={termForm.effectiveDate}
+                      onChange={(e) => setTermForm({ ...termForm, effectiveDate: e.target.value })}
+                      className="gf-input font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="gf-form-label">Executive Legal Summary *</label>
+                  <textarea
+                    rows={2}
+                    required
+                    value={termForm.summary}
+                    onChange={(e) => setTermForm({ ...termForm, summary: e.target.value })}
+                    className="gf-textarea"
+                    placeholder="Short summary displayed on registration and tender clickwrap gates..."
+                  />
+                </div>
+
+                <div>
+                  <label className="gf-form-label">Full Legal Clauses &amp; Terms Contract Text *</label>
+                  <textarea
+                    rows={7}
+                    required
+                    value={termForm.fullText}
+                    onChange={(e) => setTermForm({ ...termForm, fullText: e.target.value })}
+                    className="gf-textarea font-mono text-xs"
+                    placeholder="Enter complete contractual clauses, dispute arbitration rules, and liability terms..."
+                  />
+                </div>
+
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <label className="text-xs font-bold text-amber-900 block mb-1">
+                    Audited Legal Reason for Version Update *
+                  </label>
                   <input
                     type="text"
                     required
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="gf-input w-full text-xs font-bold"
-                  />
-                </div>
-                <div className="gf-form-group col-span-1">
-                  <label className="gf-form-label font-bold">New Version</label>
-                  <input
-                    type="text"
-                    required
-                    value={editVersion}
-                    onChange={(e) => setEditVersion(e.target.value)}
-                    placeholder="e.g. 3.3"
-                    className="gf-input w-full text-xs font-mono font-bold"
+                    value={termForm.editReason}
+                    onChange={(e) => setTermForm({ ...termForm, editReason: e.target.value })}
+                    className="gf-input"
+                    placeholder="e.g. Updated cargo detention liability pursuant to FMC 2026 guidelines"
                   />
                 </div>
               </div>
 
-              <div className="gf-form-group">
-                <label className="gf-form-label font-bold">Executive Summary</label>
-                <input
-                  type="text"
-                  required
-                  value={editSummary}
-                  onChange={(e) => setEditSummary(e.target.value)}
-                  className="gf-input w-full text-xs"
-                />
-              </div>
-
-              <div className="gf-form-group">
-                <label className="gf-form-label font-bold">Full Legal Clauses & Terms Text</label>
-                <textarea
-                  required
-                  rows={8}
-                  value={editText}
-                  onChange={(e) => setEditText(e.target.value)}
-                  className="gf-textarea w-full text-xs font-mono"
-                />
-              </div>
-
-              <div className="gf-form-group">
-                <label className="gf-form-label font-bold">Godfather Amendment Justification (Audit Record)</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={editReason}
-                  onChange={(e) => setEditReason(e.target.value)}
-                  className="gf-textarea w-full text-xs"
-                />
-              </div>
-
-              <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="gf-btn gf-btn-secondary">
+              <div className="gf-modal-footer">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setIsCreateModalOpen(false);
+                  }}
+                  className="gf-btn gf-btn-secondary"
+                >
                   Cancel
                 </button>
-                <button type="submit" className="gf-btn gf-btn-primary font-bold">
-                  Publish New Version (Step-Up Authorized)
+                <button type="submit" className="gf-btn gf-btn-primary">
+                  {isCreateModalOpen ? 'Publish Agreement' : 'Save & Bump Terms Version'}
                 </button>
               </div>
             </form>
