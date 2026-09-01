@@ -66,6 +66,141 @@ interface BookedAd {
   cost: number;
 }
 
+// ── AI Job Requirements Suggestion Component ─────────────────────────────────
+const AI_SUGGESTION_CATEGORIES: { label: string; color: string; chips: string[] }[] = [
+  {
+    label: 'Ocean Freight',
+    color: '#0891b2',
+    chips: [
+      'FCL/LCL ocean freight procurement',
+      'Carrier contract negotiation (Maersk, MSC, CMA CGM)',
+      'INCOTERMS 2020 expertise',
+      'Port-pair rate benchmarking',
+      'Bill of Lading & shipping documentation',
+      'Detention & demurrage dispute management',
+      'Blank sailing risk mitigation',
+      'Freight reverse auction execution',
+    ],
+  },
+  {
+    label: 'Customs & Compliance',
+    color: '#7c3aed',
+    chips: [
+      'HS code classification (ITC-HS/HTS)',
+      'Bill of Entry (BE) filing — import/export',
+      'AEO certification compliance (CBIC)',
+      'DGFT / IEC compliance',
+      'Advance Authorization & EPCG handling',
+      'MSDS / DG cargo documentation',
+      'Customs audit & SVB order management',
+      'FTA preferential tariff utilization',
+    ],
+  },
+  {
+    label: 'Freight Coordinator',
+    color: '#059669',
+    chips: [
+      'Multi-modal coordination (sea + air + road)',
+      'Container booking & space allocation',
+      'VGM (Verified Gross Mass) compliance',
+      'Pre-shipment inspection coordination',
+      'Port health & phytosanitary clearance',
+      'Shipment tracking & event management',
+      'MBL/HBL documentation management',
+      'Carrier VGM & SI cutoff adherence',
+    ],
+  },
+  {
+    label: 'Logistics Analyst',
+    color: '#d97706',
+    chips: [
+      'Freight rate benchmarking & market intelligence',
+      'TMS / ERP system proficiency (SAP, Oracle)',
+      'KPI dashboard & SLA reporting',
+      'Carrier performance scorecard analysis',
+      'Cost-to-serve modelling (C2S)',
+      'Port congestion & dwell time analytics',
+      'Demurrage & detention cost reduction',
+      'Excel / Power BI logistics reporting',
+    ],
+  },
+  {
+    label: 'Trade Finance',
+    color: '#dc2626',
+    chips: [
+      'Letter of Credit (LC) issuance & negotiation',
+      'Bank Guarantee & BG issuance',
+      'Trade receivables financing (invoice discounting)',
+      'Documentary Collection (CAD/DP/DA)',
+      'ECGC / credit insurance management',
+      'Export incentive computation (RoDTEP, RoSCTL)',
+      'GST refund on exports (IGST refund)',
+      'Forex hedging (forward contracts, options)',
+    ],
+  },
+];
+
+function AiJobSuggestions({ onAppend }: { onAppend: (text: string) => void }) {
+  const [activeTab, setActiveTab] = React.useState(0);
+  return (
+    <div style={{ border: '1px solid #c8e0fe', borderRadius: '8px', background: '#f0f7ff', overflow: 'hidden' }}>
+      {/* Tab bar */}
+      <div style={{ display: 'flex', overflowX: 'auto', borderBottom: '1px solid #c8e0fe', background: '#e8f1fd' }}>
+        {AI_SUGGESTION_CATEGORIES.map((cat, i) => (
+          <button
+            key={cat.label}
+            type="button"
+            onClick={() => setActiveTab(i)}
+            style={{
+              padding: '6px 12px',
+              fontSize: '10.5px',
+              fontWeight: activeTab === i ? 700 : 500,
+              color: activeTab === i ? cat.color : '#53647a',
+              background: activeTab === i ? '#fff' : 'transparent',
+              border: 'none',
+              borderBottom: activeTab === i ? `2px solid ${cat.color}` : '2px solid transparent',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
+      {/* Chips */}
+      <div style={{ padding: '8px 10px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+        <span style={{ fontSize: '10px', color: '#53647a', alignSelf: 'center', marginRight: '2px' }}>
+          ✦ Click to add:
+        </span>
+        {AI_SUGGESTION_CATEGORIES[activeTab].chips.map((chip) => (
+          <button
+            key={chip}
+            type="button"
+            onClick={() => onAppend(chip)}
+            style={{
+              fontSize: '10.5px',
+              padding: '3px 9px',
+              borderRadius: '20px',
+              border: `1px solid ${AI_SUGGESTION_CATEGORIES[activeTab].color}30`,
+              background: '#fff',
+              color: AI_SUGGESTION_CATEGORIES[activeTab].color,
+              cursor: 'pointer',
+              fontWeight: 500,
+              transition: 'background 0.15s',
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = `${AI_SUGGESTION_CATEGORIES[activeTab].color}12`)}
+            onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+          >
+            + {chip}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
 export default function FeedsPage() {
   const {
     posts,
@@ -664,6 +799,10 @@ export default function FeedsPage() {
                 onChange={(e) => setNewJobReq(e.target.value)}
                 required
               />
+              {/* AI Suggestion Chips — All Categories as tabs */}
+              <div style={{ marginTop: '8px' }}>
+                <AiJobSuggestions onAppend={(text) => setNewJobReq((prev) => (prev ? prev + '\n' + text : text))} />
+              </div>
             </div>
 
             {/* Transparent Job Posting Fee & Duration Matrix */}
@@ -723,7 +862,7 @@ export default function FeedsPage() {
                 Cancel
               </button>
               <button type="submit" className="btn primary">
-                Pay ₹{currentJobCost.toLocaleString('en-IN')} & Post Job
+                Post
               </button>
             </div>
           </form>
@@ -794,7 +933,7 @@ export default function FeedsPage() {
               style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
             >
               <Plus size={15} color="var(--brand)" />
-              <span>Post a Job (₹300)</span>
+              <span>Post a Job</span>
             </button>
             <Link href="/nexus" className="feed-shortcut-link">
               <ShieldAlert size={15} color="#d97706" />

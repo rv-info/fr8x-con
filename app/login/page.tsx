@@ -8,13 +8,6 @@ import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
 import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff } from 'lucide-react';
 
-// Demo accounts: uid → { label, badge, email, password }
-const DEMO_ACCOUNTS = [
-  { uid: 'u-arjun',  label: 'Arjun Rao',    company: 'Atlas Logistics Pvt. Ltd.',  badge: 'PREMIUM', badgeClass: 'badge amber', password: 'Atlas@2025'      },
-  { uid: 'u-sarah',  label: 'Sarah Lewis',   company: 'Rotterdam Freight NV',       badge: 'PRO',     badgeClass: 'badge blue',  password: 'Rotterdam@2025'  },
-  { uid: 'u-kiran',  label: 'Kiran Mehta',   company: 'Indo Ocean Lines',           badge: 'TRIAL',   badgeClass: 'badge green', password: 'IndoOcean@2025'  },
-];
-
 export default function LoginPage() {
   const router = useRouter();
   const { login, loadRemembered, userStatus } = useAuth();
@@ -25,7 +18,6 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeUid, setActiveUid] = useState('');
 
   // Restore remembered credentials on mount
   useEffect(() => {
@@ -67,13 +59,6 @@ export default function LoginPage() {
     }, 600);
   };
 
-  const fillDemo = (uid: string, password: string) => {
-    setIdentifier(uid);
-    setPassword(password);
-    setActiveUid(uid);
-    setErrorMessage('');
-  };
-
   return (
     <div
       style={{
@@ -104,12 +89,19 @@ export default function LoginPage() {
             textAlign: 'center',
           }}
         >
-          <div
-            className="mark"
-            style={{ width: '38px', height: '38px', margin: '0 auto 10px', fontSize: '14px', borderRadius: '10px' }}
-          >
-            f8
-          </div>
+          <img
+            src="/logo.png"
+            alt="FR8X"
+            style={{
+              width: '52px',
+              height: '52px',
+              margin: '0 auto 12px',
+              borderRadius: '12px',
+              objectFit: 'cover',
+              display: 'block',
+              boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+            }}
+          />
           <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
             fr<b style={{ color: 'var(--teal)' }}>8</b>x Workspace
           </h1>
@@ -222,7 +214,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo Account Switcher */}
+          {/* Enterprise Support & Access Notice */}
           <div
             style={{
               marginTop: '16px',
@@ -231,41 +223,14 @@ export default function LoginPage() {
               borderRadius: '8px',
               border: '1px solid #e2e8f0',
               fontSize: '11px',
+              color: 'var(--mut)',
+              lineHeight: 1.45,
             }}
           >
-            <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '6px' }}>
-              Quick Login — Verified Enterprise Accounts:
+            <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '3px' }}>
+              Multi-Enterprise Global Network:
             </b>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              {DEMO_ACCOUNTS.map((acc) => (
-                <button
-                  key={acc.uid}
-                  type="button"
-                  onClick={() => fillDemo(acc.uid, acc.password)}
-                  style={{
-                    textAlign: 'left',
-                    background: activeUid === acc.uid ? '#eff6ff' : '#ffffff',
-                    border: activeUid === acc.uid ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    padding: '5px 8px',
-                    fontSize: '11px',
-                    cursor: 'pointer',
-                    color: 'var(--ink)',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  <span>
-                    • <b>{acc.label}</b>{' '}
-                    <span style={{ color: 'var(--mut)' }}>({acc.company})</span>
-                  </span>
-                  <span className={acc.badgeClass} style={{ fontSize: '8.5px', padding: '1px 5px' }}>
-                    {acc.badge}
-                  </span>
-                </button>
-              ))}
-            </div>
+            Log in using your enterprise User ID or verified company email. Separate workspaces are provisioned per registered freight organisation.
           </div>
         </div>
 

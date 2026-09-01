@@ -756,8 +756,9 @@ export default function ProfilePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
           {/* Avatar + Company Logo + User Info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            {/* Profile Avatar Upload Container */}
-            <div style={{ position: 'relative' }}>
+            {/* Profile Avatar (circle) + Company Logo (square, overlaid lower-left at 70% left) */}
+            <div style={{ position: 'relative', width: '84px', flexShrink: 0 }}>
+              {/* Circle Profile Photo */}
               {avatarUrl ? (
                 <img
                   src={avatarUrl}
@@ -765,10 +766,11 @@ export default function ProfilePage() {
                   style={{
                     width: '84px',
                     height: '84px',
-                    borderRadius: '18px',
+                    borderRadius: '50%',
                     objectFit: 'cover',
-                    border: '3px solid var(--brand)',
+                    border: '3px solid #fff',
                     boxShadow: '0 4px 14px rgba(17, 104, 215, 0.25)',
+                    display: 'block',
                   }}
                 />
               ) : (
@@ -778,9 +780,10 @@ export default function ProfilePage() {
                     width: '84px',
                     height: '84px',
                     fontSize: '28px',
-                    borderRadius: '18px',
+                    borderRadius: '50%',
                     background: 'linear-gradient(135deg, #1168d7 0%, #0d53ad 100%)',
                     boxShadow: '0 4px 14px rgba(17, 104, 215, 0.25)',
+                    border: '3px solid #fff',
                   }}
                 >
                   {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
@@ -791,30 +794,96 @@ export default function ProfilePage() {
               <label
                 style={{
                   position: 'absolute',
-                  bottom: '-4px',
-                  right: '-4px',
+                  bottom: '2px',
+                  right: '-2px',
                   background: 'var(--brand)',
                   color: '#fff',
                   borderRadius: '50%',
-                  width: '28px',
-                  height: '28px',
+                  width: '24px',
+                  height: '24px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
                   boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                   border: '2px solid #fff',
+                  zIndex: 2,
                 }}
                 title="Upload profile photo"
               >
-                <Camera size={13} />
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  style={{ display: 'none' }}
-                />
+                <Camera size={11} />
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
               </label>
+
+              {/* Company Logo — square, overlaid at lower-left, shifted left 70% of its width */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '-8px',
+                  left: '-26px', /* 70% of 36px ≈ 25px shifted left */
+                  zIndex: 3,
+                }}
+              >
+                <div style={{ position: 'relative' }}>
+                  {companyLogoUrl ? (
+                    <img
+                      src={companyLogoUrl}
+                      alt="Company Logo"
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '7px',
+                        objectFit: 'contain',
+                        background: '#fff',
+                        border: '2px solid #fff',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                        padding: '2px',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '7px',
+                        background: '#f1f5f9',
+                        border: '2px solid #fff',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--mut)',
+                      }}
+                    >
+                      <Building2 size={14} />
+                      <span style={{ fontSize: '7px', fontWeight: 700, marginTop: '1px' }}>CO</span>
+                    </div>
+                  )}
+                  {/* Upload company logo trigger */}
+                  <label
+                    style={{
+                      position: 'absolute',
+                      bottom: '-4px',
+                      right: '-4px',
+                      background: 'var(--ink)',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      width: '16px',
+                      height: '16px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      border: '1.5px solid #fff',
+                    }}
+                    title="Upload company logo"
+                  >
+                    <Upload size={8} />
+                    <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
+                  </label>
+                </div>
+              </div>
             </div>
 
             {/* User Identity Details */}
@@ -845,98 +914,6 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Dedicated Company Logo Upload Box */}
-            <div
-              style={{
-                borderLeft: '1px solid var(--line)',
-                paddingLeft: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-              }}
-            >
-              <div style={{ position: 'relative' }}>
-                {companyLogoUrl ? (
-                  <img
-                    src={companyLogoUrl}
-                    alt="Company Logo"
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '12px',
-                      objectFit: 'contain',
-                      background: '#ffffff',
-                      border: '1px solid var(--line)',
-                      padding: '4px',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '12px',
-                      background: '#f1f5f9',
-                      border: '1px dashed #94a3b8',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--mut)',
-                    }}
-                  >
-                    <Building2 size={20} />
-                    <span style={{ fontSize: '9px', fontWeight: 700, marginTop: '2px' }}>LOGO</span>
-                  </div>
-                )}
-
-                <label
-                  style={{
-                    position: 'absolute',
-                    bottom: '-4px',
-                    right: '-4px',
-                    background: 'var(--ink)',
-                    color: '#fff',
-                    borderRadius: '50%',
-                    width: '24px',
-                    height: '24px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    border: '2px solid #fff',
-                  }}
-                  title="Upload company logo"
-                >
-                  <Upload size={11} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCompanyLogoUpload}
-                    style={{ display: 'none' }}
-                  />
-                </label>
-              </div>
-
-              <div>
-                <b style={{ fontSize: '12.5px', color: 'var(--ink)', display: 'block' }}>Corporate Brand Logo</b>
-                <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>
-                  {companyLogoUrl ? 'Verified brand logo active' : 'Click upload to add company logo'}
-                </span>
-                {companyLogoUrl && (
-                  <button
-                    onClick={() => {
-                      setCompanyLogoUrl(null);
-                      updateUser({ companyLogoUrl: undefined });
-                      toast('Company logo removed.');
-                    }}
-                    style={{ color: 'var(--red)', fontSize: '10.5px', marginTop: '2px', cursor: 'pointer' }}
-                  >
-                    Remove logo
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
 
           {/* D&B / Ariba Trust Index & Completeness Score */}

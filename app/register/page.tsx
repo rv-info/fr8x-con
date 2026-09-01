@@ -29,6 +29,7 @@ export default function RegisterPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [mobile, setMobile] = useState('');
   const [designation, setDesignation] = useState('Freight Procurement Manager');
   const [preferredContact, setPreferredContact] = useState<'tradeChat' | 'email' | 'mobile'>('tradeChat');
@@ -119,7 +120,7 @@ export default function RegisterPage() {
       plan: selectedPlan,
       hasGoldenTick: selectedPlan === 'premium',
       isVerified: true,
-    });
+    }, password || 'Password@123');
 
     toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
     router.push('/auctions');
@@ -237,6 +238,19 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div className="field">
+                    <label>
+                      Account Password <span className="req">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      className="input"
+                      placeholder="Create strong password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="field">
                     <label>Mobile Number</label>
                     <input
                       className="input"
@@ -246,6 +260,9 @@ export default function RegisterPage() {
                       required
                     />
                   </div>
+                </div>
+
+                <div className="grid g1" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>Time Zone (IANA)</label>
                     <select

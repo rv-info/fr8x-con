@@ -6,6 +6,7 @@ import { useCurrency } from '@/lib/context/CurrencyContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
+import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
 import { RateItem } from '@/lib/types';
 import {
   BarChart3,
@@ -799,45 +800,31 @@ Generated via FR8X Reverse Auction & Freight Exchange
             </div>
 
             <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              {/* Row 1: CARRIER + CARRIER input */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
+              {/* Row 1: CARRIER search with 3-letter typeahead */}
+              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px', alignItems: 'center' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>CARRIER</label>
-                <select className="input" style={{ fontSize: '11.5px', height: '32px', padding: '0 6px' }} value={carrier} onChange={(e) => setCarrier(e.target.value)}>
-                  {(masterCarriers && masterCarriers.length > 0 ? masterCarriers : [
-                    { id: '1', name: 'Maersk', carrierCode: 'MSK', type: 'MLO' },
-                    { id: '2', name: 'Hapag-Lloyd', carrierCode: 'HAP', type: 'MLO' },
-                    { id: '3', name: 'CMA CGM', carrierCode: 'CMA', type: 'MLO' },
-                    { id: '4', name: 'MSC', carrierCode: 'MSC', type: 'MLO' },
-                    { id: '5', name: 'ONE Line', carrierCode: 'ONE', type: 'MLO' },
-                    { id: '6', name: 'Evergreen', carrierCode: 'EVG', type: 'MLO' },
-                    { id: '7', name: 'COSCO', carrierCode: 'COS', type: 'MLO' },
-                  ]).map((c: any) => (
-                    <option key={c.id || c.name} value={c.name}>
-                      {c.name} ({c.type})
-                    </option>
-                  ))}
-                </select>
+                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Type carrier (3+ letters)…" />
               </div>
-              {/* Row 2: POR + POL */}
+              {/* Row 2: POR + POL — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>POR</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="POR" value={por} onChange={(e) => setPor(e.target.value)} />
+                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POR</label>
+                  <PortSearch value={por} onChange={setPor} placeholder="POR (3+ letters)" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>POL</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="POL" value={pol} onChange={(e) => setPol(e.target.value)} />
+                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POL</label>
+                  <PortSearch value={pol} onChange={setPol} placeholder="POL (3+ letters)" />
                 </div>
               </div>
-              {/* Row 3: POD + FPOD */}
+              {/* Row 3: POD + FPOD — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>POD</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="POD" value={pod} onChange={(e) => setPod(e.target.value)} />
+                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POD</label>
+                  <PortSearch value={pod} onChange={setPod} placeholder="POD (3+ letters)" />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>FPOD</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="FPOD" value={fpod} onChange={(e) => setFpod(e.target.value)} />
+                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>FPOD</label>
+                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD (3+ letters)" />
                 </div>
               </div>
               {/* Row 4: 20 TYPE + 20 [USD] */}
@@ -986,27 +973,27 @@ Generated via FR8X Reverse Auction & Freight Exchange
                 <col style={{ width: '80px' }} />
               </colgroup>
               <thead>
-                {/* Header row */}
-                <tr style={{ background: '#2c3e7a' }}>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'center' }}>CMP</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'center' }}>SEQ</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>SERVICE PROVIDER</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>CARRIER</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>POR</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>POL</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>POD</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>FPOD</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'right' }}>20DV (USD)</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>20TYPE</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'right' }}>40HC (USD)</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>40TYPE</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>F/T</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>DATE</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>TYPE</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'right' }}>TT</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>ROUTING</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px' }}>REMARKS</th>
-                  <th style={{ color: '#fff', fontSize: '10px', padding: '6px 4px', textAlign: 'center' }}>ACTION</th>
+                {/* Header row — bold dark color font (#0f172a) for maximum crisp visibility */}
+                <tr style={{ background: '#cbd5e1', borderBottom: '2px solid #94a3b8' }}>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>CARRIER</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>FPOD</th>
+                  <th style={{ color: '#0369a1', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>20DV (USD)</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>20TYPE</th>
+                  <th style={{ color: '#047857', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>40HC (USD)</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>40TYPE</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>F/T</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>DATE</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
+                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTION</th>
                 </tr>
                 {/* Per-column search row */}
                 <tr style={{ background: '#dbe3f5' }}>

@@ -12,20 +12,43 @@ import { TopBar } from './TopBar';
 import { TradeChat } from '@/components/chat/TradeChat';
 import { Menu } from 'lucide-react';
 
+import { useAuth } from '@/lib/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
 interface AppShellProps {
   children: ReactNode;
 }
 
 function ShellLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
   const isGodfather = pathname.toLowerCase().startsWith('/godfather') || pathname.toLowerCase().startsWith('/godfatheron');
 
+  // Protect app routes if not authenticated
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated && !isAuthPage && !isGodfather) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, isLoading, isAuthPage, isGodfather, router]);
+
   if (isGodfather || isAuthPage) {
     return <main style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}>{children}</main>;
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-300">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-mono font-medium tracking-wide text-slate-400">Verifying session...</span>
+        </div>
+      </div>
+    );
   }
 
   // Get active page title for header breadcrumb

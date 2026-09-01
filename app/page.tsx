@@ -6,16 +6,17 @@ import { useAuth } from '@/lib/context/AuthContext';
 
 export default function RootPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    // If authenticated, navigate to feeds; otherwise go to login
-    if (user && user.email) {
+    if (isLoading) return;
+
+    if (isAuthenticated) {
       router.replace('/feeds');
     } else {
       router.replace('/login');
     }
-  }, [user, router]);
+  }, [isAuthenticated, isLoading, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-300">

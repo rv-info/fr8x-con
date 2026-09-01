@@ -15,6 +15,7 @@ import {
   getLocationTypeIcon,
   getIncotermIcon,
 } from '@/lib/utils';
+import { searchPorts, formatPort } from '@/lib/master-data';
 import { ContainerEquipmentRow } from '@/lib/types';
 import {
   ArrowLeft,
@@ -228,6 +229,10 @@ export default function CreateReverseAuctionPage() {
 
     if (val.trim().length >= 2) {
       const q = val.toLowerCase().trim();
+      const masterPortMatches = searchPorts(q, 8).map(
+        (p) => `⚓ ${formatPort(p)}, ${p.country}`
+      );
+
       const locList = (masterLocations || []).filter(
         (l) =>
           l.unLocode.toLowerCase().includes(q) ||
@@ -239,7 +244,7 @@ export default function CreateReverseAuctionPage() {
         p.toLowerCase().includes(q)
       ).map((p) => `⚓ ${p}`);
 
-      const combined = Array.from(new Set([...locList, ...stringMatches])).slice(0, 8);
+      const combined = Array.from(new Set([...masterPortMatches, ...locList, ...stringMatches])).slice(0, 10);
       setSuggestMatches(combined);
       setActiveSuggestField(field);
     } else {

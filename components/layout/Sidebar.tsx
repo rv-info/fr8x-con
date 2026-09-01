@@ -54,7 +54,18 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
     <aside className="side" style={{ width: isCollapsed ? '68px' : '230px' }}>
       {/* Brand */}
       <div className="brand" style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-        <span className="mark">f8</span>
+        <img
+          src="/logo.png"
+          alt="FR8X"
+          style={{
+            width: '32px',
+            height: '32px',
+            borderRadius: '8px',
+            objectFit: 'cover',
+            flexShrink: 0,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+          }}
+        />
         {!isCollapsed && (
           <span>
             fr<b>8</b>x

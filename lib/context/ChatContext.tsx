@@ -151,9 +151,7 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [isLauncherOpen, setIsLauncherOpen] = useState(false);
-  const [activeWindows, setActiveWindows] = useState<ActiveChatWindow[]>([
-    { contactId: 'sarah', isMinimized: false },
-  ]);
+  const [activeWindows, setActiveWindows] = useState<ActiveChatWindow[]>([]);
   const [contacts, setContacts] = useState<ChatContact[]>(INITIAL_CONTACTS);
   const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
 
