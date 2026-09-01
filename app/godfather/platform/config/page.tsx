@@ -3,11 +3,18 @@
 import React, { useState } from 'react';
 import { Sliders, Activity, Shield, CheckCircle2, AlertTriangle, RefreshCw, Server, Database, Globe, Zap, Radio } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
+import { usePlatformConfig } from '@/lib/platform-config';
+import { useToast } from '@/lib/context/ToastContext';
 
 export default function SystemConfigPage() {
   const { environment } = useGodfatherAuth();
+  const { config, updateConfig } = usePlatformConfig();
+  const { toast } = useToast();
 
   const [flags, setFlags] = useState([
+    { id: 'flag-card', name: 'Mandatory Payment Cards on Login/Billing', code: 'COMMERCE_REQUIRE_PAYMENT_CARDS', enabled: config.requirePaymentCards, category: 'Commerce & Auth', desc: 'When disabled, login payment cards and billing paywalls are removed' },
+    { id: 'flag-job', name: 'Logistics Job Vacancy Posting Fee (₹500)', code: 'COMMERCE_JOB_POSTING_FEE', enabled: config.jobPostingFeeEnabled, category: 'Commerce & Jobs', desc: 'When disabled, freight companies post jobs 100% free with zero fees' },
+    { id: 'flag-bid', name: 'Reverse Auction Spot Bidding Fee (₹300)', code: 'COMMERCE_BIDDING_FEE', enabled: config.biddingFeeEnabled, category: 'Commerce & Tender', desc: 'When disabled, forwarders submit bids for 100% free across all lanes' },
     { id: 'flag-1', name: 'Reverse Freight Auction Engine', code: 'FEATURE_AUCTIONS_LIVE', enabled: true, category: 'Core Product', desc: 'Real-time multi-bidder tender and rank calculation room' },
     { id: 'flag-2', name: 'Real-time Carrier Rate Procurement', code: 'FEATURE_RATE_INTELLIGENCE', enabled: true, category: 'Core Product', desc: 'Instant search across published carrier spot tariffs' },
     { id: 'flag-3', name: 'Automated GSTN & PAN API Validation', code: 'INTEG_GOV_GSTN_PORTAL', enabled: true, category: 'Verification', desc: 'Direct government portal tax certificate verification pipeline' },
@@ -17,6 +24,20 @@ export default function SystemConfigPage() {
   ]);
 
   const toggleFlag = (id: string) => {
+    if (id === 'flag-card') {
+      const next = !config.requirePaymentCards;
+      updateConfig({ requirePaymentCards: next });
+      toast(next ? 'Payment cards required.' : 'Login & platform payment cards REMOVED.');
+    } else if (id === 'flag-job') {
+      const next = !config.jobPostingFeeEnabled;
+      updateConfig({ jobPostingFeeEnabled: next });
+      toast(next ? 'Job posting fee enabled.' : 'Job posting fee REMOVED (100% Free).');
+    } else if (id === 'flag-bid') {
+      const next = !config.biddingFeeEnabled;
+      updateConfig({ biddingFeeEnabled: next });
+      toast(next ? 'Bidding fee enabled.' : 'Auction bidding fee REMOVED (100% Free).');
+    }
+
     setFlags((prev) =>
       prev.map((f) => (f.id === id ? { ...f, enabled: !f.enabled } : f))
     );

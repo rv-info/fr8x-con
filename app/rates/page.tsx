@@ -86,16 +86,40 @@ export default function RatesPage() {
   const [rateType, setRateType] = useState('Direct Spot');
   const [remarks, setRemarks] = useState('Subject to low sulphur fuel bunker surcharge at destination.');
 
+  // Generate structured SEQ: {company_initials}-{dd}{mm}-{0001}
+  const getRateSeq = (r: RateItem, idx: number) => {
+    const src = r.sp || user.company || 'FR8X';
+    const clean = src.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+    const words = clean.split(/\s+/).filter(Boolean);
+    let initials = words.map((w) => w[0].toUpperCase()).join('');
+    if (initials.length < 2) initials = clean.substring(0, 3).toUpperCase();
+
+    let dd = '01';
+    let mm = '09';
+    if (r.valid) {
+      const parts = r.valid.split('-');
+      if (parts.length === 3) {
+        dd = parts[2].padStart(2, '0');
+        mm = parts[1].padStart(2, '0');
+      }
+    }
+    const num = String(idx + 1).padStart(4, '0');
+    return `${initials}-${dd}${mm}-${num}`;
+  };
+
   // Format structured rate quote breakdown (Requirement 8)
-  const formatRateQuote = (r: RateItem) => `=======================================================
+  const formatRateQuote = (r: RateItem, idx = 0) => `=======================================================
 FR8X FREIGHT RATE QUOTATION DOSSIER
 =======================================================
 Rate Reference   : ${r.id}
+SEQ Number       : ${getRateSeq(r, idx)}
 Service Provider : ${r.sp}
 Ocean Carrier    : ${r.carrier}
 Routing Mode     : ${r.route || 'Direct Ocean'}
+Place of Receipt : ${r.por || r.pol}
 Port of Loading  : ${r.pol}
 Port of Discharge: ${r.pod}
+Final Delivery   : ${r.fpod || r.pod}
 Transit Time     : ${r.tt || '28 Days'}
 Free Time Terms  : ${r.ft || '14 Days Combined'}
 -------------------------------------------------------
@@ -111,8 +135,8 @@ Remarks & Terms  : ${r.remark || 'Subject to standard liner terms'}
 Generated via FR8X Reverse Auction & Freight Exchange
 =======================================================`;
 
-  const handleCopyQuote = (rate: RateItem) => {
-    const text = formatRateQuote(rate);
+  const handleCopyQuote = (rate: RateItem, idx = 0) => {
+    const text = formatRateQuote(rate, idx);
     navigator.clipboard.writeText(text);
     toast(`Structured rate quote for ${rate.id} (${rate.carrier}) copied to clipboard.`);
   };
@@ -161,6 +185,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
     if (!matchesGlobal) return false;
 
     // Per-column search
+    if (colSearch.seq && !getRateSeq(r, allAvailableRates.indexOf(r)).toLowerCase().includes(colSearch.seq.toLowerCase())) return false;
     if (colSearch.sp && !r.sp?.toLowerCase().includes(colSearch.sp.toLowerCase())) return false;
     if (colSearch.carrier && !r.carrier?.toLowerCase().includes(colSearch.carrier.toLowerCase())) return false;
     if (colSearch.por && !r.por?.toLowerCase().includes(colSearch.por.toLowerCase())) return false;
@@ -331,99 +356,145 @@ Generated via FR8X Reverse Auction & Freight Exchange
 
   return (
     <div className="rates-container">
-      {/* Rate Detail Modal */}
+      {/* Comprehensive Rate Intelligence & Table Matrix Popup Modal */}
       {selectedRateDetail && (
         <Modal
           isOpen={Boolean(selectedRateDetail)}
           onClose={() => setSelectedRateDetail(null)}
-          title={`Rate Intelligence Card: ${selectedRateDetail.id}`}
+          title={`Freight Rate Intelligence Matrix · ${getRateSeq(selectedRateDetail, allAvailableRates.indexOf(selectedRateDetail))}`}
+          maxWidth="760px"
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Header Strip */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: '#f8fafc', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--line)', flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{selectedRateDetail.carrier} · {selectedRateDetail.route}</b>
-                <span style={{ display: 'block', fontSize: '11.5px', color: 'var(--mut)', marginTop: '2px' }}>
-                  Offered by <b>{selectedRateDetail.sp}</b>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{selectedRateDetail.carrier}</b>
+                  <span className="badge blue" style={{ fontSize: '10px' }}>{selectedRateDetail.rateType || 'Direct Spot'}</span>
+                  <span className="badge grey font-mono" style={{ fontSize: '10px' }}>{getRateSeq(selectedRateDetail, allAvailableRates.indexOf(selectedRateDetail))}</span>
+                </div>
+                <span style={{ display: 'block', fontSize: '11.5px', color: 'var(--mut)', marginTop: '3px' }}>
+                  Service Provider: <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.sp}</b> · Service Loop: <b>{selectedRateDetail.route || 'Direct Ocean Corridor'}</b>
                 </span>
               </div>
-              <span className={`badge ${isExpiringSoon(selectedRateDetail.valid) ? 'amber' : 'green'}`}>
-                VALID UNTIL {selectedRateDetail.valid}
-              </span>
+              <div style={{ textAlign: 'right' }}>
+                <span className={`badge ${isExpiringSoon(selectedRateDetail.valid) ? 'amber' : 'green'}`} style={{ fontSize: '10.5px' }}>
+                  VALID TILL {selectedRateDetail.valid}
+                </span>
+                <small style={{ display: 'block', color: 'var(--mut)', fontSize: '10px', marginTop: '2px' }}>
+                  Transit Time: <b>{selectedRateDetail.tt || '28 days'}</b>
+                </small>
+              </div>
             </div>
 
-            {/* Pricing Box */}
-            <div className="grid g2" style={{ background: '#f8fafc', padding: '12px', borderRadius: '8px', border: '1px solid var(--line)' }}>
-              <div>
-                <small style={{ color: 'var(--mut)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700 }}>20' Dry Standard</small>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--brand)' }}>
-                  ${selectedRateDetail.d20.toLocaleString()} USD
+            {/* Container Pricing & Multi-Currency Grid */}
+            <div className="grid g2" style={{ gap: '10px' }}>
+              {/* 20DV Card */}
+              <div style={{ background: '#f0f7ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <small style={{ color: '#0369a1', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>20' Standard Container (20DV)</small>
+                  <span className="badge blue" style={{ fontSize: '9.5px' }}>{selectedRateDetail.d20Type || 'Dry Standard'}</span>
                 </div>
-                <small style={{ color: 'var(--mut)', fontSize: '10px' }}>{selectedRateDetail.d20Type || 'Standard Dry'}</small>
-              </div>
-              <div>
-                <small style={{ color: 'var(--mut)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700 }}>40' High Cube (40HC)</small>
-                <div style={{ fontSize: '20px', fontWeight: 800, color: 'var(--teal)' }}>
-                  ${selectedRateDetail.h40.toLocaleString()} USD
+                <div style={{ fontSize: '22px', fontWeight: 850, color: '#0284c7' }}>
+                  ${selectedRateDetail.d20.toLocaleString()} <span style={{ fontSize: '12px', fontWeight: 600 }}>USD</span>
                 </div>
-                <small style={{ color: 'var(--mut)', fontSize: '10px' }}>{selectedRateDetail.h40Type || 'High Cube'}</small>
+                <div style={{ fontSize: '11px', color: '#0369a1', marginTop: '2px', fontWeight: 600 }}>
+                  ≈ {format(selectedRateDetail.d20)} (Local Equivalent)
+                </div>
+              </div>
+
+              {/* 40HC Card */}
+              <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <small style={{ color: '#15803d', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>40' High Cube Container (40HC)</small>
+                  <span className="badge green" style={{ fontSize: '9.5px' }}>{selectedRateDetail.h40Type || 'High Cube'}</span>
+                </div>
+                <div style={{ fontSize: '22px', fontWeight: 850, color: '#16a34a' }}>
+                  ${selectedRateDetail.h40.toLocaleString()} <span style={{ fontSize: '12px', fontWeight: 600 }}>USD</span>
+                </div>
+                <div style={{ fontSize: '11px', color: '#15803d', marginTop: '2px', fontWeight: 600 }}>
+                  ≈ {format(selectedRateDetail.h40)} (Local Equivalent)
+                </div>
               </div>
             </div>
 
-            {/* Lane & Service Details */}
-            <div className="snapshot-grid">
-              <div className="info-cell">
-                <small>Port of Loading (POL)</small>
-                <strong>{selectedRateDetail.pol}</strong>
+            {/* Complete Routing & Port Breakdown Table */}
+            <div style={{ border: '1px solid var(--line)', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ background: '#f1f5f9', padding: '6px 12px', fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>
+                Port Routing & Terminal Architecture
               </div>
-              <div className="info-cell">
-                <small>Port of Discharge (POD)</small>
-                <strong>{selectedRateDetail.pod}</strong>
-              </div>
-              <div className="info-cell">
-                <small>Free Time Combined</small>
-                <strong>{selectedRateDetail.ft}</strong>
-              </div>
-              <div className="info-cell">
-                <small>Estimated Transit Time</small>
-                <strong>{selectedRateDetail.tt}</strong>
+              <div className="grid g4" style={{ padding: '10px 12px', gap: '8px', background: '#fff' }}>
+                <div style={{ fontSize: '11px' }}>
+                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Place of Receipt (POR)</span>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.por || selectedRateDetail.pol}</b>
+                </div>
+                <div style={{ fontSize: '11px' }}>
+                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Port of Loading (POL)</span>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.pol}</b>
+                </div>
+                <div style={{ fontSize: '11px' }}>
+                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Port of Discharge (POD)</span>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.pod}</b>
+                </div>
+                <div style={{ fontSize: '11px' }}>
+                  <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Final Place of Delivery (FPOD)</span>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.fpod || selectedRateDetail.pod}</b>
+                </div>
               </div>
             </div>
 
-            {/* Surcharges & Terms */}
-            <div style={{ padding: '10px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px' }}>
-              <b style={{ color: 'var(--brand)' }}>Commercial Remarks & Surcharges:</b>
-              <p style={{ margin: '4px 0 0', color: 'var(--ink)' }}>
-                {selectedRateDetail.remark}
+            {/* Itemized Terms, Surcharges & Free Time */}
+            <div className="grid g2" style={{ gap: '10px' }}>
+              <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '10px', fontSize: '11px', background: '#fff' }}>
+                <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '6px', fontSize: '11.5px' }}>Free Time & Liner Terms</b>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)' }}>Combined Demurrage & Detention:</span>
+                  <b>{selectedRateDetail.ft || '14 Days Combined'}</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)' }}>Rate Type Classification:</span>
+                  <b>{selectedRateDetail.rateType || 'Direct Spot'}</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+                  <span style={{ color: 'var(--mut)' }}>Corridor Transit Time:</span>
+                  <b>{selectedRateDetail.tt || '28 days'}</b>
+                </div>
+              </div>
+
+              <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '10px', fontSize: '11px', background: '#fff' }}>
+                <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '6px', fontSize: '11.5px' }}>Standard Liner Inclusions</b>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)' }}>Base Ocean Freight (BAS):</span>
+                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)' }}>Bunker Adjustment (BAF / LSS):</span>
+                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
+                  <span style={{ color: 'var(--mut)' }}>ISPS / Security & Seal:</span>
+                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Surcharges & Remarks */}
+            <div style={{ padding: '9px 12px', background: '#eff6ff', borderRadius: '7px', border: '1px solid #bfdbfe', fontSize: '11px' }}>
+              <b style={{ color: 'var(--brand)' }}>Operational Remarks & Surcharges:</b>
+              <p style={{ margin: '2px 0 0', color: 'var(--ink)' }}>
+                {selectedRateDetail.remark || 'Standard carrier terms apply. Rates valid subject to vessel space allocation.'}
               </p>
             </div>
 
-            {/* Rate History / Versioning */}
-            <div style={{ borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
-              <b style={{ fontSize: '11px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
-                Rate Versioning History
-              </b>
-              <div style={{ fontSize: '11px', color: 'var(--ink-secondary)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed var(--line)' }}>
-                  <span>v1.2 (Current Active)</span>
-                  <span>Valid: {selectedRateDetail.valid}</span>
-                  <b>${selectedRateDetail.h40} USD</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', color: 'var(--mut)' }}>
-                  <span>v1.1 (Replaced 15 Aug)</span>
-                  <span>Valid: 2026-08-31</span>
-                  <span>${selectedRateDetail.h40 + 80} USD</span>
-                </div>
-              </div>
-            </div>
-
+            {/* Modal Footer Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: '10px', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', gap: '6px' }}>
                 <button
                   className="btn secondary sm"
-                  onClick={() => handleCopyQuote(selectedRateDetail)}
+                  onClick={() => handleCopyQuote(selectedRateDetail, allAvailableRates.indexOf(selectedRateDetail))}
                   title="Copy Structured Quotation"
                 >
-                  <Copy size={12} /> Copy Quote
+                  <Copy size={12} /> Copy Dossier
                 </button>
                 <button
                   className="btn secondary sm"
@@ -433,7 +504,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
                   }}
                   title="Email Quote to Service Provider"
                 >
-                  <Mail size={12} /> Email Quote
+                  <Mail size={12} /> Email Rate Quote
                 </button>
               </div>
 
@@ -449,7 +520,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
                     setShowComparisonModal(true);
                   }}
                 >
-                  <ArrowRightLeft size={13} /> Add to Compare
+                  <ArrowRightLeft size={12} /> Compare Rate
                 </button>
               </div>
             </div>
@@ -951,10 +1022,10 @@ Generated via FR8X Reverse Auction & Freight Exchange
 
           {/* Full-width rates table matching reference image */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="table" style={{ fontSize: '11px', tableLayout: 'auto', width: '100%', borderCollapse: 'collapse', minWidth: '1400px' }}>
+            <table className="table" style={{ fontSize: '11px', tableLayout: 'auto', width: '100%', borderCollapse: 'collapse', minWidth: '1420px' }}>
               <colgroup>
-                <col style={{ width: '36px' }} />
-                <col style={{ width: '36px' }} />
+                <col style={{ width: '56px' }} />
+                <col style={{ width: '120px' }} />
                 <col style={{ width: '110px' }} />
                 <col style={{ width: '80px' }} />
                 <col style={{ width: '80px' }} />
@@ -998,7 +1069,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
                 {/* Per-column search row */}
                 <tr style={{ background: '#dbe3f5' }}>
                   <th />
-                  <th />
+                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%', fontFamily: 'monospace' }} placeholder="SEQ" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
                   <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
                   <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.carrier || ''} onChange={(e) => updateColSearch('carrier', e.target.value)} /></th>
                   <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.por || ''} onChange={(e) => updateColSearch('por', e.target.value)} /></th>
@@ -1038,15 +1109,43 @@ Generated via FR8X Reverse Auction & Freight Exchange
                         setEditingRateId(rate.id);
                       }}
                     >
-                      <td style={{ textAlign: 'center', padding: '5px 4px' }}>
-                        <input
-                          type="checkbox"
-                          checked={isCompared}
-                          onChange={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }}
-                          title="Select to compare"
-                        />
+                      <td style={{ textAlign: 'center', padding: '4px 3px', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                          <input
+                            type="checkbox"
+                            checked={isCompared}
+                            onChange={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }}
+                            title="Select to compare"
+                            style={{ cursor: 'pointer' }}
+                          />
+                          <button
+                            type="button"
+                            className="btn icon sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedRateDetail(rate);
+                            }}
+                            title="View Complete Structured Dossier & Table Matrix"
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              border: '1px solid #cbd5e1',
+                              background: '#fff',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              padding: 0,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <FileSpreadsheet size={11} color="var(--brand)" />
+                          </button>
+                        </div>
                       </td>
-                      <td style={{ textAlign: 'center', color: 'var(--mut)', padding: '5px 4px', fontSize: '10.5px' }}>{idx + 1}</td>
+                      <td style={{ textAlign: 'center', color: 'var(--ink)', padding: '5px 4px', fontSize: '10.5px', fontWeight: 700, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                        {getRateSeq(rate, allAvailableRates.indexOf(rate))}
+                      </td>
                       <td style={{ padding: '5px 4px' }}>
                         <span style={{ fontSize: '11px', fontWeight: isOwner ? 700 : 400 }}>{rate.sp}</span>
                         {isOwner && <span style={{ fontSize: '9px', color: 'var(--brand)', display: 'block' }}>i-Rate</span>}

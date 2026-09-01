@@ -9,6 +9,7 @@ import { DataProvider } from '@/lib/context/DataContext';
 import { ChatProvider } from '@/lib/context/ChatContext';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { MobileNav } from './MobileNav';
 import { TradeChat } from '@/components/chat/TradeChat';
 import { Menu } from 'lucide-react';
 
@@ -87,6 +88,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
         />
         <div className="view">{children}</div>
       </main>
+      <MobileNav />
       <TradeChat />
     </div>
   );

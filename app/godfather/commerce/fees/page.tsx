@@ -14,10 +14,38 @@ import {
   Sparkles,
   CreditCard,
   Building,
+  ToggleLeft,
+  ToggleRight,
+  Check,
+  AlertCircle,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { usePlatformConfig } from '@/lib/platform-config';
+import { useToast } from '@/lib/context/ToastContext';
 
 export default function FeesDiscountsPage() {
+  const { config, updateConfig } = usePlatformConfig();
+  const { toast } = useToast();
+
+  const handleToggleBiddingFee = () => {
+    const nextState = !config.biddingFeeEnabled;
+    updateConfig({ biddingFeeEnabled: nextState });
+    toast(nextState ? 'Bidding fee enabled (₹300/bid).' : 'Bidding fee REMOVED (100% Free Bidding active across platform).');
+  };
+
+  const handleToggleJobPostingFee = () => {
+    const nextState = !config.jobPostingFeeEnabled;
+    updateConfig({ jobPostingFeeEnabled: nextState });
+    toast(nextState ? 'Job posting fee enabled (₹500/post).' : 'Job posting fee REMOVED (100% Free Job Posting active across platform).');
+  };
+
+  const handleTogglePaymentCards = () => {
+    const nextState = !config.requirePaymentCards;
+    updateConfig({ requirePaymentCards: nextState });
+    toast(nextState ? 'Payment cards required for billing operations.' : 'Login & platform payment cards REMOVED (Zero-friction free mode).');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -25,16 +53,117 @@ export default function FeesDiscountsPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="gf-badge gf-badge-green text-[11px] font-bold">COMMERCE & INCENTIVES</span>
-            <span className="gf-badge gf-badge-gold text-[11px]">40% Premium Gold Incentive Active</span>
+            <span className="gf-badge gf-badge-gold text-[11px]">Godfather Master Fee Controls</span>
           </div>
-          <h1 className="gf-page-title">Commercial Fee Schedules, Benefit Rationale & Incentives</h1>
+          <h1 className="gf-page-title">Commercial Fee Schedules, Payment Controls & Waivers</h1>
           <p className="gf-page-subtitle">
-            Inspect fee structures across Reverse Freight Auctions, Job Postings, Advertisements, Company KYC, and VIP Member Discounts
+            Configure dynamic platform fee schedules, remove login payment card requirements, toggle job posting costs, and grant free bidding access
           </p>
         </div>
       </div>
 
-      {/* Grid of Fee Cards */}
+      {/* Godfather Master Fee Switchboard */}
+      <div className="gf-card p-5 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl border border-slate-700 shadow-md">
+        <div className="flex items-center justify-between flex-wrap gap-3 pb-4 border-b border-slate-700">
+          <div>
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-amber-400" />
+              <span>Godfather Live Sovereign Fee & Payment Card Controls</span>
+            </h2>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Instantly toggle fees and payment cards across user feeds, reverse auctions, and portal logins in real-time.
+            </p>
+          </div>
+          <span className="gf-badge bg-emerald-500 text-slate-950 font-bold text-xs uppercase px-2.5 py-1">
+            HOT-SYNC ACTIVE
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+          {/* Switch 1: Payment Cards Requirement */}
+          <div className="p-4 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-sky-400" /> Login Payment Cards
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${config.requirePaymentCards ? 'bg-amber-400 text-slate-950' : 'bg-emerald-400 text-slate-950'}`}>
+                  {config.requirePaymentCards ? 'REQUIRED' : 'REMOVED / FREE'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2">
+                When removed, users can register and login without entering credit card details or payment walls.
+              </p>
+            </div>
+            <button
+              onClick={handleTogglePaymentCards}
+              className={`w-full py-2 px-3 rounded text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                config.requirePaymentCards
+                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-500'
+              }`}
+            >
+              {config.requirePaymentCards ? 'Click to Remove Cards Requirement' : 'Payment Cards Removed (Active)'}
+            </button>
+          </div>
+
+          {/* Switch 2: Job Posting Cost */}
+          <div className="p-4 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Briefcase className="w-4 h-4 text-amber-400" /> Job Posting Cost
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${config.jobPostingFeeEnabled ? 'bg-amber-400 text-slate-950' : 'bg-emerald-400 text-slate-950'}`}>
+                  {config.jobPostingFeeEnabled ? '₹500 / POST' : '100% FREE'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2">
+                When removed, recruiters and freight companies post job vacancies at ₹0 with zero card requirement.
+              </p>
+            </div>
+            <button
+              onClick={handleToggleJobPostingFee}
+              className={`w-full py-2 px-3 rounded text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                config.jobPostingFeeEnabled
+                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-500'
+              }`}
+            >
+              {config.jobPostingFeeEnabled ? 'Click to Make Job Posts 100% Free' : 'Free Job Posting Active'}
+            </button>
+          </div>
+
+          {/* Switch 3: Reverse Auction Bidding Cost */}
+          <div className="p-4 rounded-lg bg-slate-800/80 border border-slate-700 flex flex-col justify-between gap-3">
+            <div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Gavel className="w-4 h-4 text-emerald-400" /> Auction Bidding Cost
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${config.biddingFeeEnabled ? 'bg-amber-400 text-slate-950' : 'bg-emerald-400 text-slate-950'}`}>
+                  {config.biddingFeeEnabled ? '₹300 / BID' : '100% FREE'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-2">
+                When removed, freight forwarders submit spot container bids without paying ₹300 per bid.
+              </p>
+            </div>
+            <button
+              onClick={handleToggleBiddingFee}
+              className={`w-full py-2 px-3 rounded text-xs font-bold transition-all flex items-center justify-center gap-2 ${
+                config.biddingFeeEnabled
+                  ? 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+                  : 'bg-emerald-600 text-white hover:bg-emerald-500'
+              }`}
+            >
+              {config.biddingFeeEnabled ? 'Click to Make Bidding 100% Free' : 'Free Bidding Active'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Grid of Fee Schedules & Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* Fee 1: Reverse Tender Bid Submission */}
         <div className="gf-card p-5 space-y-4">
@@ -43,21 +172,32 @@ export default function FeesDiscountsPage() {
               <Gavel className="lucide w-4 h-4 text-emerald-700" />
               <h3 className="font-bold text-emerald-950 text-sm">Reverse Auction Bidding Fee</h3>
             </div>
-            <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold">Tender Rail</span>
+            <span className={`gf-badge text-[10px] uppercase font-bold ${config.biddingFeeEnabled ? 'gf-badge-blue' : 'gf-badge-green'}`}>
+              {config.biddingFeeEnabled ? 'Tender Rail' : 'Waived (Free)'}
+            </span>
           </div>
 
           <div className="font-mono">
-            <span className="text-3xl font-extrabold text-emerald-950">₹300</span>
-            <span className="text-xs text-mut"> / bid (Standard)</span>
+            <span className="text-3xl font-extrabold text-emerald-950">
+              {config.biddingFeeEnabled ? `₹${config.biddingFeeAmount}` : '₹0'}
+            </span>
+            <span className="text-xs text-mut"> {config.biddingFeeEnabled ? '/ bid (Standard)' : '(Godfather Free Waiver Active)'}</span>
           </div>
 
           <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-950 space-y-1">
-            <strong className="block font-bold">Commercial Purpose & Utility:</strong>
-            Eliminates phantom bidding, prevents bot spam, and commits freight forwarders to legally binding 48-hour container slot validity.
+            <strong className="block font-bold">Commercial Status & Control:</strong>
+            {config.biddingFeeEnabled
+              ? 'Prevents bot spam and binds forwarders to legally enforceable 48-hour container slot validity.'
+              : '100% Free Bidding mode is enabled by Godfather. Forwarders place bids with zero transaction fees.'}
           </div>
 
-          <div className="text-[11px] text-slate-600">
-            <strong>Gold Member Rate:</strong> <span className="text-amber-800 font-bold font-mono">₹180 / bid (40% OFF)</span>
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={handleToggleBiddingFee}
+              className="text-xs font-bold text-emerald-700 hover:underline"
+            >
+              {config.biddingFeeEnabled ? 'Toggle to Free Bidding →' : 'Re-enable ₹300 Fee →'}
+            </button>
           </div>
         </div>
 
@@ -93,21 +233,32 @@ export default function FeesDiscountsPage() {
               <Briefcase className="lucide w-4 h-4 text-sky-700" />
               <h3 className="font-bold text-slate-900 text-sm">Logistics Job Posting Fee</h3>
             </div>
-            <span className="gf-badge gf-badge-green text-[10px] uppercase font-bold">Talent Rail</span>
+            <span className={`gf-badge text-[10px] uppercase font-bold ${config.jobPostingFeeEnabled ? 'gf-badge-green' : 'gf-badge-gold'}`}>
+              {config.jobPostingFeeEnabled ? 'Talent Rail' : 'Waived (Free)'}
+            </span>
           </div>
 
           <div className="font-mono">
-            <span className="text-3xl font-extrabold text-slate-900">₹500</span>
-            <span className="text-xs text-mut"> / 30-day listing</span>
+            <span className="text-3xl font-extrabold text-slate-900">
+              {config.jobPostingFeeEnabled ? `₹${config.jobPostingFeeAmount}` : '₹0'}
+            </span>
+            <span className="text-xs text-mut"> {config.jobPostingFeeEnabled ? '/ 30-day listing' : '(Free Posting Active)'}</span>
           </div>
 
           <div className="p-3 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 space-y-1">
-            <strong className="block font-bold">Commercial Purpose & Utility:</strong>
-            Ensures listings represent legitimate freight forwarding & supply chain vacancies, protecting job seekers from unverified recruiter scams.
+            <strong className="block font-bold">Commercial Status & Control:</strong>
+            {config.jobPostingFeeEnabled
+              ? 'Ensures listings represent legitimate freight forwarding & supply chain vacancies.'
+              : 'Job posting fee is waived by Godfather. Any member can publish logistics jobs instantly.'}
           </div>
 
-          <div className="text-[11px] text-slate-600">
-            Includes automated distribution across verified member trade feeds.
+          <div className="flex items-center justify-between pt-1">
+            <button
+              onClick={handleToggleJobPostingFee}
+              className="text-xs font-bold text-sky-700 hover:underline"
+            >
+              {config.jobPostingFeeEnabled ? 'Toggle to Free Job Posts →' : 'Re-enable ₹500 Fee →'}
+            </button>
           </div>
         </div>
 
@@ -194,7 +345,7 @@ export default function FeesDiscountsPage() {
         <Shield className="lucide w-5 h-5 text-emerald-700 flex-shrink-0 mt-0.5" />
         <div>
           <strong className="text-emerald-950 block mb-1 font-bold">Settlement Integrity & Immutability Policy</strong>
-          GODFATHER operators may view and adjust future versioned fee schedules but cannot retroactively alter historical settled transaction invoices. Any fee remediation must be issued as an audited commercial credit note.
+          GODFATHER operators can dynamically remove or enable commercial fees, job posting costs, and payment cards across the exchange in real-time.
         </div>
       </div>
     </div>
