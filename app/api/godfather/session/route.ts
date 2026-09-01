@@ -1,22 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 
+const ALLOWED_DOMAINS = ['@fr8x.in', '@con.fr8x.in'];
+
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   try {
     const body = await req.json();
-    const { idToken, operatorUid, operatorEmail, role } = body;
+    const { operatorUid, operatorEmail, role } = body;
 
-    if (!operatorEmail || !operatorEmail.endsWith('@fr8x.in')) {
+    const isAllowed = ALLOWED_DOMAINS.some((d) => operatorEmail?.endsWith(d));
+    if (!operatorEmail || !isAllowed) {
       return NextResponse.json(
-        { error: 'Unauthorized: Operator identity must be an authorized @fr8x.in mailbox' },
+        { error: 'Unauthorized: Operator identity must be a verified @fr8x.in or @con.fr8x.in mailbox' },
         { status: 403 }
       );
     }
 
     const sessionId = `SESS-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString();
 
-    // Create session response
     const response = NextResponse.json({
       success: true,
       sessionId,
@@ -25,17 +28,17 @@ export async function POST(req: NextRequest) {
       role: role || 'godfather_owner',
       mfaVerified: true,
       correlationId,
-      expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(), // 8 hours
+      expiresAt,
     });
 
-    // Set secure HttpOnly cookie
+    // Secure httpOnly session cookie — 8-hour expiry
     response.cookies.set({
       name: '__Secure-FR8X-Godfather-Session',
       value: `${sessionId}:${operatorUid || 'gf-op-001'}:${role || 'godfather_owner'}`,
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 8 * 60 * 60, // 8 hours
+      maxAge: 8 * 60 * 60,
       path: '/',
     });
 
@@ -46,4 +49,11 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Logout — clear session cookie
+export async function DELETE(_req: NextRequest) {
+  const res = NextResponse.json({ success: true });
+  res.cookies.delete('__Secure-FR8X-Godfather-Session');
+  return res;
 }

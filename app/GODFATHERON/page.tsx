@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import {
   ShieldAlert,
@@ -12,29 +11,27 @@ import {
   KeyRound,
   CheckCircle2,
   AlertTriangle,
-  Fingerprint,
   ArrowRight,
   ShieldCheck,
   RotateCcw,
-  Clock,
-  ExternalLink,
 } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 
 export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
-  const { loginOperator } = useGodfatherAuth();
+  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
 
-  // Authentication Stage: 'credentials' -> 'mfa_challenge' -> 'hardware_key' -> 'success'
-  const [stage, setStage] = useState<'credentials' | 'mfa_challenge' | 'hardware_key' | 'success'>('credentials');
+  // Stage flow: credentials → mfa_challenge → success
+  const [stage, setStage] = useState<'credentials' | 'mfa_challenge' | 'success'>('credentials');
 
-  // Form Fields
+  // Form fields
   const [email, setEmail] = useState('tech@fr8x.in');
-  const [password, setPassword] = useState('••••••••••••');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
 
-  // Lockout & Security State
+  // Security / lockout state
   const [attemptsRemaining, setAttemptsRemaining] = useState(5);
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
@@ -42,15 +39,25 @@ export default function DedicatedGodfatherLoginPage() {
   const [correlationId, setCorrelationId] = useState('');
   const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
 
-  // OTP Resend Timer
+  // OTP resend timer
   const [resendTimer, setResendTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
 
-  // Access Request Modal
+  // Access request modal
   const [isAccessRequestOpen, setIsAccessRequestOpen] = useState(false);
   const [accessRequestReason, setAccessRequestReason] = useState('');
   const [accessRequestSent, setAccessRequestSent] = useState(false);
 
+  // Restore remembered operator email on mount
+  useEffect(() => {
+    const remembered = loadRememberedOperator();
+    if (remembered) {
+      setEmail(remembered);
+      setRememberDevice(true);
+    }
+  }, []);
+
+  // OTP resend countdown
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (resendTimer > 0 && stage === 'mfa_challenge') {
@@ -61,7 +68,7 @@ export default function DedicatedGodfatherLoginPage() {
     return () => clearTimeout(timer);
   }, [resendTimer, stage]);
 
-  // Lockout countdown timer
+  // Lockout countdown
   useEffect(() => {
     let lockTimer: NodeJS.Timeout;
     if (isLocked && lockoutSeconds > 0) {
@@ -74,22 +81,20 @@ export default function DedicatedGodfatherLoginPage() {
     return () => clearTimeout(lockTimer);
   }, [isLocked, lockoutSeconds]);
 
-  // Stage 1: Validate credentials and trigger backend OTP send
+  // Stage 1: validate credentials locally, then dispatch OTP via API
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-
     if (isLocked) return;
 
-    // Strict domain check: must be @fr8x.in or @con.fr8x.in
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (domain !== 'fr8x.in' && domain !== 'con.fr8x.in') {
-      setErrorMessage('Access Denied: GODFATHER accounts are restricted to verified @fr8x.in or @con.fr8x.in mailboxes only.');
+    // Client-side credential check (domain + password)
+    const check = validateCredentials(email, password);
+    if (!check.success) {
+      setErrorMessage(check.error || 'Invalid credentials.');
       return;
     }
 
     try {
-      // Call backend to dispatch OTP
       const res = await fetch('/api/godfather/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -108,19 +113,23 @@ export default function DedicatedGodfatherLoginPage() {
       }
 
       setCorrelationId(data.correlationId);
-      if (data.demoCode) {
-        setDemoCodeHint(data.demoCode);
+      if (data.demoCode) setDemoCodeHint(data.demoCode);
+
+      if (rememberDevice) {
+        rememberOperator(email);
+      } else {
+        forgetOperator();
       }
 
       setStage('mfa_challenge');
       setResendTimer(60);
       setCanResend(false);
-    } catch (err: any) {
+    } catch {
       setErrorMessage('Failed to connect to authentication server');
     }
   };
 
-  // Stage 2: Validate OTP challenge
+  // Stage 2: verify OTP via API, then establish session
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -151,24 +160,19 @@ export default function DedicatedGodfatherLoginPage() {
         return;
       }
 
-      // Establish privileged session
+      // Establish privileged session cookie
       await fetch('/api/godfather/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          operatorEmail: email,
-          operatorUid: 'gf-op-001',
-          role: 'godfather_owner',
-        }),
+        body: JSON.stringify({ operatorEmail: email, operatorUid: 'gf-op-001', role: 'godfather_owner' }),
       });
 
-      setStage('success');
-      loginOperator(email, password, '884210');
+      // Finalize client-side auth state
+      loginOperator(email, password, otpCode);
 
-      setTimeout(() => {
-        router.push('/godfather');
-      }, 1200);
-    } catch (err: any) {
+      setStage('success');
+      setTimeout(() => router.push('/godfather'), 1200);
+    } catch {
       setErrorMessage('Authentication verification failed');
     }
   };
@@ -193,10 +197,8 @@ export default function DedicatedGodfatherLoginPage() {
 
   return (
     <div className="gf-login-container">
-      {/* Background Ambience */}
       <div className="gf-login-bg-glow" />
 
-      {/* Main Security Card */}
       <div className="gf-login-card w-full max-w-md relative z-10">
         {/* Header Branding */}
         <div className="text-center space-y-2 pb-2">
@@ -216,7 +218,7 @@ export default function DedicatedGodfatherLoginPage() {
           </div>
         </div>
 
-        {/* Explicit Restricted Access Warning Box */}
+        {/* Restricted access warning */}
         <div className="gf-callout gf-callout-amber text-[11px] leading-relaxed flex items-start gap-2">
           <ShieldAlert className="lucide w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
           <div>
@@ -225,18 +227,18 @@ export default function DedicatedGodfatherLoginPage() {
           </div>
         </div>
 
-        {/* Lockout Banner if triggered */}
+        {/* Lockout banner */}
         {isLocked && (
           <div className="p-3 bg-red-950/80 border border-red-800 text-red-200 text-xs rounded-lg flex items-start gap-2">
             <AlertTriangle className="lucide w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <strong className="text-red-300 block">Operator Account Locked</strong>
-              Too many failed attempts. Account locked for security. Cooldown: {Math.floor(lockoutSeconds / 60)}m {lockoutSeconds % 60}s. Security alert dispatched to <strong>tech@fr8x.in</strong>.
+              Too many failed attempts. Cooldown: {Math.floor(lockoutSeconds / 60)}m {lockoutSeconds % 60}s. Security alert dispatched to <strong>tech@fr8x.in</strong>.
             </div>
           </div>
         )}
 
-        {/* Error Message */}
+        {/* Error message */}
         {errorMessage && !isLocked && (
           <div className="p-2.5 bg-red-950/60 border border-red-800 text-red-300 text-xs rounded flex items-center gap-2">
             <AlertTriangle className="lucide w-3.5 h-3.5 text-red-400 flex-shrink-0" />
@@ -244,7 +246,7 @@ export default function DedicatedGodfatherLoginPage() {
           </div>
         )}
 
-        {/* STAGE 1: Credentials Input Form */}
+        {/* STAGE 1: Credentials */}
         {stage === 'credentials' && (
           <form onSubmit={handleCredentialsSubmit} className="space-y-4">
             <div className="space-y-1.5">
@@ -280,6 +282,7 @@ export default function DedicatedGodfatherLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••••••"
+                  autoComplete="current-password"
                   className="gf-input w-full pl-9 pr-9 text-xs font-medium"
                 />
                 <button
@@ -292,18 +295,32 @@ export default function DedicatedGodfatherLoginPage() {
               </div>
             </div>
 
+            {/* Remember device */}
+            <div className="flex items-center gap-2">
+              <input
+                id="gf-remember-device"
+                type="checkbox"
+                checked={rememberDevice}
+                onChange={(e) => setRememberDevice(e.target.checked)}
+                className="w-3.5 h-3.5 cursor-pointer"
+              />
+              <label htmlFor="gf-remember-device" className="text-[11px] text-slate-400 cursor-pointer">
+                Remember operator mailbox on this device
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={isLocked}
               className="gf-btn gf-btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg"
             >
-              <span>Authenticate & Request MFA Token</span>
+              <span>Authenticate &amp; Request MFA Token</span>
               <ArrowRight className="lucide w-4 h-4" />
             </button>
           </form>
         )}
 
-        {/* STAGE 2: MFA / OTP Challenge */}
+        {/* STAGE 2: MFA / OTP */}
         {stage === 'mfa_challenge' && (
           <form onSubmit={handleOtpSubmit} className="space-y-4">
             <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs space-y-1">
@@ -321,7 +338,7 @@ export default function DedicatedGodfatherLoginPage() {
 
             {demoCodeHint && (
               <div className="p-2 bg-sky-950/60 border border-sky-800 text-sky-300 text-[11px] rounded font-mono flex items-center justify-between">
-                <span>Demo Passkey: <strong>{demoCodeHint}</strong> (or 884210)</span>
+                <span>Demo Passkey: <strong>{demoCodeHint}</strong></span>
                 <button
                   type="button"
                   onClick={() => setOtpCode(demoCodeHint)}
@@ -346,7 +363,7 @@ export default function DedicatedGodfatherLoginPage() {
                   required
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="884210"
+                  placeholder="______"
                   className="gf-input w-full pl-9 text-base tracking-[0.4em] font-mono font-bold text-emerald-400 text-center"
                 />
               </div>
@@ -360,14 +377,11 @@ export default function DedicatedGodfatherLoginPage() {
               >
                 ← Back
               </button>
-
               <button
                 type="button"
                 disabled={!canResend}
                 onClick={handleResendOtp}
-                className={`text-xs font-semibold ${
-                  canResend ? 'text-sky-400 hover:underline' : 'text-slate-500 cursor-not-allowed'
-                }`}
+                className={`text-xs font-semibold ${canResend ? 'text-sky-400 hover:underline' : 'text-slate-500 cursor-not-allowed'}`}
               >
                 {canResend ? 'Resend Code' : `Resend in ${resendTimer}s`}
               </button>
@@ -378,12 +392,12 @@ export default function DedicatedGodfatherLoginPage() {
               className="gf-btn gf-btn-success w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg"
             >
               <Lock className="lucide w-4 h-4" />
-              <span>Verify Passkey & Establish Session</span>
+              <span>Verify Passkey &amp; Establish Session</span>
             </button>
           </form>
         )}
 
-        {/* STAGE 3: Success Elevation */}
+        {/* STAGE 3: Success */}
         {stage === 'success' && (
           <div className="p-6 text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center mx-auto shadow-lg animate-bounce">
@@ -396,7 +410,7 @@ export default function DedicatedGodfatherLoginPage() {
           </div>
         )}
 
-        {/* Footer Actions */}
+        {/* Footer */}
         <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
           <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
             <button
@@ -409,9 +423,8 @@ export default function DedicatedGodfatherLoginPage() {
             <span>·</span>
             <span className="font-mono text-[10px] text-faint">NODE: MUM-SEC-01</span>
           </div>
-
           <div className="text-[10px] text-slate-500 font-mono">
-            FR8X CONSOLE · CONFIDENTIAL & PROPRIETARY · STRICT AUDIT LEDGER
+            FR8X CONSOLE · CONFIDENTIAL &amp; PROPRIETARY · STRICT AUDIT LEDGER
           </div>
         </div>
       </div>
@@ -423,11 +436,9 @@ export default function DedicatedGodfatherLoginPage() {
             <div className="gf-modal-header">
               <div>
                 <h3 className="gf-modal-title">Request GODFATHER Clearance</h3>
-                <p className="gf-modal-subtitle">Direct dispatch to Security & Compliance (tech@fr8x.in)</p>
+                <p className="gf-modal-subtitle">Direct dispatch to Security &amp; Compliance (tech@fr8x.in)</p>
               </div>
-              <button onClick={() => setIsAccessRequestOpen(false)} className="gf-modal-close-btn">
-                ✕
-              </button>
+              <button onClick={() => setIsAccessRequestOpen(false)} className="gf-modal-close-btn">✕</button>
             </div>
 
             {accessRequestSent ? (
@@ -435,15 +446,12 @@ export default function DedicatedGodfatherLoginPage() {
                 <CheckCircle2 className="lucide w-8 h-8 text-emerald-400 mx-auto" />
                 <h4 className="font-bold text-slate-100 text-sm">Clearance Request Submitted</h4>
                 <p className="text-xs text-mut">
-                  Your identity and request have been routed to <strong className="text-slate-200">tech@fr8x.in</strong>. Security officers will review your hardware key within 2 business hours.
+                  Your identity and request have been routed to <strong className="text-slate-200">tech@fr8x.in</strong>. Security officers will review within 2 business hours.
                 </p>
                 <div className="pt-3">
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsAccessRequestOpen(false);
-                      setAccessRequestSent(false);
-                    }}
+                    onClick={() => { setIsAccessRequestOpen(false); setAccessRequestSent(false); }}
                     className="gf-btn gf-btn-secondary text-xs"
                   >
                     Close
@@ -452,10 +460,7 @@ export default function DedicatedGodfatherLoginPage() {
               </div>
             ) : (
               <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setAccessRequestSent(true);
-                }}
+                onSubmit={(e) => { e.preventDefault(); setAccessRequestSent(true); }}
                 className="gf-modal-body space-y-3"
               >
                 <div className="gf-form-group">
@@ -468,9 +473,8 @@ export default function DedicatedGodfatherLoginPage() {
                     className="gf-input w-full text-xs font-mono"
                   />
                 </div>
-
                 <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Business Justification & Subrole Needed</label>
+                  <label className="gf-form-label font-bold">Business Justification &amp; Subrole Needed</label>
                   <textarea
                     required
                     rows={3}
@@ -480,14 +484,9 @@ export default function DedicatedGodfatherLoginPage() {
                     className="gf-textarea w-full text-xs"
                   />
                 </div>
-
                 <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
-                  <button type="button" onClick={() => setIsAccessRequestOpen(false)} className="gf-btn gf-btn-secondary text-xs">
-                    Cancel
-                  </button>
-                  <button type="submit" className="gf-btn gf-btn-primary text-xs font-bold">
-                    Submit Clearance Ticket
-                  </button>
+                  <button type="button" onClick={() => setIsAccessRequestOpen(false)} className="gf-btn gf-btn-secondary text-xs">Cancel</button>
+                  <button type="submit" className="gf-btn gf-btn-primary text-xs font-bold">Submit Clearance Ticket</button>
                 </div>
               </form>
             )}

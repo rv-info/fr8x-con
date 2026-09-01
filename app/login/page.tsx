@@ -1,36 +1,55 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, Mail, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+
+// Demo accounts: uid → { label, badge, email, password }
+const DEMO_ACCOUNTS = [
+  { uid: 'u-arjun',  label: 'Arjun Rao',    company: 'Atlas Logistics Pvt. Ltd.',  badge: 'PREMIUM', badgeClass: 'badge amber', password: 'Atlas@2025'      },
+  { uid: 'u-sarah',  label: 'Sarah Lewis',   company: 'Rotterdam Freight NV',       badge: 'PRO',     badgeClass: 'badge blue',  password: 'Rotterdam@2025'  },
+  { uid: 'u-kiran',  label: 'Kiran Mehta',   company: 'Indo Ocean Lines',           badge: 'TRIAL',   badgeClass: 'badge green', password: 'IndoOcean@2025'  },
+];
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, loadRemembered, userStatus } = useAuth();
   const { toast } = useToast();
 
-  const [email, setEmail] = useState('arjun@atlaslogistics.com');
-  const [password, setPassword] = useState('••••••••••••');
+  const [identifier, setIdentifier] = useState('');      // uid or email
+  const [password, setPassword] = useState('');
+  const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [activeUid, setActiveUid] = useState('');
+
+  // Restore remembered credentials on mount
+  useEffect(() => {
+    const saved = loadRemembered();
+    if (saved) {
+      setIdentifier(saved.userId);
+      setPassword(saved.password);
+      setRemember(true);
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!email.trim() || !password.trim()) {
-      setErrorMessage('Please enter both corporate email and password.');
+    const id = identifier.trim();
+    if (!id || !password) {
+      setErrorMessage('Please enter your User ID (or email) and password.');
       return;
     }
 
-    if (!isCorporateEmail(email)) {
-      setErrorMessage(
-        'Please use a registered corporate email. Free email domains (Gmail, Yahoo, Outlook, etc.) are restricted.'
-      );
+    // If looks like email, enforce corporate domain
+    if (id.includes('@') && !isCorporateEmail(id)) {
+      setErrorMessage('Free email domains (Gmail, Yahoo, Outlook, etc.) are not permitted.');
       return;
     }
 
@@ -38,14 +57,21 @@ export default function LoginPage() {
 
     setTimeout(() => {
       setIsLoading(false);
-      const success = login(email, password);
+      const success = login(id, password, remember);
       if (success) {
         toast('Logged in successfully to FR8X Workspace.');
         router.push('/feeds');
       } else {
-        setErrorMessage('Invalid credentials or account locked.');
+        setErrorMessage('Invalid User ID / email or incorrect password. Please try again.');
       }
     }, 600);
+  };
+
+  const fillDemo = (uid: string, password: string) => {
+    setIdentifier(uid);
+    setPassword(password);
+    setActiveUid(uid);
+    setErrorMessage('');
   };
 
   return (
@@ -80,13 +106,7 @@ export default function LoginPage() {
         >
           <div
             className="mark"
-            style={{
-              width: '38px',
-              height: '38px',
-              margin: '0 auto 10px',
-              fontSize: '14px',
-              borderRadius: '10px',
-            }}
+            style={{ width: '38px', height: '38px', margin: '0 auto 10px', fontSize: '14px', borderRadius: '10px' }}
           >
             f8
           </div>
@@ -94,7 +114,7 @@ export default function LoginPage() {
             fr<b style={{ color: 'var(--teal)' }}>8</b>x Workspace
           </h1>
           <p style={{ fontSize: '11.5px', color: 'var(--mut)', margin: '4px 0 0' }}>
-            Enterprise Freight Forwarding & Reverse Auctions Platform
+            Enterprise Freight Forwarding &amp; Reverse Auctions Platform
           </p>
         </div>
 
@@ -121,24 +141,25 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleLogin}>
+            {/* User ID / Email */}
             <div className="field" style={{ marginBottom: '14px' }}>
-              <label>Professional Corporate Email</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  className="input"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              <label>User ID or Corporate Email</label>
+              <input
+                type="text"
+                className="input"
+                placeholder="u-arjun  or  name@company.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                autoComplete="username"
+                required
+              />
               <small style={{ color: 'var(--mut)', fontSize: '10px', marginTop: '3px' }}>
-                Consumer email domains (Gmail/Yahoo/Outlook) are rejected.
+                Enter your User ID (e.g. u-arjun) or verified corporate email.
               </small>
             </div>
 
-            <div className="field" style={{ marginBottom: '16px' }}>
+            {/* Password */}
+            <div className="field" style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <label>Password</label>
                 <a
@@ -157,8 +178,38 @@ export default function LoginPage() {
                 className="input"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
+            </div>
+
+            {/* Remember Me */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '16px' }}>
+              <input
+                id="remember-device"
+                type="checkbox"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+              />
+              <label htmlFor="remember-device" style={{ fontSize: '11px', color: 'var(--mut)', cursor: 'pointer', margin: 0 }}>
+                Remember me on this device
+              </label>
+              {/* Live status dot */}
+              <span
+                style={{
+                  marginLeft: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '10px',
+                  color: userStatus === 'available' ? '#16a34a' : '#94a3b8',
+                }}
+              >
+                {userStatus === 'available'
+                  ? <><Wifi size={11} /> Available</>
+                  : <><WifiOff size={11} /> Offline</>}
+              </span>
             </div>
 
             <button
@@ -167,17 +218,11 @@ export default function LoginPage() {
               style={{ width: '100%', height: '38px', fontSize: '13px' }}
               disabled={isLoading}
             >
-              {isLoading ? (
-                'Authenticating…'
-              ) : (
-                <>
-                  Sign in to Workspace <ArrowRight size={14} />
-                </>
-              )}
+              {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={14} /></>}
             </button>
           </form>
 
-          {/* Demo Account Switcher Hint */}
+          {/* Demo Account Switcher */}
           <div
             style={{
               marginTop: '16px',
@@ -189,55 +234,37 @@ export default function LoginPage() {
             }}
           >
             <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '6px' }}>
-              Quick Login with Verified Enterprise Accounts:
+              Quick Login — Verified Enterprise Accounts:
             </b>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('arjun@atlaslogistics.com');
-                  setPassword('••••••••••••');
-                }}
-                style={{
-                  textAlign: 'left',
-                  background: email === 'arjun@atlaslogistics.com' ? '#eff6ff' : '#ffffff',
-                  border: email === 'arjun@atlaslogistics.com' ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  padding: '5px 8px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  color: 'var(--ink)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <span>• <b>Arjun Rao</b> (Atlas Logistics Pvt. Ltd.)</span>
-                <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 5px' }}>PREMIUM</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('sarah.lewis@rotterdamfreight.nl');
-                  setPassword('••••••••••••');
-                }}
-                style={{
-                  textAlign: 'left',
-                  background: email === 'sarah.lewis@rotterdamfreight.nl' ? '#eff6ff' : '#ffffff',
-                  border: email === 'sarah.lewis@rotterdamfreight.nl' ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                  borderRadius: '6px',
-                  padding: '5px 8px',
-                  fontSize: '11px',
-                  cursor: 'pointer',
-                  color: 'var(--ink)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <span>• <b>Sarah Lewis</b> (Rotterdam Freight NV)</span>
-                <span className="badge blue" style={{ fontSize: '8.5px', padding: '1px 5px' }}>PRO</span>
-              </button>
+              {DEMO_ACCOUNTS.map((acc) => (
+                <button
+                  key={acc.uid}
+                  type="button"
+                  onClick={() => fillDemo(acc.uid, acc.password)}
+                  style={{
+                    textAlign: 'left',
+                    background: activeUid === acc.uid ? '#eff6ff' : '#ffffff',
+                    border: activeUid === acc.uid ? '1px solid #93c5fd' : '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    padding: '5px 8px',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    color: 'var(--ink)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span>
+                    • <b>{acc.label}</b>{' '}
+                    <span style={{ color: 'var(--mut)' }}>({acc.company})</span>
+                  </span>
+                  <span className={acc.badgeClass} style={{ fontSize: '8.5px', padding: '1px 5px' }}>
+                    {acc.badge}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
         </div>

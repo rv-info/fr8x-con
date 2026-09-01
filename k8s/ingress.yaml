@@ -1,0 +1,58 @@
+# k8s/ingress.yaml
+# Nginx Ingress with TLS, rate limiting, and security headers
+# Prerequisites: cert-manager + nginx ingress controller installed in cluster
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fr8x-ingress
+  namespace: fr8x
+  annotations:
+    # TLS — cert-manager issues Let's Encrypt certificate
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Nginx settings
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Rate limiting — 30 req/s per IP (adjust as needed)
+    nginx.ingress.kubernetes.io/limit-rps: "30"
+    nginx.ingress.kubernetes.io/limit-connections: "10"
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+      more_set_headers "Permissions-Policy: geolocation=(), microphone=(), camera=()";
+    # Proxy settings for Next.js
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - con.fr8x.in
+        - www.con.fr8x.in
+      secretName: fr8x-tls-secret
+  rules:
+    - host: con.fr8x.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fr8x-app-service
+                port:
+                  number: 80
+    - host: www.con.fr8x.in
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: fr8x-app-service
+                port:
+                  number: 80

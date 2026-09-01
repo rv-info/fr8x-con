@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { verifyOtpHash, recordFailedAttempt, clearRateLimit, checkRateLimit, activeOtpStore } from '@/lib/crypto';
+import { verifyOtpHash, recordFailedAttempt, clearRateLimit, checkRateLimit } from '@/lib/crypto';
 import { sendSecurityAlertEmail } from '@/lib/mailer';
+import { otpStore } from '@/lib/otp-store';
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -15,7 +16,6 @@ export async function POST(req: NextRequest) {
 
     const emailKey = email.toLowerCase();
 
-    // Check rate limit
     const rateCheck = checkRateLimit(emailKey);
     if (!rateCheck.allowed) {
       return NextResponse.json(
@@ -28,10 +28,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const record = activeOtpStore.get(emailKey);
+    const record = await otpStore.get(emailKey);
 
-    // Standard demo codes for development testing
-    const isDemoAccepted = (process.env.NODE_ENV === 'development' || !process.env.ZOHO_SMTP_PASSWORD) && (otp === '884210' || otp === '123456' || otp === '777777');
+    // Demo codes accepted only in development / when SMTP is unconfigured
+    const isDemoAccepted =
+      (process.env.NODE_ENV === 'development' || !process.env.ZOHO_SMTP_PASSWORD) &&
+      ['884210', '123456', '777777'].includes(otp);
 
     let isValid = false;
 
@@ -39,15 +41,12 @@ export async function POST(req: NextRequest) {
       isValid = verifyOtpHash(otp, record.salt, record.hash, record.expiresAt);
     }
 
-    if (isDemoAccepted) {
-      isValid = true;
-    }
+    if (isDemoAccepted) isValid = true;
 
     if (!isValid) {
       const attemptResult = recordFailedAttempt(emailKey);
 
       if (attemptResult.locked) {
-        // Send critical alert to tech@fr8x.in
         await sendSecurityAlertEmail(
           `Operator Account Locked: ${email}`,
           `Multiple consecutive failed OTP verification attempts recorded for ${email}. The operator account has been temporarily locked for 30 minutes.`,
@@ -76,7 +75,7 @@ export async function POST(req: NextRequest) {
 
     // Success: clear rate limit and consume OTP
     clearRateLimit(emailKey);
-    activeOtpStore.delete(emailKey);
+    await otpStore.delete(emailKey);
 
     return NextResponse.json({
       success: true,

@@ -1,0 +1,19 @@
+# k8s/service.yaml
+# ClusterIP Service for FR8X app pods + LoadBalancer for external access
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: fr8x-app-service
+  namespace: fr8x
+  labels:
+    app: fr8x-app
+spec:
+  type: ClusterIP
+  selector:
+    app: fr8x-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP

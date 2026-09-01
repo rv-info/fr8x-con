@@ -1,0 +1,93 @@
+# k8s/deployment.yaml
+# FR8X Next.js Application Deployment
+# Apply: kubectl apply -f k8s/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fr8x-app
+  namespace: fr8x
+  labels:
+    app: fr8x-app
+    tier: frontend
+spec:
+  replicas: 2
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: fr8x-app
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0          # Zero-downtime deploys
+  template:
+    metadata:
+      labels:
+        app: fr8x-app
+        tier: frontend
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+      containers:
+        - name: fr8x-app
+          image: ghcr.io/fr8x/fr8x-con:latest   # Replace with your registry image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: NEXT_TELEMETRY_DISABLED
+              value: "1"
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: fr8x-secrets
+                  key: REDIS_URL
+            - name: GODFATHER_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: fr8x-secrets
+                  key: GODFATHER_SESSION_SECRET
+            - name: GODFATHER_KMS_ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: fr8x-secrets
+                  key: GODFATHER_KMS_ENCRYPTION_KEY
+            - name: ZOHO_SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: fr8x-secrets
+                  key: ZOHO_SMTP_PASSWORD
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /api/admin/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/admin/health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop: ["ALL"]
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

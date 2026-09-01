@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { hashOtp, checkRateLimit, activeOtpStore } from '@/lib/crypto';
+import { hashOtp, checkRateLimit } from '@/lib/crypto';
 import { sendOtpEmail } from '@/lib/mailer';
+import { otpStore } from '@/lib/otp-store';
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -13,7 +14,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Valid operator email is required' }, { status: 400 });
     }
 
-    // Rate limit check
     const rateCheck = checkRateLimit(email.toLowerCase());
     if (!rateCheck.allowed) {
       return NextResponse.json(
@@ -26,22 +26,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate 6-digit random cryptographically-safe OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const hashed = hashOtp(otpCode);
 
-    // Save salted hash
-    activeOtpStore.set(email.toLowerCase(), hashed);
+    // Use distributed store (Redis in production, in-memory in dev)
+    await otpStore.set(email.toLowerCase(), hashed);
 
-    // Send email via Zoho SMTP
-    const emailResult = await sendOtpEmail(email, otpCode, correlationId);
+    await sendOtpEmail(email, otpCode, correlationId);
 
     return NextResponse.json({
       success: true,
       message: `Verification code dispatched to ${email}`,
       correlationId,
       expiresAt: hashed.expiresAt,
-      // For development/demo purposes when running in emulator mode or without live SMTP
       demoCode: process.env.NODE_ENV === 'development' || !process.env.ZOHO_SMTP_PASSWORD ? otpCode : undefined,
     });
   } catch (err: any) {
