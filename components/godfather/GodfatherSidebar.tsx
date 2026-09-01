@@ -122,17 +122,17 @@ export function GodfatherSidebar() {
   };
 
   return (
-    <aside className="gf-sidebar">
+    <aside className="gf-sidebar" style={{ fontFamily: "Calibri, 'Segoe UI', Candara, Arial, sans-serif" }}>
       {/* Brand Header */}
       <div className="gf-sidebar-header">
         <Link href="/godfather" className="gf-brand-wrap">
           <div className="gf-brand-logo-badge">
-            <ShieldCheck className="lucide w-5 h-5 text-sky-400" />
+            <ShieldCheck className="lucide w-4 h-4 text-sky-400" />
           </div>
           <div>
             <div className="gf-brand-title">
               <span>GODFATHER</span>
-              <span className="gf-badge gf-badge-gold text-[9px] uppercase font-mono py-0 px-1">
+              <span className="gf-badge gf-badge-gold text-[8.5px] uppercase font-mono py-0 px-1">
                 SOVEREIGN
               </span>
             </div>
@@ -144,8 +144,8 @@ export function GodfatherSidebar() {
 
         {/* Environment Badge & Switcher */}
         <div className="gf-env-select-wrap">
-          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1.5`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
+          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[8.5px] uppercase font-bold flex items-center gap-1`}>
+            <span className="w-1 h-1 rounded-full bg-current inline-block animate-pulse" />
             {environment}
           </span>
           <select

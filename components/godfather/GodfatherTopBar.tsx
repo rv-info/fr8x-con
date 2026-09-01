@@ -33,51 +33,51 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
       {/* Top Ribbon */}
       <div className="gf-tricolore-ribbon" />
 
-      <header className="gf-topbar">
+      <header className="gf-topbar" style={{ fontFamily: "Calibri, 'Segoe UI', Candara, Arial, sans-serif" }}>
         {/* Left: Mobile Toggle & Breadcrumbs */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
           {onMobileMenuClick && (
             <button
               onClick={onMobileMenuClick}
-              className="lg:hidden p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+              className="lg:hidden p-1 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100"
               aria-label="Toggle Navigation"
             >
-              <Menu className="lucide w-5 h-5" />
+              <Menu className="lucide w-4 h-4" />
             </button>
           )}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-slate-400 font-mono font-semibold text-xs hidden sm:inline">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-slate-400 font-mono font-bold text-[9px] hidden sm:inline">
               GODFATHER /
             </span>
-            <h1 className="text-sm font-bold text-slate-900 tracking-tight truncate">{activeTitle}</h1>
+            <h1 className="text-xs font-bold text-slate-900 tracking-tight truncate">{activeTitle}</h1>
           </div>
         </div>
 
         {/* Center: Universal Command Search Bar */}
-        <div className="flex-1 max-w-xl mx-4">
+        <div className="flex-1 max-w-md mx-2">
           <button
             type="button"
             onClick={() => setIsCommandOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100/80 border border-slate-200 text-xs text-slate-600 transition-all shadow-xs"
+            className="w-full flex items-center justify-between px-2.5 py-1 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 text-[10px] text-slate-600 transition-all shadow-xs"
           >
-            <div className="flex items-center gap-2 truncate">
-              <Search className="lucide w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 truncate">
+              <Search className="lucide w-3 h-3 text-slate-400 flex-shrink-0" />
               <span className="font-medium text-slate-500 truncate">Quick search records, companies, tax IDs, auctions...</span>
             </div>
-            <div className="flex items-center gap-1 font-mono text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-bold shadow-2xs flex-shrink-0">
-              <Command className="lucide w-3 h-3" />
+            <div className="flex items-center gap-0.5 font-mono text-[9px] bg-white border border-slate-200 px-1 py-0.5 rounded text-slate-600 font-bold shadow-2xs flex-shrink-0">
+              <Command className="lucide w-2.5 h-2.5" />
               <span>K</span>
             </div>
           </button>
         </div>
 
         {/* Right: Security Pill, Alert Centre & Operator Avatar */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Step-Up Status Indicator */}
           <button
             type="button"
             onClick={() => requestStepUpVerification('Manual Operator Privilege Refresh')}
-            className={`text-xs px-2.5 py-1 rounded-lg border flex items-center gap-1.5 transition-colors font-bold ${
+            className={`text-[9.5px] px-2 py-0.5 rounded border flex items-center gap-1 transition-colors font-bold ${
               isStepUpValid
                 ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
                 : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
@@ -86,13 +86,13 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
           >
             {isStepUpValid ? (
               <>
-                <ShieldCheck className="lucide w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden md:inline font-mono font-bold text-[10.5px]">ELEVATED (15M)</span>
+                <ShieldCheck className="lucide w-3 h-3 text-emerald-600" />
+                <span className="hidden md:inline font-mono font-bold text-[9px]">ELEVATED</span>
               </>
             ) : (
               <>
-                <ShieldAlert className="lucide w-3.5 h-3.5 text-amber-600" />
-                <span className="hidden md:inline font-mono font-bold text-[10.5px]">STEP-UP REQUIRED</span>
+                <ShieldAlert className="lucide w-3 h-3 text-amber-600" />
+                <span className="hidden md:inline font-mono font-bold text-[9px]">STEP-UP</span>
               </>
             )}
           </button>
