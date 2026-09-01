@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, ShieldCheck, ShieldAlert, KeyRound, Command, Menu, LogOut, Radio } from 'lucide-react';
+import { Search, Bell, ShieldCheck, ShieldAlert, Command, Menu, LogOut } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { CommandPalette } from './CommandPalette';
 import { NotificationDrawer } from './NotificationDrawer';
@@ -16,7 +16,6 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
-  // Global keyboard shortcut for Cmd/Ctrl + K
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
@@ -30,132 +29,104 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
 
   return (
     <>
-      {/* Top Ribbon */}
       <div className="gf-tricolore-ribbon" />
 
       <header className="gf-topbar">
-        {/* Left: Mobile Toggle & Breadcrumbs */}
-        <div className="flex items-center gap-3 min-w-0">
+        {/* Left: Mobile Toggle + Breadcrumb */}
+        <div style={{display:'flex',alignItems:'center',gap:6,minWidth:0}}>
           {onMobileMenuClick && (
-            <button
-              onClick={onMobileMenuClick}
-              className="lg:hidden p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100"
-              aria-label="Toggle Navigation"
-            >
-              <Menu className="lucide w-5 h-5" />
+            <button onClick={onMobileMenuClick} className="lg:hidden" style={{padding:3,borderRadius:3,color:'#6b7280',background:'none',border:'none',cursor:'pointer'}} aria-label="Toggle Navigation">
+              <Menu className="lucide" style={{width:16,height:16}} />
             </button>
           )}
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="text-slate-400 font-mono font-bold text-[11px] hidden sm:inline">
-              GODFATHER /
-            </span>
-            <h1 className="text-sm font-bold text-slate-900 tracking-tight truncate">{activeTitle}</h1>
+          <div style={{display:'flex',alignItems:'center',gap:4,minWidth:0}}>
+            <span style={{color:'#9ca3af',fontFamily:'monospace',fontWeight:700,fontSize:9}}>GF /</span>
+            <h1 style={{fontSize:11.5,fontWeight:750,color:'#111827',margin:0,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{activeTitle}</h1>
           </div>
         </div>
 
-        {/* Center: Universal Command Search Bar */}
-        <div className="flex-1 max-w-xl mx-4 hidden md:block">
+        {/* Center: Command Search */}
+        <div style={{flex:1,maxWidth:420,margin:'0 8px',display:'flex'}}>
           <button
             type="button"
             onClick={() => setIsCommandOpen(true)}
-            className="w-full flex items-center justify-between px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs text-slate-600 transition-all shadow-xs"
+            style={{
+              width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',
+              padding:'0 8px',height:26,borderRadius:4,background:'#f4f6f8',
+              border:'1px solid #e0e4ea',fontSize:10,color:'#6b7280',cursor:'pointer',
+              transition:'border-color 0.1s',
+            }}
           >
-            <div className="flex items-center gap-2 truncate">
-              <Search className="lucide w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-              <span className="font-medium text-slate-500 truncate">Search users, companies, reports, auctions, rates, audit events...</span>
+            <div style={{display:'flex',alignItems:'center',gap:5,overflow:'hidden'}}>
+              <Search className="lucide" style={{width:12,height:12,color:'#9ca3af',flexShrink:0}} />
+              <span style={{fontWeight:500,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>Search users, companies, audit events...</span>
             </div>
-            <div className="flex items-center gap-1 font-mono text-[10px] bg-white border border-slate-200 px-1.5 py-0.5 rounded text-slate-600 font-bold shadow-2xs flex-shrink-0">
-              <Command className="lucide w-3 h-3" />
+            <div style={{display:'flex',alignItems:'center',gap:2,fontFamily:'monospace',fontSize:9,background:'#fff',border:'1px solid #e0e4ea',padding:'1px 4px',borderRadius:3,color:'#6b7280',fontWeight:700,flexShrink:0}}>
+              <Command className="lucide" style={{width:9,height:9}} />
               <span>K</span>
             </div>
           </button>
         </div>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-2.5">
-          {/* Quick Shortcuts: OTP ON & Reports */}
-          <a
-            href="/GODFATHERON"
-            className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-md bg-amber-500 hover:bg-amber-600 text-white transition-colors shadow-2xs uppercase tracking-wide"
-            title="Godfather Login & OTP Challenge Terminal"
-          >
-            <KeyRound className="lucide w-3.5 h-3.5" />
-            <span>OTP ON</span>
-          </a>
-
-          <a
-            href="/godfather/trust-safety/reports"
-            className="hidden sm:inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md bg-rose-50 border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors uppercase"
-            title="Platform Grievance & Reports Queue"
-          >
-            <span>REPORTS</span>
-          </a>
-
-          {/* Session Status indicator */}
-          <div className="hidden lg:flex items-center gap-1.5 text-[10.5px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md">
-            <Radio className="lucide w-3 h-3 animate-pulse text-emerald-600" />
-            <span className="font-bold">SECURED NODE</span>
-          </div>
-
-          {/* Step-Up Status Indicator */}
+        {/* Right: Actions */}
+        <div style={{display:'flex',alignItems:'center',gap:4}}>
+          {/* Step-Up */}
           <button
             type="button"
-            onClick={() => requestStepUpVerification('Manual Operator Privilege Refresh')}
-            className={`text-xs px-2.5 py-1 rounded-md border flex items-center gap-1.5 transition-colors font-bold ${
-              isStepUpValid
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-amber-50 border-amber-300 text-amber-800 hover:bg-amber-100'
-            }`}
-            title={isStepUpValid ? 'Privileged authorization active' : 'Click to perform Step-Up re-authentication'}
+            onClick={() => requestStepUpVerification('Manual Privilege Refresh')}
+            style={{
+              display:'inline-flex',alignItems:'center',gap:3,
+              fontSize:9,padding:'0 6px',height:22,borderRadius:3,
+              border: `1px solid ${isStepUpValid ? '#86efac' : '#fcd34d'}`,
+              background: isStepUpValid ? '#dcfce7' : '#fef3c7',
+              color: isStepUpValid ? '#15803d' : '#b45309',
+              fontWeight:700,cursor:'pointer',fontFamily:'monospace',
+              transition:'all 0.1s',
+            }}
+            title={isStepUpValid ? 'Elevated active' : 'Click to re-authenticate'}
           >
-            {isStepUpValid ? (
-              <>
-                <ShieldCheck className="lucide w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden xl:inline font-mono font-bold text-[10px]">ELEVATED</span>
-              </>
-            ) : (
-              <>
-                <ShieldAlert className="lucide w-3.5 h-3.5 text-amber-600" />
-                <span className="hidden xl:inline font-mono font-bold text-[10px]">STEP-UP</span>
-              </>
-            )}
+            {isStepUpValid
+              ? <><ShieldCheck className="lucide" style={{width:11,height:11}} /><span>ELEVATED</span></>
+              : <><ShieldAlert className="lucide" style={{width:11,height:11}} /><span>STEP-UP</span></>
+            }
           </button>
 
-          {/* Notifications Alert Center */}
+          {/* Notifications */}
           <button
             type="button"
             onClick={() => setIsNotifOpen(true)}
-            className="relative text-slate-600 hover:text-slate-900 p-1.5 rounded-md hover:bg-slate-100 transition-colors"
-            aria-label="Platform Alerts"
+            style={{
+              position:'relative',color:'#6b7280',padding:3,borderRadius:3,
+              background:'none',border:'none',cursor:'pointer',
+              transition:'color 0.1s',
+            }}
+            aria-label="Alerts"
           >
-            <Bell className="lucide w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+            <Bell className="lucide" style={{width:14,height:14}} />
+            <span style={{position:'absolute',top:2,right:2,width:5,height:5,borderRadius:'50%',background:'#d97706',border:'1.5px solid #fff'}} />
           </button>
 
-          {/* Operator Profile & Logout */}
-          <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div className="w-7 h-7 rounded-md bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
+          {/* Operator */}
+          <div style={{display:'flex',alignItems:'center',gap:4,paddingLeft:4,borderLeft:'1px solid #e0e4ea'}}>
+            <div style={{width:22,height:22,borderRadius:4,background:'#111827',color:'#fff',fontWeight:700,display:'flex',alignItems:'center',justifyContent:'center',fontSize:9}}>
               {operator.displayName.charAt(0)}
             </div>
-            <span className="text-xs font-semibold text-slate-700 font-mono hidden xl:inline">
+            <span style={{fontSize:9,fontWeight:600,color:'#374151',fontFamily:'monospace',maxWidth:100,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
               {operator.email}
             </span>
             <button
               type="button"
               onClick={logoutOperator}
-              className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-              title="Terminate Sovereign Session (Logout)"
+              style={{padding:3,borderRadius:3,color:'#9ca3af',background:'none',border:'none',cursor:'pointer',transition:'color 0.1s'}}
+              title="Logout"
             >
-              <LogOut className="lucide w-4 h-4" />
+              <LogOut className="lucide" style={{width:13,height:13}} />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Global Command Palette Modal */}
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
-
-      {/* Notification Drawer */}
       <NotificationDrawer isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
     </>
   );
