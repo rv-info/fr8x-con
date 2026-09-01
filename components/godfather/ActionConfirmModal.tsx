@@ -14,7 +14,8 @@ interface ActionConfirmModalProps {
   afterSnapshot?: any;
   isDestructive?: boolean;
   onConfirm: (reason: string) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onClose?: () => void;
 }
 
 export function ActionConfirmModal({
@@ -28,9 +29,15 @@ export function ActionConfirmModal({
   isDestructive = false,
   onConfirm,
   onCancel,
+  onClose,
 }: ActionConfirmModalProps) {
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
+
+  const handleDismiss = () => {
+    if (onCancel) onCancel();
+    else if (onClose) onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -59,7 +66,7 @@ export function ActionConfirmModal({
               </p>
             </div>
           </div>
-          <button onClick={onCancel} className="gf-modal-close-btn" aria-label="Close">
+          <button type="button" onClick={handleDismiss} className="gf-modal-close-btn" aria-label="Close">
             <X className="lucide w-4 h-4" />
           </button>
         </div>
@@ -101,7 +108,7 @@ export function ActionConfirmModal({
           </div>
 
           <div className="gf-modal-footer mt-5 flex items-center justify-end gap-2.5">
-            <button type="button" onClick={onCancel} className="gf-btn gf-btn-secondary">
+            <button type="button" onClick={handleDismiss} className="gf-btn gf-btn-secondary">
               Cancel
             </button>
             <button

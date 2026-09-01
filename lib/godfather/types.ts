@@ -201,16 +201,20 @@ export interface CompanyVerificationItem {
   iec?: string;
   mto?: string;
   status: 'pending' | 'verified' | 'rejected' | 'suspended' | 'additional_info_required';
+  riskLevel?: 'LOW' | 'MEDIUM' | 'HIGH';
+  phone?: string;
   submittedAt: string;
   reviewedAt?: string;
   reviewedBy?: string;
   adminNotes: string[];
   documents: {
     docId: string;
-    type: 'GST_CERTIFICATE' | 'PAN_CARD' | 'IEC_LICENSE' | 'MTO_REGISTRATION' | 'INCORPORATION_CERT' | 'BANK_STATEMENT';
+    type: 'GST_CERTIFICATE' | 'PAN_CARD' | 'IEC_LICENSE' | 'MTO_REGISTRATION' | 'INCORPORATION_CERT' | 'BANK_STATEMENT' | string;
     name: string;
     fileUrl: string;
     verified: boolean;
+    status?: 'verified' | 'pending' | 'rejected';
+    size?: string;
     uploadedAt: string;
   }[];
   primaryContactName: string;

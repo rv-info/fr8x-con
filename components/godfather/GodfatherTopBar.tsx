@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, ShieldCheck, ShieldAlert, KeyRound, Command, Menu } from 'lucide-react';
+import { Search, Bell, ShieldCheck, ShieldAlert, KeyRound, Command, Menu, LogOut, Radio } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { CommandPalette } from './CommandPalette';
 import { NotificationDrawer } from './NotificationDrawer';
@@ -12,7 +12,7 @@ interface GodfatherTopBarProps {
 }
 
 export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }: GodfatherTopBarProps) {
-  const { operator, isStepUpValid, requestStepUpVerification } = useGodfatherAuth();
+  const { operator, isStepUpValid, requestStepUpVerification, logoutOperator } = useGodfatherAuth();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
 
@@ -54,7 +54,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
         </div>
 
         {/* Center: Universal Command Search Bar */}
-        <div className="flex-1 max-w-md mx-2">
+        <div className="flex-1 max-w-lg mx-2">
           <button
             type="button"
             onClick={() => setIsCommandOpen(true)}
@@ -62,7 +62,7 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
           >
             <div className="flex items-center gap-1.5 truncate">
               <Search className="lucide w-3 h-3 text-slate-400 flex-shrink-0" />
-              <span className="font-medium text-slate-500 truncate">Quick search records, companies, tax IDs, auctions...</span>
+              <span className="font-medium text-slate-500 truncate">Search users, companies, reports, auctions, rates, audit events...</span>
             </div>
             <div className="flex items-center gap-0.5 font-mono text-[9px] bg-white border border-slate-200 px-1 py-0.5 rounded text-slate-600 font-bold shadow-2xs flex-shrink-0">
               <Command className="lucide w-2.5 h-2.5" />
@@ -71,8 +71,14 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
           </button>
         </div>
 
-        {/* Right: Security Pill, Alert Centre & Operator Avatar */}
+        {/* Right: Security Pill, Alert Centre, Session Status & Logout */}
         <div className="flex items-center gap-2">
+          {/* Session Status indicator */}
+          <div className="hidden md:flex items-center gap-1 text-[9px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">
+            <Radio className="lucide w-2.5 h-2.5 animate-pulse text-emerald-600" />
+            <span className="font-bold">SECURED NODE</span>
+          </div>
+
           {/* Step-Up Status Indicator */}
           <button
             type="button"
@@ -87,12 +93,12 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
             {isStepUpValid ? (
               <>
                 <ShieldCheck className="lucide w-3 h-3 text-emerald-600" />
-                <span className="hidden md:inline font-mono font-bold text-[9px]">ELEVATED</span>
+                <span className="hidden lg:inline font-mono font-bold text-[9px]">ELEVATED</span>
               </>
             ) : (
               <>
                 <ShieldAlert className="lucide w-3 h-3 text-amber-600" />
-                <span className="hidden md:inline font-mono font-bold text-[9px]">STEP-UP</span>
+                <span className="hidden lg:inline font-mono font-bold text-[9px]">STEP-UP</span>
               </>
             )}
           </button>
@@ -101,21 +107,29 @@ export function GodfatherTopBar({ activeTitle = 'Overview', onMobileMenuClick }:
           <button
             type="button"
             onClick={() => setIsNotifOpen(true)}
-            className="relative text-slate-600 hover:text-slate-900 p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            className="relative text-slate-600 hover:text-slate-900 p-1 rounded hover:bg-slate-100 transition-colors"
             aria-label="Platform Alerts"
           >
-            <Bell className="lucide w-4 h-4" />
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500 ring-2 ring-white" />
+            <Bell className="lucide w-3.5 h-3.5" />
+            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full bg-amber-500 ring-2 ring-white" />
           </button>
 
-          {/* Operator Profile Tag */}
-          <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
-            <div className="w-6 h-6 rounded-md bg-slate-900 text-white font-bold flex items-center justify-center text-[11px]">
+          {/* Operator Profile & Logout */}
+          <div className="flex items-center gap-1.5 pl-1.5 border-l border-slate-200">
+            <div className="w-5 h-5 rounded bg-slate-900 text-white font-bold flex items-center justify-center text-[9.5px]">
               {operator.displayName.charAt(0)}
             </div>
-            <span className="text-xs font-semibold text-slate-700 font-mono hidden xl:inline">
+            <span className="text-[10px] font-semibold text-slate-700 font-mono hidden xl:inline">
               {operator.email}
             </span>
+            <button
+              type="button"
+              onClick={logoutOperator}
+              className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+              title="Terminate Sovereign Session (Logout)"
+            >
+              <LogOut className="lucide w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </header>

@@ -167,6 +167,7 @@ interface GodfatherAuthContextType {
   cancelStepUp: () => void;
   permissions: typeof ROLE_PERMISSIONS['godfather_owner'];
   checkPermission: (permissionKey: keyof typeof ROLE_PERMISSIONS['godfather_owner']) => boolean;
+  hasPermission: (permissionKey: keyof typeof ROLE_PERMISSIONS['godfather_owner']) => boolean;
 }
 
 const GodfatherAuthContext = createContext<GodfatherAuthContextType | undefined>(undefined);
@@ -334,6 +335,7 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
         cancelStepUp,
         permissions,
         checkPermission,
+        hasPermission: checkPermission,
       }}
     >
       {children}

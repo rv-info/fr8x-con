@@ -1,56 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { serverSecurityStore } from '@/lib/server-auth-store';
 
 /**
  * POST /api/auth/login
- * Server-side credential validation — validates user ID/email + password.
- * Sets an httpOnly session cookie on success.
- *
- * In production: swap USER_CREDENTIALS for a DB/Firebase Auth lookup.
+ * Server-side credential validation with strict 3-attempt limit,
+ * account blocking, detailed remaining attempt feedback, and httpOnly session cookies.
  */
-
-// Server-side password store (mirrors AuthContext demo passwords)
-const USER_CREDENTIALS: Record<string, { uid: string; email: string; password: string }> = {
-  'u-arjun': { uid: 'u-arjun', email: 'arjun@atlaslogistics.com', password: 'Atlas@2025' },
-  'arjun@atlaslogistics.com': { uid: 'u-arjun', email: 'arjun@atlaslogistics.com', password: 'Atlas@2025' },
-  'u-sarah': { uid: 'u-sarah', email: 'sarah.lewis@rotterdamfreight.nl', password: 'Rotterdam@2025' },
-  'sarah.lewis@rotterdamfreight.nl': { uid: 'u-sarah', email: 'sarah.lewis@rotterdamfreight.nl', password: 'Rotterdam@2025' },
-  'u-kiran': { uid: 'u-kiran', email: 'kiran.mehta@indoocean.com', password: 'IndoOcean@2025' },
-  'kiran.mehta@indoocean.com': { uid: 'u-kiran', email: 'kiran.mehta@indoocean.com', password: 'IndoOcean@2025' },
-};
-
 export async function POST(req: NextRequest) {
   try {
     const { identifier, password } = await req.json();
 
     if (!identifier || !password) {
-      return NextResponse.json({ error: 'User ID and password are required.' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: 'User ID / email and password are required.' },
+        { status: 400 }
+      );
     }
 
-    const record = USER_CREDENTIALS[identifier.trim().toLowerCase()];
+    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    const result = serverSecurityStore.recordLoginAttempt(identifier, password, ip);
 
-    if (!record || record.password !== password) {
-      return NextResponse.json({ error: 'Invalid credentials.' }, { status: 401 });
+    if (result.isBlocked) {
+      return NextResponse.json(
+        {
+          success: false,
+          isBlocked: true,
+          error: 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.',
+        },
+        { status: 403 }
+      );
     }
 
-    const res = NextResponse.json({ success: true, uid: record.uid, email: record.email });
+    if (!result.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          attemptsRemaining: result.attemptsRemaining,
+          error: result.message,
+        },
+        { status: 401 }
+      );
+    }
 
-    // httpOnly session cookie — 8-hour expiry
-    res.cookies.set('fr8x_session', record.uid, {
+    const user = result.user!;
+    const res = NextResponse.json({
+      success: true,
+      uid: user.uid,
+      email: user.email,
+      displayName: user.displayName,
+      company: user.company,
+      companyId: user.companyId,
+      role: user.role,
+      status: user.status,
+    });
+
+    // Secure httpOnly session cookie
+    res.cookies.set('fr8x_session', user.uid, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 8,
+      maxAge: 60 * 60 * 8, // 8 hours
       path: '/',
     });
 
     return res;
   } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Login failed.' }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message || 'Login service unavailable.' }, { status: 500 });
   }
 }
 
 export async function DELETE(_req: NextRequest) {
-  const res = NextResponse.json({ success: true });
+  const res = NextResponse.json({ success: true, message: 'Session terminated.' });
   res.cookies.delete('fr8x_session');
   return res;
 }

@@ -6,18 +6,24 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
   const { login, loadRemembered, userStatus } = useAuth();
   const { toast } = useToast();
 
-  const [identifier, setIdentifier] = useState('');      // uid or email
+  const [identifier, setIdentifier] = useState(''); // uid or email
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Forgot password modal
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetSubmitting, setIsResetSubmitting] = useState(false);
 
   // Restore remembered credentials on mount
   useEffect(() => {
@@ -29,13 +35,14 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+    setIsBlocked(false);
 
     const id = identifier.trim();
     if (!id || !password) {
-      setErrorMessage('Please enter your User ID (or email) and password.');
+      setErrorMessage('Please enter your User ID (or corporate email) and password.');
       return;
     }
 
@@ -47,8 +54,33 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      // Server-side authentication & attempt limiter
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: id, password }),
+      });
+
+      const json = await res.json();
       setIsLoading(false);
+
+      if (res.ok && json.success) {
+        // Successful login
+        login(id, password, remember);
+        toast('Logged in successfully to FR8X Workspace.');
+        router.push('/feeds');
+      } else {
+        if (json.isBlocked || res.status === 403) {
+          setIsBlocked(true);
+          setErrorMessage('ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
+        } else {
+          setErrorMessage(json.error || 'Invalid credentials.');
+        }
+      }
+    } catch {
+      setIsLoading(false);
+      // Fallback local verification
       const success = login(id, password, remember);
       if (success) {
         toast('Logged in successfully to FR8X Workspace.');
@@ -56,7 +88,31 @@ export default function LoginPage() {
       } else {
         setErrorMessage('Invalid User ID / email or incorrect password. Please try again.');
       }
-    }, 600);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail.trim()) return;
+
+    setIsResetSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail.trim() }),
+      });
+
+      const json = await res.json();
+      toast(json.message || 'If an account matches this email, password reset instructions have been dispatched.');
+      setIsForgotModalOpen(false);
+      setResetEmail('');
+    } catch {
+      toast('If an account matches this email, password reset instructions have been dispatched.');
+      setIsForgotModalOpen(false);
+    } finally {
+      setIsResetSubmitting(false);
+    }
   };
 
   return (
@@ -117,17 +173,22 @@ export default function LoginPage() {
               style={{
                 padding: '10px 12px',
                 borderRadius: '8px',
-                background: '#fff0f1',
-                border: '1px solid #f0c8ce',
-                color: 'var(--red)',
+                background: isBlocked ? '#fef2f2' : '#fff0f1',
+                border: isBlocked ? '1px solid #f87171' : '1px solid #f0c8ce',
+                color: isBlocked ? '#b91c1c' : 'var(--red)',
                 fontSize: '11.5px',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
+                fontWeight: isBlocked ? 700 : 500,
               }}
             >
-              <AlertCircle size={15} style={{ flexShrink: 0 }} />
+              {isBlocked ? (
+                <ShieldAlert size={16} style={{ flexShrink: 0, color: '#dc2626' }} />
+              ) : (
+                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+              )}
               <span>{errorMessage}</span>
             </div>
           )}
@@ -158,7 +219,7 @@ export default function LoginPage() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    toast('Password reset link dispatched to your verified corporate email.');
+                    setIsForgotModalOpen(true);
                   }}
                   style={{ fontSize: '10.5px', color: 'var(--brand)', fontWeight: 600 }}
                 >
@@ -198,9 +259,15 @@ export default function LoginPage() {
                   color: userStatus === 'available' ? '#16a34a' : '#94a3b8',
                 }}
               >
-                {userStatus === 'available'
-                  ? <><Wifi size={11} /> Available</>
-                  : <><WifiOff size={11} /> Offline</>}
+                {userStatus === 'available' ? (
+                  <>
+                    <Wifi size={11} /> Available
+                  </>
+                ) : (
+                  <>
+                    <WifiOff size={11} /> Offline
+                  </>
+                )}
               </span>
             </div>
 
@@ -230,7 +297,7 @@ export default function LoginPage() {
             <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '3px' }}>
               Multi-Enterprise Global Network:
             </b>
-            Log in using your enterprise User ID or verified company email. Separate workspaces are provisioned per registered freight organisation.
+            Log in using your enterprise User ID or verified company email. Max 3 password attempts enforced server-side.
           </div>
         </div>
 
@@ -251,6 +318,65 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {isForgotModalOpen && (
+        <div className="gf-modal-overlay">
+          <div className="gf-modal-card" style={{ maxWidth: '400px' }}>
+            <div className="gf-modal-header">
+              <div className="gf-modal-title flex items-center gap-2">
+                <KeyRound className="lucide w-4 h-4 text-sky-600" />
+                <span>Reset Account Password</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsForgotModalOpen(false)}
+                className="gf-modal-close-btn"
+              >
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleResetPasswordSubmit} style={{ padding: '16px' }} className="space-y-3">
+              <p style={{ fontSize: '11.5px', color: 'var(--mut)', margin: 0, lineHeight: 1.4 }}>
+                Enter your registered corporate email. If an account is matched, secure instructions will be dispatched.
+              </p>
+
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                  Verified Corporate Email
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="name@company.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  className="input"
+                  style={{ width: '100%', height: '34px', fontSize: '12px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsForgotModalOpen(false)}
+                  className="btn secondary sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isResetSubmitting || !resetEmail.trim()}
+                  className="btn primary sm"
+                >
+                  {isResetSubmitting ? 'Dispatching…' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

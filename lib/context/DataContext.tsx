@@ -1441,16 +1441,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { user, bidPostingFee } = useAuth();
   const { toast } = useToast();
 
-  const [posts, setPosts] = useState<FeedPost[]>(SEED_POSTS);
-  const [jobs, setJobs] = useState<JobPost[]>(SEED_JOBS);
-  const [topics, setTopics] = useState<NexusTopic[]>(SEED_TOPICS);
-  const [reviews, setReviews] = useState<CompanyReview[]>(SEED_REVIEWS);
-  const [cases, setCases] = useState<BlacklistCase[]>(SEED_BLACKLIST);
-  const [auctions, setAuctions] = useState<Auction[]>(SEED_AUCTIONS);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [jobs, setJobs] = useState<JobPost[]>([]);
+  const [topics, setTopics] = useState<NexusTopic[]>([]);
+  const [reviews, setReviews] = useState<CompanyReview[]>([]);
+  const [cases, setCases] = useState<BlacklistCase[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
-  const [rates] = useState<RateItem[]>(SEED_RATES);
+  const [rates, setRates] = useState<RateItem[]>([]);
   const [myRates, setMyRates] = useState<RateItem[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Master Data States with Live Synchronizer
   const [masterLocations, setMasterLocations] = useState<LocationMasterItem[]>(MASTER_LOCATIONS);
@@ -1468,37 +1468,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (savedCars) setMasterCarriers(JSON.parse(savedCars));
     } catch {}
   }, []);
-  const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([
-    {
-      id: 'bid-2',
-      auctionId: 'GB-2026-0311',
-      bidderUid: 'u-arjun',
-      bidderName: 'Arjun Rao',
-      bidderCompany: 'Atlas Logistics Pvt. Ltd.',
-      bidderHasGoldenTick: true,
-      charges: [
-        {
-          equipment: '40HC',
-          quantity: 1,
-          oceanFreight: 2750,
-          freightSurcharges: 150,
-          originTransport: 0,
-          originClearance: 50,
-          originLocal: 40,
-          destTransport: 0,
-          destClearance: 0,
-          destLocal: 0,
-          totalUnit: 2990,
-        },
-      ],
-      grandTotalUSD: 2990,
-      rank: 1,
-      feePaid: 180,
-      currency: 'USD',
-      submittedAt: '27 Aug 11:30 IST',
-      status: 'winning',
-    },
-  ]);
+  const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([]);
 
   // Notification Actions
   const markNotificationRead = (notifId: string) => {

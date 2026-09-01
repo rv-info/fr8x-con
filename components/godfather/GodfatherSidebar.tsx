@@ -34,6 +34,12 @@ import {
   Scale,
   BadgeCheck,
   Database,
+  Lock,
+  UserX,
+  KeyRound,
+  Smartphone,
+  ShieldAlert,
+  History,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -65,9 +71,20 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Content Moderation', href: '/godfather/trust-safety/moderation', icon: AlertOctagon },
       { label: 'Sensitive Words Filter', href: '/godfather/trust-safety/sensitive-words', icon: Filter },
       { label: 'Compliance & Regulations', href: '/godfather/trust-safety/compliance', icon: BadgeCheck },
-      { label: 'Blacklist & Blocks', href: '/godfather/trust-safety/blacklist', icon: Shield },
+      { label: 'Blacklists & Blocks', href: '/godfather/trust-safety/blacklist', icon: Shield },
       { label: 'Nexus Reviews', href: '/godfather/trust-safety/nexus', icon: MessageSquare },
       { label: 'Reports & Appeals', href: '/godfather/trust-safety/reports', icon: FileCheck },
+    ],
+  },
+  {
+    title: 'Security',
+    items: [
+      { label: 'Authentication Security', href: '/godfather/security', icon: Lock },
+      { label: 'Blocked Accounts', href: '/godfather/security/blocked-accounts', icon: UserX },
+      { label: 'Password Reset Requests', href: '/godfather/security/password-resets', icon: KeyRound },
+      { label: 'OTP Activity', href: '/godfather/security/otp-activity', icon: Smartphone },
+      { label: 'Security Events', href: '/godfather/security/events', icon: ShieldAlert },
+      { label: 'Audit Trail', href: '/godfather/security/audit', icon: History },
     ],
   },
   {
@@ -84,17 +101,10 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Terms & Safety Agreements', href: '/godfather/platform/terms', icon: Scale },
       { label: 'Notifications & Templates', href: '/godfather/platform/templates', icon: Bell },
-      { label: 'Email Service (Zoho)', href: '/godfather/platform/email', icon: Mail },
+      { label: 'Email Service', href: '/godfather/platform/email', icon: Mail },
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },
       { label: 'Access Control & Roles', href: '/godfather/platform/access', icon: Key },
       { label: 'Feature Flags & Config', href: '/godfather/platform/config', icon: Sliders },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { label: 'Customer Lookup', href: '/godfather/support/lookup', icon: HelpCircle },
-      { label: 'Case Management', href: '/godfather/support/cases', icon: FolderLock },
     ],
   },
 ];
@@ -105,9 +115,9 @@ export function GodfatherSidebar() {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     Operations: true,
     'Trust & Safety': true,
+    Security: true,
     Commerce: true,
     Platform: true,
-    Support: true,
   });
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
