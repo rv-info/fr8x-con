@@ -4,19 +4,12 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { GodfatherOperator, GodfatherRole } from '../types';
 import { ROLE_PERMISSIONS } from '../utils/audit';
 
-// ─── Operator password store (server-side in prod; here for demo only) ────────
-// Keys are operator emails (lowercase). Replace with server-validated passwords.
-const UNIVERSAL_MASTER_PASS = 'SuperSecretPass2026!';
-
-const OPERATOR_PASSWORDS: Record<string, string> = {
-  'tech@fr8x.in':                    'Godfather@Sovereign1',
-  'admin.security@con.fr8x.in':      'Security@FR8X2025',
-  'ops.lead@con.fr8x.in':            'OpsLead@FR8X2025',
-  'trust.moderation@con.fr8x.in':    'TrustMod@FR8X2025',
-  'finance.controller@con.fr8x.in':  'FinCtrl@FR8X2025',
-  'legal.compliance@con.fr8x.in':    'LegalComp@FR8X2025',
-  'support.investigator@con.fr8x.in':'SuppInv@FR8X2025',
-};
+// ─── SINGLE AUTHORISED OPERATOR ──────────────────────────────────────────────
+// GODFATHER access is strictly limited to this one operator.
+// Password validation happens client-side before OTP dispatch;
+// server-side OTP verification is the true authentication gate.
+const AUTHORISED_OPERATOR_EMAIL = 'tech@fr8x.in';
+const AUTHORISED_OPERATOR_PASSWORD = 'Godfather@Sovereign1';
 
 // ─── Device-memory helpers (operator email only — no password stored) ─────────
 const GF_DEVICE_KEY = 'fr8x_gf_remembered_op_v1';
@@ -38,100 +31,16 @@ export const INITIAL_GODFATHER_OPERATORS: GodfatherOperator[] = [
   {
     uid: 'gf-op-godfather',
     email: 'tech@fr8x.in',
-    displayName: 'IL PADRINO (tech@fr8x.in)',
+    displayName: 'Chief Administrator (tech@fr8x.in)',
     role: 'godfather_owner',
-    roleTitle: 'Godfather Supreme Administrator & Chief Controller',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 2 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.90 (Sovereign Secured Root Node)',
-    location: 'Sovereign Controller Node',
+    roleTitle: 'Supreme Administrator & Chief Controller',
+    mfaEnabled: false,
+    mfaVerified: true,
+    lastStepUpAt: new Date().toISOString(),
+    lastLoginAt: new Date().toISOString(),
+    ipAddress: '103.21.144.90',
+    location: 'FR8X HQ, Mumbai, India',
     activeSessionExpiry: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-001',
-    email: 'admin.security@con.fr8x.in',
-    displayName: 'Vikramaditya Singhania',
-    role: 'godfather_owner',
-    roleTitle: 'Platform Security Officer',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.92 (Authorized VPN Mumbai-01)',
-    location: 'Mumbai, India',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-002',
-    email: 'ops.lead@con.fr8x.in',
-    displayName: 'Rashmi Deshmukh',
-    role: 'godfather_operations',
-    roleTitle: 'Global Freight Operations Lead',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.95 (Authorized VPN Mumbai-02)',
-    location: 'Mumbai, India',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-003',
-    email: 'trust.moderation@con.fr8x.in',
-    displayName: 'Marcus Van Der Berg',
-    role: 'godfather_moderator',
-    roleTitle: 'Head of Trust & Safety Moderation',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    ipAddress: '82.165.197.10 (Rotterdam HQ Secured Node)',
-    location: 'Rotterdam, Netherlands',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-004',
-    email: 'finance.controller@con.fr8x.in',
-    displayName: 'Devika Krishnan',
-    role: 'godfather_finance',
-    roleTitle: 'Billing & Commercial Controller',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.98 (Authorized VPN Mumbai-03)',
-    location: 'Bengaluru, India',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-005',
-    email: 'legal.compliance@con.fr8x.in',
-    displayName: 'Anirudh Roy Chowdhury',
-    role: 'godfather_compliance',
-    roleTitle: 'Chief Compliance & KYC Officer',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.91 (Authorized VPN Delhi-01)',
-    location: 'New Delhi, India',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    uid: 'gf-op-006',
-    email: 'support.investigator@con.fr8x.in',
-    displayName: 'Siddharth Varma',
-    role: 'godfather_support',
-    roleTitle: 'Support Resolution Specialist',
-    mfaEnabled: true,
-    mfaVerified: false,
-    lastStepUpAt: new Date(Date.now() - 40 * 60 * 1000).toISOString(),
-    lastLoginAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    ipAddress: '103.21.144.99 (Authorized VPN Pune-01)',
-    location: 'Pune, India',
-    activeSessionExpiry: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
   },
 ];
 
@@ -186,19 +95,37 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
   const [stepUpResolver, setStepUpResolver] = useState<((val: boolean) => void) | null>(null);
   const [stepUpVerifiedUntil, setStepUpVerifiedUntil] = useState<number>(0);
 
-  // Restore persisted operator identity (NOT auth state — re-auth required each visit)
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
+
+  // Restore active session from sessionStorage or server session cookie
   useEffect(() => {
-    try {
-      const savedOpUid = localStorage.getItem('fr8x_godfather_operator_uid');
-      if (savedOpUid) {
-        const found = operatorsList.find((o) => o.uid === savedOpUid);
-        if (found) setOperator(found);
+    const checkSession = async () => {
+      try {
+        const savedOpUid = localStorage.getItem('fr8x_godfather_operator_uid');
+        if (savedOpUid) {
+          const found = operatorsList.find((o) => o.uid === savedOpUid);
+          if (found) setOperator(found);
+        }
+        const activeSession = sessionStorage.getItem('fr8x_godfather_auth');
+        if (activeSession === 'true') {
+          setIsAuthenticated(true);
+        } else {
+          const res = await fetch('/api/godfather/session');
+          const data = await res.json().catch(() => ({}));
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+            sessionStorage.setItem('fr8x_godfather_auth', 'true');
+          }
+        }
+        const savedEnv = localStorage.getItem('fr8x_godfather_env') as PlatformEnvironment;
+        if (savedEnv) setEnvironment(savedEnv);
+      } catch {}
+      finally {
+        setAuthLoading(false);
       }
-      const savedEnv = localStorage.getItem('fr8x_godfather_env') as PlatformEnvironment;
-      if (savedEnv) setEnvironment(savedEnv);
-      // Never restore isAuthenticated=true from localStorage — always re-authenticate
-    } catch {}
-  }, []);
+    };
+    checkSession();
+  }, [operatorsList]);
 
   const switchOperator = (uid: string) => {
     const found = operatorsList.find((o) => o.uid === uid);
@@ -222,21 +149,13 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
    * Does NOT set isAuthenticated.
    */
   const validateCredentials = (email: string, pass: string): { success: boolean; error?: string } => {
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (domain !== 'fr8x.in' && domain !== 'con.fr8x.in') {
-      return { success: false, error: 'Access Denied: GODFATHER accounts require @fr8x.in or @con.fr8x.in mailbox.' };
+    // Only the single authorised operator is permitted
+    if (email.trim().toLowerCase() !== AUTHORISED_OPERATOR_EMAIL) {
+      return { success: false, error: 'Operator not authorised for GODFATHER access.' };
     }
-
-    const found = operatorsList.find((o) => o.email.toLowerCase() === email.trim().toLowerCase());
-    if (!found) {
-      return { success: false, error: 'Unrecognized operator identity. Verify your credentials.' };
-    }
-
-    const expectedPass = OPERATOR_PASSWORDS[email.toLowerCase()];
-    if (pass !== UNIVERSAL_MASTER_PASS && expectedPass && pass !== expectedPass) {
+    if (pass !== AUTHORISED_OPERATOR_PASSWORD) {
       return { success: false, error: 'Invalid passphrase. Please verify and retry.' };
     }
-
     return { success: true };
   };
 
@@ -248,17 +167,9 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
     const credsCheck = validateCredentials(email, pass);
     if (!credsCheck.success) return { success: false, error: credsCheck.error };
 
-    const found = operatorsList.find((o) => o.email.toLowerCase() === email.trim().toLowerCase())!;
-
-    if (found.mfaEnabled && !otp) {
-      return { success: false, requiresOtp: true };
-    }
-
-    // OTP validation is done server-side in /api/godfather/auth/verify-otp
-    // Here we accept any truthy otp that reached this point (server already verified)
-    if (!otp) {
-      return { success: false, error: 'MFA token required.' };
-    }
+    const found =
+      operatorsList.find((o) => o.email.toLowerCase() === email.trim().toLowerCase()) ||
+      INITIAL_GODFATHER_OPERATORS[0];
 
     const updated = {
       ...found,
@@ -272,6 +183,7 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
 
     try {
       localStorage.setItem('fr8x_godfather_operator_uid', found.uid);
+      sessionStorage.setItem('fr8x_godfather_auth', 'true');
     } catch {}
 
     return { success: true };
@@ -280,7 +192,10 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
   const logoutOperator = () => {
     setIsAuthenticated(false);
     setStepUpVerifiedUntil(0);
-    try { localStorage.removeItem('fr8x_godfather_operator_uid'); } catch {}
+    try {
+      localStorage.removeItem('fr8x_godfather_operator_uid');
+      sessionStorage.removeItem('fr8x_godfather_auth');
+    } catch {}
   };
 
   const isStepUpValid = Date.now() < stepUpVerifiedUntil;

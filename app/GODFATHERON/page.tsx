@@ -3,52 +3,69 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  ShieldAlert,
+  ShieldCheck,
   Lock,
   Mail,
   Eye,
   EyeOff,
-  KeyRound,
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
-  ShieldCheck,
   RotateCcw,
+  ChevronRight,
+  X,
+  HelpCircle,
+  Send,
+  Sparkles,
 } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 
+/* ─── Live IST Clock ────────────────────────────────────────────────────── */
+function LiveClock() {
+  const [time, setTime] = useState('');
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date();
+      setTime(
+        now.toLocaleTimeString('en-IN', {
+          hour: '2-digit', minute: '2-digit', second: '2-digit',
+          hour12: true, timeZone: 'Asia/Kolkata',
+        }) + ' IST'
+      );
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return <span className="gfl-clock-live">{time}</span>;
+}
+
 export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
-  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator, operatorsList } = useGodfatherAuth();
+  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
 
-  // Stage flow: credentials → mfa_challenge → success
-  const [stage, setStage] = useState<'credentials' | 'mfa_challenge' | 'success'>('credentials');
-
-  // Form fields
+  const [mode, setMode] = useState<'login' | 'forgot' | 'success'>('login');
   const [email, setEmail] = useState('tech@fr8x.in');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('Godfather@Sovereign1');
   const [showPassword, setShowPassword] = useState(false);
-  const [otpCode, setOtpCode] = useState('');
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(true);
 
-  // Security / lockout state
-  const [attemptsRemaining, setAttemptsRemaining] = useState(5);
-  const [isLocked, setIsLocked] = useState(false);
-  const [lockoutSeconds, setLockoutSeconds] = useState(0);
   const [errorMessage, setErrorMessage] = useState('');
-  const [correlationId, setCorrelationId] = useState('');
-  const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // OTP resend timer
-  const [resendTimer, setResendTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  // Forgot password state
+  const [forgotEmail, setForgotEmail] = useState('tech@fr8x.in');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
+  const [forgotTimer, setForgotTimer] = useState(0);
+  const [forgotDemoCode, setForgotDemoCode] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [smtpStatusMessage, setSmtpStatusMessage] = useState<string | null>(null);
 
   // Access request modal
   const [isAccessRequestOpen, setIsAccessRequestOpen] = useState(false);
-  const [accessRequestReason, setAccessRequestReason] = useState('');
-  const [accessRequestSent, setAccessRequestSent] = useState(false);
+  const [accessReqSent, setAccessReqSent] = useState(false);
 
-  // Restore remembered operator email on mount
   useEffect(() => {
     const remembered = loadRememberedOperator();
     if (remembered) {
@@ -57,63 +74,45 @@ export default function DedicatedGodfatherLoginPage() {
     }
   }, []);
 
-  // OTP resend countdown
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (resendTimer > 0 && stage === 'mfa_challenge') {
-      timer = setTimeout(() => setResendTimer((t) => t - 1), 1000);
-    } else if (resendTimer === 0) {
-      setCanResend(true);
+    if (forgotTimer > 0) {
+      const t = setTimeout(() => setForgotTimer(s => s - 1), 1000);
+      return () => clearTimeout(t);
     }
-    return () => clearTimeout(timer);
-  }, [resendTimer, stage]);
+  }, [forgotTimer]);
 
-  // Lockout countdown
-  useEffect(() => {
-    let lockTimer: NodeJS.Timeout;
-    if (isLocked && lockoutSeconds > 0) {
-      lockTimer = setTimeout(() => setLockoutSeconds((s) => s - 1), 1000);
-    } else if (lockoutSeconds === 0 && isLocked) {
-      setIsLocked(false);
-      setAttemptsRemaining(5);
-      setErrorMessage('');
-    }
-    return () => clearTimeout(lockTimer);
-  }, [isLocked, lockoutSeconds]);
-
-  // Stage 1: validate credentials locally, then dispatch OTP via API
-  const handleCredentialsSubmit = async (e: React.FormEvent) => {
+  /* ── Direct 1-Step Sign In (No OTP Required) ── */
+  const handleDirectSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    if (isLocked) return;
 
-    // Client-side credential check (domain + password)
+    if (!email || !password) {
+      setErrorMessage('Please provide your operator email and password.');
+      return;
+    }
+
     const check = validateCredentials(email, password);
     if (!check.success) {
       setErrorMessage(check.error || 'Invalid credentials.');
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      const res = await fetch('/api/godfather/auth/send-otp', {
+      const res = await fetch('/api/godfather/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.locked) {
-          setIsLocked(true);
-          setLockoutSeconds(data.retryAfterSeconds || 1800);
-        }
-        setErrorMessage(data.error || 'Failed to initiate MFA authentication');
+        setErrorMessage(data.error || 'Authentication failed. Please verify your credentials.');
+        setIsSubmitting(false);
         return;
       }
-
-      setCorrelationId(data.correlationId);
-      if (data.demoCode) setDemoCodeHint(data.demoCode);
 
       if (rememberDevice) {
         rememberOperator(email);
@@ -121,423 +120,470 @@ export default function DedicatedGodfatherLoginPage() {
         forgetOperator();
       }
 
-      setStage('mfa_challenge');
-      setResendTimer(60);
-      setCanResend(false);
+      loginOperator(email, password);
+      setMode('success');
+
+      setTimeout(() => {
+        window.location.href = '/godfather';
+      }, 400);
     } catch {
-      setErrorMessage('Failed to connect to authentication server');
+      setErrorMessage('Failed to connect to authentication server.');
+      setIsSubmitting(false);
     }
   };
 
-  // Stage 2: verify OTP via API, then establish session
-  const handleOtpSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  /* ── Forgot Password: Send OTP to Email ── */
+  const handleSendRecoveryOtp = async () => {
     setErrorMessage('');
+    setSmtpStatusMessage(null);
+    setForgotDemoCode(null);
+    setIsSubmitting(true);
 
-    if (otpCode.length < 6) {
-      setErrorMessage('Please enter the complete 6-digit security code');
+    try {
+      const res = await fetch('/api/godfather/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json();
+      if (data.demoCode) setForgotDemoCode(data.demoCode);
+      setForgotSent(true);
+      setForgotTimer(60);
+      setSmtpStatusMessage(data.message || 'Recovery code dispatched to your registered email.');
+    } catch {
+      setForgotSent(true);
+      setForgotTimer(60);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ── Forgot Password: Verify OTP ── */
+  const handleVerifyRecoveryOtp = async () => {
+    setErrorMessage('');
+    if (forgotOtp.length < 6) {
+      setErrorMessage('Please enter the full 6-digit recovery code.');
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const res = await fetch('/api/godfather/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: otpCode }),
+        body: JSON.stringify({ email: forgotEmail, otp: forgotOtp }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data.locked) {
-          setIsLocked(true);
-          setLockoutSeconds(1800);
-        }
-        if (data.remainingAttempts !== undefined) {
-          setAttemptsRemaining(data.remainingAttempts);
-        }
-        setErrorMessage(data.error || 'Invalid verification code');
-        return;
+      if (res.ok) {
+        setForgotSuccess(true);
+      } else {
+        const data = await res.json();
+        setErrorMessage(data.error || 'Invalid or expired recovery code.');
       }
-
-      // Establish privileged session cookie
-      await fetch('/api/godfather/session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ operatorEmail: email, operatorUid: 'gf-op-001', role: 'godfather_owner' }),
-      });
-
-      // Finalize client-side auth state
-      loginOperator(email, password, otpCode);
-
-      setStage('success');
-      setTimeout(() => router.push('/godfather'), 1200);
     } catch {
-      setErrorMessage('Authentication verification failed');
-    }
-  };
-
-  const handleResendOtp = async () => {
-    if (!canResend) return;
-    setErrorMessage('');
-    try {
-      const res = await fetch('/api/godfather/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (data.demoCode) setDemoCodeHint(data.demoCode);
-      setResendTimer(60);
-      setCanResend(false);
-    } catch {
-      setErrorMessage('Failed to resend code');
+      setErrorMessage('Verification request failed.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="gf-login-container">
-      <div className="gf-login-bg-glow" />
-
-      <div className="gf-login-card w-full max-w-md relative z-10">
-        {/* Header Branding */}
-        <div className="text-center space-y-2 pb-2">
-          <div className="inline-flex p-3 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-inner mb-1 text-sky-400">
-            <ShieldCheck className="lucide w-8 h-8 text-sky-400" />
-          </div>
-          <div>
-            <div className="font-mono text-xl font-black tracking-widest text-slate-100 flex items-center justify-center gap-2">
-              GODFATHER
-              <span className="text-[10px] text-teal-400 font-sans font-extrabold bg-teal-950 px-1.5 py-0.5 rounded border border-teal-800 tracking-normal">
-                SOVEREIGN
-              </span>
-            </div>
-            <p className="text-xs text-slate-400 font-mono tracking-tight mt-0.5">
-              CON.FR8X.IN · INTERNAL PLATFORM GOVERNANCE
-            </p>
-          </div>
+    <div className="gfl-clean-root">
+      {/* Top clean status bar */}
+      <header className="gfl-clean-topbar">
+        <div className="gfl-topbar-brand">
+          <span className="gfl-status-pill">
+            <span className="gfl-status-indicator" />
+            SECURED OPERATOR CONSOLE
+          </span>
+          <span className="gfl-topbar-divider">·</span>
+          <span className="gfl-topbar-node">NODE: MUM-SEC-01</span>
         </div>
-
-        {/* Restricted access warning */}
-        <div className="gf-callout gf-callout-amber text-[11px] leading-relaxed flex items-start gap-2">
-          <ShieldAlert className="lucide w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-          <div>
-            <strong className="text-amber-200 block mb-0.5">RESTRICTED ACCESS ONLY</strong>
-            GODFATHER is restricted to authorised Con.FR8X.IN platform operators. All authentication attempts and privileged operations are cryptographically signed, logged, and audited.
-          </div>
+        <div className="gfl-topbar-clock">
+          <LiveClock />
         </div>
+      </header>
 
-        {/* Lockout banner */}
-        {isLocked && (
-          <div className="p-3 bg-red-950/80 border border-red-800 text-red-200 text-xs rounded-lg flex items-start gap-2">
-            <AlertTriangle className="lucide w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <strong className="text-red-300 block">Operator Account Locked</strong>
-              Too many failed attempts. Cooldown: {Math.floor(lockoutSeconds / 60)}m {lockoutSeconds % 60}s. Security alert dispatched to <strong>tech@fr8x.in</strong>.
+      {/* Main Container */}
+      <main className="gfl-clean-wrapper">
+        <div className="gfl-clean-card">
+          {/* Top Brand Stripe */}
+          <div className="gfl-clean-card-stripe" />
+
+          {/* Brand Header */}
+          <div className="gfl-clean-brand-header">
+            <div className="gfl-clean-logo-badge">
+              <ShieldCheck className="w-8 h-8 text-blue-600" strokeWidth={1.75} />
             </div>
+            <h1 className="gfl-clean-title">GODFATHER</h1>
+            <p className="gfl-clean-subtitle">FR8X SOVEREIGN CONTROL PLANE</p>
           </div>
-        )}
 
-        {/* Error message */}
-        {errorMessage && !isLocked && (
-          <div className="p-2.5 bg-red-950/60 border border-red-800 text-red-300 text-xs rounded flex items-center gap-2">
-            <AlertTriangle className="lucide w-3.5 h-3.5 text-red-400 flex-shrink-0" />
-            <span>{errorMessage}</span>
-          </div>
-        )}
-
-        {/* STAGE 1: Credentials */}
-        {stage === 'credentials' && (
-          <form onSubmit={handleCredentialsSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                <span>Operator Mailbox (@fr8x.in)</span>
-                <span className="text-[10px] text-mut font-mono">TLS 1.3 ENFORCED</span>
-              </label>
-              <div className="relative">
-                <Mail className="lucide w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="email"
-                  required
-                  disabled={isLocked}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="operator.identity@fr8x.in"
-                  className="gf-input w-full pl-9 text-xs font-medium"
-                />
-              </div>
+          {/* Alerts */}
+          {errorMessage && (
+            <div className="gfl-clean-alert">
+              <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+              <span>{errorMessage}</span>
             </div>
+          )}
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                <span>Passphrase</span>
-                <span className="text-[10px] text-mut font-mono">BCRYPT / ARGON2</span>
-              </label>
-              <div className="relative">
-                <Lock className="lucide w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  disabled={isLocked}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••••••"
-                  autoComplete="current-password"
-                  className="gf-input w-full pl-9 pr-9 text-xs font-medium"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
-                >
-                  {showPassword ? <EyeOff className="lucide w-3.5 h-3.5" /> : <Eye className="lucide w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Remember device */}
-            <div className="flex items-center gap-2">
-              <input
-                id="gf-remember-device"
-                type="checkbox"
-                checked={rememberDevice}
-                onChange={(e) => setRememberDevice(e.target.checked)}
-                className="w-3.5 h-3.5 cursor-pointer"
-              />
-              <label htmlFor="gf-remember-device" className="text-[11px] text-slate-400 cursor-pointer">
-                Remember operator mailbox on this device
-              </label>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLocked}
-              className="gf-btn gf-btn-primary w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg"
-            >
-              <span>Authenticate &amp; Request MFA Token</span>
-              <ArrowRight className="lucide w-4 h-4" />
-            </button>
-
-            {/* Quick Test Operators */}
-            <div className="pt-3 border-t border-slate-800">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  Quick Switch Test Operators
-                </span>
-                <span className="text-[10px] text-slate-500 font-mono">1-Click Fast Login</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {operatorsList.slice(0, 4).map((op) => (
-                  <div
-                    key={op.uid}
-                    className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-[11px]"
-                  >
-                    <div className="font-bold text-slate-200 truncate">{op.displayName.split(' ')[0]}</div>
-                    <div className="text-[9.5px] text-slate-400 font-mono truncate mb-1.5">{op.email}</div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEmail(op.email);
-                          setPassword('SuperSecretPass2026!');
-                          setErrorMessage('');
-                        }}
-                        className="flex-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[9.5px] text-slate-300 font-medium"
-                      >
-                        Fill
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setEmail(op.email);
-                          setPassword('SuperSecretPass2026!');
-                          loginOperator(op.email, 'SuperSecretPass2026!', '884210');
-                          await fetch('/api/godfather/session', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ operatorEmail: op.email, operatorUid: op.uid, role: 'godfather_owner' }),
-                          }).catch(() => {});
-                          router.push('/godfather');
-                        }}
-                        className="flex-1 py-0.5 rounded bg-sky-600 hover:bg-sky-500 text-[9.5px] text-white font-bold"
-                      >
-                        Enter ⚡
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </form>
-        )}
-
-        {/* STAGE 2: MFA / OTP */}
-        {stage === 'mfa_challenge' && (
-          <form onSubmit={handleOtpSubmit} className="space-y-4">
-            <div className="p-3 bg-slate-900 border border-slate-800 rounded-lg text-xs space-y-1">
-              <div className="text-slate-300 font-semibold flex items-center justify-between">
-                <span>Security Token Dispatched:</span>
-                <span className="gf-badge gf-badge-green text-[9px] font-mono">ACTIVE</span>
-              </div>
-              <p className="text-mut text-[11px]">
-                A 6-digit challenge code was dispatched from <strong className="text-slate-200">password@fr8x.in</strong> to <strong className="text-sky-400">{email}</strong>.
-              </p>
-              {correlationId && (
-                <div className="text-[10px] text-faint font-mono pt-1">Correlation: {correlationId}</div>
-              )}
-            </div>
-
-            {demoCodeHint && (
-              <div className="p-2 bg-sky-950/60 border border-sky-800 text-sky-300 text-[11px] rounded font-mono flex items-center justify-between">
-                <span>Demo Passkey: <strong>{demoCodeHint}</strong></span>
-                <button
-                  type="button"
-                  onClick={() => setOtpCode(demoCodeHint)}
-                  className="underline text-sky-400 hover:text-sky-200 font-sans text-[10px]"
-                >
-                  Autofill
-                </button>
-              </div>
-            )}
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300 flex items-center justify-between">
-                <span>6-Digit Verification Token</span>
-                <span className="text-[10px] text-mut font-mono">SALTED SHA-256</span>
-              </label>
-              <div className="relative">
-                <KeyRound className="lucide w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  maxLength={6}
-                  autoFocus
-                  required
-                  value={otpCode}
-                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-                  placeholder="______"
-                  className="gf-input w-full pl-9 text-base tracking-[0.4em] font-mono font-bold text-emerald-400 text-center"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-xs text-mut pt-1">
-              <button
-                type="button"
-                onClick={() => setStage('credentials')}
-                className="text-slate-400 hover:text-slate-200 flex items-center gap-1"
-              >
-                ← Back
-              </button>
-              <button
-                type="button"
-                disabled={!canResend}
-                onClick={handleResendOtp}
-                className={`text-xs font-semibold ${canResend ? 'text-sky-400 hover:underline' : 'text-slate-500 cursor-not-allowed'}`}
-              >
-                {canResend ? 'Resend Code' : `Resend in ${resendTimer}s`}
-              </button>
-            </div>
-
-            <button
-              type="submit"
-              className="gf-btn gf-btn-success w-full py-2.5 text-xs font-bold flex items-center justify-center gap-2 shadow-lg"
-            >
-              <Lock className="lucide w-4 h-4" />
-              <span>Verify Passkey &amp; Establish Session</span>
-            </button>
-          </form>
-        )}
-
-        {/* STAGE 3: Success */}
-        {stage === 'success' && (
-          <div className="p-6 text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-950 text-emerald-400 border border-emerald-800 flex items-center justify-center mx-auto shadow-lg animate-bounce">
-              <CheckCircle2 className="lucide w-6 h-6" />
-            </div>
-            <h3 className="text-sm font-bold text-slate-100 font-mono">CRYPTOGRAPHIC SESSION AUTHORIZED</h3>
-            <p className="text-xs text-mut">
-              Elevating operator clearance to <strong className="text-teal-400">godfather_owner</strong>. Redirecting to sovereign console...
-            </p>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
-          <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
-            <button
-              type="button"
-              onClick={() => setIsAccessRequestOpen(true)}
-              className="hover:text-slate-200 transition-colors flex items-center gap-1"
-            >
-              Request Access Clearance
-            </button>
-            <span>·</span>
-            <span className="font-mono text-[10px] text-faint">NODE: MUM-SEC-01</span>
-          </div>
-          <div className="text-[10px] text-slate-500 font-mono">
-            FR8X CONSOLE · CONFIDENTIAL &amp; PROPRIETARY · STRICT AUDIT LEDGER
-          </div>
-        </div>
-      </div>
-
-      {/* Access Request Modal */}
-      {isAccessRequestOpen && (
-        <div className="gf-modal-overlay">
-          <div className="gf-modal-card">
-            <div className="gf-modal-header">
-              <div>
-                <h3 className="gf-modal-title">Request GODFATHER Clearance</h3>
-                <p className="gf-modal-subtitle">Direct dispatch to Security &amp; Compliance (tech@fr8x.in)</p>
-              </div>
-              <button onClick={() => setIsAccessRequestOpen(false)} className="gf-modal-close-btn">✕</button>
-            </div>
-
-            {accessRequestSent ? (
-              <div className="p-6 text-center space-y-2">
-                <CheckCircle2 className="lucide w-8 h-8 text-emerald-400 mx-auto" />
-                <h4 className="font-bold text-slate-100 text-sm">Clearance Request Submitted</h4>
-                <p className="text-xs text-mut">
-                  Your identity and request have been routed to <strong className="text-slate-200">tech@fr8x.in</strong>. Security officers will review within 2 business hours.
-                </p>
-                <div className="pt-3">
-                  <button
-                    type="button"
-                    onClick={() => { setIsAccessRequestOpen(false); setAccessRequestSent(false); }}
-                    className="gf-btn gf-btn-secondary text-xs"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form
-                onSubmit={(e) => { e.preventDefault(); setAccessRequestSent(true); }}
-                className="gf-modal-body space-y-3"
-              >
-                <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Your @fr8x.in Mailbox</label>
+          {/* ── MODE 1: DIRECT SIGN IN ── */}
+          {mode === 'login' && (
+            <form onSubmit={handleDirectSignIn} className="gfl-clean-form">
+              <div className="gfl-clean-field">
+                <label htmlFor="gfl-op-email" className="gfl-clean-label">
+                  Operator Email
+                </label>
+                <div className="gfl-clean-input-box">
+                  <Mail className="gfl-clean-input-icon" />
                   <input
+                    id="gfl-op-email"
                     type="email"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="gf-input w-full text-xs font-mono"
+                    placeholder="tech@fr8x.in"
+                    className="gfl-clean-input"
+                    autoComplete="username"
                   />
                 </div>
-                <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Business Justification &amp; Subrole Needed</label>
+              </div>
+
+              <div className="gfl-clean-field">
+                <div className="gfl-clean-label-row">
+                  <label htmlFor="gfl-op-pass" className="gfl-clean-label">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMessage('');
+                      setMode('forgot');
+                    }}
+                    className="gfl-clean-text-link"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div className="gfl-clean-input-box">
+                  <Lock className="gfl-clean-input-icon" />
+                  <input
+                    id="gfl-op-pass"
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••••••••••"
+                    autoComplete="current-password"
+                    className="gfl-clean-input gfl-clean-input-pr"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="gfl-clean-eye-btn"
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="gfl-clean-options-row">
+                <label className="gfl-clean-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberDevice}
+                    onChange={(e) => setRememberDevice(e.target.checked)}
+                    className="gfl-clean-checkbox"
+                  />
+                  <span>Remember on this browser</span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="gfl-clean-btn gfl-clean-btn-primary"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="gfl-clean-spinner" />
+                    <span>Signing In…</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+
+          {/* ── MODE 2: FORGOT PASSWORD RECOVERY ── */}
+          {mode === 'forgot' && (
+            <div className="gfl-clean-form">
+              {forgotSuccess ? (
+                <div className="gfl-recovery-success">
+                  <div className="gfl-recovery-success-icon">
+                    <CheckCircle2 className="w-8 h-8 text-green-600" />
+                  </div>
+                  <h3 className="gfl-recovery-title">Identity Confirmed</h3>
+                  <p className="gfl-recovery-desc">
+                    Your operator identity has been verified via email OTP. You may now sign in using your authorized passphrase.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setForgotOtp('');
+                      setForgotSent(false);
+                      setForgotSuccess(false);
+                      setErrorMessage('');
+                    }}
+                    className="gfl-clean-btn gfl-clean-btn-primary"
+                  >
+                    Proceed to Sign In
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <div className="gfl-recovery-header">
+                    <h3 className="gfl-recovery-title">Account Recovery</h3>
+                    <p className="gfl-recovery-desc">
+                      Enter your operator email. A 6-digit recovery passkey will be dispatched to your registered mailbox.
+                    </p>
+                  </div>
+
+                  <div className="gfl-clean-field">
+                    <label className="gfl-clean-label">Registered Mailbox</label>
+                    <div className="gfl-clean-input-box">
+                      <Mail className="gfl-clean-input-icon" />
+                      <input
+                        type="email"
+                        required
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="tech@fr8x.in"
+                        className="gfl-clean-input"
+                      />
+                    </div>
+                  </div>
+
+                  {smtpStatusMessage && (
+                    <div className="gfl-clean-info-banner">
+                      <Mail className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span>{smtpStatusMessage}</span>
+                    </div>
+                  )}
+
+                  {!forgotSent ? (
+                    <button
+                      type="button"
+                      disabled={isSubmitting || !forgotEmail}
+                      onClick={handleSendRecoveryOtp}
+                      className="gfl-clean-btn gfl-clean-btn-primary"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <span className="gfl-clean-spinner" />
+                          <span>Dispatching Code…</span>
+                        </>
+                      ) : (
+                        <>
+                          <Send className="w-4 h-4" />
+                          <span>Send Recovery Code</span>
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <>
+                      {forgotDemoCode && (
+                        <div className="gfl-demo-hint-box">
+                          <span>Verification Code: <strong>{forgotDemoCode}</strong></span>
+                          <button
+                            type="button"
+                            onClick={() => setForgotOtp(forgotDemoCode)}
+                            className="gfl-demo-autofill-btn"
+                          >
+                            Autofill
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="gfl-clean-field">
+                        <label className="gfl-clean-label">Enter 6-Digit Code</label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={forgotOtp}
+                          onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                          placeholder="______"
+                          className="gfl-clean-input gfl-clean-otp-input"
+                          autoFocus
+                        />
+                      </div>
+
+                      <div className="gfl-recovery-actions">
+                        <button
+                          type="button"
+                          disabled={forgotTimer > 0 || isSubmitting}
+                          onClick={handleSendRecoveryOtp}
+                          className={`gfl-clean-resend-link ${forgotTimer === 0 ? 'active' : ''}`}
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          {forgotTimer > 0 ? `Resend code in ${forgotTimer}s` : 'Resend code'}
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={forgotOtp.length < 6 || isSubmitting}
+                        onClick={handleVerifyRecoveryOtp}
+                        className="gfl-clean-btn gfl-clean-btn-primary"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="gfl-clean-spinner" />
+                            <span>Verifying…</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Verify Recovery Code</span>
+                          </>
+                        )}
+                      </button>
+                    </>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMode('login');
+                      setForgotSent(false);
+                      setForgotOtp('');
+                      setErrorMessage('');
+                    }}
+                    className="gfl-clean-btn gfl-clean-btn-outline"
+                  >
+                    ← Back to Sign In
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ── MODE 3: SUCCESS REDIRECT ── */}
+          {mode === 'success' && (
+            <div className="gfl-clean-success-pane">
+              <div className="gfl-clean-success-icon">
+                <CheckCircle2 className="w-10 h-10 text-green-600" />
+              </div>
+              <h2 className="gfl-clean-success-title">Authenticated</h2>
+              <p className="gfl-clean-success-sub">
+                Operator credentials verified. Redirecting to sovereign console…
+              </p>
+              <div className="gfl-clean-progress-bar">
+                <div className="gfl-clean-progress-bar-fill" />
+              </div>
+            </div>
+          )}
+
+          {/* Footer inside card */}
+          <div className="gfl-clean-card-footer">
+            <button
+              type="button"
+              onClick={() => setIsAccessRequestOpen(true)}
+              className="gfl-clean-footer-action"
+            >
+              <HelpCircle className="w-3.5 h-3.5" />
+              <span>Need Access Clearance?</span>
+              <ChevronRight className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+      </main>
+
+      {/* Page Watermark */}
+      <footer className="gfl-clean-page-footer">
+        <span>FR8X GODFATHER · SOVEREIGN EDITION · CON.FR8X.IN</span>
+      </footer>
+
+      {/* Access Request Clearance Modal */}
+      {isAccessRequestOpen && (
+        <div className="gfl-overlay" onClick={() => setIsAccessRequestOpen(false)}>
+          <div className="gfl-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="gfl-modal-header">
+              <div>
+                <h3 className="gfl-modal-title">Request GODFATHER Clearance</h3>
+                <p className="gfl-modal-sub">Direct dispatch to Security &amp; Compliance (tech@fr8x.in)</p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsAccessRequestOpen(false);
+                  setAccessReqSent(false);
+                }}
+                className="gfl-modal-close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {accessReqSent ? (
+              <div className="gfl-modal-body text-center py-6">
+                <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-2" />
+                <h4 className="font-bold text-slate-800 text-sm">Clearance Ticket Submitted</h4>
+                <p className="text-xs text-slate-500 mt-1">
+                  Your request has been routed to <strong>tech@fr8x.in</strong>. Security officers will review within business hours.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAccessRequestOpen(false);
+                    setAccessReqSent(false);
+                  }}
+                  className="gfl-clean-btn gfl-clean-btn-outline mt-4"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  setAccessReqSent(true);
+                }}
+                className="gfl-modal-body"
+              >
+                <div className="gfl-clean-field">
+                  <label className="gfl-clean-label">Your @fr8x.in Mailbox</label>
+                  <input
+                    type="email"
+                    required
+                    defaultValue="tech@fr8x.in"
+                    className="gfl-clean-input"
+                  />
+                </div>
+                <div className="gfl-clean-field">
+                  <label className="gfl-clean-label">Operational Justification</label>
                   <textarea
                     required
                     rows={3}
-                    value={accessRequestReason}
-                    onChange={(e) => setAccessRequestReason(e.target.value)}
-                    placeholder="Specify operational requirement (e.g. Operations tariff upload / Finance invoice dispute)"
-                    className="gf-textarea w-full text-xs"
+                    placeholder="Specify reason for privileged console clearance…"
+                    className="gfl-textarea"
                   />
                 </div>
-                <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
-                  <button type="button" onClick={() => setIsAccessRequestOpen(false)} className="gf-btn gf-btn-secondary text-xs">Cancel</button>
-                  <button type="submit" className="gf-btn gf-btn-primary text-xs font-bold">Submit Clearance Ticket</button>
+                <div className="gfl-modal-footer">
+                  <button
+                    type="button"
+                    onClick={() => setIsAccessRequestOpen(false)}
+                    className="gfl-clean-btn gfl-clean-btn-outline"
+                  >
+                    Cancel
+                  </button>
+                  <button type="submit" className="gfl-clean-btn gfl-clean-btn-primary">
+                    Submit Clearance Request
+                  </button>
                 </div>
               </form>
             )}

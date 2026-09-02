@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, ReactNode } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { GodfatherSidebar } from './GodfatherSidebar';
 import { GodfatherTopBar } from './GodfatherTopBar';
@@ -14,14 +14,40 @@ interface GodfatherShellProps {
 export function GodfatherShell({ children }: GodfatherShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated } = useGodfatherAuth();
+  const { isAuthenticated, logoutOperator } = useGodfatherAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  const [isClientReady, setIsClientReady] = useState(false);
+
+  useEffect(() => {
+    setIsClientReady(true);
+  }, []);
 
   const isLoginPage = pathname.toLowerCase() === '/godfatheron' || pathname === '/godfather/login';
 
-  // If visiting login page, render standalone high-security login shell
+  // ── Redirect unauthenticated users to login ───────────────────────────────
+  useEffect(() => {
+    if (!isClientReady) return;
+    if (isLoginPage) return;
+
+    if (!isAuthenticated) {
+      // Check session API to avoid redirecting active session holders
+      fetch('/api/godfather/session')
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.authenticated) {
+            router.replace('/godfather/login');
+          }
+        })
+        .catch(() => {
+          router.replace('/godfather/login');
+        });
+    }
+  }, [isAuthenticated, isLoginPage, isClientReady, router]);
+
+  // ── Login page: render children standalone (fully self-contained) ─────────
   if (isLoginPage) {
-    return <div className="gf-login-root">{children}</div>;
+    return <>{children}</>;
   }
 
   // Get active title based on route

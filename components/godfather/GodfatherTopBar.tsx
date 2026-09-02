@@ -122,7 +122,11 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
             </span>
             <button
               type="button"
-              onClick={logoutOperator}
+              onClick={async () => {
+                await fetch('/api/godfather/session', { method: 'DELETE' }).catch(() => {});
+                logoutOperator();
+                window.location.href = '/godfather/login';
+              }}
               className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
               title="Terminate Sovereign Session (Logout)"
             >

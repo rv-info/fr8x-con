@@ -28,7 +28,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const record = await otpStore.get(emailKey);
+    let record = await otpStore.get(emailKey);
+    let storeKeyUsed = emailKey;
+
+    if (!record) {
+      const forgotRecord = await otpStore.get(`forgot::${emailKey}`);
+      if (forgotRecord) {
+        record = forgotRecord;
+        storeKeyUsed = `forgot::${emailKey}`;
+      }
+    }
 
     // Demo codes accepted only in development / when SMTP is unconfigured
     const isDemoAccepted =
@@ -75,7 +84,8 @@ export async function POST(req: NextRequest) {
 
     // Success: clear rate limit and consume OTP
     clearRateLimit(emailKey);
-    await otpStore.delete(emailKey);
+    clearRateLimit(storeKeyUsed);
+    await otpStore.delete(storeKeyUsed);
 
     return NextResponse.json({
       success: true,

@@ -4,7 +4,7 @@ import { GodfatherAuthProvider } from '@/lib/godfather/context/GodfatherAuthCont
 import { GodfatherDataProvider } from '@/lib/godfather/context/GodfatherDataContext';
 
 export const metadata: Metadata = {
-  title: 'GODFATHER ON · FR8X Dedicated Admin Login',
+  title: 'GODFATHER ON · FR8X Sovereign Admin Login',
   description: 'Restricted administrative portal for authorized Con.FR8X.IN operators.',
   robots: {
     index: false,
@@ -17,7 +17,8 @@ export default function DedicatedGodfatherLayout({ children }: { children: React
   return (
     <GodfatherAuthProvider>
       <GodfatherDataProvider>
-        <div className="gf-login-root">{children}</div>
+        {/* No extra wrapper — page.tsx owns its full-screen root */}
+        {children}
       </GodfatherDataProvider>
     </GodfatherAuthProvider>
   );
