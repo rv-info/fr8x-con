@@ -310,37 +310,48 @@ export default function UsersGovernancePage() {
                     </td>
 
                     {/* Actions */}
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        {/* Grant 1-Month Free Trial */}
+                    <td className="text-right" style={{ whiteSpace: 'nowrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+                        {/* Grant Promotional 100% Free Access */}
                         <button
                           type="button"
                           onClick={() => {
                             setTrialUserTarget(u);
-                            setTrialReason('1-Month Complete Free Trial approved by Godfather Controller');
+                            setTrialReason('100% Fee-Waiver Promotional Access authorized by Godfather Super Admin');
                             setIsTrialModalOpen(true);
                           }}
-                          className="gf-btn text-[11px] py-1 px-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold"
-                          title="Grant 1-Month Complete Free Trial"
+                          className="gf-btn"
+                          style={{
+                            fontSize: '11px',
+                            padding: '3px 8px',
+                            height: '26px',
+                            background: '#ecfdf5',
+                            color: '#065f46',
+                            border: '1px solid #a7f3d0',
+                            fontWeight: 800,
+                          }}
+                          title="Grant 100% Free Promotional Period (Internal Override)"
                         >
-                          🎁 1-Mo Trial
+                          🎁 Promo Access
                         </button>
 
                         {/* Edit Profile */}
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(u)}
-                          className="gf-btn gf-btn-secondary text-[11px] py-1 px-2"
+                          className="gf-btn gf-btn-secondary"
+                          style={{ fontSize: '11px', padding: '3px 7px', height: '26px' }}
                           title="Correct Profile Data"
                         >
-                          <Edit className="lucide w-3 h-3 text-slate-600" />
+                          <Edit style={{ width: '13px', height: '13px', color: '#475569' }} />
                         </button>
 
                         {/* Toggle Verification */}
                         <button
                           type="button"
                           onClick={() => handleToggleVerification(u)}
-                          className={`gf-btn text-[11px] py-1 px-2 ${u.isVerified ? 'gf-btn-secondary' : 'gf-btn-success'}`}
+                          className={`gf-btn ${u.isVerified ? 'gf-btn-secondary' : 'gf-btn-success'}`}
+                          style={{ fontSize: '11px', padding: '3px 8px', height: '26px' }}
                           title={u.isVerified ? 'Revoke Verification' : 'Verify Member'}
                         >
                           {u.isVerified ? 'Unverify' : 'Verify'}
@@ -350,7 +361,8 @@ export default function UsersGovernancePage() {
                         <button
                           type="button"
                           onClick={() => handleToggleGoldTick(u)}
-                          className={`gf-btn text-[11px] py-1 px-2 ${u.hasGoldenTick ? 'gf-btn-secondary' : 'gf-btn-warning'}`}
+                          className={`gf-btn ${u.hasGoldenTick ? 'gf-btn-secondary' : 'gf-btn-warning'}`}
+                          style={{ fontSize: '11px', padding: '3px 8px', height: '26px' }}
                           title="Toggle Premium Gold Tick"
                         >
                           ★ Gold
@@ -360,20 +372,22 @@ export default function UsersGovernancePage() {
                         <button
                           type="button"
                           onClick={() => handleOpenBlockModal(u)}
-                          className="gf-btn gf-btn-danger text-[11px] py-1 px-2"
+                          className="gf-btn gf-btn-danger"
+                          style={{ fontSize: '11px', padding: '3px 7px', height: '26px' }}
                           title="Apply Feature / Login Block"
                         >
-                          <Lock className="lucide w-3 h-3" />
+                          <Lock style={{ width: '13px', height: '13px' }} />
                         </button>
 
                         {/* Force Logout */}
                         <button
                           type="button"
                           onClick={() => handleForceLogout(u)}
-                          className="gf-btn gf-btn-secondary text-[11px] py-1 px-2 text-slate-500 hover:text-rose-600 hover:border-rose-300"
+                          className="gf-btn gf-btn-secondary"
+                          style={{ fontSize: '11px', padding: '3px 7px', height: '26px' }}
                           title="Force Session Revocation"
                         >
-                          <LogOut className="lucide w-3 h-3" />
+                          <LogOut style={{ width: '13px', height: '13px' }} />
                         </button>
                       </div>
                     </td>
@@ -578,11 +592,11 @@ export default function UsersGovernancePage() {
       {/* Free Trial Modal */}
       {isTrialModalOpen && trialUserTarget && (
         <div className="gf-modal-overlay">
-          <div className="gf-modal-card">
+          <div className="gf-modal-card" style={{ maxWidth: '600px' }}>
             <div className="gf-modal-header">
               <div>
-                <h3 className="gf-modal-title flex items-center gap-1.5 text-emerald-800">
-                  <span>🎁</span> Grant 1-Month Free Trial (Sovereign Exemption)
+                <h3 className="gf-modal-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#065f46' }}>
+                  <span>🎁</span> Grant 100% Fee-Waiver Promotional Access
                 </h3>
                 <p className="gf-modal-subtitle">
                   Member: {trialUserTarget.displayName} · {trialUserTarget.company} ({trialUserTarget.email})
@@ -599,56 +613,66 @@ export default function UsersGovernancePage() {
                 await grantFreeTrial(trialUserTarget.uid, trialDuration, trialReason);
                 setIsTrialModalOpen(false);
               }}
-              className="gf-modal-body space-y-4"
+              className="gf-modal-body"
+              style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}
             >
-              <div className="p-3 rounded bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs leading-relaxed">
-                <strong className="block font-bold mb-1 text-emerald-950">Privilege & Exemption Details:</strong>
-                Granting this complete trial upgrades the organization to <strong>Premium Enterprise tier</strong>, enables full reverse freight auction creation & bidding with <strong>₹0 fees</strong>, grants immediate <strong>Gold Verification tick</strong>, and registers an immutable timestamped audit receipt.
+              <div style={{ padding: '10px 12px', borderRadius: '6px', background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', fontSize: '12px', lineHeight: '1.5' }}>
+                <strong style={{ display: 'block', fontWeight: 800, marginBottom: '2px', color: '#064e3b' }}>
+                  Internal Sovereign Exemption & Privilege Details:
+                </strong>
+                Authorizing this promotional grant immediately unlocks <strong>Premium Enterprise Privileges</strong> with <strong>₹0 Platform & Auction Bidding Fees</strong> for the selected promotional duration. Grants the <strong>Gold Verification Tick</strong> and logs an immutable audit event in the cryptographic ledger.
+                <div style={{ marginTop: '4px', fontSize: '11px', color: '#047857', fontWeight: 700 }}>
+                  ℹ️ Note: The user-facing app displays this as an active Premium Enterprise Plan (no &ldquo;free&rdquo; label is exposed to the public user).
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Trial Duration</label>
+                  <label className="gf-form-label" style={{ fontWeight: 800 }}>Promotional Duration</label>
                   <select
                     value={trialDuration}
                     onChange={(e) => setTrialDuration(Number(e.target.value))}
-                    className="gf-select w-full text-xs font-bold"
+                    className="gf-select"
+                    style={{ fontWeight: 700 }}
                   >
                     <option value={30}>30 Days (1 Full Month - Standard)</option>
-                    <option value={60}>60 Days (2 Months - Strategic Partner)</option>
+                    <option value={60}>60 Days (2 Months - Extended)</option>
                     <option value={90}>90 Days (Quarterly Waiver)</option>
-                    <option value={14}>14 Days (Short Sprint)</option>
+                    <option value={180}>180 Days (Semi-Annual Access)</option>
+                    <option value={365}>365 Days (1-Year Strategic Onboarding)</option>
+                    <option value={9999}>Unlimited / Lifetime Strategic Waiver</option>
                   </select>
                 </div>
 
                 <div className="gf-form-group">
-                  <label className="gf-form-label font-bold">Upgraded Plan Tier</label>
+                  <label className="gf-form-label" style={{ fontWeight: 800 }}>Provisioned Plan Tier</label>
                   <input
                     type="text"
                     disabled
                     value="Premium Gold Enterprise"
-                    className="gf-input w-full text-xs font-bold bg-slate-100 text-slate-700"
+                    className="gf-input"
+                    style={{ fontWeight: 800, background: '#f1f5f9', color: '#334155' }}
                   />
                 </div>
               </div>
 
               <div className="gf-form-group">
-                <label className="gf-form-label font-bold">Godfather Approval Rationale (Audit Record)</label>
+                <label className="gf-form-label" style={{ fontWeight: 800 }}>Godfather Approval Rationale (Immutable Audit Log)</label>
                 <textarea
                   required
                   rows={2}
                   value={trialReason}
                   onChange={(e) => setTrialReason(e.target.value)}
-                  className="gf-textarea w-full text-xs"
+                  className="gf-textarea"
                 />
               </div>
 
-              <div className="gf-modal-footer flex items-center justify-end gap-2 pt-3">
+              <div className="gf-modal-footer" style={{ padding: '12px 0 0', borderTop: '1px solid #e2e8f0', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                 <button type="button" onClick={() => setIsTrialModalOpen(false)} className="gf-btn gf-btn-secondary">
                   Cancel
                 </button>
-                <button type="submit" className="gf-btn gf-btn-primary font-bold">
-                  Authorize & Provision 30-Day Trial
+                <button type="submit" className="gf-btn gf-btn-success" style={{ fontWeight: 800 }}>
+                  Authorize & Apply Promotional Waiver
                 </button>
               </div>
             </form>

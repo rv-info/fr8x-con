@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   UserX,
@@ -33,7 +33,7 @@ export default function BlockedAccountsPage() {
   const [unblockReason, setUnblockReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchBlockedData = async () => {
+  const fetchBlockedData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/godfather/security?type=blocked');
@@ -47,11 +47,11 @@ export default function BlockedAccountsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchBlockedData();
-  }, []);
+  }, [fetchBlockedData]);
 
   const handleUnblock = async (e: React.FormEvent) => {
     e.preventDefault();

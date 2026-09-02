@@ -1441,16 +1441,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { user, bidPostingFee } = useAuth();
   const { toast } = useToast();
 
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [jobs, setJobs] = useState<JobPost[]>([]);
-  const [topics, setTopics] = useState<NexusTopic[]>([]);
-  const [reviews, setReviews] = useState<CompanyReview[]>([]);
-  const [cases, setCases] = useState<BlacklistCase[]>([]);
-  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [posts, setPosts] = useState<FeedPost[]>(SEED_POSTS);
+  const [jobs, setJobs] = useState<JobPost[]>(SEED_JOBS);
+  const [topics, setTopics] = useState<NexusTopic[]>(SEED_TOPICS);
+  const [reviews, setReviews] = useState<CompanyReview[]>(SEED_REVIEWS);
+  const [cases, setCases] = useState<BlacklistCase[]>(SEED_BLACKLIST);
+  const [auctions, setAuctions] = useState<Auction[]>(SEED_AUCTIONS);
   const [reports, setReports] = useState<PostReport[]>([]);
-  const [rates, setRates] = useState<RateItem[]>([]);
+  const [rates, setRates] = useState<RateItem[]>(SEED_RATES);
   const [myRates, setMyRates] = useState<RateItem[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
 
   // Master Data States with Live Synchronizer
   const [masterLocations, setMasterLocations] = useState<LocationMasterItem[]>(MASTER_LOCATIONS);
@@ -1462,6 +1462,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      const savedTopics = localStorage.getItem('fr8x_nexus_topics');
+      if (savedTopics) setTopics(JSON.parse(savedTopics));
+      const savedReviews = localStorage.getItem('fr8x_nexus_reviews');
+      if (savedReviews) setReviews(JSON.parse(savedReviews));
+      const savedCases = localStorage.getItem('fr8x_nexus_cases');
+      if (savedCases) setCases(JSON.parse(savedCases));
+      const savedPosts = localStorage.getItem('fr8x_feed_posts');
+      if (savedPosts) setPosts(JSON.parse(savedPosts));
+      const savedJobs = localStorage.getItem('fr8x_jobs');
+      if (savedJobs) setJobs(JSON.parse(savedJobs));
+      const savedAuctions = localStorage.getItem('fr8x_auctions');
+      if (savedAuctions) setAuctions(JSON.parse(savedAuctions));
+      const savedRates = localStorage.getItem('fr8x_rates');
+      if (savedRates) setRates(JSON.parse(savedRates));
+
       const savedLocs = localStorage.getItem('fr8x_gf_master_locations');
       if (savedLocs) setMasterLocations(JSON.parse(savedLocs));
       const savedCars = localStorage.getItem('fr8x_gf_master_carriers');

@@ -968,7 +968,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {experiences.length === 0 ? (
               <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
-                No experience records added yet. Click "+ Add Experience" to showcase your career.
+                No experience records added yet. Click &quot;+ Add Experience&quot; to showcase your career.
               </div>
             ) : (
               experiences.map((exp) => (
@@ -1050,7 +1050,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {educations.length === 0 ? (
               <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
-                No education records added yet. Click "+ Add Education" to add degree credentials.
+                No education records added yet. Click &quot;+ Add Education&quot; to add degree credentials.
               </div>
             ) : (
               educations.map((edu) => (
@@ -1123,7 +1123,7 @@ export default function ProfilePage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {certifications.length === 0 ? (
               <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
-                No certifications added yet. Click "+ Add Certification" to add your accredited licenses.
+                No certifications added yet. Click &quot;+ Add Certification&quot; to add your accredited licenses.
               </div>
             ) : (
               certifications.map((cert) => (

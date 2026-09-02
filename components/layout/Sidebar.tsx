@@ -51,24 +51,23 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
   };
 
   return (
-    <aside className="side" style={{ width: isCollapsed ? '68px' : '230px' }}>
+    <aside className={`side ${isCollapsed ? 'is-collapsed' : ''}`}>
       {/* Brand */}
-      <div className="brand" style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
+      <div className="brand" style={{ justifyContent: isCollapsed ? 'center' : 'flex-start', padding: isCollapsed ? '4px 0 10px' : '4px 6px 10px' }}>
         <img
           src="/logo.png"
           alt="FR8X"
           style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '8px',
-            objectFit: 'cover',
+            width: '26px',
+            height: '26px',
+            objectFit: 'contain',
             flexShrink: 0,
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            display: 'block',
           }}
         />
         {!isCollapsed && (
-          <span>
-            fr<b>8</b>x
+          <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+            fr<b style={{ color: 'var(--brand)' }}>8</b>x
           </span>
         )}
       </div>

@@ -270,7 +270,7 @@ export default function SensitiveWordsFilterPage() {
                 <div className="flex flex-wrap gap-1.5">
                   {testResult.matches.map((m, idx) => (
                     <span key={idx} className="px-2 py-0.5 rounded bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-mono font-bold">
-                      "{m.word}" ({m.category} · {m.severity})
+                      &quot;{m.word}&quot; ({m.category} · {m.severity})
                     </span>
                   ))}
                 </div>

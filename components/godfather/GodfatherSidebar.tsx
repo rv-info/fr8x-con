@@ -18,7 +18,7 @@ interface NavSection {
   items: {
     label: string;
     href: string;
-    icon: React.ComponentType<{ className?: string }>;
+    icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   }[];
 }
 
@@ -70,7 +70,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Terms & Safety Agreements', href: '/godfather/platform/terms', icon: Scale },
       { label: 'Notification Templates', href: '/godfather/platform/templates', icon: Bell },
-      { label: 'Zoho Email Service', href: '/godfather/platform/email', icon: Mail },
+      { label: 'Zoho Email & Setup Guide', href: '/godfather/platform/email', icon: Mail },
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },
       { label: 'Access Control & Roles', href: '/godfather/platform/access', icon: Key },
       { label: 'Feature Flags & Config', href: '/godfather/platform/config', icon: Sliders },
@@ -94,41 +94,95 @@ export function GodfatherSidebar() {
     setOpenSections((prev) => ({ ...prev, [title]: prev[title] === false }));
   };
 
-  const getEnvBadgeClass = (env: PlatformEnvironment) => {
-    if (env === 'Production') return 'gf-badge-green';
-    if (env === 'Staging') return 'gf-badge-amber';
-    return 'gf-badge-blue';
-  };
-
   return (
-    <aside className="gf-sidebar">
+    <aside className="gf-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
       {/* Brand Header */}
-      <div className="gf-sidebar-header">
-        <Link href="/godfather" className="gf-brand-wrap">
-          <div className="gf-brand-logo-badge">
-            <ShieldCheck className="lucide w-4 h-4 text-sky-400" />
+      <div className="gf-sidebar-header" style={{ padding: '10px 12px', borderBottom: '1px solid #e2e8f0', background: '#ffffff' }}>
+        <Link href="/godfather" className="gf-brand-wrap" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <div
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '7px',
+              background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #334155',
+              flexShrink: 0,
+            }}
+          >
+            <ShieldCheck style={{ width: '16px', height: '16px', color: '#38bdf8' }} />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="gf-brand-title">
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span>GODFATHER</span>
-              <span className="gf-badge gf-badge-gold text-[9px] uppercase font-mono py-0 px-1.5">
+              <span
+                style={{
+                  fontSize: '9px',
+                  fontWeight: 800,
+                  fontFamily: 'Consolas, monospace',
+                  background: '#fef9c3',
+                  color: '#854d0e',
+                  border: '1px solid #fde047',
+                  padding: '1px 4px',
+                  borderRadius: '3px',
+                }}
+              >
                 SOVEREIGN
               </span>
             </div>
-            <div className="gf-brand-subtitle">FR8X SUPER ADMIN</div>
+            <div style={{ fontSize: '9.5px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              FR8X SUPER ADMIN
+            </div>
           </div>
         </Link>
 
         {/* Env Switcher */}
-        <div className="gf-env-select-wrap">
-          <span className={`gf-badge ${getEnvBadgeClass(environment)} text-[10px] uppercase font-bold flex items-center gap-1`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-current inline-block animate-pulse" />
+        <div
+          style={{
+            marginTop: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '4px 8px',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '6px',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 800,
+              fontFamily: 'Consolas, monospace',
+              color: environment === 'Production' ? '#15803d' : '#b45309',
+              background: environment === 'Production' ? '#dcfce7' : '#fef3c7',
+              border: `1px solid ${environment === 'Production' ? '#86efac' : '#fcd34d'}`,
+              padding: '1px 5px',
+              borderRadius: '3px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+            }}
+          >
+            <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: 'currentColor' }} />
             {environment === 'Production' ? 'PROD' : environment === 'Staging' ? 'STAGING' : 'LOCAL'}
           </span>
           <select
             value={environment}
             onChange={(e) => setEnvironment(e.target.value as PlatformEnvironment)}
-            className="gf-env-dropdown"
+            style={{
+              background: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '4px',
+              padding: '2px 4px',
+              fontSize: '10.5px',
+              fontWeight: 700,
+              color: '#0f172a',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
           >
             <option value="Production">Prod Node</option>
             <option value="Staging">Staging</option>
@@ -138,8 +192,8 @@ export function GodfatherSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="gf-sidebar-nav custom-scrollbar">
-        <div className="gf-nav-group-root">
+      <nav className="gf-sidebar-nav custom-scrollbar" style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingBottom: '6px', borderBottom: '1px solid #f1f5f9' }}>
           <Link href="/godfather" className={`gf-nav-link ${pathname === '/godfather' ? 'active' : ''}`}>
             <LayoutDashboard className="lucide" />
             <span>Overview Dashboard</span>
@@ -153,17 +207,38 @@ export function GodfatherSidebar() {
         {NAV_SECTIONS.map((section) => {
           const isOpen = openSections[section.title] ?? true;
           return (
-            <div key={section.title} className="gf-nav-section">
-              <button type="button" onClick={() => toggleSection(section.title)} className="gf-nav-section-header">
+            <div key={section.title} style={{ marginTop: '10px' }}>
+              <button
+                type="button"
+                onClick={() => toggleSection(section.title)}
+                className="gf-nav-section-header"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '4px 8px',
+                  fontSize: '10px',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                  color: '#64748b',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '4px',
+                  height: '24px',
+                }}
+              >
                 <span>{section.title}</span>
                 {isOpen ? (
-                  <ChevronDown className="lucide w-3.5 h-3.5" />
+                  <ChevronDown style={{ width: '13px', height: '13px' }} />
                 ) : (
-                  <ChevronRight className="lucide w-3.5 h-3.5" />
+                  <ChevronRight style={{ width: '13px', height: '13px' }} />
                 )}
               </button>
               {isOpen && (
-                <div className="flex flex-col gap-0.5 mt-0.5">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
                   {section.items.map((item) => {
                     const Icon = item.icon;
                     const isActive = pathname === item.href || (item.href !== '/godfather' && pathname.startsWith(item.href));
@@ -182,24 +257,73 @@ export function GodfatherSidebar() {
       </nav>
 
       {/* Operator Footer */}
-      <div className="gf-sidebar-footer">
-        <div className="relative">
-          <button type="button" onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)} className="gf-operator-pill">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-6 h-6 rounded-md bg-slate-900 text-white font-bold flex items-center justify-center text-xs flex-shrink-0">
+      <div className="gf-sidebar-footer" style={{ padding: '8px 10px', borderTop: '1px solid #e2e8f0', background: '#ffffff' }}>
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '6px 8px',
+              borderRadius: '6px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              cursor: 'pointer',
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <div
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '6px',
+                  background: '#0f172a',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  flexShrink: 0,
+                }}
+              >
                 {operator.displayName.charAt(0)}
               </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">{operator.displayName}</div>
-                <div className="text-[10px] text-sky-700 font-mono font-semibold truncate">{operator.roleTitle}</div>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {operator.displayName}
+                </div>
+                <div style={{ fontSize: '9.5px', color: '#0284c7', fontFamily: 'Consolas, monospace', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {operator.roleTitle}
+                </div>
               </div>
             </div>
-            <ChevronDown className="lucide w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+            <ChevronDown style={{ width: '13px', height: '13px', color: '#94a3b8', flexShrink: 0 }} />
           </button>
 
           {isRoleDropdownOpen && (
-            <div className="gf-role-dropdown-menu">
-              <div className="px-2 py-1 text-[9.5px] font-mono font-bold text-slate-400 uppercase tracking-wider">
+            <div
+              style={{
+                position: 'absolute',
+                bottom: 'calc(100% + 4px)',
+                left: 0,
+                width: '100%',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                padding: '6px',
+                zIndex: 50,
+                maxHeight: '220px',
+                overflowY: 'auto',
+                fontSize: '11px',
+              }}
+            >
+              <div style={{ padding: '4px 6px', fontSize: '9.5px', fontFamily: 'Consolas, monospace', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
                 Switch Authorized Persona
               </div>
               {operatorsList.map((op) => (
@@ -210,18 +334,28 @@ export function GodfatherSidebar() {
                     switchOperator(op.uid);
                     setIsRoleDropdownOpen(false);
                   }}
-                  className={`w-full text-left px-2 py-1.5 rounded text-xs flex items-center justify-between transition-colors ${
-                    op.uid === operator.uid
-                      ? 'bg-sky-50 text-sky-900 font-bold'
-                      : 'text-slate-700 hover:bg-slate-50'
-                  }`}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '6px 8px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: op.uid === operator.uid ? '#f0f9ff' : 'transparent',
+                    color: op.uid === operator.uid ? '#0369a1' : '#334155',
+                    fontWeight: op.uid === operator.uid ? 800 : 500,
+                  }}
                 >
-                  <div className="truncate">
-                    <div>{op.displayName}</div>
-                    <div className="text-[10px] text-slate-400 font-mono">{op.roleTitle}</div>
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{op.displayName}</div>
+                    <div style={{ fontSize: '9.5px', color: '#94a3b8', fontFamily: 'Consolas, monospace' }}>{op.roleTitle}</div>
                   </div>
                   {op.uid === operator.uid && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-sky-600 flex-shrink-0" />
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', flexShrink: 0 }} />
                   )}
                 </button>
               ))}

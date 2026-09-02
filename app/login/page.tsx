@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,12 +18,28 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
 
   // Forgot password modal
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+
+  // Read URL reason parameter (session_expired, inactivity, not_found)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const reason = params.get('reason');
+      if (reason === 'session_expired' || reason === 'inactivity') {
+        setSessionNotice('Your session has expired due to inactivity. Please sign in again to continue.');
+      } else if (reason === 'not_found') {
+        setSessionNotice('Requested page not found or unauthenticated. Please sign in to access the workspace.');
+      } else if (reason === 'unauthorized') {
+        setSessionNotice('Authentication required. Please sign in with your enterprise credentials.');
+      }
+    }
+  }, []);
 
   // Restore remembered credentials on mount
   useEffect(() => {
@@ -33,7 +49,7 @@ export default function LoginPage() {
       setPassword(saved.password);
       setRemember(true);
     }
-  }, []);
+  }, [loadRemembered]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,13 +165,11 @@ export default function LoginPage() {
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '52px',
-              height: '52px',
-              margin: '0 auto 12px',
-              borderRadius: '12px',
-              objectFit: 'cover',
+              width: '48px',
+              height: '48px',
+              margin: '0 auto 10px',
+              objectFit: 'contain',
               display: 'block',
-              boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
             }}
           />
           <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
@@ -168,6 +182,28 @@ export default function LoginPage() {
 
         {/* Body */}
         <div style={{ padding: '24px' }}>
+          {sessionNotice && !errorMessage && (
+            <div
+              style={{
+                padding: '10px 12px',
+                borderRadius: '8px',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                color: '#1d4ed8',
+                fontSize: '11.5px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontWeight: 500,
+                lineHeight: 1.4,
+              }}
+            >
+              <Clock size={15} style={{ flexShrink: 0, color: '#2563eb' }} />
+              <span>{sessionNotice}</span>
+            </div>
+          )}
+
           {errorMessage && (
             <div
               style={{

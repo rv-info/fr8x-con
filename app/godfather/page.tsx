@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -17,9 +17,20 @@ import {
   History,
   RefreshCw,
   Zap,
+  BookOpen,
+  ArrowUpRight,
+  TrendingUp,
+  Mail,
+  Server,
+  Layers,
+  Sparkles,
+  Lock,
+  ChevronRight,
+  Activity,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
+import { ZohoEmailGuidebookModal } from '@/components/godfather/ZohoEmailGuidebookModal';
 
 export default function GodfatherDashboardPage() {
   const { companies, users, auctions, auditLogs } = useGodfatherData();
@@ -35,13 +46,21 @@ export default function GodfatherDashboardPage() {
   const [securityEvents, setSecurityEvents] = useState<any[]>([]);
   const [passwordResets, setPasswordResets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGuidebookOpen, setIsGuidebookOpen] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<string>('');
 
-  const fetchSecurityOverview = async () => {
+  const fetchSecurityOverview = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch('/api/godfather/security');
       if (res.ok) {
         const json = await res.json();
-        setSecurityStats(json.summary || securityStats);
+        setSecurityStats(json.summary || {
+          blockedAccountsCount: 0,
+          securityEventsCount: 0,
+          passwordResetsCount: 0,
+          criticalEventsCount: 0,
+        });
         setBlockedAccounts(json.blockedAccounts || []);
         setSecurityEvents(json.recentEvents || []);
       }
@@ -51,16 +70,24 @@ export default function GodfatherDashboardPage() {
         const jsonResets = await resResets.json();
         setPasswordResets(jsonResets.data || []);
       }
+      setLastRefreshed(
+        new Date().toLocaleTimeString('en-IN', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: true,
+        })
+      );
     } catch {
       // Fallback
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSecurityOverview();
-  }, []);
+  }, [fetchSecurityOverview]);
 
   const activeUsersCount = users.length;
   const blockedAccountsCount = blockedAccounts.length;
@@ -72,21 +99,27 @@ export default function GodfatherDashboardPage() {
   const activeAuctionsCount = auctions.filter((a) => a.status === 'Live').length;
 
   return (
-    <div className="space-y-4">
-      {/* Page Header */}
+    <div className="space-y-6">
+      {/* ── 1. PAGE MASTER HEADER ── */}
       <div className="gf-page-header">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="gf-badge gf-badge-gold uppercase font-mono font-bold text-[10px]">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="gf-badge gf-badge-gold uppercase font-mono font-bold text-[10px] tracking-wider px-2 py-0.5">
               SOVEREIGN ROOT CONSOLE
             </span>
-            <span className="gf-badge gf-badge-green uppercase font-mono text-[10px]">
+            <span className="gf-badge gf-badge-green uppercase font-mono text-[10px] tracking-wider px-2 py-0.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               NODE: {environment.toUpperCase()}
             </span>
+            {lastRefreshed && (
+              <span className="text-[11px] font-mono text-slate-400 hidden sm:inline">
+                Synced at {lastRefreshed}
+              </span>
+            )}
           </div>
           <h1 className="gf-page-title flex items-center gap-2">
             <ShieldCheck className="lucide w-5 h-5 text-sky-600" />
-            <span>Godfather Control Center & Platform Governance</span>
+            <span>Godfather Sovereign Control Center &amp; Platform Governance</span>
           </h1>
           <p className="gf-page-subtitle">
             Central sovereign command console for security monitoring, corporate verification, anti-fraud enforcement, and cryptographic audit ledger.
@@ -94,10 +127,21 @@ export default function GodfatherDashboardPage() {
         </div>
 
         <div className="gf-page-actions">
+          {/* Quick Guidebook Launch */}
+          <button
+            type="button"
+            onClick={() => setIsGuidebookOpen(true)}
+            className="gf-btn gf-btn-primary text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 shadow-sm"
+          >
+            <BookOpen className="lucide w-3.5 h-3.5" />
+            <span>📖 Zoho Free Mail Guidebook</span>
+          </button>
+
           <button
             type="button"
             onClick={fetchSecurityOverview}
-            className="gf-btn gf-btn-secondary"
+            disabled={loading}
+            className="gf-btn gf-btn-secondary text-xs font-bold flex items-center gap-1.5 text-slate-700"
             title="Refresh All Telemetry"
           >
             <RefreshCw className={`lucide w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -106,259 +150,483 @@ export default function GodfatherDashboardPage() {
         </div>
       </div>
 
-      {/* SECTION 1: 8 REAL METRIC CARDS */}
+      {/* ── 2. QUICK GOVERNANCE LAUNCHPAD RIBBON ── */}
+      <div className="gf-card p-3.5 bg-gradient-to-r from-slate-50 via-white to-sky-50/40 border-slate-200 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wide">
+            <Zap className="lucide w-4 h-4 text-sky-600" />
+            <span>Fast Action Launchpad</span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsGuidebookOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-xs font-bold flex items-center gap-1.5 transition-all"
+            >
+              <Mail className="lucide w-3.5 h-3.5 text-sky-600" />
+              <span>Zoho Free SMTP Setup</span>
+            </button>
+
+            <Link
+              href="/godfather/operations/companies"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+            >
+              <Building className="lucide w-3.5 h-3.5 text-slate-600" />
+              <span>Verify KYCs ({pendingKYCCount})</span>
+            </Link>
+
+            <Link
+              href="/godfather/security/blocked-accounts"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+            >
+              <UserX className="lucide w-3.5 h-3.5 text-rose-600" />
+              <span>Unlock Users ({blockedAccountsCount})</span>
+            </Link>
+
+            <Link
+              href="/godfather/operations/auctions"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+            >
+              <Gavel className="lucide w-3.5 h-3.5 text-amber-600" />
+              <span>Live Spot Auctions ({activeAuctionsCount})</span>
+            </Link>
+
+            <Link
+              href="/godfather/security/audit"
+              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
+            >
+              <History className="lucide w-3.5 h-3.5 text-indigo-600" />
+              <span>Audit Ledger ({auditLogs.length})</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. EXECUTIVE TELEMETRY METRIC TILES (4x2 GRID) ── */}
       <div>
-        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-          <Zap className="lucide w-3.5 h-3.5 text-sky-600" />
-          <span>Platform & Security Summary</span>
+        <div className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Activity className="lucide w-4 h-4 text-sky-600" />
+            <span>Platform Telemetry &amp; Health Metrics</span>
+          </div>
+          <span className="text-[11px] font-mono text-slate-500 font-semibold">Real-Time Aggregation</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-          {/* Card 1: Active Users */}
-          <Link href="/godfather/operations/users" className="gf-metric-card">
-            <div className="gf-metric-title">Active Users</div>
-            <div className="gf-metric-value text-slate-900">{activeUsersCount}</div>
-            <div className="gf-metric-foot text-slate-500">
-              <Users className="lucide" />
-              <span>Directory</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          {/* Tile 1: Active Users */}
+          <Link href="/godfather/operations/users" className="gf-metric-card p-4 hover:border-sky-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Active Directory Users</span>
+              <div className="p-2 rounded-lg bg-sky-50 text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                <Users className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className="text-2xl font-black text-slate-900 tracking-tight">{activeUsersCount}</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Verified Freight Operators</p>
+            </div>
+            <div className="gf-metric-foot text-sky-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Manage Users</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-blue text-[9px] font-mono">100% OK</span>
             </div>
           </Link>
 
-          {/* Card 2: Blocked Accounts */}
-          <Link href="/godfather/security/blocked-accounts" className="gf-metric-card">
-            <div className="gf-metric-title">Blocked Accounts</div>
-            <div className={`gf-metric-value ${blockedAccountsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-              {blockedAccountsCount}
+          {/* Tile 2: Corporate KYC */}
+          <Link href="/godfather/operations/companies" className="gf-metric-card p-4 hover:border-amber-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Corporate KYC Review</span>
+              <div className="p-2 rounded-lg bg-amber-50 text-amber-600 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                <Building className="lucide w-4 h-4" />
+              </div>
             </div>
-            <div className={`gf-metric-foot ${blockedAccountsCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-              <UserX className="lucide" />
-              <span>{blockedAccountsCount > 0 ? 'Action Needed' : '0 Locked'}</span>
+            <div className="my-2">
+              <div className={`text-2xl font-black tracking-tight ${pendingKYCCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
+                {pendingKYCCount}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {pendingKYCCount > 0 ? 'Verification reviews pending' : 'All GSTN documents approved'}
+              </p>
             </div>
-          </Link>
-
-          {/* Card 3: Pending KYC */}
-          <Link href="/godfather/operations/companies" className="gf-metric-card">
-            <div className="gf-metric-title">Pending KYC</div>
-            <div className={`gf-metric-value ${pendingKYCCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
-              {pendingKYCCount}
-            </div>
-            <div className={`gf-metric-foot ${pendingKYCCount > 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
-              <Building className="lucide" />
-              <span>{pendingKYCCount > 0 ? 'Review Queue' : 'All Clear'}</span>
-            </div>
-          </Link>
-
-          {/* Card 4: Open Reports */}
-          <Link href="/godfather/trust-safety/reports" className="gf-metric-card">
-            <div className="gf-metric-title">Open Reports</div>
-            <div className={`gf-metric-value ${openReportsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-              {openReportsCount}
-            </div>
-            <div className={`gf-metric-foot ${openReportsCount > 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
-              <FileCheck className="lucide" />
-              <span>{openReportsCount > 0 ? 'Disputes Open' : '0 Reports'}</span>
+            <div className="gf-metric-foot text-amber-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>KYC Queue</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className={`gf-badge ${pendingKYCCount > 0 ? 'gf-badge-amber' : 'gf-badge-green'} text-[9px] font-mono`}>
+                {pendingKYCCount > 0 ? 'ACTION NEEDED' : 'CLEARED'}
+              </span>
             </div>
           </Link>
 
-          {/* Card 5: Security Alerts */}
-          <Link href="/godfather/security/events" className="gf-metric-card">
-            <div className="gf-metric-title">Security Alerts</div>
-            <div className={`gf-metric-value ${activeSecurityAlertsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
-              {activeSecurityAlertsCount}
+          {/* Tile 3: Blocked & Security Perimeter */}
+          <Link href="/godfather/security/blocked-accounts" className="gf-metric-card p-4 hover:border-rose-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Security Perimeter</span>
+              <div className="p-2 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                <ShieldAlert className="lucide w-4 h-4" />
+              </div>
             </div>
-            <div className="gf-metric-foot text-sky-600">
-              <ShieldAlert className="lucide" />
-              <span>24h Stream</span>
+            <div className="my-2">
+              <div className={`text-2xl font-black tracking-tight ${blockedAccountsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                {blockedAccountsCount} Locked
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {otpLimitEventsCount} OTP Limit Hits · {activeSecurityAlertsCount} Alerts
+              </p>
             </div>
-          </Link>
-
-          {/* Card 6: Password Resets */}
-          <Link href="/godfather/security/password-resets" className="gf-metric-card">
-            <div className="gf-metric-title">Password Resets</div>
-            <div className="gf-metric-value text-slate-900">{pendingPasswordResetsCount}</div>
-            <div className="gf-metric-foot text-slate-500">
-              <KeyRound className="lucide" />
-              <span>Tokens Active</span>
-            </div>
-          </Link>
-
-          {/* Card 7: OTP Limit Events */}
-          <Link href="/godfather/security/otp-activity" className="gf-metric-card">
-            <div className="gf-metric-title">OTP Limit Hits</div>
-            <div className={`gf-metric-value ${otpLimitEventsCount > 0 ? 'text-amber-600' : 'text-slate-900'}`}>
-              {otpLimitEventsCount}
-            </div>
-            <div className="gf-metric-foot text-emerald-600">
-              <Smartphone className="lucide" />
-              <span>3/3 Quota</span>
+            <div className="gf-metric-foot text-rose-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Inspect Locks</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className={`gf-badge ${blockedAccountsCount > 0 ? 'gf-badge-red' : 'gf-badge-green'} text-[9px] font-mono`}>
+                {blockedAccountsCount > 0 ? 'LOCKS ACTIVE' : '0 THREATS'}
+              </span>
             </div>
           </Link>
 
-          {/* Card 8: Active Auctions */}
-          <Link href="/godfather/operations/auctions" className="gf-metric-card">
-            <div className="gf-metric-title">Active Auctions</div>
-            <div className="gf-metric-value text-sky-700">{activeAuctionsCount}</div>
-            <div className="gf-metric-foot text-sky-600">
-              <Gavel className="lucide" />
-              <span>Live Bidding</span>
+          {/* Tile 4: Live Reverse Auctions */}
+          <Link href="/godfather/operations/auctions" className="gf-metric-card p-4 hover:border-emerald-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Live Reverse Auctions</span>
+              <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                <Gavel className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className="text-2xl font-black text-emerald-700 tracking-tight">{activeAuctionsCount} Live</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Real-time spot bidding active</p>
+            </div>
+            <div className="gf-metric-foot text-emerald-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Auction Arena</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-green text-[9px] font-mono">BROADCASTING</span>
+            </div>
+          </Link>
+
+          {/* Tile 5: Zoho Email Service */}
+          <Link href="/godfather/platform/email" className="gf-metric-card p-4 hover:border-sky-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Zoho Email Service</span>
+              <div className="p-2 rounded-lg bg-sky-50 text-sky-600 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+                <Mail className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className="text-2xl font-black text-slate-900 tracking-tight">Free Forever</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">smtp.zoho.in:465 · SSL Enforced</p>
+            </div>
+            <div className="gf-metric-foot text-sky-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Mailbox Governance</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-green text-[9px] font-mono">ACTIVE (5 USERS)</span>
+            </div>
+          </Link>
+
+          {/* Tile 6: Password Resets */}
+          <Link href="/godfather/security/password-resets" className="gf-metric-card p-4 hover:border-indigo-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Password Reset Tokens</span>
+              <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                <KeyRound className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className="text-2xl font-black text-slate-900 tracking-tight">{pendingPasswordResetsCount}</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Single-use encrypted tokens active</p>
+            </div>
+            <div className="gf-metric-foot text-indigo-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Audit Tokens</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-gray text-[9px] font-mono">15-MIN TTL</span>
+            </div>
+          </Link>
+
+          {/* Tile 7: Dispute Resolution */}
+          <Link href="/godfather/trust-safety/reports" className="gf-metric-card p-4 hover:border-rose-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Dispute Resolution</span>
+              <div className="p-2 rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                <FileCheck className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className={`text-2xl font-black tracking-tight ${openReportsCount > 0 ? 'text-rose-600' : 'text-slate-900'}`}>
+                {openReportsCount} Report
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Commercial deviation mediation</p>
+            </div>
+            <div className="gf-metric-foot text-rose-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Review Disputes</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-amber text-[9px] font-mono">OPEN CASE</span>
+            </div>
+          </Link>
+
+          {/* Tile 8: Audit Ledger */}
+          <Link href="/godfather/security/audit" className="gf-metric-card p-4 hover:border-purple-400 group">
+            <div className="flex items-start justify-between">
+              <span className="gf-metric-title">Sovereign Audit Ledger</span>
+              <div className="p-2 rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                <History className="lucide w-4 h-4" />
+              </div>
+            </div>
+            <div className="my-2">
+              <div className="text-2xl font-black text-purple-700 tracking-tight">{auditLogs.length}</div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Append-only cryptographic events</p>
+            </div>
+            <div className="gf-metric-foot text-purple-700 flex items-center justify-between pt-2 border-t border-slate-100">
+              <span className="text-xs font-bold flex items-center gap-1">
+                <span>Verify Ledger</span>
+                <ArrowUpRight className="lucide w-3 h-3" />
+              </span>
+              <span className="gf-badge gf-badge-purple text-[9px] font-mono">SHA-256 SIGNED</span>
             </div>
           </Link>
         </div>
       </div>
 
-      {/* SECTION 2: SPLIT GRID (Security Alerts + Pending Actions) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+      {/* ── 4. SPLIT GRID: SECURITY ALERTS + PENDING ADMINISTRATIVE ACTIONS ── */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
         {/* Security Alert Center (6 Cols) */}
-        <div className="lg:col-span-6">
+        <div className="xl:col-span-6">
           <div className="gf-card">
             <div className="gf-card-header">
               <div className="gf-card-title text-rose-800">
                 <ShieldAlert className="lucide w-4 h-4 text-rose-600" />
-                <span>Security Alert Center</span>
+                <span>Security Intrusion &amp; Anomaly Stream</span>
               </div>
-              <Link href="/godfather/security/events" className="text-xs font-bold text-sky-600 hover:underline">
-                Full Center →
-              </Link>
+              <div className="flex items-center gap-2">
+                <span className="gf-badge gf-badge-red text-[9.5px] font-mono font-bold">
+                  {securityEvents.length} ACTIVE ALERTS
+                </span>
+                <Link href="/godfather/security/events" className="text-xs font-bold text-sky-600 hover:underline flex items-center gap-0.5">
+                  <span>Full Stream</span>
+                  <ChevronRight className="lucide w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
 
-            <div className="divide-y divide-slate-100 max-h-[280px] overflow-y-auto">
+            <div className="overflow-x-auto max-h-[340px] overflow-y-auto custom-scrollbar">
               {securityEvents.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-xs">
-                  <CheckCircle2 className="lucide w-8 h-8 mx-auto mb-2 text-emerald-500 opacity-60" />
-                  <div className="font-bold text-slate-700 text-sm">No Active Security Alerts</div>
-                  <div className="text-slate-500 mt-1">Brute force mitigation and authentication systems operating normally.</div>
+                  <CheckCircle2 className="lucide w-8 h-8 mx-auto mb-2 text-emerald-500 opacity-80" />
+                  <div className="font-bold text-slate-800 text-sm">No Active Security Alerts</div>
+                  <div className="text-slate-500 mt-1">Brute force mitigation, IP throttling, and MFA systems operating normally.</div>
                 </div>
               ) : (
-                securityEvents.slice(0, 6).map((evt) => (
-                  <div key={evt.id} className="p-3 hover:bg-slate-50 text-xs space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span
-                        className={`gf-badge ${
-                          evt.severity === 'CRITICAL'
-                            ? 'gf-badge-red'
-                            : evt.severity === 'HIGH'
-                            ? 'gf-badge-amber'
-                            : 'gf-badge-blue'
-                        }`}
-                      >
-                        {evt.type}
-                      </span>
-                      <span className="font-mono text-[11px] text-slate-400">
-                        {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    <div className="font-semibold text-slate-900">{evt.details}</div>
-                    <div className="font-mono text-[11px] text-slate-500">Target: {evt.userEmail}</div>
-                  </div>
-                ))
+                <table className="gf-table text-xs">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '110px' }}>SEVERITY</th>
+                      <th>TARGET USER</th>
+                      <th>DETAILS</th>
+                      <th style={{ width: '90px' }}>TIME</th>
+                      <th style={{ width: '70px', textAlign: 'right' }}>ACTION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {securityEvents.slice(0, 7).map((evt) => (
+                      <tr key={evt.id} className="hover:bg-rose-50/40 transition-colors">
+                        <td>
+                          <span
+                            className={`gf-badge ${
+                              evt.severity === 'CRITICAL'
+                                ? 'gf-badge-red'
+                                : evt.severity === 'HIGH'
+                                ? 'gf-badge-amber'
+                                : 'gf-badge-blue'
+                            } text-[9px] font-mono font-bold uppercase`}
+                          >
+                            {evt.type}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="font-bold text-slate-900 truncate max-w-[140px]" title={evt.userEmail}>
+                            {evt.userEmail}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono truncate">{evt.ip || 'Secured Gateway'}</div>
+                        </td>
+                        <td>
+                          <div className="text-slate-800 font-medium line-clamp-1" title={evt.details}>
+                            {evt.details}
+                          </div>
+                        </td>
+                        <td className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                          {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <Link
+                            href="/godfather/security/events"
+                            className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2 h-[26px]"
+                          >
+                            Inspect
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
           </div>
         </div>
 
         {/* Pending Administrative Actions (6 Cols) */}
-        <div className="lg:col-span-6">
+        <div className="xl:col-span-6">
           <div className="gf-card">
             <div className="gf-card-header">
               <div className="gf-card-title text-amber-800">
                 <Clock className="lucide w-4 h-4 text-amber-600" />
-                <span>Pending Administrative Actions</span>
+                <span>Pending Administrative Action Queue</span>
               </div>
-              <span className="gf-badge gf-badge-amber font-mono font-bold">
+              <span className="gf-badge gf-badge-amber font-mono font-bold text-[9.5px]">
                 {pendingKYCCount + openReportsCount + blockedAccountsCount} ACTION ITEMS
               </span>
             </div>
 
-            <div className="divide-y divide-slate-100 max-h-[280px] overflow-y-auto">
-              {/* KYC Queue */}
-              {companies.filter((c) => c.status === 'pending').map((comp) => (
-                <div key={comp.companyId} className="p-3 hover:bg-slate-50 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                      <Building className="lucide w-3.5 h-3.5 text-sky-600" />
-                      <span>KYC Verification: {comp.legalName}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                      GSTN: {comp.gstn || 'Pending'} · {comp.documents.length} KYC Documents
-                    </div>
-                  </div>
-                  <Link href="/godfather/operations/companies" className="gf-btn gf-btn-success text-xs">
-                    Verify
-                  </Link>
-                </div>
-              ))}
+            <div className="overflow-x-auto max-h-[340px] overflow-y-auto custom-scrollbar">
+              <table className="gf-table text-xs">
+                <thead>
+                  <tr>
+                    <th style={{ width: '85px' }}>TYPE</th>
+                    <th>TARGET ENTITY</th>
+                    <th>CONTEXT / REASON</th>
+                    <th style={{ width: '80px', textAlign: 'right' }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {/* KYC Queue */}
+                  {companies.filter((c) => c.status === 'pending').map((comp) => (
+                    <tr key={comp.companyId} className="hover:bg-amber-50/40 transition-colors">
+                      <td>
+                        <span className="gf-badge gf-badge-blue text-[9px] font-mono font-bold uppercase">
+                          KYC
+                        </span>
+                      </td>
+                      <td>
+                        <div className="font-bold text-slate-900 truncate max-w-[150px]" title={comp.legalName}>
+                          {comp.legalName}
+                        </div>
+                        <div className="text-[10px] text-slate-400 font-mono">GSTN: {comp.gstn || 'Pending'}</div>
+                      </td>
+                      <td>
+                        <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
+                          {comp.documents.length} verification docs uploaded
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <Link href="/godfather/operations/companies" className="gf-btn gf-btn-success text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
+                          Verify
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
 
-              {/* Blocked Accounts Queue */}
-              {blockedAccounts.map((blk) => (
-                <div key={blk.uid} className="p-3 hover:bg-slate-50 flex items-center justify-between text-xs">
-                  <div>
-                    <div className="font-bold text-rose-900 flex items-center gap-1.5">
-                      <UserX className="lucide w-3.5 h-3.5 text-rose-600" />
-                      <span>Account Unlock Request: {blk.displayName || blk.email}</span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                      Locked after 3 failed password attempts ({blk.company})
-                    </div>
-                  </div>
-                  <Link href="/godfather/security/blocked-accounts" className="gf-btn gf-btn-danger text-xs">
-                    Unlock
-                  </Link>
-                </div>
-              ))}
+                  {/* Blocked Accounts Queue */}
+                  {blockedAccounts.map((blk) => (
+                    <tr key={blk.uid} className="hover:bg-rose-50/40 transition-colors">
+                      <td>
+                        <span className="gf-badge gf-badge-red text-[9px] font-mono font-bold uppercase">
+                          LOCKED
+                        </span>
+                      </td>
+                      <td>
+                        <div className="font-bold text-slate-900 truncate max-w-[150px]" title={blk.displayName || blk.email}>
+                          {blk.displayName || blk.email}
+                        </div>
+                        <div className="text-[10px] text-slate-400 truncate">{blk.company}</div>
+                      </td>
+                      <td>
+                        <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
+                          3 failed password attempts
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <Link href="/godfather/security/blocked-accounts" className="gf-btn gf-btn-danger text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
+                          Unlock
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
 
-              {/* Reports Queue */}
-              <div className="p-3 hover:bg-slate-50 flex items-center justify-between text-xs">
-                <div>
-                  <div className="font-bold text-slate-900 flex items-center gap-1.5">
-                    <FileCheck className="lucide w-3.5 h-3.5 text-rose-600" />
-                    <span>Commercial Dispute: REP-2026-001 (Indo Ocean Lines)</span>
-                  </div>
-                  <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                    Demurrage free time deviation in spot quote confirmation
-                  </div>
-                </div>
-                <Link href="/godfather/trust-safety/reports" className="gf-btn gf-btn-secondary text-xs">
-                  Review
-                </Link>
-              </div>
+                  {/* Reports Queue */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td>
+                      <span className="gf-badge gf-badge-amber text-[9px] font-mono font-bold uppercase">
+                        DISPUTE
+                      </span>
+                    </td>
+                    <td>
+                      <div className="font-bold text-slate-900 truncate max-w-[150px]">
+                        Indo Ocean Lines
+                      </div>
+                      <div className="text-[10px] text-slate-400 font-mono">Case REP-2026-001</div>
+                    </td>
+                    <td>
+                      <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
+                        Demurrage free time deviation
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <Link href="/godfather/trust-safety/reports" className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
+                        Review
+                      </Link>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
       </div>
 
-      {/* SECTION 3: RECENT AUDIT ACTIVITY TABLE */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
-            <History className="lucide w-3.5 h-3.5 text-sky-600" />
-            <span>Recent Sovereign Audit Activity (Append-Only Ledger)</span>
+      {/* ── 5. RECENT AUDIT ACTIVITY TABLE ── */}
+      <div className="gf-card">
+        <div className="gf-card-header">
+          <div className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+            <History className="lucide w-4 h-4 text-sky-600" />
+            <span>Recent Sovereign Audit Activity (Append-Only Cryptographic Ledger)</span>
           </div>
-          <Link href="/godfather/security/audit" className="text-xs font-bold text-sky-600 hover:underline">
-            View Full Cryptographic Audit Trail →
+          <Link href="/godfather/security/audit" className="text-xs font-bold text-sky-600 hover:underline flex items-center gap-1">
+            <span>View Full Ledger</span>
+            <ChevronRight className="lucide w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="gf-table-container">
-          <table className="gf-table">
+        <div className="overflow-x-auto">
+          <table className="gf-table text-xs">
             <thead>
               <tr>
-                <th>TIME</th>
-                <th>ADMIN / OPERATOR</th>
-                <th>MODULE</th>
-                <th>ACTION</th>
-                <th>RECORD</th>
-                <th>STATUS</th>
+                <th style={{ width: '90px' }}>TIME</th>
+                <th style={{ width: '180px' }}>ADMIN / OPERATOR</th>
+                <th style={{ width: '100px' }}>MODULE</th>
+                <th style={{ width: '130px' }}>ACTION TYPE</th>
+                <th>TARGET ENTITY &amp; REASON</th>
+                <th style={{ width: '130px', textAlign: 'center' }}>AUTHORIZATION</th>
               </tr>
             </thead>
             <tbody>
               {auditLogs.slice(0, 8).map((log) => (
-                <tr key={log.actionId}>
+                <tr key={log.actionId} className="hover:bg-slate-50 transition-colors">
                   <td className="font-mono text-xs text-slate-600 whitespace-nowrap">
-                    {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </td>
                   <td>
                     <div className="font-bold text-slate-900">{log.actorName}</div>
-                    <div className="font-mono text-[10.5px] text-slate-500">{log.actorRole}</div>
+                    <div className="font-mono text-[10px] text-slate-500">{log.actorRole}</div>
                   </td>
                   <td>
                     <span className="font-bold text-slate-700 uppercase font-mono text-[10.5px]">
@@ -366,19 +634,19 @@ export default function GodfatherDashboardPage() {
                     </span>
                   </td>
                   <td>
-                    <span className="font-mono text-xs font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                    <span className="font-mono text-[11px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
                       {log.actionType}
                     </span>
                   </td>
                   <td>
-                    <div className="font-medium text-slate-900 truncate max-w-sm">
+                    <div className="font-semibold text-slate-900 truncate max-w-md">
                       {log.targetLabel || log.targetId}
                     </div>
-                    <div className="text-[11px] text-slate-500 truncate">{log.reason}</div>
+                    <div className="text-[11px] text-slate-500 truncate max-w-md">{log.reason}</div>
                   </td>
-                  <td>
-                    <span className="gf-badge gf-badge-green font-mono">
-                      {log.stepUpVerified ? 'MFA VERIFIED' : 'COMMITTED'}
+                  <td style={{ textAlign: 'center' }}>
+                    <span className="gf-badge gf-badge-green font-mono text-[9.5px] font-bold">
+                      {log.stepUpVerified ? 'MFA VERIFIED' : 'SHA-256 SIGNED'}
                     </span>
                   </td>
                 </tr>
@@ -387,6 +655,9 @@ export default function GodfatherDashboardPage() {
           </table>
         </div>
       </div>
+
+      {/* Guidebook Modal */}
+      <ZohoEmailGuidebookModal isOpen={isGuidebookOpen} onClose={() => setIsGuidebookOpen(false)} />
     </div>
   );
 }

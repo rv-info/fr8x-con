@@ -120,12 +120,12 @@ export default function AuctionsAdministrationPage() {
       </div>
 
       {/* Main Split: Auction List on Left (5 cols) & Auction Inspector on Right (7 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="gf-grid-5-7">
         {/* Left Column: List & Filters */}
-        <div className="lg:col-span-5 space-y-3">
-          <div className="gf-card p-3 space-y-2 bg-slate-50 border-slate-200">
-            <div className="gf-search-input-wrap w-full bg-white border-slate-300">
-              <Search className="lucide w-4 h-4 text-slate-400" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div className="gf-card" style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div className="gf-search-input-wrap" style={{ width: '100%' }}>
+              <Search style={{ width: '14px', height: '14px', color: '#94a3b8' }} />
               <input
                 type="text"
                 value={searchQuery}
@@ -135,17 +135,26 @@ export default function AuctionsAdministrationPage() {
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto text-[11px] pb-1">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
               {['all', 'Live', 'Awarded', 'Draft', 'Cancelled'].map((st) => (
                 <button
                   key={st}
                   type="button"
                   onClick={() => setStatusFilter(st)}
-                  className={`px-2.5 py-1 rounded-md capitalize font-bold transition-colors whitespace-nowrap ${
-                    statusFilter === st
-                      ? 'bg-sky-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                  }`}
+                  className={`gf-pill-btn ${statusFilter === st ? 'active' : ''}`}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '5px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textTransform: 'capitalize',
+                    border: '1px solid',
+                    borderColor: statusFilter === st ? '#0284c7' : '#e2e8f0',
+                    background: statusFilter === st ? '#0284c7' : '#ffffff',
+                    color: statusFilter === st ? '#ffffff' : '#64748b',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {st}
                 </button>
@@ -153,16 +162,23 @@ export default function AuctionsAdministrationPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {filtered.map((auc) => {
               const isSelected = selectedAuction?.id === auc.id;
               return (
                 <div
                   key={auc.id}
                   onClick={() => setSelectedAuction(auc)}
-                  className={`gf-card p-4 cursor-pointer transition-all ${
-                    isSelected ? 'border-sky-400 bg-sky-50/70 shadow-sm ring-1 ring-sky-300' : 'hover:border-slate-300 hover:bg-slate-50'
-                  }`}
+                  className="gf-card"
+                  style={{
+                    padding: '12px',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
+                    marginBottom: 0,
+                    borderColor: isSelected ? '#0284c7' : '#e2e8f0',
+                    background: isSelected ? '#f0f9ff' : '#ffffff',
+                    boxShadow: isSelected ? '0 0 0 1.5px #0284c7' : '0 1px 2px rgba(0,0,0,0.03)',
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <div>

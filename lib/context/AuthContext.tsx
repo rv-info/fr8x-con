@@ -168,6 +168,29 @@ const PASSWORDS_STORAGE_KEY = 'fr8x_user_passwords_v2';
 const ACTIVE_SESSION_KEY = 'fr8x_active_user_uid';
 const STATUS_KEY = 'fr8x_user_status';
 const DEVICE_KEY = 'fr8x_remembered_creds_v2';
+const SESSION_START_KEY = 'fr8x_session_start_time';
+const LAST_ACTIVITY_KEY = 'fr8x_last_activity_time';
+
+// ─── Session Expiration & Inactivity Limits ─────────────────────────────────
+// Inactivity timeout: 30 minutes of no interaction / browser backgrounded
+export const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
+// Maximum absolute session duration: 12 hours
+export const MAX_SESSION_DURATION_MS = 12 * 60 * 60 * 1000;
+
+function checkIsSessionExpired(): boolean {
+  try {
+    const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
+    const sessionStart = localStorage.getItem(SESSION_START_KEY);
+    if (!lastActivity) return false;
+    const now = Date.now();
+    const idleTime = now - Number(lastActivity);
+    if (idleTime > INACTIVITY_TIMEOUT_MS) return true;
+    if (sessionStart && now - Number(sessionStart) > MAX_SESSION_DURATION_MS) return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 // ─── Device-memory helpers ───────────────────────────────────────────────────
 function saveToDevice(userId: string, password: string) {
@@ -207,7 +230,7 @@ interface AuthContextType {
   /** Accepts uid OR email + password. Returns true on success. */
   login: (identifier: string, pass: string, remember?: boolean) => boolean;
   register: (profile: Partial<UserProfile>, password?: string) => void;
-  logout: () => void;
+  logout: (reason?: string) => void;
   loadRemembered: () => { userId: string; password: string } | null;
   bidPostingFee: number;
   bidDiscountPercentage: number;
@@ -221,6 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [userPasswords, setUserPasswords] = useState<Record<string, string>>(DEFAULT_PASSWORDS);
   const [userStatus, setUserStatusState] = useState<UserStatus>('offline');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Keep a ref to currentUser for event handlers and intervals
+  const currentUserRef = React.useRef<UserProfile | null>(null);
+  currentUserRef.current = currentUser;
+
+  const lastTrackedTimeRef = React.useRef<number>(Date.now());
 
   // Initial load: restore registered users and active session from localStorage
   useEffect(() => {
@@ -251,19 +280,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setUserPasswords(passwordsMap);
 
-      // 3. Restore active session ONLY if explicitly saved
+      // 3. Restore active session ONLY if explicitly saved and NOT expired
       const savedUid = localStorage.getItem(ACTIVE_SESSION_KEY);
       if (savedUid) {
-        const found = usersList.find((u) => u.uid === savedUid);
-        if (found) {
-          setCurrentUser(found);
-          const savedStatus = (localStorage.getItem(STATUS_KEY) as UserStatus) || 'available';
-          setUserStatusState(savedStatus);
-        } else {
-          // Stale UID — clear
+        const isExpired = checkIsSessionExpired();
+        if (isExpired) {
+          // Session expired due to inactivity / timeout while browser was closed or dormant
           localStorage.removeItem(ACTIVE_SESSION_KEY);
+          localStorage.removeItem(SESSION_START_KEY);
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
           setCurrentUser(null);
           setUserStatusState('offline');
+        } else {
+          const found = usersList.find((u) => u.uid === savedUid);
+          if (found) {
+            setCurrentUser(found);
+            const savedStatus = (localStorage.getItem(STATUS_KEY) as UserStatus) || 'available';
+            setUserStatusState(savedStatus);
+            // Refresh activity timestamp
+            try {
+              localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
+            } catch {}
+          } else {
+            // Stale UID — clear
+            localStorage.removeItem(ACTIVE_SESSION_KEY);
+            setCurrentUser(null);
+            setUserStatusState('offline');
+          }
         }
       } else {
         // No session stored — start completely unauthenticated
@@ -287,6 +330,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('beforeunload', onUnload);
   }, []);
 
+  // Track user activity across interactions (clicks, keyboard, scroll, touch)
+  useEffect(() => {
+    const handleUserActivity = () => {
+      if (!currentUserRef.current) return;
+      const now = Date.now();
+      // Throttle localStorage writes to at most once every 10 seconds
+      if (now - lastTrackedTimeRef.current > 10000) {
+        lastTrackedTimeRef.current = now;
+        try {
+          localStorage.setItem(LAST_ACTIVITY_KEY, now.toString());
+        } catch {}
+      }
+    };
+
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    activityEvents.forEach((evt) => {
+      window.addEventListener(evt, handleUserActivity, { passive: true });
+    });
+
+    return () => {
+      activityEvents.forEach((evt) => {
+        window.removeEventListener(evt, handleUserActivity);
+      });
+    };
+  }, []);
+
+  // Periodic and visibility/focus session validity checks (handles browser left open / dormant for a long time)
+  useEffect(() => {
+    const performSessionCheck = () => {
+      if (!currentUserRef.current) return;
+
+      if (checkIsSessionExpired()) {
+        // Inactivity or max session duration exceeded
+        setCurrentUser(null);
+        setUserStatusState('offline');
+        clearDevice();
+        try {
+          localStorage.removeItem(ACTIVE_SESSION_KEY);
+          localStorage.removeItem(SESSION_START_KEY);
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
+          localStorage.setItem(STATUS_KEY, 'offline');
+        } catch {}
+
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+          window.location.href = '/login?reason=session_expired';
+        }
+      }
+    };
+
+    // Check when user refocuses or wakes the tab
+    const onVisibilityOrFocus = () => {
+      if (document.visibilityState === 'visible') {
+        performSessionCheck();
+      }
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityOrFocus);
+    window.addEventListener('focus', onVisibilityOrFocus);
+
+    // Periodic check every 20 seconds
+    const interval = setInterval(performSessionCheck, 20000);
+
+    return () => {
+      window.removeEventListener('visibilitychange', onVisibilityOrFocus);
+      window.removeEventListener('focus', onVisibilityOrFocus);
+      clearInterval(interval);
+    };
+  }, []);
+
   const setUserStatus = (status: UserStatus) => {
     setUserStatusState(status);
     try { localStorage.setItem(STATUS_KEY, status); } catch {}
@@ -297,9 +409,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (found) {
       setCurrentUser(found);
       setUserStatusState('available');
+      const now = Date.now().toString();
       try {
         localStorage.setItem(ACTIVE_SESSION_KEY, uid);
         localStorage.setItem(STATUS_KEY, 'available');
+        localStorage.setItem(SESSION_START_KEY, now);
+        localStorage.setItem(LAST_ACTIVITY_KEY, now);
       } catch {}
     }
   };
@@ -344,9 +459,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser(found);
     setUserStatus('available');
 
+    const now = Date.now().toString();
     try {
       localStorage.setItem(ACTIVE_SESSION_KEY, found.uid);
       localStorage.setItem(STATUS_KEY, 'available');
+      localStorage.setItem(SESSION_START_KEY, now);
+      localStorage.setItem(LAST_ACTIVITY_KEY, now);
     } catch {}
 
     if (remember) {
@@ -395,25 +513,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const nextPasswords = { ...userPasswords, [newUid]: password };
     setUserPasswords(nextPasswords);
 
+    const now = Date.now().toString();
     try {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(nextUsers));
       localStorage.setItem(PASSWORDS_STORAGE_KEY, JSON.stringify(nextPasswords));
       localStorage.setItem(ACTIVE_SESSION_KEY, newUid);
       localStorage.setItem(STATUS_KEY, 'available');
+      localStorage.setItem(SESSION_START_KEY, now);
+      localStorage.setItem(LAST_ACTIVITY_KEY, now);
     } catch {}
   };
 
   /**
    * Explicit Logout: destroys the session and sets user to null (unauthenticated).
    */
-  const logout = () => {
+  const logout = (reason?: string) => {
     setCurrentUser(null);
     setUserStatusState('offline');
     clearDevice();
     try {
       localStorage.removeItem(ACTIVE_SESSION_KEY);
+      localStorage.removeItem(SESSION_START_KEY);
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
       localStorage.setItem(STATUS_KEY, 'offline');
     } catch {}
+
+    if (reason && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+      window.location.href = `/login?reason=${encodeURIComponent(reason)}`;
+    }
   };
 
   const activeUser = currentUser || GUEST_USER;

@@ -1138,7 +1138,7 @@ export default function NexusPage() {
                       </div>
 
                       <p style={{ margin: '2px 0 4px', color: 'var(--ink)', lineHeight: 1.45 }}>
-                        "{r.text}"
+                        &quot;{r.text}&quot;
                       </p>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
@@ -1271,7 +1271,7 @@ export default function NexusPage() {
                 {/* Active Dispute Counter-Claims */}
                 {c.disputes && c.disputes.length > 0 && (
                   <div style={{ marginTop: '4px', padding: '6px 8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bae6fd', fontSize: '11px', color: '#0369a1' }}>
-                    <b>Counter-Claim under review:</b> "{c.disputes[0].text}" — <i>{c.disputes[0].authorCompany || c.disputes[0].author}</i>
+                    <b>Counter-Claim under review:</b> &quot;{c.disputes[0].text}&quot; — <i>{c.disputes[0].authorCompany || c.disputes[0].author}</i>
                   </div>
                 )}
               </div>

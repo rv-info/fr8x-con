@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Smartphone, RefreshCw, CheckCircle2, ShieldCheck, AlertCircle, Send, KeyRound, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -15,7 +15,7 @@ export default function OTPActivityPage() {
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<any | null>(null);
 
-  const fetchOTPData = async () => {
+  const fetchOTPData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/godfather/security?type=events');
@@ -31,11 +31,11 @@ export default function OTPActivityPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchOTPData();
-  }, []);
+  }, [fetchOTPData]);
 
   const handleSimulateOTP = async (e: React.FormEvent) => {
     e.preventDefault();

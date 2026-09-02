@@ -821,175 +821,139 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
       )}
 
       {/* Statistics Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      <div className="gf-grid-6">
         <div
           onClick={() => setActiveTab('locations')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'locations'
-              ? 'border-sky-500 bg-sky-50/50 ring-1 ring-sky-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'locations' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Locations</span>
-            <Anchor className="lucide w-4 h-4 text-sky-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Locations</span>
+            <Anchor style={{ width: '15px', height: '15px', color: '#0284c7' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterLocations.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">POR / POL / POD / FPOD</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterLocations.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>POR / POL / POD / FPOD</div>
         </div>
 
         <div
           onClick={() => setActiveTab('carriers')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'carriers'
-              ? 'border-indigo-500 bg-indigo-50/50 ring-1 ring-indigo-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'carriers' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Carriers</span>
-            <Ship className="lucide w-4 h-4 text-indigo-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Carriers</span>
+            <Ship style={{ width: '15px', height: '15px', color: '#4f46e5' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterCarriers.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">MLO · NVOCC · Feeder</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterCarriers.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>MLO · NVOCC · Feeder</div>
         </div>
 
         <div
           onClick={() => setActiveTab('equipment')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'equipment'
-              ? 'border-emerald-500 bg-emerald-50/50 ring-1 ring-emerald-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'equipment' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Equipment</span>
-            <Box className="lucide w-4 h-4 text-emerald-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Equipment</span>
+            <Box style={{ width: '15px', height: '15px', color: '#059669' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterEquipment.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">ISO Dry · Reefer · OOG</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterEquipment.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>ISO Dry · Reefer · OOG</div>
         </div>
 
         <div
           onClick={() => setActiveTab('commodities')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'commodities'
-              ? 'border-amber-500 bg-amber-50/50 ring-1 ring-amber-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'commodities' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">HS Codes</span>
-            <FileCode2 className="lucide w-4 h-4 text-amber-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>HS Codes</span>
+            <FileCode2 style={{ width: '15px', height: '15px', color: '#d97706' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterCommodities.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">Harmonized Tariff & Haz</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterCommodities.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Harmonized Tariff & Haz</div>
         </div>
 
         <div
           onClick={() => setActiveTab('incoterms')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'incoterms'
-              ? 'border-purple-500 bg-purple-50/50 ring-1 ring-purple-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'incoterms' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Incoterms</span>
-            <Scale className="lucide w-4 h-4 text-purple-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Incoterms</span>
+            <Scale style={{ width: '15px', height: '15px', color: '#7c3aed' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterIncoterms.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">Incoterms 2020 Rules</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterIncoterms.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Incoterms 2020 Rules</div>
         </div>
 
         <div
           onClick={() => setActiveTab('tax')}
-          className={`gf-card p-3 cursor-pointer transition-all ${
-            activeTab === 'tax'
-              ? 'border-rose-500 bg-rose-50/50 ring-1 ring-rose-500/30'
-              : 'hover:border-slate-300'
-          }`}
+          className={`gf-stat-box ${activeTab === 'tax' ? 'active' : ''}`}
         >
-          <div className="flex items-center justify-between text-slate-500 mb-1">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Tax & SAC</span>
-            <Receipt className="lucide w-4 h-4 text-rose-600" />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Tax & SAC</span>
+            <Receipt style={{ width: '15px', height: '15px', color: '#dc2626' }} />
           </div>
-          <div className="text-xl font-black text-slate-900 font-mono">{masterTaxCodes.length}</div>
-          <div className="text-[10.5px] text-slate-500 font-medium">Statutory GST & RCM</div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            {masterTaxCodes.length}
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Statutory GST & RCM</div>
         </div>
       </div>
 
       {/* Tabs Bar */}
-      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2 overflow-x-auto">
+      <div className="gf-tab-bar">
         <button
           onClick={() => { setActiveTab('locations'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'locations'
-              ? 'bg-sky-50 text-sky-800 border border-sky-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'locations' ? 'active' : ''}`}
         >
-          <Anchor className="lucide w-3.5 h-3.5 text-sky-600" />
+          <Anchor style={{ width: '14px', height: '14px' }} />
           <span>Locations & Ports ({masterLocations.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('carriers'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'carriers'
-              ? 'bg-indigo-50 text-indigo-800 border border-indigo-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'carriers' ? 'active' : ''}`}
         >
-          <Ship className="lucide w-3.5 h-3.5 text-indigo-600" />
+          <Ship style={{ width: '14px', height: '14px' }} />
           <span>Carriers & Liners ({masterCarriers.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('equipment'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'equipment'
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'equipment' ? 'active' : ''}`}
         >
-          <Box className="lucide w-3.5 h-3.5 text-emerald-600" />
+          <Box style={{ width: '14px', height: '14px' }} />
           <span>Container Equipment ({masterEquipment.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('commodities'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'commodities'
-              ? 'bg-amber-50 text-amber-800 border border-amber-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'commodities' ? 'active' : ''}`}
         >
-          <FileCode2 className="lucide w-3.5 h-3.5 text-amber-600" />
+          <FileCode2 style={{ width: '14px', height: '14px' }} />
           <span>Commodities & HS Codes ({masterCommodities.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('incoterms'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'incoterms'
-              ? 'bg-purple-50 text-purple-800 border border-purple-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'incoterms' ? 'active' : ''}`}
         >
-          <Scale className="lucide w-3.5 h-3.5 text-purple-600" />
+          <Scale style={{ width: '14px', height: '14px' }} />
           <span>Incoterms 2020 Matrix ({masterIncoterms.length})</span>
         </button>
 
         <button
           onClick={() => { setActiveTab('tax'); setSearchQuery(''); }}
-          className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap ${
-            activeTab === 'tax'
-              ? 'bg-rose-50 text-rose-800 border border-rose-300 shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
+          className={`gf-tab-pill ${activeTab === 'tax' ? 'active' : ''}`}
         >
-          <Receipt className="lucide w-3.5 h-3.5 text-rose-600" />
+          <Receipt style={{ width: '14px', height: '14px' }} />
           <span>Tax SAC Classification ({masterTaxCodes.length})</span>
         </button>
       </div>

@@ -50,6 +50,44 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
     return <>{children}</>;
   }
 
+  if (!isClientReady || !isAuthenticated) {
+    return (
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'linear-gradient(135deg, #090d16 0%, #111827 100%)',
+          color: '#94a3b8',
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+          <div
+            style={{
+              width: '32px',
+              height: '32px',
+              border: '2px solid #334155',
+              borderTopColor: '#38bdf8',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite',
+            }}
+          />
+          <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#94a3b8', letterSpacing: '0.05em' }}>
+            Verifying Godfather Session…
+          </span>
+        </div>
+        <style jsx>{`
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   // Get active title based on route
   let activeTitle = 'Overview Dashboard';
   if (pathname === '/godfather/search') activeTitle = 'Global Deep Search';

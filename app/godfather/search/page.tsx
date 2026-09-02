@@ -40,26 +40,28 @@ export default function GodfatherSearchPage() {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="gf-card p-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-[280px]">
-            <Search className="lucide w-4 h-4 absolute left-3 text-slate-400" />
+      <div className="gf-card" style={{ padding: '14px', marginBottom: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '280px' }}>
+            <Search style={{ width: '15px', height: '15px', position: 'absolute', left: '10px', top: '9px', color: '#94a3b8' }} />
             <input
               type="text"
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by Entity Name, Email, GSTN (27AABCA...), PAN, Auction (RA-2026...), Rate ID, RFQ..."
-              className="gf-input w-full pl-9 text-sm font-medium"
+              className="gf-input"
+              style={{ width: '100%', paddingLeft: '34px', fontSize: '13px', fontWeight: 600 }}
             />
           </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="lucide w-4 h-4 text-slate-400" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <Filter style={{ width: '14px', height: '14px', color: '#64748b' }} />
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="gf-select text-xs"
+              className="gf-select"
+              style={{ fontSize: '11.5px', fontWeight: 700, minWidth: '150px' }}
             >
               <option value="all">All Record Types</option>
               <option value="user">Users & Profiles</option>
@@ -73,14 +75,24 @@ export default function GodfatherSearchPage() {
         </div>
 
         {/* Quick query tags */}
-        <div className="flex items-center gap-2 mt-3 text-xs text-slate-600 flex-wrap">
-          <span className="font-semibold text-slate-700">Quick Test Searches:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '11px', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 800, color: '#475569' }}>Quick Test Searches:</span>
           {['Atlas Logistics', '27AABCA1234F1Z5', 'RA-2026-0842', 'RT-884210', 'sarah.lewis', 'OceanStar'].map((tag) => (
             <button
               key={tag}
               type="button"
               onClick={() => setQuery(tag)}
-              className="px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-mono text-[11px] transition-colors border border-slate-200 font-semibold"
+              style={{
+                padding: '3px 8px',
+                borderRadius: '4px',
+                background: '#f1f5f9',
+                border: '1px solid #cbd5e1',
+                color: '#334155',
+                fontFamily: 'Consolas, monospace',
+                fontSize: '10.5px',
+                fontWeight: 700,
+                cursor: 'pointer',
+              }}
             >
               {tag}
             </button>

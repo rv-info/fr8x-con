@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { KeyRound, RefreshCw, CheckCircle2, ShieldCheck, Mail, Calendar } from 'lucide-react';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -8,7 +8,7 @@ export default function PasswordResetsPage() {
   const [resets, setResets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchResets = async () => {
+  const fetchResets = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/godfather/security?type=resets');
@@ -21,11 +21,11 @@ export default function PasswordResetsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchResets();
-  }, []);
+  }, [fetchResets]);
 
   return (
     <div className="space-y-4">

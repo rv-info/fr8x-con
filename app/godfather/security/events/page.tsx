@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ShieldAlert, RefreshCw, CheckCircle2, Search, Filter } from 'lucide-react';
 
 export default function SecurityEventsPage() {
@@ -9,7 +9,7 @@ export default function SecurityEventsPage() {
   const [search, setSearch] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState('ALL');
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/godfather/security?type=events');
@@ -22,11 +22,11 @@ export default function SecurityEventsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
   const filtered = events.filter((e) => {
     const q = search.toLowerCase();

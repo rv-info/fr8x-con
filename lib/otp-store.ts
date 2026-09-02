@@ -22,8 +22,9 @@ async function getRedis() {
   if (redisClient) return redisClient;
   if (!process.env.REDIS_URL) return null;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const Redis = require('ioredis');
+    // Dynamic load so Webpack does not trace ioredis at build time when optional
+    const req = (globalThis as any).require || eval('require');
+    const Redis = req('ioredis');
     redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: false, connectTimeout: 3000 });
     return redisClient;
   } catch {

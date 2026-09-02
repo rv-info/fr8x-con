@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   ShieldAlert,
@@ -38,13 +38,18 @@ export default function AuthenticationSecurityPage() {
   const [unblockReason, setUnblockReason] = useState('');
   const [isSubmittingUnblock, setIsSubmittingUnblock] = useState(false);
 
-  const fetchSecurityData = async () => {
+  const fetchSecurityData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/godfather/security');
       if (res.ok) {
         const json = await res.json();
-        setStats(json.summary || stats);
+        setStats(json.summary || {
+          blockedAccountsCount: 0,
+          securityEventsCount: 0,
+          passwordResetsCount: 0,
+          criticalEventsCount: 0,
+        });
         setBlockedAccounts(json.blockedAccounts || []);
         setRecentEvents(json.recentEvents || []);
       }
@@ -53,11 +58,11 @@ export default function AuthenticationSecurityPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSecurityData();
-  }, []);
+  }, [fetchSecurityData]);
 
   const handleUnblockSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -51,6 +51,7 @@ export default function DedicatedGodfatherLoginPage() {
   const [rememberDevice, setRememberDevice] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Forgot password state
@@ -67,12 +68,26 @@ export default function DedicatedGodfatherLoginPage() {
   const [accessReqSent, setAccessReqSent] = useState(false);
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const reason = params.get('reason');
+      if (reason === 'session_expired' || reason === 'inactivity') {
+        setSessionNotice('Administrator session expired due to inactivity or idle timeout. Please sign in again.');
+      } else if (reason === 'not_found') {
+        setSessionNotice('Requested console route not found or unauthenticated. Please sign in to access Godfather.');
+      } else if (reason === 'unauthorized') {
+        setSessionNotice('Privileged operator authentication required.');
+      }
+    }
+  }, []);
+
+  useEffect(() => {
     const remembered = loadRememberedOperator();
     if (remembered) {
       setEmail(remembered);
       setRememberDevice(true);
     }
-  }, []);
+  }, [loadRememberedOperator]);
 
   useEffect(() => {
     if (forgotTimer > 0) {
@@ -219,6 +234,13 @@ export default function DedicatedGodfatherLoginPage() {
           </div>
 
           {/* Alerts */}
+          {sessionNotice && !errorMessage && (
+            <div className="gfl-clean-alert" style={{ background: '#eff6ff', borderColor: '#bfdbfe', color: '#1d4ed8' }}>
+              <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <span>{sessionNotice}</span>
+            </div>
+          )}
+
           {errorMessage && (
             <div className="gfl-clean-alert">
               <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />

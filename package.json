@@ -23,6 +23,10 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.24",
+    "pngjs": "^7.0.0",
+    "sharp": "^0.35.4",
     "typescript": "^5.7.3"
   }
 }

@@ -392,7 +392,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
               {/* 20DV Card */}
               <div style={{ background: '#f0f7ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <small style={{ color: '#0369a1', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>20' Standard Container (20DV)</small>
+                  <small style={{ color: '#0369a1', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>20&apos; Standard Container (20DV)</small>
                   <span className="badge blue" style={{ fontSize: '9.5px' }}>{selectedRateDetail.d20Type || 'Dry Standard'}</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 850, color: '#0284c7' }}>
@@ -406,7 +406,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
               {/* 40HC Card */}
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <small style={{ color: '#15803d', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>40' High Cube Container (40HC)</small>
+                  <small style={{ color: '#15803d', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>40&apos; High Cube Container (40HC)</small>
                   <span className="badge green" style={{ fontSize: '9.5px' }}>{selectedRateDetail.h40Type || 'High Cube'}</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 850, color: '#16a34a' }}>
@@ -623,13 +623,13 @@ Generated via FR8X Reverse Auction & Freight Exchange
                   </thead>
                   <tbody>
                     <tr>
-                      <td><b>20' Dry Standard</b></td>
+                      <td><b>20&apos; Dry Standard</b></td>
                       {comparedRatesList.map((r) => (
                         <td key={r.id}><b style={{ color: 'var(--brand)' }}>${r.d20.toLocaleString()} USD</b></td>
                       ))}
                     </tr>
                     <tr>
-                      <td><b>40' High Cube (40HC)</b></td>
+                      <td><b>40&apos; High Cube (40HC)</b></td>
                       {comparedRatesList.map((r) => (
                         <td key={r.id}><b style={{ color: 'var(--teal)' }}>${r.h40.toLocaleString()} USD</b></td>
                       ))}
