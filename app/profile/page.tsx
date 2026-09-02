@@ -746,142 +746,207 @@ export default function ProfilePage() {
       <div
         className="card"
         style={{
-          padding: '24px 28px',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
-          border: '1px solid var(--line)',
-          boxShadow: '0 4px 18px rgba(17, 104, 215, 0.06)',
-          borderRadius: '14px',
+          padding: '22px 24px',
+          background: 'var(--card)',
+          border: '1px solid var(--fr8x-outline)',
+          boxShadow: 'var(--sh-md)',
+          borderRadius: '8px',
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '24px' }}>
-          {/* Avatar + Company Logo + User Info */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap' }}>
-            {/* Profile Avatar (circle) + Company Logo (square, overlaid lower-left at 70% left) */}
-            <div style={{ position: 'relative', width: '84px', flexShrink: 0 }}>
-              {/* Circle Profile Photo */}
-              {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="Profile"
-                  style={{
-                    width: '84px',
-                    height: '84px',
-                    borderRadius: '50%',
-                    objectFit: 'cover',
-                    border: '3px solid #fff',
-                    boxShadow: '0 4px 14px rgba(17, 104, 215, 0.25)',
-                    display: 'block',
-                  }}
-                />
-              ) : (
-                <div
-                  className="avatar"
-                  style={{
-                    width: '84px',
-                    height: '84px',
-                    fontSize: '28px',
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #1168d7 0%, #0d53ad 100%)',
-                    boxShadow: '0 4px 14px rgba(17, 104, 215, 0.25)',
-                    border: '3px solid #fff',
-                  }}
-                >
-                  {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
-                </div>
-              )}
-
-              {/* Upload Photo Trigger */}
-              <label
-                style={{
-                  position: 'absolute',
-                  bottom: '2px',
-                  right: '-2px',
-                  background: 'var(--brand)',
-                  color: '#fff',
-                  borderRadius: '50%',
-                  width: '24px',
-                  height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-                  border: '2px solid #fff',
-                  zIndex: 2,
-                }}
-                title="Upload profile photo"
-              >
-                <Camera size={11} />
-                <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
-              </label>
-
-              {/* Company Logo — square, overlaid at lower-left, shifted left 70% of its width */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          {/* Avatar + Background CO Symbol + User Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+            {/* 5-Layer Stack: 1. Card Bg | 2. CO Symbol | 3. Circular Avatar | 4. GoldenTick Badge | 5. Camera/Edit Controls */}
+            <div
+              style={{
+                position: 'relative',
+                width: '106px',
+                height: '106px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {/* LAYER 2: Subtle Geometric "CO" Background Symbol (40% larger than 76px avatar = 106px diameter) */}
               <div
                 style={{
                   position: 'absolute',
-                  bottom: '-8px',
-                  left: '-26px', /* 70% of 36px ≈ 25px shifted left */
-                  zIndex: 3,
+                  inset: 0,
+                  borderRadius: '50%',
+                  background: 'var(--fr8x-input)',
+                  border: '1px dashed var(--fr8x-outline)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1,
+                  userSelect: 'none',
+                  pointerEvents: 'none',
                 }}
               >
-                <div style={{ position: 'relative' }}>
-                  {companyLogoUrl ? (
-                    <img
-                      src={companyLogoUrl}
-                      alt="Company Logo"
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '7px',
-                        objectFit: 'contain',
-                        background: '#fff',
-                        border: '2px solid #fff',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
-                        padding: '2px',
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: '36px',
-                        height: '36px',
-                        borderRadius: '7px',
-                        background: '#f1f5f9',
-                        border: '2px solid #fff',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'var(--mut)',
-                      }}
-                    >
-                      <Building2 size={14} />
-                      <span style={{ fontSize: '7px', fontWeight: 700, marginTop: '1px' }}>CO</span>
-                    </div>
-                  )}
-                  {/* Upload company logo trigger */}
-                  <label
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '32px',
+                    fontWeight: 900,
+                    letterSpacing: '-0.06em',
+                    color: 'var(--fr8x-container)',
+                    lineHeight: 1,
+                  }}
+                >
+                  CO
+                </span>
+              </div>
+
+              {/* LAYER 3: Circular Avatar (Reduced by exactly 10%: 84px -> 75.6px ≈ 76px) */}
+              <div
+                style={{
+                  position: 'relative',
+                  width: '76px',
+                  height: '76px',
+                  borderRadius: '50%',
+                  zIndex: 2,
+                  boxShadow: 'var(--sh)',
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile"
+                    style={{
+                      width: '76px',
+                      height: '76px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '2px solid #fff',
+                      display: 'block',
+                    }}
+                  />
+                ) : (
+                  <div
+                    className="avatar hero"
+                    style={{
+                      width: '76px',
+                      height: '76px',
+                      fontSize: '24px',
+                      borderRadius: '50%',
+                      background: 'var(--fr8x-outline)',
+                      border: '2px solid #fff',
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: '#fff',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+                  </div>
+                )}
+
+                {/* LAYER 4: Verified / Premium Brand Asset Badge */}
+                {user.hasGoldenTick && (
+                  <div
                     style={{
                       position: 'absolute',
-                      bottom: '-4px',
-                      right: '-4px',
-                      background: 'var(--ink)',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      width: '16px',
-                      height: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      border: '1.5px solid #fff',
+                      top: '-2px',
+                      right: '-2px',
+                      zIndex: 3,
                     }}
-                    title="Upload company logo"
                   >
-                    <Upload size={8} />
-                    <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
-                  </label>
+                    <GoldenTick size={20} title="FR8X Premium Verified" />
+                  </div>
+                )}
+
+                {/* LAYER 5: Camera / Upload Profile Photo Trigger */}
+                <label
+                  style={{
+                    position: 'absolute',
+                    bottom: '-2px',
+                    right: '-2px',
+                    background: 'var(--fr8x-outline)',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '22px',
+                    height: '22px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    boxShadow: 'var(--sh)',
+                    border: '1.5px solid #fff',
+                    zIndex: 4,
+                  }}
+                  title="Upload profile photo"
+                >
+                  <Camera size={10} />
+                  <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
+                </label>
+
+                {/* Company Logo Badge — lower-left overlay */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: '-4px',
+                    left: '-14px',
+                    zIndex: 4,
+                  }}
+                >
+                  <div style={{ position: 'relative' }}>
+                    {companyLogoUrl ? (
+                      <img
+                        src={companyLogoUrl}
+                        alt="Company Logo"
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '5px',
+                          objectFit: 'contain',
+                          background: '#fff',
+                          border: '1.5px solid var(--fr8x-outline)',
+                          padding: '1px',
+                        }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: '30px',
+                          height: '30px',
+                          borderRadius: '5px',
+                          background: 'var(--fr8x-input)',
+                          border: '1.5px solid var(--fr8x-outline)',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'var(--fr8x-text)',
+                        }}
+                      >
+                        <Building2 size={12} />
+                        <span style={{ fontSize: '6.5px', fontWeight: 800 }}>CO</span>
+                      </div>
+                    )}
+                    {/* Upload company logo trigger */}
+                    <label
+                      style={{
+                        position: 'absolute',
+                        bottom: '-3px',
+                        right: '-3px',
+                        background: 'var(--fr8x-outline)',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '14px',
+                        height: '14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        border: '1px solid #fff',
+                      }}
+                      title="Upload company logo"
+                    >
+                      <Upload size={7} />
+                      <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
+                    </label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -889,26 +954,26 @@ export default function ProfilePage() {
             {/* User Identity Details */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h2 style={{ margin: 0, fontSize: '24px', fontWeight: 800, color: 'var(--ink)' }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
                   {user.displayName}
                 </h2>
-                {user.hasGoldenTick && <GoldenTick />}
-                <span className="badge green" style={{ fontSize: '10px', fontWeight: 700 }}>
+                {user.hasGoldenTick && <GoldenTick size={16} />}
+                <span className="badge" style={{ fontSize: '10px', fontWeight: 700 }}>
                   <ShieldCheck size={11} /> VERIFIED B2B
                 </span>
-                <span className={`badge ${user.plan === 'premium' ? 'amber' : 'blue'}`} style={{ fontSize: '10px' }}>
+                <span className="badge" style={{ fontSize: '10px' }}>
                   <Sparkles size={10} /> {user.plan.toUpperCase()} PLAN
                 </span>
               </div>
-              <div style={{ fontSize: '14.5px', color: 'var(--ink-secondary)', marginTop: '4px', fontWeight: 600 }}>
-                {designation} at <span style={{ color: 'var(--brand)', fontWeight: 700 }}>{company}</span>
+              <div style={{ fontSize: '13px', color: 'var(--fr8x-text)', marginTop: '4px', fontWeight: 600 }}>
+                {designation} at <span style={{ fontWeight: 700 }}>{company}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <MapPin size={13} color="var(--brand)" /> {city}, {country}
+                <span style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <MapPin size={12} color="var(--fr8x-outline)" /> {city}, {country}
                 </span>
                 <LocalTimeBadge timezone={timezone} />
-                <span style={{ fontSize: '11.5px', color: 'var(--mut)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
                   IATA: <b>{iataCode}</b> · MTO: <b>{mto}</b>
                 </span>
               </div>
@@ -917,26 +982,26 @@ export default function ProfilePage() {
           </div>
 
           {/* D&B / Ariba Trust Index & Completeness Score */}
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ background: '#eef6ff', border: '1px solid #c8e0fe', padding: '12px 18px', borderRadius: '10px', textAlign: 'center' }}>
-              <small style={{ color: 'var(--brand)', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                <Star size={12} color="#f59e0b" /> FR8X TRUST SCORE
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ background: 'var(--fr8x-input)', border: '1px solid var(--fr8x-outline)', padding: '10px 16px', borderRadius: '6px', textAlign: 'center' }}>
+              <small style={{ color: 'var(--fr8x-muted)', fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                <Star size={11} color="var(--fr8x-outline)" /> FR8X TRUST SCORE
               </small>
-              <div style={{ fontSize: '24px', fontWeight: 800, color: 'var(--brand)', marginTop: '2px' }}>
-                98<span style={{ fontSize: '14px', color: 'var(--mut)', fontWeight: 500 }}>/100</span>
+              <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--fr8x-text)', marginTop: '2px' }}>
+                98<span style={{ fontSize: '13px', color: 'var(--fr8x-muted)', fontWeight: 500 }}>/100</span>
               </div>
-              <small style={{ fontSize: '10px', color: 'var(--green)', fontWeight: 700 }}>Top 2% Tier-1 Forwarder</small>
+              <small style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', fontWeight: 700 }}>Tier-1 Accredited</small>
             </div>
 
-            <div style={{ minWidth: '200px', background: '#ffffff', padding: '12px 16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
+            <div style={{ minWidth: '190px', background: '#ffffff', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>Profile Completeness</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--brand)' }}>{completeness}%</span>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--fr8x-text)' }}>Profile Completeness</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-text)' }}>{completeness}%</span>
               </div>
-              <div className="progress">
-                <i style={{ width: `${completeness}%` }} />
+              <div className="progress" style={{ background: 'var(--fr8x-input)', height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
+                <div style={{ width: `${completeness}%`, background: 'var(--fr8x-outline)', height: '100%' }} />
               </div>
-              <small style={{ display: 'block', fontSize: '10px', color: 'var(--mut)', marginTop: '4px' }}>
+              <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '4px' }}>
                 {completeness === 100 ? 'All credentials & logos verified' : 'Upload photos & details to reach 100%'}
               </small>
             </div>
@@ -945,9 +1010,9 @@ export default function ProfilePage() {
       </div>
 
       {/* 3 DEDICATED, COMPREHENSIVE CARDS FOR: EXPERIENCE, EDUCATION, CERTIFICATIONS */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* CARD 1: Professional Work Experience */}
-        <div className="card" style={{ padding: '20px 24px', borderRadius: '12px', border: '1px solid var(--line)' }}>
+        <div className="card" style={{ padding: '18px 20px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eef6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

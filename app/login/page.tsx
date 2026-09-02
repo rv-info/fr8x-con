@@ -138,7 +138,7 @@ export default function LoginPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0d1d31 0%, #152c4a 100%)',
+        background: 'var(--fr8x-background)',
         padding: '20px',
       }}
     >
@@ -147,17 +147,22 @@ export default function LoginPage() {
         style={{
           width: '100%',
           maxWidth: '420px',
-          boxShadow: 'var(--sh-lg)',
+          boxShadow: 'var(--sh-md)',
           overflow: 'hidden',
-          borderRadius: '14px',
+          borderRadius: '8px',
+          border: '1px solid var(--fr8x-outline)',
+          background: '#ffffff',
         }}
       >
+        {/* Top Brand Stripe */}
+        <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />
+
         {/* Header */}
         <div
           style={{
-            padding: '24px 24px 20px',
-            background: '#fff',
-            borderBottom: '1px solid var(--line)',
+            padding: '24px 24px 18px',
+            background: 'var(--fr8x-background)',
+            borderBottom: '1px solid var(--fr8x-outline)',
             textAlign: 'center',
           }}
         >
@@ -165,17 +170,17 @@ export default function LoginPage() {
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '48px',
-              height: '48px',
+              width: '44px',
+              height: '44px',
               margin: '0 auto 10px',
               objectFit: 'contain',
               display: 'block',
             }}
           />
-          <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
-            fr<b style={{ color: 'var(--teal)' }}>8</b>x Workspace
+          <h1 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>
+            fr<b style={{ color: 'var(--fr8x-outline)' }}>8</b>x Workspace
           </h1>
-          <p style={{ fontSize: '11.5px', color: 'var(--mut)', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
             Enterprise Freight Forwarding &amp; Reverse Auctions Platform
           </p>
         </div>
@@ -186,20 +191,20 @@ export default function LoginPage() {
             <div
               style={{
                 padding: '10px 12px',
-                borderRadius: '8px',
-                background: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                color: '#1d4ed8',
+                borderRadius: '6px',
+                background: 'var(--fr8x-input)',
+                border: '1px solid var(--fr8x-outline)',
+                color: 'var(--fr8x-text)',
                 fontSize: '11.5px',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontWeight: 500,
+                fontWeight: 600,
                 lineHeight: 1.4,
               }}
             >
-              <Clock size={15} style={{ flexShrink: 0, color: '#2563eb' }} />
+              <Clock size={15} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
               <span>{sessionNotice}</span>
             </div>
           )}
@@ -208,22 +213,22 @@ export default function LoginPage() {
             <div
               style={{
                 padding: '10px 12px',
-                borderRadius: '8px',
-                background: isBlocked ? '#fef2f2' : '#fff0f1',
-                border: isBlocked ? '1px solid #f87171' : '1px solid #f0c8ce',
-                color: isBlocked ? '#b91c1c' : 'var(--red)',
+                borderRadius: '6px',
+                background: 'var(--fr8x-input)',
+                border: '1px solid var(--fr8x-outline)',
+                color: 'var(--fr8x-text)',
                 fontSize: '11.5px',
                 marginBottom: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                fontWeight: isBlocked ? 700 : 500,
+                fontWeight: 700,
               }}
             >
               {isBlocked ? (
-                <ShieldAlert size={16} style={{ flexShrink: 0, color: '#dc2626' }} />
+                <ShieldAlert size={16} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
               ) : (
-                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <AlertCircle size={15} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
               )}
               <span>{errorMessage}</span>
             </div>

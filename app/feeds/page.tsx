@@ -871,19 +871,19 @@ export default function FeedsPage() {
 
       {/* LEFT COLUMN: Identity & Quick Shortcuts */}
       <aside className="feed-left-rail">
-        <div className="card" style={{ marginBottom: '12px' }}>
-          <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--line)' }}>
-            <div className="avatar big" style={{ margin: '0 auto 10px', width: '56px', height: '56px', fontSize: '18px' }}>
+        <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
+          <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
+            <div className="avatar big" style={{ margin: '0 auto 10px', width: '50px', height: '50px', fontSize: '16px', background: 'var(--fr8x-outline)', border: '2px solid #fff' }}>
               {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
             </div>
-            <b style={{ fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+            <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
               {user.displayName}
-              {user.hasGoldenTick && <GoldenTick />}
+              {user.hasGoldenTick && <GoldenTick size={14} />}
             </b>
-            <small style={{ color: 'var(--mut)', fontSize: '11px', display: 'block', marginTop: '2px' }}>
+            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block', marginTop: '2px' }}>
               {user.designation}
             </small>
-            <small style={{ color: 'var(--brand)', fontSize: '11.5px', fontWeight: 700, display: 'block' }}>
+            <small style={{ color: 'var(--fr8x-text)', fontSize: '11.5px', fontWeight: 700, display: 'block' }}>
               {user.company}
             </small>
             <div style={{ marginTop: '8px' }}>
@@ -892,19 +892,19 @@ export default function FeedsPage() {
           </div>
 
           <div style={{ padding: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px' }}>
-              <span style={{ color: 'var(--mut)' }}>My Plan</span>
-              <span className={`badge ${user.plan === 'premium' ? 'amber' : 'blue'}`}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
+              <span style={{ color: 'var(--fr8x-muted)' }}>My Plan</span>
+              <span className="badge">
                 {user.plan.toUpperCase()}
               </span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px' }}>
-              <span style={{ color: 'var(--mut)' }}>Saved Posts</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
+              <span style={{ color: 'var(--fr8x-muted)' }}>Saved Posts</span>
               <b>{posts.filter((p) => p.isSaved).length}</b>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px' }}>
-              <span style={{ color: 'var(--mut)' }}>Verification</span>
-              <span className="badge green">VERIFIED</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
+              <span style={{ color: 'var(--fr8x-muted)' }}>Verification</span>
+              <span className="badge">VERIFIED</span>
             </div>
           </div>
         </div>
@@ -1093,19 +1093,17 @@ export default function FeedsPage() {
                     title="View verified member profile"
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="avatar" style={{ width: '42px', height: '42px', fontSize: '14px' }}>
+                    <div className="avatar" style={{ width: '38px', height: '38px', fontSize: '13px', background: 'var(--fr8x-outline)', color: '#fff' }}>
                       {post.author.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
                     </div>
                     <div>
                       <div className="author-name-row">
-                        <span className="author-name" style={{ fontSize: '14px', fontWeight: 700 }}>{post.author}</span>
-                        {post.hasGoldenTick && <GoldenTick />}
-                        <span style={{ color: 'var(--faint)', fontSize: '11px' }}>· {post.time}</span>
+                        <span className="author-name" style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--fr8x-text)' }}>{post.author}</span>
+                        {post.hasGoldenTick && <GoldenTick size={14} />}
+                        <span style={{ color: 'var(--fr8x-muted)', fontSize: '11px' }}>· {post.time}</span>
                         <span
                           className="badge"
                           style={{
-                            backgroundColor: postTypeConfig.bg,
-                            color: postTypeConfig.color,
                             fontSize: '9.5px',
                             marginLeft: '6px',
                             fontWeight: 700,
@@ -1114,7 +1112,7 @@ export default function FeedsPage() {
                           {postTypeConfig.label}
                         </span>
                       </div>
-                      <div className="author-subtext" style={{ fontSize: '12px' }}>
+                      <div className="author-subtext" style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)' }}>
                         {post.authorRole} {post.authorCompany && `· ${post.authorCompany}`}
                       </div>
                       {post.authorTimezone && (

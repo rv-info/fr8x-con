@@ -9,7 +9,7 @@ import {
   CreditCard, Receipt, Percent, Scale, Bell, Mail, FileText,
   Key, Sliders, ChevronDown, ChevronRight, ShieldCheck,
   AlertOctagon, LayoutDashboard, Search, Lock, UserX,
-  KeyRound, Smartphone, ShieldAlert, History,
+  KeyRound, Smartphone, ShieldAlert, History, Sparkles,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -59,6 +59,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Commerce & Accounting',
     items: [
+      { label: 'Promotional Settings', href: '/godfather/commerce/promotions', icon: Sparkles },
       { label: 'Plans & Pricing', href: '/godfather/commerce/plans', icon: DollarSign },
       { label: 'Payment Gateways', href: '/godfather/commerce/payments', icon: CreditCard },
       { label: 'Accounting & GST Taxes', href: '/godfather/commerce/invoices', icon: Receipt },
