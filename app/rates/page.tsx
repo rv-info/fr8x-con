@@ -833,7 +833,6 @@ Generated via FR8X Freight Exchange
       <div className="head">
         <div>
           <h1>Global Rate Intelligence & i-Rate Matrix</h1>
-          <p>Carrier spot benchmarking, verified contract pricing, multi-lane rate comparison, and bulk ingestion.</p>
         </div>
         <div className="actions">
           <button className="btn secondary" onClick={() => setShowBulkModal(true)}>

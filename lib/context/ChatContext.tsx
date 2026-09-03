@@ -202,8 +202,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       if (existing) {
         return prev.map((w) => (w.contactId === contactId ? { ...w, isMinimized: false } : w));
       }
-      // Maximum 3 windows open on desktop side-by-side to prevent screen overflow
-      const currentList = prev.length >= 3 ? prev.slice(1) : prev;
+      // Maximum 4 windows open on desktop side-by-side in parallel
+      const currentList = prev.length >= 4 ? prev.slice(1) : prev;
       return [...currentList, { contactId, isMinimized: false }];
     });
   };

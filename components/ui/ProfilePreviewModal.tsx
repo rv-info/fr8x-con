@@ -143,8 +143,8 @@ export function ProfilePreviewModal({
       <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
         {/* Profile Header Block */}
         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap', background: '#fafcff', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
-          <div className="avatar big" style={{ width: '58px', height: '58px', fontSize: '20px' }}>
-            {initials}
+          <div className="avatar big" style={{ width: '58px', height: '58px', padding: 0, overflow: 'hidden' }}>
+            <img src="/profile-avatar.png" alt={resolvedProfile.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           </div>
           <div style={{ flex: 1, minWidth: '220px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>

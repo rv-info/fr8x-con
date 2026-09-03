@@ -104,6 +104,8 @@ class ServerSecurityStore {
     const salt1 = 'fr8x_salt_arjun_2026';
     const salt2 = 'fr8x_salt_sarah_2026';
     const salt3 = 'fr8x_salt_kiran_2026';
+    const salt4 = 'fr8x_salt_elena_2026';
+    const salt5 = 'fr8x_salt_david_2026';
 
     const usersList: ServerUserRecord[] = [
       {
@@ -145,12 +147,65 @@ class ServerSecurityStore {
         failedLoginAttempts: 0,
         createdAt: '2026-02-01T11:15:00.000Z',
       },
+      {
+        uid: 'u-elena',
+        email: 'elena.rossi@mediterraneanlines.it',
+        salt: salt4,
+        passwordHash: hashPassword('MedLines@2025', salt4),
+        displayName: 'Elena Rossi',
+        company: 'Mediterranean Shipping Agency S.p.A.',
+        companyId: 'CMP-00104',
+        role: 'company_admin',
+        status: 'active',
+        failedLoginAttempts: 0,
+        createdAt: '2026-02-10T10:00:00.000Z',
+      },
+      {
+        uid: 'u-david',
+        email: 'david.chen@pacificcargo.sg',
+        salt: salt5,
+        passwordHash: hashPassword('Pacific@2025', salt5),
+        displayName: 'David Chen',
+        company: 'Pacific Maritime Cargo Pte. Ltd.',
+        companyId: 'CMP-00105',
+        role: 'company_admin',
+        status: 'active',
+        failedLoginAttempts: 0,
+        createdAt: '2026-02-15T14:30:00.000Z',
+      },
     ];
 
     for (const u of usersList) {
       this.users.set(u.uid.toLowerCase(), u);
       this.users.set(u.email.toLowerCase(), u);
     }
+  }
+
+  public registerUser(user: {
+    uid: string;
+    email: string;
+    password: string;
+    displayName: string;
+    company: string;
+    companyId: string;
+    role?: 'company_admin' | 'user' | 'billing_admin';
+  }) {
+    const salt = `fr8x_salt_${Date.now()}`;
+    const record: ServerUserRecord = {
+      uid: user.uid,
+      email: user.email,
+      salt,
+      passwordHash: hashPassword(user.password, salt),
+      displayName: user.displayName,
+      company: user.company,
+      companyId: user.companyId,
+      role: user.role || 'company_admin',
+      status: 'active',
+      failedLoginAttempts: 0,
+      createdAt: new Date().toISOString(),
+    };
+    this.users.set(record.uid.toLowerCase(), record);
+    this.users.set(record.email.toLowerCase(), record);
   }
 
   public getUserByEmailOrUid(identifier: string): ServerUserRecord | undefined {

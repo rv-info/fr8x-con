@@ -67,8 +67,8 @@ function SingleChatBox({
         onClick={onMinimize}
         title={`Restore chat with ${contact?.name || 'Contact'}`}
       >
-        <div className="avatar" style={{ width: '22px', height: '22px', fontSize: '9px' }}>
-          {initials}
+        <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
+          <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
         </div>
         <span className="name">{contact?.name || 'Chat'}</span>
         {contact?.hasGoldenTick && <GoldenTick />}
@@ -96,8 +96,8 @@ function SingleChatBox({
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}
           title="View profile"
         >
-          <div className="avatar" style={{ width: '24px', height: '24px', fontSize: '9.5px' }}>
-            {initials}
+          <div className="avatar" style={{ width: '24px', height: '24px', padding: 0, overflow: 'hidden' }}>
+            <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           </div>
           <div style={{ overflow: 'hidden' }}>
             <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -221,8 +221,13 @@ export function TradeChat() {
         personName={selectedProfileName || ''}
       />
 
-      {/* Multi-Window Chat Tray (Docked Bottom Right) */}
-      <div className="multichattray">
+      {/* Multi-Window Chat Tray (Docked Bottom Right, offset to the left of launcher when open) */}
+      <div
+        className="multichattray"
+        style={{
+          right: isLauncherOpen ? '348px' : '76px',
+        }}
+      >
         {activeWindows.map((win) => (
           <SingleChatBox
             key={win.contactId}
@@ -268,13 +273,6 @@ export function TradeChat() {
               </div>
             ) : (
               filteredContacts.map((c) => {
-                const initials = c.name
-                  .split(' ')
-                  .map((p) => p[0])
-                  .join('')
-                  .substring(0, 2)
-                  .toUpperCase();
-
                 return (
                   <div
                     key={c.id}
@@ -283,8 +281,8 @@ export function TradeChat() {
                       openChatWith(c.id);
                     }}
                   >
-                    <div className="avatar" style={{ width: '28px', height: '28px', fontSize: '10px' }}>
-                      {initials}
+                    <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden' }}>
+                      <img src="/profile-avatar.png" alt={c.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <b>

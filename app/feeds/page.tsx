@@ -18,6 +18,10 @@ import {
   Send,
   Search,
   MessageCircle,
+  MessageSquare,
+  ThumbsUp,
+  Scale,
+  Repeat,
   Bookmark,
   MoreVertical,
   Plus,
@@ -242,6 +246,136 @@ export default function FeedsPage() {
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [activeReplyBoxKey, setActiveReplyBoxKey] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState('');
+
+  // Post Reactions: Support, Critique, Discuss, Amplify, Send, Red Flag
+  const [postReactions, setPostReactions] = useState<Record<string, {
+    support: number;
+    critique: number;
+    amplify: number;
+    isSupported: boolean;
+    isCritiqued: boolean;
+    isAmplified: boolean;
+  }>>({
+    'post-1': { support: 18, critique: 2, amplify: 7, isSupported: false, isCritiqued: false, isAmplified: false },
+    'post-2': { support: 24, critique: 1, amplify: 12, isSupported: false, isCritiqued: false, isAmplified: false },
+    'post-3': { support: 9, critique: 3, amplify: 4, isSupported: false, isCritiqued: false, isAmplified: false },
+    'post-4': { support: 31, critique: 0, amplify: 15, isSupported: false, isCritiqued: false, isAmplified: false },
+  });
+
+  const getReactions = (postId: string | number) => {
+    const key = String(postId);
+    return postReactions[key] || {
+      support: 8,
+      critique: 1,
+      amplify: 3,
+      isSupported: false,
+      isCritiqued: false,
+      isAmplified: false,
+    };
+  };
+
+  const handleToggleSupport = (postId: string | number) => {
+    const key = String(postId);
+    setPostReactions((prev) => {
+      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
+      const isSupported = !current.isSupported;
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          isSupported,
+          support: isSupported ? current.support + 1 : Math.max(0, current.support - 1),
+        },
+      };
+    });
+  };
+
+  const handleToggleCritique = (postId: string | number) => {
+    const key = String(postId);
+    setPostReactions((prev) => {
+      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
+      const isCritiqued = !current.isCritiqued;
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          isCritiqued,
+          critique: isCritiqued ? current.critique + 1 : Math.max(0, current.critique - 1),
+        },
+      };
+    });
+  };
+
+  const handleAmplify = (postId: string | number) => {
+    const key = String(postId);
+    setPostReactions((prev) => {
+      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
+      const isAmplified = !current.isAmplified;
+      return {
+        ...prev,
+        [key]: {
+          ...current,
+          isAmplified,
+          amplify: isAmplified ? current.amplify + 1 : Math.max(0, current.amplify - 1),
+        },
+      };
+    });
+    toast('Post amplified to your enterprise freight network.');
+  };
+
+  const handleSendPost = (post: FeedPost) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(`${window.location.origin}/feeds?post=${post.id}`);
+    }
+    toast('Post link copied. Share directly in Trade Chat or with network.');
+  };
+
+  const renderCommentWithMentions = (text: string) => {
+    const mentionRegex = /\(#\{([^}]+)\}\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      const personName = match[1];
+      parts.push(
+        <button
+          key={match.index}
+          type="button"
+          className="mention-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setSelectedProfileName(personName);
+          }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2px',
+            padding: '1px 5px',
+            color: '#1985a1',
+            fontWeight: 700,
+            background: '#e0f2fe',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            border: '1px solid #c5c3c6',
+            fontSize: '11px',
+            marginRight: '3px',
+          }}
+          title={`View ${personName}'s Freight Profile`}
+        >
+          (#{personName})
+        </button>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts.length > 0 ? parts : text;
+  };
 
   // Modals
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
@@ -873,8 +1007,8 @@ export default function FeedsPage() {
       <aside className="feed-left-rail">
         <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
-            <div className="avatar big" style={{ margin: '0 auto 10px', width: '50px', height: '50px', fontSize: '16px', background: 'var(--fr8x-outline)', border: '2px solid #fff' }}>
-              {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+            <div className="avatar big" style={{ margin: '0 auto 10px', width: '56px', height: '56px', padding: 0, overflow: 'hidden', background: 'transparent', border: '2px solid var(--fr8x-outline)' }}>
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
             </div>
             <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
               {user.displayName}
@@ -1024,8 +1158,8 @@ export default function FeedsPage() {
         {/* Post Composer */}
         <div className="card compose-card" style={{ marginBottom: '16px', padding: '16px 18px' }}>
           <div className="compose-top">
-            <div className="avatar" style={{ width: '40px', height: '40px', fontSize: '13px' }}>
-              {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+            <div className="avatar" style={{ width: '40px', height: '40px', padding: 0, overflow: 'hidden' }}>
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1057,10 +1191,7 @@ export default function FeedsPage() {
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
             />
-            <div className="compose-footer">
-              <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
-                Use <code>*bold*</code>, <code>&gt; quote</code>, or bullet lists
-              </small>
+            <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button type="submit" className="btn primary" disabled={!postText.trim()} style={{ padding: '0 16px', height: '34px' }}>
                 <Send size={13} /> Post Update
               </button>
@@ -1093,8 +1224,8 @@ export default function FeedsPage() {
                     title="View verified member profile"
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="avatar" style={{ width: '38px', height: '38px', fontSize: '13px', background: 'var(--fr8x-outline)', color: '#fff' }}>
-                      {post.author.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+                    <div className="avatar" style={{ width: '38px', height: '38px', padding: 0, overflow: 'hidden' }}>
+                      <img src="/profile-avatar.png" alt={post.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
                     </div>
                     <div>
                       <div className="author-name-row">
@@ -1224,40 +1355,104 @@ export default function FeedsPage() {
                   />
                 )}
 
-                {/* Clean Post Action Buttons (No Like/Dislike) */}
-                <div className="post-actions-bar" style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--line-light)' }}>
-                  <button
-                    className="action-btn"
-                    onClick={() =>
-                      setExpandedPostComments((prev) => ({
-                        ...prev,
-                        [String(post.id)]: !prev[String(post.id)],
-                      }))
-                    }
-                  >
-                    <MessageCircle size={14} />
-                    <span>
-                      {post.comments.length > 0 ? `${post.comments.length} Comments` : 'Comment'}
-                    </span>
-                  </button>
-                  <button
-                    className="action-btn"
-                    onClick={() => setSelectedPostDetailId(post.id)}
-                    title="Open full widescreen discussion and trade intel"
-                    style={{ color: 'var(--brand)', fontWeight: 600 }}
-                  >
-                    <ExternalLink size={14} />
-                    <span>Expand Intel & Discussion</span>
-                  </button>
-                  <button
-                    className={`action-btn ${post.isSaved ? 'active' : ''}`}
-                    onClick={() => savePost(post.id)}
-                    title={post.isSaved ? 'Saved' : 'Save post'}
-                    style={{ marginLeft: 'auto' }}
-                  >
-                    <Bookmark size={14} /> <span>{post.isSaved ? 'Saved' : 'Save'}</span>
-                  </button>
-                </div>
+                {/* Post Action Buttons: Support, Critique, Discuss, Amplify, Send, Red Flag, Save */}
+                {(() => {
+                  const reactions = getReactions(post.id);
+                  return (
+                    <div className="post-actions-bar" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--fr8x-outline)', flexWrap: 'wrap' }}>
+                      {/* 1. Support */}
+                      <button
+                        className={`action-btn ${reactions.isSupported ? 'active' : ''}`}
+                        onClick={() => handleToggleSupport(post.id)}
+                        title="Support this trade intelligence"
+                        style={{ color: reactions.isSupported ? '#1985a1' : 'var(--fr8x-muted)' }}
+                      >
+                        <ThumbsUp size={14} />
+                        <span>Support ({reactions.support})</span>
+                      </button>
+
+                      {/* 2. Critique */}
+                      <button
+                        className={`action-btn ${reactions.isCritiqued ? 'active' : ''}`}
+                        onClick={() => handleToggleCritique(post.id)}
+                        title="Constructive B2B Critique"
+                        style={{ color: reactions.isCritiqued ? '#d97706' : 'var(--fr8x-muted)' }}
+                      >
+                        <Scale size={14} />
+                        <span>Critique ({reactions.critique})</span>
+                      </button>
+
+                      {/* 3. Discuss */}
+                      <button
+                        className="action-btn"
+                        onClick={() =>
+                          setExpandedPostComments((prev) => ({
+                            ...prev,
+                            [String(post.id)]: !prev[String(post.id)],
+                          }))
+                        }
+                        title="Discuss in comments"
+                      >
+                        <MessageSquare size={14} />
+                        <span>Discuss ({post.comments.length})</span>
+                      </button>
+
+                      {/* 4. Amplify */}
+                      <button
+                        className={`action-btn ${reactions.isAmplified ? 'active' : ''}`}
+                        onClick={() => handleAmplify(post.id)}
+                        title="Amplify to your enterprise network"
+                        style={{ color: reactions.isAmplified ? '#059669' : 'var(--fr8x-muted)' }}
+                      >
+                        <Repeat size={14} />
+                        <span>Amplify ({reactions.amplify})</span>
+                      </button>
+
+                      {/* 5. Send */}
+                      <button
+                        className="action-btn"
+                        onClick={() => handleSendPost(post)}
+                        title="Send post link"
+                      >
+                        <Send size={14} />
+                        <span>Send</span>
+                      </button>
+
+                      {/* 6. Red Flag */}
+                      <button
+                        className="action-btn"
+                        onClick={() => setReportingPost(post)}
+                        title="Report this post"
+                        style={{ color: '#dc2626' }}
+                      >
+                        <Flag size={14} />
+                        <span>Red Flag</span>
+                      </button>
+
+                      {/* Expand Intel Details */}
+                      <button
+                        className="action-btn"
+                        onClick={() => setSelectedPostDetailId(post.id)}
+                        title="Open full widescreen discussion and trade intel"
+                        style={{ color: '#1985a1', fontWeight: 600 }}
+                      >
+                        <ExternalLink size={13} />
+                        <span>Expand Intel</span>
+                      </button>
+
+                      {/* Save Bookmark */}
+                      <button
+                        className={`action-btn ${post.isSaved ? 'active' : ''}`}
+                        onClick={() => savePost(post.id)}
+                        title={post.isSaved ? 'Saved' : 'Save post'}
+                        style={{ marginLeft: 'auto' }}
+                      >
+                        <Bookmark size={14} />
+                        <span>{post.isSaved ? 'Saved' : 'Save'}</span>
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 {/* Comments Section */}
                 {expandedPostComments[String(post.id)] && (
@@ -1287,7 +1482,10 @@ export default function FeedsPage() {
                     <div className="comments-tree">
                       {post.comments.map((comment) => (
                         <div key={comment.id} className="comment-item tier-1">
-                          <div className="comment-header">
+                          <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
+                              <img src="/profile-avatar.png" alt={comment.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                            </div>
                             <span
                               className="comment-author"
                               onClick={() => setSelectedProfileName(comment.author)}
@@ -1300,15 +1498,16 @@ export default function FeedsPage() {
                               <LocalTimeBadge timezone={comment.authorTimezone} />
                             )}
                           </div>
-                          <p className="comment-text">{comment.text}</p>
+                          <p className="comment-text">{renderCommentWithMentions(comment.text)}</p>
                           <div className="comment-actions">
                             <button
                               className="sub-action"
-                              onClick={() =>
+                              onClick={() => {
                                 setActiveReplyBoxKey(
                                   activeReplyBoxKey === comment.id ? null : comment.id
-                                )
-                              }
+                                );
+                                setReplyInputText(`(#{${comment.author}}) `);
+                              }}
                             >
                               Reply
                             </button>
@@ -1345,7 +1544,10 @@ export default function FeedsPage() {
                           {comment.replies &&
                             comment.replies.map((reply) => (
                               <div key={reply.id} className="comment-item tier-2">
-                                <div className="comment-header">
+                                <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <div className="avatar" style={{ width: '20px', height: '20px', padding: 0, overflow: 'hidden' }}>
+                                    <img src="/profile-avatar.png" alt={reply.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                  </div>
                                   <span
                                     className="comment-author"
                                     onClick={() => setSelectedProfileName(reply.author)}
@@ -1355,15 +1557,16 @@ export default function FeedsPage() {
                                   {reply.hasGoldenTick && <GoldenTick />}
                                   <span className="comment-time">· {reply.time}</span>
                                 </div>
-                                <p className="comment-text">{reply.text}</p>
+                                <p className="comment-text">{renderCommentWithMentions(reply.text)}</p>
                                 <div className="comment-actions">
                                   <button
                                     className="sub-action"
-                                    onClick={() =>
+                                    onClick={() => {
                                       setActiveReplyBoxKey(
                                         activeReplyBoxKey === reply.id ? null : reply.id
-                                      )
-                                    }
+                                      );
+                                      setReplyInputText(`(#{${reply.author}}) `);
+                                    }}
                                   >
                                     Reply
                                   </button>
@@ -1402,7 +1605,10 @@ export default function FeedsPage() {
                                 {reply.replies &&
                                   reply.replies.map((nested) => (
                                     <div key={nested.id} className="comment-item tier-3">
-                                      <div className="comment-header">
+                                      <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <div className="avatar" style={{ width: '18px', height: '18px', padding: 0, overflow: 'hidden' }}>
+                                          <img src="/profile-avatar.png" alt={nested.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                        </div>
                                         <span
                                           className="comment-author"
                                           onClick={() => setSelectedProfileName(nested.author)}
@@ -1411,7 +1617,7 @@ export default function FeedsPage() {
                                         </span>
                                         <span className="comment-time">· {nested.time}</span>
                                       </div>
-                                      <p className="comment-text">{nested.text}</p>
+                                      <p className="comment-text">{renderCommentWithMentions(nested.text)}</p>
                                     </div>
                                   ))}
                               </div>
@@ -1517,9 +1723,6 @@ export default function FeedsPage() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '16px 12px' }}>
-              <div style={{ display: 'inline-block', padding: '4px 10px', background: '#eef6ff', color: 'var(--brand)', borderRadius: '20px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                1 YOUR AD HERE
-              </div>
               <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
                 Promote your business with us
               </h3>
@@ -1573,9 +1776,6 @@ export default function FeedsPage() {
             </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '16px 12px' }}>
-              <div style={{ display: 'inline-block', padding: '4px 10px', background: '#eef6ff', color: 'var(--brand)', borderRadius: '20px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>
-                2 YOUR AD HERE
-              </div>
               <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
                 Promote your business with us
               </h3>

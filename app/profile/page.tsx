@@ -75,7 +75,7 @@ export default function ProfilePage() {
   );
 
   // Profile Image & Company Logo State
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl || '/profile-avatar.png');
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
 
   // Address & Google Maps State

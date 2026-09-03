@@ -8,7 +8,9 @@ const ALLOWED_DOMAINS = ['@fr8x.in', '@con.fr8x.in'];
  * Checks whether an active Godfather session cookie is present and valid.
  */
 export async function GET(req: NextRequest) {
-  const sessionCookie = req.cookies.get('__Secure-FR8X-Godfather-Session');
+  const sessionCookie =
+    req.cookies.get('fr8x_godfather_session') ||
+    req.cookies.get('__Secure-FR8X-Godfather-Session');
 
   if (!sessionCookie || !sessionCookie.value) {
     return NextResponse.json({ authenticated: false }, { status: 200 });
@@ -64,15 +66,30 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
-    // Session cookie (cleared on browser close, sameSite lax for clean navigation)
+    const isHttps = req.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production';
+
+    // Session cookie (compatible with localhost and HTTPS)
     response.cookies.set({
-      name: '__Secure-FR8X-Godfather-Session',
+      name: 'fr8x_godfather_session',
       value: `${sessionId}:${operatorUid || 'gf-op-godfather'}:${role || 'godfather_owner'}`,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       path: '/',
+      maxAge: 60 * 60 * 12,
     });
+
+    if (isHttps) {
+      response.cookies.set({
+        name: '__Secure-FR8X-Godfather-Session',
+        value: `${sessionId}:${operatorUid || 'gf-op-godfather'}:${role || 'godfather_owner'}`,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 12,
+      });
+    }
 
     return response;
   } catch (err: any) {
@@ -89,6 +106,7 @@ export async function POST(req: NextRequest) {
  */
 export async function DELETE(_req: NextRequest) {
   const res = NextResponse.json({ success: true });
+  res.cookies.delete('fr8x_godfather_session');
   res.cookies.delete('__Secure-FR8X-Godfather-Session');
   return res;
 }

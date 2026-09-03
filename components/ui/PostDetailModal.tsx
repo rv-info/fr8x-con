@@ -130,6 +130,53 @@ export function PostDetailModal({
     return acc + count;
   }, 0);
 
+  const renderCommentWithMentions = (text: string) => {
+    const mentionRegex = /\(#\{([^}]+)\}\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+      const personName = match[1];
+      parts.push(
+        <button
+          key={match.index}
+          type="button"
+          className="mention-btn"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenProfile(personName);
+          }}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '2px',
+            padding: '1px 5px',
+            color: '#1985a1',
+            fontWeight: 700,
+            background: '#e0f2fe',
+            borderRadius: '3px',
+            cursor: 'pointer',
+            border: '1px solid #c5c3c6',
+            fontSize: '11px',
+            marginRight: '3px',
+          }}
+          title={`View ${personName}'s Freight Profile`}
+        >
+          (#{personName})
+        </button>
+      );
+      lastIndex = match.index + match[0].length;
+    }
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+    return parts.length > 0 ? parts : text;
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -156,10 +203,10 @@ export function PostDetailModal({
           <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
             <div
               className="avatar big"
-              style={{ width: '52px', height: '52px', fontSize: '18px', cursor: 'pointer' }}
+              style={{ width: '52px', height: '52px', padding: 0, overflow: 'hidden', cursor: 'pointer' }}
               onClick={() => onOpenProfile(post.author)}
             >
-              {initials}
+              <img src="/profile-avatar.png" alt={post.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -366,6 +413,9 @@ export function PostDetailModal({
                   {/* Tier 1 Comment Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                      <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
+                        <img src="/profile-avatar.png" alt={comment.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                      </div>
                       <b
                         style={{ fontSize: '13px', color: 'var(--ink)', cursor: 'pointer' }}
                         onClick={() => onOpenProfile(comment.author)}
@@ -379,7 +429,7 @@ export function PostDetailModal({
                   </div>
 
                   <p style={{ margin: '8px 0 10px', fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.55 }}>
-                    {comment.text}
+                    {renderCommentWithMentions(comment.text)}
                   </p>
 
                   {/* Comment Actions */}
@@ -387,7 +437,10 @@ export function PostDetailModal({
                     <button
                       className="btn secondary sm"
                       style={{ padding: '3px 10px', fontSize: '11px' }}
-                      onClick={() => setActiveReplyKey(activeReplyKey === comment.id ? null : comment.id)}
+                      onClick={() => {
+                        setActiveReplyKey(activeReplyKey === comment.id ? null : comment.id);
+                        setReplyInputText(`(#{${comment.author}}) `);
+                      }}
                     >
                       Reply
                     </button>
@@ -435,6 +488,9 @@ export function PostDetailModal({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div className="avatar" style={{ width: '20px', height: '20px', padding: 0, overflow: 'hidden' }}>
+                              <img src="/profile-avatar.png" alt={reply.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                            </div>
                             <b
                               style={{ fontSize: '12px', color: 'var(--ink)', cursor: 'pointer' }}
                               onClick={() => onOpenProfile(reply.author)}
@@ -445,13 +501,16 @@ export function PostDetailModal({
                             <span style={{ fontSize: '10.5px', color: 'var(--mut)' }}>· {reply.time}</span>
                           </div>
                           <p style={{ margin: '5px 0 8px', fontSize: '12px', color: 'var(--ink-secondary)' }}>
-                            {reply.text}
+                            {renderCommentWithMentions(reply.text)}
                           </p>
                           <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                             <button
                               className="btn secondary sm"
                               style={{ padding: '2px 8px', fontSize: '10.5px' }}
-                              onClick={() => setActiveReplyKey(activeReplyKey === reply.id ? null : reply.id)}
+                              onClick={() => {
+                                setActiveReplyKey(activeReplyKey === reply.id ? null : reply.id);
+                                setReplyInputText(`(#{${reply.author}}) `);
+                              }}
                             >
                               Reply
                             </button>
@@ -491,6 +550,9 @@ export function PostDetailModal({
                               {reply.replies.map((nested) => (
                                 <div key={nested.id} style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <div className="avatar" style={{ width: '18px', height: '18px', padding: 0, overflow: 'hidden' }}>
+                                      <img src="/profile-avatar.png" alt={nested.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                    </div>
                                     <b
                                       style={{ fontSize: '11.5px', color: 'var(--ink)', cursor: 'pointer' }}
                                       onClick={() => onOpenProfile(nested.author)}
@@ -500,7 +562,7 @@ export function PostDetailModal({
                                     <span style={{ fontSize: '10px', color: 'var(--mut)' }}>· {nested.time}</span>
                                   </div>
                                   <p style={{ margin: '3px 0 0', fontSize: '11.5px', color: 'var(--ink-secondary)' }}>
-                                    {nested.text}
+                                    {renderCommentWithMentions(nested.text)}
                                   </p>
                                 </div>
                               ))}

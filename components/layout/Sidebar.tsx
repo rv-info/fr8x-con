@@ -127,10 +127,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
               maxHeight: '28px',
               flex: '0 0 28px',
               aspectRatio: '1 / 1',
+              padding: 0,
+              overflow: 'hidden',
               borderRadius: '0px',
             }}
           >
-            {initials}
+            <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           </div>
           {!isCollapsed && (
             <div className="user-meta" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>

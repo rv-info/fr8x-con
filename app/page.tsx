@@ -19,10 +19,30 @@ export default function RootPage() {
   }, [isAuthenticated, isLoading, router]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-slate-950 text-slate-300">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs font-mono font-medium tracking-wide text-slate-400">Loading FR8X Workspace...</span>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: 'var(--fr8x-background, #f8fafc)',
+        color: 'var(--fr8x-text, #1e293b)',
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}>
+        <div
+          style={{
+            width: '32px',
+            height: '32px',
+            border: '2px solid #cbd5e1',
+            borderTopColor: '#1985a1',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+          }}
+        />
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em' }}>
+          Loading FR8X Workspace…
+        </span>
       </div>
     </div>
   );

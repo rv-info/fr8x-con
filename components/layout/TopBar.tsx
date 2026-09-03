@@ -545,32 +545,34 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             <button
               onClick={() => { setShowUserDropdown(!showUserDropdown); setShowNotifications(false); setShowCurrencyModal(false); }}
               className="user-top-btn"
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px' }} />
               <span>{user.displayName}</span>
               {user.hasGoldenTick && <GoldenTick />}
               <ChevronDown size={13} style={{ color: 'var(--mut)' }} />
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu" style={{ width: '240px', padding: '0', background: '#ffffff', border: '1px solid var(--fr8x-outline)' }}>
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
-                  <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
-                    {user.displayName}
-                    {user.hasGoldenTick && <GoldenTick size={13} />}
-                  </b>
-                  <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
-                    {user.designation}
-                  </small>
-                  <small style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)', display: 'block' }}>
-                    {user.company}
-                  </small>
-                  <div style={{ marginTop: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
-                      {user.plan.toUpperCase()} PLAN
-                    </span>
-                    <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
-                      LEVEL 3 VERIFIED
-                    </span>
+              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid var(--fr8x-outline)' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '40px', height: '40px' }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
+                      {user.displayName}
+                      {user.hasGoldenTick && <GoldenTick size={13} />}
+                    </b>
+                    <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
+                      {user.designation}
+                    </small>
+                    <small style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                      {user.company}
+                    </small>
+                    <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
+                        {user.plan.toUpperCase()} PLAN
+                      </span>
+                    </div>
                   </div>
                 </div>
 

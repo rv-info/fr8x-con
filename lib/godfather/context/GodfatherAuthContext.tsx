@@ -72,6 +72,7 @@ interface GodfatherAuthContextType {
   setEnvironment: (env: PlatformEnvironment) => void;
   /** false by default — requires full credential + MFA flow */
   isAuthenticated: boolean;
+  authLoading: boolean;
   /** Returns remembered operator email from device, or null */
   loadRememberedOperator: () => string | null;
   /**
@@ -349,6 +350,7 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
         environment,
         setEnvironment: setEnvWithPersistence,
         isAuthenticated,
+        authLoading,
         loadRememberedOperator,
         validateCredentials,
         loginOperator,

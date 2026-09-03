@@ -43,15 +43,30 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
-    // Session cookie (cleared on browser close)
+    const isHttps = req.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production';
+
+    // Session cookie (cleared on browser close, compatible with localhost and HTTPS)
     response.cookies.set({
-      name: '__Secure-FR8X-Godfather-Session',
+      name: 'fr8x_godfather_session',
       value: `${sessionId}:gf-op-godfather:godfather_owner`,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       path: '/',
+      maxAge: 60 * 60 * 12,
     });
+
+    if (isHttps) {
+      response.cookies.set({
+        name: '__Secure-FR8X-Godfather-Session',
+        value: `${sessionId}:gf-op-godfather:godfather_owner`,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 12,
+      });
+    }
 
     return response;
   } catch (err: any) {

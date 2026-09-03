@@ -14,7 +14,7 @@ interface GodfatherShellProps {
 export function GodfatherShell({ children }: GodfatherShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, logoutOperator } = useGodfatherAuth();
+  const { isAuthenticated, authLoading, logoutOperator } = useGodfatherAuth();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const [isClientReady, setIsClientReady] = useState(false);
@@ -23,34 +23,26 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
     setIsClientReady(true);
   }, []);
 
-  const isLoginPage = pathname.toLowerCase() === '/godfatheron' || pathname === '/godfather/login';
+  const isLoginPage =
+    pathname.toLowerCase().startsWith('/godfatheron') ||
+    pathname.toLowerCase().startsWith('/godfather/login');
 
-  // ── Redirect unauthenticated users to login ───────────────────────────────
+  // ── Redirect unauthenticated users to login only AFTER session check completes ──
   useEffect(() => {
-    if (!isClientReady) return;
+    if (!isClientReady || authLoading) return;
     if (isLoginPage) return;
 
     if (!isAuthenticated) {
-      // Check session API to avoid redirecting active session holders
-      fetch('/api/godfather/session')
-        .then((res) => res.json())
-        .then((data) => {
-          if (!data.authenticated) {
-            router.replace('/godfather/login');
-          }
-        })
-        .catch(() => {
-          router.replace('/godfather/login');
-        });
+      router.replace('/godfather/login');
     }
-  }, [isAuthenticated, isLoginPage, isClientReady, router]);
+  }, [isAuthenticated, authLoading, isLoginPage, isClientReady, router]);
 
   // ── Login page: render children standalone (fully self-contained) ─────────
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  if (!isClientReady || !isAuthenticated) {
+  if (!isClientReady || authLoading || !isAuthenticated) {
     return (
       <div
         style={{

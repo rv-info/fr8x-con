@@ -5,50 +5,49 @@
   --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
 
   /* ==========================================================================
-     STRICT FR8X MONOCHROMATIC PALETTE
-     #2E4053: Outlines, borders, separators, structural active emphasis
-     #AAB7B8: Containers, boxes, panels, secondary structural areas
-     #D5DBDB: Input fields, text boxes, form controls, inactive surfaces
-     #F4F6F6: Page, workspace, and content background
-     #4A4A4A: PRIMARY TEXT (headings, labels, names, table content, nav text)
-     #7D7D7D: SECONDARY TEXT (helper text, timestamps, descriptions)
+     FR8X HIGH-CONTRAST MONOCHROMATIC + #1985A1 BRAND PALETTE
+     #c5c3c6: Outlines, borders, separators across the whole web app
+     #1985a1: Brand emphasis and all primary buttons
+     #1e293b: Primary dark text across all body, headers, cards, tables
+     #475569: Secondary muted text
      ========================================================================== */
-  --fr8x-outline: #2E4053;
-  --fr8x-container: #AAB7B8;
-  --fr8x-input: #D5DBDB;
-  --fr8x-background: #F4F6F6;
-  --fr8x-text: #4A4A4A;
-  --fr8x-muted: #7D7D7D;
+  --fr8x-outline: #c5c3c6;
+  --fr8x-container: #e8ebec;
+  --fr8x-input: #f1f3f4;
+  --fr8x-background: #ffffff;
+  --fr8x-text: #1e293b;
+  --fr8x-muted: #475569;
 
-  --bg: #F4F6F6;
+  --bg: #f8f9fa;
   --card: #FFFFFF;
-  --ink: #4A4A4A;
-  --ink-secondary: #4A4A4A;
-  --mut: #7D7D7D;
-  --faint: #7D7D7D;
-  --line: #2E4053;
-  --line-light: #AAB7B8;
+  --ink: #1e293b;
+  --ink-secondary: #334155;
+  --mut: #475569;
+  --faint: #64748b;
+  --line: #c5c3c6;
+  --line-light: #c5c3c6;
   
-  /* Brand Structure */
-  --brand: #2E4053;
-  --brand2: #1e2c3a;
-  --brand-soft: #D5DBDB;
-  --teal: #2E4053;
-  --teal-soft: #D5DBDB;
+  /* Brand Structure - #1985a1 */
+  --brand: #1985a1;
+  --brand2: #146b82;
+  --brand-soft: #e2f4f8;
+  --teal: #1985a1;
+  --teal-soft: #e2f4f8;
+  --primary: #1985a1;
   
   /* Navigation Surfaces */
-  --nav: #F4F6F6;
-  --navhi: #D5DBDB;
-  --nav-border: #2E4053;
+  --nav: #ffffff;
+  --navhi: #f1f3f4;
+  --nav-border: #c5c3c6;
 
   /* Monochromatic Status Indicators */
-  --green: #2E4053;
-  --green-soft: #D5DBDB;
-  --amber: #2E4053;
-  --amber-soft: #D5DBDB;
-  --red: #2E4053;
-  --red-soft: #D5DBDB;
-  --gold: #F59E0B; /* Controlled Brand Asset Exception for Verified Badge */
+  --green: #059669;
+  --green-soft: #d1fae5;
+  --amber: #d97706;
+  --amber-soft: #fef3c7;
+  --red: #dc2626;
+  --red-soft: #fee2e2;
+  --gold: #F59E0B;
   --gold-gradient: linear-gradient(135deg, #F59E0B, #D97706);
 
   /* Elevation & Shape - Strict Zero Curve */
@@ -642,31 +641,38 @@ a {
   white-space: nowrap;
 }
 
-.btn.primary {
-  background: var(--fr8x-outline);
-  color: #fff;
-  border-color: var(--fr8x-outline);
+.btn.primary, button.primary, [type="submit"].btn {
+  background: #1985a1 !important;
+  color: #ffffff !important;
+  border-color: #1985a1 !important;
+  font-weight: 700;
 }
-.btn.primary:hover {
-  background: var(--brand2);
+.btn.primary:hover, button.primary:hover, [type="submit"].btn:hover {
+  background: #146b82 !important;
+  border-color: #146b82 !important;
 }
 
 .btn.secondary {
-  border-color: var(--fr8x-outline);
-  color: var(--fr8x-text);
-  background: var(--fr8x-input);
+  border-color: #c5c3c6;
+  color: #1985a1;
+  background: #ffffff;
+  font-weight: 700;
 }
 .btn.secondary:hover {
-  background: var(--fr8x-container);
+  background: #f0f9fb;
+  border-color: #1985a1;
+  color: #146b82;
 }
 
 .btn.danger {
-  background: var(--fr8x-input);
-  color: var(--fr8x-text);
-  border-color: var(--fr8x-outline);
+  background: #ffffff;
+  color: #dc2626;
+  border-color: #fca5a5;
+  font-weight: 700;
 }
 .btn.danger:hover {
-  background: var(--fr8x-container);
+  background: #dc2626;
+  color: #ffffff;
 }
 
 .btn.sm {
@@ -1941,9 +1947,11 @@ textarea.input {
   right: 76px;
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
   z-index: 55;
   pointer-events: none;
+  transition: right 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: calc(100vw - 260px);
 }
 
 .multichattray > * {
@@ -1951,16 +1959,26 @@ textarea.input {
 }
 
 .singlechatwindow {
-  width: 290px;
+  width: 265px;
   height: 380px;
   background: #ffffff;
-  border: 1px solid var(--line);
+  border: 1px solid var(--fr8x-outline);
   border-bottom: none;
-  border-radius: 10px 10px 0 0;
+  border-radius: 0 !important;
   box-shadow: var(--sh-md);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.profile-img-avatar {
+  object-fit: cover;
+  border-radius: 50% !important;
+  border: 1px solid var(--fr8x-outline);
+  background: #f8fafc;
+  display: inline-block;
+  aspect-ratio: 1 / 1;
+  flex-shrink: 0;
 }
 
 .minichattab {
@@ -3262,23 +3280,39 @@ textarea.input {
   grid-template-columns: 240px minmax(0, 1fr) 280px;
   gap: 16px;
   align-items: start;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 68px);
+  max-height: calc(100vh - 68px);
+  overflow: hidden;
   width: 100%;
 }
 
 .feed-left-rail {
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  padding-bottom: 24px;
 }
 
 .feed-center-rail {
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 6px;
+  padding-bottom: 40px;
 }
 
 .feed-right-rail {
   min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-bottom: 24px;
 }
 
 .feed-shortcut-link {

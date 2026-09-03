@@ -91,6 +91,13 @@ export default function LoginPage() {
           setIsBlocked(true);
           setErrorMessage('ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
         } else {
+          // Check client-side registered accounts fallback (e.g. newly registered organizations)
+          const localSuccess = login(id, password, remember);
+          if (localSuccess) {
+            toast('Logged in successfully to FR8X Workspace.');
+            router.push('/feeds');
+            return;
+          }
           setErrorMessage(json.error || 'Invalid credentials.');
         }
       }
@@ -247,9 +254,6 @@ export default function LoginPage() {
                 autoComplete="username"
                 required
               />
-              <small style={{ color: 'var(--mut)', fontSize: '10px', marginTop: '3px' }}>
-                Enter your User ID (e.g. u-arjun) or verified corporate email.
-              </small>
             </div>
 
             {/* Password */}
@@ -321,25 +325,6 @@ export default function LoginPage() {
               {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={14} /></>}
             </button>
           </form>
-
-          {/* Enterprise Support & Access Notice */}
-          <div
-            style={{
-              marginTop: '16px',
-              padding: '10px 12px',
-              background: '#f8fafc',
-              borderRadius: '8px',
-              border: '1px solid #e2e8f0',
-              fontSize: '11px',
-              color: 'var(--mut)',
-              lineHeight: 1.45,
-            }}
-          >
-            <b style={{ display: 'block', color: 'var(--ink)', marginBottom: '3px' }}>
-              Multi-Enterprise Global Network:
-            </b>
-            Log in using your enterprise User ID or verified company email. Max 3 password attempts enforced server-side.
-          </div>
         </div>
 
         {/* Footer */}

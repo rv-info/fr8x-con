@@ -173,6 +173,12 @@ export interface FeedPost {
   dis: number;
   liked?: boolean;
   disliked?: boolean;
+  supportCount?: number;
+  critiqueCount?: number;
+  amplifyCount?: number;
+  isSupported?: boolean;
+  isCritiqued?: boolean;
+  isAmplified?: boolean;
   isSaved?: boolean;
   comments: PostComment[];
   isOwner?: boolean;
