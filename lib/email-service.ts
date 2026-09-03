@@ -64,7 +64,7 @@ export interface SendEmailResponse {
   fromType: EmailSenderType;
   sender: string;
   to: string;
-  provider: 'ZOHO_FLOW' | 'MOCK_SANDBOX';
+  provider: 'ZOHO_FLOW' | 'ZOHO_ZEPTOMAIL' | 'MOCK_SANDBOX';
   isPasswordConfigured: boolean;
   error?: string;
 }
@@ -74,6 +74,38 @@ export interface EmailSenderStatus {
   mailbox: string;
   isOperational: boolean;
   notes: string;
+}
+
+export interface ZeptoMailConfigStatus {
+  isOperational: boolean;
+  endpoint: string;
+  bounceAddress: string;
+  hasToken: boolean;
+  tokenMasked?: string;
+  notes: string;
+}
+
+/**
+ * Returns current operational status of the Zoho ZeptoMail API configuration
+ */
+export function getZeptoMailStatus(): ZeptoMailConfigStatus {
+  const token = (process.env.ZOHO_ZEPTOMAIL_TOKEN || '').trim();
+  const endpoint = process.env.ZOHO_ZEPTOMAIL_URL?.trim() || 'https://api.zeptomail.in/v1.1/email';
+  const bounceAddress = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() || 'bounce@bounce.fr8x.in';
+  const hasToken = Boolean(token && token !== 'undefined');
+
+  return {
+    isOperational: hasToken,
+    endpoint,
+    bounceAddress,
+    hasToken,
+    tokenMasked: hasToken
+      ? `${token.substring(0, 12)}••••••••${token.slice(-4)}`
+      : undefined,
+    notes: hasToken
+      ? `Operational: Zoho ZeptoMail transactional API active (${endpoint}).`
+      : 'Pending: ZOHO_ZEPTOMAIL_TOKEN is not configured in process environment.',
+  };
 }
 
 /**
@@ -237,8 +269,53 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     message: cleanMessage,
   };
 
-  // If no Zoho Flow webhook URL is set in environment, use mock sandbox dispatch
+  // If no Zoho Flow webhook URL is set in environment, attempt ZeptoMail before mock sandbox
   if (!webhookUrl) {
+    if (process.env.ZOHO_ZEPTOMAIL_TOKEN) {
+      try {
+        const token = process.env.ZOHO_ZEPTOMAIL_TOKEN.trim();
+        const authHeader = token.toLowerCase().startsWith('zoho-enczapikey') ? token : `Zoho-enczapikey ${token}`;
+        const endpoint = process.env.ZOHO_ZEPTOMAIL_URL?.trim() || 'https://api.zeptomail.in/v1.1/email';
+        const bounceAddress = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() || 'bounce@bounce.fr8x.in';
+
+        const zeptoRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+          },
+          body: JSON.stringify({
+            bounce_address: bounceAddress,
+            from: { address: senderAddress, name: 'FR8X' },
+            to: [{ email_address: { address: cleanTo, name: cleanTo.split('@')[0] } }],
+            subject: cleanSubject,
+            htmlbody: params.htmlMessage || `<pre style="font-family:sans-serif;">${cleanMessage}</pre>`,
+            textbody: cleanMessage,
+          }),
+        });
+
+        const zeptoData = await zeptoRes.json().catch(() => ({}));
+        if (zeptoRes.ok) {
+          const messageId = zeptoData?.data?.[0]?.message_id || `zepto-${Date.now()}`;
+          console.log(`[ZOHO_ZEPTOMAIL_DISPATCH_SUCCESS] Event: ${params.event} | MsgID: ${messageId}`);
+          return {
+            success: true,
+            messageId,
+            correlationId,
+            event: params.event,
+            fromType: params.fromType,
+            sender: senderAddress,
+            to: cleanTo,
+            provider: 'ZOHO_ZEPTOMAIL',
+            isPasswordConfigured: isPasswordOperational,
+          };
+        }
+      } catch (zeptoErr: any) {
+        console.warn('[ZOHO_ZEPTOMAIL_DIRECT_WARN]', zeptoErr.message);
+      }
+    }
+
     const domain = cleanTo.split('@')[1] || 'unknown';
     console.log(
       `[EMAIL_SANDBOX_DISPATCH] From: ${senderAddress} (${params.fromType}) | Event: ${params.event} | Recipient: ***@${domain} | Correlation: ${correlationId}`
@@ -321,6 +398,53 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
   console.error(
     `[ZOHO_FLOW_ERROR] All dispatch attempts failed for event: ${params.event} | Correlation: ${correlationId} | Reason: ${lastError}`
   );
+
+  // Attempt ZeptoMail failover if Zoho Flow webhook failed
+  if (process.env.ZOHO_ZEPTOMAIL_TOKEN) {
+    try {
+      console.log(`[ZOHO_ZEPTOMAIL_FAILOVER] Attempting ZeptoMail failover for ${cleanTo} after Zoho Flow error`);
+      const token = process.env.ZOHO_ZEPTOMAIL_TOKEN.trim();
+      const authHeader = token.toLowerCase().startsWith('zoho-enczapikey') ? token : `Zoho-enczapikey ${token}`;
+      const endpoint = process.env.ZOHO_ZEPTOMAIL_URL?.trim() || 'https://api.zeptomail.in/v1.1/email';
+      const bounceAddress = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() || 'bounce@bounce.fr8x.in';
+
+      const zeptoRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+          Authorization: authHeader,
+        },
+        body: JSON.stringify({
+          bounce_address: bounceAddress,
+          from: { address: senderAddress, name: 'FR8X' },
+          to: [{ email_address: { address: cleanTo, name: cleanTo.split('@')[0] } }],
+          subject: cleanSubject,
+          htmlbody: params.htmlMessage || `<pre style="font-family:sans-serif;">${cleanMessage}</pre>`,
+          textbody: cleanMessage,
+        }),
+      });
+
+      const zeptoData = await zeptoRes.json().catch(() => ({}));
+      if (zeptoRes.ok) {
+        const messageId = zeptoData?.data?.[0]?.message_id || `zepto-${Date.now()}`;
+        console.log(`[ZOHO_ZEPTOMAIL_FAILOVER_SUCCESS] Event: ${params.event} | MsgID: ${messageId}`);
+        return {
+          success: true,
+          messageId,
+          correlationId,
+          event: params.event,
+          fromType: params.fromType,
+          sender: senderAddress,
+          to: cleanTo,
+          provider: 'ZOHO_ZEPTOMAIL',
+          isPasswordConfigured: isPasswordOperational,
+        };
+      }
+    } catch (zeptoErr: any) {
+      console.warn('[ZOHO_ZEPTOMAIL_FAILOVER_ERR]', zeptoErr.message);
+    }
+  }
 
   return {
     success: false,
