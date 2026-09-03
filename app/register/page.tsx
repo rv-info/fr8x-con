@@ -71,7 +71,10 @@ export default function RegisterPage() {
     return () => clearInterval(interval);
   }, [step, otpTimer]);
 
-  const handleInitialSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [devCode, setDevCode] = useState<string | null>(null);
+
+  const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -126,46 +129,116 @@ export default function RegisterPage() {
       return;
     }
 
-    // Advance to OTP verification
-    setStep('otp');
-    setOtpTimer(60);
-    setCanResend(false);
-    toast(`6-digit OTP dispatched to ${email}. (Demo Code: 492815)`);
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: cleanEmail,
+          password: password || 'Password@123',
+          company: companyName.trim(),
+          companyId,
+          mobile: cleanMobile,
+          designation,
+          role: 'company_admin',
+        }),
+      });
+
+      const data = await res.json();
+      setIsSubmitting(false);
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || 'Registration failed. Please check your details.');
+        return;
+      }
+
+      // Advance to OTP verification
+      setStep('otp');
+      setOtpTimer(60);
+      setCanResend(false);
+      if (data.demoCode) {
+        setDevCode(data.demoCode);
+      }
+      toast(data.message || `Verification email sent from password@fr8x.in to ${email}.`);
+    } catch {
+      setIsSubmitting(false);
+      setErrorMessage('Network connection error. Please try again.');
+    }
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage('');
+
     if (!otp || otp.trim().length !== 6) {
       setErrorMessage('Please enter a valid 6-digit verification code.');
       return;
     }
 
-    const result = await register(
-      {
-        firstName,
-        lastName,
-        email,
-        mobile,
-        designation,
-        company: companyName,
-        companyId,
-        city,
-        country,
-        timezone,
-        plan: selectedPlan,
-        hasGoldenTick: selectedPlan === 'premium',
-        isVerified: true,
-      },
-      password || 'Password@123'
-    );
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: otp.trim(),
+        }),
+      });
 
-    if (!result.success) {
-      setErrorMessage(result.error || 'Registration failed under the One User, One Login policy.');
-      return;
+      const data = await res.json();
+      setIsSubmitting(false);
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || 'Verification failed. Please check your verification code.');
+        return;
+      }
+
+      // Sync local client auth state
+      await register(
+        {
+          firstName,
+          lastName,
+          email: email.trim().toLowerCase(),
+          mobile,
+          designation,
+          company: companyName,
+          companyId,
+          city,
+          country,
+          timezone,
+          plan: selectedPlan,
+          hasGoldenTick: selectedPlan === 'premium',
+          isVerified: true,
+        },
+        password || 'Password@123'
+      );
+
+      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
+      router.push('/feeds');
+    } catch {
+      setIsSubmitting(false);
+      setErrorMessage('Network error during verification. Please try again.');
     }
+  };
 
-    toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
-    router.push('/feeds');
+  const handleResendCode = async () => {
+    setCanResend(false);
+    setOtpTimer(60);
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      toast(data.message || 'Verification code resent.');
+    } catch {
+      toast('Failed to resend verification code. Please try again.');
+    }
   };
 
   return (
@@ -583,12 +656,14 @@ export default function RegisterPage() {
                     onChange={(e) => setOtp(e.target.value)}
                     required
                   />
-                  <small
-                    onClick={() => setOtp('492815')}
-                    style={{ color: 'var(--brand)', fontSize: '11px', marginTop: '4px', cursor: 'pointer', display: 'inline-block' }}
-                  >
-                    Click to auto-fill test code: <b>492815</b>
-                  </small>
+                  {devCode && (
+                    <small
+                      onClick={() => setOtp(devCode)}
+                      style={{ color: 'var(--brand)', fontSize: '11px', marginTop: '4px', cursor: 'pointer', display: 'inline-block' }}
+                    >
+                      Dev sandbox test code: <b>{devCode}</b> (click to auto-fill)
+                    </small>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -598,12 +673,8 @@ export default function RegisterPage() {
                   <button
                     type="button"
                     className="btn secondary sm"
-                    disabled={!canResend}
-                    onClick={() => {
-                      setOtpTimer(60);
-                      setCanResend(false);
-                      toast('New OTP sent to email.');
-                    }}
+                    disabled={!canResend || isSubmitting}
+                    onClick={handleResendCode}
                   >
                     Resend Code
                   </button>

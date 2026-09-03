@@ -1,17 +1,29 @@
 /**
  * FR8X Central Server-Side Email Service
+ *
  * Architecture:
- * FR8X Client/Console -> FR8X Backend API -> Server-Side Email Service -> Zoho Flow Webhook -> Zoho Mail -> Recipient
+ * FR8X Client / Console -> FR8X Backend API -> EmailService -> Zoho Flow Webhook -> Zoho Mail -> Recipient
  *
- * Senders:
- * - SUPPORT: support@fr8x.in (Currently authenticated & operational in Zoho Flow)
- * - PASSWORD: password@fr8x.in (Architecturally isolated & ready; requires Zoho Mail connection in Zoho Flow)
+ * Senders & Strict Routing:
+ * - SUPPORT: support@fr8x.in (Authenticated and operational via Zoho Flow)
+ * - PASSWORD: password@fr8x.in (Dedicated auth mailbox; requires separate Zoho Mail authorization in Zoho Flow)
  *
- * CRITICAL SECURITY RULES:
- * 1. The browser must never receive or expose the Zoho Flow webhook URL or secret.
- * 2. Unauthenticated clients cannot override the sender or Zoho credentials.
- * 3. Never log passwords, tokens, or webhook secrets.
+ * CRITICAL SECURITY POLICIES:
+ * 1. The client must NEVER specify arbitrary sender or from_email. Sender is strictly determined by internal email type.
+ * 2. Webhook URLs and secrets remain strictly server-side (process.env only).
+ * 3. Never log passwords, OTPs, verification/reset tokens, or webhook credentials.
+ * 4. Preserves 100% exact Zoho Flow JSON contract:
+ *    { "event": "<EVENT>", "to_email": "<RECIPIENT>", "subject": "<SUBJECT>", "message": "<MESSAGE>" }
  */
+
+import {
+  renderEmailVerificationEmail,
+  renderPasswordResetEmail,
+  renderPasswordChangedEmail,
+  renderOtpChallengeEmail,
+  renderSupportEmail,
+  renderSecurityAlertEmail,
+} from '@/lib/email-templates';
 
 export const EMAIL_SENDERS = {
   SUPPORT: 'support@fr8x.in',
@@ -25,11 +37,13 @@ export type EmailEventType =
   | 'SUPPORT_CONTACT'
   | 'SUPPORT_TICKET'
   | 'SUPPORT_NOTIFICATION'
-  | 'PASSWORD_RESET'
-  | 'PASSWORD_OTP'
   | 'EMAIL_VERIFICATION'
+  | 'AUTH_OTP'
+  | 'PASSWORD_OTP'
+  | 'PASSWORD_RESET'
+  | 'PASSWORD_CHANGED'
   | 'LOGIN_SECURITY'
-  | 'PASSWORD_CHANGED';
+  | 'EMAIL_TEST';
 
 export interface SendEmailParams {
   fromType: EmailSenderType;
@@ -66,15 +80,20 @@ export interface EmailSenderStatus {
  * Returns the current operational status of the dedicated FR8X email addresses.
  */
 export function getEmailSendersStatus(): Record<EmailSenderType, EmailSenderStatus> {
+  const supportWebhook =
+    process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim() ||
+    process.env.ZOHO_FLOW_WEBHOOK_URL?.trim();
+
   const hasSupportFlow = Boolean(
-    process.env.ZOHO_FLOW_WEBHOOK_URL &&
-      process.env.ZOHO_FLOW_WEBHOOK_URL.trim() &&
-      process.env.ZOHO_FLOW_WEBHOOK_URL !== 'undefined'
+    supportWebhook && supportWebhook !== 'undefined' && supportWebhook.length > 0
   );
+
+  const passwordWebhook =
+    process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim() ||
+    process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL?.trim();
+
   const hasDedicatedPasswordFlow = Boolean(
-    process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL &&
-      process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL.trim() &&
-      process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL !== 'undefined'
+    passwordWebhook && passwordWebhook !== 'undefined' && passwordWebhook.length > 0
   );
 
   return {
@@ -84,35 +103,33 @@ export function getEmailSendersStatus(): Record<EmailSenderType, EmailSenderStat
       isOperational: hasSupportFlow,
       notes: hasSupportFlow
         ? 'Operational: Configured and authenticated via Zoho Flow (support@fr8x.in).'
-        : 'Pending: ZOHO_FLOW_WEBHOOK_URL is not set in environment.',
+        : 'Pending: ZOHO_SUPPORT_FLOW_WEBHOOK_URL is not configured in environment.',
     },
     PASSWORD: {
       sender: 'PASSWORD',
       mailbox: EMAIL_SENDERS.PASSWORD,
-      // Operational only if a dedicated password flow connection is explicitly set up,
-      // or if password@fr8x.in connection is attached in Zoho Flow.
       isOperational: hasDedicatedPasswordFlow,
       notes: hasDedicatedPasswordFlow
-        ? 'Operational: Dedicated password flow configured via ZOHO_FLOW_PASSWORD_WEBHOOK_URL.'
-        : 'Architecturally Ready: Code and templates are implemented. Operational once Zoho Mail connection for password@fr8x.in is authorized in Zoho Flow.',
+        ? 'Operational: Dedicated password flow configured via ZOHO_PASSWORD_FLOW_WEBHOOK_URL.'
+        : 'PASSWORD@FR8X.IN REQUIRES ZOHO FLOW MAIL CONNECTION/AUTHORIZATION.',
     },
   };
 }
 
 /**
- * Validates an email recipient address format.
+ * Validates an email recipient address format (RFC 5322 compatible).
  */
 export function isValidEmailAddress(email: string): boolean {
   if (!email || typeof email !== 'string') return false;
   const trimmed = email.trim();
   if (trimmed.length > 254) return false;
-  // RFC 5322 compatible regex
-  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
+  const emailRegex =
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
   return emailRegex.test(trimmed);
 }
 
 /**
- * Sanitizes an email input to prevent header injection or malicious payloads.
+ * Sanitizes input to prevent header injection or malicious control characters.
  */
 function sanitizeString(str: string): string {
   return str.replace(/[\r\n\t]/g, ' ').trim();
@@ -123,20 +140,35 @@ function sanitizeString(str: string): string {
  * Server-side only: never exposed to the client.
  */
 function resolveWebhookUrl(fromType: EmailSenderType): string | null {
-  const customPassUrl = process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL;
-  if (fromType === 'PASSWORD' && customPassUrl && customPassUrl.trim() && customPassUrl !== 'undefined') {
-    return customPassUrl.trim();
+  if (fromType === 'PASSWORD') {
+    const customPassUrl =
+      process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim() ||
+      process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL?.trim();
+    if (customPassUrl && customPassUrl !== 'undefined') {
+      return customPassUrl;
+    }
   }
-  const defaultUrl = process.env.ZOHO_FLOW_WEBHOOK_URL;
-  if (defaultUrl && defaultUrl.trim() && defaultUrl !== 'undefined') {
-    return defaultUrl.trim();
+
+  // Support webhook URL or general fallback
+  const supportUrl =
+    process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim() ||
+    process.env.ZOHO_FLOW_WEBHOOK_URL?.trim();
+  if (supportUrl && supportUrl !== 'undefined') {
+    return supportUrl;
   }
+
   return null;
 }
 
 /**
  * Central Server-Side Email Dispatcher
- * Sends outbound email through Zoho Flow webhook -> Zoho Mail.
+ * Sends outbound email strictly following the Zoho Flow JSON contract:
+ * {
+ *   "event": "<EVENT>",
+ *   "to_email": "<RECIPIENT>",
+ *   "subject": "<SUBJECT>",
+ *   "message": "<MESSAGE>"
+ * }
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResponse> {
   const correlationId =
@@ -147,7 +179,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
   const cleanSubject = sanitizeString(params.subject || '');
   const cleanMessage = (params.message || '').trim();
 
-  // Validate recipient
+  // Validate recipient email
   if (!isValidEmailAddress(cleanTo)) {
     return {
       success: false,
@@ -162,7 +194,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     };
   }
 
-  // Validate mandatory fields
+  // Validate subject
   if (!cleanSubject) {
     return {
       success: false,
@@ -177,6 +209,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     };
   }
 
+  // Validate body message
   if (!cleanMessage) {
     return {
       success: false,
@@ -193,33 +226,22 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
 
   const senderAddress = EMAIL_SENDERS[params.fromType] || EMAIL_SENDERS.SUPPORT;
   const webhookUrl = resolveWebhookUrl(params.fromType);
-
-  // Exact Zoho Flow payload format:
-  // Preserves 100% compatibility with existing Zoho Flow configuration:
-  // ${webhookTrigger.payload.to_email}
-  // ${webhookTrigger.payload.subject}
-  // ${webhookTrigger.payload.message}
-  // And includes event & sender_type for advanced routing:
-  const payload = {
-    event: params.event,
-    sender_type: params.fromType,
-    from_email: senderAddress,
-    to_email: cleanTo,
-    subject: cleanSubject,
-    message: cleanMessage,
-    correlation_id: correlationId,
-    timestamp: new Date().toISOString(),
-  };
-
   const status = getEmailSendersStatus();
   const isPasswordOperational = status.PASSWORD.isOperational;
 
+  // REQUIRED BACKEND PAYLOAD (Section 2 & 3 JSON Contract)
+  const payload = {
+    event: params.event,
+    to_email: cleanTo,
+    subject: cleanSubject,
+    message: cleanMessage,
+  };
+
   // If no Zoho Flow webhook URL is set in environment, use mock sandbox dispatch
   if (!webhookUrl) {
-    // Safe mock logging (no secrets, masked recipient)
     const domain = cleanTo.split('@')[1] || 'unknown';
     console.log(
-      `[EMAIL_SANDBOX_DISPATCH] From: ${senderAddress} (${params.fromType}) | Event: ${params.event} | Recipient domain: @${domain} | Correlation: ${correlationId}`
+      `[EMAIL_SANDBOX_DISPATCH] From: ${senderAddress} (${params.fromType}) | Event: ${params.event} | Recipient: ***@${domain} | Correlation: ${correlationId}`
     );
 
     return {
@@ -235,13 +257,13 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     };
   }
 
-  // Live Zoho Flow Webhook Dispatch with timeout and retry
+  // Live Zoho Flow Webhook Dispatch with retry
   const MAX_RETRIES = 1;
   let lastError: string | null = null;
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 8000); // 8-second timeout limit
 
     try {
       const response = await fetch(webhookUrl, {
@@ -258,7 +280,6 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
       clearTimeout(timeoutId);
 
       if (response.ok) {
-        // Safe logging of successful dispatch
         console.log(
           `[ZOHO_FLOW_DISPATCH_SUCCESS] Event: ${params.event} | Sender: ${senderAddress} | Correlation: ${correlationId} | HTTP ${response.status}`
         );
@@ -276,7 +297,6 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
         };
       }
 
-      // Non-200 HTTP response
       lastError = `Zoho Flow returned HTTP status ${response.status}`;
       console.warn(
         `[ZOHO_FLOW_HTTP_WARN] Attempt ${attempt + 1}: ${lastError} | Correlation: ${correlationId}`
@@ -293,13 +313,11 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
       );
     }
 
-    // Short backoff before retry if attempt failed
     if (attempt < MAX_RETRIES) {
       await new Promise((res) => setTimeout(res, 600));
     }
   }
 
-  // Failed after retries
   console.error(
     `[ZOHO_FLOW_ERROR] All dispatch attempts failed for event: ${params.event} | Correlation: ${correlationId} | Reason: ${lastError}`
   );
@@ -316,3 +334,206 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     error: lastError || 'Email dispatch failed through Zoho Flow',
   };
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CENTRALIZED EMAIL SERVICE ABSTRACTION
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const EmailService = {
+  /**
+   * Support emails: strictly routes to support@fr8x.in
+   */
+  async sendSupportEmail(params: {
+    to: string;
+    subject: string;
+    message: string;
+    ticketId?: string;
+    senderName?: string;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderSupportEmail({
+      recipient: params.to,
+      subject: params.subject,
+      message: params.message,
+      ticketId: params.ticketId,
+      senderName: params.senderName,
+    });
+
+    return sendEmail({
+      fromType: 'SUPPORT',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'SUPPORT_REQUEST',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * General authentication / password email dispatcher: strictly routes to password@fr8x.in
+   */
+  async sendPasswordEmail(params: {
+    to: string;
+    subject: string;
+    message: string;
+    htmlMessage?: string;
+    event?: EmailEventType;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: params.subject,
+      message: params.message,
+      htmlMessage: params.htmlMessage,
+      event: params.event || 'PASSWORD_RESET',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Account registration email verification: strictly routes to password@fr8x.in
+   * Subject: "FR8X Verify Your Email"
+   */
+  async sendVerificationEmail(params: {
+    to: string;
+    verificationLink?: string;
+    token?: string;
+    otpCode?: string;
+    expiryMinutes?: number;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderEmailVerificationEmail({
+      recipient: params.to,
+      verificationLink: params.verificationLink,
+      otpCode: params.otpCode,
+      expiryMinutes: params.expiryMinutes || 1440,
+    });
+
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'EMAIL_VERIFICATION',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * One-time passcode (OTP): strictly routes to password@fr8x.in
+   * Subject: "FR8X Verification Code"
+   */
+  async sendOtpEmail(params: {
+    to: string;
+    otpCode: string;
+    expiryMinutes?: number;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderOtpChallengeEmail({
+      recipient: params.to,
+      otpCode: params.otpCode,
+      expiryMinutes: params.expiryMinutes || 10,
+      correlationId: params.correlationId,
+    });
+
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'AUTH_OTP',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Password reset request: strictly routes to password@fr8x.in
+   * Subject: "FR8X Password Reset Request"
+   */
+  async sendPasswordResetEmail(params: {
+    to: string;
+    resetLink?: string;
+    otpCode?: string;
+    expiryMinutes?: number;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderPasswordResetEmail({
+      recipient: params.to,
+      resetLink: params.resetLink,
+      otpCode: params.otpCode,
+      expiryMinutes: params.expiryMinutes || 15,
+    });
+
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'PASSWORD_RESET',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Password changed confirmation: strictly routes to password@fr8x.in
+   * Subject: "FR8X Password Changed Successfully"
+   */
+  async sendPasswordChangedEmail(params: {
+    to: string;
+    changedAt?: string;
+    ipAddress?: string;
+    correlationId?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderPasswordChangedEmail({
+      recipient: params.to,
+      changedAt: params.changedAt || new Date().toUTCString(),
+      ipAddress: params.ipAddress,
+    });
+
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'PASSWORD_CHANGED',
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Security notifications: strictly routes to password@fr8x.in
+   */
+  async sendSecurityAlertEmail(params: {
+    to: string;
+    subject: string;
+    details: string;
+    correlationId?: string;
+    ipAddress?: string;
+  }): Promise<SendEmailResponse> {
+    const tmpl = renderSecurityAlertEmail({
+      subject: params.subject,
+      details: params.details,
+      correlationId: params.correlationId,
+      ipAddress: params.ipAddress,
+    });
+
+    return sendEmail({
+      fromType: 'PASSWORD',
+      to: params.to,
+      subject: tmpl.subject,
+      message: tmpl.text,
+      htmlMessage: tmpl.html,
+      event: 'LOGIN_SECURITY',
+      correlationId: params.correlationId,
+    });
+  },
+
+  getStatus: getEmailSendersStatus,
+  validateEmail: isValidEmailAddress,
+};

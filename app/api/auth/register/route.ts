@@ -44,18 +44,22 @@ export async function POST(req: NextRequest) {
 
     const uid = body.uid || `u-${Date.now()}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
+    const origin = req.nextUrl.origin;
 
-    // Enforce "One User, One Login" duplicate check on server store
-    const result = serverSecurityStore.registerUser({
-      uid,
-      email: cleanEmail,
-      password,
-      displayName,
-      company: company.trim(),
-      companyId: companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
-      role: role || 'company_admin',
-      mobile: mobile ? mobile.trim() : undefined,
-    });
+    // Enforce "One User, One Login" duplicate check and generate email verification challenge
+    const result = serverSecurityStore.registerUser(
+      {
+        uid,
+        email: cleanEmail,
+        password,
+        displayName,
+        company: company.trim(),
+        companyId: companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
+        role: role || 'company_admin',
+        mobile: mobile ? mobile.trim() : undefined,
+      },
+      { origin }
+    );
 
     if (!result.success) {
       return NextResponse.json(
@@ -68,6 +72,36 @@ export async function POST(req: NextRequest) {
     }
 
     const user = result.user!;
+
+    // If verification is required, do not issue session cookie yet
+    if (result.isVerificationRequired) {
+      return NextResponse.json(
+        {
+          success: true,
+          isVerificationRequired: true,
+          message: 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.',
+          user: {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            company: user.company,
+            companyId: user.companyId,
+            role: user.role,
+            mobile: user.mobile,
+            designation: designation || 'Freight Procurement Manager',
+            status: user.status,
+          },
+          demoCode:
+            process.env.NODE_ENV === 'development' &&
+            !process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL &&
+            !process.env.ZOHO_FLOW_WEBHOOK_URL
+              ? result.verificationOtp
+              : undefined,
+        },
+        { status: 201 }
+      );
+    }
+
     const res = NextResponse.json(
       {
         success: true,

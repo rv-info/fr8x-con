@@ -84,8 +84,75 @@ function wrapEmailHtml(content: string, preheader = ''): string {
 </html>`;
 }
 
+export interface EmailVerificationTemplateParams {
+  recipient: string;
+  verificationLink?: string;
+  otpCode?: string;
+  expiryMinutes?: number;
+}
+
 /**
- * 1. PASSWORD RESET TEMPLATE
+ * 1. EMAIL VERIFICATION TEMPLATE
+ * Requirements:
+ * - Subject: "FR8X Verify Your Email"
+ * - Body: "Hello, Good Day!", verification link, OTP code, expiry notice.
+ * - ZERO plain-text passwords.
+ */
+export function renderEmailVerificationEmail(params: EmailVerificationTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const expiry = params.expiryMinutes || 1440; // Default 24 hours (1440 mins)
+  const subject = 'FR8X Verify Your Email';
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello, Good Day!</p>
+    <p>Welcome to the FR8X Sovereign Enterprise Platform. To activate your account and verify ownership of corporate address <strong style="color: #f8fafc;">${params.recipient}</strong>, please complete verification below:</p>
+
+    ${params.otpCode ? `
+    <div class="code-box">
+      <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.08em; margin-bottom: 8px;">Your 6-Digit Email Verification Code</div>
+      <div class="code-digits">${params.otpCode}</div>
+      <div style="font-size: 11px; color: #64748b; margin-top: 8px;">Valid for ${Math.min(expiry, 60)} minutes</div>
+    </div>
+    ` : ''}
+
+    ${params.verificationLink ? `
+    <p style="text-align: center; margin: 24px 0;">
+      <a href="${params.verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer">Verify My Email Address</a>
+    </p>
+    <p style="font-size: 11px; color: #64748b; word-break: break-all;">
+      Or paste this URL into your secure browser:<br>
+      <a href="${params.verificationLink}" style="color: #38bdf8;">${params.verificationLink}</a>
+    </p>
+    ` : ''}
+
+    <div class="info-box">
+      <strong>Notice:</strong> This verification request is valid for ${expiry >= 60 ? `${Math.round(expiry / 60)} hours` : `${expiry} minutes`}. Accounts must be verified prior to platform activation.
+    </div>
+
+    <p style="font-size: 12px; color: #94a3b8; margin-top: 24px;">
+      If you did not register for an account on the FR8X Platform, please disregard this message or contact <a href="mailto:support@fr8x.in" style="color: #38bdf8;">support@fr8x.in</a>.
+    </p>
+  `, 'Verify your email address for FR8X');
+
+  const text = `Hello, Good Day!
+
+Welcome to FR8X Platform. Please verify your email address (${params.recipient}).
+
+${params.otpCode ? `Verification Code: ${params.otpCode}\n` : ''}${params.verificationLink ? `Verification Link: ${params.verificationLink}\n` : ''}
+This link and code will expire in ${expiry >= 60 ? `${Math.round(expiry / 60)} hours` : `${expiry} minutes`}.
+
+If you did not create an account, please ignore this email.
+
+FR8X Platform Security`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 2. PASSWORD RESET TEMPLATE
  * Requirements:
  * - Subject: "FR8X Password Reset Request"
  * - Body: "Hello, Good Day!", secure link/OTP, expiry notice, ignore if not requested.
@@ -146,7 +213,7 @@ FR8X Platform Security`;
 }
 
 /**
- * 2. PASSWORD CHANGED CONFIRMATION TEMPLATE
+ * 3. PASSWORD CHANGED CONFIRMATION TEMPLATE
  * Requirements:
  * - Subject: "FR8X Password Changed Successfully"
  * - Confirmation that password was updated, no passwords included.
@@ -188,7 +255,10 @@ FR8X Platform Security`;
 }
 
 /**
- * 3. OTP CHALLENGE / LOGIN VERIFICATION TEMPLATE
+ * 4. OTP CHALLENGE / LOGIN VERIFICATION TEMPLATE
+ * Requirements:
+ * - Subject: "FR8X Verification Code"
+ * - Body: "Hello, Good Day!", 6-digit code, expiration, security warning.
  */
 export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
   subject: string;
@@ -196,11 +266,11 @@ export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
   text: string;
 } {
   const expiry = params.expiryMinutes || 10;
-  const subject = `[FR8X GODFATHER] Login Verification Code: ${params.otpCode}`;
+  const subject = 'FR8X Verification Code';
 
   const html = wrapEmailHtml(`
-    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Privileged Operator Challenge</p>
-    <p>A privileged login attempt requires one-time security authentication for operator <strong style="color: #f8fafc;">${params.recipient}</strong>.</p>
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello, Good Day!</p>
+    <p>Your one-time authentication verification code for <strong style="color: #f8fafc;">${params.recipient}</strong> is provided below:</p>
 
     <div class="code-box">
       <div class="code-digits">${params.otpCode}</div>
@@ -218,9 +288,13 @@ export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
     ` : ''}
   `, `Your verification code is ${params.otpCode}`);
 
-  const text = `FR8X GODFATHER Verification Code: ${params.otpCode}
+  const text = `Hello, Good Day!
+
+FR8X Verification Code: ${params.otpCode}
 Valid for ${expiry} minutes. Never share this code with anyone.
-Correlation ID: ${params.correlationId || 'N/A'}`;
+Correlation ID: ${params.correlationId || 'N/A'}
+
+FR8X Platform Security`;
 
   return { subject, html, text };
 }

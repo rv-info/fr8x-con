@@ -1,7 +1,8 @@
 // Server-side Authentication, Security, and State Management Engine
 // Handles credential validation, failed login attempt tracking, account blocking,
 // daily OTP limits, salted password hashing, privileged session control, and audit logs.
-import { sendSystemEmail } from '@/lib/mailer';
+import crypto from 'crypto';
+import { EmailService } from '@/lib/email-service';
 
 export interface ServerUserRecord {
   uid: string;
@@ -12,13 +13,25 @@ export interface ServerUserRecord {
   company: string;
   companyId: string;
   role: 'company_admin' | 'user' | 'billing_admin';
-  status: 'active' | 'blocked' | 'suspended';
+  status: 'active' | 'blocked' | 'suspended' | 'pending_verification';
   mobile?: string;
   failedLoginAttempts: number;
   lastFailedAttemptAt?: string;
   blockedAt?: string;
   blockedReason?: string;
+  emailVerificationToken?: string;
+  emailVerificationExpiresAt?: number;
+  emailVerifiedAt?: string;
   createdAt: string;
+}
+
+export interface EmailVerificationRecord {
+  email: string;
+  token: string;
+  otp: string;
+  expiresAt: number;
+  attempts: number;
+  createdAt: number;
 }
 
 export interface BlockedAccountRecord {
@@ -110,6 +123,9 @@ class ServerSecurityStore {
   private users: Map<string, ServerUserRecord> = new Map();
   private blockedAccounts: Map<string, BlockedAccountRecord> = new Map();
   private otpRecords: Map<string, OTPRecord> = new Map(); // key: email:date
+  private emailVerifications: Map<string, EmailVerificationRecord> = new Map(); // key: email.toLowerCase()
+  private verificationTokens: Map<string, string> = new Map(); // key: token -> email.toLowerCase()
+  private resendLimits: Map<string, { count: number; windowStart: number }> = new Map(); // key: email.toLowerCase()
   private activeResetOtps: Map<string, ActivePasswordResetOTP> = new Map(); // key: email.toLowerCase()
   private passwordResets: PasswordResetRecord[] = [];
   private securityEvents: SecurityEventRecord[] = [];
@@ -200,16 +216,26 @@ class ServerSecurityStore {
     }
   }
 
-  public registerUser(user: {
-    uid: string;
-    email: string;
-    password: string;
-    displayName: string;
-    company: string;
-    companyId: string;
-    role?: 'company_admin' | 'user' | 'billing_admin';
-    mobile?: string;
-  }): { success: boolean; error?: string; user?: ServerUserRecord } {
+  public registerUser(
+    user: {
+      uid: string;
+      email: string;
+      password: string;
+      displayName: string;
+      company: string;
+      companyId: string;
+      role?: 'company_admin' | 'user' | 'billing_admin';
+      mobile?: string;
+    },
+    options?: { skipVerification?: boolean; origin?: string }
+  ): {
+    success: boolean;
+    error?: string;
+    user?: ServerUserRecord;
+    verificationToken?: string;
+    verificationOtp?: string;
+    isVerificationRequired?: boolean;
+  } {
     const cleanEmail = user.email.trim().toLowerCase();
     const cleanUid = user.uid.trim().toLowerCase();
     const cleanMobile = user.mobile ? user.mobile.replace(/[^0-9+]/g, '') : undefined;
@@ -248,6 +274,14 @@ class ServerSecurityStore {
     }
 
     const salt = `fr8x_salt_${Date.now()}`;
+    const isVerificationRequired = !options?.skipVerification;
+    const initialStatus = isVerificationRequired ? 'pending_verification' : 'active';
+
+    // Generate cryptographic email verification token and 6-digit OTP
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationOtp = crypto.randomInt(100_000, 999_999).toString();
+    const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
     const record: ServerUserRecord = {
       uid: user.uid,
       email: user.email,
@@ -257,17 +291,251 @@ class ServerSecurityStore {
       company: user.company,
       companyId: user.companyId,
       role: user.role || 'company_admin',
-      status: 'active',
+      status: initialStatus,
       mobile: user.mobile,
       failedLoginAttempts: 0,
+      emailVerificationToken: isVerificationRequired ? verificationToken : undefined,
+      emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
+      emailVerifiedAt: !isVerificationRequired ? new Date().toISOString() : undefined,
       createdAt: new Date().toISOString(),
     };
+
     this.users.set(cleanUid, record);
     this.users.set(cleanEmail, record);
+
+    if (isVerificationRequired) {
+      this.emailVerifications.set(cleanEmail, {
+        email: cleanEmail,
+        token: verificationToken,
+        otp: verificationOtp,
+        expiresAt: tokenExpiresAt,
+        attempts: 0,
+        createdAt: Date.now(),
+      });
+      this.verificationTokens.set(verificationToken, cleanEmail);
+
+      const origin = options?.origin || 'https://con.fr8x.in';
+      const verificationLink = `${origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+      // Dispatch verification email via EmailService (password@fr8x.in)
+      EmailService.sendVerificationEmail({
+        to: cleanEmail,
+        verificationLink,
+        token: verificationToken,
+        otpCode: verificationOtp,
+        expiryMinutes: 1440,
+      }).catch((err) => {
+        console.error('[Security] Failed to dispatch verification email:', err.message);
+      });
+    }
 
     return {
       success: true,
       user: record,
+      verificationToken: isVerificationRequired ? verificationToken : undefined,
+      verificationOtp: isVerificationRequired ? verificationOtp : undefined,
+      isVerificationRequired,
+    };
+  }
+
+  /**
+   * Validates email verification via token (URL click) or 6-digit OTP
+   */
+  public verifyEmailToken(params: {
+    token?: string;
+    otp?: string;
+    email?: string;
+  }): { success: boolean; error?: string; message?: string; user?: ServerUserRecord } {
+    let cleanEmail = (params.email || '').trim().toLowerCase();
+
+    // If token provided without email, look up email
+    if (params.token && !cleanEmail) {
+      const mapped = this.verificationTokens.get(params.token.trim());
+      if (mapped) cleanEmail = mapped;
+    }
+
+    if (!cleanEmail) {
+      return { success: false, error: 'Email address or valid token is required for verification.' };
+    }
+
+    const verificationRecord = this.emailVerifications.get(cleanEmail);
+    const user = this.users.get(cleanEmail);
+
+    if (!user) {
+      return { success: false, error: 'User account not found.' };
+    }
+
+    if (user.status === 'active') {
+      return {
+        success: true,
+        message: 'Account is already verified and active. Please sign in.',
+        user,
+      };
+    }
+
+    if (!verificationRecord) {
+      // Check if token matches stored token on user record
+      if (
+        params.token &&
+        user.emailVerificationToken === params.token.trim() &&
+        user.emailVerificationExpiresAt &&
+        user.emailVerificationExpiresAt > Date.now()
+      ) {
+        user.status = 'active';
+        user.emailVerifiedAt = new Date().toISOString();
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpiresAt = undefined;
+        return {
+          success: true,
+          message: 'Email successfully verified! Your account is now active.',
+          user,
+        };
+      }
+      return {
+        success: false,
+        error: 'No active verification record found or verification code has expired. Please request a new verification code.',
+      };
+    }
+
+    if (Date.now() > verificationRecord.expiresAt) {
+      this.emailVerifications.delete(cleanEmail);
+      if (verificationRecord.token) this.verificationTokens.delete(verificationRecord.token);
+      return {
+        success: false,
+        error: 'Verification code or token has expired. Please request a new code.',
+      };
+    }
+
+    // Check match: token or OTP
+    let isMatch = false;
+    if (params.token && params.token.trim() === verificationRecord.token) {
+      isMatch = true;
+    } else if (params.otp && params.otp.trim() === verificationRecord.otp) {
+      isMatch = true;
+    }
+
+    if (!isMatch) {
+      verificationRecord.attempts += 1;
+      if (verificationRecord.attempts >= 5) {
+        this.emailVerifications.delete(cleanEmail);
+        if (verificationRecord.token) this.verificationTokens.delete(verificationRecord.token);
+        return {
+          success: false,
+          error: 'Maximum verification attempts exceeded. Please request a new code.',
+        };
+      }
+      return {
+        success: false,
+        error: 'Invalid verification token or 6-digit code. Please check your email.',
+      };
+    }
+
+    // Success: activate user, clear verification tokens
+    user.status = 'active';
+    user.emailVerifiedAt = new Date().toISOString();
+    user.emailVerificationToken = undefined;
+    user.emailVerificationExpiresAt = undefined;
+
+    this.emailVerifications.delete(cleanEmail);
+    this.verificationTokens.delete(verificationRecord.token);
+
+    this.addSecurityEvent({
+      type: 'ACCOUNT_UNBLOCKED',
+      severity: 'INFO',
+      userEmail: cleanEmail,
+      uid: user.uid,
+      company: user.company,
+      details: 'Account successfully verified via email confirmation.',
+    });
+
+    return {
+      success: true,
+      message: 'Email verified successfully! Your account is now active.',
+      user,
+    };
+  }
+
+  /**
+   * Resend verification email with rate-limiting (max 3 resends per hour)
+   */
+  public resendEmailVerification(
+    email: string,
+    origin = 'https://con.fr8x.in'
+  ): { success: boolean; message: string; remainingAttempts?: number } {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = this.users.get(cleanEmail);
+
+    // Rate limiting
+    const now = Date.now();
+    const rateLimit = this.resendLimits.get(cleanEmail) || { count: 0, windowStart: now };
+    const ONE_HOUR = 60 * 60 * 1000;
+
+    if (now - rateLimit.windowStart > ONE_HOUR) {
+      rateLimit.count = 0;
+      rateLimit.windowStart = now;
+    }
+
+    const MAX_RESENDS = 3;
+    if (rateLimit.count >= MAX_RESENDS) {
+      return {
+        success: false,
+        message: 'Resend limit reached (max 3 per hour). Please try again later or check your spam folder.',
+        remainingAttempts: 0,
+      };
+    }
+
+    rateLimit.count += 1;
+    this.resendLimits.set(cleanEmail, rateLimit);
+
+    if (user && user.status === 'pending_verification') {
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationOtp = crypto.randomInt(100_000, 999_999).toString();
+      const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+
+      user.emailVerificationToken = verificationToken;
+      user.emailVerificationExpiresAt = tokenExpiresAt;
+
+      // Clean up old token if mapped
+      const existing = this.emailVerifications.get(cleanEmail);
+      if (existing?.token) this.verificationTokens.delete(existing.token);
+
+      this.emailVerifications.set(cleanEmail, {
+        email: cleanEmail,
+        token: verificationToken,
+        otp: verificationOtp,
+        expiresAt: tokenExpiresAt,
+        attempts: 0,
+        createdAt: now,
+      });
+      this.verificationTokens.set(verificationToken, cleanEmail);
+
+      const verificationLink = `${origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+
+      EmailService.sendVerificationEmail({
+        to: cleanEmail,
+        verificationLink,
+        token: verificationToken,
+        otpCode: verificationOtp,
+        expiryMinutes: 1440,
+      }).catch((err) => {
+        console.error('[Security] Failed to resend verification email:', err.message);
+      });
+    }
+
+    // Always generic message to prevent enumeration
+    return {
+      success: true,
+      message: 'If an unverified account matches this email, a new verification link and code have been sent.',
+      remainingAttempts: MAX_RESENDS - rateLimit.count,
+    };
+  }
+
+  public getVerificationStatus(email: string): { isVerified: boolean; isPending: boolean } {
+    const user = this.users.get(email.trim().toLowerCase());
+    if (!user) return { isVerified: false, isPending: false };
+    return {
+      isVerified: user.status === 'active',
+      isPending: user.status === 'pending_verification',
     };
   }
 
@@ -283,6 +551,7 @@ class ServerSecurityStore {
     success: boolean;
     user?: ServerUserRecord;
     isBlocked?: boolean;
+    isPendingVerification?: boolean;
     passwordResetRequired?: boolean;
     email?: string;
     maskedEmail?: string;
@@ -303,6 +572,17 @@ class ServerSecurityStore {
       return {
         success: false,
         message: 'Invalid User ID / email or password.',
+      };
+    }
+
+    // Check if account is awaiting email verification
+    if (user.status === 'pending_verification') {
+      return {
+        success: false,
+        isPendingVerification: true,
+        email: user.email,
+        maskedEmail: maskEmail(user.email),
+        message: `Account is pending email verification. Please check your registered corporate email (${maskEmail(user.email)}) for your verification link and 6-digit code.`,
       };
     }
 
@@ -570,51 +850,19 @@ class ServerSecurityStore {
   }
 
   /**
-   * Helper to dispatch secure password reset email via Zoho SMTP / ZeptoMail
+   * Helper to dispatch secure password reset email via EmailService (password@fr8x.in)
    */
   private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string) {
-    sendSystemEmail({
-      recipient: user.email,
-      subject: 'FR8X Security Alert: Password Reset OTP (3 Failed Login Attempts)',
-      templateId: 'tpl-sec-password-reset-otp',
-      templateName: 'Security Password Reset OTP',
-      htmlBody: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
-          <div style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
-            <h2 style="color: #0f172a; margin: 0; font-size: 18px;">FR8X Workspace Security Alert</h2>
-            <span style="font-size: 11px; color: #64748b;">Automated Server Security Dispatch</span>
-          </div>
-          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
-            Hello <strong>${user.displayName}</strong> (${user.company}),
-          </p>
-          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
-            Our security engine detected <strong>3 consecutive invalid password attempts</strong> on your account from IP address <code>${ip}</code>.
-          </p>
-          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
-            To protect your freight organization and comply with our One User, One Login policy, your account has been temporarily locked and requires a verified password reset.
-          </p>
-          <div style="margin: 20px 0; padding: 16px; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; text-align: center;">
-            <div style="font-size: 11px; color: #0369a1; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">
-              Your 6-Digit Password Reset OTP
-            </div>
-            <div style="margin: 8px 0; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #0369a1;">
-              ${otp}
-            </div>
-            <div style="font-size: 11px; color: #64748b;">
-              Valid for 15 minutes. Enter this code on the login page along with your new password.
-            </div>
-          </div>
-          <p style="color: #64748b; font-size: 12px; line-height: 1.4;">
-            If you did not initiate these attempts, please contact your company administrator or FR8X Trust &amp; Safety immediately at <a href="mailto:security@fr8x.in" style="color: #0284c7;">security@fr8x.in</a>.
-          </p>
-          <div style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center;">
-            &copy; 2026 FR8X Platform Technologies. Protected under Enterprise Security Infrastructure.
-          </div>
-        </div>
-      `,
-      actorUid: user.uid,
+    const origin = 'https://con.fr8x.in';
+    const resetLink = `${origin}/godfather/reset-password?email=${encodeURIComponent(user.email)}`;
+
+    EmailService.sendPasswordResetEmail({
+      to: user.email,
+      otpCode: otp,
+      resetLink,
+      expiryMinutes: 15,
     }).catch((err) => {
-      console.error('[Security] Failed to dispatch password reset OTP email:', err);
+      console.error('[Security] Failed to dispatch password reset OTP email:', err.message);
     });
   }
 
@@ -740,6 +988,14 @@ class ServerSecurityStore {
       company: user.company,
       details: 'Password reset completed and account unblocked via server-verified OTP.',
       ipAddress: ip,
+    });
+
+    // Dispatch confirmation notice via password@fr8x.in
+    EmailService.sendPasswordChangedEmail({
+      to: user.email,
+      ipAddress: ip,
+    }).catch((err) => {
+      console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
     });
 
     return {

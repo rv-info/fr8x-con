@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test:auth-email": "npx -y tsx scripts/test-auth-email-system.ts"
   },
   "dependencies": {
     "clsx": "^2.1.1",

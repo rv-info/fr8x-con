@@ -239,26 +239,36 @@ export async function checkSmtpHealth(): Promise<{
   }
 }
 
+import { EmailService } from '@/lib/email-service';
+
+/**
+ * Helper to dispatch email verification email
+ * Sender: password@fr8x.in
+ */
+export async function sendVerificationEmail(
+  recipient: string,
+  verificationLink?: string,
+  otpCode?: string,
+  correlationId?: string
+) {
+  const corrId = correlationId || generateCorrelationId();
+  return EmailService.sendVerificationEmail({
+    to: recipient,
+    verificationLink,
+    otpCode,
+    correlationId: corrId,
+  });
+}
+
 /**
  * Helper to dispatch 6-digit MFA / OTP Challenge Email
  * Sender: password@fr8x.in
  */
 export async function sendOtpEmail(recipient: string, otpCode: string, correlationId?: string) {
   const corrId = correlationId || generateCorrelationId();
-  const tmpl = renderOtpChallengeEmail({
-    recipient,
-    otpCode,
-    expiryMinutes: 10,
-    correlationId: corrId,
-  });
-
-  return sendEmail({
-    fromType: 'PASSWORD',
+  return EmailService.sendOtpEmail({
     to: recipient,
-    subject: tmpl.subject,
-    message: tmpl.text,
-    htmlMessage: tmpl.html,
-    event: 'PASSWORD_OTP',
+    otpCode,
     correlationId: corrId,
   });
 }
@@ -269,25 +279,15 @@ export async function sendOtpEmail(recipient: string, otpCode: string, correlati
  */
 export async function sendPasswordResetOtpEmail(
   recipient: string,
-  otpCode: string,
+  otpCode?: string,
   correlationId?: string,
   resetLink?: string
 ) {
   const corrId = correlationId || generateCorrelationId();
-  const tmpl = renderPasswordResetEmail({
-    recipient,
+  return EmailService.sendPasswordResetEmail({
+    to: recipient,
     otpCode,
     resetLink,
-    expiryMinutes: 15,
-  });
-
-  return sendEmail({
-    fromType: 'PASSWORD',
-    to: recipient,
-    subject: tmpl.subject,
-    message: tmpl.text,
-    htmlMessage: tmpl.html,
-    event: 'PASSWORD_RESET',
     correlationId: corrId,
   });
 }
@@ -302,44 +302,31 @@ export async function sendPasswordChangedConfirmation(
   ipAddress?: string
 ) {
   const corrId = correlationId || generateCorrelationId();
-  const tmpl = renderPasswordChangedEmail({
-    recipient,
-    changedAt: new Date().toUTCString(),
-    ipAddress,
-  });
-
-  return sendEmail({
-    fromType: 'PASSWORD',
+  return EmailService.sendPasswordChangedEmail({
     to: recipient,
-    subject: tmpl.subject,
-    message: tmpl.text,
-    htmlMessage: tmpl.html,
-    event: 'PASSWORD_CHANGED',
     correlationId: corrId,
+    ipAddress,
   });
 }
 
 /**
- * Helper to dispatch Security Event / Account Lockout Alert to tech@fr8x.in / support@fr8x.in
- * Sender: support@fr8x.in
+ * Helper to dispatch Security Event / Account Lockout Alert
+ * Sender: password@fr8x.in
  */
-export async function sendSecurityAlertEmail(subject: string, details: string, correlationId?: string) {
+export async function sendSecurityAlertEmail(
+  subject: string,
+  details: string,
+  correlationId?: string,
+  ipAddress?: string
+) {
   const corrId = correlationId || generateCorrelationId();
-  const recipient = process.env.ZOHO_SECURITY_EMAIL || 'tech@fr8x.in';
-  const tmpl = renderSecurityAlertEmail({
+  const recipient = process.env.ZOHO_SECURITY_EMAIL || 'support@fr8x.in';
+  return EmailService.sendSecurityAlertEmail({
+    to: recipient,
     subject,
     details,
     correlationId: corrId,
-  });
-
-  return sendEmail({
-    fromType: 'SUPPORT',
-    to: recipient,
-    subject: tmpl.subject,
-    message: tmpl.text,
-    htmlMessage: tmpl.html,
-    event: 'LOGIN_SECURITY',
-    correlationId: corrId,
+    ipAddress,
   });
 }
 
@@ -355,20 +342,11 @@ export async function sendSupportRequestEmail(params: {
   correlationId?: string;
 }) {
   const corrId = params.correlationId || generateCorrelationId();
-  const tmpl = renderSupportEmail({
-    recipient: params.recipient,
+  return EmailService.sendSupportEmail({
+    to: params.recipient,
     subject: params.subject,
     message: params.message,
     ticketId: params.ticketId,
-  });
-
-  return sendEmail({
-    fromType: 'SUPPORT',
-    to: params.recipient,
-    subject: tmpl.subject,
-    message: tmpl.text,
-    htmlMessage: tmpl.html,
-    event: 'SUPPORT_REQUEST',
     correlationId: corrId,
   });
 }
