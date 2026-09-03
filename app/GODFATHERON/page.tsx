@@ -57,6 +57,10 @@ export default function DedicatedGodfatherLoginPage() {
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('tech@fr8x.in');
   const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotConfirmPassword, setForgotConfirmPassword] = useState('');
+  const [showForgotNewPass, setShowForgotNewPass] = useState(false);
+  const [showForgotConfirmPass, setShowForgotConfirmPass] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotTimer, setForgotTimer] = useState(0);
   const [forgotDemoCode, setForgotDemoCode] = useState<string | null>(null);
@@ -173,29 +177,43 @@ export default function DedicatedGodfatherLoginPage() {
     }
   };
 
-  /* ── Forgot Password: Verify OTP ── */
-  const handleVerifyRecoveryOtp = async () => {
+  /* ── Forgot Password: Reset Password with OTP ── */
+  const handleResetPassword = async () => {
     setErrorMessage('');
     if (forgotOtp.length < 6) {
       setErrorMessage('Please enter the full 6-digit recovery code.');
       return;
     }
+    if (!forgotNewPassword || forgotNewPassword.length < 8) {
+      setErrorMessage('New passphrase must be at least 8 characters long.');
+      return;
+    }
+    if (forgotNewPassword !== forgotConfirmPassword) {
+      setErrorMessage('New passphrase and confirmation do not match.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const res = await fetch('/api/godfather/auth/verify-otp', {
+      const res = await fetch('/api/godfather/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail, otp: forgotOtp }),
+        body: JSON.stringify({
+          email: forgotEmail,
+          otp: forgotOtp,
+          newPassword: forgotNewPassword,
+          confirmPassword: forgotConfirmPassword,
+        }),
       });
-      if (res.ok) {
+      const data = await res.json();
+      if (res.ok && data.success) {
         setForgotSuccess(true);
+        setPassword(forgotNewPassword);
       } else {
-        const data = await res.json();
-        setErrorMessage(data.error || 'Invalid or expired recovery code.');
+        setErrorMessage(data.error || 'Password reset failed. Please verify your code.');
       }
     } catch {
-      setErrorMessage('Verification request failed.');
+      setErrorMessage('Password reset request failed. Please check network connectivity.');
     } finally {
       setIsSubmitting(false);
     }
@@ -349,15 +367,17 @@ export default function DedicatedGodfatherLoginPage() {
                   <div className="gfl-recovery-success-icon">
                     <CheckCircle2 className="w-8 h-8 text-green-600" />
                   </div>
-                  <h3 className="gfl-recovery-title">Identity Confirmed</h3>
+                  <h3 className="gfl-recovery-title">Passphrase Reset Complete</h3>
                   <p className="gfl-recovery-desc">
-                    Your operator identity has been verified via email OTP. You may now sign in using your authorized passphrase.
+                    Your operator credentials have been updated successfully and an audit confirmation has been dispatched to your mailbox. You may now sign in using your new passphrase.
                   </p>
                   <button
                     type="button"
                     onClick={() => {
                       setMode('login');
                       setForgotOtp('');
+                      setForgotNewPassword('');
+                      setForgotConfirmPassword('');
                       setForgotSent(false);
                       setForgotSuccess(false);
                       setErrorMessage('');
@@ -445,6 +465,48 @@ export default function DedicatedGodfatherLoginPage() {
                         />
                       </div>
 
+                      <div className="gfl-clean-field">
+                        <label className="gfl-clean-label">New Passphrase</label>
+                        <div className="gfl-clean-input-box">
+                          <Lock className="gfl-clean-input-icon" />
+                          <input
+                            type={showForgotNewPass ? 'text' : 'password'}
+                            value={forgotNewPassword}
+                            onChange={(e) => setForgotNewPassword(e.target.value)}
+                            placeholder="Minimum 8 characters"
+                            className="gfl-clean-input gfl-clean-input-pr"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotNewPass(!showForgotNewPass)}
+                            className="gfl-clean-eye-btn"
+                          >
+                            {showForgotNewPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="gfl-clean-field">
+                        <label className="gfl-clean-label">Confirm New Passphrase</label>
+                        <div className="gfl-clean-input-box">
+                          <Lock className="gfl-clean-input-icon" />
+                          <input
+                            type={showForgotConfirmPass ? 'text' : 'password'}
+                            value={forgotConfirmPassword}
+                            onChange={(e) => setForgotConfirmPassword(e.target.value)}
+                            placeholder="Re-enter new passphrase"
+                            className="gfl-clean-input gfl-clean-input-pr"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotConfirmPass(!showForgotConfirmPass)}
+                            className="gfl-clean-eye-btn"
+                          >
+                            {showForgotConfirmPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+
                       <div className="gfl-recovery-actions">
                         <button
                           type="button"
@@ -459,19 +521,19 @@ export default function DedicatedGodfatherLoginPage() {
 
                       <button
                         type="button"
-                        disabled={forgotOtp.length < 6 || isSubmitting}
-                        onClick={handleVerifyRecoveryOtp}
+                        disabled={forgotOtp.length < 6 || !forgotNewPassword || !forgotConfirmPassword || isSubmitting}
+                        onClick={handleResetPassword}
                         className="gfl-clean-btn gfl-clean-btn-primary"
                       >
                         {isSubmitting ? (
                           <>
                             <span className="gfl-clean-spinner" />
-                            <span>Verifying…</span>
+                            <span>Resetting Passphrase…</span>
                           </>
                         ) : (
                           <>
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>Verify Recovery Code</span>
+                            <span>Reset Passphrase</span>
                           </>
                         )}
                       </button>

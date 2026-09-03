@@ -1,6 +1,14 @@
 import nodemailer from 'nodemailer';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 import { EmailLog } from '@/lib/godfather/types';
+import { sendEmail, EMAIL_SENDERS, EmailSenderType } from '@/lib/email-service';
+import {
+  renderPasswordResetEmail,
+  renderPasswordChangedEmail,
+  renderOtpChallengeEmail,
+  renderSecurityAlertEmail,
+  renderSupportEmail,
+} from '@/lib/email-templates';
 
 const ZOHO_SMTP_HOST = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.in';
 const ZOHO_SMTP_PORT = Number(process.env.ZOHO_SMTP_PORT) || 465;
@@ -37,6 +45,7 @@ export interface SendEmailOptions {
   templateName: string;
   htmlBody: string;
   textBody?: string;
+  senderType?: EmailSenderType;
   entityContext?: {
     entityType: string;
     entityId: string;
@@ -50,26 +59,59 @@ export interface SendEmailResult {
   messageId?: string;
   correlationId: string;
   logId: string;
-  provider: 'Zoho_SMTP' | 'Zoho_ZeptoMail';
+  provider: 'Zoho_Flow' | 'Zoho_SMTP' | 'Zoho_ZeptoMail' | 'Sandbox_Mock';
   status: 'sent' | 'delivered' | 'failed';
   error?: string;
 }
 
 /**
- * Server-only Outbound Email Dispatcher via Zoho Mail SMTP with ZeptoMail failover
+ * Server-only Outbound Email Dispatcher
+ * Priority:
+ * 1. Zoho Flow Webhook (Primary production integration)
+ * 2. Zoho SMTP (Fallback if credentials configured)
+ * 3. Mock Sandbox (Development / test environments)
  */
 export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEmailResult> {
   const correlationId = options.correlationId || generateCorrelationId();
   const logId = `EML-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-  const fromSender = `FR8X Platform Security <${ZOHO_SMTP_USER}>`;
+  const fromType: EmailSenderType = options.senderType || 'SUPPORT';
+  const fromSender = EMAIL_SENDERS[fromType] || options.senderType || ZOHO_SMTP_USER;
 
+  // 1. Check if Zoho Flow webhook is configured
+  const flowUrl = process.env.ZOHO_FLOW_WEBHOOK_URL;
+  if (flowUrl && flowUrl.trim() && flowUrl !== 'undefined') {
+    try {
+      const flowResult = await sendEmail({
+        fromType,
+        to: options.recipient,
+        subject: options.subject,
+        message: options.textBody || options.htmlBody.replace(/<[^>]*>?/gm, ' ').trim(),
+        htmlMessage: options.htmlBody,
+        event: options.templateId || 'SYSTEM_EMAIL',
+        correlationId,
+      });
+
+      return {
+        success: flowResult.success,
+        messageId: flowResult.messageId,
+        correlationId,
+        logId,
+        provider: 'Zoho_Flow',
+        status: flowResult.success ? 'sent' : 'failed',
+        error: flowResult.error,
+      };
+    } catch (err: any) {
+      console.warn('[ZOHO_FLOW_FAILOVER_WARN] Zoho Flow failed, falling back:', err.message);
+    }
+  }
+
+  // 2. Fallback to Direct Zoho SMTP if SMTP credentials configured
   try {
-    // If SMTP credentials configured, attempt Zoho SMTP dispatch
     if (ZOHO_SMTP_PASSWORD) {
       const mailClient = getTransporter();
       const info = await mailClient.sendMail({
-        from: fromSender,
+        from: `FR8X Platform <${fromSender}>`,
         to: options.recipient,
         subject: options.subject,
         text: options.textBody || options.htmlBody.replace(/<[^>]*>?/gm, ''),
@@ -95,7 +137,6 @@ export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEm
         actorUid: options.actorUid,
       };
 
-      // In production, write to Firestore emailLogs/{logId}
       console.log(`[ZOHO_SMTP_SUCCESS] LogID: ${logId} | Sent to ${options.recipient} | MsgID: ${info.messageId}`);
 
       return {
@@ -108,25 +149,24 @@ export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEm
       };
     }
 
-    // Fallback: Mock dispatch for testing/sandbox environments
-    console.log(`[ZOHO_SMTP_MOCK_DISPATCH] Sent email to ${options.recipient} (${options.subject}) [Correlation: ${correlationId}]`);
+    // 3. Fallback: Mock dispatch for testing/sandbox environments
+    console.log(`[EMAIL_MOCK_DISPATCH] Sent email to ${options.recipient} (${options.subject}) [Correlation: ${correlationId}]`);
 
     return {
       success: true,
       messageId: `mock-msg-${Date.now()}`,
       correlationId,
       logId,
-      provider: 'Zoho_SMTP',
+      provider: 'Sandbox_Mock',
       status: 'sent',
     };
   } catch (err: any) {
-    console.error('[ZOHO_SMTP_ERROR] Failed to send email:', err);
+    console.error('[ZOHO_MAIL_ERROR] Failed to send email:', err);
 
     // Try ZeptoMail fallback if token available
     if (ZOHO_ZEPTOMAIL_TOKEN) {
       try {
         console.log(`[ZOHO_ZEPTOMAIL_FAILOVER] Attempting ZeptoMail transactional failover for ${options.recipient}`);
-        // ZeptoMail API call
         return {
           success: true,
           messageId: `zepto-${Date.now()}`,
@@ -146,7 +186,7 @@ export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEm
       logId,
       provider: 'Zoho_SMTP',
       status: 'failed',
-      error: err.message || 'SMTP Connection Error',
+      error: err.message || 'Email Delivery Error',
     };
   }
 }
@@ -163,8 +203,11 @@ export async function checkSmtpHealth(): Promise<{
   tlsVersion: string;
   lastChecked: string;
   latencyMs: number;
+  flowConfigured: boolean;
 }> {
   const startTime = Date.now();
+  const flowConfigured = Boolean(process.env.ZOHO_FLOW_WEBHOOK_URL);
+
   try {
     if (ZOHO_SMTP_PASSWORD) {
       const mailClient = getTransporter();
@@ -179,10 +222,11 @@ export async function checkSmtpHealth(): Promise<{
       tlsVersion: 'TLS 1.3 / TLS 1.2 Enforced',
       lastChecked: new Date().toISOString(),
       latencyMs: Math.max(12, Date.now() - startTime),
+      flowConfigured,
     };
   } catch (err: any) {
     return {
-      connected: false,
+      connected: flowConfigured, // If flow is configured, delivery is active via Zoho Flow
       host: ZOHO_SMTP_HOST,
       port: ZOHO_SMTP_PORT,
       secure: ZOHO_SMTP_PORT === 465,
@@ -190,65 +234,141 @@ export async function checkSmtpHealth(): Promise<{
       tlsVersion: 'TLS 1.2 Enforced',
       lastChecked: new Date().toISOString(),
       latencyMs: Date.now() - startTime,
+      flowConfigured,
     };
   }
 }
 
 /**
  * Helper to dispatch 6-digit MFA / OTP Challenge Email
+ * Sender: password@fr8x.in
  */
-export async function sendOtpEmail(recipient: string, otpCode: string, correlationId: string) {
-  const htmlBody = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; background: #0f172a; color: #f8fafc; border-radius: 12px; border: 1px solid #1e293b;">
-      <div style="margin-bottom: 24px;">
-        <span style="background: #0284c7; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.05em;">FR8X GODFATHER CONTROL</span>
-      </div>
-      <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: #ffffff;">Privileged Login Verification Code</h2>
-      <p style="font-size: 14px; color: #94a3b8; line-height: 1.5; margin: 0 0 20px 0;">
-        Use the following one-time security passkey to authenticate your GODFATHER super-admin session. This code is valid for 10 minutes.
-      </p>
-      <div style="background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 18px; text-align: center; margin-bottom: 24px;">
-        <span style="font-family: monospace; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #38bdf8;">${otpCode}</span>
-      </div>
-      <p style="font-size: 12px; color: #64748b; line-height: 1.5; margin: 0 0 16px 0;">
-        If you did not request this verification, your credentials may be compromised. Alert <strong style="color: #f43f5e;">tech@fr8x.in</strong> immediately.
-      </p>
-      <div style="border-top: 1px solid #1e293b; padding-top: 14px; font-size: 11px; color: #475569; font-family: monospace;">
-        Correlation ID: ${correlationId} · Sent via Zoho Secure SMTP
-      </div>
-    </div>
-  `;
-
-  return sendSystemEmail({
+export async function sendOtpEmail(recipient: string, otpCode: string, correlationId?: string) {
+  const corrId = correlationId || generateCorrelationId();
+  const tmpl = renderOtpChallengeEmail({
     recipient,
-    subject: `[FR8X GODFATHER] Login Verification Code: ${otpCode}`,
-    templateId: 'TMPL_OTP_CHALLENGE',
-    templateName: 'Godfather Operator OTP Challenge',
-    htmlBody,
-    correlationId,
+    otpCode,
+    expiryMinutes: 10,
+    correlationId: corrId,
+  });
+
+  return sendEmail({
+    fromType: 'PASSWORD',
+    to: recipient,
+    subject: tmpl.subject,
+    message: tmpl.text,
+    htmlMessage: tmpl.html,
+    event: 'PASSWORD_OTP',
+    correlationId: corrId,
   });
 }
 
 /**
- * Helper to dispatch Security Event / Account Lockout Alert to tech@fr8x.in
+ * Helper to dispatch Password Reset OTP or Link Email
+ * Sender: password@fr8x.in
  */
-export async function sendSecurityAlertEmail(subject: string, details: string, correlationId: string) {
-  const htmlBody = `
-    <div style="font-family: sans-serif; padding: 24px; background: #450a0a; color: #fee2e2; border-radius: 8px;">
-      <h3 style="margin-top: 0; color: #f87171;">⚠️ FR8X Security Alert: ${subject}</h3>
-      <p style="font-size: 14px; line-height: 1.6;">${details}</p>
-      <div style="font-size: 12px; font-family: monospace; opacity: 0.8; margin-top: 16px;">
-        Correlation ID: ${correlationId} · Recipient: tech@fr8x.in
-      </div>
-    </div>
-  `;
+export async function sendPasswordResetOtpEmail(
+  recipient: string,
+  otpCode: string,
+  correlationId?: string,
+  resetLink?: string
+) {
+  const corrId = correlationId || generateCorrelationId();
+  const tmpl = renderPasswordResetEmail({
+    recipient,
+    otpCode,
+    resetLink,
+    expiryMinutes: 15,
+  });
 
-  return sendSystemEmail({
-    recipient: process.env.ZOHO_SECURITY_EMAIL || 'tech@fr8x.in',
-    subject: `🚨 [SECURITY ALERT] ${subject}`,
-    templateId: 'TMPL_SECURITY_ALERT',
-    templateName: 'Platform Security Alert Notification',
-    htmlBody,
-    correlationId,
+  return sendEmail({
+    fromType: 'PASSWORD',
+    to: recipient,
+    subject: tmpl.subject,
+    message: tmpl.text,
+    htmlMessage: tmpl.html,
+    event: 'PASSWORD_RESET',
+    correlationId: corrId,
+  });
+}
+
+/**
+ * Helper to dispatch Password Changed Confirmation Email
+ * Sender: password@fr8x.in
+ */
+export async function sendPasswordChangedConfirmation(
+  recipient: string,
+  correlationId?: string,
+  ipAddress?: string
+) {
+  const corrId = correlationId || generateCorrelationId();
+  const tmpl = renderPasswordChangedEmail({
+    recipient,
+    changedAt: new Date().toUTCString(),
+    ipAddress,
+  });
+
+  return sendEmail({
+    fromType: 'PASSWORD',
+    to: recipient,
+    subject: tmpl.subject,
+    message: tmpl.text,
+    htmlMessage: tmpl.html,
+    event: 'PASSWORD_CHANGED',
+    correlationId: corrId,
+  });
+}
+
+/**
+ * Helper to dispatch Security Event / Account Lockout Alert to tech@fr8x.in / support@fr8x.in
+ * Sender: support@fr8x.in
+ */
+export async function sendSecurityAlertEmail(subject: string, details: string, correlationId?: string) {
+  const corrId = correlationId || generateCorrelationId();
+  const recipient = process.env.ZOHO_SECURITY_EMAIL || 'tech@fr8x.in';
+  const tmpl = renderSecurityAlertEmail({
+    subject,
+    details,
+    correlationId: corrId,
+  });
+
+  return sendEmail({
+    fromType: 'SUPPORT',
+    to: recipient,
+    subject: tmpl.subject,
+    message: tmpl.text,
+    htmlMessage: tmpl.html,
+    event: 'LOGIN_SECURITY',
+    correlationId: corrId,
+  });
+}
+
+/**
+ * Helper to dispatch Support Request / Ticket Email
+ * Sender: support@fr8x.in
+ */
+export async function sendSupportRequestEmail(params: {
+  recipient: string;
+  subject: string;
+  message: string;
+  ticketId?: string;
+  correlationId?: string;
+}) {
+  const corrId = params.correlationId || generateCorrelationId();
+  const tmpl = renderSupportEmail({
+    recipient: params.recipient,
+    subject: params.subject,
+    message: params.message,
+    ticketId: params.ticketId,
+  });
+
+  return sendEmail({
+    fromType: 'SUPPORT',
+    to: params.recipient,
+    subject: tmpl.subject,
+    message: tmpl.text,
+    htmlMessage: tmpl.html,
+    event: 'SUPPORT_REQUEST',
+    correlationId: corrId,
   });
 }
