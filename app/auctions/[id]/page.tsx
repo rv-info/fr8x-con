@@ -70,7 +70,7 @@ export default function BidRoomPage() {
   const auctionId = String(params.id || 'RA-2026-0842');
 
   const { auctions, submitBid } = useData();
-  const { format, availableCurrencies, getRateFromUSD, convertToUSD } = useCurrency();
+  const { format, availableCurrencies, getRateFromUSD, convertToUSD, lastUpdatedTime } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -79,8 +79,11 @@ export default function BidRoomPage() {
   // Active Tab: console | specs | terms | ledger | docs
   const [activeTab, setActiveTab] = useState<'console' | 'specs' | 'terms' | 'ledger' | 'docs'>('console');
 
-  // Currency & Tax State for Bidding Rate Matrix
+  // Granular Per-Charge-Head Currency States (Requirement: Currency with every charge head)
   const [biddingCurrency, setBiddingCurrency] = useState<string>('USD');
+  const [oceanCurrency, setOceanCurrency] = useState<string>('USD');
+  const [originCurrency, setOriginCurrency] = useState<string>('INR');
+  const [destCurrency, setDestCurrency] = useState<string>('EUR');
   const [taxOption, setTaxOption] = useState<'exempt_as_applicable' | 'tax_inclusive'>('exempt_as_applicable');
 
   // Routing Submission State (Requirement 1)
@@ -151,24 +154,32 @@ export default function BidRoomPage() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  // Row total calculation in selected input currency
-  const getRowUnitTotal = (r: ChargeRow) =>
-    r.oceanFreight +
-    r.surcharges +
-    r.originTransport +
-    r.originClearance +
-    r.originLocal +
-    r.destTransport +
-    r.destClearance +
-    r.destLocal;
+  // Live Exchange Rate Conversion Engine
+  const convertAmountToUSD = (amount: number, fromCurrency: string) => {
+    const rate = availableCurrencies[fromCurrency]?.rateFromUSD || 1;
+    return rate > 0 ? amount / rate : amount;
+  };
 
-  const getRowLineTotal = (r: ChargeRow) => getRowUnitTotal(r) * r.qty;
+  const convertUSDTo = (amountUSD: number, toCurrency: string) => {
+    const rate = availableCurrencies[toCurrency]?.rateFromUSD || 1;
+    return amountUSD * rate;
+  };
 
-  const grandTotalInputCurrency = chargeRows.reduce((sum, r) => sum + getRowLineTotal(r), 0);
+  // Row unit total in USD combining granular charge head currencies
+  const getRowUnitTotalUSD = (r: ChargeRow) => {
+    const ocean = convertAmountToUSD(r.oceanFreight + r.surcharges, oceanCurrency);
+    const origin = convertAmountToUSD(r.originTransport + r.originClearance + r.originLocal, originCurrency);
+    const dest = convertAmountToUSD(r.destTransport + r.destClearance + r.destLocal, destCurrency);
+    return ocean + origin + dest;
+  };
 
-  // Convert total to USD as per live exchange rate (Requirement 1)
-  const currentFxRate = getRateFromUSD(biddingCurrency);
-  const grandTotalUSD = biddingCurrency === 'USD' ? grandTotalInputCurrency : grandTotalInputCurrency / (currentFxRate || 1);
+  const getRowLineTotalUSD = (r: ChargeRow) => getRowUnitTotalUSD(r) * r.qty;
+
+  // Multi-Currency Grand Totals as per live exchange rate engine
+  const grandTotalUSD = chargeRows.reduce((sum, r) => sum + getRowLineTotalUSD(r), 0);
+  const grandTotalEUR = convertUSDTo(grandTotalUSD, 'EUR');
+  const grandTotalGBP = convertUSDTo(grandTotalUSD, 'GBP');
+  const grandTotalINR = convertUSDTo(grandTotalUSD, 'INR');
 
   // Reverse Auction L1 / L2 / L3 Logic (Requirement 5: L1 is strictly lowest bid)
   const ceiling = auction.competitionCeiling || 2450;
@@ -510,40 +521,28 @@ export default function BidRoomPage() {
             </div>
           </div>
 
-          {/* Granular Charge Breakdown Table with Currency Selector & Tax Option (Requirement 1) */}
-          <div className="card" style={{ border: '1.5px solid #cbd5e1', overflowX: 'auto', background: '#ffffff' }}>
-            <div style={{ background: '#0f172a', padding: '8px 14px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <b style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                2. Bidding Rate Matrix — Enter Component Breakdown
-              </b>
+          {/* Granular Charge Breakdown Table with Currency Selector & Tax Option */}
+          <div className="card" style={{ border: '1px solid var(--fr8x-outline)', overflowX: 'auto', background: '#ffffff', borderRadius: '0px' }}>
+            <div style={{ background: '#f8fafc', padding: '10px 14px', borderBottom: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <b style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--fr8x-text)', display: 'block' }}>
+                  2. Bidding Rate Matrix — Enter Component Breakdown
+                </b>
+                <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                  Live Forex Synced · Select applicable currency with each charge head
+                </span>
+              </div>
               
               {/* Currency & Tax Options Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-                {/* Currency Selector */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '3px 8px', borderRadius: '6px', border: '1px solid #334155' }}>
-                  <Coins size={13} color="#38bdf8" />
-                  <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 600 }}>Input Currency:</span>
-                  <select
-                    value={biddingCurrency}
-                    onChange={(e) => setBiddingCurrency(e.target.value)}
-                    style={{ background: '#0f172a', color: '#38bdf8', fontWeight: 800, fontSize: '12px', border: '1px solid #0284c7', borderRadius: '4px', padding: '2px 6px' }}
-                  >
-                    {Object.keys(availableCurrencies).map((code) => (
-                      <option key={code} value={code}>
-                        {code} ({availableCurrencies[code]?.symbol}) · {availableCurrencies[code]?.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                 {/* Tax Option */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#1e293b', padding: '3px 8px', borderRadius: '6px', border: '1px solid #334155' }}>
-                  <Receipt size={13} color="#34d399" />
-                  <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 600 }}>Tax Option:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#ffffff', padding: '4px 8px', border: '1px solid var(--fr8x-outline)' }}>
+                  <Receipt size={13} color="var(--fr8x-text)" />
+                  <span style={{ fontSize: '11px', color: 'var(--fr8x-text)', fontWeight: 600 }}>Tax Option:</span>
                   <select
                     value={taxOption}
                     onChange={(e) => setTaxOption(e.target.value as any)}
-                    style={{ background: '#0f172a', color: '#34d399', fontWeight: 700, fontSize: '11.5px', border: '1px solid #059669', borderRadius: '4px', padding: '2px 6px' }}
+                    style={{ background: '#ffffff', color: 'var(--fr8x-text)', fontWeight: 700, fontSize: '11px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', padding: '2px 6px' }}
                   >
                     <option value="exempt_as_applicable">Exempt / As Applicable (GST extra at actuals)</option>
                     <option value="tax_inclusive">Tax Inclusive (All-in rate)</option>
@@ -554,92 +553,227 @@ export default function BidRoomPage() {
 
             <table className="table" style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', minWidth: '1350px' }}>
               <thead>
-                <tr style={{ background: '#334155', color: '#ffffff' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '100px' }}>EQUIPMENT</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '90px' }}>CONTAINER</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px' }}>QTY</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#1d4ed8' }}>OCEAN FREIGHT ({biddingCurrency})</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#1d4ed8' }}>F/S ({biddingCurrency})</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#0f766e' }}>ORIGIN TRANSPORT</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#0f766e' }}>ORIGIN CLEARANCE</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#0f766e' }}>ORIGIN LOCAL</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#0f766e' }}>ORIGIN ANCILLARY</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#6b21a8' }}>DEST. TRANSPORT</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#6b21a8' }}>DEST. CLEARANCE</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#6b21a8' }}>DEST. LOCAL</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', background: '#6b21a8' }}>DEST. ANCILLARY</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#1e293b' }}>TOTAL ({biddingCurrency})</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#0f172a', color: '#38bdf8' }}>TOTAL [USD ($) ▼]</th>
+                <tr style={{ background: '#f1f5f9', color: 'var(--fr8x-text)', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '110px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '150px', borderRight: '1px solid var(--line-light)' }}>CONTAINER</th>
+                  <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--line-light)' }}>QTY</th>
+
+                  {/* Ocean Charges Head with Currency */}
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <span style={{ fontWeight: 800 }}>OCEAN FREIGHT</span>
+                      <select
+                        value={oceanCurrency}
+                        onChange={(e) => setOceanCurrency(e.target.value)}
+                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                        title="Ocean Freight Currency"
+                      >
+                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    F/S ({oceanCurrency})
+                  </th>
+
+                  {/* Origin Charges Head with Currency */}
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <span style={{ fontWeight: 800 }}>ORIGIN TRANSPORT</span>
+                      <select
+                        value={originCurrency}
+                        onChange={(e) => setOriginCurrency(e.target.value)}
+                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                        title="Origin Charges Currency"
+                      >
+                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    ORIGIN CLEARANCE ({originCurrency})
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    ORIGIN LOCAL ({originCurrency})
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    ORIGIN ANCILLARY ({originCurrency})
+                  </th>
+
+                  {/* Destination Charges Head with Currency */}
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                      <span style={{ fontWeight: 800 }}>DEST. TRANSPORT</span>
+                      <select
+                        value={destCurrency}
+                        onChange={(e) => setDestCurrency(e.target.value)}
+                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                        title="Destination Charges Currency"
+                      >
+                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </div>
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    DEST. CLEARANCE ({destCurrency})
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    DEST. LOCAL ({destCurrency})
+                  </th>
+                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    DEST. ANCILLARY ({destCurrency})
+                  </th>
+
+                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                    ROW TOTAL (USD $)
+                  </th>
+                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', fontWeight: 800 }}>
+                    ROW TOTAL (EUR / INR)
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {chargeRows.map((r, i) => {
-                  const unitTotal = getRowUnitTotal(r);
-                  const lineTotal = getRowLineTotal(r);
-                  const lineTotalUSD = biddingCurrency === 'USD' ? lineTotal : lineTotal / (currentFxRate || 1);
+                  const lineUSD = getRowLineTotalUSD(r);
+                  const lineEUR = convertUSDTo(lineUSD, 'EUR');
+                  const lineINR = convertUSDTo(lineUSD, 'INR');
+
                   return (
-                    <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                      <td style={{ background: '#f1f5f9', fontWeight: 700, padding: '6px', color: 'var(--ink)' }}>{r.equipment.split(' (')[0]}</td>
-                      <td style={{ background: '#f1f5f9', fontWeight: 600, padding: '6px', color: 'var(--ink)' }}>{r.equipment.split(' (')[0]}</td>
-                      <td style={{ background: '#f1f5f9', textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)' }}>{r.qty}</td>
-                      <td style={{ padding: '4px', background: '#eff6ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #93c5fd', color: 'var(--ink)', fontWeight: 700 }}
+                    <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid var(--line-light)' }}>
+                      <td style={{ fontWeight: 700, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        {r.equipment.split(' (')[0]}
+                      </td>
+                      <td style={{ fontWeight: 600, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        <select
+                          value={r.equipment}
+                          onChange={(e) => {
+                            const newRows = [...chargeRows];
+                            newRows[i].equipment = e.target.value;
+                            setChargeRows(newRows);
+                          }}
+                          style={{ width: '100%', fontSize: '11px', padding: '3px 4px', border: '1px solid var(--fr8x-outline)', background: '#fff', borderRadius: '0px' }}
+                        >
+                          <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
+                          <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
+                          <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
+                          <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
+                          <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
+                          <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
+                          <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
+                          <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
+                          <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
+                          <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
+                          <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
+                          <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
+                          <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
+                          <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
+                          <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
+                        </select>
+                      </td>
+                      <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        {r.qty}
+                      </td>
+
+                      {/* Ocean inputs */}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
                           value={r.oceanFreight} onChange={(e) => updateCharge(i, 'oceanFreight', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#eff6ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #93c5fd', color: 'var(--ink)', fontWeight: 700 }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
                           value={r.surcharges} onChange={(e) => updateCharge(i, 'surcharges', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#f0fdfa' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #99f6e4', color: 'var(--ink)' }}
+
+                      {/* Origin inputs */}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.originTransport} onChange={(e) => updateCharge(i, 'originTransport', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#f0fdfa' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #99f6e4', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.originClearance} onChange={(e) => updateCharge(i, 'originClearance', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#f0fdfa' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #99f6e4', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.originLocal} onChange={(e) => updateCharge(i, 'originLocal', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#f0fdfa' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #99f6e4', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={0} onChange={() => {}} />
                       </td>
-                      <td style={{ padding: '4px', background: '#faf5ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #e9d5ff', color: 'var(--ink)' }}
+
+                      {/* Destination inputs */}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.destTransport} onChange={(e) => updateCharge(i, 'destTransport', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#faf5ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #e9d5ff', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.destClearance} onChange={(e) => updateCharge(i, 'destClearance', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#faf5ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #e9d5ff', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={r.destLocal} onChange={(e) => updateCharge(i, 'destLocal', Number(e.target.value))} />
                       </td>
-                      <td style={{ padding: '4px', background: '#faf5ff' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11.5px', textAlign: 'right', background: '#fff', border: '1px solid #e9d5ff', color: 'var(--ink)' }}
+                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
                           value={0} onChange={() => {}} />
                       </td>
-                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--ink)' }}>
-                        {currSymbol}{lineTotal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+
+                      {/* Total cells */}
+                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                        ${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: '#0284c7', fontSize: '12px' }}>
-                        ${lineTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>
+                        €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+
+            {/* Live Exchange Engine & Grand Total in 4 Currencies Bar */}
+            <div style={{ padding: '10px 14px', background: '#f8fafc', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ width: '8px', height: '8px', background: '#16a34a', display: 'inline-block' }} />
+                  <b style={{ color: 'var(--fr8x-text)' }}>Live Interbank Rates (Google Database API):</b>
+                  <span>
+                    1 USD = ₹{(availableCurrencies['INR']?.rateFromUSD || 83.92).toFixed(2)} INR · 1 EUR = ${(1 / (availableCurrencies['EUR']?.rateFromUSD || 0.92)).toFixed(3)} USD · 1 GBP = ${(1 / (availableCurrencies['GBP']?.rateFromUSD || 0.78)).toFixed(3)} USD
+                  </span>
+                </div>
+                <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', fontWeight: 600 }}>{lastUpdatedTime}</span>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN USD ($)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>${grandTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                </div>
+                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN EUR (€)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>€{grandTotalEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                </div>
+                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN GBP (£)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>£{grandTotalGBP.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                </div>
+                <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
+                  <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN LOCAL (₹ INR)</small>
+                  <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>₹{grandTotalINR.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Bottom Grid: Audit + Conditions + Ranks (Lowest Offer L1) + Submission Actions */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.6fr 2.3fr', gap: '12px', alignItems: 'stretch' }}>
             {/* Audit Box */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px', background: '#ffffff', overflow: 'hidden' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10.5px', fontWeight: 800, padding: '5px 8px', textAlign: 'center' }}>AUDIT TRAIL</div>
+            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', overflow: 'hidden' }}>
+              <div style={{ background: '#f8fafc', color: 'var(--fr8x-text)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                AUDIT TRAIL
+              </div>
               <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '11px', color: 'var(--ink)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>BIDDER ORG</span><b>{user.company}</b></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}><span style={{ color: 'var(--mut)' }}>CREATED DATE</span><b>{auction.startDate || '2026-08-29'}</b></div>
@@ -648,14 +782,16 @@ export default function BidRoomPage() {
               </div>
             </div>
 
-            {/* Conditions & Information Box with Rich Icon Popups (Requirement 4) */}
-            <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '8px', background: '#ffffff', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-              <div style={{ background: '#334155', color: '#fff', fontSize: '10.5px', fontWeight: 800, padding: '5px 8px', textAlign: 'center' }}>CONDITIONS &amp; INFORMATION</div>
+            {/* Conditions & Information Box */}
+            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div style={{ background: '#f8fafc', color: 'var(--fr8x-text)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                CONDITIONS &amp; INFORMATION
+              </div>
               <div style={{ padding: '10px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
                 <button
                   type="button"
                   className="btn secondary sm"
-                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600 }}
+                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
                   onClick={() => setShowRfqTermsModal(true)}
                 >
                   <FileText size={13} color="var(--brand)" /> RFQ Terms
@@ -664,7 +800,7 @@ export default function BidRoomPage() {
                 <button
                   type="button"
                   className="btn secondary sm"
-                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600 }}
+                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
                   onClick={() => setShowMsdsModal(true)}
                 >
                   <ShieldAlert size={13} color="var(--red)" /> MSDS Sheet
@@ -673,7 +809,7 @@ export default function BidRoomPage() {
                 <button
                   type="button"
                   className="btn secondary sm"
-                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600 }}
+                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
                   onClick={() => setShowDimensionModal(true)}
                 >
                   <Maximize2 size={13} color="var(--teal)" /> Dimension Table
@@ -682,7 +818,7 @@ export default function BidRoomPage() {
                 <button
                   type="button"
                   className="btn secondary sm"
-                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600 }}
+                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
                   onClick={() => setShowInstructionsModal(true)}
                 >
                   <ClipboardList size={13} color="#d97706" /> Instructions
@@ -692,7 +828,7 @@ export default function BidRoomPage() {
               <div style={{ padding: '0 10px 10px' }}>
                 <button
                   className="btn primary sm"
-                  style={{ width: '100%', background: '#15803d', borderColor: '#15803d', fontSize: '11.5px', fontWeight: 700 }}
+                  style={{ width: '100%', background: 'var(--fr8x-outline)', borderColor: 'var(--fr8x-outline)', fontSize: '11.5px', fontWeight: 700, borderRadius: '0px' }}
                   onClick={() => toast('RFQ Conditions & Terms accepted.')}
                 >
                   <Check size={13} /> ACCEPT ALL CONDITIONS
@@ -700,27 +836,27 @@ export default function BidRoomPage() {
               </div>
             </div>
 
-            {/* Reverse Auction Competition Ceiling L1 / L2 / L3 (Requirement 5) */}
-            <div style={{ border: '1.5px solid #86efac', borderRadius: '8px', background: '#f0fdf4', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            {/* Reverse Auction Competition Ceiling L1 / L2 / L3 */}
+            <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', padding: '12px 14px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: '10px', alignItems: 'center' }}>
-                <div style={{ textAlign: 'center', background: '#ffffff', borderRadius: '8px', padding: '8px', border: '1.5px solid #86efac', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
-                  <small style={{ fontSize: '9px', fontWeight: 800, color: '#15803d', textTransform: 'uppercase' }}>YOUR RANK (LOWEST OFFER)</small>
-                  <div style={{ fontSize: '38px', fontWeight: 900, color: calculatedRank === '#1' ? '#15803d' : '#d97706', lineHeight: 1, margin: '4px 0' }}>
+                <div style={{ textAlign: 'center', background: '#f8fafc', padding: '8px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+                  <small style={{ fontSize: '9px', fontWeight: 800, color: 'var(--fr8x-text)', textTransform: 'uppercase' }}>YOUR RANK (LOWEST OFFER)</small>
+                  <div style={{ fontSize: '38px', fontWeight: 900, color: 'var(--fr8x-text)', lineHeight: 1, margin: '4px 0' }}>
                     {calculatedRank}
                   </div>
                   <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 600 }}>Reverse Sourcing</small>
                 </div>
 
-                <div style={{ background: '#ffffff', borderRadius: '8px', padding: '10px', border: '1.5px solid #cbd5e1', fontSize: '11px', color: 'var(--ink)' }}>
-                  <b style={{ color: '#0f172a', display: 'block', marginBottom: '5px', textTransform: 'uppercase', fontSize: '10.5px' }}>
+                <div style={{ background: '#ffffff', padding: '10px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', fontSize: '11px', color: 'var(--ink)' }}>
+                  <b style={{ color: 'var(--fr8x-text)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', fontSize: '10.5px' }}>
                     COMPETITION CEILING (REVERSE AUCTION)
                   </b>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#15803d', fontWeight: 700 }}>L1 (Lowest / Best):</span>
-                    <b style={{ color: '#15803d' }}>${l1Display.toFixed(2)} USD</b>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
+                    <span style={{ color: 'var(--fr8x-text)', fontWeight: 700 }}>L1 (Lowest / Best):</span>
+                    <b style={{ color: 'var(--fr8x-text)' }}>${l1Display.toFixed(2)} USD</b>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid #f1f5f9' }}>
-                    <span style={{ color: '#0284c7', fontWeight: 600 }}>L2 (2nd Lowest):</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
+                    <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>L2 (2nd Lowest):</span>
                     <b>${l2Display.toFixed(2)} USD</b>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
@@ -730,25 +866,23 @@ export default function BidRoomPage() {
                 </div>
               </div>
 
-              {/* Total & Submit Action (Requirement 2) */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', background: '#ffffff', padding: '8px 12px', borderRadius: '6px', border: '1.5px solid #cbd5e1', flexWrap: 'wrap', gap: '8px' }}>
+              {/* Total & Submit Action */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px', background: '#f8fafc', padding: '8px 12px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <small style={{ color: 'var(--mut)', fontSize: '10px', display: 'block', fontWeight: 700 }}>TOTAL BID OFFER</small>
-                  <b style={{ fontSize: '16px', color: '#0f172a' }}>
+                  <b style={{ fontSize: '16px', color: 'var(--fr8x-text)' }}>
                     ${grandTotalUSD.toFixed(2)} USD
                   </b>
-                  {biddingCurrency !== 'USD' && (
-                    <small style={{ display: 'block', color: 'var(--brand)', fontSize: '10.5px', fontWeight: 600 }}>
-                      ({currSymbol}{grandTotalInputCurrency.toLocaleString()} {biddingCurrency} @ {currentFxRate.toFixed(2)})
-                    </small>
-                  )}
+                  <small style={{ display: 'block', color: 'var(--fr8x-muted)', fontSize: '10.5px', fontWeight: 600 }}>
+                    (€{grandTotalEUR.toFixed(2)} EUR · ₹{grandTotalINR.toFixed(2)} INR)
+                  </small>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
-                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700 }} onClick={() => toast('Edit mode active.')}>
+                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '0px' }} onClick={() => toast('Edit mode active.')}>
                     EDIT
                   </button>
-                  <button className="btn primary" style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: '#0284c7' }} onClick={() => setShowConfirmModal(true)}>
+                  <button className="btn primary" style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: 'var(--fr8x-outline)', borderRadius: '0px' }} onClick={() => setShowConfirmModal(true)}>
                     <Gavel size={13} /> Confirm &amp; Submit Bid
                   </button>
                 </div>

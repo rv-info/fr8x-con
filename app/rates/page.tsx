@@ -67,6 +67,7 @@ export default function RatesPage() {
 
   // Rate Comparison Tool State
   const [comparedRateIds, setComparedRateIds] = useState<string[]>([]);
+  const [expiredRateIds, setExpiredRateIds] = useState<string[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
 
   // i-Rate Editor Form State
@@ -107,38 +108,57 @@ export default function RatesPage() {
     return `${initials}-${dd}${mm}-${num}`;
   };
 
-  // Format structured rate quote breakdown (Requirement 8)
-  const formatRateQuote = (r: RateItem, idx = 0) => `=======================================================
-FR8X FREIGHT RATE QUOTATION DOSSIER
+  // Format structured rate quote breakdown as per exact user dossier specification
+  const formatRateQuote = (r: RateItem, idx = 0) => {
+    const seq = getRateSeq(r, idx);
+    const dated = r.valid || '2026-09-30';
+    const freeTimeTerms = r.ft
+      ? (r.ft.toLowerCase().includes('at desitnation') || r.ft.toLowerCase().includes('at destination')
+          ? r.ft
+          : `${r.ft} (at desitnation)`)
+      : '14 days combined (at desitnation)';
+    const d20TypeStr = r.d20Type || "20'DV";
+    const h40TypeStr = r.h40Type || "40'HC";
+
+    return `=======================================================
+FR8X FREIGHT RATE QUOTATION DOSSIER - ${dated} ${seq}
 =======================================================
 Rate Reference   : ${r.id}
-SEQ Number       : ${getRateSeq(r, idx)}
+SEQ Number       : ${seq}
 Service Provider : ${r.sp}
 Ocean Carrier    : ${r.carrier}
-Routing Mode     : ${r.route || 'Direct Ocean'}
+Routing Mode     : ${r.route || 'Direct EP-X Service'}
 Place of Receipt : ${r.por || r.pol}
 Port of Loading  : ${r.pol}
 Port of Discharge: ${r.pod}
 Final Delivery   : ${r.fpod || r.pod}
-Transit Time     : ${r.tt || '28 Days'}
-Free Time Terms  : ${r.ft || '14 Days Combined'}
+Transit Time     : ${r.tt || '28 days'}
+Free Time Terms  : ${freeTimeTerms}
 -------------------------------------------------------
-EQUIPMENT & FREIGHT CHARGES (USD)
--------------------------------------------------------
-• 20' Standard (20DV) : $${r.d20.toLocaleString()} USD (${r.d20Type || 'Standard'})
-• 40' High Cube (40HC): $${r.h40.toLocaleString()} USD (${r.h40Type || 'High Cube'})
+ocean FREIGHT CHARGES (USD)
+US $${r.d20.toLocaleString()}/${d20TypeStr} & US $${r.h40.toLocaleString()}/${h40TypeStr}
 -------------------------------------------------------
 Validity Date    : ${r.valid}
-Rate Category    : ${r.rateType || 'Direct Spot'}
-Remarks & Terms  : ${r.remark || 'Subject to standard liner terms'}
+Rate Category    : ${r.rateType || 'Spot Contract'}
+Remarks & Terms  : ${r.remark || ''}
 -------------------------------------------------------
-Generated via FR8X Reverse Auction & Freight Exchange
+Generated via FR8X Freight Exchange
 =======================================================`;
+  };
 
   const handleCopyQuote = (rate: RateItem, idx = 0) => {
     const text = formatRateQuote(rate, idx);
     navigator.clipboard.writeText(text);
     toast(`Structured rate quote for ${rate.id} (${rate.carrier}) copied to clipboard.`);
+  };
+
+  const handleExpireSelectedRates = () => {
+    if (comparedRateIds.length === 0) return;
+    const count = comparedRateIds.length;
+    setExpiredRateIds((prev) => [...new Set([...prev, ...comparedRateIds])]);
+    setComparedRateIds([]);
+    setActiveTab('expiring');
+    toast(`${count} rate(s) marked as expired and shifted to Expiring/Expired Rates.`);
   };
 
   const handleOpenEmailModal = (rate: RateItem) => {
@@ -199,7 +219,7 @@ Generated via FR8X Reverse Auction & Freight Exchange
       return myRates.some((mr) => mr.id === r.id);
     }
     if (activeTab === 'expiring') {
-      return isExpiringSoon(r.valid);
+      return isExpiringSoon(r.valid) || expiredRateIds.includes(r.id);
     }
     return true;
   });
@@ -849,10 +869,12 @@ Generated via FR8X Reverse Auction & Freight Exchange
           <b>{comparedRateIds.length}</b>
           {comparedRateIds.length > 0 ? (
             <button
-              onClick={() => setShowComparisonModal(true)}
-              style={{ color: 'var(--brand)', fontWeight: 700, fontSize: '10.5px' }}
+              type="button"
+              onClick={handleExpireSelectedRates}
+              style={{ color: '#b91c1c', fontWeight: 700, fontSize: '10px', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}
+              title="Make selection expire and shift to expired rates"
             >
-              Open Comparison →
+              Make selection expire / Shift to expired rates
             </button>
           ) : (
             <span>Select with checkboxes</span>
@@ -864,89 +886,124 @@ Generated via FR8X Reverse Auction & Freight Exchange
       <div className={activeTab === 'i' ? 'rateeditor' : 'rateeditor-full'}>
         {/* Left Form: RATES EDITOR available ONLY in My i-Rates tab */}
         {activeTab === 'i' && (
-          <div className="card" style={{ alignSelf: 'flex-start' }}>
-            <div className="cardhead" style={{ background: '#1168d7', borderRadius: '8px 8px 0 0' }}>
-              <b style={{ color: '#fff', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
-              <span className="badge" style={{ background: '#e0ecfb', color: '#1168d7', fontSize: '10px', fontWeight: 800 }}>My i-Rate</span>
+          <div className="card" style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+            <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+              <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
+              <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '0px' }}>My i-Rate</span>
             </div>
 
             <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {/* Row 1: CARRIER search with 3-letter typeahead */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px', alignItems: 'center' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>CARRIER</label>
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>CARRIER</label>
                 <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Type carrier (3+ letters)…" />
               </div>
               {/* Row 2: POR + POL — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POR</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POR</label>
                   <PortSearch value={por} onChange={setPor} placeholder="POR (3+ letters)" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POL</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POL</label>
                   <PortSearch value={pol} onChange={setPol} placeholder="POL (3+ letters)" />
                 </div>
               </div>
               {/* Row 3: POD + FPOD — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>POD</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POD</label>
                   <PortSearch value={pod} onChange={setPod} placeholder="POD (3+ letters)" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '4px', textAlign: 'center' }}>FPOD</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>FPOD</label>
                   <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD (3+ letters)" />
                 </div>
               </div>
-              {/* Row 4: 20 TYPE + 20 [USD] */}
+              {/* Row 4: 20 TYPE (All Container Types Dropdown) + 20 [USD] */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>20 TYPE</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="e.g. Dry Std" value={d20Type} onChange={(e) => setD20Type(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 TYPE</label>
+                  <select
+                    className="input"
+                    style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }}
+                    value={d20Type}
+                    onChange={(e) => setD20Type(e.target.value)}
+                  >
+                    <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
+                    <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
+                    <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
+                    <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
+                    <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
+                    <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
+                    <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
+                    <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
+                    <option value="20' Ventilated (20VN)">20&apos; Ventilated (20VN)</option>
+                    <option value="20' Insulated (20IN)">20&apos; Insulated (20IN)</option>
+                    <option value="20' Hard Top (20HT)">20&apos; Hard Top (20HT)</option>
+                  </select>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>20 [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} type="number" placeholder="0" value={d20 || ''} onChange={(e) => setD20(Number(e.target.value))} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 [USD]</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={d20 || ''} onChange={(e) => setD20(Number(e.target.value))} />
                 </div>
               </div>
-              {/* Row 5: 40 TYPE + 40HC [USD] */}
+              {/* Row 5: 40 TYPE (All Container Types Dropdown) + 40HC [USD] */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>40 TYPE</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="e.g. HC" value={h40Type} onChange={(e) => setH40Type(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40 TYPE</label>
+                  <select
+                    className="input"
+                    style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }}
+                    value={h40Type}
+                    onChange={(e) => setH40Type(e.target.value)}
+                  >
+                    <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
+                    <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
+                    <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
+                    <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
+                    <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
+                    <option value="40' Open Top HC (40OH)">40&apos; Open Top High Cube (40OH)</option>
+                    <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
+                    <option value="40' Flat Rack Collapsible (40FC)">40&apos; Flat Rack Collapsible (40FC)</option>
+                    <option value="40' Platform (40PL)">40&apos; Platform (40PL)</option>
+                    <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
+                    <option value="40' ISO Tank (40TK)">40&apos; ISO Tank (40TK)</option>
+                    <option value="40' Pallet Wide (40PW)">40&apos; Pallet Wide (40PW)</option>
+                  </select>
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>40HC [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} type="number" placeholder="0" value={h40 || ''} onChange={(e) => setH40(Number(e.target.value))} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40HC [USD]</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={h40 || ''} onChange={(e) => setH40(Number(e.target.value))} />
                 </div>
               </div>
               {/* Row 6: FREE TIME + VALIDITY */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>FREE TIME</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="e.g. 14 days" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>FREE TIME</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 14 days" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>VALIDITY</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
                 </div>
               </div>
               {/* Row 7: TRANSIT + ROUTING */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>TRANSIT</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>TRANSIT</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>ROUTING</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>ROUTING</label>
+                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
                 </div>
               </div>
               {/* Row 8: VALIDITY TYPE */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center' }}>VALIDITY TYPE</label>
-                  <select className="input" style={{ fontSize: '11px', height: '32px', padding: '0 4px' }} value={rateType} onChange={(e) => setRateType(e.target.value)}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY TYPE</label>
+                  <select className="input" style={{ fontSize: '11px', height: '32px', padding: '0 4px', borderRadius: '0px' }} value={rateType} onChange={(e) => setRateType(e.target.value)}>
                     <option value="Direct Spot">Direct Spot</option>
                     <option value="Contract">Contract</option>
                     <option value="NAC">NAC</option>
@@ -957,54 +1014,55 @@ Generated via FR8X Reverse Auction & Freight Exchange
               </div>
               {/* Row 9: REMARKS full width */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', alignItems: 'flex-start' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '4px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>
-                <textarea className="input" style={{ fontSize: '11px', padding: '5px 6px', resize: 'vertical' }} rows={2} placeholder="Surcharges, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>
+                <textarea className="input" style={{ fontSize: '11px', padding: '5px 6px', resize: 'vertical', borderRadius: '0px' }} rows={2} placeholder="Surcharges, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
               </div>
 
               {/* Action Buttons: SAVE | UPDATE | CLEAR | DUPLICATE */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
-                <button className="btn primary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, background: '#2e7d32', borderColor: '#2e7d32' }} onClick={handleSaveIRate}>
+                <button className="btn primary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, background: 'var(--fr8x-outline)', borderColor: 'var(--fr8x-outline)', borderRadius: '0px' }} onClick={handleSaveIRate}>
                   SAVE
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700 }} onClick={() => {
+                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={() => {
                   if (!editingRateId) { alert('Select a rate row to update.'); return; }
                   handleSaveIRate();
                 }}>
                   UPDATE
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, color: '#b45309', borderColor: '#f59e0b', background: '#fffbeb' }} onClick={handleClearForm}>
+                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={handleClearForm}>
                   CLEAR
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700 }} onClick={handleDuplicateSelected}>
+                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={handleDuplicateSelected}>
                   DUPLICATE
                 </button>
               </div>
             </div>
           </div>
         )}
-
         {/* Main Table: Rates Matrix */}
-        <div className="card" style={{ width: '100%', overflow: 'hidden' }}>
-
-          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px' }}>
-            <div className="feed-tabs" style={{ margin: 0 }}>
+        <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
-                className={`feed-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                className={`tab ${activeTab === 'all' ? 'active' : ''}`}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
                 onClick={() => setActiveTab('all')}
               >
-                All Rates ({allAvailableRates.length})
+                All Available Rates ({rates.length + myRates.length})
               </button>
               <button
-                className={`feed-tab-btn ${activeTab === 'i' ? 'active' : ''}`}
+                className={`tab ${activeTab === 'i' ? 'active' : ''}`}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
                 onClick={() => setActiveTab('i')}
               >
                 My i-Rates ({myRates.length})
               </button>
               <button
-                className={`feed-tab-btn ${activeTab === 'expiring' ? 'active' : ''}`}
+                className={`tab ${activeTab === 'expiring' ? 'active' : ''}`}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
                 onClick={() => setActiveTab('expiring')}
               >
-                <Clock size={11} style={{ verticalAlign: '-1px' }} /> Expiring Soon (
+                <Clock size={11} style={{ verticalAlign: '-1px' }} /> Expiring / Expired Rates (
                 {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length})
               </button>
             </div>
@@ -1016,69 +1074,71 @@ Generated via FR8X Reverse Auction & Freight Exchange
                 placeholder="Filter port, carrier…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ borderRadius: '0px' }}
               />
             </div>
           </div>
 
-          {/* Full-width rates table matching reference image */}
+          {/* Full-width rates table fitting screen wide without text wrap */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="table" style={{ fontSize: '11px', tableLayout: 'auto', width: '100%', borderCollapse: 'collapse', minWidth: '1420px' }}>
+            <table className="table" style={{ fontSize: '10.5px', tableLayout: 'auto', width: '100%', borderCollapse: 'collapse', minWidth: '100%' }}>
               <colgroup>
-                <col style={{ width: '56px' }} />
-                <col style={{ width: '120px' }} />
-                <col style={{ width: '110px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '110px' }} />
-                <col style={{ width: '110px' }} />
-                <col style={{ width: '80px' }} />
+                <col style={{ width: '38px' }} />
+                <col style={{ width: '90px' }} />
+                <col style={{ width: '95px' }} />
                 <col style={{ width: '70px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '70px' }} />
-                <col style={{ width: '75px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '80px' }} />
                 <col style={{ width: '65px' }} />
-                <col style={{ width: '120px' }} />
-                <col style={{ minWidth: '120px' }} />
-                <col style={{ width: '80px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '68px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '68px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '55px' }} />
+                <col style={{ width: '68px' }} />
+                <col style={{ width: '55px' }} />
+                <col style={{ width: '45px' }} />
+                <col style={{ width: '75px' }} />
+                <col style={{ width: '85px' }} />
+                <col style={{ width: '70px' }} />
               </colgroup>
               <thead>
-                {/* Header row — bold dark color font (#0f172a) for maximum crisp visibility */}
-                <tr style={{ background: '#cbd5e1', borderBottom: '2px solid #94a3b8' }}>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>CARRIER</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>FPOD</th>
-                  <th style={{ color: '#0369a1', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>20DV (USD)</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>20TYPE</th>
-                  <th style={{ color: '#047857', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>40HC (USD)</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>40TYPE</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>F/T</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>DATE</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
-                  <th style={{ color: '#0f172a', fontSize: '10px', padding: '7px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTION</th>
+                {/* Header row — clean, high-contrast, zero-curve, 1px outline */}
+                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>CARRIER</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>FPOD</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>20DV (USD)</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>20TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>40HC (USD)</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>40TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>F/T</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>DATE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTION</th>
                 </tr>
                 {/* Per-column search row */}
-                <tr style={{ background: '#dbe3f5' }}>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)' }}>
                   <th />
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%', fontFamily: 'monospace' }} placeholder="SEQ" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.carrier || ''} onChange={(e) => updateColSearch('carrier', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.por || ''} onChange={(e) => updateColSearch('por', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.pol || ''} onChange={(e) => updateColSearch('pol', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.pod || ''} onChange={(e) => updateColSearch('pod', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.fpod || ''} onChange={(e) => updateColSearch('fpod', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', fontFamily: 'monospace', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEQ" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.carrier || ''} onChange={(e) => updateColSearch('carrier', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.por || ''} onChange={(e) => updateColSearch('por', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.pol || ''} onChange={(e) => updateColSearch('pol', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.pod || ''} onChange={(e) => updateColSearch('pod', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.fpod || ''} onChange={(e) => updateColSearch('fpod', e.target.value)} /></th>
                   <th /><th /><th /><th /><th /><th /><th /><th />
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.routing || ''} onChange={(e) => updateColSearch('routing', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '10px', height: '24px', padding: '0 4px', width: '100%' }} placeholder="SEARCH" value={colSearch.remarks || ''} onChange={(e) => updateColSearch('remarks', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.routing || ''} onChange={(e) => updateColSearch('routing', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.remarks || ''} onChange={(e) => updateColSearch('remarks', e.target.value)} /></th>
                   <th />
                 </tr>
               </thead>

@@ -32,14 +32,14 @@ function SingleChatBox({
 }: SingleChatBoxProps) {
   const { getContact, getMessagesFor, sendMessageTo } = useChat();
   const [inputText, setInputText] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatBodyRef = useRef<HTMLDivElement>(null);
 
   const contact = getContact(contactId);
   const messages = getMessagesFor(contactId);
 
   useEffect(() => {
-    if (!isMinimized) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (!isMinimized && chatBodyRef.current) {
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
   }, [messages, isMinimized]);
 
@@ -139,7 +139,7 @@ function SingleChatBox({
       )}
 
       {/* Messages Scroll Area */}
-      <div className="chatbody messages">
+      <div className="chatbody messages" ref={chatBodyRef}>
         {messages.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '20px 10px', color: 'var(--mut)', fontSize: '11px' }}>
             No messages yet. Send a trade message to start negotiation.
@@ -154,7 +154,6 @@ function SingleChatBox({
             </div>
           ))
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Quick Freight Responses */}

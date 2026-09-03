@@ -110,10 +110,30 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
       {/* Sidebar Footer */}
       <div className="sidefoot">
-        <div className="user" style={{ justifyContent: isCollapsed ? 'center' : 'flex-start' }}>
-          <div className="avatar">{initials}</div>
+        <Link
+          href="/profile"
+          className="user"
+          title="View profile"
+          style={{ justifyContent: isCollapsed ? 'center' : 'flex-start', textDecoration: 'none' }}
+        >
+          <div
+            className="avatar"
+            style={{
+              width: '28px',
+              height: '28px',
+              minWidth: '28px',
+              minHeight: '28px',
+              maxWidth: '28px',
+              maxHeight: '28px',
+              flex: '0 0 28px',
+              aspectRatio: '1 / 1',
+              borderRadius: '0px',
+            }}
+          >
+            {initials}
+          </div>
           {!isCollapsed && (
-            <div style={{ overflow: 'hidden' }}>
+            <div className="user-meta" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
               <b>
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                   {user.displayName}
@@ -125,7 +145,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
               </small>
             </div>
           )}
-        </div>
+        </Link>
 
         <button
           className="sidelink"

@@ -1009,30 +1009,30 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 3 DEDICATED, COMPREHENSIVE CARDS FOR: EXPERIENCE, EDUCATION, CERTIFICATIONS */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        {/* CARD 1: Professional Work Experience */}
-        <div className="card" style={{ padding: '18px 20px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
+      {/* 3 DEDICATED, COMPREHENSIVE SECTIONS: CARDS IN ROWS (EXPERIENCE, EDUCATION, CERTIFICATIONS) */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* SECTION 1: Professional Work Experience */}
+        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eef6ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Briefcase size={18} color="var(--brand)" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Briefcase size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '16px', color: 'var(--ink)' }}>1. Professional Work Experience</b>
-                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>1. Professional Work Experience</b>
+                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   Forwarding career milestones, freight volume managed, and liner contract leadership.
                 </span>
               </div>
             </div>
-            <button className="btn primary" onClick={() => handleOpenExpModal()}>
-              <Plus size={14} /> Add Experience
+            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenExpModal()}>
+              <Plus size={13} /> Add Experience
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {experiences.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
                 No experience records added yet. Click &quot;+ Add Experience&quot; to showcase your career.
               </div>
             ) : (
@@ -1040,81 +1040,93 @@ export default function ProfilePage() {
                 <div
                   key={exp.id}
                   style={{
-                    padding: '16px 18px',
-                    background: '#f8fafc',
-                    borderRadius: '10px',
-                    border: '1px solid var(--line)',
+                    padding: '14px 16px',
+                    background: '#ffffff',
+                    borderRadius: '0px',
+                    border: '1px solid var(--fr8x-outline)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                    <div>
-                      <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{exp.designation}</b>
-                      <div style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: 600, marginTop: '2px' }}>
-                        {exp.company} · <span style={{ color: 'var(--mut)' }}>{exp.location}</span> · <span className="badge blue" style={{ fontSize: '9px' }}>{exp.employmentType}</span>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                      <div>
+                        <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{exp.designation}</b>
+                        <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
+                          {exp.company} · <span style={{ color: 'var(--fr8x-muted)' }}>{exp.location}</span>
+                        </div>
                       </div>
-                      <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
-                        <Clock size={11} style={{ verticalAlign: '-1px', marginRight: '4px' }} />
-                        {exp.startDate} – {exp.isCurrent ? 'Present' : exp.endDate}
+                      <span className="badge" style={{ fontSize: '9.5px', background: '#f1f5f9', color: 'var(--fr8x-text)', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }}>
+                        {exp.employmentType}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn secondary sm" onClick={() => handleOpenExpModal(exp)}>
-                        <Edit2 size={12} /> Edit
+                    <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Clock size={11} />
+                      {exp.startDate} – {exp.isCurrent ? 'Present' : exp.endDate}
+                    </div>
+
+                    <p style={{ margin: '10px 0 8px', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
+                      {exp.description}
+                    </p>
+                  </div>
+
+                  <div>
+                    {exp.skills && (
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '8px 0' }}>
+                        {exp.skills.split(',').map((s, idx) => (
+                          <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', border: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)' }}>
+                            {s.trim()}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)' }}>
+                      <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenExpModal(exp)}>
+                        <Edit2 size={11} /> Edit
                       </button>
                       <button
-                        className="btn danger sm"
+                        className="btn secondary sm"
+                        style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                         onClick={() => {
                           setExperiences((prev) => prev.filter((i) => i.id !== exp.id));
                           toast('Experience entry removed.');
                         }}
                       >
-                        <Trash2 size={12} /> Remove
+                        <Trash2 size={11} /> Remove
                       </button>
                     </div>
                   </div>
-
-                  <p style={{ margin: '10px 0 8px', fontSize: '13px', color: 'var(--ink-secondary)', lineHeight: 1.6 }}>
-                    {exp.description}
-                  </p>
-
-                  {exp.skills && (
-                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                      {exp.skills.split(',').map((s, idx) => (
-                        <span key={idx} className="badge grey" style={{ fontSize: '10px' }}>
-                          {s.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* CARD 2: Academic & Maritime Education */}
-        <div className="card" style={{ padding: '20px 24px', borderRadius: '12px', border: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
+        {/* SECTION 2: Academic & Maritime Education */}
+        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <GraduationCap size={18} color="var(--green)" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <GraduationCap size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '16px', color: 'var(--ink)' }}>2. Academic & Maritime Education</b>
-                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>2. Academic & Maritime Education</b>
+                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   University degrees, supply chain specializations, and maritime research credentials.
                 </span>
               </div>
             </div>
-            <button className="btn primary" onClick={() => handleOpenEduModal()}>
-              <Plus size={14} /> Add Education
+            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenEduModal()}>
+              <Plus size={13} /> Add Education
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {educations.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
                 No education records added yet. Click &quot;+ Add Education&quot; to add degree credentials.
               </div>
             ) : (
@@ -1122,72 +1134,74 @@ export default function ProfilePage() {
                 <div
                   key={edu.id}
                   style={{
-                    padding: '16px 18px',
-                    background: '#f8fafc',
-                    borderRadius: '10px',
-                    border: '1px solid var(--line)',
+                    padding: '14px 16px',
+                    background: '#ffffff',
+                    borderRadius: '0px',
+                    border: '1px solid var(--fr8x-outline)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                    <div>
-                      <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
-                      <div style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: 600, marginTop: '2px' }}>
-                        {edu.institution}
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
-                        {edu.startYear} – {edu.endYear} {edu.grade && `· Grade: ${edu.grade}`}
-                      </span>
+                  <div>
+                    <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
+                    <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
+                      {edu.institution}
                     </div>
+                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '2px' }}>
+                      {edu.startYear} – {edu.endYear} {edu.grade && `· Grade: ${edu.grade}`}
+                    </span>
 
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn secondary sm" onClick={() => handleOpenEduModal(edu)}>
-                        <Edit2 size={12} /> Edit
-                      </button>
-                      <button
-                        className="btn danger sm"
-                        onClick={() => {
-                          setEducations((prev) => prev.filter((i) => i.id !== edu.id));
-                          toast('Education record removed.');
-                        }}
-                      >
-                        <Trash2 size={12} /> Remove
-                      </button>
-                    </div>
+                    {edu.description && (
+                      <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
+                        {edu.description}
+                      </p>
+                    )}
                   </div>
 
-                  {edu.description && (
-                    <p style={{ margin: '8px 0 0', fontSize: '12.5px', color: 'var(--ink-secondary)', lineHeight: 1.5 }}>
-                      {edu.description}
-                    </p>
-                  )}
+                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)', marginTop: '10px' }}>
+                    <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenEduModal(edu)}>
+                      <Edit2 size={11} /> Edit
+                    </button>
+                    <button
+                      className="btn secondary sm"
+                      style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
+                      onClick={() => {
+                        setEducations((prev) => prev.filter((i) => i.id !== edu.id));
+                        toast('Education record removed.');
+                      }}
+                    >
+                      <Trash2 size={11} /> Remove
+                    </button>
+                  </div>
                 </div>
               ))
             )}
           </div>
         </div>
 
-        {/* CARD 3: Industry Certifications & Licences */}
-        <div className="card" style={{ padding: '20px 24px', borderRadius: '12px', border: '1px solid var(--line)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
+        {/* SECTION 3: Industry Certifications & Licences */}
+        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Award size={18} color="#d97706" />
+              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Award size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '16px', color: 'var(--ink)' }}>3. Industry Certifications & Licences</b>
-                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>3. Industry Certifications & Licences</b>
+                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   IATA DGR, FIATA, CSCP, and CBIC Customs Brokerage license registrations.
                 </span>
               </div>
             </div>
-            <button className="btn primary" onClick={() => handleOpenCertModal()}>
-              <Plus size={14} /> Add Certification
+            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenCertModal()}>
+              <Plus size={13} /> Add Certification
             </button>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {certifications.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
                 No certifications added yet. Click &quot;+ Add Certification&quot; to add your accredited licenses.
               </div>
             ) : (
@@ -1195,53 +1209,59 @@ export default function ProfilePage() {
                 <div
                   key={cert.id}
                   style={{
-                    padding: '16px 18px',
-                    background: '#f8fafc',
-                    borderRadius: '10px',
-                    border: '1px solid var(--line)',
+                    padding: '14px 16px',
+                    background: '#ffffff',
+                    borderRadius: '0px',
+                    border: '1px solid var(--fr8x-outline)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <b style={{ fontSize: '15px', color: 'var(--ink)' }}>{cert.title}</b>
-                        <span className="badge green" style={{ fontSize: '9px', fontWeight: 700 }}>
-                          <CheckCircle2 size={10} /> VERIFIED
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: 600, marginTop: '2px' }}>
-                        {cert.issuingAuthority}
-                      </div>
-                      <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
-                        License ID: <b style={{ fontFamily: 'var(--font-mono)' }}>{cert.certificateNumber}</b> · Issued: {cert.issueDate} {cert.expiryDate ? `· Exp: ${cert.expiryDate}` : ''}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                      <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{cert.title}</b>
+                      <span className="badge" style={{ fontSize: '9px', fontWeight: 800, background: '#f1f5f9', color: 'var(--fr8x-text)', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+                        <CheckCircle2 size={10} /> VERIFIED
                       </span>
                     </div>
-
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      {cert.credentialUrl && (
-                        <a
-                          href={cert.credentialUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn secondary sm"
-                          title="Verify credential online"
-                        >
-                          <ExternalLink size={12} /> Verify
-                        </a>
-                      )}
-                      <button className="btn secondary sm" onClick={() => handleOpenCertModal(cert)}>
-                        <Edit2 size={12} /> Edit
-                      </button>
-                      <button
-                        className="btn danger sm"
-                        onClick={() => {
-                          setCertifications((prev) => prev.filter((i) => i.id !== cert.id));
-                          toast('Certification credential removed.');
-                        }}
-                      >
-                        <Trash2 size={12} /> Remove
-                      </button>
+                    <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
+                      {cert.issuingAuthority}
                     </div>
+                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '3px' }}>
+                      License ID: <b style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-text)' }}>{cert.certificateNumber}</b>
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '1px' }}>
+                      Issued: {cert.issueDate} {cert.expiryDate ? `· Exp: ${cert.expiryDate}` : ''}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)', marginTop: '10px' }}>
+                    {cert.credentialUrl && (
+                      <a
+                        href={cert.credentialUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn secondary sm"
+                        style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }}
+                        title="Verify credential online"
+                      >
+                        <ExternalLink size={11} /> Verify
+                      </a>
+                    )}
+                    <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenCertModal(cert)}>
+                      <Edit2 size={11} /> Edit
+                    </button>
+                    <button
+                      className="btn secondary sm"
+                      style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
+                      onClick={() => {
+                        setCertifications((prev) => prev.filter((i) => i.id !== cert.id));
+                        toast('Certification credential removed.');
+                      }}
+                    >
+                      <Trash2 size={11} /> Remove
+                    </button>
                   </div>
                 </div>
               ))

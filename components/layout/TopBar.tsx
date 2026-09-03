@@ -31,6 +31,10 @@ import {
   CheckCheck,
   Anchor,
   Ship,
+  User as UserIcon,
+  ShieldCheck,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -39,7 +43,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
-  const { user, allUsers, switchUser } = useAuth();
+  const { user, allUsers, logout } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates } = useCurrency();
   const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
@@ -548,41 +552,74 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu">
-                <div style={{ padding: '8px', borderBottom: '1px solid var(--line)' }}>
-                  <b style={{ fontSize: '12px', display: 'block' }}>{user.displayName}</b>
-                  <small style={{ fontSize: '10px', color: 'var(--mut)' }}>{user.company}</small>
-                  <div style={{ marginTop: '4px' }}>
-                    <span className={`badge ${user.plan === 'premium' ? 'amber' : 'blue'}`}>
+              <div className="user-dropdown-menu" style={{ width: '240px', padding: '0', background: '#ffffff', border: '1px solid var(--fr8x-outline)' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
+                  <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
+                    {user.displayName}
+                    {user.hasGoldenTick && <GoldenTick size={13} />}
+                  </b>
+                  <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
+                    {user.designation}
+                  </small>
+                  <small style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                    {user.company}
+                  </small>
+                  <div style={{ marginTop: '8px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
                       {user.plan.toUpperCase()} PLAN
+                    </span>
+                    <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
+                      LEVEL 3 VERIFIED
                     </span>
                   </div>
                 </div>
 
-                <div style={{ padding: '6px 8px', fontSize: '9.5px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
-                  Simulate Counterpart
-                </div>
-
-                {allUsers.map((u) => (
-                  <button
-                    key={u.uid}
-                    onClick={() => {
-                      switchUser(u.uid);
-                      setShowUserDropdown(false);
-                    }}
-                    className={`user-switch-item ${user.uid === u.uid ? 'active' : ''}`}
+                <div style={{ padding: '6px' }}>
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="user-switch-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
                   >
-                    <div style={{ textAlign: 'left' }}>
-                      <div>
-                        {u.displayName} {u.hasGoldenTick && '★'}
-                      </div>
-                      <small style={{ fontSize: '9.5px', color: 'var(--mut)' }}>
-                        {u.designation} ({u.plan})
-                      </small>
-                    </div>
-                    {user.uid === u.uid && <Check size={13} />}
-                  </button>
-                ))}
+                    <UserIcon size={14} />
+                    <span>Freight Passport & Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/profile"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="user-switch-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
+                  >
+                    <ShieldCheck size={14} />
+                    <span>KYC & Accreditations</span>
+                  </Link>
+
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="user-switch-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
+                  >
+                    <Settings size={14} />
+                    <span>Workspace Preferences</span>
+                  </Link>
+
+                  <div style={{ borderTop: '1px solid var(--line-light)', margin: '4px 0' }} />
+
+                  <Link
+                    href="/login"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      logout();
+                    }}
+                    className="user-switch-item"
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#b91c1c' }}
+                  >
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
+                  </Link>
+                </div>
               </div>
             )}
           </div>
