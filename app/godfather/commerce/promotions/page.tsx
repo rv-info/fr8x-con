@@ -17,6 +17,11 @@ import {
   Check,
   X,
   FileSpreadsheet,
+  ShieldAlert,
+  Clock,
+  Zap,
+  Ban,
+  RefreshCw,
 } from 'lucide-react';
 import {
   usePlatformConfig,
@@ -25,6 +30,8 @@ import {
   UserOverride,
 } from '@/lib/platform-config';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
+import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
+import { UserProfile } from '@/lib/types';
 
 export default function GodfatherPromotionsPage() {
   const { operator } = useGodfatherAuth();
@@ -34,6 +41,20 @@ export default function GodfatherPromotionsPage() {
     addUserOverride,
     removeUserOverride,
   } = usePlatformConfig();
+
+  const {
+    users,
+    grantFreeTrial,
+    expireUserPlanNow,
+    rechargeUserPlan,
+  } = useGodfatherData();
+
+  // Promotional Free Login Validity States
+  const [promoUserSearch, setPromoUserSearch] = useState('');
+  const [selectedUserForPromo, setSelectedUserForPromo] = useState<UserProfile | null>(null);
+  const [promoDays, setPromoDays] = useState<number>(30);
+  const [promoReason, setPromoReason] = useState<string>('');
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
 
   // Safety Confirmation Modal State
   const [pendingGlobalChange, setPendingGlobalChange] = useState<{
@@ -450,6 +471,231 @@ export default function GodfatherPromotionsPage() {
         })}
       </div>
 
+      {/* PROMOTIONAL FREE LOGIN & VALIDITY ENFORCEMENT MANAGER (User Requirement) */}
+      <div className="card" style={{ padding: '16px 18px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <ShieldAlert size={16} style={{ color: 'var(--brand, #1985a1)' }} />
+              <h2 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>
+                Promotional Free Login &amp; Validity Enforcement
+              </h2>
+              <span style={{ fontSize: '10px', fontWeight: 800, background: '#fef2f2', color: '#991b1b', border: '1px solid #fecaca', padding: '1px 6px', borderRadius: '4px' }}>
+                Auto-Block on Expiration Active
+              </span>
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
+              Grant promotional free access with custom validity durations. When access expires, the member is blocked by the recharge paywall until paid via UPI QR or Bank Wire.
+            </p>
+          </div>
+
+          <div style={{ position: 'relative', width: '220px' }}>
+            <Search size={12} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--fr8x-muted)' }} />
+            <input
+              type="text"
+              placeholder="Search member, company..."
+              value={promoUserSearch}
+              onChange={(e) => setPromoUserSearch(e.target.value)}
+              className="input"
+              style={{ height: '28px', paddingLeft: '26px', fontSize: '11px', width: '100%' }}
+            />
+          </div>
+        </div>
+
+        {/* Quick KPI stats */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ background: 'var(--fr8x-input)', border: '1px solid var(--fr8x-outline)', borderRadius: '5px', padding: '8px 12px' }}>
+            <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL REGISTERED USERS</span>
+            <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>{users.length}</b>
+          </div>
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '5px', padding: '8px 12px' }}>
+            <span style={{ fontSize: '10px', color: '#166534', display: 'block' }}>ACTIVE PROMOTIONAL ACCESS</span>
+            <b style={{ fontSize: '15px', color: '#15803d' }}>
+              {users.filter((u) => u.plan === 'trial' && !u.isPlanExpired).length}
+            </b>
+          </div>
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '5px', padding: '8px 12px' }}>
+            <span style={{ fontSize: '10px', color: '#991b1b', display: 'block' }}>EXPIRED / ACCESS BLOCKED</span>
+            <b style={{ fontSize: '15px', color: '#b91c1c' }}>
+              {
+                users.filter(
+                  (u) =>
+                    Boolean(u.isPlanExpired) ||
+                    (u.planExpiresAt && new Date(u.planExpiresAt).getTime() < Date.now())
+                ).length
+              }
+            </b>
+          </div>
+        </div>
+
+        {/* User Validity Enforcement Table */}
+        <div className="tablewrap">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Member / Company</th>
+                <th>Role</th>
+                <th>Plan Tier</th>
+                <th>Plan Expires At</th>
+                <th>Status</th>
+                <th style={{ textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users
+                .filter((u) => {
+                  if (!promoUserSearch) return true;
+                  const q = promoUserSearch.toLowerCase();
+                  return (
+                    u.displayName?.toLowerCase().includes(q) ||
+                    u.company?.toLowerCase().includes(q) ||
+                    u.email?.toLowerCase().includes(q)
+                  );
+                })
+                .map((u) => {
+                  const isBlocked =
+                    Boolean(u.isPlanExpired) ||
+                    Boolean(u.rechargeRequired) ||
+                    (u.planExpiresAt ? new Date(u.planExpiresAt).getTime() < Date.now() : false);
+
+                  const daysRemaining = u.planExpiresAt
+                    ? Math.max(0, Math.ceil((new Date(u.planExpiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+                    : null;
+
+                  return (
+                    <tr key={u.uid}>
+                      <td>
+                        <b style={{ color: 'var(--fr8x-text)', fontSize: '11.5px', display: 'block' }}>
+                          {u.displayName}
+                        </b>
+                        <small style={{ color: 'var(--fr8x-muted)', fontSize: '10px' }}>
+                          {u.company} · {u.email}
+                        </small>
+                      </td>
+                      <td style={{ fontSize: '11px', textTransform: 'capitalize' }}>
+                        {u.role || 'Forwarder'}
+                      </td>
+                      <td>
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            textTransform: 'uppercase',
+                            background: u.plan === 'trial' ? '#f0f9ff' : '#f8fafc',
+                            color: u.plan === 'trial' ? '#0369a1' : 'var(--fr8x-text)',
+                            border: '1px solid var(--fr8x-outline)',
+                          }}
+                        >
+                          {u.plan || 'Free'}
+                        </span>
+                      </td>
+                      <td style={{ fontSize: '11px', fontFamily: 'var(--font-mono)' }}>
+                        {u.planExpiresAt ? (
+                          <span>{u.planExpiresAt.split('T')[0]}</span>
+                        ) : (
+                          <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>
+                        )}
+                      </td>
+                      <td>
+                        {isBlocked ? (
+                          <span
+                            style={{
+                              background: '#dc2626',
+                              color: '#ffffff',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                            }}
+                          >
+                            EXPIRED - BLOCKED
+                          </span>
+                        ) : u.plan === 'trial' ? (
+                          <span
+                            style={{
+                              background: '#0284c7',
+                              color: '#ffffff',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                            }}
+                          >
+                            PROMO ACTIVE ({daysRemaining}d left)
+                          </span>
+                        ) : (
+                          <span
+                            style={{
+                              background: '#16a34a',
+                              color: '#ffffff',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                            }}
+                          >
+                            PAID ACTIVE
+                          </span>
+                        )}
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedUserForPromo(u);
+                              setPromoDays(30);
+                              setPromoReason('Promotional free campaign access');
+                              setIsPromoModalOpen(true);
+                            }}
+                            className="btn secondary"
+                            style={{ height: '24px', fontSize: '10px', padding: '0 6px' }}
+                            title="Grant custom promotional free login"
+                          >
+                            Grant Promo
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => grantFreeTrial(u.uid, 30, 'Extended validity +30 days')}
+                            className="btn secondary"
+                            style={{ height: '24px', fontSize: '10px', padding: '0 6px' }}
+                            title="Quick extend validity +30 days"
+                          >
+                            +30D
+                          </button>
+                          {!isBlocked ? (
+                            <button
+                              type="button"
+                              onClick={() => expireUserPlanNow(u.uid, 'Administrative expiration to test paywall')}
+                              className="btn secondary"
+                              style={{ height: '24px', fontSize: '10px', padding: '0 6px', color: '#dc2626' }}
+                              title="Instantly expire plan and block workspace access"
+                            >
+                              Expire &amp; Block
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => rechargeUserPlan(u.uid, 30, 'Manual admin recharge and unlock')}
+                              className="btn primary"
+                              style={{ height: '24px', fontSize: '10px', padding: '0 6px' }}
+                              title="Recharge plan and restore workspace access"
+                            >
+                              Recharge &amp; Unlock
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* IMMUTABLE AUDIT LOGS SECTION */}
       <div className="card" style={{ padding: '16px 18px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
@@ -792,6 +1038,126 @@ export default function GodfatherPromotionsPage() {
                   className="btn primary"
                 >
                   Save User Override
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Grant Promotional Free Login Modal */}
+      {isPromoModalOpen && selectedUserForPromo && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            background: 'rgba(0, 0, 0, 0.65)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '460px',
+              background: '#ffffff',
+              borderRadius: '8px',
+              border: '1px solid var(--fr8x-outline)',
+              boxShadow: 'var(--sh-lg)',
+              overflow: 'hidden',
+            }}
+          >
+            <div
+              style={{
+                padding: '14px 18px',
+                background: 'var(--fr8x-background)',
+                borderBottom: '1px solid var(--fr8x-outline)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={16} style={{ color: 'var(--brand, #1985a1)' }} />
+                <h3 style={{ fontSize: '13px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>
+                  Grant Promotional Free Login
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPromoModalOpen(false);
+                  setSelectedUserForPromo(null);
+                }}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fr8x-muted)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!promoReason.trim()) return;
+                await grantFreeTrial(selectedUserForPromo.uid, Number(promoDays), promoReason.trim());
+                setIsPromoModalOpen(false);
+                setSelectedUserForPromo(null);
+              }}
+              style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: '12px' }}
+            >
+              <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
+                <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', display: 'block' }}>TARGET MEMBER</span>
+                <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block' }}>
+                  {selectedUserForPromo.displayName}
+                </b>
+                <small style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+                  {selectedUserForPromo.company} · {selectedUserForPromo.email}
+                </small>
+              </div>
+
+              <div className="field">
+                <label>Promotional Free Validity Duration</label>
+                <select
+                  value={promoDays}
+                  onChange={(e) => setPromoDays(Number(e.target.value))}
+                  className="input"
+                >
+                  <option value={7}>7 Days (Introductory Access)</option>
+                  <option value={14}>14 Days (Fortnight Trial)</option>
+                  <option value={30}>30 Days (Standard Promotional Month)</option>
+                  <option value={60}>60 Days (Strategic Partner Onboarding)</option>
+                  <option value={90}>90 Days (Quarterly Waiver)</option>
+                </select>
+              </div>
+
+              <div className="field">
+                <label>Campaign / Promotional Rationale <span style={{ color: '#dc2626' }}>*</span></label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Free login promotional campaign for NVOCC onboardings"
+                  value={promoReason}
+                  onChange={(e) => setPromoReason(e.target.value)}
+                  className="input"
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    setIsPromoModalOpen(false);
+                    setSelectedUserForPromo(null);
+                  }}
+                >
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary">
+                  Activate Promotional Free Access
                 </button>
               </div>
             </form>

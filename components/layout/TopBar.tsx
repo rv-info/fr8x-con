@@ -386,21 +386,43 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                   <div className="calc-tool-box">
                     <div className="calc-row">
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '10px', color: 'var(--mut)' }}>Amount</label>
+                      <div>
+                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>Amount</label>
                         <input
                           type="number"
                           value={calcSourceAmount}
                           onChange={(e) => setCalcSourceAmount(parseFloat(e.target.value) || 0)}
-                          style={{ width: '100%', padding: '4px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid var(--line)' }}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '6px 10px',
+                            height: '34px',
+                            fontSize: '12.5px',
+                            fontWeight: 600,
+                            borderRadius: '6px',
+                            border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                            background: '#ffffff',
+                            color: 'var(--fr8x-text, #0f172a)',
+                          }}
                         />
                       </div>
-                      <div style={{ width: '80px' }}>
-                        <label style={{ fontSize: '10px', color: 'var(--mut)' }}>From</label>
+                      <div>
+                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>From</label>
                         <select
                           value={calcSourceCurrency}
                           onChange={(e) => setCalcSourceCurrency(e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '11.5px', borderRadius: '4px', border: '1px solid var(--line)' }}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '6px 8px',
+                            height: '34px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            borderRadius: '6px',
+                            border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                            background: '#ffffff',
+                            color: 'var(--fr8x-text, #0f172a)',
+                          }}
                         >
                           {Object.keys(availableCurrencies).map((c) => (
                             <option key={c} value={c}>{c}</option>
@@ -409,8 +431,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'center', margin: '6px 0' }}>
+                    <div style={{ textAlign: 'center', margin: '8px 0' }}>
                       <button
+                        type="button"
                         onClick={() => {
                           const temp = calcSourceCurrency;
                           setCalcSourceCurrency(calcTargetCurrency);
@@ -418,25 +441,54 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         }}
                         className="btn secondary sm"
                         title="Swap currencies"
-                        style={{ padding: '2px 8px', fontSize: '10.5px' }}
+                        style={{ padding: '3px 12px', fontSize: '11px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                       >
                         <ArrowRightLeft size={11} /> Swap
                       </button>
                     </div>
 
                     <div className="calc-row">
-                      <div style={{ flex: 1 }}>
-                        <label style={{ fontSize: '10px', color: 'var(--mut)' }}>Converted Amount</label>
-                        <div style={{ padding: '4px 8px', background: '#e8f8f5', borderRadius: '4px', fontWeight: 700, color: '#087b70', fontSize: '13px' }}>
+                      <div>
+                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>Converted Amount</label>
+                        <div
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '0 10px',
+                            height: '34px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            background: '#ecfdf5',
+                            border: '1px solid #a7f3d0',
+                            borderRadius: '6px',
+                            fontWeight: 800,
+                            color: '#065f46',
+                            fontSize: '13px',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {availableCurrencies[calcTargetCurrency]?.symbol || ''} {convertedResult.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </div>
                       </div>
-                      <div style={{ width: '80px' }}>
-                        <label style={{ fontSize: '10px', color: 'var(--mut)' }}>To</label>
+                      <div>
+                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>To</label>
                         <select
                           value={calcTargetCurrency}
                           onChange={(e) => setCalcTargetCurrency(e.target.value)}
-                          style={{ width: '100%', padding: '4px', fontSize: '11.5px', borderRadius: '4px', border: '1px solid var(--line)' }}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '6px 8px',
+                            height: '34px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            borderRadius: '6px',
+                            border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                            background: '#ffffff',
+                            color: 'var(--fr8x-text, #0f172a)',
+                          }}
                         >
                           {Object.keys(availableCurrencies).map((c) => (
                             <option key={c} value={c}>{c}</option>

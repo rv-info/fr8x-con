@@ -105,6 +105,12 @@ export interface UserProfile {
   experiences?: ProfileExperience[];
   educations?: ProfileEducation[];
   certifications?: ProfileCertification[];
+  // Plan Validity, Promotional Access & Recharge Enforcement
+  planExpiresAt?: string;
+  isPlanExpired?: boolean;
+  rechargeRequired?: boolean;
+  promotionalPlanGrantedBy?: string;
+  promotionalPlanGrantedAt?: string;
 }
 
 export interface NestedReply {

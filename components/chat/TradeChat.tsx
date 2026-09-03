@@ -96,7 +96,7 @@ function SingleChatBox({
         <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
           <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
         </div>
-        <span className="name">{contact?.name || 'Chat'}</span>
+        <span className="name" style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{contact?.name || 'Chat'}</span>
         {contact?.hasGoldenTick && <GoldenTick />}
         <button
           onClick={(e) => {
@@ -126,11 +126,11 @@ function SingleChatBox({
             <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           </div>
           <div style={{ overflow: 'hidden' }}>
-            <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11.5px', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span>{contact?.name || 'Contact'}</span>
+            <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--fr8x-text, #1e293b)', fontWeight: 700, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{contact?.name || 'Contact'}</span>
               {contact?.hasGoldenTick && <GoldenTick />}
             </b>
-            <small style={{ display: 'flex', alignItems: 'center', fontSize: '9.5px', color: 'var(--mut)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <small style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               <PresenceDot status={contact?.presenceStatus || (contact?.online ? 'active' : 'away')} />
               <span>{contact?.presenceStatus === 'active' || contact?.online ? 'Active' : contact?.presenceStatus === 'idle' ? 'Idle' : 'Away'} · {contact?.company}</span>
             </small>
@@ -173,8 +173,8 @@ function SingleChatBox({
         ) : (
           messages.map((m) => (
             <div key={m.id} className={`msg ${m.me ? 'me' : ''}`}>
-              <div>{m.text}</div>
-              <small>
+              <div style={{ color: m.me ? '#0f172a' : 'var(--fr8x-text, #1e293b)', fontWeight: 500 }}>{m.text}</div>
+              <small style={{ color: 'var(--fr8x-muted, #64748b)' }}>
                 {m.time} {m.me ? (m.status === 'read' ? ' ✓✓' : ' ✓') : ''}
               </small>
             </div>
@@ -272,8 +272,8 @@ export function TradeChat() {
           <div className="chathead">
             <MessagesSquare size={17} />
             <div style={{ flex: 1 }}>
-              <b>Nexus</b>
-              <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--mut)' }}>
+              <b style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>Nexus</b>
+              <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500 }}>
                 Direct verified participant communication
               </small>
             </div>

@@ -20,6 +20,8 @@ import {
   TermsAgreement,
   ComplianceRecord,
   PaymentGatewayConfig,
+  PlatformBankDetails,
+  PlatformUpiDetails,
   MonthlyAccountingSummary,
   MasterLocation,
   MasterCarrier,
@@ -1396,6 +1398,33 @@ const SEED_COMPLIANCE_RECORDS: ComplianceRecord[] = [
   },
 ];
 
+export const SEED_BANK_DETAILS: PlatformBankDetails = {
+  bankName: 'HDFC Bank Ltd.',
+  accountHolderName: 'FR8X LOGISTICS TECHNOLOGIES PVT. LTD.',
+  accountNumber: '50200088921822',
+  ifscCode: 'HDFC0001234',
+  accountType: 'Current',
+  branch: 'Bandra-Kurla Complex (BKC), Mumbai',
+  swiftCode: 'HDFCINBBXXX',
+  isActive: true,
+  notes: 'Official platform collection account for verified enterprise subscriptions, reverse auction deposits, and carrier escrow.',
+  updatedAt: '2026-09-01T10:00:00.000Z',
+  updatedBy: 'godfather.finance@fr8x.in',
+};
+
+export const SEED_UPI_DETAILS: PlatformUpiDetails = {
+  vpaId: 'fr8xlogistics@icici',
+  payeeName: 'FR8X LOGISTICS TECHNOLOGIES PVT LTD',
+  qrImageUrl: '/upi-qr-placeholder.png',
+  mccCode: '4789',
+  isActive: true,
+  minAmount: 1,
+  maxAmount: 100000,
+  notes: 'Official verified UPI merchant handle for instant 0% surcharge subscription recharges and promotional activation.',
+  updatedAt: '2026-09-01T10:00:00.000Z',
+  updatedBy: 'godfather.finance@fr8x.in',
+};
+
 const SEED_PAYMENT_GATEWAYS: PaymentGatewayConfig[] = [
   {
     gatewayId: 'gw-rzp-01',
@@ -2704,6 +2733,12 @@ interface GodfatherDataContextType {
   processRefundOrCredit: (invoiceId: string, amount: number, type: 'refund' | 'credit', reason: string) => Promise<boolean>;
   togglePaymentGateway: (gatewayId: string, enabled: boolean, reason: string) => Promise<boolean>;
   updatePaymentGateway: (gatewayId: string, updates: Partial<PaymentGatewayConfig>, reason: string) => Promise<boolean>;
+  bankDetails: PlatformBankDetails;
+  upiDetails: PlatformUpiDetails;
+  updateBankDetails: (updates: Partial<PlatformBankDetails>, reason: string) => Promise<boolean>;
+  updateUpiDetails: (updates: Partial<PlatformUpiDetails>, reason: string) => Promise<boolean>;
+  expireUserPlanNow: (uid: string, reason: string) => Promise<boolean>;
+  rechargeUserPlan: (uid: string, days: number, reason: string) => Promise<boolean>;
 
   // Terms & Clickwrap
   updateTermsAgreement: (code: TermsAgreement['code'], updates: Partial<TermsAgreement>, reason: string) => Promise<boolean>;
@@ -2770,6 +2805,8 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
   const [termsAgreements, setTermsAgreements] = useState<TermsAgreement[]>(SEED_TERMS_AGREEMENTS);
   const [complianceRecords, setComplianceRecords] = useState<ComplianceRecord[]>(SEED_COMPLIANCE_RECORDS);
   const [paymentGateways, setPaymentGateways] = useState<PaymentGatewayConfig[]>(SEED_PAYMENT_GATEWAYS);
+  const [bankDetails, setBankDetails] = useState<PlatformBankDetails>(SEED_BANK_DETAILS);
+  const [upiDetails, setUpiDetails] = useState<PlatformUpiDetails>(SEED_UPI_DETAILS);
   const [monthlyAccounting, setMonthlyAccounting] = useState<MonthlyAccountingSummary[]>(SEED_MONTHLY_ACCOUNTING);
 
   // Master Data States
@@ -2789,6 +2826,10 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       if (savedLocations) setMasterLocations(JSON.parse(savedLocations));
       const savedCarriers = localStorage.getItem('fr8x_gf_master_carriers');
       if (savedCarriers) setMasterCarriers(JSON.parse(savedCarriers));
+      const savedBank = localStorage.getItem('fr8x_godfather_bank_details');
+      if (savedBank) setBankDetails(JSON.parse(savedBank));
+      const savedUpi = localStorage.getItem('fr8x_godfather_upi_details');
+      if (savedUpi) setUpiDetails(JSON.parse(savedUpi));
     } catch {}
   }, []);
 
@@ -3596,9 +3637,14 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     const expiryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
     const after: UserProfile = {
       ...user,
-      plan: 'premium',
+      plan: 'trial',
       isVerified: true,
       hasGoldenTick: true,
+      planExpiresAt: expiryDate,
+      isPlanExpired: false,
+      rechargeRequired: false,
+      promotionalPlanGrantedBy: 'Godfather Super Admin',
+      promotionalPlanGrantedAt: new Date().toISOString(),
     };
 
     await executeAction({
@@ -3606,11 +3652,83 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       targetId: uid,
       targetLabel: `${user.displayName} (${user.company})`,
       actionType: 'MEMBER_FREE_TRIAL_GRANTED',
-      reason: reason || `Granted complete 30-Day Free Trial with sovereign platform privileges (Expires ${expiryDate.split('T')[0]})`,
+      reason: reason || `Granted ${days}-Day Promotional Free Access (Valid until ${expiryDate.split('T')[0]})`,
       beforeSnapshot: before,
       afterSnapshot: after,
       mutationFn: () => {
-        setUsers((prev) => prev.map((u) => (u.uid === uid ? after : u)));
+        setUsers((prev) => {
+          const next = prev.map((u) => (u.uid === uid ? after : u));
+          try {
+            localStorage.setItem('fr8x_users_v10', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      },
+    });
+    return true;
+  };
+
+  const expireUserPlanNow = async (uid: string, reason: string): Promise<boolean> => {
+    const user = users.find((u) => u.uid === uid);
+    if (!user) return false;
+    const before = { ...user };
+    const after: UserProfile = {
+      ...user,
+      planExpiresAt: new Date(Date.now() - 1000).toISOString(),
+      isPlanExpired: true,
+      rechargeRequired: true,
+    };
+
+    await executeAction({
+      targetType: 'user',
+      targetId: uid,
+      targetLabel: `${user.displayName} (${user.company})`,
+      actionType: 'MEMBER_PLAN_EXPIRED_ACCESS_BLOCKED',
+      reason: reason || 'Validity expired - Access blocked pending recharge',
+      beforeSnapshot: before,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setUsers((prev) => {
+          const next = prev.map((u) => (u.uid === uid ? after : u));
+          try {
+            localStorage.setItem('fr8x_users_v10', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+      },
+    });
+    return true;
+  };
+
+  const rechargeUserPlan = async (uid: string, days: number = 30, reason: string): Promise<boolean> => {
+    const user = users.find((u) => u.uid === uid);
+    if (!user) return false;
+    const before = { ...user };
+    const expiryDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toISOString();
+    const after: UserProfile = {
+      ...user,
+      plan: 'professional',
+      planExpiresAt: expiryDate,
+      isPlanExpired: false,
+      rechargeRequired: false,
+    };
+
+    await executeAction({
+      targetType: 'user',
+      targetId: uid,
+      targetLabel: `${user.displayName} (${user.company})`,
+      actionType: 'MEMBER_PLAN_RECHARGED_UNLOCKED',
+      reason: reason || `Recharged account plan for ${days} days (Valid until ${expiryDate.split('T')[0]})`,
+      beforeSnapshot: before,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setUsers((prev) => {
+          const next = prev.map((u) => (u.uid === uid ? after : u));
+          try {
+            localStorage.setItem('fr8x_users_v10', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
       },
     });
     return true;
@@ -3756,6 +3874,60 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       afterSnapshot: after,
       mutationFn: () => {
         setPaymentGateways((prev) => prev.map((g) => (g.gatewayId === gatewayId ? after : g)));
+      },
+    });
+    return true;
+  };
+
+  const updateBankDetails = async (updates: Partial<PlatformBankDetails>, reason: string): Promise<boolean> => {
+    const before = { ...bankDetails };
+    const after: PlatformBankDetails = {
+      ...bankDetails,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      updatedBy: operator.email,
+    };
+
+    await executeAction({
+      targetType: 'config',
+      targetId: 'platform_bank_details',
+      targetLabel: `${after.bankName} - ${after.accountHolderName}`,
+      actionType: 'BANK_ACCOUNT_DETAILS_UPDATED',
+      reason: reason || 'Updated official corporate collection bank account details',
+      beforeSnapshot: before,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setBankDetails(after);
+        try {
+          localStorage.setItem('fr8x_godfather_bank_details', JSON.stringify(after));
+        } catch {}
+      },
+    });
+    return true;
+  };
+
+  const updateUpiDetails = async (updates: Partial<PlatformUpiDetails>, reason: string): Promise<boolean> => {
+    const before = { ...upiDetails };
+    const after: PlatformUpiDetails = {
+      ...upiDetails,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      updatedBy: operator.email,
+    };
+
+    await executeAction({
+      targetType: 'config',
+      targetId: 'platform_upi_details',
+      targetLabel: `${after.vpaId} (${after.payeeName})`,
+      actionType: 'UPI_QR_DETAILS_UPDATED',
+      reason: reason || 'Updated official platform UPI QR code and collection handle',
+      beforeSnapshot: before,
+      afterSnapshot: after,
+      mutationFn: () => {
+        setUpiDetails(after);
+        try {
+          localStorage.setItem('fr8x_godfather_upi_details', JSON.stringify(after));
+        } catch {}
       },
     });
     return true;
@@ -4344,6 +4516,12 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         processRefundOrCredit,
         togglePaymentGateway,
         updatePaymentGateway,
+        bankDetails,
+        upiDetails,
+        updateBankDetails,
+        updateUpiDetails,
+        expireUserPlanNow,
+        rechargeUserPlan,
         updateTermsAgreement,
         toggleTermsEnforcement,
         saveNotificationTemplate,

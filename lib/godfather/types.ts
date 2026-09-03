@@ -443,6 +443,33 @@ export interface ComplianceRecord {
   certificateRef?: string;
 }
 
+export interface PlatformBankDetails {
+  bankName: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType: 'Current' | 'Escrow' | 'Settlement';
+  branch: string;
+  swiftCode?: string;
+  isActive: boolean;
+  notes?: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
+export interface PlatformUpiDetails {
+  vpaId: string;
+  payeeName: string;
+  qrImageUrl: string;
+  mccCode: string;
+  isActive: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  notes?: string;
+  updatedAt: string;
+  updatedBy: string;
+}
+
 export interface PaymentGatewayConfig {
   gatewayId: string;
   provider: 'Razorpay' | 'PayPal' | 'Stripe' | 'Cashfree' | 'UPI_Direct' | 'Bank_Wire';

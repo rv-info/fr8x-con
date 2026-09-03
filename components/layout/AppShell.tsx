@@ -18,6 +18,11 @@ const NexusChat = dynamic(
   { ssr: false }
 );
 
+const PlanExpiredModal = dynamic(
+  () => import('@/components/ui/PlanExpiredModal').then((mod) => mod.PlanExpiredModal),
+  { ssr: false }
+);
+
 import { useAuth } from '@/lib/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -115,6 +120,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
       </main>
       <MobileNav />
       <NexusChat />
+      <PlanExpiredModal />
     </div>
   );
 }

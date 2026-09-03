@@ -50,6 +50,8 @@ import {
   Mail,
   PhoneCall,
   UserCheck,
+  Info,
+  HelpCircle,
 } from 'lucide-react';
 
 const POST_TYPE_LABELS: Record<PostType, { label: string; color: string; bg: string }> = {
@@ -73,6 +75,80 @@ interface BookedAd {
   duration: string;
   cost: number;
 }
+
+interface WorkspaceContact {
+  id: string;
+  uid: string;
+  name: string;
+  role: string;
+  company: string;
+  isOnline: boolean;
+  hasGoldenTick: boolean;
+  email: string;
+}
+
+const WORKSPACE_CONTACTS: WorkspaceContact[] = [
+  {
+    id: 'c-1',
+    uid: 'u-sarah',
+    name: 'Sarah Jenkins',
+    role: 'Ocean Freight Lead',
+    company: 'Maersk Line',
+    isOnline: true,
+    hasGoldenTick: true,
+    email: 'sarah.j@maersk.com',
+  },
+  {
+    id: 'c-2',
+    uid: 'u-kiran',
+    name: 'Capt. Kiran Rao',
+    role: 'VP Line Operations',
+    company: 'Hapag-Lloyd AG',
+    isOnline: true,
+    hasGoldenTick: true,
+    email: 'kiran.rao@hapag-lloyd.com',
+  },
+  {
+    id: 'c-3',
+    uid: 'u-priya',
+    name: 'Priya Nair',
+    role: 'Maritime Trade Specialist',
+    company: 'Nair Cargo Solutions',
+    isOnline: false,
+    hasGoldenTick: true,
+    email: 'priya@naircargo.com',
+  },
+  {
+    id: 'c-4',
+    uid: 'u-david',
+    name: 'David Chen',
+    role: 'Head of Global Liner Services',
+    company: 'COSCO Shipping',
+    isOnline: true,
+    hasGoldenTick: false,
+    email: 'd.chen@cosco.com',
+  },
+  {
+    id: 'c-5',
+    uid: 'u-rajiv',
+    name: 'Rajiv Mehta',
+    role: 'CFS Drayage & Terminal Lead',
+    company: 'Nhava Sheva Terminal',
+    isOnline: true,
+    hasGoldenTick: true,
+    email: 'rajiv.m@nhavasheva.in',
+  },
+  {
+    id: 'c-6',
+    uid: 'u-elena',
+    name: 'Elena Rostova',
+    role: 'Senior Freight Broker',
+    company: 'Hamburg Süd Logistics',
+    isOnline: false,
+    hasGoldenTick: false,
+    email: 'elena.r@hamburgsud.com',
+  },
+];
 
 // ── AI Job Requirements Suggestion Component ─────────────────────────────────
 const AI_SUGGESTION_CATEGORIES: { label: string; color: string; chips: string[] }[] = [
@@ -327,10 +403,31 @@ export default function FeedsPage() {
   };
 
   const handleSendPost = (post: FeedPost) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(`${window.location.origin}/feeds?post=${post.id}`);
+    setSendPostTarget(post);
+    setSelectedContactUids([]);
+    setSendOptionalNote('');
+    setSendContactSearch('');
+  };
+
+  const handleConfirmSendToContacts = () => {
+    if (!sendPostTarget || selectedContactUids.length === 0) {
+      toast('Please select at least one contact to send this post.');
+      return;
     }
-    toast('Post link copied. Share directly in Trade Chat or with network.');
+
+    selectedContactUids.forEach((contactUid) => {
+      openChatWith(contactUid, {
+        type: 'company',
+        id: String(sendPostTarget.id),
+        title: `Shared Post: ${sendPostTarget.author}`,
+      });
+    });
+
+    toast(`Post shared with ${selectedContactUids.length} contact(s) via Trade Chat!`);
+    setSendPostTarget(null);
+    setSelectedContactUids([]);
+    setSendOptionalNote('');
+    setSendContactSearch('');
   };
 
   const renderCommentWithMentions = (text: string) => {
@@ -388,6 +485,19 @@ export default function FeedsPage() {
   const [reportingPost, setReportingPost] = useState<FeedPost | null>(null);
   const [reportCategory, setReportCategory] = useState<'malicious' | 'spam' | 'fraud' | 'copyright' | 'harassment' | 'misleading' | 'prohibited' | 'other'>('spam');
   const [reportDesc, setReportDesc] = useState('');
+
+  // Post Composer formatting tooltip state (Requirement 3)
+  const [showFormattingHelp, setShowFormattingHelp] = useState(false);
+
+  // Send Post to Contact Selection Modal state (Requirement 4)
+  const [sendPostTarget, setSendPostTarget] = useState<FeedPost | null>(null);
+  const [sendContactSearch, setSendContactSearch] = useState('');
+  const [selectedContactUids, setSelectedContactUids] = useState<string[]>([]);
+  const [sendOptionalNote, setSendOptionalNote] = useState('');
+
+  // Left Sidebar Contacts List state (Requirement 5)
+  const [contactRailSearch, setContactRailSearch] = useState('');
+  const [showManageContactsModal, setShowManageContactsModal] = useState(false);
 
   // New Job Form State + Payment calculation (₹300 for 2 days + ₹180/day thereafter)
   const [newJobTitle, setNewJobTitle] = useState('');
@@ -472,6 +582,30 @@ export default function FeedsPage() {
     setAdCreativeName(null);
     setAdCreativePreview(null);
   };
+
+  // Filtered Contacts for the Send Modal (Requirement 4)
+  const filteredSendContacts = React.useMemo(() => {
+    if (!sendContactSearch.trim()) return WORKSPACE_CONTACTS;
+    const q = sendContactSearch.toLowerCase();
+    return WORKSPACE_CONTACTS.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.company.toLowerCase().includes(q) ||
+        c.role.toLowerCase().includes(q)
+    );
+  }, [sendContactSearch]);
+
+  // Filtered Contacts for the Left Rail (Requirement 5)
+  const displayedRailContacts = React.useMemo(() => {
+    if (!contactRailSearch.trim()) return WORKSPACE_CONTACTS;
+    const q = contactRailSearch.toLowerCase();
+    return WORKSPACE_CONTACTS.filter(
+      (c) =>
+        c.name.toLowerCase().includes(q) ||
+        c.company.toLowerCase().includes(q) ||
+        c.role.toLowerCase().includes(q)
+    );
+  }, [contactRailSearch]);
 
   // 1. Two-Stage Candidate Retrieval & Personalized Hybrid Ranking
   const rankedFeedPosts = React.useMemo(() => {
@@ -1014,8 +1148,8 @@ export default function FeedsPage() {
       <aside className="feed-left-rail">
         <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
-            <div className="avatar big borderless" style={{ margin: '0 auto 10px', width: '56px', height: '56px', padding: 0, overflow: 'hidden', background: 'transparent', border: 'none', boxShadow: 'none' }}>
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', border: 'none' }} />
+            <div className="avatar big borderless" style={{ margin: '0 auto 10px', width: '74px', height: '74px', padding: 0, overflow: 'hidden', background: '#f1f5f9', border: '2px solid var(--fr8x-outline, #cbd5e1)', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
               {user.displayName}
@@ -1123,44 +1257,186 @@ export default function FeedsPage() {
             </Link>
           </div>
         </div>
+
+        {/* Added Contacts List (Requirement 5) */}
+        <div className="card" style={{ marginTop: '12px', border: '1px solid var(--fr8x-outline)' }}>
+          <div className="cardhead" style={{ fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <b style={{ display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
+              <UserCheck size={13} color="var(--brand)" /> Added Contacts
+            </b>
+            <span className="badge" style={{ fontSize: '9.5px', fontWeight: 700 }}>
+              {WORKSPACE_CONTACTS.length} Added
+            </span>
+          </div>
+          <div style={{ padding: '8px' }}>
+            {/* Filter contacts input */}
+            <div style={{ position: 'relative', marginBottom: '8px' }}>
+              <Search size={11} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--fr8x-muted)' }} />
+              <input
+                type="text"
+                placeholder="Filter contacts..."
+                value={contactRailSearch}
+                onChange={(e) => setContactRailSearch(e.target.value)}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  padding: '5px 6px 5px 24px',
+                  fontSize: '11px',
+                  borderRadius: '5px',
+                  border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                  background: '#f8fafc',
+                  color: 'var(--fr8x-text)',
+                }}
+              />
+            </div>
+
+            {/* Scrollable list of verified trade contacts */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '260px', overflowY: 'auto' }}>
+              {displayedRailContacts.map((contact) => (
+                <div
+                  key={contact.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '6px 8px',
+                    borderRadius: '5px',
+                    border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                    background: '#ffffff',
+                  }}
+                >
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
+                    <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden' }}>
+                      <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    </div>
+                    {contact.isOnline && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: '-1px',
+                          right: '-1px',
+                          width: '7px',
+                          height: '7px',
+                          borderRadius: '50%',
+                          background: '#16a34a',
+                          border: '1.5px solid #ffffff',
+                        }}
+                        title="Online"
+                      />
+                    )}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span
+                        onClick={() => setSelectedProfileName(contact.name)}
+                        style={{
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          color: 'var(--fr8x-text)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          cursor: 'pointer',
+                        }}
+                        title={`View ${contact.name}'s profile`}
+                      >
+                        {contact.name}
+                      </span>
+                      {contact.hasGoldenTick && <GoldenTick size={11} />}
+                    </div>
+                    <small
+                      style={{
+                        display: 'block',
+                        fontSize: '9.5px',
+                        color: 'var(--fr8x-muted)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {contact.company}
+                    </small>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` })}
+                    title={`Send Trade Message to ${contact.name}`}
+                    style={{
+                      background: '#f1f5f9',
+                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                      borderRadius: '4px',
+                      padding: '3px 5px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      color: 'var(--brand)',
+                    }}
+                  >
+                    <MessageCircle size={11} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* View All & Manage Contacts trigger */}
+            <div style={{ marginTop: '8px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '6px' }}>
+              <button
+                type="button"
+                onClick={() => setShowManageContactsModal(true)}
+                className="btn secondary sm"
+                style={{ width: '100%', justifyContent: 'center', fontSize: '10.5px' }}
+              >
+                View All &amp; Manage Contacts
+              </button>
+            </div>
+          </div>
+        </div>
       </aside>
 
       {/* CENTER COLUMN: Main Feed */}
       <main className="feed-center-rail">
-        {/* Post Type Filters & Tabs */}
+        {/* Post Type Filters & Navigation Tabs in One Consistent Horizontal Row */}
         <div className="feed-header-bar">
-          <div className="feed-tabs" style={{ display: 'flex', overflowX: 'auto', gap: '4px' }}>
+          <div className="feed-tabs">
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'home' ? 'active' : ''}`}
               onClick={() => setActiveSurface('home')}
             >
               Home Feed
             </button>
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'trending' ? 'active' : ''}`}
               onClick={() => setActiveSurface('trending')}
             >
               Trending
             </button>
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'discover' ? 'active' : ''}`}
               onClick={() => setActiveSurface('discover')}
             >
               Discover
             </button>
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'following' ? 'active' : ''}`}
               onClick={() => setActiveSurface('following')}
             >
               Following
             </button>
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'latest' ? 'active' : ''}`}
               onClick={() => setActiveSurface('latest')}
             >
               Latest
             </button>
             <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'saved' ? 'active' : ''}`}
               onClick={() => setActiveSurface('saved')}
             >
@@ -1168,79 +1444,66 @@ export default function FeedsPage() {
             </button>
           </div>
 
-          <div className="feed-search-box">
-            <Search size={14} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search feed posts, authors, commodities…"
-              value={feedSearch}
-              onChange={(e) => {
-                setFeedSearch(e.target.value);
-                setShowAllSearchResults(false);
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Integrated Category Filter Dropdown */}
+            <select
+              value={selectedPostType}
+              onChange={(e) => setSelectedPostType(e.target.value as any)}
+              style={{
+                height: '32px',
+                padding: '0 10px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                background: '#ffffff',
+                color: 'var(--fr8x-text)',
+                cursor: 'pointer',
               }}
-            />
-            {feedSearch && (
-              <button onClick={() => setFeedSearch('')} className="clear-search-btn">
-                ✕
-              </button>
-            )}
+            >
+              <option value="all">All Categories</option>
+              <option value="rate_info">Rate Intelligence</option>
+              <option value="auction_ref">Reverse Auctions</option>
+              <option value="job">Job Openings</option>
+              <option value="business_update">Business Updates</option>
+              <option value="logistics_discussion">Roundtables</option>
+            </select>
+
+            {/* Feed Search Input */}
+            <div className="feed-search-box">
+              <Search size={14} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search feed posts, authors, commodities…"
+                value={feedSearch}
+                onChange={(e) => {
+                  setFeedSearch(e.target.value);
+                  setShowAllSearchResults(false);
+                }}
+              />
+              {feedSearch && (
+                <button onClick={() => setFeedSearch('')} className="clear-search-btn">
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Category Pills Strip */}
-        <div className="feed-type-pill-strip">
-          <button
-            className={`feed-type-pill ${selectedPostType === 'all' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('all')}
-          >
-            All Categories
-          </button>
-          <button
-            className={`feed-type-pill ${selectedPostType === 'rate_info' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('rate_info')}
-          >
-            Rate Intelligence
-          </button>
-          <button
-            className={`feed-type-pill ${selectedPostType === 'auction_ref' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('auction_ref')}
-          >
-            Reverse Auctions
-          </button>
-          <button
-            className={`feed-type-pill ${selectedPostType === 'job' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('job')}
-          >
-            Job Openings
-          </button>
-          <button
-            className={`feed-type-pill ${selectedPostType === 'business_update' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('business_update')}
-          >
-            Business Updates
-          </button>
-          <button
-            className={`feed-type-pill ${selectedPostType === 'logistics_discussion' ? 'active' : ''}`}
-            onClick={() => setSelectedPostType('logistics_discussion')}
-          >
-            Roundtables
-          </button>
-        </div>
-
-        {/* Post Composer */}
-        <div className="card compose-card" style={{ marginBottom: '16px', padding: '16px 18px' }}>
+        {/* Compact Post Composer immediately below navigation (eliminates large blank space) */}
+        <div className="card compose-card" style={{ marginBottom: '12px', padding: '12px 14px' }}>
           <div className="compose-top">
-            <div className="avatar" style={{ width: '40px', height: '40px', padding: 0, overflow: 'hidden' }}>
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            <div className="avatar" style={{ width: '36px', height: '36px', padding: 0, overflow: 'hidden' }}>
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
                   Publish B2B Trade Intelligence to Global Network
                 </span>
                 <select
                   className="input"
-                  style={{ height: '30px', fontSize: '11px', width: 'auto', padding: '0 8px' }}
+                  style={{ height: '28px', fontSize: '11px', width: 'auto', padding: '0 8px', borderRadius: '4px' }}
                   value={composerPostType}
                   onChange={(e) => setComposerPostType(e.target.value as PostType)}
                 >
@@ -1258,13 +1521,89 @@ export default function FeedsPage() {
           <form onSubmit={handlePostSubmit}>
             <textarea
               className="compose-textarea"
-              rows={3}
+              rows={2}
               placeholder="Share market intelligence, blank sailings alert, port operational updates, or rate trends… (Markdown supported)"
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
+              style={{ minHeight: '60px', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}
             />
-            <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="submit" className="btn primary" disabled={!postText.trim()} style={{ padding: '0 16px', height: '34px' }}>
+            <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
+              {/* Information / Supported Markdown Formatting Guide Tooltip (Requirement 3) */}
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowFormattingHelp(!showFormattingHelp)}
+                  onMouseEnter={() => setShowFormattingHelp(true)}
+                  className="btn secondary sm"
+                  style={{ width: '28px', height: '28px', padding: 0, justifyContent: 'center', borderRadius: '6px', color: 'var(--fr8x-muted)' }}
+                  title="Markdown Formatting Guide"
+                >
+                  <Info size={14} />
+                </button>
+
+                {showFormattingHelp && (
+                  <div
+                    onMouseLeave={() => setShowFormattingHelp(false)}
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      right: 0,
+                      marginBottom: '8px',
+                      width: '280px',
+                      background: '#ffffff',
+                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
+                      zIndex: 50,
+                      fontSize: '11.5px',
+                      color: 'var(--fr8x-text)',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid var(--fr8x-outline, #e2e8f0)', paddingBottom: '5px' }}>
+                      <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Sparkles size={12} color="var(--brand)" /> Formatting Guide
+                      </b>
+                      <button
+                        type="button"
+                        onClick={() => setShowFormattingHelp(false)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fr8x-muted)', fontSize: '12px' }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>**bold**</code>
+                        <span><b>Bold text</b></span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>*italic*</code>
+                        <span><i>Italic text</i></span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>[title](url)</code>
+                        <span style={{ color: '#0284c7', textDecoration: 'underline' }}>Clickable link</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>- item</code>
+                        <span>• Bulleted list</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>&gt; quote</code>
+                        <span style={{ color: '#64748b', fontStyle: 'italic' }}>Blockquote</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>(#Name)</code>
+                        <span style={{ color: '#0891b2', fontWeight: 600 }}>@Mention contact</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <button type="submit" className="btn primary" disabled={!postText.trim()} style={{ padding: '0 16px', height: '32px' }}>
                 <Send size={13} /> Post Update
               </button>
             </div>
@@ -1760,7 +2099,7 @@ export default function FeedsPage() {
                 style={{ padding: '2px 8px', fontSize: '10px' }}
                 onClick={() => setShowJobCreateModal(true)}
               >
-                + Post (₹300)
+                + Post
               </button>
               <Link href="/jobs" className="btn secondary sm">
                 View All
@@ -1899,6 +2238,298 @@ export default function FeedsPage() {
           )}
         </div>
       </aside>
+
+      {/* 4. Send Post to Contact Selection Modal (Requirement 4) */}
+      {sendPostTarget && (
+        <Modal
+          isOpen={Boolean(sendPostTarget)}
+          onClose={() => {
+            setSendPostTarget(null);
+            setSelectedContactUids([]);
+            setSendOptionalNote('');
+            setSendContactSearch('');
+          }}
+          title="Send to contact"
+          maxWidth="460px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* Post Preview Snippet */}
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                borderRadius: '6px',
+                padding: '8px 10px',
+                fontSize: '11.5px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                <b style={{ color: 'var(--fr8x-text)' }}>{sendPostTarget.author}</b>
+                {sendPostTarget.authorCompany && (
+                  <span style={{ color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>({sendPostTarget.authorCompany})</span>
+                )}
+              </div>
+              <p
+                style={{
+                  margin: 0,
+                  color: 'var(--fr8x-text)',
+                  fontSize: '11px',
+                  lineHeight: 1.4,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                }}
+              >
+                {sendPostTarget.text}
+              </p>
+            </div>
+
+            {/* Search contacts input */}
+            <div className="field" style={{ margin: 0 }}>
+              <div style={{ position: 'relative' }}>
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--fr8x-muted)' }} />
+                <input
+                  type="text"
+                  placeholder="🔍 Search contacts..."
+                  value={sendContactSearch}
+                  onChange={(e) => setSendContactSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '6px 10px 6px 30px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                    background: '#ffffff',
+                    color: 'var(--fr8x-text)',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Checkable contact list */}
+            <div
+              style={{
+                border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                borderRadius: '6px',
+                maxHeight: '200px',
+                overflowY: 'auto',
+                padding: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                background: '#ffffff',
+              }}
+            >
+              {filteredSendContacts.length === 0 ? (
+                <div style={{ padding: '14px', textAlign: 'center', color: 'var(--fr8x-muted)', fontSize: '11.5px' }}>
+                  No contacts found matching &ldquo;{sendContactSearch}&rdquo;
+                </div>
+              ) : (
+                filteredSendContacts.map((contact) => {
+                  const isSelected = selectedContactUids.includes(contact.uid);
+                  return (
+                    <label
+                      key={contact.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        padding: '6px 8px',
+                        borderRadius: '4px',
+                        background: isSelected ? '#f0f9ff' : 'transparent',
+                        cursor: 'pointer',
+                        transition: 'background 0.1s ease',
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setSelectedContactUids((prev) =>
+                            prev.includes(contact.uid)
+                              ? prev.filter((id) => id !== contact.uid)
+                              : [...prev, contact.uid]
+                          );
+                        }}
+                        style={{ cursor: 'pointer', accentColor: 'var(--brand, #1985a1)', width: '15px', height: '15px' }}
+                      />
+                      <div className="avatar" style={{ width: '26px', height: '26px', padding: 0, overflow: 'hidden', flexShrink: 0 }}>
+                        <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>{contact.name}</b>
+                          {contact.hasGoldenTick && <GoldenTick size={11} />}
+                          {contact.isOnline && (
+                            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16a34a' }} title="Online" />
+                          )}
+                        </div>
+                        <small style={{ color: 'var(--fr8x-muted)', fontSize: '10px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {contact.role} · {contact.company}
+                        </small>
+                      </div>
+                    </label>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Optional note field */}
+            <div className="field" style={{ margin: 0 }}>
+              <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted)', marginBottom: '3px', display: 'block' }}>
+                Optional message note
+              </label>
+              <textarea
+                rows={2}
+                placeholder="Include an optional message (e.g. Please review this market intelligence)..."
+                value={sendOptionalNote}
+                onChange={(e) => setSendOptionalNote(e.target.value)}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  fontSize: '11.5px',
+                  padding: '6px 8px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                }}
+              />
+            </div>
+
+            {/* Cancel & Send Buttons */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '10px' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => {
+                  setSendPostTarget(null);
+                  setSelectedContactUids([]);
+                  setSendOptionalNote('');
+                  setSendContactSearch('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                disabled={selectedContactUids.length === 0}
+                onClick={handleConfirmSendToContacts}
+                style={{ minWidth: '85px' }}
+              >
+                <Send size={12} /> Send ({selectedContactUids.length})
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* 5. View All & Manage Contacts Modal (Requirement 5) */}
+      {showManageContactsModal && (
+        <Modal
+          isOpen={showManageContactsModal}
+          onClose={() => setShowManageContactsModal(false)}
+          title="Enterprise Network Contacts"
+          maxWidth="560px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--fr8x-muted)', margin: 0 }}>
+              Manage your verified enterprise freight partners and direct contacts across shipping lines, forwarders, and logistics operators.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
+              {WORKSPACE_CONTACTS.map((contact) => (
+                <div
+                  key={contact.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                    background: '#ffffff',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ position: 'relative' }}>
+                      <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
+                        <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      {contact.isOnline && (
+                        <span
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            right: 0,
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            background: '#16a34a',
+                            border: '1.5px solid #ffffff',
+                          }}
+                          title="Online"
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <b
+                        onClick={() => {
+                          setShowManageContactsModal(false);
+                          setSelectedProfileName(contact.name);
+                        }}
+                        style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        {contact.name}
+                        {contact.hasGoldenTick && <GoldenTick size={12} />}
+                      </b>
+                      <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
+                        {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
+                      </small>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button
+                      type="button"
+                      className="btn secondary sm"
+                      onClick={() => {
+                        setShowManageContactsModal(false);
+                        setSelectedProfileName(contact.name);
+                      }}
+                      style={{ fontSize: '10.5px' }}
+                    >
+                      Profile
+                    </button>
+                    <button
+                      type="button"
+                      className="btn primary sm"
+                      onClick={() => {
+                        setShowManageContactsModal(false);
+                        openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
+                      }}
+                      style={{ fontSize: '10.5px' }}
+                    >
+                      <MessageCircle size={11} /> Chat
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setShowManageContactsModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 }
