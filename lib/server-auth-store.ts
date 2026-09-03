@@ -679,7 +679,7 @@ class ServerSecurityStore {
     otp: string,
     newPassword: string,
     ip = '127.0.0.1'
-  ): { success: boolean; message: string; error?: string; user?: ServerUserRecord } {
+  ): { success: boolean; message?: string; error?: string; user?: ServerUserRecord } {
     const cleanEmail = email.trim().toLowerCase();
     const user = this.users.get(cleanEmail);
     if (!user) {

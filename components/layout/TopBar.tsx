@@ -12,6 +12,7 @@ import {
   getCarrierTypeIcon,
 } from '@/lib/utils';
 import Link from 'next/link';
+import { NetworkStatusPill } from './NetworkStatusPill';
 import {
   MapPin,
   Bell,
@@ -44,7 +45,7 @@ interface TopBarProps {
 
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { user, allUsers, logout } = useAuth();
-  const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates } = useCurrency();
+  const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates, convertAmount: convertAmountLive } = useCurrency();
   const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
@@ -60,8 +61,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const [calcTargetCurrency, setCalcTargetCurrency] = useState('USD');
   const [calcSourceAmount, setCalcSourceAmount] = useState<number>(1500);
 
-  const convertedResult = convertAmount(calcSourceAmount || 0, calcSourceCurrency, calcTargetCurrency);
-  const directRate = convertAmount(1, calcSourceCurrency, calcTargetCurrency);
+  const convertedResult = convertAmountLive ? convertAmountLive(calcSourceAmount || 0, calcSourceCurrency, calcTargetCurrency) : convertAmount(calcSourceAmount || 0, calcSourceCurrency, calcTargetCurrency);
+  const directRate = convertAmountLive ? convertAmountLive(1, calcSourceCurrency, calcTargetCurrency) : convertAmount(1, calcSourceCurrency, calcTargetCurrency);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -327,6 +328,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </button>
 
         <div className="topright">
+          {/* HyperSpeed Network & Offline Status */}
+          <NetworkStatusPill />
+
           {/* Location Badge */}
           <span className="country" title={`Location: ${user.city}, ${user.country}`}>
             <MapPin size={13} style={{ color: 'var(--brand)' }} />

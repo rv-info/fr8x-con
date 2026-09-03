@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loadRemembered, userStatus } = useAuth();
+  const { login, loadRemembered, userStatus, resetPasswordWithOtp } = useAuth();
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState(''); // uid or email
@@ -21,9 +21,14 @@ export default function LoginPage() {
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Forgot password modal
+  // Forgot password modal state
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'otp'>('request');
   const [resetEmail, setResetEmail] = useState('');
+  const [resetOtp, setResetOtp] = useState('');
+  const [resetNewPassword, setResetNewPassword] = useState('');
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('');
+  const [resetError, setResetError] = useState('');
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
 
   // Read URL reason parameter (session_expired, inactivity, not_found)
@@ -93,7 +98,20 @@ export default function LoginPage() {
       } else {
         if (json.isBlocked || res.status === 403) {
           setIsBlocked(true);
-          setErrorMessage('ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
+          if (json.passwordResetRequired) {
+            const userTargetEmail = json.email || (id.includes('@') ? id : '');
+            setErrorMessage(
+              json.error ||
+                'Security Lock: 3 invalid attempts detected. A password reset OTP has been dispatched from the server to your registered email.'
+            );
+            setResetEmail(userTargetEmail);
+            setResetStep('otp');
+            setResetError('');
+            setIsForgotModalOpen(true);
+            toast('Password reset OTP dispatched from server. Please check your email.');
+          } else {
+            setErrorMessage(json.error || 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
+          }
         } else {
           // Check client-side registered accounts fallback (e.g. newly registered organizations)
           const localSuccess = login(id, password, remember);
@@ -122,10 +140,11 @@ export default function LoginPage() {
     }
   };
 
-  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+  const handleRequestResetOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail.trim()) return;
 
+    setResetError('');
     setIsResetSubmitting(true);
     try {
       const res = await fetch('/api/auth/reset-password', {
@@ -136,11 +155,59 @@ export default function LoginPage() {
 
       const json = await res.json();
       toast(json.message || 'If an account matches this email, password reset instructions have been dispatched.');
-      setIsForgotModalOpen(false);
-      setResetEmail('');
+      setResetStep('otp');
     } catch {
-      toast('If an account matches this email, password reset instructions have been dispatched.');
+      toast('Verification code dispatched. Please check your registered email.');
+      setResetStep('otp');
+    } finally {
+      setIsResetSubmitting(false);
+    }
+  };
+
+  const handleVerifyOtpAndReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+
+    if (!resetOtp.trim() || resetOtp.trim().length !== 6) {
+      setResetError('Please enter a valid 6-digit verification code.');
+      return;
+    }
+    if (!resetNewPassword || resetNewPassword.length < 6) {
+      setResetError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (resetNewPassword !== resetConfirmPassword) {
+      setResetError('Passwords do not match. Please re-enter.');
+      return;
+    }
+
+    setIsResetSubmitting(true);
+    try {
+      const result = await resetPasswordWithOtp(
+        resetEmail.trim(),
+        resetOtp.trim(),
+        resetNewPassword.trim()
+      );
+
+      if (!result.success) {
+        setResetError(result.error || 'Invalid or expired OTP code.');
+        setIsResetSubmitting(false);
+        return;
+      }
+
+      toast('Password reset successfully! You can now sign in.');
       setIsForgotModalOpen(false);
+      setIsBlocked(false);
+      setIdentifier(resetEmail.trim());
+      setPassword('');
+      setErrorMessage('');
+      setSessionNotice('Password successfully reset! Please sign in with your new password.');
+      setResetOtp('');
+      setResetNewPassword('');
+      setResetConfirmPassword('');
+      setResetStep('request');
+    } catch (err: any) {
+      setResetError(err.message || 'Password reset failed.');
     } finally {
       setIsResetSubmitting(false);
     }
@@ -367,14 +434,18 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Password Reset Modal (Dispatched on 3 invalid attempts or manual request) */}
       {isForgotModalOpen && (
         <div className="gf-modal-overlay">
-          <div className="gf-modal-card" style={{ maxWidth: '400px' }}>
+          <div className="gf-modal-card" style={{ maxWidth: '440px' }}>
             <div className="gf-modal-header">
               <div className="gf-modal-title flex items-center gap-2">
                 <KeyRound className="lucide w-4 h-4 text-sky-600" />
-                <span>Reset Account Password</span>
+                <span>
+                  {resetStep === 'otp'
+                    ? 'Verify OTP & Reset Password'
+                    : 'Reset Account Password'}
+                </span>
               </div>
               <button
                 type="button"
@@ -385,43 +456,177 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <form onSubmit={handleResetPasswordSubmit} style={{ padding: '16px' }} className="space-y-3">
-              <p style={{ fontSize: '11.5px', color: 'var(--mut)', margin: 0, lineHeight: 1.4 }}>
-                Enter your registered corporate email. If an account is matched, secure instructions will be dispatched.
-              </p>
+            {resetStep === 'request' ? (
+              <form onSubmit={handleRequestResetOtp} style={{ padding: '16px' }} className="space-y-3">
+                <p style={{ fontSize: '11.5px', color: 'var(--mut)', margin: 0, lineHeight: 1.4 }}>
+                  Enter your registered corporate email. A secure 6-digit password reset OTP will be dispatched from the server.
+                </p>
 
-              <div className="field">
-                <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                  Verified Corporate Email
-                </label>
-                <input
-                  type="email"
-                  required
-                  placeholder="name@company.com"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                  className="input"
-                  style={{ width: '100%', height: '34px', fontSize: '12px' }}
-                />
-              </div>
+                {resetError && (
+                  <div
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: '#fff0f1',
+                      border: '1px solid #f0c8ce',
+                      color: 'var(--red)',
+                      fontSize: '11px',
+                    }}
+                  >
+                    {resetError}
+                  </div>
+                )}
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsForgotModalOpen(false)}
-                  className="btn secondary sm"
+                <div className="field">
+                  <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    Verified Corporate Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    placeholder="name@company.com"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    className="input"
+                    style={{ width: '100%', height: '34px', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotModalOpen(false)}
+                    className="btn secondary sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isResetSubmitting || !resetEmail.trim()}
+                    className="btn primary sm"
+                  >
+                    {isResetSubmitting ? 'Dispatching…' : 'Send Reset Code'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtpAndReset} style={{ padding: '16px' }} className="space-y-3">
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: '6px',
+                    fontSize: '11.5px',
+                    color: '#0369a1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    lineHeight: 1.4,
+                  }}
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isResetSubmitting || !resetEmail.trim()}
-                  className="btn primary sm"
-                >
-                  {isResetSubmitting ? 'Dispatching…' : 'Send Reset Link'}
-                </button>
-              </div>
-            </form>
+                  <Mail size={15} style={{ flexShrink: 0, color: '#0284c7' }} />
+                  <span>
+                    A 6-digit OTP was dispatched from the server to <strong>{resetEmail || 'your email'}</strong>. Enter it below to unlock your account.
+                  </span>
+                </div>
+
+                {resetError && (
+                  <div
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      background: '#fff0f1',
+                      border: '1px solid #f0c8ce',
+                      color: 'var(--red)',
+                      fontSize: '11px',
+                    }}
+                  >
+                    {resetError}
+                  </div>
+                )}
+
+                <div className="field">
+                  <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    6-Digit Verification OTP Code <span className="req">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    value={resetOtp}
+                    onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
+                    className="input"
+                    style={{
+                      width: '100%',
+                      height: '36px',
+                      fontSize: '14px',
+                      fontWeight: 700,
+                      letterSpacing: '3px',
+                      textAlign: 'center',
+                    }}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="field">
+                  <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    New Password <span className="req">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="At least 6 characters"
+                    value={resetNewPassword}
+                    onChange={(e) => setResetNewPassword(e.target.value)}
+                    className="input"
+                    style={{ width: '100%', height: '34px', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div className="field">
+                  <label style={{ fontSize: '11px', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                    Confirm New Password <span className="req">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    placeholder="Re-enter new password"
+                    value={resetConfirmPassword}
+                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                    className="input"
+                    style={{ width: '100%', height: '34px', fontSize: '12px' }}
+                  />
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setResetStep('request')}
+                    style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                  >
+                    Change Email / Resend
+                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotModalOpen(false)}
+                      className="btn secondary sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isResetSubmitting || resetOtp.length !== 6 || !resetNewPassword}
+                      className="btn primary sm"
+                    >
+                      {isResetSubmitting ? 'Verifying…' : 'Verify & Reset Password'}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

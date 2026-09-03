@@ -254,6 +254,8 @@ export interface NexusTopic {
   views?: number;
   commentsCount: number;
   createdAt: string;
+  isEdited?: boolean;
+  updatedAt?: string;
   replies: {
     id?: string;
     author: string;
@@ -362,6 +364,25 @@ export interface BidItemRow {
   totalUnit: number;
 }
 
+export interface BidEvidenceDocket {
+  docketRef: string;
+  termsAccepted: boolean;
+  termsAcceptedAt: string;
+  proposedCarrier: string;
+  proposedRouting: string;
+  proposedTransitTime: string;
+  proposedVesselDate: string;
+  offeredOriginFreeDays: number;
+  offeredDestFreeDays: number;
+  bidderUid: string;
+  bidderName: string;
+  bidderCompany: string;
+  bidderEmail: string;
+  evidenceHash: string;
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 export interface SubmittedBid {
   id: string;
   auctionId: string;
@@ -376,6 +397,7 @@ export interface SubmittedBid {
   currency: string;
   submittedAt: string;
   status: 'active' | 'withdrawn' | 'winning' | 'outbid';
+  evidenceDocket?: BidEvidenceDocket;
 }
 
 export type AuctionResult = 'won' | 'lost' | 'cancelled' | 'no_result' | 'expired' | 'pending';

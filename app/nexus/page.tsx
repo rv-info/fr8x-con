@@ -37,13 +37,22 @@ import {
   FileCheck,
   AlertCircle,
   ExternalLink,
+  Maximize2,
+  Minimize2,
+  Edit3,
+  Trash2,
+  Check,
+  XCircle,
 } from 'lucide-react';
 
 export default function NexusPage() {
   const {
     topics,
     addTopic,
+    updateTopic,
+    deleteTopic,
     addTopicReply,
+    deleteTopicReply,
     reactTopic,
     reactTopicReply,
     reportTarget,
@@ -62,10 +71,17 @@ export default function NexusPage() {
   const [activeTab, setActiveTab] = useState<'community' | 'reviews' | 'blacklist'>('community');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Modals & Discussion Form
+  // Modals & Discussion Form (Full-Screen CRUD)
   const [selectedTopic, setSelectedTopic] = useState<NexusTopic | null>(null);
+  const [isTopicFullScreen, setIsTopicFullScreen] = useState(true);
+  const [isEditingTopic, setIsEditingTopic] = useState(false);
+  const [editTopicTitle, setEditTopicTitle] = useState('');
+  const [editTopicCategory, setEditTopicCategory] = useState('');
+  const [editTopicBody, setEditTopicBody] = useState('');
+
   const [topicReplyText, setTopicReplyText] = useState('');
   const [showNewTopicModal, setShowNewTopicModal] = useState(false);
+  const [isNewTopicFullScreen, setIsNewTopicFullScreen] = useState(true);
   const [newTopicSubject, setNewTopicSubject] = useState('');
   const [newTopicCategory, setNewTopicCategory] = useState('Routing Strategy');
   const [newTopicBody, setNewTopicBody] = useState('');
@@ -160,6 +176,50 @@ export default function NexusPage() {
         : null
     );
     setTopicReplyText('');
+  };
+
+  const handleUpdateTopic = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedTopic || !editTopicTitle.trim() || !editTopicBody.trim()) {
+      toast('Title and content are required.');
+      return;
+    }
+    updateTopic(selectedTopic.id, editTopicTitle, editTopicCategory, editTopicBody);
+    setSelectedTopic((prev) =>
+      prev
+        ? {
+            ...prev,
+            title: editTopicTitle.trim(),
+            category: editTopicCategory,
+            text: editTopicBody.trim(),
+            isEdited: true,
+          }
+        : null
+    );
+    setIsEditingTopic(false);
+  };
+
+  const handleDeleteTopic = (topicId: string) => {
+    if (window.confirm('Are you sure you want to permanently delete this community topic?')) {
+      deleteTopic(topicId);
+      setSelectedTopic(null);
+      setIsEditingTopic(false);
+    }
+  };
+
+  const handleDeleteTopicReply = (topicId: string, replyId: string) => {
+    if (window.confirm('Delete this reply from the thread?')) {
+      deleteTopicReply(topicId, replyId);
+      setSelectedTopic((prev) =>
+        prev
+          ? {
+              ...prev,
+              commentsCount: Math.max(0, prev.commentsCount - 1),
+              replies: prev.replies.filter((r) => r.id !== replyId),
+            }
+          : null
+      );
+    }
   };
 
   const handleConfirmReport = (e: React.FormEvent) => {
@@ -470,26 +530,78 @@ export default function NexusPage() {
         </Modal>
       )}
 
-      {/* Topic Detail Modal — Widescreen 1100px two-column layout */}
+      {/* Topic Detail Modal — Full-Screen Widescreen Layout for CRUD Operations */}
       {selectedTopic && (
         <Modal
           isOpen={Boolean(selectedTopic)}
-          onClose={() => setSelectedTopic(null)}
-          title={`Nexus Discussion: ${selectedTopic.title}`}
-          maxWidth="1100px"
+          onClose={() => {
+            setSelectedTopic(null);
+            setIsEditingTopic(false);
+          }}
+          title={isEditingTopic ? `Edit Topic: ${selectedTopic.title}` : `Nexus Community Discussion: ${selectedTopic.title}`}
+          maxWidth="1200px"
+          isFullScreen={isTopicFullScreen}
+          headerActions={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                type="button"
+                className="btn secondary sm"
+                onClick={() => setIsTopicFullScreen(!isTopicFullScreen)}
+                title={isTopicFullScreen ? 'Exit Full Screen' : 'Expand to Full Screen'}
+                style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                {isTopicFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+                {isTopicFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+              </button>
+
+              {(user.displayName === selectedTopic.author || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && !isEditingTopic && (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  onClick={() => {
+                    setIsEditingTopic(true);
+                    setEditTopicTitle(selectedTopic.title);
+                    setEditTopicCategory(selectedTopic.category);
+                    setEditTopicBody(selectedTopic.text);
+                  }}
+                  title="Edit Topic Content"
+                  style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  <Edit3 size={12} /> Edit
+                </button>
+              )}
+
+              {(user.displayName === selectedTopic.author || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  onClick={() => handleDeleteTopic(selectedTopic.id)}
+                  title="Delete Topic"
+                  style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              )}
+            </div>
+          }
         >
           {/* Meta row */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px', paddingBottom: '12px', borderBottom: '1px solid var(--line)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span className="badge blue" style={{ fontSize: '10.5px', fontWeight: 700 }}>{selectedTopic.category}</span>
+              <span className="badge blue" style={{ fontSize: '11px', fontWeight: 700 }}>{selectedTopic.category}</span>
               <span style={{ fontSize: '12px', color: 'var(--mut)' }}>{selectedTopic.createdAt}</span>
-              <span className="badge grey" style={{ fontSize: '10px' }}>
-                <MessageCircle size={10} style={{ verticalAlign: '-1px', marginRight: '2px' }} />
+              {selectedTopic.isEdited && (
+                <span className="badge grey" style={{ fontSize: '10.5px' }}>
+                  Edited {selectedTopic.updatedAt || ''}
+                </span>
+              )}
+              <span className="badge grey" style={{ fontSize: '10.5px' }}>
+                <MessageCircle size={11} style={{ verticalAlign: '-1px', marginRight: '3px' }} />
                 {selectedTopic.replies.length} Replies
               </span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px' }}>
-              <span style={{ color: 'var(--mut)' }}>Posted by</span>
+              <span style={{ color: 'var(--mut)' }}>Topic Creator:</span>
               <b
                 style={{ color: 'var(--brand)', cursor: 'pointer' }}
                 onClick={() => setSelectedProfileName(selectedTopic.author)}
@@ -497,79 +609,217 @@ export default function NexusPage() {
                 {selectedTopic.author}
               </b>
               {selectedTopic.hasGoldenTick && <GoldenTick />}
+              {selectedTopic.authorCompany && (
+                <span style={{ color: 'var(--mut)', fontSize: '11.5px' }}>({selectedTopic.authorCompany})</span>
+              )}
             </div>
           </div>
 
-          {/* Two-column layout */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', minHeight: '420px' }}>
-            {/* Left: Original Post Content */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ background: '#f8fafc', borderRadius: '10px', border: '1px solid var(--line)', padding: '20px 22px', fontSize: '14.5px', lineHeight: 1.75, color: 'var(--ink)', flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-                  <MessagesSquare size={15} color="var(--brand)" />
-                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Original Post</span>
-                </div>
-                <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{selectedTopic.text}</p>
-              </div>
-
-              {/* Reactions & Report row */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    className={`btn secondary sm ${selectedTopic.liked ? 'on' : ''}`}
-                    onClick={() => {
-                      reactTopic(selectedTopic.id, 'like');
-                      setSelectedTopic((prev) => prev ? { ...prev, liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) } : null);
-                    }}
-                    style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: selectedTopic.liked ? 'var(--brand)' : 'inherit' }}
-                  >
-                    <ThumbsUp size={13} /> {selectedTopic.likes || 0}
-                  </button>
-                  <button
-                    className={`btn secondary sm ${selectedTopic.disliked ? 'on' : ''}`}
-                    onClick={() => {
-                      reactTopic(selectedTopic.id, 'dis');
-                      setSelectedTopic((prev) => prev ? { ...prev, disliked: !prev.disliked, dis: prev.dis + (prev.disliked ? -1 : 1) } : null);
-                    }}
-                    style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: selectedTopic.disliked ? 'var(--red)' : 'inherit' }}
-                  >
-                    <ThumbsDown size={13} /> {selectedTopic.dis || 0}
-                  </button>
-                </div>
-                <button
-                  className="btn secondary sm"
-                  onClick={() => setReportModalTarget({ id: selectedTopic.id, type: 'post', title: selectedTopic.title })}
-                  style={{ color: 'var(--mut)', fontSize: '11px' }}
+          {/* Two-column layout in Full Screen */}
+          <div style={{ display: 'grid', gridTemplateColumns: isTopicFullScreen ? '1.1fr 1fr' : '1fr 1fr', gap: '24px', flex: 1, minHeight: isTopicFullScreen ? 'calc(100vh - 180px)' : '480px' }}>
+            {/* Left: Original Post Content or Live Edit Form */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', height: '100%' }}>
+              {isEditingTopic ? (
+                /* Edit Form (Update Operation) */
+                <form
+                  onSubmit={handleUpdateTopic}
+                  style={{
+                    background: '#ffffff',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px',
+                    flex: 1,
+                  }}
                 >
-                  <Flag size={12} /> Report Topic
-                </button>
-              </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Edit3 size={15} color="var(--brand)" />
+                    <b style={{ fontSize: '12.5px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--brand)' }}>
+                      Edit Topic Content (Update CRUD)
+                    </b>
+                  </div>
+
+                  <div className="field">
+                    <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Topic Subject / Title</label>
+                    <input
+                      className="input"
+                      value={editTopicTitle}
+                      onChange={(e) => setEditTopicTitle(e.target.value)}
+                      required
+                      style={{ fontSize: '13px' }}
+                    />
+                  </div>
+
+                  <div className="field">
+                    <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Category</label>
+                    <select
+                      className="input"
+                      value={editTopicCategory}
+                      onChange={(e) => setEditTopicCategory(e.target.value)}
+                      style={{ fontSize: '13px' }}
+                    >
+                      <option value="Routing Strategy">Routing Strategy &amp; Transshipment</option>
+                      <option value="Commercial Terms">Commercial Terms &amp; INCOTERMS</option>
+                      <option value="Customs Clearance">Customs &amp; Compliance</option>
+                      <option value="Carrier Relations">Carrier Relations &amp; Space Allocation</option>
+                      <option value="Market Trends">Market Trends &amp; GRI Benchmarking</option>
+                      <option value="General Trade">General Trade Discussions</option>
+                    </select>
+                  </div>
+
+                  <div className="field" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Discussion Body &amp; Trade Details</label>
+                    <textarea
+                      className="input"
+                      value={editTopicBody}
+                      onChange={(e) => setEditTopicBody(e.target.value)}
+                      rows={12}
+                      required
+                      style={{ flex: 1, minHeight: '220px', resize: 'vertical', fontSize: '13.5px', lineHeight: 1.6 }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
+                    <button
+                      type="button"
+                      className="btn secondary"
+                      onClick={() => setIsEditingTopic(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <Check size={14} /> Save Changes
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                /* Read View (Read Operation) */
+                <div
+                  style={{
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    border: '1px solid var(--line)',
+                    padding: '24px',
+                    fontSize: '14.5px',
+                    lineHeight: 1.75,
+                    color: 'var(--ink)',
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflowY: 'auto',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <MessagesSquare size={16} color="var(--brand)" />
+                      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        Topic Docket #{selectedTopic.id}
+                      </span>
+                    </div>
+                    {selectedTopic.authorTimezone && (
+                      <LocalTimeBadge timezone={selectedTopic.authorTimezone} />
+                    )}
+                  </div>
+
+                  <h3 style={{ margin: '0 0 14px', fontSize: '18px', fontWeight: 800, color: 'var(--ink)', lineHeight: 1.4 }}>
+                    {selectedTopic.title}
+                  </h3>
+
+                  <div style={{ flex: 1, whiteSpace: 'pre-wrap', color: 'var(--ink-secondary)', fontSize: '14px' }}>
+                    {selectedTopic.text}
+                  </div>
+
+                  {/* Reactions & Report row */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '16px', marginTop: '16px', borderTop: '1px solid var(--line)' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className={`btn secondary sm ${selectedTopic.liked ? 'on' : ''}`}
+                        onClick={() => {
+                          reactTopic(selectedTopic.id, 'like');
+                          setSelectedTopic((prev) => prev ? { ...prev, liked: !prev.liked, likes: prev.likes + (prev.liked ? -1 : 1) } : null);
+                        }}
+                        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: selectedTopic.liked ? 'var(--brand)' : 'inherit' }}
+                      >
+                        <ThumbsUp size={13} /> {selectedTopic.likes || 0}
+                      </button>
+                      <button
+                        className={`btn secondary sm ${selectedTopic.disliked ? 'on' : ''}`}
+                        onClick={() => {
+                          reactTopic(selectedTopic.id, 'dis');
+                          setSelectedTopic((prev) => prev ? { ...prev, disliked: !prev.disliked, dis: prev.dis + (prev.disliked ? -1 : 1) } : null);
+                        }}
+                        style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: selectedTopic.disliked ? 'var(--red)' : 'inherit' }}
+                      >
+                        <ThumbsDown size={13} /> {selectedTopic.dis || 0}
+                      </button>
+                    </div>
+                    <button
+                      className="btn secondary sm"
+                      onClick={() => setReportModalTarget({ id: selectedTopic.id, type: 'post', title: selectedTopic.title })}
+                      style={{ color: 'var(--mut)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Flag size={12} /> Report Topic
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right: Replies Thread + Reply Box */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Send size={13} color="var(--teal)" />
-                Thread Replies ({selectedTopic.replies.length})
-              </b>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                height: '100%',
+                background: '#ffffff',
+                border: '1px solid var(--line)',
+                borderRadius: '8px',
+                padding: '16px',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '10px' }}>
+                <b style={{ fontSize: '13.5px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Send size={14} color="var(--teal)" />
+                  Community Responses ({selectedTopic.replies.length})
+                </b>
+                <span style={{ fontSize: '11.5px', color: 'var(--mut)' }}>
+                  Verified Members Only
+                </span>
+              </div>
 
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', maxHeight: '340px', paddingRight: '4px' }}>
+              {/* Scrollable list of replies */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto', paddingRight: '4px', minHeight: '260px' }}>
                 {selectedTopic.replies.length === 0 ? (
-                  <div style={{ padding: '32px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px', border: '1px dashed var(--line)', fontSize: '13px' }}>
-                    <MessagesSquare size={28} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.35 }} />
-                    No responses yet. Be the first to share your perspective.
+                  <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: '8px', border: '1px dashed var(--line)', fontSize: '13px', margin: 'auto 0' }}>
+                    <MessagesSquare size={32} style={{ margin: '0 auto 10px', display: 'block', opacity: 0.35 }} />
+                    No responses yet. Post your professional insight below to participate.
                   </div>
                 ) : (
                   selectedTopic.replies.map((reply, i) => (
-                    <div key={reply.id || i} style={{ padding: '12px 14px', background: '#ffffff', borderRadius: '8px', border: '1px solid var(--line)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                    <div key={reply.id || i} style={{ padding: '12px 14px', background: '#fafbfc', borderRadius: '6px', border: '1px solid var(--line)', position: 'relative' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <span style={{ fontWeight: 700, fontSize: '12px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                           {reply.author}
                           {reply.hasGoldenTick && <GoldenTick />}
                         </span>
-                        <small style={{ color: 'var(--faint)', fontSize: '10.5px' }}>{reply.time}</small>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <small style={{ color: 'var(--faint)', fontSize: '10.5px' }}>{reply.time}</small>
+                          {(reply.author === user.displayName || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && reply.id && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteTopicReply(selectedTopic.id, reply.id!)}
+                              title="Delete response"
+                              style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '2px' }}
+                            >
+                              <Trash2 size={11} />
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <p style={{ fontSize: '12.5px', margin: '0 0 6px', color: 'var(--ink-secondary)', lineHeight: 1.55 }}>
+                      <p style={{ fontSize: '13px', margin: '0 0 8px', color: 'var(--ink-secondary)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>
                         {reply.text}
                       </p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '6px' }}>
@@ -577,27 +827,26 @@ export default function NexusPage() {
                           <button
                             onClick={() => {
                               if (reply.id) reactTopicReply(selectedTopic.id, reply.id, 'like');
-                              toast('Reply liked.');
+                              toast('Reply marked helpful.');
                             }}
-                            style={{ fontSize: '11px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
+                            style={{ fontSize: '11px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', background: 'transparent', border: 'none' }}
                           >
                             <ThumbsUp size={11} /> {reply.likes || 0}
                           </button>
                           <button
                             onClick={() => {
                               if (reply.id) reactTopicReply(selectedTopic.id, reply.id, 'dis');
-                              toast('Reply disliked.');
                             }}
-                            style={{ fontSize: '11px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
+                            style={{ fontSize: '11px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', background: 'transparent', border: 'none' }}
                           >
                             <ThumbsDown size={11} /> {reply.dis || 0}
                           </button>
                         </div>
                         <button
                           onClick={() => setReportModalTarget({ id: reply.id || `r-${i}`, type: 'comment', title: `Reply by ${reply.author}` })}
-                          style={{ fontSize: '10.5px', color: 'var(--mut)', cursor: 'pointer' }}
+                          style={{ fontSize: '10.5px', color: 'var(--mut)', cursor: 'pointer', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}
                         >
-                          <Flag size={10} style={{ verticalAlign: '-1px' }} /> Report
+                          <Flag size={10} /> Report
                         </button>
                       </div>
                     </div>
@@ -609,14 +858,18 @@ export default function NexusPage() {
               <div style={{ borderTop: '1px solid var(--line)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <textarea
                   className="input"
-                  placeholder="Add your verified industry input or counter-quote…"
+                  placeholder="Share your freight operational advice or market experience…"
                   value={topicReplyText}
                   onChange={(e) => setTopicReplyText(e.target.value)}
                   rows={3}
                   style={{ resize: 'vertical', fontSize: '12.5px', lineHeight: 1.5 }}
                 />
-                <button className="btn primary" onClick={handleTopicReply} style={{ alignSelf: 'flex-end', padding: '8px 20px' }}>
-                  <Send size={13} /> Post Reply
+                <button
+                  className="btn primary"
+                  onClick={handleTopicReply}
+                  style={{ alignSelf: 'flex-end', padding: '8px 20px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  <Send size={13} /> Post Response
                 </button>
               </div>
             </div>
@@ -624,58 +877,94 @@ export default function NexusPage() {
         </Modal>
       )}
 
-
-
-
-      {/* New Topic Modal */}
+      {/* New Topic Modal — Full-Screen Support for Create CRUD */}
       {showNewTopicModal && (
         <Modal
           isOpen={showNewTopicModal}
           onClose={() => setShowNewTopicModal(false)}
-          title="Create Nexus Discussion Topic"
-          maxWidth="640px"
+          title="Create Nexus Community Topic (Create CRUD)"
+          maxWidth="980px"
+          isFullScreen={isNewTopicFullScreen}
+          headerActions={
+            <button
+              type="button"
+              className="btn secondary sm"
+              onClick={() => setIsNewTopicFullScreen(!isNewTopicFullScreen)}
+              title={isNewTopicFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+              style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+            >
+              {isNewTopicFullScreen ? <Minimize2 size={12} /> : <Maximize2 size={12} />}
+              {isNewTopicFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+            </button>
+          }
         >
-          <form onSubmit={handleCreateTopic} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="field">
-              <label>Topic Title <span className="req">*</span></label>
-              <input
-                className="input"
-                placeholder="e.g. Best demurrage negotiation strategies for Rotterdam ECT..."
-                value={newTopicSubject}
-                onChange={(e) => setNewTopicSubject(e.target.value)}
-              />
+          <form
+            onSubmit={handleCreateTopic}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              flex: 1,
+              height: isNewTopicFullScreen ? 'calc(100vh - 160px)' : 'auto',
+            }}
+          >
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
+              <div className="field">
+                <label style={{ fontWeight: 700, fontSize: '12px' }}>Topic Title / Subject <span className="req">*</span></label>
+                <input
+                  className="input"
+                  placeholder="e.g. Best demurrage negotiation strategies for Rotterdam ECT..."
+                  value={newTopicSubject}
+                  onChange={(e) => setNewTopicSubject(e.target.value)}
+                  required
+                  style={{ fontSize: '13.5px' }}
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontWeight: 700, fontSize: '12px' }}>Category</label>
+                <select
+                  className="input"
+                  value={newTopicCategory}
+                  onChange={(e) => setNewTopicCategory(e.target.value)}
+                  style={{ fontSize: '13.5px' }}
+                >
+                  <option value="Routing Strategy">Routing Strategy &amp; Transshipment</option>
+                  <option value="Commercial Terms">Commercial Terms &amp; INCOTERMS</option>
+                  <option value="Customs Clearance">Customs &amp; Compliance</option>
+                  <option value="Carrier Relations">Carrier Relations &amp; Space Allocation</option>
+                  <option value="Market Trends">Market Trends &amp; GRI Benchmarking</option>
+                  <option value="General Trade">General Trade Discussions</option>
+                </select>
+              </div>
             </div>
-            <div className="field">
-              <label>Category</label>
-              <select
-                className="input"
-                value={newTopicCategory}
-                onChange={(e) => setNewTopicCategory(e.target.value)}
-              >
-                <option value="Routing Strategy">Routing Strategy & Transshipment</option>
-                <option value="Commercial Terms">Commercial Terms & INCOTERMS</option>
-                <option value="Customs Clearance">Customs & Compliance</option>
-                <option value="Carrier Relations">Carrier Relations & Space Allocation</option>
-                <option value="Market Trends">Market Trends & GRI Benchmarking</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Discussion Context & Details <span className="req">*</span></label>
+
+            <div className="field" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <label style={{ fontWeight: 700, fontSize: '12px' }}>
+                Discussion Context, Port Logistics &amp; Inquiries <span className="req">*</span>
+              </label>
               <textarea
                 className="input"
-                rows={4}
-                placeholder="Provide trade context, port specifics, or data points to begin the professional dialogue..."
+                rows={isNewTopicFullScreen ? 15 : 6}
+                placeholder="Provide trade context, port specifics, regulatory issues or rate data points to initiate professional dialogue..."
                 value={newTopicBody}
                 onChange={(e) => setNewTopicBody(e.target.value)}
+                required
+                style={{ flex: 1, resize: 'vertical', fontSize: '13.5px', lineHeight: 1.6 }}
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowNewTopicModal(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn primary">
-                Publish Topic
-              </button>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+              <span style={{ fontSize: '11.5px', color: 'var(--mut)' }}>
+                Posting as <b>{user.displayName}</b> ({user.company})
+              </span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" className="btn secondary" onClick={() => setShowNewTopicModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Send size={13} /> Publish Topic
+                </button>
+              </div>
             </div>
           </form>
         </Modal>

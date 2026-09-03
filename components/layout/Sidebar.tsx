@@ -117,7 +117,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
           style={{ justifyContent: isCollapsed ? 'center' : 'flex-start', textDecoration: 'none' }}
         >
           <div
-            className="avatar"
+            className="avatar borderless"
             style={{
               width: '28px',
               height: '28px',
@@ -130,6 +130,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
               padding: 0,
               overflow: 'hidden',
               borderRadius: '0px',
+              border: 'none',
+              background: 'transparent',
             }}
           >
             <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />

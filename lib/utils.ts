@@ -9,6 +9,15 @@ export const CURRENCY_RATES: Record<string, { symbol: string; rateFromUSD: numbe
   JPY: { symbol: '¥', rateFromUSD: 154.2, name: 'Japanese Yen' },
 };
 
+export function updateGlobalCurrencyRates(newRates: Record<string, number>) {
+  for (const [code, rate] of Object.entries(newRates)) {
+    const c = code.toUpperCase();
+    if (CURRENCY_RATES[c] && typeof rate === 'number' && rate > 0) {
+      CURRENCY_RATES[c].rateFromUSD = rate;
+    }
+  }
+}
+
 export const BLOCKED_EMAIL_DOMAINS = new Set([
   'gmail.com',
   'yahoo.com',

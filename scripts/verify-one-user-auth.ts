@@ -101,6 +101,44 @@ function runTests() {
     'Reject duplicate registration sharing same mobile phone number'
   );
 
+  // 10. 3 invalid login attempts trigger automatic Password Reset OTP dispatch
+  const userToTest = 'kiran.mehta@indoocean.com';
+  // Attempt 1
+  const fail1 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass1', '127.0.0.1');
+  assert(fail1.success === false && fail1.attemptsRemaining === 2, 'Attempt 1: 2 attempts remaining');
+  // Attempt 2
+  const fail2 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass2', '127.0.0.1');
+  assert(fail2.success === false && fail2.attemptsRemaining === 1, 'Attempt 2: 1 attempt remaining');
+  // Attempt 3: triggers lock and OTP dispatch
+  const fail3 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass3', '127.0.0.1');
+  assert(
+    fail3.success === false &&
+      fail3.isBlocked === true &&
+      fail3.passwordResetRequired === true &&
+      fail3.email === userToTest,
+    'Attempt 3: Account locked and Password Reset OTP dispatched from server to registered email'
+  );
+
+  // 11. Verify OTP code is recorded on server
+  const dispatchedOtp = serverSecurityStore.getActiveResetOtp(userToTest);
+  assert(
+    Boolean(dispatchedOtp && dispatchedOtp.length === 6),
+    'Server generated and recorded 6-digit password reset OTP for registered email',
+    `OTP: ${dispatchedOtp}`
+  );
+
+  // 12. Invalid OTP verification fails
+  const badOtpRes = serverSecurityStore.verifyAndResetPassword(userToTest, '999999', 'NewKiranPass@2026');
+  assert(badOtpRes.success === false && badOtpRes.error?.includes('Invalid verification OTP'), 'Reject invalid OTP during password reset');
+
+  // 13. Valid OTP resets password and unblocks account
+  const goodReset = serverSecurityStore.verifyAndResetPassword(userToTest, dispatchedOtp!, 'NewKiranPass@2026');
+  assert(goodReset.success === true, 'Successfully reset password and unblock account with dispatched OTP');
+
+  // 14. Immediate login with newly reset password succeeds
+  const loginWithNewPass = serverSecurityStore.recordLoginAttempt(userToTest, 'NewKiranPass@2026', '127.0.0.1');
+  assert(loginWithNewPass.success === true, 'Log in successfully with newly updated password after reset');
+
   console.log(`\n=== Verification Complete: ${passed} passed, ${failed} failed ===`);
   if (failed > 0) {
     process.exit(1);

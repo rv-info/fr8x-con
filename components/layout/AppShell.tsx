@@ -119,18 +119,33 @@ function ShellLayout({ children }: { children: ReactNode }) {
   );
 }
 
+import { NetworkProvider } from '@/lib/context/NetworkContext';
+
 export function AppShell({ children }: AppShellProps) {
+  React.useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      // Register Service Worker for HyperSpeed offline resilience
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('[HyperSpeed PWA] Service worker registration deferred:', err);
+        });
+      });
+    }
+  }, []);
+
   return (
     <ToastProvider>
-      <AuthProvider>
-        <CurrencyProvider>
-          <DataProvider>
-            <ChatProvider>
-              <ShellLayout>{children}</ShellLayout>
-            </ChatProvider>
-          </DataProvider>
-        </CurrencyProvider>
-      </AuthProvider>
+      <NetworkProvider>
+        <AuthProvider>
+          <CurrencyProvider>
+            <DataProvider>
+              <ChatProvider>
+                <ShellLayout>{children}</ShellLayout>
+              </ChatProvider>
+            </DataProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </NetworkProvider>
     </ToastProvider>
   );
 }

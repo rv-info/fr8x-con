@@ -142,18 +142,25 @@ a {
   width: var(--sidebar-collapsed-width);
 }
 
-.app main {
+.app main,
+.app > main {
   margin-left: var(--sidebar-width);
   width: calc(100% - var(--sidebar-width));
+  max-width: calc(100vw - var(--sidebar-width));
   min-height: 100vh;
-  transition: margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 0;
+  box-sizing: border-box;
+  transition: margin-left 0.22s cubic-bezier(0.4, 0, 0.2, 1), width 0.22s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
-.app.collapsed-sidebar main {
+.app.collapsed-sidebar main,
+.app.collapsed-sidebar > main {
   margin-left: var(--sidebar-collapsed-width);
   width: calc(100% - var(--sidebar-collapsed-width));
+  max-width: calc(100vw - var(--sidebar-collapsed-width));
 }
 
 /* Mobile Sidebar Overlay */
@@ -419,6 +426,26 @@ a {
   border-radius: 0 !important;
 }
 
+/* Remove decorative borders from profile avatars and logos */
+.avatar:has(img),
+.avatar.borderless,
+.avatar:has(.profile-img-avatar),
+.profile-img-avatar,
+.avatar-borderless {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+img.profile-img-avatar,
+.avatar img {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  display: block;
+}
+
 .sidelink {
   display: flex;
   gap: 8px;
@@ -586,7 +613,6 @@ a {
 
 .app > main {
   min-width: 0;
-  width: 100%;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -3277,13 +3303,15 @@ textarea.input {
 
 .feeds-three-col-layout {
   display: grid;
-  grid-template-columns: 240px minmax(0, 1fr) 280px;
-  gap: 16px;
+  grid-template-columns: 220px minmax(0, 1fr) 275px;
+  gap: 14px;
   align-items: start;
   height: calc(100vh - 68px);
   max-height: calc(100vh - 68px);
   overflow: hidden;
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .feed-left-rail {

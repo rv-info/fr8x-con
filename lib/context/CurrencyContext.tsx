@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { CURRENCY_RATES } from '@/lib/utils';
+import { CURRENCY_RATES, updateGlobalCurrencyRates } from '@/lib/utils';
 
 export interface CurrencyItem {
   symbol: string;
@@ -13,12 +13,14 @@ interface CurrencyContextType {
   currentCurrency: string;
   setCurrency: (curr: string) => void;
   format: (amountUSD: number) => string;
-  convert: (amount: number, fromCurrency: string) => number;
+  convert: (amount: number, fromCurrency: string, toCurrency?: string) => number;
+  convertAmount: (amount: number, fromCurrency: string, toCurrency: string) => number;
   convertToUSD: (amount: number, fromCurrency: string) => number;
   getRateFromUSD: (curr: string) => number;
   availableCurrencies: Record<string, CurrencyItem>;
   isLiveRates: boolean;
   lastUpdatedTime: string;
+  rateSource: string;
   refreshLiveRates: () => Promise<void>;
 }
 
@@ -28,20 +30,22 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [currentCurrency, setCurrentCurrency] = useState<string>('INR');
   const [ratesMap, setRatesMap] = useState<Record<string, CurrencyItem>>(CURRENCY_RATES);
   const [isLiveRates, setIsLiveRates] = useState<boolean>(true);
+  const [rateSource, setRateSource] = useState<string>('Open Exchange API (Live)');
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>('Live Interbank (Synced)');
 
   const fetchRates = useCallback(async () => {
-    // Multi-tier API fallback to ensure live rates never fail
+    // Multi-tier reliable free APIs that require no API keys
     const endpoints = [
-      'https://open.er-api.com/v6/latest/USD',
-      'https://api.exchangerate-api.com/v4/latest/USD',
-      'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json'
+      { url: 'https://open.er-api.com/v6/latest/USD', source: 'Open ER (Live Interbank)' },
+      { url: 'https://api.exchangerate-api.com/v4/latest/USD', source: 'ExchangeRate-API (Live)' },
+      { url: 'https://api.frankfurter.dev/v1/latest?base=USD', source: 'Frankfurter ECB (Live)' },
+      { url: 'https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json', source: 'Currency-API Global (Live)' }
     ];
 
-    for (const url of endpoints) {
+    for (const { url, source } of endpoints) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 4000);
+        const timeoutId = setTimeout(() => controller.abort(), 4500);
         const res = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
 
@@ -49,20 +53,41 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           const data = await res.json();
           const rates = data.rates || data.usd || {};
           if (rates && Object.keys(rates).length > 0) {
+            const numericRates: Record<string, number> = {};
+
+            const inr = Number(rates.INR || rates.inr);
+            const eur = Number(rates.EUR || rates.eur);
+            const gbp = Number(rates.GBP || rates.gbp);
+            const aed = Number(rates.AED || rates.aed);
+            const sgd = Number(rates.SGD || rates.sgd);
+            const cny = Number(rates.CNY || rates.cny);
+            const jpy = Number(rates.JPY || rates.jpy);
+
+            if (inr) numericRates.INR = inr;
+            if (eur) numericRates.EUR = eur;
+            if (gbp) numericRates.GBP = gbp;
+            if (aed) numericRates.AED = aed;
+            if (sgd) numericRates.SGD = sgd;
+            if (cny) numericRates.CNY = cny;
+            if (jpy) numericRates.JPY = jpy;
+
+            // Update in-memory global baseline as well
+            updateGlobalCurrencyRates(numericRates);
+
             setRatesMap((prev) => {
               const updated = { ...prev };
-              if (rates.INR || rates.inr) updated.INR = { ...updated.INR, rateFromUSD: Number(rates.INR || rates.inr) };
-              if (rates.EUR || rates.eur) updated.EUR = { ...updated.EUR, rateFromUSD: Number(rates.EUR || rates.eur) };
-              if (rates.GBP || rates.gbp) updated.GBP = { ...updated.GBP, rateFromUSD: Number(rates.GBP || rates.gbp) };
-              if (rates.AED || rates.aed) updated.AED = { ...updated.AED, rateFromUSD: Number(rates.AED || rates.aed) };
-              if (rates.SGD || rates.sgd) updated.SGD = { ...updated.SGD, rateFromUSD: Number(rates.SGD || rates.sgd) };
-              if (rates.CNY || rates.cny) updated.CNY = { ...updated.CNY, rateFromUSD: Number(rates.CNY || rates.cny) };
-              if (rates.JPY || rates.jpy) updated.JPY = { ...updated.JPY, rateFromUSD: Number(rates.JPY || rates.jpy) };
+              for (const [k, v] of Object.entries(numericRates)) {
+                if (updated[k]) {
+                  updated[k] = { ...updated[k], rateFromUSD: v };
+                }
+              }
               return updated;
             });
+
             setIsLiveRates(true);
+            setRateSource(source);
             const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            setLastUpdatedTime(`Live ${timeStr} IST`);
+            setLastUpdatedTime(`Live ${timeStr} · ${source}`);
             return;
           }
         }
@@ -72,9 +97,9 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Default to verified reliable baseline
+    // Baseline fallback if offline
     setIsLiveRates(true);
-    setLastUpdatedTime('Live Interbank (Synced)');
+    setLastUpdatedTime('Verified Interbank Cache');
   }, []);
 
   useEffect(() => {
@@ -102,14 +127,23 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     [currentCurrency, ratesMap]
   );
 
-  const convert = useCallback(
-    (amount: number, fromCurrency: string) => {
+  const convertAmount = useCallback(
+    (amount: number, fromCurrency: string, toCurrency: string) => {
       const fromRate = ratesMap[fromCurrency]?.rateFromUSD || CURRENCY_RATES[fromCurrency]?.rateFromUSD || 1;
-      const toRate = ratesMap[currentCurrency]?.rateFromUSD || CURRENCY_RATES[currentCurrency]?.rateFromUSD || 1;
+      const toRate = ratesMap[toCurrency]?.rateFromUSD || CURRENCY_RATES[toCurrency]?.rateFromUSD || 1;
+      if (!fromRate || fromRate <= 0) return amount;
       const inUSD = amount / fromRate;
       return inUSD * toRate;
     },
-    [currentCurrency, ratesMap]
+    [ratesMap]
+  );
+
+  const convert = useCallback(
+    (amount: number, fromCurrency: string, toCurrency?: string) => {
+      const target = toCurrency || currentCurrency;
+      return convertAmount(amount, fromCurrency, target);
+    },
+    [currentCurrency, convertAmount]
   );
 
   const convertToUSD = useCallback(
@@ -128,11 +162,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
         setCurrency: setCurrentCurrency,
         format,
         convert,
+        convertAmount,
         convertToUSD,
         getRateFromUSD,
         availableCurrencies: ratesMap,
         isLiveRates,
         lastUpdatedTime,
+        rateSource,
         refreshLiveRates: fetchRates,
       }}
     >

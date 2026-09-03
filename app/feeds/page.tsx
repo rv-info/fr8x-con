@@ -46,8 +46,10 @@ import {
   Layers,
   Award,
   Upload,
-  Image as ImageIcon,
   Check,
+  Mail,
+  PhoneCall,
+  UserCheck,
 } from 'lucide-react';
 
 const POST_TYPE_LABELS: Record<PostType, { label: string; color: string; bg: string }> = {
@@ -1012,8 +1014,8 @@ export default function FeedsPage() {
       <aside className="feed-left-rail">
         <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
-            <div className="avatar big" style={{ margin: '0 auto 10px', width: '56px', height: '56px', padding: 0, overflow: 'hidden', background: 'transparent', border: '2px solid var(--fr8x-outline)' }}>
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            <div className="avatar big borderless" style={{ margin: '0 auto 10px', width: '56px', height: '56px', padding: 0, overflow: 'hidden', background: 'transparent', border: 'none', boxShadow: 'none' }}>
+              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', border: 'none' }} />
             </div>
             <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
               {user.displayName}
@@ -1044,6 +1046,47 @@ export default function FeedsPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 4px', fontSize: '11.5px', color: 'var(--fr8x-text)' }}>
               <span style={{ color: 'var(--fr8x-muted)' }}>Verification</span>
               <span className="badge">VERIFIED</span>
+            </div>
+          </div>
+
+          {/* Contact Details & Direct Contact Action below profile */}
+          <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fafbfc' }}>
+            <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+              Contact &amp; Trade Connect
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}>
+              <Mail size={12} style={{ flexShrink: 0, color: 'var(--fr8x-text)' }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>
+                {user.email}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}>
+              <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
+              <span>{user.mobile || '+91 98111 22334'}</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+              <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : 'JNPT Nhava Sheva Terminal')}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+              <button
+                className="btn primary sm"
+                style={{ flex: 1, justifyContent: 'center', fontSize: '11px', height: '28px', background: 'var(--fr8x-outline)', borderRadius: '0px' }}
+                onClick={() => setSelectedProfileName(user.displayName)}
+              >
+                <UserCheck size={12} /> Contact Profile
+              </button>
+              <a
+                href={`mailto:${user.email}`}
+                className="btn secondary sm"
+                style={{ padding: '0 8px', height: '28px', borderRadius: '0px' }}
+                title="Send Email"
+              >
+                <Mail size={12} />
+              </a>
             </div>
           </div>
         </div>
