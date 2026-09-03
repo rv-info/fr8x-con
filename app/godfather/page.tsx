@@ -27,10 +27,16 @@ import {
   Lock,
   ChevronRight,
   Activity,
+  Sliders,
+  SlidersHorizontal,
+  CheckSquare,
+  AlertTriangle,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { ZohoEmailGuidebookModal } from '@/components/godfather/ZohoEmailGuidebookModal';
+import { RankingConfig, KYCDossier, KYCStatus } from '@/lib/types';
+import { getRankingConfigFromDB, saveRankingConfigInDB, upsertKYCDossierInDB } from '@/lib/firebase/firestore';
 
 export default function GodfatherDashboardPage() {
   const { companies, users, auctions, auditLogs } = useGodfatherData();
@@ -48,6 +54,137 @@ export default function GodfatherDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [isGuidebookOpen, setIsGuidebookOpen] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
+
+  // Ranking Engine Config State
+  const [rankingConfig, setRankingConfig] = useState<RankingConfig>({
+    id: 'default',
+    version: 'v2.4-logistic-two-stage',
+    updatedAt: new Date().toISOString(),
+    updatedBy: 'The Godfather Admin',
+    weights: {
+      professionalRelevance: 0.24,
+      relationshipAffinity: 0.18,
+      predictedQualityEngagement: 0.14,
+      meaningfulConversationValue: 0.12,
+      dwellValue: 0.10,
+      freshness: 0.08,
+      geographyAndTradeLaneRelevance: 0.07,
+      creatorTrust: 0.04,
+      explorationValue: 0.03,
+      skipProbabilityPenalty: 0.12,
+      lowQualitySpamPenalty: 0.10,
+      repeatedContentPenalty: 0.08,
+    },
+    hybrid: {
+      alphaDeterministic: 0.60,
+      betaML: 0.10,
+      gammaSemantic: 0.10,
+      deltaGraph: 0.20,
+    },
+    halfLivesHours: {
+      urgentOperational: 24,
+      rateCapacity: 72,
+      educational: 168,
+      announcements: 336,
+    },
+    diversityThresholds: {
+      maxConsecutiveSameAuthor: 2,
+      maxConsecutiveSameCompany: 2,
+      maxSameTradeLaneRatio: 0.4,
+    },
+    fatigueMultipliers: {
+      seenWithin24h: 0.6,
+      repeatedTopic: 0.8,
+    },
+  });
+  const [isSavingRanking, setIsSavingRanking] = useState(false);
+  const [rankingSaveSuccess, setRankingSaveSuccess] = useState(false);
+
+  // KYC Review Queue State
+  const [activeKycReview, setActiveKycReview] = useState<any | null>(null);
+  const [reviewAction, setReviewAction] = useState<'approve' | 'request_changes' | 'reject'>('approve');
+  const [rejectionReasonCode, setRejectionReasonCode] = useState('INVALID_GSTN');
+  const [reviewNotes, setReviewNotes] = useState('');
+  const [missingChecklist, setMissingChecklist] = useState({
+    gstinProof: false,
+    panCard: false,
+    iecCert: false,
+    associationMembership: false,
+  });
+
+  useEffect(() => {
+    getRankingConfigFromDB().then((cfg) => {
+      if (cfg) setRankingConfig(cfg);
+    });
+  }, []);
+
+  const handleSaveRanking = async () => {
+    setIsSavingRanking(true);
+    try {
+      await saveRankingConfigInDB({
+        ...rankingConfig,
+        updatedAt: new Date().toISOString(),
+      });
+      setRankingSaveSuccess(true);
+      setTimeout(() => setRankingSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSavingRanking(false);
+    }
+  };
+
+  const handleKycDecision = async () => {
+    if (!activeKycReview) return;
+    const now = new Date().toISOString();
+    const newStatus: KYCStatus = reviewAction === 'approve' ? 'verified' : reviewAction === 'reject' ? 'rejected' : 'request_changes';
+    
+    const dossier: KYCDossier = {
+      userId: activeKycReview.companyId || activeKycReview.uid || 'usr_unknown',
+      companyId: activeKycReview.companyId || 'comp_unknown',
+      legalEntityName: activeKycReview.legalName || activeKycReview.company || 'Enterprise Entity',
+      gstin: activeKycReview.gstn || '27AAAAA0000A1Z5',
+      pan: activeKycReview.pan || 'AAAAA0000A',
+      registeredAddress: {
+        addressLine1: 'Corporate Logistics Park',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        postalCode: '400093',
+        country: 'India',
+      },
+      memberships: [],
+      status: newStatus,
+      missingItemsChecklist: [
+        { key: 'gstinProof', label: 'GSTIN Registration Certificate', isMissing: missingChecklist.gstinProof },
+        { key: 'panCard', label: 'Company PAN Card Copy', isMissing: missingChecklist.panCard },
+        { key: 'iecCert', label: 'DGFT IEC Code Certificate', isMissing: missingChecklist.iecCert },
+        { key: 'associationMembership', label: 'Association Membership Validation', isMissing: missingChecklist.associationMembership },
+      ],
+      reviewNotes: reviewNotes.trim() || undefined,
+      rejectionReason: reviewAction === 'reject' ? rejectionReasonCode : undefined,
+      statusHistory: [
+        {
+          status: newStatus,
+          timestamp: now,
+          reviewerUid: 'godfather_admin',
+          reviewerName: 'Godfather Command Reviewer',
+          notes: reviewNotes.trim() || undefined,
+        },
+      ],
+      termsAccepted: true,
+      termsAcceptedAt: now,
+      termsVersion: 'v2.4-2026',
+      verifiedAt: newStatus === 'verified' ? now : undefined,
+      submittedAt: now,
+      updatedAt: now,
+    };
+
+    try {
+      await upsertKYCDossierInDB(dossier);
+    } catch {}
+    setActiveKycReview(null);
+    setReviewNotes('');
+  };
 
   const fetchSecurityOverview = useCallback(async () => {
     setLoading(true);
@@ -528,9 +665,13 @@ export default function GodfatherDashboardPage() {
                         </div>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <Link href="/godfather/operations/companies" className="gf-btn gf-btn-success text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
-                          Verify
-                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setActiveKycReview(comp)}
+                          className="gf-btn gf-btn-success text-[11px] font-bold py-0.5 px-2.5 h-[26px]"
+                        >
+                          Review
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -588,6 +729,280 @@ export default function GodfatherDashboardPage() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── FEED INTELLIGENCE & RANKING WEIGHT CONTROL ── */}
+      <div className="gf-card">
+        <div className="gf-card-header flex items-center justify-between">
+          <div className="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+            <SlidersHorizontal className="lucide w-4 h-4 text-sky-600" />
+            <span>Feed Intelligence & Dynamic Ranking Weight Engine</span>
+          </div>
+          <div className="flex items-center gap-2">
+            {rankingSaveSuccess && (
+              <span className="gf-badge gf-badge-green font-mono text-[9px] font-bold">
+                ✓ LIVE WEIGHTS PERSISTED
+              </span>
+            )}
+            <button
+              type="button"
+              disabled={isSavingRanking}
+              onClick={handleSaveRanking}
+              className="gf-btn gf-btn-primary text-xs font-bold py-1 px-3 h-[28px]"
+            >
+              {isSavingRanking ? 'Deploying...' : 'Deploy Live Ranking Weights'}
+            </button>
+          </div>
+        </div>
+
+        <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+          {/* Col 1: Model & Core Relevance */}
+          <div>
+            <b className="text-slate-900 block mb-2 font-bold uppercase tracking-wider text-[11px]">
+              Model Registry & Primary Weights
+            </b>
+            <div className="space-y-3">
+              <div>
+                <label className="text-slate-600 block mb-1 font-medium">Model Architecture Version</label>
+                <select
+                  className="gf-input w-full"
+                  value={rankingConfig.version}
+                  onChange={(e) => setRankingConfig({ ...rankingConfig, version: e.target.value })}
+                >
+                  <option value="v2.4-logistic-two-stage">v2.4 Two-Stage Ranking (Production Active)</option>
+                  <option value="v2.3-hybrid">v2.3 Hybrid Deterministic + ML</option>
+                  <option value="v2.2-legacy">v2.2 Legacy Time-Decay Only</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Professional Relevance (w1)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.professionalRelevance.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.50"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.professionalRelevance}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, professionalRelevance: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Relationship Affinity (w2)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.relationshipAffinity.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.40"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.relationshipAffinity}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, relationshipAffinity: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Predicted Quality Engagement (w3)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.predictedQualityEngagement.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.05"
+                  max="0.30"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.predictedQualityEngagement}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, predictedQualityEngagement: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Col 2: Contextual Signals & Decay */}
+          <div>
+            <b className="text-slate-900 block mb-2 font-bold uppercase tracking-wider text-[11px]">
+              Trade Lane Relevance & Decay
+            </b>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Trade Lane & Geo Relevance (w7)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.geographyAndTradeLaneRelevance.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.25"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.geographyAndTradeLaneRelevance}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, geographyAndTradeLaneRelevance: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Freshness Weight (w6)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.freshness.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.20"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.freshness}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, freshness: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Meaningful Conversation (w4)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.meaningfulConversationValue.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.02"
+                  max="0.25"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.meaningfulConversationValue}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, meaningfulConversationValue: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Creator Trust (w8)</span>
+                  <span className="font-mono font-bold">{rankingConfig.weights.creatorTrust.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.15"
+                  step="0.01"
+                  className="w-full accent-sky-600"
+                  value={rankingConfig.weights.creatorTrust}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, creatorTrust: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Col 3: Penalty Weights */}
+          <div>
+            <b className="text-slate-900 block mb-2 font-bold uppercase tracking-wider text-[11px]">
+              Strict Penalty Penalizations
+            </b>
+            <div className="space-y-3">
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Skip Probability Penalty (p1)</span>
+                  <span className="font-mono font-bold text-rose-600">-{rankingConfig.weights.skipProbabilityPenalty.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.02"
+                  max="0.30"
+                  step="0.01"
+                  className="w-full accent-rose-600"
+                  value={rankingConfig.weights.skipProbabilityPenalty}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, skipProbabilityPenalty: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Spam / Low Quality Penalty (p2)</span>
+                  <span className="font-mono font-bold text-rose-600">-{rankingConfig.weights.lowQualitySpamPenalty.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.02"
+                  max="0.30"
+                  step="0.01"
+                  className="w-full accent-rose-600"
+                  value={rankingConfig.weights.lowQualitySpamPenalty}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, lowQualitySpamPenalty: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-slate-700 mb-0.5">
+                  <span>Repeated Content Penalty (p3)</span>
+                  <span className="font-mono font-bold text-rose-600">-{rankingConfig.weights.repeatedContentPenalty.toFixed(2)}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0.01"
+                  max="0.20"
+                  step="0.01"
+                  className="w-full accent-rose-600"
+                  value={rankingConfig.weights.repeatedContentPenalty}
+                  onChange={(e) =>
+                    setRankingConfig({
+                      ...rankingConfig,
+                      weights: { ...rankingConfig.weights, repeatedContentPenalty: parseFloat(e.target.value) },
+                    })
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -655,6 +1070,150 @@ export default function GodfatherDashboardPage() {
           </table>
         </div>
       </div>
+
+      {/* ── ACTIONABLE KYC REVIEW MODAL ── */}
+      {activeKycReview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-lg shadow-2xl border border-slate-200 max-w-xl w-full p-5 text-xs">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4">
+              <div className="flex items-center gap-2">
+                <FileCheck className="w-5 h-5 text-sky-600" />
+                <h3 className="text-sm font-black text-slate-900">
+                  KYC Decision Review: {activeKycReview.legalName}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveKycReview(null)}
+                className="text-slate-400 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-3 rounded border border-slate-200">
+                <div>
+                  <span className="text-slate-500 block text-[10.5px]">GSTIN Number:</span>
+                  <span className="font-mono font-bold text-slate-900">{activeKycReview.gstn || 'Pending Upload'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 block text-[10.5px]">Company Type:</span>
+                  <span className="font-semibold text-slate-900">{activeKycReview.businessType || 'Freight Forwarder'}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Administrative Decision</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReviewAction('approve')}
+                    className={`py-1.5 px-2 rounded font-bold border text-center transition-all ${
+                      reviewAction === 'approve'
+                        ? 'bg-emerald-600 text-white border-emerald-600'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    ✓ Approve Verified
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewAction('request_changes')}
+                    className={`py-1.5 px-2 rounded font-bold border text-center transition-all ${
+                      reviewAction === 'request_changes'
+                        ? 'bg-amber-600 text-white border-amber-600'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    ⚠ Request Changes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewAction('reject')}
+                    className={`py-1.5 px-2 rounded font-bold border text-center transition-all ${
+                      reviewAction === 'reject'
+                        ? 'bg-rose-600 text-white border-rose-600'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    ✕ Reject
+                  </button>
+                </div>
+              </div>
+
+              {reviewAction === 'request_changes' && (
+                <div className="bg-amber-50 p-3 rounded border border-amber-200 space-y-2">
+                  <b className="text-amber-900 block font-bold">Missing Documentation Checklist</b>
+                  <div className="space-y-1">
+                    {[
+                      { key: 'gstinProof', label: 'Missing / Illegible GSTIN Certificate' },
+                      { key: 'panCard', label: 'Company PAN Card Missing' },
+                      { key: 'iecCert', label: 'DGFT IEC Certificate Missing' },
+                      { key: 'associationMembership', label: 'Unverified Association Membership Number' },
+                    ].map((item) => (
+                      <label key={item.key} className="flex items-center gap-2 cursor-pointer text-amber-900">
+                        <input
+                          type="checkbox"
+                          checked={(missingChecklist as any)[item.key]}
+                          onChange={(e) =>
+                            setMissingChecklist({ ...missingChecklist, [item.key]: e.target.checked })
+                          }
+                        />
+                        <span>{item.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {reviewAction === 'reject' && (
+                <div>
+                  <label className="font-bold text-slate-800 block mb-1">Formal Rejection Code</label>
+                  <select
+                    className="gf-input w-full"
+                    value={rejectionReasonCode}
+                    onChange={(e) => setRejectionReasonCode(e.target.value)}
+                  >
+                    <option value="INVALID_GSTN">INVALID_GSTN - GSTIN could not be validated on Icegate/GST portal</option>
+                    <option value="EXPIRED_IEC">EXPIRED_IEC - DGFT Import Export Code is deactivated</option>
+                    <option value="DISCREDITED_ASSOCIATION">DISCREDITED_ASSOCIATION - Association membership rejected by network</option>
+                    <option value="SUSPECTED_FRAUD">SUSPECTED_FRAUD - Inconsistent incorporation credentials detected</option>
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="font-bold text-slate-800 block mb-1">Reviewer Ledger Audit Notes</label>
+                <textarea
+                  className="gf-input w-full"
+                  rows={2}
+                  placeholder="Official notes recorded permanently on the cryptographic sovereign audit ledger..."
+                  value={reviewNotes}
+                  onChange={(e) => setReviewNotes(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 mt-5 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setActiveKycReview(null)}
+                className="gf-btn gf-btn-secondary text-xs py-1 px-3 h-[28px]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleKycDecision}
+                className="gf-btn gf-btn-primary text-xs py-1 px-3 h-[28px]"
+              >
+                Commit Decision &amp; Sign Ledger
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Guidebook Modal */}
       <ZohoEmailGuidebookModal isOpen={isGuidebookOpen} onClose={() => setIsGuidebookOpen(false)} />

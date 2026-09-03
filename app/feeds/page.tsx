@@ -13,7 +13,9 @@ import { PostDetailModal } from '@/components/ui/PostDetailModal';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { parseRichText } from '@/lib/utils';
-import { FeedPost, JobPost, PostType } from '@/lib/types';
+import Image from 'next/image';
+import { FeedPost, JobPost, PostType, FeedSurface } from '@/lib/types';
+import { feedRankingEngine } from '@/lib/ranking/engine';
 import {
   Send,
   Search,
@@ -224,8 +226,9 @@ export default function FeedsPage() {
   const { toast } = useToast();
   const { openChatWith } = useChat();
 
-  // Navigation & Search State
-  const [activeTab, setActiveTab] = useState<'all' | 'saved'>('all');
+  // Navigation & Surface State
+  const [activeSurface, setActiveSurface] = useState<FeedSurface>('home');
+  const [visiblePostCount, setVisiblePostCount] = useState(12);
   const [selectedPostType, setSelectedPostType] = useState<string>('all');
   const [feedSearch, setFeedSearch] = useState('');
   const [showAllSearchResults, setShowAllSearchResults] = useState(false);
@@ -239,10 +242,8 @@ export default function FeedsPage() {
   const [editingPostId, setEditingPostId] = useState<string | number | null>(null);
   const [editingPostText, setEditingPostText] = useState('');
 
-  // Comment & Nested Reply State
-  const [expandedPostComments, setExpandedPostComments] = useState<Record<string, boolean>>({
-    'post-1': true,
-  });
+  // Comment & Nested Reply State (Deferred until explicit user click)
+  const [expandedPostComments, setExpandedPostComments] = useState<Record<string, boolean>>({});
   const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
   const [activeReplyBoxKey, setActiveReplyBoxKey] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState('');
@@ -470,11 +471,16 @@ export default function FeedsPage() {
     setAdCreativePreview(null);
   };
 
-  // Filter posts based on tab, post type, and universal feed search
-  const basePosts = activeTab === 'saved' ? posts.filter((p) => p.isSaved) : posts;
+  // 1. Two-Stage Candidate Retrieval & Personalized Hybrid Ranking
+  const rankedFeedPosts = React.useMemo(() => {
+    return feedRankingEngine.rankFeed(posts, {
+      viewer: user,
+      surface: activeSurface,
+    });
+  }, [posts, user, activeSurface]);
 
-  const filteredPosts = basePosts.filter((p) => {
-    // Post type filter
+  // 2. Filter posts based on post type and universal search
+  const filteredPosts = rankedFeedPosts.filter((p) => {
     if (selectedPostType !== 'all' && (p.postType || 'general') !== selectedPostType) {
       return false;
     }
@@ -485,13 +491,12 @@ export default function FeedsPage() {
       p.author.toLowerCase().includes(q) ||
       (p.authorCompany || '').toLowerCase().includes(q) ||
       p.text.toLowerCase().includes(q) ||
-      (p.auctionRefId || '').toLowerCase().includes(q)
+      (p.auctionRefId || '').toLowerCase().includes(q) ||
+      (p.tradeLane || '').toLowerCase().includes(q)
     );
   });
 
-  const displayedPosts = showAllSearchResults || !feedSearch.trim()
-    ? filteredPosts
-    : filteredPosts.slice(0, 7);
+  const displayedPosts = filteredPosts.slice(0, visiblePostCount);
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1081,18 +1086,42 @@ export default function FeedsPage() {
       <main className="feed-center-rail">
         {/* Post Type Filters & Tabs */}
         <div className="feed-header-bar">
-          <div className="feed-tabs">
+          <div className="feed-tabs" style={{ display: 'flex', overflowX: 'auto', gap: '4px' }}>
             <button
-              className={`feed-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
-              onClick={() => setActiveTab('all')}
+              className={`feed-tab-btn ${activeSurface === 'home' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('home')}
             >
-              All Global Feeds ({posts.length})
+              Home Feed
             </button>
             <button
-              className={`feed-tab-btn ${activeTab === 'saved' ? 'active' : ''}`}
-              onClick={() => setActiveTab('saved')}
+              className={`feed-tab-btn ${activeSurface === 'trending' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('trending')}
             >
-              <Bookmark size={12} style={{ verticalAlign: '-1px' }} /> Saved Items ({posts.filter((p) => p.isSaved).length})
+              Trending
+            </button>
+            <button
+              className={`feed-tab-btn ${activeSurface === 'discover' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('discover')}
+            >
+              Discover
+            </button>
+            <button
+              className={`feed-tab-btn ${activeSurface === 'following' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('following')}
+            >
+              Following
+            </button>
+            <button
+              className={`feed-tab-btn ${activeSurface === 'latest' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('latest')}
+            >
+              Latest
+            </button>
+            <button
+              className={`feed-tab-btn ${activeSurface === 'saved' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('saved')}
+            >
+              <Bookmark size={12} style={{ verticalAlign: '-1px' }} /> Saved ({posts.filter((p) => p.isSaved).length})
             </button>
           </div>
 
@@ -1224,8 +1253,8 @@ export default function FeedsPage() {
                     title="View verified member profile"
                     style={{ cursor: 'pointer' }}
                   >
-                    <div className="avatar" style={{ width: '38px', height: '38px', padding: 0, overflow: 'hidden' }}>
-                      <img src="/profile-avatar.png" alt={post.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                    <div className="avatar" style={{ width: '38px', height: '38px', padding: 0, overflow: 'hidden', position: 'relative' }}>
+                      <Image src={post.authorPhotoUrl || "/profile-avatar.png"} alt={post.author} width={38} height={38} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     </div>
                     <div>
                       <div className="author-name-row">
@@ -1246,6 +1275,24 @@ export default function FeedsPage() {
                       <div className="author-subtext" style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)' }}>
                         {post.authorRole} {post.authorCompany && `· ${post.authorCompany}`}
                       </div>
+                      {post.rankingExplanation && (
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '10.5px',
+                            color: '#1985a1',
+                            background: 'rgba(25, 133, 161, 0.08)',
+                            padding: '2px 7px',
+                            borderRadius: '4px',
+                            marginTop: '3px',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <Sparkles size={10} /> {post.rankingExplanation}
+                        </div>
+                      )}
                       {post.authorTimezone && (
                         <div style={{ marginTop: '2px' }}>
                           <LocalTimeBadge timezone={post.authorTimezone} />
@@ -1630,6 +1677,19 @@ export default function FeedsPage() {
               </article>
             );
           })
+        )}
+
+        {/* Pagination & Infinite Scroll Trigger */}
+        {filteredPosts.length > visiblePostCount && (
+          <div style={{ textAlign: 'center', margin: '18px 0 24px' }}>
+            <button
+              className="btn secondary"
+              onClick={() => setVisiblePostCount((prev) => prev + 10)}
+              style={{ padding: '8px 24px', fontSize: '12.5px', borderRadius: '20px', fontWeight: 600 }}
+            >
+              Load more freight intelligence ({filteredPosts.length - visiblePostCount} remaining)
+            </button>
+          </div>
         )}
 
         {/* Expand search button */}

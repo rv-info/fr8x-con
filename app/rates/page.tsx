@@ -42,12 +42,12 @@ import {
 } from '@/lib/utils';
 
 export default function RatesPage() {
-  const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
+  const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'i' | 'expiring'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'self' | 'i' | 'expiring'>('all');
   // Per-column search state
   const [colSearch, setColSearch] = useState<Record<string, string>>({});
   const updateColSearch = (col: string, val: string) =>
@@ -65,10 +65,17 @@ export default function RatesPage() {
   const [emailSubject, setEmailSubject] = useState<string>('');
   const [emailBody, setEmailBody] = useState<string>('');
 
-  // Rate Comparison Tool State
+  // Rate Comparison & Bulk Tool State
   const [comparedRateIds, setComparedRateIds] = useState<string[]>([]);
   const [expiredRateIds, setExpiredRateIds] = useState<string[]>([]);
   const [showComparisonModal, setShowComparisonModal] = useState(false);
+
+  // Bulk Operations State
+  const [selectedRateIdsForBulk, setSelectedRateIdsForBulk] = useState<string[]>([]);
+  const [showBulkAdjustModal, setShowBulkAdjustModal] = useState(false);
+  const [bulkPercentAdjustment, setBulkPercentAdjustment] = useState<number>(0);
+  const [bulkValidityExtension, setBulkValidityExtension] = useState<string>('');
+  const [viewingRevisionRate, setViewingRevisionRate] = useState<RateItem | null>(null);
 
   // i-Rate Editor Form State
   const [carrier, setCarrier] = useState('Maersk');
@@ -217,6 +224,9 @@ Generated via FR8X Freight Exchange
 
     if (activeTab === 'i') {
       return myRates.some((mr) => mr.id === r.id);
+    }
+    if (activeTab === 'self') {
+      return r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id);
     }
     if (activeTab === 'expiring') {
       return isExpiringSoon(r.valid) || expiredRateIds.includes(r.id);
@@ -829,6 +839,136 @@ Generated via FR8X Freight Exchange
         </Modal>
       )}
 
+      {/* Bulk Modifier Modal */}
+      {showBulkAdjustModal && (
+        <Modal
+          isOpen={showBulkAdjustModal}
+          onClose={() => setShowBulkAdjustModal(false)}
+          title={`Bulk Modifier · ${selectedRateIdsForBulk.length} Rates Selected`}
+          maxWidth="520px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <p style={{ fontSize: '12px', color: 'var(--mut)', margin: 0 }}>
+              Apply batch pricing adjustments and validity updates across all selected freight routes simultaneously. An immutable revision entry will be appended to each rate.
+            </p>
+
+            {/* Percentage adjustment */}
+            <div className="field">
+              <label>Percentage Adjustment (+/- %)</label>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[-5, -2, 2, 5, 10].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    className={`btn sm ${bulkPercentAdjustment === pct ? 'primary' : 'secondary'}`}
+                    style={{ fontSize: '11px', padding: '4px 8px' }}
+                    onClick={() => setBulkPercentAdjustment(pct)}
+                  >
+                    {pct > 0 ? `+${pct}%` : `${pct}%`}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  className="input"
+                  style={{ width: '80px', height: '28px', fontSize: '11px' }}
+                  placeholder="Custom %"
+                  value={bulkPercentAdjustment || ''}
+                  onChange={(e) => setBulkPercentAdjustment(Number(e.target.value))}
+                />
+              </div>
+            </div>
+
+            {/* Validity Extension */}
+            <div className="field">
+              <label>Extend Validity Date</label>
+              <input
+                type="date"
+                className="input"
+                value={bulkValidityExtension}
+                onChange={(e) => setBulkValidityExtension(e.target.value)}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+              <button className="btn secondary" onClick={() => setShowBulkAdjustModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="btn primary"
+                onClick={async () => {
+                  const updates: Partial<RateItem> = {};
+                  if (bulkValidityExtension) updates.valid = bulkValidityExtension;
+                  await bulkUpdateRates(
+                    selectedRateIdsForBulk,
+                    updates,
+                    bulkPercentAdjustment !== 0 ? bulkPercentAdjustment : undefined
+                  );
+                  setShowBulkAdjustModal(false);
+                  setSelectedRateIdsForBulk([]);
+                  setBulkPercentAdjustment(0);
+                  setBulkValidityExtension('');
+                }}
+              >
+                Apply Modifications
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Revision History Modal */}
+      {viewingRevisionRate && (
+        <Modal
+          isOpen={Boolean(viewingRevisionRate)}
+          onClose={() => setViewingRevisionRate(null)}
+          title={`Rate Revision History · ${viewingRevisionRate.id}`}
+          maxWidth="640px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--ink)' }}>
+              <b>{viewingRevisionRate.carrier}</b> · {viewingRevisionRate.pol} → {viewingRevisionRate.pod}
+            </div>
+            {(!viewingRevisionRate.versions || viewingRevisionRate.versions.length === 0) ? (
+              <p style={{ fontSize: '12px', color: 'var(--mut)', textAlign: 'center', padding: '24px 0' }}>
+                No prior revisions recorded. This rate is currently on its initial publication v1.
+              </p>
+            ) : (
+              <div className="tablewrap flush">
+                <table className="table sub-table">
+                  <thead>
+                    <tr>
+                      <th>Rev</th>
+                      <th>20DV</th>
+                      <th>40HC</th>
+                      <th>Valid Till</th>
+                      <th>Adjustment</th>
+                      <th>Changed By</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {viewingRevisionRate.versions.map((v) => (
+                      <tr key={v.id}>
+                        <td>v{v.version}</td>
+                        <td>${v.d20}</td>
+                        <td>${v.h40}</td>
+                        <td>{v.valid}</td>
+                        <td>{v.adjustmentPercentage ? `${v.adjustmentPercentage > 0 ? '+' : ''}${v.adjustmentPercentage}%` : 'Direct'}</td>
+                        <td>{v.changedBy || 'Owner'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button className="btn secondary" onClick={() => setViewingRevisionRate(null)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {/* Header */}
       <div className="head">
         <div>
@@ -1050,6 +1190,13 @@ Generated via FR8X Freight Exchange
                 All Available Rates ({rates.length + myRates.length})
               </button>
               <button
+                className={`tab ${activeTab === 'self' ? 'active' : ''}`}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
+                onClick={() => setActiveTab('self')}
+              >
+                Self-Posted Rates ({allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length})
+              </button>
+              <button
                 className={`tab ${activeTab === 'i' ? 'active' : ''}`}
                 style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
                 onClick={() => setActiveTab('i')}
@@ -1064,6 +1211,19 @@ Generated via FR8X Freight Exchange
                 <Clock size={11} style={{ verticalAlign: '-1px' }} /> Expiring / Expired Rates (
                 {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length})
               </button>
+
+              {comparedRateIds.length > 0 && (
+                <button
+                  className="btn primary sm"
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '0px', marginLeft: '6px' }}
+                  onClick={() => {
+                    setSelectedRateIdsForBulk(comparedRateIds);
+                    setShowBulkAdjustModal(true);
+                  }}
+                >
+                  ⚡ Bulk Modify Selected ({comparedRateIds.length})
+                </button>
+              )}
             </div>
 
             <div className="feed-search-box" style={{ width: '220px' }}>
@@ -1266,6 +1426,17 @@ Generated via FR8X Freight Exchange
                           </button>
                           <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }} title="Compare">
                             <ArrowRightLeft size={11} />
+                          </button>
+                          <button
+                            className="btn secondary sm"
+                            style={{ padding: '2px 5px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingRevisionRate(rate);
+                            }}
+                            title={`Revision History (${rate.versions?.length || 1} versions)`}
+                          >
+                            <History size={11} />
                           </button>
                           {isOwner && (
                             <button className="btn danger sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); deleteMyRate(rate.id); }} title="Delete">

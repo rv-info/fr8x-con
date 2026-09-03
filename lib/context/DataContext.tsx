@@ -14,6 +14,7 @@ import {
   Auction,
   SubmittedBid,
   RateItem,
+  RateVersion,
   ContainerEquipmentRow,
   PostReport,
   AppNotification,
@@ -34,6 +35,19 @@ import {
 } from '@/lib/utils';
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
+import {
+  getPostsFromDB,
+  upsertPostInDB,
+  deletePostInDB,
+  getAuctionsFromDB,
+  upsertAuctionInDB,
+  submitBidInDB,
+  getRatesFromDB,
+  upsertRateInDB,
+  batchUpdateRatesInDB,
+} from '@/lib/firebase/firestore';
+import { eventBus } from '@/lib/intelligence/events';
+import { presenceService } from '@/lib/presence/presenceService';
 
 // Initial Mock Datasets
 const SEED_NOTIFICATIONS: AppNotification[] = [
@@ -1422,6 +1436,7 @@ interface DataContextType {
   addMyRate: (rateData: Omit<RateItem, 'id' | 'isOwner' | 'sp'>) => string;
   deleteMyRate: (rateId: string) => void;
   bulkImportRates: (importedRates: Partial<RateItem>[]) => { count: number; errors: string[] };
+  bulkUpdateRates: (rateIds: string[], updates: Partial<RateItem>, adjustmentPercentage?: number) => Promise<void>;
   // Notifications
   notifications: AppNotification[];
   markNotificationRead: (notifId: string) => void;
@@ -1460,7 +1475,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [masterIncoterms, setMasterIncoterms] = useState<IncotermMasterItem[]>(MASTER_INCOTERMS);
   const [masterTaxCodes, setMasterTaxCodes] = useState<TaxSACMasterItem[]>(MASTER_TAX_SAC);
 
+  // Presence heartbeat lifecycle
   useEffect(() => {
+    if (user?.uid) {
+      presenceService.initialize(user.uid);
+    }
+    return () => {
+      presenceService.cleanup();
+    };
+  }, [user?.uid]);
+
+  // SWR Data Synchronization: Non-sensitive local cache -> Live Firestore revalidation
+  useEffect(() => {
+    let isMounted = true;
+
+    // 1. Instant paint from non-sensitive local cache
     try {
       const savedTopics = localStorage.getItem('fr8x_nexus_topics');
       if (savedTopics) setTopics(JSON.parse(savedTopics));
@@ -1482,7 +1511,50 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const savedCars = localStorage.getItem('fr8x_gf_master_carriers');
       if (savedCars) setMasterCarriers(JSON.parse(savedCars));
     } catch {}
-  }, []);
+
+    // 2. Revalidate asynchronously against live Firestore
+    async function revalidateLiveFirestore() {
+      try {
+        const [postsRes, auctionsRes, ratesRes] = await Promise.allSettled([
+          getPostsFromDB({ limitCount: 40 }),
+          getAuctionsFromDB(),
+          getRatesFromDB(),
+        ]);
+
+        if (!isMounted) return;
+
+        if (postsRes.status === 'fulfilled' && postsRes.value.posts.length > 0) {
+          setPosts(postsRes.value.posts);
+          try {
+            localStorage.setItem('fr8x_feed_posts', JSON.stringify(postsRes.value.posts));
+          } catch {}
+        }
+
+        if (auctionsRes.status === 'fulfilled' && auctionsRes.value.length > 0) {
+          setAuctions(auctionsRes.value);
+          try {
+            localStorage.setItem('fr8x_auctions', JSON.stringify(auctionsRes.value));
+          } catch {}
+        }
+
+        if (ratesRes.status === 'fulfilled' && ratesRes.value.length > 0) {
+          setRates(ratesRes.value);
+          setMyRates(ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner));
+          try {
+            localStorage.setItem('fr8x_rates', JSON.stringify(ratesRes.value));
+          } catch {}
+        }
+      } catch (err) {
+        console.warn('[DataContext] SWR fallback active:', err);
+      }
+    }
+
+    revalidateLiveFirestore();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.uid]);
   const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([]);
 
   // Notification Actions
@@ -1498,6 +1570,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Feed Actions
   const addPost = (text: string, postType: FeedPost['postType'] = 'general') => {
     if (!text.trim()) return;
+    const now = new Date().toISOString();
     const newPost: FeedPost = {
       id: `post-${Date.now()}`,
       authorUid: user.uid,
@@ -1515,8 +1588,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       disliked: false,
       isSaved: false,
       comments: [],
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      schemaVersion: 2,
     };
     setPosts((prev) => [newPost, ...prev]);
+    upsertPostInDB(newPost).catch(() => {});
+    eventBus.recordEvent({
+      eventType: 'post_create',
+      actorId: user.uid,
+      actorCompany: user.company,
+      targetId: newPost.id,
+      targetType: 'post',
+      immediate: true,
+    });
     toast('Post published to Global Freight Feed.');
   };
 
@@ -1535,9 +1621,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    const updatedPost: FeedPost = {
+      ...target,
+      text: newText.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+
     setPosts((prev) =>
-      prev.map((p) => (String(p.id) === String(postId) ? { ...p, text: newText.trim() } : p))
+      prev.map((p) => (String(p.id) === String(postId) ? updatedPost : p))
     );
+    upsertPostInDB(updatedPost).catch(() => {});
     toast('Post updated successfully.');
   };
 
@@ -1551,6 +1644,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
 
     setPosts((prev) => prev.filter((p) => String(p.id) !== String(postId)));
+    deletePostInDB(String(postId)).catch(() => {});
     toast('Post removed from feed.');
   };
 
@@ -1562,7 +1656,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const disliked = reaction === 'dis' ? !p.disliked : false;
         const likes = p.likes + (liked ? 1 : p.liked ? -1 : 0);
         const dis = p.dis + (disliked ? 1 : p.disliked ? -1 : 0);
-        return { ...p, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
+        const updated = { ...p, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
+        upsertPostInDB(updated).catch(() => {});
+        eventBus.recordEvent({
+          eventType: reaction === 'like' ? 'post_like' : 'post_critique',
+          actorId: user.uid,
+          targetId: String(postId),
+        });
+        return updated;
       })
     );
   };
@@ -2055,6 +2156,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     setAuctions((prev) => [newAuction, ...prev]);
+    upsertAuctionInDB(newAuction).catch(() => {});
+    eventBus.recordEvent({
+      eventType: 'auction_create',
+      actorId: user.uid,
+      actorCompany: user.company,
+      targetId: id,
+      immediate: true,
+    });
 
     // Also post an immutable announcement in the feed
     const feedAnnouncement: FeedPost = {
@@ -2075,8 +2184,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       isAuctionAnnouncement: true,
       auctionRefId: id,
       comments: [],
+      createdAt: new Date().toISOString(),
+      status: 'active',
+      schemaVersion: 2,
     };
     setPosts((prev) => [feedAnnouncement, ...prev]);
+    upsertPostInDB(feedAnnouncement).catch(() => {});
 
     if (newAuction.selectedBidders.length > 0) {
       newAuction.selectedBidders.forEach((b) => {
@@ -2130,6 +2243,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       })
     );
 
+    submitBidInDB(auctionId, newBid).catch(() => {});
+    eventBus.recordEvent({
+      eventType: 'auction_bid',
+      actorId: user.uid,
+      actorCompany: user.company,
+      targetId: auctionId,
+      metadata: { grandTotalUSD, rank },
+      immediate: true,
+    });
+
     toast(
       `Bid of USD $${grandTotalUSD.toFixed(2)} submitted successfully for ${auctionId}.`
     );
@@ -2138,21 +2261,96 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Rates
   const addMyRate = (rateData: Omit<RateItem, 'id' | 'isOwner' | 'sp'>): string => {
     const id = `IRT-${String(Math.floor(100000 + Math.random() * 900000))}`;
+    const now = new Date().toISOString();
     const newRate: RateItem = {
       ...rateData,
       id,
       sp: user.company,
       ownerUid: user.uid,
       isOwner: true,
+      isSelfPosted: true,
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      schemaVersion: 2,
     };
     setMyRates((prev) => [newRate, ...prev]);
+    setRates((prev) => [newRate, ...prev]);
+    upsertRateInDB(newRate).catch(() => {});
+    eventBus.recordEvent({
+      eventType: 'rate_edit',
+      actorId: user.uid,
+      actorCompany: user.company,
+      targetId: id,
+    });
     toast(`i-Rate ${id} added to your published inventory.`);
     return id;
   };
 
   const deleteMyRate = (rateId: string) => {
     setMyRates((prev) => prev.filter((r) => r.id !== rateId));
+    setRates((prev) => prev.filter((r) => r.id !== rateId));
     toast(`Rate ${rateId} removed from inventory.`);
+  };
+
+  const bulkUpdateRates = async (
+    rateIds: string[],
+    updates: Partial<RateItem>,
+    adjustmentPercentage?: number
+  ) => {
+    const now = new Date().toISOString();
+    const updateBatch: { id: string; updates: Partial<RateItem>; revision?: RateVersion }[] = [];
+
+    const updatedRates = rates.map((r) => {
+      if (!rateIds.includes(r.id)) return r;
+
+      const revisedD20 = adjustmentPercentage
+        ? Math.round(r.d20 * (1 + adjustmentPercentage / 100))
+        : updates.d20 ?? r.d20;
+      const revisedH40 = adjustmentPercentage
+        ? Math.round(r.h40 * (1 + adjustmentPercentage / 100))
+        : updates.h40 ?? r.h40;
+
+      const revision: RateVersion = {
+        id: `rv_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+        version: (r.versions?.length || 0) + 1,
+        status: 'current',
+        createdAt: now,
+        d20: revisedD20,
+        h40: revisedH40,
+        valid: updates.valid || r.valid,
+        remark: updates.remark || (adjustmentPercentage ? `Adjusted by ${adjustmentPercentage}%` : r.remark),
+        changedBy: user.displayName,
+        adjustmentPercentage,
+      };
+
+      const newRate: RateItem = {
+        ...r,
+        ...updates,
+        d20: revisedD20,
+        h40: revisedH40,
+        versions: [revision, ...(r.versions || [])],
+        updatedAt: now,
+        updatedBy: user.uid,
+      };
+
+      updateBatch.push({ id: r.id, updates: newRate, revision });
+      return newRate;
+    });
+
+    setRates(updatedRates);
+    setMyRates((prev) =>
+      prev.map((r) => {
+        const match = updatedRates.find((ur) => ur.id === r.id);
+        return match || r;
+      })
+    );
+
+    try {
+      await batchUpdateRatesInDB(updateBatch);
+    } catch {}
+
+    toast(`Successfully updated ${rateIds.length} rates with revision history.`);
   };
 
   const bulkImportRates = (importedRates: Partial<RateItem>[]) => {
@@ -2193,11 +2391,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
         remark: row.remark || 'Bulk imported',
         ownerUid: user.uid,
         isOwner: true,
+        isSelfPosted: true,
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        schemaVersion: 2,
       });
     });
 
     if (validRows.length > 0) {
       setMyRates((prev) => [...validRows, ...prev]);
+      setRates((prev) => [...validRows, ...prev]);
       toast(`Successfully imported ${validRows.length} valid rates into i-Rates inventory.`);
     }
 
@@ -2245,6 +2448,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         addMyRate,
         deleteMyRate,
         bulkImportRates,
+        bulkUpdateRates,
         notifications,
         markNotificationRead,
         markAllNotificationsRead,
@@ -2268,3 +2472,4 @@ export function useData() {
   }
   return context;
 }
+

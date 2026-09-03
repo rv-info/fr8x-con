@@ -202,5 +202,62 @@ service cloud.firestore {
       allow create: if isAuthenticated() && request.resource.data.reporterUid == request.auth.uid;
       allow update, delete: if isPlatformAdmin();
     }
+
+    // =========================================================================
+    // INTELLIGENCE, EVENTS, PRESENCE & EXTENDED WORKFLOWS
+    // =========================================================================
+
+    // Idempotent Logistics Telemetry Events (Append-Only)
+    match /events/{eventId} {
+      allow read: if isPlatformAdmin();
+      allow create: if isAuthenticated() && request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false; // Strict Immutability
+    }
+
+    // Real Presence Heartbeats (3-State Active/Idle/Away)
+    match /presence/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isPlatformAdmin();
+    }
+
+    // Configurable Two-Stage Feed Ranking Algorithm
+    match /rankingConfigs/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    // KYC Records & Verification Dossiers
+    match /kyc_records/{userId} {
+      allow read: if isOwner(userId) || isPlatformAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isPlatformAdmin() || (isOwner(userId) && resource.data.status != 'verified');
+      allow delete: if isPlatformAdmin();
+    }
+
+    // Account-Scoped Bidder Groups
+    match /bidderGroups/{groupId} {
+      allow read: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
+    }
+
+    // Operational Disruptions & Logistics Signals
+    match /operationalSignals/{signalId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    // Model Registry & Algorithm Governance
+    match /modelRegistry/{modelId} {
+      allow read: if isPlatformAdmin();
+      allow write: if isPlatformAdmin();
+    }
+
+    // Advertising Campaigns & Settlements
+    match /ads/{adId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isPlatformAdmin();
+    }
   }
 }

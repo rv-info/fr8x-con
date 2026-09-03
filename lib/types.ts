@@ -165,6 +165,8 @@ export interface FeedPost {
   authorRole: string;
   authorCompany?: string;
   authorTimezone?: string;
+  authorPhotoUrl?: string;
+  authorCompanyLogoUrl?: string;
   hasGoldenTick?: boolean;
   time: string;
   text: string;
@@ -185,6 +187,19 @@ export interface FeedPost {
   isAuctionAnnouncement?: boolean;
   auctionRefId?: string;
   tags?: string[];
+  // Logistics ranking & intelligence metadata
+  tradeLane?: string;
+  ports?: string[];
+  rankingScore?: number;
+  rankingExplanation?: string;
+  decayHalfLifeHours?: number; // 24, 72, 168, 336
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  status?: 'active' | 'archived' | 'moderated' | 'deleted';
+  schemaVersion?: number;
+  source?: string;
 }
 
 export interface JobPost {
@@ -417,7 +432,7 @@ export interface Auction {
     specialRequirements?: string;
   };
   containers: ContainerEquipmentRow[];
-  originCharges: {
+    originCharges: {
     transportation: boolean;
     clearance: boolean;
     carrierLocal: boolean;
@@ -425,6 +440,16 @@ export interface Auction {
     handoverLocation?: string;
     factoryStuffing?: boolean;
     cfsStuffing?: boolean;
+    fobScope?: {
+      factoryStuffing: boolean;
+      originHaulage: boolean;
+      exportCustomsCHA: boolean;
+      blIssuance: boolean;
+      terminalHandling: boolean;
+      cfsCarting: boolean;
+      vgmSubmission: boolean;
+      notes?: string;
+    };
   };
   destinationCharges: {
     transportation: boolean;
@@ -473,6 +498,12 @@ export interface Auction {
       location: string;
     };
   };
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  schemaVersion?: number;
+  source?: string;
 }
 
 export interface RateVersion {
@@ -484,6 +515,8 @@ export interface RateVersion {
   h40: number;
   valid: string;
   remark: string;
+  changedBy?: string;
+  adjustmentPercentage?: number;
 }
 
 export interface RateItem {
@@ -501,13 +534,24 @@ export interface RateItem {
   ft: string; // Free Time e.g. "14 days"
   tt: string; // Transit Time e.g. "29 days"
   valid: string; // Validity date
+  validityFrom?: string;
+  validityTo?: string;
   rateType?: string;
   route: string;
   remark: string;
   ownerUid?: string;
   isOwner?: boolean;
+  isSelfPosted?: boolean;
+  linkedBookingsCount?: number;
   versions?: RateVersion[];
   isExpiringSoon?: boolean; // computed: within 7 days of valid date
+  createdAt?: string;
+  updatedAt?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  status?: 'active' | 'expired' | 'suspended';
+  schemaVersion?: number;
+  source?: string;
 }
 
 export interface ChatMessage {
@@ -532,6 +576,7 @@ export interface ChatContact {
   location: string;
   timezone: string;
   online: boolean;
+  presenceStatus?: 'active' | 'idle' | 'away';
   unreadCount: number;
   hasGoldenTick?: boolean;
   contextRecord?: {
@@ -705,5 +750,260 @@ export interface TaxSACMasterItem {
   rcmApplicable: boolean;
   category: string;
   status: 'active' | 'inactive';
+}
+
+// ─── AUDIT & DATA INTEGRITY ──────────────────────────────────────────────────
+export interface AuditMetadata {
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
+  updatedBy?: string;
+  schemaVersion: number;
+  source: string;
+  ipHash?: string;
+  correlationId?: string;
+}
+
+// ─── EVENT-DRIVEN TELEMETRY & IDEMPOTENT EVENT BUS ───────────────────────────
+export type LogisticsEventType =
+  | 'post_create'
+  | 'post_impression'
+  | 'post_dwell'
+  | 'post_like'
+  | 'post_critique'
+  | 'post_amplify'
+  | 'post_comment'
+  | 'post_reply'
+  | 'post_save'
+  | 'post_hide'
+  | 'post_report'
+  | 'profile_view'
+  | 'profile_search'
+  | 'user_follow'
+  | 'contact_approve'
+  | 'chat_send'
+  | 'chat_read'
+  | 'auction_create'
+  | 'auction_invite'
+  | 'auction_bid'
+  | 'auction_revise'
+  | 'auction_award'
+  | 'auction_dispute'
+  | 'rate_view'
+  | 'rate_edit'
+  | 'rate_expiry'
+  | 'rate_book'
+  | 'kyc_submit'
+  | 'kyc_review'
+  | 'kyc_approve'
+  | 'kyc_request_changes'
+  | 'review_create'
+  | 'review_dispute'
+  | 'ad_create'
+  | 'ad_payment'
+  | 'presence_heartbeat';
+
+export interface IdempotentEvent {
+  eventId: string; // sha256 or uuidv4 deterministic key
+  eventType: LogisticsEventType;
+  actorId: string;
+  actorCompany?: string;
+  targetId: string;
+  targetType?: string;
+  timestamp: string;
+  sourceSurface: FeedSurface | 'rates' | 'auctions' | 'profile' | 'nexus' | 'godfather';
+  correlationId: string;
+  rankingVersion: string;
+  metadata?: Record<string, any>;
+}
+
+// ─── FEED SURFACES & TWO-STAGE RANKING INTELLIGENCE ──────────────────────────
+export type FeedSurface =
+  | 'home'
+  | 'discover'
+  | 'trending'
+  | 'following'
+  | 'saved'
+  | 'latest';
+
+export interface RankingFormulaWeights {
+  professionalRelevance: number; // 0.24
+  relationshipAffinity: number;  // 0.18
+  predictedQualityEngagement: number; // 0.14
+  meaningfulConversationValue: number; // 0.12
+  dwellValue: number; // 0.10
+  freshness: number; // 0.08
+  geographyAndTradeLaneRelevance: number; // 0.07
+  creatorTrust: number; // 0.04
+  explorationValue: number; // 0.03
+  // Penalties
+  skipProbabilityPenalty: number; // 0.12
+  lowQualitySpamPenalty: number; // 0.10
+  repeatedContentPenalty: number; // 0.08
+}
+
+export interface HybridScoreWeights {
+  alphaDeterministic: number; // α e.g. 0.60
+  betaML: number;             // β e.g. 0.10
+  gammaSemantic: number;      // γ e.g. 0.10
+  deltaGraph: number;         // δ e.g. 0.20
+}
+
+export interface RankingConfig {
+  id: string; // "default"
+  version: string;
+  updatedAt: string;
+  updatedBy: string;
+  weights: RankingFormulaWeights;
+  hybrid: HybridScoreWeights;
+  halfLivesHours: {
+    urgentOperational: number; // 24
+    rateCapacity: number;      // 72
+    educational: number;       // 168
+    announcements: number;     // 336
+  };
+  diversityThresholds: {
+    maxConsecutiveSameAuthor: number;
+    maxConsecutiveSameCompany: number;
+    maxSameTradeLaneRatio: number;
+  };
+  fatigueMultipliers: {
+    seenWithin24h: number;
+    repeatedTopic: number;
+  };
+}
+
+// ─── SHORT-LIVED LOGISTICS INTENT ────────────────────────────────────────────
+export interface LogisticsIntent {
+  userId: string;
+  recentSearchedPorts: string[]; // UN/LOCODEs e.g. ["INNSA", "NLRTM"]
+  viewedRates: string[];
+  activeAuctionRoutes: string[]; // e.g. ["INNSA-NLRTM"]
+  savedTradeLanes: string[];
+  followedCommodities: string[];
+  carrierSearches: string[];
+  lastActiveAt: string;
+  expiresAt: string; // 7 days TTL
+}
+
+// ─── EXTERNAL OPERATIONAL DISRUPTIONS & SIGNALS ──────────────────────────────
+export type OperationalSignalType =
+  | 'port_congestion'
+  | 'vessel_schedule_change'
+  | 'blank_sailing'
+  | 'equipment_shortage'
+  | 'weather_disruption'
+  | 'customs_advisory'
+  | 'strike'
+  | 'sanctions'
+  | 'carrier_alert'
+  | 'fuel_surcharge'
+  | 'exchange_rate_volatility'
+  | 'regional_holiday';
+
+export interface OperationalSignal {
+  id: string;
+  signalType: OperationalSignalType;
+  portLocode?: string;
+  tradeLane?: string;
+  carrierScac?: string;
+  headline: string;
+  description: string;
+  source: string;
+  observedAt: string;
+  confidenceScore: number; // 0.0 - 1.0
+  expiresAt: string;
+  verificationStatus: 'verified' | 'unverified' | 'debunked';
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+// ─── STRUCTURED KYC & REPUTATION ─────────────────────────────────────────────
+export type KYCStatus = 'not_submitted' | 'pending' | 'under_review' | 'verified' | 'request_changes' | 'rejected';
+
+export interface AssociationMembership {
+  id: string;
+  association: 'WCA' | 'FIATA' | 'IATA' | 'AEO' | 'MTO' | string;
+  canonicalName: string; // e.g. "WCA"
+  membershipNumber: string;
+  validTill: string;
+  verified: boolean;
+}
+
+export interface KYCDossier {
+  userId: string;
+  companyId: string;
+  legalEntityName: string;
+  tradeName?: string;
+  gstin: string;
+  pan: string;
+  iec?: string;
+  registeredAddress: {
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+    coordinates?: Coordinates;
+  };
+  memberships: AssociationMembership[];
+  status: KYCStatus;
+  missingItemsChecklist: {
+    key: string;
+    label: string;
+    isMissing: boolean;
+  }[];
+  reviewNotes?: string;
+  rejectionReason?: string;
+  statusHistory: {
+    status: KYCStatus;
+    timestamp: string;
+    reviewerUid: string;
+    reviewerName: string;
+    notes?: string;
+  }[];
+  submittedAt?: string;
+  verifiedAt?: string;
+  termsAccepted: boolean;
+  termsVersion: string;
+  termsAcceptedAt: string;
+  updatedAt: string;
+}
+
+// ─── REAL PRESENCE (3-STATE HEARTBEAT) ───────────────────────────────────────
+export type PresenceStatus = 'active' | 'idle' | 'away'; // green = active, orange = idle, red = away
+
+export interface UserPresenceState {
+  userId: string;
+  status: PresenceStatus;
+  lastHeartbeat: string;
+  currentSurface?: string;
+  deviceType?: 'desktop' | 'mobile';
+  ttlExpiry: number; // unix timestamp seconds
+}
+
+// ─── BIDDER GROUPS (ACCOUNT-LEVEL NORMALIZATION) ──────────────────────────────
+export interface BidderGroup {
+  id: string;
+  ownerUid: string;
+  name: string; // e.g. "Europe FCL Core Carriers", "Gulf Feeder Forwarders"
+  description?: string;
+  bidders: SelectedBidder[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── MODEL REGISTRY ──────────────────────────────────────────────────────────
+export interface ModelRegistryEntry {
+  modelId: string;
+  version: string;
+  datasetVersion: string;
+  featureVersion: string;
+  rolloutPercentage: number;
+  evaluationMetrics: Record<string, number>;
+  fairnessPassed: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected' | 'rolled_back';
+  approvedBy?: string;
+  deployedAt?: string;
 }
 

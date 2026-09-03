@@ -228,8 +228,21 @@ interface AuthContextType {
   updateUser: (updatedFields: Partial<UserProfile>) => void;
   upgradePlan: (plan: PlanTier) => void;
   /** Accepts uid OR email + password. Returns true on success. */
-  login: (identifier: string, pass: string, remember?: boolean) => boolean;
-  register: (profile: Partial<UserProfile>, password?: string) => void;
+  login: (
+    identifier: string,
+    pass: string,
+    remember?: boolean,
+    serverVerifiedUser?: Partial<UserProfile>
+  ) => boolean;
+  register: (
+    profile: Partial<UserProfile>,
+    password?: string
+  ) => Promise<{ success: boolean; error?: string; user?: UserProfile }>;
+  resetPasswordWithOtp: (
+    email: string,
+    otp: string,
+    newPassword: string
+  ) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: (reason?: string) => void;
   loadRemembered: () => { userId: string; password: string } | null;
   bidPostingFee: number;
@@ -254,14 +267,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Initial load: restore registered users and active session from localStorage
   useEffect(() => {
     try {
-      // 1. Load registered users
+      // 1. Load registered users with One User One Login deduplication
       const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
       let usersList = INITIAL_USERS;
       if (storedUsersRaw) {
         try {
           const parsed = JSON.parse(storedUsersRaw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            usersList = parsed;
+            // Deduplicate by normalized email to enforce One User, One Login
+            const seenEmails = new Set<string>();
+            const deduped: UserProfile[] = [];
+            for (const u of parsed) {
+              const emailKey = (u.email || '').trim().toLowerCase();
+              if (emailKey && !seenEmails.has(emailKey)) {
+                seenEmails.add(emailKey);
+                deduped.push(u);
+              }
+            }
+            // Also ensure initial seed users are included if not present
+            for (const initUser of INITIAL_USERS) {
+              const initKey = initUser.email.trim().toLowerCase();
+              if (!seenEmails.has(initKey)) {
+                seenEmails.add(initKey);
+                deduped.push(initUser);
+              }
+            }
+            usersList = deduped.length > 0 ? deduped : INITIAL_USERS;
           }
         } catch {}
       }
@@ -404,19 +435,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem(STATUS_KEY, status); } catch {}
   };
 
-  const switchUser = (uid: string) => {
-    const found = allUsers.find((u) => u.uid === uid);
-    if (found) {
-      setCurrentUser(found);
-      setUserStatusState('available');
-      const now = Date.now().toString();
-      try {
-        localStorage.setItem(ACTIVE_SESSION_KEY, uid);
-        localStorage.setItem(STATUS_KEY, 'available');
-        localStorage.setItem(SESSION_START_KEY, now);
-        localStorage.setItem(LAST_ACTIVITY_KEY, now);
-      } catch {}
-    }
+  const switchUser = (_uid: string) => {
+    // Under One User, One Login: direct switching between accounts is prohibited.
+    // Explicit sign out required.
+    console.warn('[Auth] Direct account switching prohibited under One User, One Login policy.');
+    logout('Account switching prohibited under One User, One Login policy. Please log in.');
   };
 
   const updateUser = (updatedFields: Partial<UserProfile>) => {
@@ -437,23 +460,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Login by User ID or Corporate Email.
+   * Enforces single exclusive active session.
    */
-  const login = (identifier: string, pass: string, remember = false): boolean => {
+  const login = (
+    identifier: string,
+    pass: string,
+    remember = false,
+    serverVerifiedUser?: Partial<UserProfile>
+  ): boolean => {
     const id = identifier.trim().toLowerCase();
 
+    // Purge any preexisting active session data to ensure one user, one login
+    try {
+      localStorage.removeItem(ACTIVE_SESSION_KEY);
+      localStorage.removeItem(STATUS_KEY);
+      localStorage.removeItem(SESSION_START_KEY);
+      localStorage.removeItem(LAST_ACTIVITY_KEY);
+    } catch {}
+
     // Find user by uid or email
-    const found = allUsers.find(
+    let found = allUsers.find(
       (u) => u.uid.toLowerCase() === id || u.email.toLowerCase() === id
     );
+
+    // If server already authenticated and provided details, adopt user if missing in allUsers
+    if (!found && serverVerifiedUser && serverVerifiedUser.uid) {
+      found = {
+        uid: serverVerifiedUser.uid,
+        email: serverVerifiedUser.email || identifier,
+        firstName: serverVerifiedUser.firstName || serverVerifiedUser.displayName?.split(' ')[0] || 'User',
+        lastName: serverVerifiedUser.lastName || serverVerifiedUser.displayName?.split(' ').slice(1).join(' ') || '',
+        displayName: serverVerifiedUser.displayName || identifier,
+        designation: serverVerifiedUser.designation || 'Freight Procurement Manager',
+        company: serverVerifiedUser.company || 'Enterprise Logistics Co.',
+        companyId: serverVerifiedUser.companyId || 'CMP-00000',
+        city: serverVerifiedUser.city || 'Mumbai',
+        state: serverVerifiedUser.state || '',
+        country: serverVerifiedUser.country || 'India',
+        mobile: serverVerifiedUser.mobile || '+91 90000 00000',
+        timezone: serverVerifiedUser.timezone || 'Asia/Kolkata',
+        preferredContactMethod: 'tradeChat',
+        contactAvailability: '09:00 - 18:00',
+        plan: serverVerifiedUser.plan || 'professional',
+        hasGoldenTick: false,
+        isVerified: true,
+        role: serverVerifiedUser.role || 'company_admin',
+      };
+      setAllUsers((prev) => [found!, ...prev.filter((u) => u.uid !== found!.uid && u.email.toLowerCase() !== found!.email.toLowerCase())]);
+    }
 
     if (!found) {
       return false;
     }
 
-    // Validate password
-    const expectedPass = userPasswords[found.uid] || DEFAULT_PASSWORDS[found.uid];
-    if (expectedPass && pass !== expectedPass) {
-      return false;
+    // Validate password if not verified already by server
+    if (!serverVerifiedUser) {
+      const expectedPass = userPasswords[found.uid] || DEFAULT_PASSWORDS[found.uid];
+      if (expectedPass && pass !== expectedPass) {
+        return false;
+      }
     }
 
     setCurrentUser(found);
@@ -478,17 +543,57 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Register a new freight organization and user account.
+   * Enforces strict One User, One Login policy: rejects duplicate accounts across same or different organizations.
    */
-  const register = (profile: Partial<UserProfile>, password = 'Password@123') => {
+  const register = async (
+    profile: Partial<UserProfile>,
+    password = 'Password@123'
+  ): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
+    const cleanEmail = (profile.email || '').trim().toLowerCase();
+    const cleanCompany = (profile.company || '').trim();
+    const cleanMobile = (profile.mobile || '').replace(/[^0-9+]/g, '');
+
+    // 1. One User, One Login check: duplicate email across same or different orgs
+    const existingByEmail = allUsers.find(
+      (u) => u.email.trim().toLowerCase() === cleanEmail
+    );
+    if (existingByEmail) {
+      const isSameOrg = existingByEmail.company.trim().toLowerCase() === cleanCompany.toLowerCase();
+      if (isSameOrg) {
+        return {
+          success: false,
+          error: `An account with this corporate email (${profile.email}) is already registered in ${existingByEmail.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
+        };
+      } else {
+        return {
+          success: false,
+          error: `This corporate email (${profile.email}) is already associated with another organization (${existingByEmail.company}). Multi-accounting across different organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
+        };
+      }
+    }
+
+    // 2. One User, One Login check: duplicate mobile phone number
+    if (cleanMobile && cleanMobile.length >= 8) {
+      const existingByMobile = allUsers.find(
+        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile
+      );
+      if (existingByMobile) {
+        return {
+          success: false,
+          error: `This mobile phone number (${profile.mobile}) is already associated with an active account (${existingByMobile.email}). Multi-accounting is prohibited under the One User, One Login policy.`,
+        };
+      }
+    }
+
     const newUid = `u-${Date.now()}`;
     const newUser: UserProfile = {
       uid: newUid,
-      email: profile.email || `user@${(profile.company || 'logistics').toLowerCase().replace(/\s+/g, '')}.com`,
+      email: cleanEmail,
       firstName: profile.firstName || 'User',
       lastName: profile.lastName || '',
       displayName: `${profile.firstName || 'User'} ${profile.lastName || ''}`.trim(),
       designation: profile.designation || 'Freight Procurement Manager',
-      company: profile.company || 'Enterprise Logistics Co.',
+      company: cleanCompany || 'Enterprise Logistics Co.',
       companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
       city: profile.city || 'Mumbai',
       state: profile.state || '',
@@ -504,10 +609,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ...profile,
     };
 
-    const nextUsers = [newUser, ...allUsers];
+    // 3. Register with server API to ensure server-side auth sync
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newUser,
+          password,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = await res.json();
+        return {
+          success: false,
+          error: json.error || 'Server rejected registration under the One User, One Login policy.',
+        };
+      }
+    } catch (err) {
+      console.warn('[Auth] Server register request skipped, using client registry:', err);
+    }
+
+    // 4. Save to local storage as single exclusive session
+    const nextUsers = [newUser, ...allUsers.filter((u) => u.email.trim().toLowerCase() !== cleanEmail)];
     setAllUsers(nextUsers);
-    setCurrentUser(newUser);
-    setUserStatus('available');
 
     // Save password
     const nextPasswords = { ...userPasswords, [newUid]: password };
@@ -522,6 +648,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(SESSION_START_KEY, now);
       localStorage.setItem(LAST_ACTIVITY_KEY, now);
     } catch {}
+
+    setCurrentUser(newUser);
+    setUserStatus('available');
+
+    return { success: true, user: newUser };
+  };
+
+  /**
+   * Verify server-issued OTP and reset account password
+   */
+  const resetPasswordWithOtp = async (
+    email: string,
+    otp: string,
+    newPassword: string
+  ): Promise<{ success: boolean; error?: string; message?: string }> => {
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'verify_and_reset',
+          email,
+          otp,
+          newPassword,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        return { success: false, error: json.error || 'Password reset failed.' };
+      }
+
+      // Update client password store if matching user exists locally
+      const cleanEmail = email.trim().toLowerCase();
+      const matched = allUsers.find((u) => u.email.trim().toLowerCase() === cleanEmail);
+      if (matched) {
+        const nextPasswords = { ...userPasswords, [matched.uid]: newPassword };
+        setUserPasswords(nextPasswords);
+        try {
+          localStorage.setItem(PASSWORDS_STORAGE_KEY, JSON.stringify(nextPasswords));
+        } catch {}
+      }
+
+      return { success: true, message: json.message || 'Password successfully reset.' };
+    } catch (err: any) {
+      return { success: false, error: err.message || 'Failed to connect to password reset service.' };
+    }
   };
 
   /**
@@ -563,6 +736,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         upgradePlan,
         login,
         register,
+        resetPasswordWithOtp,
         logout,
         loadRemembered,
         bidPostingFee,

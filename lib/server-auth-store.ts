@@ -1,6 +1,7 @@
 // Server-side Authentication, Security, and State Management Engine
 // Handles credential validation, failed login attempt tracking, account blocking,
 // daily OTP limits, salted password hashing, privileged session control, and audit logs.
+import { sendSystemEmail } from '@/lib/mailer';
 
 export interface ServerUserRecord {
   uid: string;
@@ -12,6 +13,7 @@ export interface ServerUserRecord {
   companyId: string;
   role: 'company_admin' | 'user' | 'billing_admin';
   status: 'active' | 'blocked' | 'suspended';
+  mobile?: string;
   failedLoginAttempts: number;
   lastFailedAttemptAt?: string;
   blockedAt?: string;
@@ -75,6 +77,22 @@ export interface PasswordResetRecord {
   ipAddress?: string;
 }
 
+export interface ActivePasswordResetOTP {
+  email: string;
+  otp: string;
+  expiresAt: number; // timestamp in ms
+  attempts: number;
+  ipAddress?: string;
+}
+
+export function maskEmail(email: string): string {
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const [name, domain] = parts;
+  if (name.length <= 2) return `${name[0]}*@${domain}`;
+  return `${name[0]}***${name[name.length - 1]}@${domain}`;
+}
+
 // Simple deterministic salt+hash for runtime demo environment
 export function hashPassword(password: string, salt: string): string {
   let hash = 0;
@@ -92,6 +110,7 @@ class ServerSecurityStore {
   private users: Map<string, ServerUserRecord> = new Map();
   private blockedAccounts: Map<string, BlockedAccountRecord> = new Map();
   private otpRecords: Map<string, OTPRecord> = new Map(); // key: email:date
+  private activeResetOtps: Map<string, ActivePasswordResetOTP> = new Map(); // key: email.toLowerCase()
   private passwordResets: PasswordResetRecord[] = [];
   private securityEvents: SecurityEventRecord[] = [];
   private activeGodfatherSessions: Set<string> = new Set();
@@ -189,7 +208,45 @@ class ServerSecurityStore {
     company: string;
     companyId: string;
     role?: 'company_admin' | 'user' | 'billing_admin';
-  }) {
+    mobile?: string;
+  }): { success: boolean; error?: string; user?: ServerUserRecord } {
+    const cleanEmail = user.email.trim().toLowerCase();
+    const cleanUid = user.uid.trim().toLowerCase();
+    const cleanMobile = user.mobile ? user.mobile.replace(/[^0-9+]/g, '') : undefined;
+
+    // Check if email or UID is already registered
+    const existingByEmailOrUid = this.users.get(cleanEmail) || this.users.get(cleanUid);
+    if (existingByEmailOrUid) {
+      const isSameCompany =
+        existingByEmailOrUid.company.trim().toLowerCase() === user.company.trim().toLowerCase();
+      if (isSameCompany) {
+        return {
+          success: false,
+          error: `An account with this corporate email (${user.email}) is already registered under ${existingByEmailOrUid.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
+        };
+      } else {
+        return {
+          success: false,
+          error: `This corporate email (${user.email}) is already associated with another registered organization (${existingByEmailOrUid.company}). Multi-accounting across organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
+        };
+      }
+    }
+
+    // Check if mobile number is already registered
+    if (cleanMobile && cleanMobile.length >= 8) {
+      for (const existing of this.users.values()) {
+        if (existing.mobile) {
+          const norm = existing.mobile.replace(/[^0-9+]/g, '');
+          if (norm === cleanMobile) {
+            return {
+              success: false,
+              error: `This mobile phone number (${user.mobile}) is already associated with an active account (${existing.email}). Multi-accounting is prohibited under the One User, One Login policy.`,
+            };
+          }
+        }
+      }
+    }
+
     const salt = `fr8x_salt_${Date.now()}`;
     const record: ServerUserRecord = {
       uid: user.uid,
@@ -201,11 +258,17 @@ class ServerSecurityStore {
       companyId: user.companyId,
       role: user.role || 'company_admin',
       status: 'active',
+      mobile: user.mobile,
       failedLoginAttempts: 0,
       createdAt: new Date().toISOString(),
     };
-    this.users.set(record.uid.toLowerCase(), record);
-    this.users.set(record.email.toLowerCase(), record);
+    this.users.set(cleanUid, record);
+    this.users.set(cleanEmail, record);
+
+    return {
+      success: true,
+      user: record,
+    };
   }
 
   public getUserByEmailOrUid(identifier: string): ServerUserRecord | undefined {
@@ -220,6 +283,9 @@ class ServerSecurityStore {
     success: boolean;
     user?: ServerUserRecord;
     isBlocked?: boolean;
+    passwordResetRequired?: boolean;
+    email?: string;
+    maskedEmail?: string;
     attemptsRemaining?: number;
     message: string;
   } {
@@ -250,11 +316,31 @@ class ServerSecurityStore {
         details: `Login attempt on blocked account: ${user.email}`,
         ipAddress: ip,
       });
+
+      // Ensure active password reset OTP exists or send fresh OTP
+      let activeOtp = this.activeResetOtps.get(user.email.toLowerCase());
+      if (!activeOtp || Date.now() > activeOtp.expiresAt) {
+        const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        activeOtp = {
+          email: user.email,
+          otp: resetOtp,
+          expiresAt: Date.now() + 15 * 60 * 1000,
+          attempts: 0,
+          ipAddress: ip,
+        };
+        this.activeResetOtps.set(user.email.toLowerCase(), activeOtp);
+        this.dispatchPasswordResetEmail(user, resetOtp, ip);
+      }
+
       return {
         success: false,
         isBlocked: true,
+        passwordResetRequired: true,
+        email: user.email,
+        maskedEmail: maskEmail(user.email),
+        attemptsRemaining: 0,
         user,
-        message: 'Account blocked. Contact platform administrator.',
+        message: `Account is locked due to 3 failed login attempts. A password reset OTP has been sent from the server to your registered email (${maskEmail(user.email)}).`,
       };
     }
 
@@ -279,7 +365,21 @@ class ServerSecurityStore {
     if (user.failedLoginAttempts >= maxAttempts) {
       user.status = 'blocked';
       user.blockedAt = new Date().toISOString();
-      user.blockedReason = 'Maximum failed password attempts exceeded (3/3).';
+      user.blockedReason = 'Maximum failed password attempts exceeded (3/3). Password reset OTP dispatched.';
+
+      // Generate 6-digit Password Reset OTP
+      const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes validity
+      this.activeResetOtps.set(user.email.toLowerCase(), {
+        email: user.email,
+        otp: resetOtp,
+        expiresAt,
+        attempts: 0,
+        ipAddress: ip,
+      });
+
+      // Dispatch real email via sendSystemEmail from lib/mailer
+      this.dispatchPasswordResetEmail(user, resetOtp, ip);
 
       const blockRecord: BlockedAccountRecord = {
         id: `blk-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
@@ -303,16 +403,19 @@ class ServerSecurityStore {
         userEmail: user.email,
         uid: user.uid,
         company: user.company,
-        details: `Account automatically blocked after 3 consecutive failed password attempts.`,
+        details: `Account automatically locked after 3 consecutive failed password attempts. Password reset OTP sent to ${user.email}.`,
         ipAddress: ip,
       });
 
       return {
         success: false,
         isBlocked: true,
+        passwordResetRequired: true,
+        email: user.email,
+        maskedEmail: maskEmail(user.email),
         attemptsRemaining: 0,
         user,
-        message: 'Account blocked. Contact platform administrator.',
+        message: `Security Alert: 3 invalid attempts detected. A password reset OTP has been sent from the server to your registered email (${maskEmail(user.email)}).`,
       };
     }
 
@@ -332,7 +435,7 @@ class ServerSecurityStore {
       user,
       message:
         remaining === 1
-          ? 'Invalid password. 1 attempt remaining before account block.'
+          ? 'Invalid password. 1 attempt remaining before password reset OTP is dispatched.'
           : `Invalid password. ${remaining} attempts remaining.`,
     };
   }
@@ -466,8 +569,57 @@ class ServerSecurityStore {
     };
   }
 
+  /**
+   * Helper to dispatch secure password reset email via Zoho SMTP / ZeptoMail
+   */
+  private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string) {
+    sendSystemEmail({
+      recipient: user.email,
+      subject: 'FR8X Security Alert: Password Reset OTP (3 Failed Login Attempts)',
+      templateId: 'tpl-sec-password-reset-otp',
+      templateName: 'Security Password Reset OTP',
+      htmlBody: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px; background: #ffffff;">
+          <div style="border-bottom: 2px solid #0284c7; padding-bottom: 12px; margin-bottom: 16px;">
+            <h2 style="color: #0f172a; margin: 0; font-size: 18px;">FR8X Workspace Security Alert</h2>
+            <span style="font-size: 11px; color: #64748b;">Automated Server Security Dispatch</span>
+          </div>
+          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
+            Hello <strong>${user.displayName}</strong> (${user.company}),
+          </p>
+          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
+            Our security engine detected <strong>3 consecutive invalid password attempts</strong> on your account from IP address <code>${ip}</code>.
+          </p>
+          <p style="color: #334155; font-size: 13.5px; line-height: 1.5;">
+            To protect your freight organization and comply with our One User, One Login policy, your account has been temporarily locked and requires a verified password reset.
+          </p>
+          <div style="margin: 20px 0; padding: 16px; background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; text-align: center;">
+            <div style="font-size: 11px; color: #0369a1; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 700;">
+              Your 6-Digit Password Reset OTP
+            </div>
+            <div style="margin: 8px 0; font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #0369a1;">
+              ${otp}
+            </div>
+            <div style="font-size: 11px; color: #64748b;">
+              Valid for 15 minutes. Enter this code on the login page along with your new password.
+            </div>
+          </div>
+          <p style="color: #64748b; font-size: 12px; line-height: 1.4;">
+            If you did not initiate these attempts, please contact your company administrator or FR8X Trust &amp; Safety immediately at <a href="mailto:security@fr8x.in" style="color: #0284c7;">security@fr8x.in</a>.
+          </p>
+          <div style="margin-top: 24px; border-top: 1px solid #f1f5f9; padding-top: 12px; font-size: 11px; color: #94a3b8; text-align: center;">
+            &copy; 2026 FR8X Platform Technologies. Protected under Enterprise Security Infrastructure.
+          </div>
+        </div>
+      `,
+      actorUid: user.uid,
+    }).catch((err) => {
+      console.error('[Security] Failed to dispatch password reset OTP email:', err);
+    });
+  }
+
   // ─── Password Reset Requests (Generic non-leaking responses) ──────────────────
-  public requestPasswordReset(email: string, ip = '127.0.0.1'): { success: true; message: string } {
+  public requestPasswordReset(email: string, ip = '127.0.0.1'): { success: true; message: string; otpDispatched?: boolean } {
     const cleanEmail = email.trim().toLowerCase();
     const user = this.users.get(cleanEmail);
 
@@ -480,13 +632,25 @@ class ServerSecurityStore {
     });
 
     if (user) {
+      const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = Date.now() + 15 * 60 * 1000;
+      this.activeResetOtps.set(cleanEmail, {
+        email: user.email,
+        otp: resetOtp,
+        expiresAt,
+        attempts: 0,
+        ipAddress: ip,
+      });
+
+      this.dispatchPasswordResetEmail(user, resetOtp, ip);
+
       this.addSecurityEvent({
         type: 'PASSWORD_RESET_REQUEST',
         severity: 'INFO',
         userEmail: user.email,
         uid: user.uid,
         company: user.company,
-        details: `Password reset requested for valid account: ${user.email}`,
+        details: `Password reset requested for valid account: ${user.email}. OTP dispatched.`,
         ipAddress: ip,
       });
     } else {
@@ -503,7 +667,93 @@ class ServerSecurityStore {
     return {
       success: true,
       message: 'If an account matches this email, password reset instructions have been dispatched.',
+      otpDispatched: !!user,
     };
+  }
+
+  /**
+   * Verify Password Reset OTP and update credentials
+   */
+  public verifyAndResetPassword(
+    email: string,
+    otp: string,
+    newPassword: string,
+    ip = '127.0.0.1'
+  ): { success: boolean; message: string; error?: string; user?: ServerUserRecord } {
+    const cleanEmail = email.trim().toLowerCase();
+    const user = this.users.get(cleanEmail);
+    if (!user) {
+      return { success: false, error: 'User account not found.' };
+    }
+
+    const resetRecord = this.activeResetOtps.get(cleanEmail);
+    if (!resetRecord) {
+      return {
+        success: false,
+        error: 'No active password reset request found or code expired. Please request a new code.',
+      };
+    }
+
+    if (Date.now() > resetRecord.expiresAt) {
+      this.activeResetOtps.delete(cleanEmail);
+      return {
+        success: false,
+        error: 'The password reset OTP code has expired. Please request a new code.',
+      };
+    }
+
+    if (resetRecord.otp !== otp.trim()) {
+      resetRecord.attempts += 1;
+      if (resetRecord.attempts >= 5) {
+        this.activeResetOtps.delete(cleanEmail);
+        return {
+          success: false,
+          error: 'Too many invalid OTP verification attempts. Please request a new code.',
+        };
+      }
+      return {
+        success: false,
+        error: 'Invalid verification OTP code. Please check your email and try again.',
+      };
+    }
+
+    if (!newPassword || newPassword.trim().length < 6) {
+      return { success: false, error: 'New password must be at least 6 characters long.' };
+    }
+
+    // OTP verified successfully: update password, reset attempts, unlock account
+    user.salt = `fr8x_salt_${Date.now()}`;
+    user.passwordHash = hashPassword(newPassword.trim(), user.salt);
+    user.status = 'active';
+    user.failedLoginAttempts = 0;
+    user.blockedAt = undefined;
+    user.blockedReason = undefined;
+
+    this.blockedAccounts.delete(user.uid);
+    this.activeResetOtps.delete(cleanEmail);
+
+    this.addSecurityEvent({
+      type: 'ACCOUNT_UNBLOCKED',
+      severity: 'INFO',
+      userEmail: user.email,
+      uid: user.uid,
+      company: user.company,
+      details: 'Password reset completed and account unblocked via server-verified OTP.',
+      ipAddress: ip,
+    });
+
+    return {
+      success: true,
+      message: 'Password successfully reset. Account has been restored to active status.',
+      user,
+    };
+  }
+
+  /**
+   * Helper to retrieve active OTP (for verification/testing)
+   */
+  public getActiveResetOtp(email: string): string | undefined {
+    return this.activeResetOtps.get(email.trim().toLowerCase())?.otp;
   }
 
   public getPasswordResets(): PasswordResetRecord[] {

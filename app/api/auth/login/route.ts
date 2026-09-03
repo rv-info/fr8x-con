@@ -25,7 +25,10 @@ export async function POST(req: NextRequest) {
         {
           success: false,
           isBlocked: true,
-          error: 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.',
+          passwordResetRequired: result.passwordResetRequired,
+          email: result.email,
+          maskedEmail: result.maskedEmail,
+          error: result.message,
         },
         { status: 403 }
       );

@@ -23,6 +23,32 @@ interface SingleChatBoxProps {
   onOpenProfile: (contactName: string) => void;
 }
 
+const PresenceDot = ({ status }: { status?: 'active' | 'idle' | 'away' | boolean }) => {
+  let color = '#ef4444'; // away
+  let title = 'Away / Offline';
+  if (status === 'active' || status === true) {
+    color = '#10b981'; // active
+    title = 'Active Now';
+  } else if (status === 'idle') {
+    color = '#f59e0b'; // idle
+    title = 'Idle (Tab Inactive)';
+  }
+  return (
+    <span
+      title={title}
+      style={{
+        display: 'inline-block',
+        width: '7px',
+        height: '7px',
+        borderRadius: '50%',
+        backgroundColor: color,
+        marginRight: '4px',
+        verticalAlign: 'middle',
+      }}
+    />
+  );
+};
+
 function SingleChatBox({
   contactId,
   isMinimized,
@@ -104,9 +130,9 @@ function SingleChatBox({
               <span>{contact?.name || 'Contact'}</span>
               {contact?.hasGoldenTick && <GoldenTick />}
             </b>
-            <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--mut)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span className={`presence ${contact?.online ? 'online' : ''}`} style={{ marginRight: '3px' }} />
-              {contact?.online ? 'Online' : 'Away'} · {contact?.company}
+            <small style={{ display: 'flex', alignItems: 'center', fontSize: '9.5px', color: 'var(--mut)', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <PresenceDot status={contact?.presenceStatus || (contact?.online ? 'active' : 'away')} />
+              <span>{contact?.presenceStatus === 'active' || contact?.online ? 'Active' : contact?.presenceStatus === 'idle' ? 'Idle' : 'Away'} · {contact?.company}</span>
             </small>
           </div>
         </div>
@@ -242,11 +268,11 @@ export function TradeChat() {
 
       {/* Contacts List Launcher Popup */}
       {isLauncherOpen && (
-        <section className="chatlauncherpanel" aria-label="Trade Contacts Directory">
+        <section className="chatlauncherpanel" aria-label="Nexus Communication">
           <div className="chathead">
             <MessagesSquare size={17} />
             <div style={{ flex: 1 }}>
-              <b>Trade Chat Hub</b>
+              <b>Nexus</b>
               <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--mut)' }}>
                 Direct verified participant communication
               </small>
@@ -291,9 +317,9 @@ export function TradeChat() {
                         </span>
                         {c.hasGoldenTick && <GoldenTick />}
                       </b>
-                      <small>
-                        <span className={`presence ${c.online ? 'online' : ''}`} />
-                        {c.online ? 'Online' : 'Away'} · {c.role} ({c.company})
+                      <small style={{ display: 'flex', alignItems: 'center' }}>
+                        <PresenceDot status={c.presenceStatus || (c.online ? 'active' : 'away')} />
+                        <span>{c.presenceStatus === 'active' || c.online ? 'Active' : c.presenceStatus === 'idle' ? 'Idle' : 'Away'} · {c.role} ({c.company})</span>
                       </small>
                       {c.contextRecord && (
                         <span
@@ -324,8 +350,8 @@ export function TradeChat() {
       <button
         className="chatfab"
         onClick={toggleLauncher}
-        title="Open Trade Chat Hub"
-        aria-label="Open Trade Chat Hub"
+        title="Open Nexus"
+        aria-label="Open Nexus"
       >
         <MessagesSquare size={20} />
         {totalUnreadCount > 0 && <span className="n">{totalUnreadCount}</span>}

@@ -29,6 +29,7 @@ import {
   Calendar,
   Layers,
   FileCheck,
+  Search,
 } from 'lucide-react';
 
 interface VerifiedBidderCandidate {
@@ -41,7 +42,46 @@ interface VerifiedBidderCandidate {
   hasGoldenTick?: boolean;
 }
 
-const VERIFIED_BIDDERS_LIST: VerifiedBidderCandidate[] = [
+import { BidderGroup } from '@/lib/types';
+import { getBidderGroupsFromDB, saveBidderGroupInDB } from '@/lib/firebase/firestore';
+
+const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [
+  {
+    id: 'u-msc',
+    name: 'MSC Mediterranean Shipping',
+    role: 'Carrier Line Operator',
+    company: 'Mediterranean Shipping Company',
+    location: 'Geneva / Mumbai',
+    timezone: 'Asia/Kolkata',
+    hasGoldenTick: true,
+  },
+  {
+    id: 'u-hapag',
+    name: 'Hapag-Lloyd Ocean Desk',
+    role: 'Trade Lane Manager',
+    company: 'Hapag-Lloyd AG',
+    location: 'Hamburg / Rotterdam',
+    timezone: 'Europe/Amsterdam',
+    hasGoldenTick: true,
+  },
+  {
+    id: 'u-cma',
+    name: 'CMA CGM Commercial',
+    role: 'Ocean Freight Lead',
+    company: 'CMA CGM S.A.',
+    location: 'Marseille / Dubai',
+    timezone: 'Asia/Dubai',
+    hasGoldenTick: true,
+  },
+  {
+    id: 'u-one',
+    name: 'Ocean Network Express',
+    role: 'Procurement Specialist',
+    company: 'ONE Line',
+    location: 'Singapore',
+    timezone: 'Asia/Singapore',
+    hasGoldenTick: true,
+  },
   {
     id: 'u-sarah',
     name: 'Sarah Lewis',
@@ -56,24 +96,6 @@ const VERIFIED_BIDDERS_LIST: VerifiedBidderCandidate[] = [
     name: 'Kiran Mehta',
     role: 'Trade Lane Manager',
     company: 'Indo Ocean Lines',
-    location: 'Mumbai, India',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-  },
-  {
-    id: 'u-ravi',
-    name: 'Ravi Thomas',
-    role: 'Procurement Director',
-    company: 'CargoLink Global',
-    location: 'Singapore',
-    timezone: 'Asia/Singapore',
-    hasGoldenTick: true,
-  },
-  {
-    id: 'u-priya',
-    name: 'Priya Nair',
-    role: 'Trade Specialist',
-    company: 'Nair Cargo Solutions',
     location: 'Mumbai, India',
     timezone: 'Asia/Kolkata',
     hasGoldenTick: false,
@@ -143,6 +165,14 @@ export default function CreateReverseAuctionPage() {
   const [originFactoryStuffing, setOriginFactoryStuffing] = useState(false);
   const [originCfsStuffing, setOriginCfsStuffing] = useState(false);
 
+  // Operational Freight Forwarder FOB Scope of Work
+  const [fobOriginHaulage, setFobOriginHaulage] = useState(true);
+  const [fobExportCHA, setFobExportCHA] = useState(true);
+  const [fobBlIssuance, setFobBlIssuance] = useState(true);
+  const [fobTerminalHandling, setFobTerminalHandling] = useState(true);
+  const [fobVgmSubmission, setFobVgmSubmission] = useState(true);
+  const [fobCfsCarting, setFobCfsCarting] = useState(false);
+
   const [destTrans, setDestTrans] = useState(false);
   const [destClear, setDestClear] = useState(false);
   const [destCarrier, setDestCarrier] = useState(true);
@@ -152,9 +182,21 @@ export default function CreateReverseAuctionPage() {
   const [dutyHsCode, setDutyHsCode] = useState('');
   const [dutyApproxValue, setDutyApproxValue] = useState('');
 
-  // Section 4: Bidder Management
-  const [assignedBidders, setAssignedBidders] = useState<Set<string>>(new Set(['u-sarah', 'u-kiran']));
+  // Section 4: Dynamic Bidder Management & Groups
+  const [availableBidders, setAvailableBidders] = useState<VerifiedBidderCandidate[]>(INITIAL_BIDDER_POOL);
+  const [assignedBidders, setAssignedBidders] = useState<Set<string>>(new Set());
   const [blockedBidders, setBlockedBidders] = useState<Set<string>>(new Set());
+  const [bidderSearchQuery, setBidderSearchQuery] = useState('');
+  const [savedBidderGroups, setSavedBidderGroups] = useState<BidderGroup[]>([]);
+  const [newGroupName, setNewGroupName] = useState('');
+
+  useEffect(() => {
+    if (user?.uid) {
+      getBidderGroupsFromDB(user.uid).then((groups) => {
+        if (groups && groups.length > 0) setSavedBidderGroups(groups);
+      }).catch(() => {});
+    }
+  }, [user?.uid]);
 
   // Auction Rules
   const [autoExtension, setAutoExtension] = useState(true);
@@ -339,7 +381,7 @@ export default function CreateReverseAuctionPage() {
       return;
     }
 
-    const selectedBiddersData = VERIFIED_BIDDERS_LIST.filter((b) =>
+    const selectedBiddersData = availableBidders.filter((b) =>
       assignedBidders.has(b.id)
     );
 
@@ -375,6 +417,17 @@ export default function CreateReverseAuctionPage() {
         handoverLocation: originHandover,
         factoryStuffing: originFactoryStuffing,
         cfsStuffing: originCfsStuffing,
+        fobScope: incoterm.toUpperCase().includes('FOB')
+          ? {
+              originHaulage: fobOriginHaulage,
+              exportCustomsCHA: fobExportCHA,
+              blIssuance: fobBlIssuance,
+              terminalHandling: fobTerminalHandling,
+              vgmSubmission: fobVgmSubmission,
+              cfsCarting: fobCfsCarting,
+              factoryStuffing: originFactoryStuffing,
+            }
+          : undefined,
       },
       destinationCharges: {
         transportation: destTrans,
@@ -965,6 +1018,69 @@ export default function CreateReverseAuctionPage() {
                       </div>
                     </div>
                   )}
+
+                  {/* Operational Freight Forwarder FOB Scope of Work Checklist */}
+                  {incoterm.toUpperCase().includes('FOB') && (
+                    <div className="subbox" style={{ marginTop: '12px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                        <ShieldCheck size={14} color="#0284c7" />
+                        <b style={{ fontSize: '11.5px', color: '#0369a1' }}>FOB Operational Freight Forwarder Scope of Work</b>
+                      </div>
+                      <p style={{ fontSize: '11px', color: '#0c4a6e', margin: '0 0 8px' }}>
+                        Explicit forwarder responsibilities required at origin port before ocean vessel departure:
+                      </p>
+                      <div className="grid g2" style={{ gap: '6px' }}>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobOriginHaulage}
+                            onChange={(e) => setFobOriginHaulage(e.target.checked)}
+                          />
+                          Origin Haulage & Drayage
+                        </label>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobExportCHA}
+                            onChange={(e) => setFobExportCHA(e.target.checked)}
+                          />
+                          Export Customs Clearance (CHA)
+                        </label>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobBlIssuance}
+                            onChange={(e) => setFobBlIssuance(e.target.checked)}
+                          />
+                          Bill of Lading / Sea Waybill
+                        </label>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobTerminalHandling}
+                            onChange={(e) => setFobTerminalHandling(e.target.checked)}
+                          />
+                          Terminal Handling & Gate-in (OTHC)
+                        </label>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobVgmSubmission}
+                            onChange={(e) => setFobVgmSubmission(e.target.checked)}
+                          />
+                          VGM Electronic Filing
+                        </label>
+                        <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                          <input
+                            type="checkbox"
+                            checked={fobCfsCarting}
+                            onChange={(e) => setFobCfsCarting(e.target.checked)}
+                          />
+                          CFS Carting &amp; Port Inspection
+                        </label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1183,53 +1299,139 @@ export default function CreateReverseAuctionPage() {
           </div>
           <div className="sectionbody">
             <div className="grid g3">
-              {/* Select Bidders */}
+              {/* Select Bidders with Dynamic Search & Groups */}
               <div className="card">
-                <div className="cardhead">
+                <div className="cardhead" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Select Bidders</span>
-                  <span className="sub">Verified Records</span>
+                  <span className="sub">{assignedBidders.size} Assigned</span>
                 </div>
-                <div className="cardbody" style={{ maxHeight: '250px', overflowY: 'auto', padding: '8px' }}>
-                  {VERIFIED_BIDDERS_LIST.map((b) => {
-                    const isAssigned = assignedBidders.has(b.id);
-                    const isBlocked = blockedBidders.has(b.id);
-
-                    return (
-                      <div
-                        key={b.id}
-                        className="record"
-                        style={{ padding: '8px 6px', borderBottom: '1px solid #edf2f7' }}
+                <div className="cardbody" style={{ padding: '10px' }}>
+                  {/* Saved Bidder Groups */}
+                  {savedBidderGroups.length > 0 && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--mut)', display: 'block', marginBottom: '2px' }}>Load Saved Bidder Group:</label>
+                      <select
+                        className="input"
+                        style={{ height: '28px', fontSize: '11px', padding: '0 6px' }}
+                        onChange={(e) => {
+                          const grp = savedBidderGroups.find(g => g.id === e.target.value);
+                          if (grp) {
+                            setAssignedBidders(new Set(grp.bidders.map((b) => b.id)));
+                            toast(`Loaded group "${grp.name}" (${grp.bidders.length} bidders).`);
+                          }
+                        }}
+                        defaultValue=""
                       >
-                        <div style={{ minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <ProfileLink name={b.name} company={b.company} hasGoldenTick={b.hasGoldenTick} />
-                          </div>
-                          <small style={{ fontSize: '10px', color: 'var(--mut)' }}>
-                            {b.role} · {b.company}
-                          </small>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <label className="check" style={{ fontSize: '11px', margin: 0 }}>
-                            <input
-                              type="checkbox"
-                              checked={isAssigned}
-                              disabled={isBlocked}
-                              onChange={() => toggleAssignBidder(b.id)}
-                            />
-                            Assign
-                          </label>
-                          <button
-                            type="button"
-                            className={`btn sm ${isBlocked ? 'secondary' : 'danger'}`}
-                            onClick={() => toggleBlockBidder(b.id)}
-                            title={isBlocked ? 'Unblock bidder' : 'Block bidder from this auction'}
+                        <option value="" disabled>-- Select a Bidder Group --</option>
+                        {savedBidderGroups.map(g => (
+                          <option key={g.id} value={g.id}>{g.name} ({g.bidders.length} members)</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Search Input */}
+                  <div style={{ position: 'relative', marginBottom: '8px' }}>
+                    <input
+                      className="input"
+                      style={{ height: '28px', fontSize: '11px', paddingLeft: '24px' }}
+                      placeholder="Search company, carrier or city..."
+                      value={bidderSearchQuery}
+                      onChange={(e) => setBidderSearchQuery(e.target.value)}
+                    />
+                    <Search size={11} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--mut)' }} />
+                  </div>
+
+                  {/* Bidder List */}
+                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                    {availableBidders
+                      .filter((b) => {
+                        if (!bidderSearchQuery.trim()) return true;
+                        const q = bidderSearchQuery.toLowerCase();
+                        return (
+                          b.name.toLowerCase().includes(q) ||
+                          b.company.toLowerCase().includes(q) ||
+                          b.location.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((b) => {
+                        const isAssigned = assignedBidders.has(b.id);
+                        const isBlocked = blockedBidders.has(b.id);
+
+                        return (
+                          <div
+                            key={b.id}
+                            className="record"
+                            style={{ padding: '6px 4px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                           >
-                            {isBlocked ? 'Unblock' : 'Block'}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <ProfileLink name={b.name} company={b.company} hasGoldenTick={b.hasGoldenTick} />
+                              </div>
+                              <small style={{ fontSize: '10px', color: 'var(--mut)', display: 'block' }}>
+                                {b.role} · {b.company}
+                              </small>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isAssigned}
+                                  disabled={isBlocked}
+                                  onChange={() => toggleAssignBidder(b.id)}
+                                />
+                                Assign
+                              </label>
+                              <button
+                                type="button"
+                                className={`btn sm ${isBlocked ? 'secondary' : 'danger'}`}
+                                style={{ padding: '1px 6px', fontSize: '10px' }}
+                                onClick={() => toggleBlockBidder(b.id)}
+                                title={isBlocked ? 'Unblock bidder' : 'Block bidder from this auction'}
+                              >
+                                {isBlocked ? 'Unblock' : 'Block'}
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Save current selection as Bidder Group */}
+                  {assignedBidders.size > 0 && (
+                    <div style={{ marginTop: '8px', borderTop: '1px dashed var(--line)', paddingTop: '6px', display: 'flex', gap: '4px' }}>
+                      <input
+                        className="input"
+                        placeholder="Group name (e.g. EU Core)"
+                        style={{ height: '26px', fontSize: '10.5px' }}
+                        value={newGroupName}
+                        onChange={(e) => setNewGroupName(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="btn secondary sm"
+                        style={{ padding: '0 8px', fontSize: '10px', whiteSpace: 'nowrap' }}
+                        onClick={async () => {
+                          if (!newGroupName.trim() || !user) return;
+                          const selectedBiddersList = availableBidders.filter((b) => assignedBidders.has(b.id));
+                          const newGrp: BidderGroup = {
+                            id: `bg_${Date.now()}`,
+                            ownerUid: user.uid,
+                            name: newGroupName.trim(),
+                            bidders: selectedBiddersList,
+                            createdAt: new Date().toISOString(),
+                            updatedAt: new Date().toISOString(),
+                          };
+                          await saveBidderGroupInDB(newGrp);
+                          setSavedBidderGroups((prev) => [newGrp, ...prev]);
+                          setNewGroupName('');
+                          toast(`Bidder group "${newGrp.name}" saved!`);
+                        }}
+                      >
+                        Save Group
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1412,7 +1614,7 @@ export default function CreateReverseAuctionPage() {
             </p>
             <p style={{ fontSize: '10.5px', color: 'var(--mut)', margin: '2px 0 0' }}>
               {Array.from(assignedBidders)
-                .map((id) => VERIFIED_BIDDERS_LIST.find((b) => b.id === id)?.name)
+                .map((id) => availableBidders.find((b) => b.id === id)?.name)
                 .filter(Boolean)
                 .join(', ')}
             </p>

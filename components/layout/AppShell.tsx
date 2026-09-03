@@ -10,8 +10,13 @@ import { ChatProvider } from '@/lib/context/ChatContext';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { MobileNav } from './MobileNav';
-import { TradeChat } from '@/components/chat/TradeChat';
+import dynamic from 'next/dynamic';
 import { Menu } from 'lucide-react';
+
+const NexusChat = dynamic(
+  () => import('@/components/chat/TradeChat').then((mod) => mod.TradeChat),
+  { ssr: false }
+);
 
 import { useAuth } from '@/lib/context/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -109,7 +114,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
         <div className="view">{children}</div>
       </main>
       <MobileNav />
-      <TradeChat />
+      <NexusChat />
     </div>
   );
 }

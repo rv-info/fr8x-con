@@ -4,7 +4,16 @@
       "collectionGroup": "posts",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "moderationStatus", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "posts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "tradeLane", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
@@ -13,7 +22,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "endTime", "order": "ASCENDING" }
+        { "fieldPath": "endDateTime", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auctions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "creatorUid", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
     {
@@ -21,7 +38,15 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "auctionId", "order": "ASCENDING" },
-        { "fieldPath": "grandTotal", "order": "ASCENDING" }
+        { "fieldPath": "grandTotalUSD", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rates",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ownerUid", "order": "ASCENDING" },
+        { "fieldPath": "valid", "order": "DESCENDING" }
       ]
     },
     {
@@ -30,7 +55,23 @@
       "fields": [
         { "fieldPath": "pol", "order": "ASCENDING" },
         { "fieldPath": "pod", "order": "ASCENDING" },
-        { "fieldPath": "validityDate", "order": "ASCENDING" }
+        { "fieldPath": "valid", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "actorId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "events",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "targetId", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
       ]
     }
   ],

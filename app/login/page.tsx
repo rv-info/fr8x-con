@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -82,10 +82,14 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (res.ok && json.success) {
-        // Successful login
-        login(id, password, remember);
-        toast('Logged in successfully to FR8X Workspace.');
-        router.push('/feeds');
+        // Successful server authentication
+        const loggedIn = login(id, password, remember, json);
+        if (loggedIn) {
+          toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
+          router.push('/feeds');
+        } else {
+          setErrorMessage('Session initialization failed. Please try again.');
+        }
       } else {
         if (json.isBlocked || res.status === 403) {
           setIsBlocked(true);
@@ -98,7 +102,11 @@ export default function LoginPage() {
             router.push('/feeds');
             return;
           }
-          setErrorMessage(json.error || 'Invalid credentials.');
+          const remainingMsg =
+            typeof json.attemptsRemaining === 'number'
+              ? ` (${json.attemptsRemaining} attempt${json.attemptsRemaining === 1 ? '' : 's'} remaining)`
+              : '';
+          setErrorMessage((json.error || 'Invalid credentials.') + remainingMsg);
         }
       }
     } catch {
@@ -342,6 +350,20 @@ export default function LoginPage() {
           <Link href="/register" style={{ color: 'var(--brand)', fontWeight: 700 }}>
             Register Company
           </Link>
+          <div
+            style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              color: 'var(--mut)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+            }}
+          >
+            <ShieldCheck size={12} style={{ color: '#16a34a' }} />
+            <span>Strict One User, One Login policy enforced across all organizations</span>
+          </div>
         </div>
       </div>
 

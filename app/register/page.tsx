@@ -22,7 +22,7 @@ import {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, allUsers } = useAuth();
   const { toast } = useToast();
 
   // Form State
@@ -87,6 +87,40 @@ export default function RegisterPage() {
       return;
     }
 
+    // Strict One User, One Login: verify email uniqueness across all existing organizations
+    const cleanEmail = email.trim().toLowerCase();
+    const existingUser = allUsers.find(
+      (u) => u.email.trim().toLowerCase() === cleanEmail
+    );
+    if (existingUser) {
+      const isSameCompany =
+        existingUser.company.trim().toLowerCase() === companyName.trim().toLowerCase();
+      if (isSameCompany) {
+        setErrorMessage(
+          `An account with this corporate email (${email}) is already registered in ${existingUser.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`
+        );
+      } else {
+        setErrorMessage(
+          `This corporate email (${email}) is already associated with another organization (${existingUser.company}). Multi-accounting across organizations is strictly prohibited under the One User, One Login policy. Each individual is permitted only one active login account.`
+        );
+      }
+      return;
+    }
+
+    // Strict One User, One Login: verify mobile phone uniqueness
+    const cleanMobile = mobile.replace(/[^0-9+]/g, '');
+    if (cleanMobile && cleanMobile.length >= 8) {
+      const existingMobileUser = allUsers.find(
+        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile
+      );
+      if (existingMobileUser) {
+        setErrorMessage(
+          `This mobile phone number (${mobile}) is already associated with an active account (${existingMobileUser.email}). Multi-accounting is prohibited under the One User, One Login policy.`
+        );
+        return;
+      }
+    }
+
     if (!termsAccepted) {
       setErrorMessage('You must review and accept the FR8X Commercial & Compliance Terms.');
       return;
@@ -99,31 +133,39 @@ export default function RegisterPage() {
     toast(`6-digit OTP dispatched to ${email}. (Demo Code: 492815)`);
   };
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp || otp.trim().length !== 6) {
       setErrorMessage('Please enter a valid 6-digit verification code.');
       return;
     }
 
-    register({
-      firstName,
-      lastName,
-      email,
-      mobile,
-      designation,
-      company: companyName,
-      companyId,
-      city,
-      country,
-      timezone,
-      plan: selectedPlan,
-      hasGoldenTick: selectedPlan === 'premium',
-      isVerified: true,
-    }, password || 'Password@123');
+    const result = await register(
+      {
+        firstName,
+        lastName,
+        email,
+        mobile,
+        designation,
+        company: companyName,
+        companyId,
+        city,
+        country,
+        timezone,
+        plan: selectedPlan,
+        hasGoldenTick: selectedPlan === 'premium',
+        isVerified: true,
+      },
+      password || 'Password@123'
+    );
+
+    if (!result.success) {
+      setErrorMessage(result.error || 'Registration failed under the One User, One Login policy.');
+      return;
+    }
 
     toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
-    router.push('/auctions');
+    router.push('/feeds');
   };
 
   return (
@@ -181,6 +223,28 @@ export default function RegisterPage() {
 
         {step === 'form' ? (
           <form onSubmit={handleInitialSubmit}>
+            {/* One User, One Login Policy Banner */}
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#166534',
+                fontSize: '11.5px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                lineHeight: 1.4,
+              }}
+            >
+              <ShieldCheck size={16} style={{ flexShrink: 0, color: '#16a34a' }} />
+              <span>
+                <strong>One User, One Login Policy:</strong> Each logistics professional is permitted strictly one active account. Multi-accounting across different organizations or within the same organization is strictly prohibited.
+              </span>
+            </div>
+
             {/* Card 1: Account and Contact Card */}
             <div className="card" style={{ marginBottom: '16px' }}>
               <div className="cardhead">
