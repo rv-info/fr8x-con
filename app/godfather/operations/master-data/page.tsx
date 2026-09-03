@@ -148,6 +148,7 @@ export default function MasterDataPage() {
     fleetTEU: string;
     bookingEmail: string;
     trackingApiEndpoint: string;
+    logoUrl: string;
     supportedEquipment: string;
     remarks: string;
     auditReason: string;
@@ -161,6 +162,7 @@ export default function MasterDataPage() {
     fleetTEU: '',
     bookingEmail: '',
     trackingApiEndpoint: '',
+    logoUrl: '',
     supportedEquipment: '20DV, 40DV, 40HC, 20RF, 40HR',
     remarks: '',
     auditReason: 'Standard ocean liner registry update',
@@ -455,6 +457,7 @@ export default function MasterDataPage() {
         fleetTEU: car.fleetTEU || '',
         bookingEmail: car.bookingEmail,
         trackingApiEndpoint: car.trackingApiEndpoint || '',
+        logoUrl: car.logoUrl || '',
         supportedEquipment: car.supportedEquipment.join(', '),
         remarks: car.remarks || '',
         auditReason: `Updating carrier profile for ${car.name} (${car.scacCode})`,
@@ -471,6 +474,7 @@ export default function MasterDataPage() {
         fleetTEU: '',
         bookingEmail: '',
         trackingApiEndpoint: '',
+        logoUrl: '',
         supportedEquipment: '20DV, 40DV, 40HC, 20RF, 40HR',
         remarks: '',
         auditReason: 'Registering new carrier to master database',
@@ -499,6 +503,7 @@ export default function MasterDataPage() {
           fleetTEU: carrierForm.fleetTEU.trim(),
           bookingEmail: carrierForm.bookingEmail.trim(),
           trackingApiEndpoint: carrierForm.trackingApiEndpoint.trim(),
+          logoUrl: carrierForm.logoUrl.trim(),
           supportedEquipment: eqArr,
           remarks: carrierForm.remarks.trim(),
         },
@@ -516,6 +521,7 @@ export default function MasterDataPage() {
           fleetTEU: carrierForm.fleetTEU.trim(),
           bookingEmail: carrierForm.bookingEmail.trim(),
           trackingApiEndpoint: carrierForm.trackingApiEndpoint.trim(),
+          logoUrl: carrierForm.logoUrl.trim(),
           supportedEquipment: eqArr,
           status: 'active',
           remarks: carrierForm.remarks.trim(),
@@ -1192,7 +1198,16 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       </div>
                     </td>
                     <td>
-                      <div className="font-bold text-slate-900 text-xs">{car.name}</div>
+                      <div className="flex items-center gap-2">
+                        {car.logoUrl ? (
+                          <img src={car.logoUrl} alt={`${car.name} logo`} className="h-6 w-6 rounded object-contain border border-slate-200 bg-white" />
+                        ) : (
+                          <span className="flex h-6 w-6 items-center justify-center rounded bg-indigo-50 text-[9px] font-black text-indigo-700">
+                            {car.carrierCode.slice(0, 3)}
+                          </span>
+                        )}
+                        <div className="font-bold text-slate-900 text-xs">{car.name}</div>
+                      </div>
                       <div className="text-[11px] text-slate-500">{car.country}</div>
                     </td>
                     <td>
@@ -1911,6 +1926,18 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                     className="gf-input font-mono"
                     placeholder="https://api.msc.com/v1/tracking"
                   />
+                </div>
+
+                <div>
+                  <label className="gf-form-label">Carrier Logo URL (optional)</label>
+                  <input
+                    type="url"
+                    value={carrierForm.logoUrl}
+                    onChange={(e) => setCarrierForm({ ...carrierForm, logoUrl: e.target.value })}
+                    className="gf-input"
+                    placeholder="https://assets.example.com/carrier-logo.png"
+                  />
+                  <p className="mt-1 text-[10px] text-slate-500">Used as a compact carrier mark in dense rate tables. Use a public HTTPS image URL.</p>
                 </div>
 
                 <div>

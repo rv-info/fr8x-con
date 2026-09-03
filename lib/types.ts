@@ -709,6 +709,8 @@ export interface CarrierMasterItem {
   fleetTEU?: string;
   bookingEmail: string;
   trackingApiEndpoint?: string;
+  /** Optional compact carrier mark used in dense rate tables. */
+  logoUrl?: string;
   supportedEquipment: string[];
   status: 'active' | 'suspended' | 'under_review';
   remarks?: string;
@@ -1034,4 +1036,3 @@ export interface ModelRegistryEntry {
   approvedBy?: string;
   deployedAt?: string;
 }
-

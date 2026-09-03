@@ -1433,7 +1433,7 @@ interface DataContextType {
   auctions: Auction[];
   addAuction: (auctionData: Partial<Auction>) => string;
   updateAuctionStatus: (auctionId: string, status: Auction['status']) => void;
-  submitBid: (auctionId: string, charges: any[], grandTotalUSD: number, evidenceMetadata?: any) => void;
+  submitBid: (auctionId: string, charges: any[], grandTotalUSD: number, evidenceMetadata?: any) => boolean;
   mySubmittedBids: SubmittedBid[];
   // Rates
   rates: RateItem[];
@@ -2298,8 +2298,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
     charges: any[],
     grandTotalUSD: number,
     evidenceMetadata?: any
-  ) => {
+  ): boolean => {
     const targetAuction = auctions.find((a) => a.id === auctionId);
+    if (!targetAuction || targetAuction.status !== 'Live') {
+      toast('This auction is no longer open for bidding.');
+      return false;
+    }
+    const configuredLimit = Number(targetAuction.rules?.bidLimit);
+    const bidLimit = ([1, 3, 5] as number[]).includes(configuredLimit) ? configuredLimit : 5;
+    const alreadySubmitted = (targetAuction.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
+    if (alreadySubmitted >= bidLimit) {
+      toast(`Bid limit reached: you may submit up to ${bidLimit} offer${bidLimit === 1 ? '' : 's'} for this auction.`);
+      return false;
+    }
     const ceiling = targetAuction?.competitionCeiling || 2720;
     const rank = grandTotalUSD <= ceiling ? 1 : 2;
 
@@ -2372,6 +2383,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }).catch(() => {});
     } catch {}
+    return true;
 
     eventBus.recordEvent({
       eventType: 'auction_bid',
@@ -2604,4 +2616,3 @@ export function useData() {
   }
   return context;
 }
-

@@ -1517,14 +1517,15 @@ export default function CreateReverseAuctionPage() {
                 <div className="cardbody">
                   <div className="field" style={{ marginBottom: '8px' }}>
                     <label>Max Bids per Forwarder</label>
-                    <input
-                      type="number"
+                    <select
                       className="input"
                       value={bidLimit}
-                      min="1"
-                      max="20"
                       onChange={(e) => setBidLimit(Number(e.target.value))}
-                    />
+                    >
+                      <option value={1}>1 submission</option>
+                      <option value={3}>3 submissions</option>
+                      <option value={5}>5 submissions</option>
+                    </select>
                   </div>
                   <div className="field">
                     <label>Special Instructions</label>

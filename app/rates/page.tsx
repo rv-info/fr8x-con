@@ -1184,28 +1184,32 @@ Generated via FR8X Freight Exchange
             <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 className={`tab ${activeTab === 'all' ? 'active' : ''}`}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
+                aria-pressed={activeTab === 'all'}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'all' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'all' ? '#fff' : undefined, borderColor: activeTab === 'all' ? 'var(--fr8x-outline)' : undefined }}
                 onClick={() => setActiveTab('all')}
               >
                 All Available Rates ({rates.length + myRates.length})
               </button>
               <button
                 className={`tab ${activeTab === 'self' ? 'active' : ''}`}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
+                aria-pressed={activeTab === 'self'}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'self' ? '#fff' : undefined, borderColor: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined }}
                 onClick={() => setActiveTab('self')}
               >
                 Self-Posted Rates ({allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length})
               </button>
               <button
                 className={`tab ${activeTab === 'i' ? 'active' : ''}`}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
+                aria-pressed={activeTab === 'i'}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'i' ? '#fff' : undefined, borderColor: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined }}
                 onClick={() => setActiveTab('i')}
               >
                 My i-Rates ({myRates.length})
               </button>
               <button
                 className={`tab ${activeTab === 'expiring' ? 'active' : ''}`}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px' }}
+                aria-pressed={activeTab === 'expiring'}
+                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'expiring' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'expiring' ? '#fff' : undefined, borderColor: activeTab === 'expiring' ? 'var(--fr8x-outline)' : undefined }}
                 onClick={() => setActiveTab('expiring')}
               >
                 <Clock size={11} style={{ verticalAlign: '-1px' }} /> Expiring / Expired Rates (
@@ -1240,12 +1244,12 @@ Generated via FR8X Freight Exchange
 
           {/* Full-width rates table fitting screen wide without text wrap */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="table" style={{ fontSize: '10.5px', tableLayout: 'auto', width: '100%', borderCollapse: 'collapse', minWidth: '100%' }}>
+            <table className="table rates-compact-table" style={{ fontSize: '10px', tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', minWidth: '1120px' }}>
               <colgroup>
                 <col style={{ width: '38px' }} />
                 <col style={{ width: '90px' }} />
                 <col style={{ width: '95px' }} />
-                <col style={{ width: '70px' }} />
+                <col style={{ width: '42px' }} />
                 <col style={{ width: '65px' }} />
                 <col style={{ width: '65px' }} />
                 <col style={{ width: '65px' }} />
@@ -1268,7 +1272,7 @@ Generated via FR8X Freight Exchange
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>CARRIER</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>LINE</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
                   <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
@@ -1369,11 +1373,17 @@ Generated via FR8X Freight Exchange
                         <span style={{ fontSize: '11px', fontWeight: isOwner ? 700 : 400 }}>{rate.sp}</span>
                         {isOwner && <span style={{ fontSize: '9px', color: 'var(--brand)', display: 'block' }}>i-Rate</span>}
                       </td>
-                      <td style={{ padding: '5px 4px', fontWeight: 600, fontSize: '11px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                          <span>🚢</span>
-                          <span>{rate.carrier}</span>
-                        </span>
+                      <td style={{ padding: '4px 3px', fontWeight: 600, fontSize: '11px' }} title={rate.carrier}>
+                        {(() => {
+                          const carrierMaster = masterCarriers.find((c) => c.name.toLowerCase() === rate.carrier.toLowerCase() || c.carrierCode.toLowerCase() === rate.carrier.toLowerCase() || c.scacCode.toLowerCase() === rate.carrier.toLowerCase());
+                          return carrierMaster?.logoUrl ? (
+                            <img src={carrierMaster.logoUrl} alt={`${rate.carrier} logo`} style={{ width: '25px', height: '25px', objectFit: 'contain', display: 'block' }} />
+                          ) : (
+                            <span aria-label={rate.carrier} style={{ display: 'inline-flex', width: '25px', height: '25px', alignItems: 'center', justifyContent: 'center', background: '#eef2ff', border: '1px solid #c7d2fe', color: '#3730a3', fontSize: '8px', fontWeight: 800 }}>
+                              {(carrierMaster?.carrierCode || rate.carrier).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>

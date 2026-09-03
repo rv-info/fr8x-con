@@ -580,6 +580,8 @@ export interface MasterCarrier {
   fleetTEU?: string;
   bookingEmail: string;
   trackingApiEndpoint?: string;
+  /** Public HTTPS logo URL for compact operational views. */
+  logoUrl?: string;
   supportedEquipment: string[];
   status: 'active' | 'suspended' | 'under_review';
   remarks?: string;
@@ -652,5 +654,4 @@ export interface MasterTaxSAC {
   category: string;
   status: 'active' | 'inactive';
 }
-
 

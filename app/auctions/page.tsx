@@ -154,10 +154,12 @@ export default function AuctionsPage() {
                   <small>Cargo Ready Date</small>
                   <strong>{selectedAuctionModal.shipment.cargoReadyDate}</strong>
                 </div>
-                <div className="info-cell">
-                  <small>Posting Fee / Terms</small>
-                  <strong>₹{selectedAuctionModal.postingFeeINR || 300} INR / USD ${selectedAuctionModal.postingFeeUSD || 7} (Bidding: FREE)</strong>
-                </div>
+                {selectedAuctionModal.creatorUid === user.uid && (
+                  <div className="info-cell">
+                    <small>Posting Fee / Terms</small>
+                    <strong>₹{selectedAuctionModal.postingFeeINR || 300} INR / USD ${selectedAuctionModal.postingFeeUSD || 7} (Bidding: FREE)</strong>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -532,7 +534,9 @@ export default function AuctionsPage() {
                     </td>
                   </tr>
                 ) : (
-                  currentTabAuctions().map((auction) => (
+                  currentTabAuctions().map((auction) => {
+                    const isPostingParty = auction.creatorUid === user.uid;
+                    return (
                     <tr key={auction.id}>
                       <td>
                         <b style={{ color: 'var(--ink)' }}>{auction.id}</b>
@@ -582,9 +586,11 @@ export default function AuctionsPage() {
                         )}
                       </td>
                       <td>
-                        <small style={{ color: 'var(--ink-secondary)', fontWeight: 600 }}>
-                          ₹{auction.postingFeeINR || 300}
-                        </small>
+                        {isPostingParty ? (
+                          <small style={{ color: 'var(--ink-secondary)', fontWeight: 600 }}>₹{auction.postingFeeINR || 300}</small>
+                        ) : (
+                          <small style={{ color: 'var(--mut)' }}>—</small>
+                        )}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '4px' }}>
@@ -593,7 +599,7 @@ export default function AuctionsPage() {
                             onClick={() => setSelectedAuctionModal(auction)}
                             title="View Audit Record"
                           >
-                            <Eye size={12} /> View
+                            <Eye size={12} /> {auction.status === 'Live' ? 'View' : 'View record'}
                           </button>
                           {auction.status === 'Live' && (
                             <Link href={`/auctions/${auction.id}`} className="btn primary sm">
@@ -608,7 +614,8 @@ export default function AuctionsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

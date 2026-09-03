@@ -1396,7 +1396,7 @@ export default function FeedsPage() {
       </aside>
 
       {/* CENTER COLUMN: Main Feed */}
-      <main className="feed-center-rail">
+      <section className="feed-center-rail" style={{ margin: 0, minWidth: 0 }}>
         {/* Post Type Filters & Navigation Tabs in One Consistent Horizontal Row */}
         <div className="feed-header-bar">
           <div className="feed-tabs">
@@ -2085,7 +2085,7 @@ export default function FeedsPage() {
             </button>
           </div>
         )}
-      </main>
+      </section>
 
       {/* RIGHT COLUMN: Jobs & Interactive "YOUR AD HERE" Booking Space */}
       <aside className="feed-right-rail">

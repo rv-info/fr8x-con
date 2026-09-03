@@ -75,6 +75,10 @@ export default function BidRoomPage() {
   const { toast } = useToast();
 
   const auction = auctions.find((a) => a.id === auctionId) || auctions[0];
+  const configuredBidLimit = Number(auction.rules?.bidLimit);
+  const bidLimit = ([1, 3, 5] as number[]).includes(configuredBidLimit) ? configuredBidLimit : 5;
+  const bidCount = (auction.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
+  const bidsRemaining = Math.max(0, bidLimit - bidCount);
 
   // Active Tab: console | specs | terms | ledger | docs
   const [activeTab, setActiveTab] = useState<'console' | 'specs' | 'terms' | 'ledger' | 'docs'>('console');
@@ -265,7 +269,11 @@ export default function BidRoomPage() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'FR8X Client Engine',
     };
 
-    submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket);
+    if (!submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket)) {
+      setIsSubmittingBid(false);
+      setShowConfirmModal(false);
+      return;
+    }
     setIsSubmittingBid(false);
     setShowConfirmModal(false);
     setLastSubmittedDocket(evidenceDocket);
@@ -919,13 +927,16 @@ export default function BidRoomPage() {
                   <small style={{ display: 'block', color: 'var(--fr8x-muted)', fontSize: '10.5px', fontWeight: 600 }}>
                     (€{grandTotalEUR.toFixed(2)} EUR · ₹{grandTotalINR.toFixed(2)} INR)
                   </small>
+                  <small style={{ display: 'block', color: bidsRemaining ? 'var(--teal)' : 'var(--red)', fontSize: '10.5px', fontWeight: 800, marginTop: '3px' }}>
+                    {bidsRemaining} of {bidLimit} bid submission{bidLimit === 1 ? '' : 's'} remaining
+                  </small>
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '0px' }} onClick={() => toast('Edit mode active.')}>
                     EDIT
                   </button>
-                  <button className="btn primary" style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: 'var(--fr8x-outline)', borderRadius: '0px' }} onClick={() => setShowConfirmModal(true)}>
+                  <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? 'var(--fr8x-outline)' : '#94a3b8', borderRadius: '0px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
                     <Gavel size={13} /> Confirm &amp; Submit Bid
                   </button>
                 </div>
