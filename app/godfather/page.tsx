@@ -564,58 +564,66 @@ export default function GodfatherDashboardPage() {
                   <div className="text-slate-500 mt-1">Brute force mitigation, IP throttling, and MFA systems operating normally.</div>
                 </div>
               ) : (
-                <table className="gf-table text-xs">
-                  <thead>
-                    <tr>
-                      <th style={{ width: '110px' }}>SEVERITY</th>
-                      <th>TARGET USER</th>
-                      <th>DETAILS</th>
-                      <th style={{ width: '90px' }}>TIME</th>
-                      <th style={{ width: '70px', textAlign: 'right' }}>ACTION</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {securityEvents.slice(0, 7).map((evt) => (
-                      <tr key={evt.id} className="hover:bg-rose-50/40 transition-colors">
-                        <td>
-                          <span
-                            className={`gf-badge ${
-                              evt.severity === 'CRITICAL'
-                                ? 'gf-badge-red'
-                                : evt.severity === 'HIGH'
-                                ? 'gf-badge-amber'
-                                : 'gf-badge-blue'
-                            } text-[9px] font-mono font-bold uppercase`}
-                          >
-                            {evt.type}
-                          </span>
-                        </td>
-                        <td>
-                          <div className="font-bold text-slate-900 truncate max-w-[140px]" title={evt.userEmail}>
-                            {evt.userEmail}
-                          </div>
-                          <div className="text-[10px] text-slate-400 font-mono truncate">{evt.ip || 'Secured Gateway'}</div>
-                        </td>
-                        <td>
-                          <div className="text-slate-800 font-medium line-clamp-1" title={evt.details}>
-                            {evt.details}
-                          </div>
-                        </td>
-                        <td className="font-mono text-[11px] text-slate-500 whitespace-nowrap">
-                          {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <Link
-                            href="/godfather/security/events"
-                            className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2 h-[26px]"
-                          >
-                            Inspect
-                          </Link>
-                        </td>
+                <div className="gf-excel-sheet">
+                  <table className="gf-table">
+                    <thead>
+                      <tr>
+                        <th className="col-index">#</th>
+                        <th className="text-center" style={{ width: '110px' }}>SEVERITY</th>
+                        <th className="text-left">TARGET USER</th>
+                        <th className="text-left">DETAILS</th>
+                        <th className="text-center" style={{ width: '90px' }}>TIME</th>
+                        <th className="text-right" style={{ width: '80px' }}>ACTION</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {securityEvents.slice(0, 7).map((evt, idx) => (
+                        <tr key={evt.id}>
+                          <td className="col-index">{idx + 1}</td>
+                          <td className="text-center">
+                            <span
+                              className={`gf-badge ${
+                                evt.severity === 'CRITICAL'
+                                  ? 'gf-badge-red'
+                                  : evt.severity === 'HIGH'
+                                  ? 'gf-badge-amber'
+                                  : 'gf-badge-blue'
+                              } text-[9px] font-mono font-bold uppercase`}
+                            >
+                              {evt.type}
+                            </span>
+                          </td>
+                          <td className="text-left">
+                            <div className="font-bold text-slate-900 truncate max-w-[140px]" title={evt.userEmail}>
+                              {evt.userEmail}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono truncate">{evt.ip || 'Secured Gateway'}</div>
+                          </td>
+                          <td className="text-left">
+                            <div className="text-slate-800 font-medium line-clamp-1" title={evt.details}>
+                              {evt.details}
+                            </div>
+                          </td>
+                          <td className="text-center font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                            {new Date(evt.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="text-right">
+                            <Link
+                              href="/godfather/security/events"
+                              className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2 h-[24px]"
+                            >
+                              Inspect
+                            </Link>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <div className="gf-excel-status-bar">
+                    <span>● REAL-TIME STREAM</span>
+                    <span>Displaying {Math.min(7, securityEvents.length)} of {securityEvents.length} Active Alerts</span>
+                  </div>
+                </div>
               )}
             </div>
           </div>
@@ -635,100 +643,110 @@ export default function GodfatherDashboardPage() {
             </div>
 
             <div className="overflow-x-auto max-h-[340px] overflow-y-auto custom-scrollbar">
-              <table className="gf-table text-xs">
-                <thead>
-                  <tr>
-                    <th style={{ width: '85px' }}>TYPE</th>
-                    <th>TARGET ENTITY</th>
-                    <th>CONTEXT / REASON</th>
-                    <th style={{ width: '80px', textAlign: 'right' }}>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {/* KYC Queue */}
-                  {companies.filter((c) => c.status === 'pending').map((comp) => (
-                    <tr key={comp.companyId} className="hover:bg-amber-50/40 transition-colors">
-                      <td>
-                        <span className="gf-badge gf-badge-blue text-[9px] font-mono font-bold uppercase">
-                          KYC
-                        </span>
-                      </td>
-                      <td>
-                        <div className="font-bold text-slate-900 truncate max-w-[150px]" title={comp.legalName}>
-                          {comp.legalName}
-                        </div>
-                        <div className="text-[10px] text-slate-400 font-mono">GSTN: {comp.gstn || 'Pending'}</div>
-                      </td>
-                      <td>
-                        <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
-                          {comp.documents.length} verification docs uploaded
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button
-                          type="button"
-                          onClick={() => setActiveKycReview(comp)}
-                          className="gf-btn gf-btn-success text-[11px] font-bold py-0.5 px-2.5 h-[26px]"
-                        >
-                          Review
-                        </button>
-                      </td>
+              <div className="gf-excel-sheet border-0">
+                <table className="gf-table">
+                  <thead>
+                    <tr>
+                      <th className="col-index">#</th>
+                      <th className="text-center" style={{ width: '85px' }}>TYPE</th>
+                      <th className="text-left">TARGET ENTITY</th>
+                      <th className="text-left">CONTEXT / REASON</th>
+                      <th className="text-right" style={{ width: '80px' }}>ACTION</th>
                     </tr>
-                  ))}
+                  </thead>
+                  <tbody>
+                    {/* KYC Queue */}
+                    {companies.filter((c) => c.status === 'pending').map((comp, idx) => (
+                      <tr key={comp.companyId}>
+                        <td className="col-index">{idx + 1}</td>
+                        <td className="text-center">
+                          <span className="gf-badge gf-badge-blue text-[9px] font-mono font-bold uppercase">
+                            KYC
+                          </span>
+                        </td>
+                        <td className="text-left">
+                          <div className="font-bold text-slate-900 truncate max-w-[150px]" title={comp.legalName}>
+                            {comp.legalName}
+                          </div>
+                          <div className="text-[10px] text-slate-400 font-mono">GSTN: {comp.gstn || 'Pending'}</div>
+                        </td>
+                        <td className="text-left">
+                          <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
+                            {comp.documents.length} verification docs uploaded
+                          </div>
+                        </td>
+                        <td className="text-right">
+                          <button
+                            type="button"
+                            onClick={() => setActiveKycReview(comp)}
+                            className="gf-btn gf-btn-success text-[11px] font-bold py-0.5 px-2.5 h-[24px]"
+                          >
+                            Review
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
 
-                  {/* Blocked Accounts Queue */}
-                  {blockedAccounts.map((blk) => (
-                    <tr key={blk.uid} className="hover:bg-rose-50/40 transition-colors">
-                      <td>
-                        <span className="gf-badge gf-badge-red text-[9px] font-mono font-bold uppercase">
-                          LOCKED
+                    {/* Blocked Accounts Queue */}
+                    {blockedAccounts.map((blk, idx) => (
+                      <tr key={blk.uid}>
+                        <td className="col-index">{companies.filter((c) => c.status === 'pending').length + idx + 1}</td>
+                        <td className="text-center">
+                          <span className="gf-badge gf-badge-red text-[9px] font-mono font-bold uppercase">
+                            LOCKED
+                          </span>
+                        </td>
+                        <td className="text-left">
+                          <div className="font-bold text-slate-900 truncate max-w-[150px]" title={blk.displayName || blk.email}>
+                            {blk.displayName || blk.email}
+                          </div>
+                          <div className="text-[10px] text-slate-400 truncate">{blk.company}</div>
+                        </td>
+                        <td className="text-left">
+                          <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
+                            3 failed password attempts
+                          </div>
+                        </td>
+                        <td className="text-right">
+                          <Link href="/godfather/security/blocked-accounts" className="gf-btn gf-btn-danger text-[11px] font-bold py-0.5 px-2.5 h-[24px]">
+                            Unlock
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {/* Reports Queue */}
+                    <tr>
+                      <td className="col-index">{companies.filter((c) => c.status === 'pending').length + blockedAccounts.length + 1}</td>
+                      <td className="text-center">
+                        <span className="gf-badge gf-badge-amber text-[9px] font-mono font-bold uppercase">
+                          DISPUTE
                         </span>
                       </td>
-                      <td>
-                        <div className="font-bold text-slate-900 truncate max-w-[150px]" title={blk.displayName || blk.email}>
-                          {blk.displayName || blk.email}
+                      <td className="text-left">
+                        <div className="font-bold text-slate-900 truncate max-w-[150px]">
+                          Indo Ocean Lines
                         </div>
-                        <div className="text-[10px] text-slate-400 truncate">{blk.company}</div>
+                        <div className="text-[10px] text-slate-400 font-mono">Case REP-2026-001</div>
                       </td>
-                      <td>
+                      <td className="text-left">
                         <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
-                          3 failed password attempts
+                          Demurrage free time deviation
                         </div>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                        <Link href="/godfather/security/blocked-accounts" className="gf-btn gf-btn-danger text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
-                          Unlock
+                      <td className="text-right">
+                        <Link href="/godfather/trust-safety/reports" className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2.5 h-[24px]">
+                          Review
                         </Link>
                       </td>
                     </tr>
-                  ))}
-
-                  {/* Reports Queue */}
-                  <tr className="hover:bg-slate-50 transition-colors">
-                    <td>
-                      <span className="gf-badge gf-badge-amber text-[9px] font-mono font-bold uppercase">
-                        DISPUTE
-                      </span>
-                    </td>
-                    <td>
-                      <div className="font-bold text-slate-900 truncate max-w-[150px]">
-                        Indo Ocean Lines
-                      </div>
-                      <div className="text-[10px] text-slate-400 font-mono">Case REP-2026-001</div>
-                    </td>
-                    <td>
-                      <div className="text-slate-700 text-[11px] truncate max-w-[180px]">
-                        Demurrage free time deviation
-                      </div>
-                    </td>
-                    <td style={{ textAlign: 'right' }}>
-                      <Link href="/godfather/trust-safety/reports" className="gf-btn gf-btn-secondary text-[11px] font-bold py-0.5 px-2.5 h-[26px]">
-                        Review
-                      </Link>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+                <div className="gf-excel-status-bar">
+                  <span>● PENDING ACTION ITEMS</span>
+                  <span>Total Queue: {pendingKYCCount + openReportsCount + blockedAccountsCount} Items</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1021,45 +1039,47 @@ export default function GodfatherDashboardPage() {
           </Link>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="gf-table text-xs">
+        <div className="gf-excel-sheet border-0">
+          <table className="gf-table">
             <thead>
               <tr>
-                <th style={{ width: '90px' }}>TIME</th>
-                <th style={{ width: '180px' }}>ADMIN / OPERATOR</th>
-                <th style={{ width: '100px' }}>MODULE</th>
-                <th style={{ width: '130px' }}>ACTION TYPE</th>
-                <th>TARGET ENTITY &amp; REASON</th>
-                <th style={{ width: '130px', textAlign: 'center' }}>AUTHORIZATION</th>
+                <th className="col-index">#</th>
+                <th className="text-center" style={{ width: '90px' }}>TIME</th>
+                <th className="text-left" style={{ width: '180px' }}>ADMIN / OPERATOR</th>
+                <th className="text-center" style={{ width: '100px' }}>MODULE</th>
+                <th className="text-center" style={{ width: '130px' }}>ACTION TYPE</th>
+                <th className="text-left">TARGET ENTITY &amp; REASON</th>
+                <th className="text-center" style={{ width: '130px' }}>AUTHORIZATION</th>
               </tr>
             </thead>
             <tbody>
-              {auditLogs.slice(0, 8).map((log) => (
-                <tr key={log.actionId} className="hover:bg-slate-50 transition-colors">
-                  <td className="font-mono text-xs text-slate-600 whitespace-nowrap">
+              {auditLogs.slice(0, 8).map((log, idx) => (
+                <tr key={log.actionId}>
+                  <td className="col-index">{idx + 1}</td>
+                  <td className="text-center font-mono text-xs text-slate-600 whitespace-nowrap">
                     {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </td>
-                  <td>
+                  <td className="text-left">
                     <div className="font-bold text-slate-900">{log.actorName}</div>
                     <div className="font-mono text-[10px] text-slate-500">{log.actorRole}</div>
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span className="font-bold text-slate-700 uppercase font-mono text-[10.5px]">
                       {log.targetType}
                     </span>
                   </td>
-                  <td>
-                    <span className="font-mono text-[11px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                  <td className="text-center">
+                    <span className="font-mono text-[10.5px] font-bold text-sky-800 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
                       {log.actionType}
                     </span>
                   </td>
-                  <td>
+                  <td className="text-left">
                     <div className="font-semibold text-slate-900 truncate max-w-md">
                       {log.targetLabel || log.targetId}
                     </div>
                     <div className="text-[11px] text-slate-500 truncate max-w-md">{log.reason}</div>
                   </td>
-                  <td style={{ textAlign: 'center' }}>
+                  <td className="text-center">
                     <span className="gf-badge gf-badge-green font-mono text-[9.5px] font-bold">
                       {log.stepUpVerified ? 'MFA VERIFIED' : 'SHA-256 SIGNED'}
                     </span>
@@ -1068,6 +1088,10 @@ export default function GodfatherDashboardPage() {
               ))}
             </tbody>
           </table>
+          <div className="gf-excel-status-bar">
+            <span>● IMMUTABLE SOVEREIGN LEDGER</span>
+            <span>Displaying {Math.min(8, auditLogs.length)} of {auditLogs.length} Events | Cryptographic Hash Verified</span>
+          </div>
         </div>
       </div>
 

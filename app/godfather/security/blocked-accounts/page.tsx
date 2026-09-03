@@ -146,70 +146,68 @@ export default function BlockedAccountsPage() {
         </div>
       </div>
 
-      {/* Enterprise Data Table */}
-      <div className="gf-table-container">
+      {/* Enterprise Data Table in Excel Grid */}
+      <div className="gf-excel-sheet">
         <table className="gf-table">
           <thead>
             <tr>
-              <th>USER</th>
-              <th>COMPANY</th>
-              <th>FAILED ATTEMPTS</th>
-              <th>LAST ATTEMPT</th>
-              <th>BLOCKED AT</th>
-              <th>STATUS</th>
-              <th>ACTION</th>
+              <th className="col-index">#</th>
+              <th className="text-left">USER</th>
+              <th className="text-left">COMPANY</th>
+              <th className="text-center" style={{ width: '130px' }}>FAILED ATTEMPTS</th>
+              <th className="text-center" style={{ width: '140px' }}>LAST ATTEMPT</th>
+              <th className="text-center" style={{ width: '140px' }}>BLOCKED AT</th>
+              <th className="text-center" style={{ width: '100px' }}>STATUS</th>
+              <th className="text-right" style={{ width: '110px' }}>ACTION</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-slate-400">
+                <td colSpan={8} className="text-center py-10 text-slate-400">
                   <CheckCircle2 className="lucide w-6 h-6 mx-auto mb-1 text-emerald-500 opacity-60" />
                   <div className="font-bold text-slate-600">No Blocked Accounts Found</div>
                   <div className="text-[9px]">Zero users are currently locked out by brute-force protection.</div>
                 </td>
               </tr>
             ) : (
-              filtered.map((row) => (
+              filtered.map((row, idx) => (
                 <tr
                   key={row.id || row.uid}
                   onClick={() => setSelectedAccount(row)}
-                  className="cursor-pointer hover:bg-slate-50"
+                  className="cursor-pointer"
                 >
-                  <td>
+                  <td className="col-index">{idx + 1}</td>
+                  <td className="text-left">
                     <div className="font-bold text-slate-900">{row.displayName || row.email}</div>
                     <div className="font-mono text-[9px] text-slate-500">{row.email}</div>
                   </td>
-                  <td>
+                  <td className="text-left">
                     <span className="text-slate-800 font-medium">{row.company || '—'}</span>
                     <div className="font-mono text-[9px] text-slate-400">{row.companyId}</div>
                   </td>
-                  <td>
+                  <td className="text-center font-mono">
                     <span className="gf-badge gf-badge-red font-mono font-bold">
                       {row.failedAttempts}/3
                     </span>
                   </td>
-                  <td>
-                    <span className="font-mono text-[9px] text-slate-600">
-                      {row.lastAttemptAt ? new Date(row.lastAttemptAt).toLocaleString() : '—'}
-                    </span>
+                  <td className="text-center font-mono text-[10px] text-slate-600">
+                    {row.lastAttemptAt ? new Date(row.lastAttemptAt).toLocaleString() : '—'}
                   </td>
-                  <td>
-                    <span className="font-mono text-[9px] text-rose-700 font-bold">
-                      {row.blockedAt ? new Date(row.blockedAt).toLocaleString() : '—'}
-                    </span>
+                  <td className="text-center font-mono text-[10px] text-rose-700 font-bold">
+                    {row.blockedAt ? new Date(row.blockedAt).toLocaleString() : '—'}
                   </td>
-                  <td>
+                  <td className="text-center">
                     <span className="gf-badge gf-badge-red">BLOCKED</span>
                   </td>
-                  <td>
+                  <td className="text-right">
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
                         setUnblockTarget(row);
                       }}
-                      className="gf-btn gf-btn-success"
+                      className="gf-btn gf-btn-success h-[24px] text-[11px] py-0 px-2"
                     >
                       <Unlock className="lucide w-3 h-3" />
                       <span>Unblock</span>
@@ -220,6 +218,10 @@ export default function BlockedAccountsPage() {
             )}
           </tbody>
         </table>
+        <div className="gf-excel-status-bar">
+          <span>● BRUTE-FORCE CONTAINMENT PERIMETER</span>
+          <span>Locked Accounts: {filtered.length} | MFA Re-verification Required</span>
+        </div>
       </div>
 
       {/* Account Detail Drawer */}

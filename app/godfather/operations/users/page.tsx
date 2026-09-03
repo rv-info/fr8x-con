@@ -211,42 +211,47 @@ export default function UsersGovernancePage() {
 
       {/* Filter & Search Bar */}
       <div className="gf-card">
-        <div className="gf-filter-bar">
-          <div className="gf-search-input-wrap">
-            <Search className="lucide w-4 h-4 text-slate-400" />
+        {/* Excel Formula Bar Toolbar */}
+        <div className="gf-excel-toolbar">
+          <div className="gf-excel-formula-bar">
+            <span className="gf-excel-formula-fx">fx</span>
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter users by name, email, company, or GSTN..."
-              className="gf-search-input"
+              placeholder="Search or filter operators by name, email, company, GSTN..."
+              className="gf-excel-formula-input"
             />
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <span>Showing <strong className="text-slate-900">{filteredUsers.length}</strong> operators</span>
+          <div className="flex items-center gap-3 text-xs text-slate-600 font-mono">
+            <span>SHOWING: <strong className="text-slate-900">{filteredUsers.length}</strong> / {users.length} ROWS</span>
           </div>
         </div>
 
-        {/* Users Dense Table */}
-        <div className="overflow-x-auto">
+        {/* Users Dense Table in Excel Grid */}
+        <div className="gf-excel-sheet border-t-0 rounded-t-none">
           <table className="gf-table">
             <thead>
               <tr>
-                <th>Operator & Identity</th>
-                <th>Company & Tax IDs</th>
-                <th>Location & Timezone</th>
-                <th>Plan & Verification</th>
-                <th>Privileges</th>
-                <th className="text-right">Governance Actions</th>
+                <th className="col-index">#</th>
+                <th className="text-left">OPERATOR &amp; IDENTITY</th>
+                <th className="text-left">COMPANY &amp; TAX IDS</th>
+                <th className="text-left">LOCATION &amp; TIMEZONE</th>
+                <th className="text-center">PLAN &amp; VERIFICATION</th>
+                <th className="text-center">PRIVILEGES</th>
+                <th className="text-right">GOVERNANCE ACTIONS</th>
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((u) => {
+              {filteredUsers.map((u, idx) => {
                 return (
                   <tr key={u.uid}>
+                    {/* Index */}
+                    <td className="col-index">{idx + 1}</td>
+
                     {/* Identity */}
-                    <td>
+                    <td className="text-left">
                       <div className="font-bold text-slate-900 flex items-center gap-1.5">
                         {u.displayName}
                         {u.hasGoldenTick && (
@@ -260,7 +265,7 @@ export default function UsersGovernancePage() {
                     </td>
 
                     {/* Company */}
-                    <td>
+                    <td className="text-left">
                       <div className="font-semibold text-slate-800">{u.company}</div>
                       <div className="text-[11px] text-slate-500 font-mono">
                         GST: {u.gstn ? <span className="text-sky-700 font-bold">{u.gstn}</span> : 'Not Provided'}
@@ -269,7 +274,7 @@ export default function UsersGovernancePage() {
                     </td>
 
                     {/* Location & Timezone Clock */}
-                    <td>
+                    <td className="text-left">
                       <div className="flex items-center gap-1 text-slate-700">
                         <MapPin className="lucide w-3 h-3 text-slate-400" />
                         <span>{u.city}, {u.country}</span>
@@ -283,13 +288,13 @@ export default function UsersGovernancePage() {
                     </td>
 
                     {/* Plan & Verification */}
-                    <td>
-                      <div className="flex items-center gap-1.5 mb-1">
+                    <td className="text-center">
+                      <div className="flex items-center justify-center gap-1.5 mb-1">
                         <span className={`gf-badge ${u.plan === 'premium' ? 'gf-badge-gold' : u.plan === 'professional' ? 'gf-badge-blue' : 'gf-badge-gray'} text-[10px] uppercase font-bold`}>
                           {u.plan}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center justify-center gap-1">
                         {u.isVerified ? (
                           <span className="gf-badge gf-badge-green text-[10px]">
                             <CheckCircle2 className="lucide w-3 h-3 mr-1" /> Verified
@@ -303,7 +308,7 @@ export default function UsersGovernancePage() {
                     </td>
 
                     {/* Privileges */}
-                    <td>
+                    <td className="text-center">
                       <span className="text-[11px] font-mono text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                         {u.role}
                       </span>
@@ -396,6 +401,10 @@ export default function UsersGovernancePage() {
               })}
             </tbody>
           </table>
+          <div className="gf-excel-status-bar">
+            <span>● OPERATOR DIRECTORY</span>
+            <span>Total Rows: {filteredUsers.length} of {users.length} | Selected: 0 | Auto-Filter: Active</span>
+          </div>
         </div>
       </div>
 

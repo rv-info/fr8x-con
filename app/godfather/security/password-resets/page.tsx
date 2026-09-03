@@ -48,37 +48,40 @@ export default function PasswordResetsPage() {
       </div>
 
       {/* Table */}
+      {/* Table in Excel Grid */}
       <div className="gf-card">
-        <div className="gf-table-container">
+        <div className="gf-excel-sheet border-0">
           <table className="gf-table">
             <thead>
               <tr>
-                <th>REQUEST ID</th>
-                <th>TARGET EMAIL</th>
-                <th>REQUESTED AT</th>
-                <th>SOURCE IP</th>
-                <th>STATUS</th>
+                <th className="col-index">#</th>
+                <th className="text-center" style={{ width: '130px' }}>REQUEST ID</th>
+                <th className="text-left">TARGET EMAIL</th>
+                <th className="text-center" style={{ width: '160px' }}>REQUESTED AT</th>
+                <th className="text-center" style={{ width: '120px' }}>SOURCE IP</th>
+                <th className="text-center" style={{ width: '100px' }}>STATUS</th>
               </tr>
             </thead>
             <tbody>
               {resets.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-10 text-slate-400">
+                  <td colSpan={6} className="text-center py-10 text-slate-400">
                     <CheckCircle2 className="lucide w-6 h-6 mx-auto mb-1 text-emerald-500 opacity-60" />
                     <div className="font-bold text-slate-600">No Pending Password Reset Requests</div>
                     <div className="text-[9px]">Zero password recovery tokens currently active in queue.</div>
                   </td>
                 </tr>
               ) : (
-                resets.map((r) => (
+                resets.map((r, idx) => (
                   <tr key={r.id}>
-                    <td className="font-mono text-[9px] text-slate-500">{r.id}</td>
-                    <td className="font-bold text-slate-900">{r.email}</td>
-                    <td className="font-mono text-[9px] text-slate-600">
+                    <td className="col-index">{idx + 1}</td>
+                    <td className="text-center font-mono text-[10px] text-slate-600">{r.id}</td>
+                    <td className="text-left font-bold text-slate-900">{r.email}</td>
+                    <td className="text-center font-mono text-[10px] text-slate-600">
                       {new Date(r.requestedAt).toLocaleString()}
                     </td>
-                    <td className="font-mono text-[9px] text-slate-500">{r.ipAddress || '127.0.0.1'}</td>
-                    <td>
+                    <td className="text-center font-mono text-[10px] text-slate-500">{r.ipAddress || '127.0.0.1'}</td>
+                    <td className="text-center">
                       <span className={`gf-badge ${r.status === 'pending' ? 'gf-badge-amber' : 'gf-badge-green'}`}>
                         {r.status.toUpperCase()}
                       </span>
@@ -88,6 +91,10 @@ export default function PasswordResetsPage() {
               )}
             </tbody>
           </table>
+          <div className="gf-excel-status-bar">
+            <span>● PASSKEY CHALLENGES</span>
+            <span>Total Reset Tokens: {resets.length} | 15-Minute Expiration Enforced</span>
+          </div>
         </div>
       </div>
     </div>

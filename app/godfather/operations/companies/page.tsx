@@ -225,59 +225,61 @@ export default function CompaniesKYCPage() {
         </div>
       </div>
 
-      {/* Enterprise Data Table */}
+      {/* Enterprise Data Table in Excel Grid */}
       <div className="gf-card">
-        <div className="gf-table-container border-0 rounded-none">
+        <div className="gf-excel-sheet border-0">
           <table className="gf-table">
             <thead>
               <tr>
-                <th>COMPANY</th>
-                <th>COMPANY ID</th>
-                <th>COUNTRY</th>
-                <th>GSTN</th>
-                <th>STATUS</th>
-                <th>RISK</th>
-                <th>SUBMITTED</th>
-                <th>ACTION</th>
+                <th className="col-index">#</th>
+                <th className="text-left">COMPANY</th>
+                <th className="text-center" style={{ width: '110px' }}>COMPANY ID</th>
+                <th className="text-center" style={{ width: '90px' }}>COUNTRY</th>
+                <th className="text-center" style={{ width: '130px' }}>GSTN</th>
+                <th className="text-center" style={{ width: '120px' }}>STATUS</th>
+                <th className="text-center" style={{ width: '80px' }}>RISK</th>
+                <th className="text-center" style={{ width: '100px' }}>SUBMITTED</th>
+                <th className="text-right" style={{ width: '140px' }}>ACTION</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-slate-400">
+                  <td colSpan={9} className="text-center py-12 text-slate-400">
                     <Building className="lucide w-8 h-8 mx-auto mb-2 text-slate-300" />
                     <div className="font-bold text-slate-700 text-xs">No Companies Found</div>
                     <div className="text-[9px]">Zero company records matching the applied status or query filters.</div>
                   </td>
                 </tr>
               ) : (
-                filtered.map((comp) => (
+                filtered.map((comp, idx) => (
                   <tr
                     key={comp.companyId}
                     onClick={() => setSelectedCompany(comp)}
-                    className="cursor-pointer hover:bg-slate-50"
+                    className="cursor-pointer"
                   >
-                    <td>
+                    <td className="col-index">{idx + 1}</td>
+                    <td className="text-left">
                       <div className="font-bold text-slate-900 flex items-center gap-1.5">
                         <Building className="lucide w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
                         <span>{comp.legalName}</span>
                       </div>
                       <div className="text-[9px] text-slate-500">{comp.city}, {comp.country}</div>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <span className="font-mono text-[9.5px] font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                         {comp.companyId}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <span className="text-slate-800 font-medium">{comp.country}</span>
                     </td>
-                    <td>
-                      <span className="font-mono text-[9.5px] text-sky-800 font-semibold">
+                    <td className="text-center font-mono">
+                      <span className="text-[9.5px] text-sky-800 font-semibold">
                         {comp.gstn || 'N/A'}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <span
                         className={`gf-badge ${
                           comp.status === 'verified'
@@ -292,7 +294,7 @@ export default function CompaniesKYCPage() {
                         {comp.status.replace(/_/g, ' ').toUpperCase()}
                       </span>
                     </td>
-                    <td>
+                    <td className="text-center">
                       <span
                         className={`gf-badge ${
                           (comp.riskLevel || 'LOW') === 'HIGH'
@@ -305,17 +307,15 @@ export default function CompaniesKYCPage() {
                         {comp.riskLevel || 'LOW'}
                       </span>
                     </td>
-                    <td>
-                      <span className="font-mono text-[9px] text-slate-500">
-                        {comp.submittedAt ? new Date(comp.submittedAt).toLocaleDateString() : '2026-01-15'}
-                      </span>
+                    <td className="text-center font-mono text-[10px] text-slate-500">
+                      {comp.submittedAt ? new Date(comp.submittedAt).toLocaleDateString() : '2026-01-15'}
                     </td>
-                    <td>
-                      <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => setSelectedCompany(comp)}
-                          className="gf-btn gf-btn-secondary"
+                          className="gf-btn gf-btn-secondary h-[24px] text-[11px] py-0 px-2"
                           title="Open Company Dossier"
                         >
                           <Eye className="lucide w-3 h-3" />
@@ -325,7 +325,7 @@ export default function CompaniesKYCPage() {
                           <button
                             type="button"
                             onClick={() => handleVerify(comp)}
-                            className="gf-btn gf-btn-success font-bold"
+                            className="gf-btn gf-btn-success font-bold h-[24px] text-[11px] py-0 px-2"
                           >
                             <CheckCircle2 className="lucide w-3 h-3" />
                             <span>Verify</span>
@@ -338,6 +338,10 @@ export default function CompaniesKYCPage() {
               )}
             </tbody>
           </table>
+          <div className="gf-excel-status-bar">
+            <span>● REGISTERED COMMERCIAL ENTITIES</span>
+            <span>Showing {filtered.length} of {companies.length} Records | KYB/AML Verification Active</span>
+          </div>
         </div>
       </div>
 

@@ -4259,28 +4259,30 @@ textarea.input {
 /* ── ENTERPRISE CARD SYSTEM ── */
 .gf-card {
   background: #ffffff;
-  border: 1px solid var(--gf-border);
-  border-radius: var(--gf-radius-lg);
-  box-shadow: var(--gf-shadow-sm);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   position: relative;
   overflow: hidden;
   margin-bottom: 12px;
 }
 
 .gf-card-header {
-  padding: 10px 14px;
-  background: var(--gf-surface-subtle);
-  border-bottom: 1px solid var(--gf-border);
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 38px;
+  min-height: 36px;
 }
 
 .gf-card-title {
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   color: var(--gf-ink);
   display: flex;
   align-items: center;
@@ -4288,15 +4290,15 @@ textarea.input {
 }
 
 .gf-card-body {
-  padding: 14px;
+  padding: 12px;
   color: var(--gf-ink);
-  font-size: 12.5px;
+  font-size: 12px;
 }
 
 .gf-card-footer {
-  padding: 10px 14px;
-  background: var(--gf-surface-subtle);
-  border-top: 1px solid var(--gf-border);
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-top: 1px solid #cbd5e1;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -4313,41 +4315,43 @@ textarea.input {
 
 .gf-metric-card {
   background: #ffffff;
-  border: 1px solid var(--gf-border);
-  border-radius: var(--gf-radius-lg);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: all 0.12s ease;
+  transition: all 0.1s ease;
   text-decoration: none;
   color: inherit;
-  box-shadow: var(--gf-shadow-sm);
-  min-height: 68px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  min-height: 72px;
+  height: 100%;
 }
 
 .gf-metric-card:hover {
-  border-color: var(--gf-brand);
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.1);
-  transform: translateY(-1px);
+  border-color: #0284c7;
+  background: #f8fafc;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.08);
 }
 
 .gf-metric-title {
-  font-size: 10.5px;
-  font-weight: 800;
+  font-size: 10px;
+  font-weight: 750;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--gf-mut);
+  letter-spacing: 0.04em;
+  color: #64748b;
   line-height: 1.2;
 }
 
 .gf-metric-value {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--gf-ink);
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
   line-height: 1.2;
-  letter-spacing: -0.02em;
-  margin: 3px 0;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin: 4px 0;
 }
 
 .gf-metric-foot {
@@ -4365,53 +4369,292 @@ textarea.input {
 }
 
 /* ── ENTERPRISE DATA TABLES ── */
-.gf-table-container {
+/* ── EXCEL SHEET SPREADSHEET GRID & ALIGNMENT SYSTEM ── */
+.gf-table-container,
+.gf-table-wrap,
+.gf-excel-sheet {
   background: #ffffff;
-  border: 1px solid var(--gf-border);
-  border-radius: var(--gf-radius-lg);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
   overflow-x: auto;
-  box-shadow: var(--gf-shadow-sm);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   margin-bottom: 12px;
+  position: relative;
 }
 
 .gf-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   text-align: left;
-  font-size: 12.5px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #0f172a;
+  background: #ffffff;
+  table-layout: auto;
 }
 
+/* Excel Column Headers */
+.gf-table thead th,
 .gf-table th {
-  background: #f8fafc;
-  color: #475569;
-  font-weight: 750;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 10.5px;
-  padding: 8px 12px;
-  border-bottom: 1.5px solid #cbd5e1;
+  letter-spacing: 0.03em;
+  font-size: 11px;
+  padding: 6px 10px;
+  height: 30px;
+  border-right: 1px solid #cbd5e1;
+  border-bottom: 2px solid #94a3b8;
+  border-top: 1px solid #cbd5e1;
   position: sticky;
   top: 0;
   z-index: 10;
   white-space: nowrap;
-  height: 32px;
-}
-
-.gf-table td {
-  padding: 8px 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: var(--gf-ink);
   vertical-align: middle;
-  height: 36px;
-  font-size: 12.5px;
+  user-select: none;
+  transition: background-color 0.1s ease;
 }
 
-.gf-table tr:hover td {
-  background: #f8fafc;
+.gf-table th:last-child {
+  border-right: none;
+}
+
+.gf-table th:hover {
+  background: #e2e8f0;
+}
+
+/* Excel Data Cells */
+.gf-table tbody td,
+.gf-table td {
+  padding: 5px 10px;
+  border-right: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+  vertical-align: middle;
+  height: 32px;
+  font-size: 11.5px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: background-color 0.08s ease;
+}
+
+.gf-table td:last-child {
+  border-right: none;
 }
 
 .gf-table tr:last-child td {
+  border-bottom: 1px solid #cbd5e1;
+}
+
+/* Excel Row Numbers / Index Column (#) */
+.gf-table th.col-index,
+.gf-table td.col-index,
+.gf-table .row-num,
+.gf-table th.is-index,
+.gf-table td.is-index {
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
+  background: #f8fafc;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-align: center !important;
+  border-right: 1.5px solid #cbd5e1;
+  user-select: none;
+  padding: 4px;
+}
+
+/* Excel Row Hover & Active Selection */
+.gf-table tbody tr:hover td {
+  background-color: #f0fdf4 !important;
+}
+
+.gf-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 #16a34a;
+}
+
+.gf-table tbody tr.selected td,
+.gf-table tbody tr.active td {
+  background-color: #e0f2fe !important;
+}
+
+.gf-table tbody tr.selected td:first-child,
+.gf-table tbody tr.active td:first-child {
+  box-shadow: inset 3px 0 0 #0284c7;
+}
+
+/* Excel Active Cell Focus Indicator */
+.gf-table td:focus-within,
+.gf-table td.active-cell {
+  outline: 2px solid #16a34a;
+  outline-offset: -2px;
+  background-color: #ffffff !important;
+}
+
+/* ── STRICT SPREADSHEET ALIGNMENT RULES ── */
+
+/* 1. Left Alignment (Text, Names, Titles, Details) */
+.gf-table th,
+.gf-table td,
+.gf-table .text-left,
+.gf-table .col-text {
+  text-align: left;
+}
+
+/* 2. Right Alignment (Numbers, Currency, Metrics, Counts, Percentages, Actions) */
+.gf-table th.text-right,
+.gf-table td.text-right,
+.gf-table th[style*="text-align: right"],
+.gf-table td[style*="text-align: right"],
+.gf-table .col-num,
+.gf-table .col-right,
+.gf-table .col-amount,
+.gf-table .col-actions {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Monospace numerals for tabular alignment */
+.gf-table .tabular-nums,
+.gf-table .col-num,
+.gf-table .col-amount,
+.gf-table td.font-mono,
+.gf-table .font-mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* 3. Center Alignment (Codes, Status, Badges, Dates, Flags, Icons) */
+.gf-table th.text-center,
+.gf-table td.text-center,
+.gf-table th[style*="text-align: center"],
+.gf-table td[style*="text-align: center"],
+.gf-table .col-center,
+.gf-table .col-status,
+.gf-table .col-badge {
+  text-align: center !important;
+}
+
+/* Align inner flex containers matching cell alignment */
+.gf-table td.text-center > div,
+.gf-table td.col-center > div,
+.gf-table td.col-status > div {
+  justify-content: center;
+}
+
+.gf-table td.text-right > div,
+.gf-table td.col-right > div,
+.gf-table td.col-actions > div {
+  justify-content: flex-end;
+}
+
+/* ── EXCEL FORMULA BAR & WORKBOOK TOOLBAR ── */
+.gf-excel-toolbar {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gf-excel-formula-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 440px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 3px;
+  padding: 0 8px;
+  height: 28px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.gf-excel-formula-fx {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-style: italic;
+  font-weight: 800;
+  font-size: 11px;
+  color: #0284c7;
+  padding-right: 6px;
+  border-right: 1px solid #e2e8f0;
+  user-select: none;
+  display: flex;
+  align-items: center;
+}
+
+.gf-excel-formula-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 11.5px;
+  color: #0f172a;
+  background: transparent;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.gf-excel-status-bar {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  padding: 4px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10.5px;
+  color: #64748b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  user-select: none;
+}
+
+.gf-excel-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #e2e8f0;
+  padding: 4px 6px 0;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  overflow-x: auto;
+}
+
+.gf-excel-tab {
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  white-space: nowrap;
+}
+
+.gf-excel-tab:hover {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.gf-excel-tab.active {
+  background: #ffffff;
+  color: #16a34a;
+  border-top: 2.5px solid #16a34a;
+  font-weight: 800;
 }
 
 /* ── BADGES & PILLS ── */
