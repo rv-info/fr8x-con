@@ -7874,3 +7874,27 @@ textarea.input {
   border-color: #94a3b8;
   color: #0f172a;
 }
+
+/* FINAL GODFATHER CONSOLE LAYER: intentionally last so page-specific legacy rules cannot dilute it. */
+.gf-app-layout,.gf-main-container { background:#f3f6fa !important; }
+.gf-sidebar-container,.gf-sidebar { background:#fff !important; border-right:1px solid #d7e1ec !important; }
+.gf-sidebar-nav { padding:10px !important; }
+.gf-nav-section-header { background:#f5f8fc !important; border:1px solid #e6edf5 !important; color:#52677e !important; border-radius:4px !important; }
+.gf-nav-link { height:34px !important; border-radius:4px !important; color:#334155 !important; }
+.gf-nav-link.active { background:#0f4c81 !important; color:#fff !important; border-left-color:#38bdf8 !important; box-shadow:inset 0 0 0 1px #0b3b64 !important; }
+.gf-nav-link.active .lucide { color:#7dd3fc !important; }
+.gf-topbar { background:#fff !important; border-bottom:1px solid #d7e1ec !important; box-shadow:0 1px 2px rgba(15,23,42,.04) !important; }
+.gf-content-viewport { padding:18px 22px 36px !important; }
+.gf-page-header { background:#fff !important; border:1px solid #d7e1ec !important; border-left:4px solid #0f4c81 !important; padding:15px 18px !important; }
+.gf-page-title { color:#102a43 !important; font-size:18px !important; }
+.gf-page-subtitle { color:#62748a !important; }
+.gf-card { background:#fff !important; border:1px solid #d7e1ec !important; border-radius:5px !important; box-shadow:0 1px 2px rgba(15,23,42,.035) !important; }
+.gf-card-header { background:#f8fbfe !important; border-bottom-color:#d7e1ec !important; min-height:40px !important; }
+.gf-table-container,.gf-table-wrap { border:1px solid #d7e1ec !important; border-radius:5px !important; }
+.gf-table thead th,.gf-table th { background:#eaf1f8 !important; color:#35516e !important; border-bottom-color:#c7d6e6 !important; font-size:10px !important; }
+.gf-table tbody tr:nth-child(even) td { background:#fbfdff !important; }
+.gf-table tbody tr:hover td { background:#eef6ff !important; }
+.gf-table td { border-bottom-color:#e3ebf3 !important; color:#263b53 !important; }
+.gf-btn,.gf-btn-primary,.gf-btn-secondary { border-radius:4px !important; min-height:32px !important; font-weight:700 !important; }
+.gf-btn-primary { background:#0f4c81 !important; }
+@media (max-width:640px){.gf-content-viewport{padding:10px 9px 76px!important}.gf-page-header{padding:11px!important}.gf-page-title{font-size:15px!important}.gf-table{min-width:680px!important;font-size:10px!important}.gf-card-body{padding:10px!important}}
