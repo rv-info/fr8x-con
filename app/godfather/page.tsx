@@ -288,55 +288,63 @@ export default function GodfatherDashboardPage() {
       </div>
 
       {/* ── 2. QUICK GOVERNANCE LAUNCHPAD RIBBON ── */}
-      <div className="gf-card p-3.5 bg-gradient-to-r from-slate-50 via-white to-sky-50/40 border-slate-200 shadow-xs">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-slate-800 uppercase tracking-wide">
-            <Zap className="lucide w-4 h-4 text-sky-600" />
+      <div className="gf-launchpad-ribbon">
+        <div className="gf-launchpad-header">
+          <div className="gf-launchpad-title">
+            <span className="gf-launchpad-icon-pulse">
+              <Zap size={14} />
+            </span>
             <span>Fast Action Launchpad</span>
           </div>
+          <span className="gf-launchpad-subtext">Sovereign Direct Operations</span>
+        </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setIsGuidebookOpen(true)}
-              className="px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-xs font-bold flex items-center gap-1.5 transition-all"
-            >
-              <Mail className="lucide w-3.5 h-3.5 text-sky-600" />
-              <span>Zoho Free SMTP Setup</span>
-            </button>
+        <div className="gf-launchpad-grid">
+          <button
+            type="button"
+            onClick={() => setIsGuidebookOpen(true)}
+            className="gf-launchpad-action-btn primary"
+          >
+            <Mail size={14} className="action-icon sky" />
+            <span className="action-label">Zoho Free SMTP Setup</span>
+            <span className="action-badge cyan">ACTIVE</span>
+          </button>
 
-            <Link
-              href="/godfather/operations/companies"
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
-            >
-              <Building className="lucide w-3.5 h-3.5 text-slate-600" />
-              <span>Verify KYCs ({pendingKYCCount})</span>
-            </Link>
+          <Link
+            href="/godfather/operations/companies"
+            className="gf-launchpad-action-btn"
+          >
+            <Building size={14} className="action-icon amber" />
+            <span className="action-label">Verify KYCs</span>
+            <span className={`action-badge ${pendingKYCCount > 0 ? 'amber' : 'neutral'}`}>{pendingKYCCount}</span>
+          </Link>
 
-            <Link
-              href="/godfather/security/blocked-accounts"
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
-            >
-              <UserX className="lucide w-3.5 h-3.5 text-rose-600" />
-              <span>Unlock Users ({blockedAccountsCount})</span>
-            </Link>
+          <Link
+            href="/godfather/security/blocked-accounts"
+            className="gf-launchpad-action-btn"
+          >
+            <UserX size={14} className="action-icon red" />
+            <span className="action-label">Unlock Users</span>
+            <span className={`action-badge ${blockedAccountsCount > 0 ? 'red' : 'neutral'}`}>{blockedAccountsCount}</span>
+          </Link>
 
-            <Link
-              href="/godfather/operations/auctions"
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
-            >
-              <Gavel className="lucide w-3.5 h-3.5 text-amber-600" />
-              <span>Live Spot Auctions ({activeAuctionsCount})</span>
-            </Link>
+          <Link
+            href="/godfather/operations/auctions"
+            className="gf-launchpad-action-btn"
+          >
+            <Gavel size={14} className="action-icon emerald" />
+            <span className="action-label">Live Spot Auctions</span>
+            <span className="action-badge green">{activeAuctionsCount}</span>
+          </Link>
 
-            <Link
-              href="/godfather/security/audit"
-              className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs"
-            >
-              <History className="lucide w-3.5 h-3.5 text-indigo-600" />
-              <span>Audit Ledger ({auditLogs.length})</span>
-            </Link>
-          </div>
+          <Link
+            href="/godfather/security/audit"
+            className="gf-launchpad-action-btn"
+          >
+            <History size={14} className="action-icon purple" />
+            <span className="action-label">Audit Ledger</span>
+            <span className="action-badge purple">{auditLogs.length}</span>
+          </Link>
         </div>
       </div>
 

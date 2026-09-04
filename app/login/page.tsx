@@ -214,33 +214,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--fr8x-background)',
-        padding: '20px',
-      }}
-    >
-      <div
-        className="card"
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          boxShadow: 'var(--sh-md)',
-          overflow: 'hidden',
-          borderRadius: '8px',
-          border: '1px solid var(--fr8x-outline)',
-          background: '#ffffff',
-        }}
-      >
+    <div className="login-viewport">
+      <div className="login-card">
         {/* Top Brand Stripe */}
         <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />
 
         {/* Header */}
         <div
+          className="login-card-header"
           style={{
             padding: '24px 24px 18px',
             background: 'var(--fr8x-background)',
@@ -268,7 +249,7 @@ export default function LoginPage() {
         </div>
 
         {/* Body */}
-        <div style={{ padding: '24px' }}>
+        <div className="login-card-body" style={{ padding: '24px' }}>
           {sessionNotice && !errorMessage && (
             <div
               style={{
@@ -319,7 +300,9 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             {/* User ID / Email */}
             <div className="field" style={{ marginBottom: '14px' }}>
-              <label>User ID or Corporate Email</label>
+              <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                User ID or Corporate Email
+              </label>
               <input
                 type="text"
                 className="input"
@@ -327,21 +310,23 @@ export default function LoginPage() {
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
                 autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
                 required
               />
             </div>
 
             {/* Password */}
-            <div className="field" style={{ marginBottom: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <label>Password</label>
+            <div className="field" style={{ marginBottom: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Password</label>
                 <a
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
                     setIsForgotModalOpen(true);
                   }}
-                  style={{ fontSize: '10.5px', color: 'var(--brand)', fontWeight: 600 }}
+                  style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600, padding: '2px 4px' }}
                 >
                   Forgot password?
                 </a>
@@ -352,20 +337,21 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
+                autoCapitalize="none"
                 required
               />
             </div>
 
             {/* Remember Me */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '18px', padding: '2px 0' }}>
               <input
                 id="remember-device"
                 type="checkbox"
                 checked={remember}
                 onChange={(e) => setRemember(e.target.checked)}
-                style={{ width: '14px', height: '14px', cursor: 'pointer' }}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
               />
-              <label htmlFor="remember-device" style={{ fontSize: '11px', color: 'var(--mut)', cursor: 'pointer', margin: 0 }}>
+              <label htmlFor="remember-device" style={{ fontSize: '11.5px', color: 'var(--mut)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
                 Remember me on this device
               </label>
               {/* Live status dot */}
@@ -393,11 +379,11 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              className="btn primary"
-              style={{ width: '100%', height: '38px', fontSize: '13px' }}
+              className="btn primary login-submit-btn"
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               disabled={isLoading}
             >
-              {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={14} /></>}
+              {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={15} /></>}
             </button>
           </form>
         </div>
@@ -428,16 +414,16 @@ export default function LoginPage() {
               gap: '4px',
             }}
           >
-            <ShieldCheck size={12} style={{ color: '#16a34a' }} />
-            <span>Strict One User, One Login policy enforced across all organizations</span>
+            <ShieldCheck size={13} style={{ color: '#16a34a' }} />
+            <span>256-Bit TLS Bank-Grade Encrypted</span>
           </div>
         </div>
       </div>
 
-      {/* Password Reset Modal (Dispatched on 3 invalid attempts or manual request) */}
+      {/* Forgot Password Modal with OTP Workflow */}
       {isForgotModalOpen && (
-        <div className="gf-modal-overlay">
-          <div className="gf-modal-card" style={{ maxWidth: '440px' }}>
+        <div className="gf-modal-backdrop">
+          <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
             <div className="gf-modal-header">
               <div className="gf-modal-title flex items-center gap-2">
                 <KeyRound className="lucide w-4 h-4 text-sky-600" />

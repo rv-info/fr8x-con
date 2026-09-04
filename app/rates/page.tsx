@@ -55,6 +55,7 @@ export default function RatesPage() {
   // Edit mode state for Update button
   const [editingRateId, setEditingRateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
 
   // Rate Detail Modal
   const [selectedRateDetail, setSelectedRateDetail] = useState<RateItem | null>(null);
@@ -984,8 +985,8 @@ Generated via FR8X Freight Exchange
         </div>
       </div>
 
-      {/* Top 4 Metrics Strip */}
-      <div className="grid g4" style={{ marginBottom: '16px' }}>
+      {/* Top 4 Metrics Strip (Desktop) */}
+      <div className="grid g4 rates-desktop-metrics" style={{ marginBottom: '16px' }}>
         <div className="metric">
           <small>Total Active Rates</small>
           <b>{allAvailableRates.length}</b>
@@ -1021,11 +1022,47 @@ Generated via FR8X Freight Exchange
         </div>
       </div>
 
+      {/* Mobile/Tablet Metrics Strip (<1024px) */}
+      <div className="rates-mobile-metrics">
+        <div className="rates-mobile-metric-item">
+          <small>Active Rates</small>
+          <b>{allAvailableRates.length}</b>
+          <span>{rates.length} market · {myRates.length} custom</span>
+        </div>
+        <div className="rates-mobile-metric-item">
+          <small>Global Carriers</small>
+          <b>{new Set(allAvailableRates.map((r) => r.carrier)).size}</b>
+          <span>Maersk, Hapag, CMA, MSC</span>
+        </div>
+        <div className="rates-mobile-metric-item">
+          <small>Expiring (30d)</small>
+          <b style={{ color: 'var(--amber)' }}>
+            {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length}
+          </b>
+          <span>Requires renewal</span>
+        </div>
+        <div className="rates-mobile-metric-item">
+          <small>Compared</small>
+          <b>{comparedRateIds.length}</b>
+          {comparedRateIds.length > 0 ? (
+            <button
+              type="button"
+              onClick={handleExpireSelectedRates}
+              style={{ color: '#b91c1c', fontWeight: 700, fontSize: '9.5px', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0, textAlign: 'left' }}
+            >
+              Expire selection
+            </button>
+          ) : (
+            <span>Tap to compare</span>
+          )}
+        </div>
+      </div>
+
       {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates */}
       <div className={activeTab === 'i' ? 'rateeditor' : 'rateeditor-full'}>
         {/* Left Form: RATES EDITOR available ONLY in My i-Rates tab */}
         {activeTab === 'i' && (
-          <div className="card" style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+          <div className={`card ${!mobileEditorOpen ? 'hidden-on-mobile' : ''}`} style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
             <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
               <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
               <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '0px' }}>My i-Rate</span>
@@ -1181,7 +1218,7 @@ Generated via FR8X Freight Exchange
         {/* Main Table: Rates Matrix */}
         <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
           <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="rates-desktop-tabs" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
               <button
                 className={`tab ${activeTab === 'all' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'all'}
@@ -1230,6 +1267,55 @@ Generated via FR8X Freight Exchange
               )}
             </div>
 
+            {/* Mobile / Tablet Horizontal Scrollable Tab Bar */}
+            <div className="rates-mobile-tabs-scroll">
+              <button
+                type="button"
+                className={`rates-mobile-tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                onClick={() => setActiveTab('all')}
+              >
+                <span>All Rates</span>
+                <span className="rates-mobile-tab-badge">{rates.length + myRates.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`rates-mobile-tab-btn ${activeTab === 'self' ? 'active' : ''}`}
+                onClick={() => setActiveTab('self')}
+              >
+                <span>Self-Posted</span>
+                <span className="rates-mobile-tab-badge">{allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length}</span>
+              </button>
+              <button
+                type="button"
+                className={`rates-mobile-tab-btn ${activeTab === 'i' ? 'active' : ''}`}
+                onClick={() => setActiveTab('i')}
+              >
+                <span>My i-Rates</span>
+                <span className="rates-mobile-tab-badge">{myRates.length}</span>
+              </button>
+              <button
+                type="button"
+                className={`rates-mobile-tab-btn ${activeTab === 'expiring' ? 'active' : ''}`}
+                onClick={() => setActiveTab('expiring')}
+              >
+                <span>Expiring</span>
+                <span className="rates-mobile-tab-badge">{allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length}</span>
+              </button>
+              {comparedRateIds.length > 0 && (
+                <button
+                  type="button"
+                  className="rates-mobile-tab-btn"
+                  style={{ background: '#0284c7', color: '#fff', borderColor: '#0284c7' }}
+                  onClick={() => {
+                    setSelectedRateIdsForBulk(comparedRateIds);
+                    setShowBulkAdjustModal(true);
+                  }}
+                >
+                  <span>⚡ Modify ({comparedRateIds.length})</span>
+                </button>
+              )}
+            </div>
+
             <div className="feed-search-box" style={{ width: '220px' }}>
               <Search size={13} className="search-icon" />
               <input
@@ -1241,6 +1327,9 @@ Generated via FR8X Freight Exchange
               />
             </div>
           </div>
+
+          {/* Desktop full-width rates table fitting screen wide without text wrap */}
+          <div className="rates-desktop-table-container">
 
           {/* Full-width rates table fitting screen wide without text wrap */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
@@ -1470,6 +1559,200 @@ Generated via FR8X Freight Exchange
               ))}
             </div>
           </div>
+        </div>
+        {/* End of Desktop Table Container */}
+
+        {/* Mobile & Tablet Card View (< 1024px) */}
+        <div className="rates-mobile-tablet-view" style={{ padding: '10px 12px' }}>
+          {/* If on My i-Rates tab, show toggleable editor on mobile */}
+          {activeTab === 'i' && (
+            <button
+              type="button"
+              className="mobile-editor-toggle-btn"
+              onClick={() => setMobileEditorOpen(!mobileEditorOpen)}
+            >
+              <span>{mobileEditorOpen ? '▲ Hide Rates Editor' : '▼ Open Rates Editor (+ Add New i-Rate)'}</span>
+            </button>
+          )}
+
+          {filteredRates.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '36px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+              <Search size={28} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>No Matching Rates Found</div>
+              <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+                Try changing search keywords, selecting another carrier, or clearing filters.
+              </p>
+            </div>
+          ) : (
+            <div className="rates-card-grid">
+              {filteredRates.map((rate) => {
+                const isCompared = comparedRateIds.includes(rate.id);
+                const isExpiring = isExpiringSoon(rate.valid);
+                const seqCode = getRateSeq(rate, allAvailableRates.indexOf(rate));
+
+                return (
+                  <div
+                    key={rate.id}
+                    className={`mobile-rate-card ${isCompared ? 'compared' : ''}`}
+                  >
+                    {/* Card Header: Carrier + SP + Type + Status */}
+                    <div className="mobile-rate-card-header">
+                      <div className="mobile-rate-carrier-wrap">
+                        <div className="mobile-rate-carrier-icon">
+                          {rate.carrier.substring(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="mobile-rate-carrier-title">{rate.carrier}</div>
+                          <div className="mobile-rate-sp">{rate.sp}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '3px' }}>
+                        <span
+                          className="badge font-mono"
+                          style={{
+                            fontSize: '9.5px',
+                            background: isExpiring ? '#fef3c7' : '#dcfce7',
+                            color: isExpiring ? '#92400e' : '#15803d',
+                            border: `1px solid ${isExpiring ? '#fde68a' : '#bbf7d0'}`,
+                            borderRadius: '4px',
+                            padding: '2px 6px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {isExpiring ? `EXP: ${rate.valid}` : `VALID: ${rate.valid}`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '9.5px',
+                            fontFamily: 'monospace',
+                            color: '#64748b',
+                            background: '#f1f5f9',
+                            padding: '1px 5px',
+                            borderRadius: '3px',
+                          }}
+                        >
+                          {seqCode}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Port Route Corridor */}
+                    <div className="mobile-rate-corridor">
+                      <div className="mobile-rate-route-line">
+                        <div className="mobile-rate-port" title={rate.por || rate.pol}>
+                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>ORIGIN</small>
+                          <span>{rate.pol.split('(')[0].trim()}</span>
+                        </div>
+
+                        <div className="mobile-rate-arrow-track">
+                          <span className="mobile-rate-tt-badge">{rate.tt || '28 days'}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '2px' }}>
+                            <div style={{ height: '1px', flex: 1, background: '#93c5fd' }} />
+                            <span style={{ fontSize: '11px' }}>➔</span>
+                          </div>
+                        </div>
+
+                        <div className="mobile-rate-port mobile-rate-port-dest" title={rate.fpod || rate.pod}>
+                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>DESTINATION</small>
+                          <span>{rate.pod.split('(')[0].trim()}</span>
+                        </div>
+                      </div>
+
+                      <div className="mobile-rate-route-sub">
+                        <span>Route: <b>{rate.route || 'Direct Ocean'}</b></span>
+                        <span>Category: <b>{rate.rateType || 'Direct Spot'}</b></span>
+                      </div>
+                    </div>
+
+                    {/* Pricing Highlight Grid (20DV & 40HC) */}
+                    <div className="mobile-rate-pricing-grid">
+                      <div className="mobile-rate-price-box box-20">
+                        <div className="mobile-rate-price-label">
+                          <span>20&apos; DV Standard</span>
+                          <span>{rate.d20Type || 'Dry'}</span>
+                        </div>
+                        <div className="mobile-rate-price-val">
+                          ${rate.d20.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 600 }}>USD</span>
+                        </div>
+                        <div className="mobile-rate-price-eq">
+                          ≈ {format(rate.d20)}
+                        </div>
+                      </div>
+
+                      <div className="mobile-rate-price-box box-40">
+                        <div className="mobile-rate-price-label">
+                          <span>40&apos; HC High Cube</span>
+                          <span>{rate.h40Type || 'HC'}</span>
+                        </div>
+                        <div className="mobile-rate-price-val">
+                          ${rate.h40.toLocaleString()} <span style={{ fontSize: '11px', fontWeight: 600 }}>USD</span>
+                        </div>
+                        <div className="mobile-rate-price-eq">
+                          ≈ {format(rate.h40)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Free Time & Conditions */}
+                    <div className="mobile-rate-meta-row">
+                      <span>Free Time: <b style={{ color: '#0f172a' }}>{rate.ft || '14 Days Combined'}</b></span>
+                      {rate.remark && (
+                        <span style={{ color: '#64748b', fontStyle: 'italic', fontSize: '10px' }} className="truncate max-w-[180px]">
+                          {rate.remark}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Action Bar */}
+                    <div className="mobile-rate-actions-bar">
+                      <button
+                        type="button"
+                        className="mobile-rate-action-btn primary"
+                        onClick={() => setSelectedRateDetail(rate)}
+                        title="View Rate Intelligence Dossier"
+                      >
+                        <Eye size={12} />
+                        <span>Dossier</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="mobile-rate-action-btn"
+                        onClick={() => handleOpenEmailModal(rate)}
+                        title="Email Quote"
+                      >
+                        <Mail size={12} />
+                        <span>Email</span>
+                      </button>
+                      <button
+                        type="button"
+                        className={`mobile-rate-action-btn ${isCompared ? 'active-cmp' : ''}`}
+                        onClick={() => handleToggleCompare(rate.id)}
+                        title="Toggle Compare"
+                      >
+                        <ArrowRightLeft size={12} />
+                        <span>{isCompared ? 'Added' : 'Compare'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="mobile-rate-action-btn"
+                        onClick={() => handleCopyQuote(rate, allAvailableRates.indexOf(rate))}
+                        title="Copy Quote Breakdown"
+                      >
+                        <Copy size={12} />
+                        <span>Copy</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Mobile pagination summary */}
+          <div style={{ textAlign: 'center', padding: '12px 8px 4px', fontSize: '11px', color: 'var(--mut)' }}>
+            Showing {filteredRates.length} of {allAvailableRates.length} rates in catalog
+          </div>
+        </div>
         </div>
       </div>
     </div>
