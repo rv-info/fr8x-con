@@ -468,7 +468,7 @@ export default function CreateReverseAuctionPage() {
           <p style={{ fontSize: '13px', color: 'var(--mut)', margin: 0 }}>
             To publish your reverse auction and notify verified forwarders, please select a listing plan. Payment is required at posting.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+          <div className="plans-grid">
             {PLANS.map((plan) => (
               <div
                 key={plan.id}
@@ -823,7 +823,8 @@ export default function CreateReverseAuctionPage() {
                 </button>
               </div>
 
-              <div className="tablewrap">
+              {/* Desktop Equipment Table */}
+              <div className="tablewrap auctions-create-desktop-table">
                 <table className="table">
                   <thead>
                     <tr>
@@ -931,6 +932,135 @@ export default function CreateReverseAuctionPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile / Tablet Container Equipment Cards */}
+              <div className="auctions-create-mobile-cards">
+                {containers.map((row, idx) => (
+                  <div key={row.id} className="auctions-create-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 800, background: '#0f172a', color: '#ffffff', borderRadius: '4px', padding: '2px 6px' }}>
+                          #{idx + 1}
+                        </span>
+                        <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{row.equipmentType.split(' (')[0]}</b>
+                      </div>
+                      {containers.length > 1 && (
+                        <button
+                          type="button"
+                          className="btn danger sm"
+                          style={{ padding: '3px 8px', fontSize: '11px' }}
+                          onClick={() => removeContainerRow(row.id)}
+                        >
+                          <Trash2 size={12} /> Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid g2" style={{ gap: '8px' }}>
+                      <div className="field">
+                        <label>Equipment Type</label>
+                        <select
+                          className="input"
+                          value={row.equipmentType}
+                          onChange={(e) => updateContainerRow(row.id, 'equipmentType', e.target.value)}
+                        >
+                          {FREIGHT_EQUIPMENT.map((eq) => (
+                            <option key={eq} value={eq}>{eq}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="field">
+                        <label>Container Type</label>
+                        <select
+                          className="input"
+                          value={row.containerType}
+                          onChange={(e) => updateContainerRow(row.id, 'containerType', e.target.value as any)}
+                        >
+                          <option value="Standard">Standard</option>
+                          <option value="Reefer">Reefer</option>
+                          <option value="OOG">OOG</option>
+                          <option value="Tank">Tank</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid g2" style={{ gap: '8px' }}>
+                      <div className="field">
+                        <label>Quantity (Units)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          min="1"
+                          value={row.quantity}
+                          onChange={(e) => updateContainerRow(row.id, 'quantity', Number(e.target.value))}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Gross Weight (KG)</label>
+                        <input
+                          type="number"
+                          className="input"
+                          value={row.grossWeight}
+                          onChange={(e) => updateContainerRow(row.id, 'grossWeight', Number(e.target.value))}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid g2" style={{ gap: '8px' }}>
+                      <div className="field">
+                        <label>Pickup Location</label>
+                        <input
+                          className="input"
+                          placeholder="Port CFS / Depot"
+                          value={row.pickupLocation}
+                          onChange={(e) => updateContainerRow(row.id, 'pickupLocation', e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Empty Return Location</label>
+                        <input
+                          className="input"
+                          placeholder="Discharge CY Depot"
+                          value={row.emptyReturnLocation}
+                          onChange={(e) => updateContainerRow(row.id, 'emptyReturnLocation', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid g2" style={{ gap: '8px' }}>
+                      <div className="field">
+                        <label>HS Code</label>
+                        <input
+                          className="input"
+                          placeholder="HS Code"
+                          value={row.hsCode}
+                          onChange={(e) => updateContainerRow(row.id, 'hsCode', e.target.value)}
+                        />
+                      </div>
+                      <div className="field">
+                        <label>Special Equipment / Handling</label>
+                        <select
+                          className="input"
+                          value={row.isSpecial ? 'Yes' : 'No'}
+                          onChange={(e) => updateContainerRow(row.id, 'isSpecial', e.target.value === 'Yes')}
+                        >
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{ width: '100%', padding: '10px', fontWeight: 700, fontSize: '12px', justifyContent: 'center' }}
+                  onClick={addContainerRow}
+                >
+                  <Plus size={14} /> Add Another Container Row
+                </button>
               </div>
             </div>
           </div>

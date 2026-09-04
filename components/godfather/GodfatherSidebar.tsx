@@ -9,7 +9,7 @@ import {
   CreditCard, Receipt, Percent, Scale, Bell, Mail, FileText,
   Key, Sliders, ChevronDown, ChevronRight, ShieldCheck,
   AlertOctagon, LayoutDashboard, Search, Lock, UserX,
-  KeyRound, Smartphone, ShieldAlert, History, Sparkles,
+  KeyRound, Smartphone, ShieldAlert, History, Sparkles, TrendingUp,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -31,6 +31,7 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Auctions & Bids', href: '/godfather/operations/auctions', icon: Gavel },
       { label: 'Rates & Imports', href: '/godfather/operations/rates', icon: DollarSign },
       { label: 'Jobs & Advertisements', href: '/godfather/operations/jobs', icon: Briefcase },
+      { label: 'Ads Reports & Algorithm', href: '/godfather/operations/ads', icon: TrendingUp },
       { label: 'Master Data Management', href: '/godfather/operations/master-data', icon: Database },
     ],
   },

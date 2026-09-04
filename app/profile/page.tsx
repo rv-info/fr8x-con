@@ -106,6 +106,21 @@ export default function ProfilePage() {
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [showKycModal, setShowKycModal] = useState(false);
 
+  // Edit Identity & Company Link State (User Requirements 9 & 10)
+  const [showEditIdentityModal, setShowEditIdentityModal] = useState(false);
+  const [editFirstName, setEditFirstName] = useState(user.firstName);
+  const [editLastName, setEditLastName] = useState(user.lastName);
+  const [editEmail, setEditEmail] = useState(user.email);
+  const [editMobile, setEditMobile] = useState(user.mobile);
+  const [editDesignation, setEditDesignation] = useState(user.designation);
+  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl || '/profile-avatar.png');
+  const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
+  const [isChangingCompany, setIsChangingCompany] = useState(false);
+  const [transferTargetCompany, setTransferTargetCompany] = useState('');
+  const [transferTargetEmail, setTransferTargetEmail] = useState('');
+  const [transferMethod, setTransferMethod] = useState<'self' | 'godfather'>('self');
+  const [transferReason, setTransferReason] = useState('Change of Employer / Corporate Reorganization');
+
   // Privacy controls per section
   const [expPrivacy, setExpPrivacy] = useState<'public' | 'network' | 'private'>('public');
   const [eduPrivacy, setEduPrivacy] = useState<'public' | 'network' | 'private'>('public');
@@ -734,19 +749,43 @@ export default function ProfilePage() {
             <Share2 size={14} /> Share
           </button>
           <button
-            className={`btn ${isEditMode ? 'primary' : 'secondary'}`}
+            className="btn primary"
             onClick={() => {
-              if (isEditMode) {
-                handleSaveProfile();
-              } else {
-                setIsEditMode(true);
-              }
+              setEditFirstName(user.firstName);
+              setEditLastName(user.lastName);
+              setEditEmail(user.email);
+              setEditMobile(user.mobile);
+              setEditDesignation(user.designation);
+              setEditAvatarUrl(avatarUrl || user.avatarUrl || '/profile-avatar.png');
+              setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
+              setIsChangingCompany(false);
+              setTransferTargetCompany('');
+              setTransferTargetEmail('');
+              setShowEditIdentityModal(true);
             }}
           >
-            {isEditMode ? <><Save size={14} /> Save Changes</> : <><Edit2 size={14} /> Edit Identity</>}
+            <Edit2 size={14} /> Edit Identity
           </button>
         </div>
       </div>
+
+      {/* Corporate Transfer Status Banner if Pending Godfather Review */}
+      {user.companyTransferStatus === 'pending_godfather_approval' && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Building2 size={18} color="#d97706" />
+            <div>
+              <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#92400e' }}>
+                Corporate Affiliation Transfer Pending Godfather Review
+              </div>
+              <div style={{ fontSize: '11px', color: '#b45309' }}>
+                Requested transfer to <b>{user.pendingCompany}</b> with corporate email <b>{user.pendingEmail}</b>. Docket Ticket: <code>{user.transferRequestId}</code>
+              </div>
+            </div>
+          </div>
+          <span className="badge amber" style={{ fontSize: '10.5px' }}>Under Godfather Audit</span>
+        </div>
+      )}
 
       {/* Executive Hero Banner Card with Profile Picture & Company Logo Uploads */}
       <div
@@ -1417,7 +1456,7 @@ export default function ProfilePage() {
                 <label>GSTN Identification (15 Digits) <span className="req">*</span></label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={gstn}
                   onChange={(e) => setGstn(e.target.value.toUpperCase())}
                   placeholder="27AAAAA0000A1Z5"
@@ -1428,7 +1467,7 @@ export default function ProfilePage() {
                 <label>Income Tax PAN (10 Characters) <span className="req">*</span></label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={pan}
                   onChange={(e) => setPan(e.target.value.toUpperCase())}
                   placeholder="AAAAA0000A"
@@ -1442,9 +1481,9 @@ export default function ProfilePage() {
                 <label>Import Export Code (IEC) <span className="req">*</span></label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={iec}
-                  onChange={(e) => setIec(e.target.value)}
+                  onChange={(e) => setIec(e.target.value.toUpperCase())}
                   placeholder="0388129941"
                   required
                 />
@@ -1453,9 +1492,9 @@ export default function ProfilePage() {
                 <label>MTO License Registration (DG Shipping)</label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={mto}
-                  onChange={(e) => setMto(e.target.value)}
+                  onChange={(e) => setMto(e.target.value.toUpperCase())}
                   placeholder="MTO/DGS/2024/9912"
                 />
               </div>
@@ -1466,9 +1505,10 @@ export default function ProfilePage() {
                 <label>Freight Forwarder Association Network</label>
                 <input
                   className="input"
+                  style={{ textTransform: 'uppercase' }}
                   value={associationName}
-                  onChange={(e) => setAssociationName(e.target.value)}
-                  placeholder="e.g. WCA, FIATA, IATA, AMTOI..."
+                  onChange={(e) => setAssociationName(e.target.value.toUpperCase())}
+                  placeholder="E.G. WCA, FIATA, IATA, AMTOI..."
                 />
                 <small style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
                   Canonical Association: <b style={{ color: 'var(--brand)' }}>{normalizeAssociationName(associationName)}</b>
@@ -1478,10 +1518,10 @@ export default function ProfilePage() {
                 <label>Association Membership ID</label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={associationId}
-                  onChange={(e) => setAssociationId(e.target.value)}
-                  placeholder="e.g. WCA-98124"
+                  onChange={(e) => setAssociationId(e.target.value.toUpperCase())}
+                  placeholder="E.G. WCA-98124"
                 />
               </div>
             </div>
@@ -1491,9 +1531,9 @@ export default function ProfilePage() {
                 <label>IATA Cargo Code</label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={iataCode}
-                  onChange={(e) => setIataCode(e.target.value)}
+                  onChange={(e) => setIataCode(e.target.value.toUpperCase())}
                   placeholder="14-3-8821"
                 />
               </div>
@@ -1501,9 +1541,9 @@ export default function ProfilePage() {
                 <label>FIATA Registration Number</label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={fiataReg}
-                  onChange={(e) => setFiataReg(e.target.value)}
+                  onChange={(e) => setFiataReg(e.target.value.toUpperCase())}
                   placeholder="FIATA-IND-2024-918"
                 />
               </div>
@@ -1514,9 +1554,9 @@ export default function ProfilePage() {
                 <label>US Federal Maritime Commission (FMC)</label>
                 <input
                   className="input"
-                  style={{ fontFamily: 'var(--font-mono)' }}
+                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
                   value={fmcNumber}
-                  onChange={(e) => setFmcNumber(e.target.value)}
+                  onChange={(e) => setFmcNumber(e.target.value.toUpperCase())}
                   placeholder="FMC-OTI-024881"
                 />
               </div>
@@ -1553,6 +1593,285 @@ export default function ProfilePage() {
               </button>
               <button type="submit" className="btn primary">
                 <Check size={13} /> Save Statutory KYC
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* MODAL: EDIT IDENTITY, PHOTO, LOGO, USER NAME, EMAIL & COMPANY LINK (User Requirements 9 & 10) */}
+      {showEditIdentityModal && (
+        <Modal
+          isOpen={showEditIdentityModal}
+          onClose={() => setShowEditIdentityModal(false)}
+          title="Edit Member Identity, Credentials & Corporate Link"
+          maxWidth="680px"
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+
+              let newCompanyTransferStatus = user.companyTransferStatus || 'none';
+              let newPendingCompany = user.pendingCompany;
+              let newPendingEmail = user.pendingEmail;
+              let newTransferRequestId = user.transferRequestId;
+              let finalCompany = user.company;
+              let finalEmail = editEmail;
+
+              if (isChangingCompany && transferTargetCompany.trim()) {
+                if (transferMethod === 'self') {
+                  finalCompany = transferTargetCompany.trim();
+                  finalEmail = transferTargetEmail.trim() || editEmail;
+                  newCompanyTransferStatus = 'verified';
+                  setCompany(finalCompany);
+                  toast(`✓ Company transferred to ${finalCompany} and login email updated via Domain Self-Link.`);
+                } else {
+                  const ticket = `TRF-CO-${Math.floor(1000 + Math.random() * 9000)}`;
+                  newCompanyTransferStatus = 'pending_godfather_approval';
+                  newPendingCompany = transferTargetCompany.trim();
+                  newPendingEmail = transferTargetEmail.trim() || editEmail;
+                  newTransferRequestId = ticket;
+                  toast(`Corporate transfer docket ${ticket} submitted for Godfather Governance review.`);
+                }
+              }
+
+              // Update local state
+              setFirstName(editFirstName);
+              setLastName(editLastName);
+              setMobile(editMobile);
+              setDesignation(editDesignation);
+              setAvatarUrl(editAvatarUrl);
+              setCompanyLogoUrl(editCompanyLogoUrl);
+
+              updateUser({
+                firstName: editFirstName,
+                lastName: editLastName,
+                displayName: `${editFirstName} ${editLastName}`.trim(),
+                email: finalEmail,
+                mobile: editMobile,
+                designation: editDesignation,
+                company: finalCompany,
+                avatarUrl: editAvatarUrl || undefined,
+                companyLogoUrl: editCompanyLogoUrl || undefined,
+                companyTransferStatus: newCompanyTransferStatus as any,
+                pendingCompany: newPendingCompany,
+                pendingEmail: newPendingEmail,
+                transferRequestId: newTransferRequestId,
+                transferSubmittedAt: isChangingCompany ? new Date().toISOString() : user.transferSubmittedAt,
+              });
+
+              setShowEditIdentityModal(false);
+              toast('Enterprise identity credentials updated successfully.');
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+          >
+            {/* 1. Visual Identity & Brand Assets (Profile Picture + Company Logo) */}
+            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '10px' }}>
+                1. Visual Identity & Brand Assets
+              </span>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                {/* Profile Photo */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>User Profile Photo</span>
+                  <div style={{ position: 'relative', width: '64px', height: '64px' }}>
+                    {editAvatarUrl ? (
+                      <img src={editAvatarUrl} alt="Profile" style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--brand)' }} />
+                    ) : (
+                      <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#e2e8f0', display: 'grid', placeItems: 'center', fontWeight: 700, color: '#475569' }}>
+                        {editFirstName[0] || 'U'}{editLastName[0] || ''}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <label className="btn secondary sm" style={{ cursor: 'pointer', fontSize: '11px', padding: '4px 8px' }}>
+                      <Camera size={12} /> Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) {
+                            const r = new FileReader();
+                            r.onload = (ev) => setEditAvatarUrl(ev.target?.result as string);
+                            r.readAsDataURL(f);
+                          }
+                        }}
+                      />
+                    </label>
+                    {editAvatarUrl && (
+                      <button type="button" className="btn secondary sm" style={{ fontSize: '11px', padding: '4px 8px', color: '#dc2626' }} onClick={() => setEditAvatarUrl(null)}>
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Company Logo */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '10px', background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>Company Corporate Logo</span>
+                  <div style={{ position: 'relative', width: '64px', height: '64px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {editCompanyLogoUrl ? (
+                      <img src={editCompanyLogoUrl} alt="Logo" style={{ width: '64px', height: '64px', borderRadius: '8px', objectFit: 'contain', border: '1px solid var(--brand)', padding: '2px', background: '#fff' }} />
+                    ) : (
+                      <div style={{ width: '64px', height: '64px', borderRadius: '8px', background: '#f1f5f9', border: '1px dashed var(--brand)', display: 'grid', placeItems: 'center', color: 'var(--mut)' }}>
+                        <Building2 size={24} />
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <label className="btn secondary sm" style={{ cursor: 'pointer', fontSize: '11px', padding: '4px 8px' }}>
+                      <Upload size={12} /> Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) {
+                            const r = new FileReader();
+                            r.onload = (ev) => setEditCompanyLogoUrl(ev.target?.result as string);
+                            r.readAsDataURL(f);
+                          }
+                        }}
+                      />
+                    </label>
+                    {editCompanyLogoUrl && (
+                      <button type="button" className="btn secondary sm" style={{ fontSize: '11px', padding: '4px 8px', color: '#dc2626' }} onClick={() => setEditCompanyLogoUrl(null)}>
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. User Name & Contact Credentials */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                2. User Name & Contact Credentials
+              </span>
+              <div className="grid g2">
+                <div className="field">
+                  <label>First Name <span className="req">*</span></label>
+                  <input className="input" value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} required />
+                </div>
+                <div className="field">
+                  <label>Last Name <span className="req">*</span></label>
+                  <input className="input" value={editLastName} onChange={(e) => setEditLastName(e.target.value)} required />
+                </div>
+              </div>
+
+              <div className="grid g2">
+                <div className="field">
+                  <label>Login Email ID (Primary Auth) <span className="req">*</span></label>
+                  <input className="input" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
+                </div>
+                <div className="field">
+                  <label>Mobile Number (with Country Code) <span className="req">*</span></label>
+                  <input className="input" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="+91 98200 12345" required />
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Job Designation / Role</label>
+                <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="Senior Vice President - Ocean Procurement" />
+              </div>
+            </div>
+
+            {/* 3. Company Link & Affiliation Governance (User Request 10) */}
+            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
+                    3. Enterprise Company Link & Login Affiliation
+                  </span>
+                  <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '2px' }}>
+                    Current Associated Organization: <b style={{ color: 'var(--ink)' }}>{user.company}</b>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className={`btn sm ${isChangingCompany ? 'primary' : 'secondary'}`}
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
+                  onClick={() => setIsChangingCompany(!isChangingCompany)}
+                >
+                  {isChangingCompany ? 'Cancel Switch' : 'Link / Switch Company'}
+                </button>
+              </div>
+
+              {isChangingCompany && (
+                <div style={{ background: '#fff', border: '1px solid var(--line-light)', borderRadius: '6px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--mut)', lineHeight: 1.4 }}>
+                    <b>Enterprise Governance Policy:</b> When switching organizations, your account profile can be transferred to the new company domain, updating your corporate login email ID. Choose between instant domain self-link or submitting for official Godfather regulatory clearance.
+                  </div>
+
+                  <div className="grid g2">
+                    <div className="field">
+                      <label>New Company / Employer Name <span className="req">*</span></label>
+                      <input
+                        className="input"
+                        placeholder="e.g. Hapag-Lloyd AG or Maersk Logistics"
+                        value={transferTargetCompany}
+                        onChange={(e) => setTransferTargetCompany(e.target.value)}
+                        required={isChangingCompany}
+                      />
+                    </div>
+                    <div className="field">
+                      <label>New Corporate Email ID <span className="req">*</span></label>
+                      <input
+                        className="input"
+                        type="email"
+                        placeholder="e.g. arjun.rao@hapag-lloyd.com"
+                        value={transferTargetEmail}
+                        onChange={(e) => setTransferTargetEmail(e.target.value)}
+                        required={isChangingCompany}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="field">
+                    <label>Transfer & Verification Method</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '11px', cursor: 'pointer', padding: '8px', border: transferMethod === 'self' ? '1.5px solid var(--brand)' : '1px solid var(--line-light)', borderRadius: '6px', background: transferMethod === 'self' ? 'rgba(0, 163, 196, 0.05)' : '#fff' }}>
+                        <input
+                          type="radio"
+                          name="transferMethod"
+                          checked={transferMethod === 'self'}
+                          onChange={() => setTransferMethod('self')}
+                        />
+                        <div>
+                          <b>Method 1: Instant Self-Link</b>
+                          <div style={{ fontSize: '10px', color: 'var(--mut)' }}>Verify immediately via corporate email domain match.</div>
+                        </div>
+                      </label>
+
+                      <label style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '11px', cursor: 'pointer', padding: '8px', border: transferMethod === 'godfather' ? '1.5px solid var(--brand)' : '1px solid var(--line-light)', borderRadius: '6px', background: transferMethod === 'godfather' ? 'rgba(0, 163, 196, 0.05)' : '#fff' }}>
+                        <input
+                          type="radio"
+                          name="transferMethod"
+                          checked={transferMethod === 'godfather'}
+                          onChange={() => setTransferMethod('godfather')}
+                        />
+                        <div>
+                          <b>Method 2: Godfather Approval</b>
+                          <div style={{ fontSize: '10px', color: 'var(--mut)' }}>Routes ticket to Godfather Admin for regulatory review.</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button type="button" className="btn secondary" onClick={() => setShowEditIdentityModal(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn primary">
+                <Check size={13} /> Save Identity & Credentials
               </button>
             </div>
           </form>

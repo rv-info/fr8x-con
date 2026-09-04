@@ -111,6 +111,12 @@ export interface UserProfile {
   rechargeRequired?: boolean;
   promotionalPlanGrantedBy?: string;
   promotionalPlanGrantedAt?: string;
+  // Company Affiliation & Transfer Governance
+  companyTransferStatus?: 'none' | 'pending_godfather_approval' | 'verified';
+  pendingCompany?: string;
+  pendingEmail?: string;
+  transferRequestId?: string;
+  transferSubmittedAt?: string;
 }
 
 export interface NestedReply {

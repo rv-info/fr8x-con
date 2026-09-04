@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FR8X Workspace · Offline</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 28px 24px;
+      max-width: 360px;
+      width: 100%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+    }
+    .icon {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid #0284c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      font-size: 24px;
+      color: #38bdf8;
+    }
+    h1 { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    p { font-size: 12px; color: #94a3b8; line-height: 1.5; margin-bottom: 20px; }
+    .btn {
+      display: inline-block;
+      width: 100%;
+      padding: 12px;
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">⚡</div>
+    <h1>Connecting to FR8X Workspace</h1>
+    <p>Waiting for live network connection or local server. Please ensure your device is connected to the internet or local development server.</p>
+    <button class="btn" onclick="window.location.reload();">Retry Live Connection</button>
+    <div class="badge">FR8X Enterprise Mobile Shell · v1.0.0</div>
+  </div>
+</body>
+</html>

@@ -115,19 +115,19 @@ function SingleChatBox({
   return (
     <div className="singlechatwindow">
       {/* Header */}
-      <div className="chathead">
+      <div className="chathead" style={{ padding: '10px 14px', minHeight: '48px' }}>
         <div
           className="userinfo"
           onClick={() => contact && onOpenProfile(contact.name)}
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: 0 }}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}
           title="View profile"
         >
-          <div className="avatar" style={{ width: '24px', height: '24px', padding: 0, overflow: 'hidden' }}>
+          <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden', flexShrink: 0 }}>
             <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           </div>
-          <div style={{ overflow: 'hidden' }}>
-            <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--fr8x-text, #1e293b)', fontWeight: 700, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{contact?.name || 'Contact'}</span>
+          <div style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
+            <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--fr8x-text, #1e293b)', fontWeight: 800, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 800 }}>{contact?.name || 'Contact'}</span>
               {contact?.hasGoldenTick && <GoldenTick />}
             </b>
             <small style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -137,19 +137,22 @@ function SingleChatBox({
           </div>
         </div>
 
-        <div className="ha">
+        <div className="ha" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <button
             onClick={() => contact && onOpenProfile(contact.name)}
             title="Open Profile"
             className="actionicon"
+            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ExternalLink size={13} />
+            <ExternalLink size={14} />
           </button>
-          <button onClick={onMinimize} title="Minimize" className="actionicon">
-            <Minus size={13} />
-          </button>
-          <button onClick={onClose} title="Close" className="actionicon">
-            <X size={13} />
+          <button
+            onClick={onClose}
+            title="Close chat"
+            className="actionicon"
+            style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px', color: '#0f172a' }}
+          >
+            <X size={16} />
           </button>
         </div>
       </div>
@@ -247,14 +250,14 @@ export function TradeChat() {
         personName={selectedProfileName || ''}
       />
 
-      {/* Multi-Window Chat Tray (Docked Bottom Right, offset to the left of launcher when open) */}
+      {/* Multi-Window Chat Tray (Docked Bottom Right on desktop; single full-screen window on mobile) */}
       <div
         className="multichattray"
         style={{
           right: isLauncherOpen ? '348px' : '76px',
         }}
       >
-        {activeWindows.map((win) => (
+        {activeWindows.slice(-1).map((win) => (
           <SingleChatBox
             key={win.contactId}
             contactId={win.contactId}
@@ -266,19 +269,24 @@ export function TradeChat() {
         ))}
       </div>
 
-      {/* Contacts List Launcher Popup */}
-      {isLauncherOpen && (
+      {/* Contacts List Launcher Popup (Hidden when a chat window is active on mobile) */}
+      {isLauncherOpen && activeWindows.length === 0 && (
         <section className="chatlauncherpanel" aria-label="Nexus Communication">
-          <div className="chathead">
-            <MessagesSquare size={17} />
-            <div style={{ flex: 1 }}>
-              <b style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>Nexus</b>
-              <small style={{ display: 'block', fontSize: '9.5px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500 }}>
+          <div className="chathead" style={{ padding: '12px 14px' }}>
+            <MessagesSquare size={18} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <b style={{ color: 'var(--fr8x-text, #1e293b)', fontSize: '13px', fontWeight: 800 }}>Nexus Direct Chat</b>
+              <small style={{ display: 'block', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500 }}>
                 Direct verified participant communication
               </small>
             </div>
-            <button onClick={toggleLauncher} title="Close directory" className="actionicon">
-              <X size={15} />
+            <button
+              onClick={toggleLauncher}
+              title="Close directory"
+              className="actionicon"
+              style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px' }}
+            >
+              <X size={16} />
             </button>
           </div>
 

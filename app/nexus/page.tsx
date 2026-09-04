@@ -571,7 +571,7 @@ export default function NexusPage() {
                 </button>
               )}
 
-              {(user.displayName === selectedTopic.author || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && (
+              {(user.displayName === selectedTopic.author || user.uid === (selectedTopic as any).authorUid) && (
                 <button
                   type="button"
                   className="btn secondary sm"
@@ -615,8 +615,8 @@ export default function NexusPage() {
             </div>
           </div>
 
-          {/* Two-column layout in Full Screen */}
-          <div style={{ display: 'grid', gridTemplateColumns: isTopicFullScreen ? '1.1fr 1fr' : '1fr 1fr', gap: '24px', flex: 1, minHeight: isTopicFullScreen ? 'calc(100vh - 180px)' : '480px' }}>
+          {/* Stacked layout: Topic Post on Top, Responses & Reply Box Below */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', flex: 1, minHeight: '400px' }}>
             {/* Left: Original Post Content or Live Edit Form */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', height: '100%' }}>
               {isEditingTopic ? (
@@ -807,7 +807,7 @@ export default function NexusPage() {
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <small style={{ color: 'var(--faint)', fontSize: '10.5px' }}>{reply.time}</small>
-                          {(reply.author === user.displayName || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && reply.id && (
+                          {(reply.author === user.displayName || reply.authorUid === user.uid) && reply.id && (
                             <button
                               type="button"
                               onClick={() => handleDeleteTopicReply(selectedTopic.id, reply.id!)}
@@ -1145,8 +1145,8 @@ export default function NexusPage() {
         </div>
       </div>
 
-      {/* Top 3 KPI Cards */}
-      <div className="grid g3">
+      {/* Top 3 KPI Cards - Visible on desktop, streamlined to tabs on mobile */}
+      <div className="grid g3 nexus-desktop-kpis">
         <div className="metric">
           <small>Community Discussions</small>
           <b>{topics.length}</b>

@@ -160,6 +160,7 @@ export default function BidRoomPage() {
 
   // Bid Submission Terms Acceptance & Legal Evidence States
   const [confirmTermsAccepted, setConfirmTermsAccepted] = useState(false);
+  const [auctionConditionsAccepted, setAuctionConditionsAccepted] = useState(false);
   const [confirmInformationVerified, setConfirmInformationVerified] = useState(false);
   const [isSubmittingBid, setIsSubmittingBid] = useState(false);
   const [lastSubmittedDocket, setLastSubmittedDocket] = useState<any>(null);
@@ -383,52 +384,36 @@ export default function BidRoomPage() {
       </div>
 
       {/* Enterprise Tab/Button Navigation (Requirement 3) */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '8px',
-          flexWrap: 'wrap',
-          background: '#ffffff',
-          padding: '8px 10px',
-          borderRadius: '10px',
-          border: '1.5px solid var(--line)',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.03)',
-        }}
-      >
+      <div className="bidding-tabs-scroll">
         <button
-          className={`btn ${activeTab === 'console' ? 'primary' : 'secondary'}`}
+          className={`bidding-tab-btn btn ${activeTab === 'console' ? 'primary' : 'secondary'}`}
           onClick={() => setActiveTab('console')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
         >
-          <DollarSign size={14} /> Live Bid Console & Cost Matrix
+          <DollarSign size={14} /> Live Bid Console &amp; Cost Matrix
         </button>
         <button
-          className={`btn ${activeTab === 'specs' ? 'primary' : 'secondary'}`}
+          className={`bidding-tab-btn btn ${activeTab === 'specs' ? 'primary' : 'secondary'}`}
           onClick={() => setActiveTab('specs')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
         >
-          <Box size={14} /> Technical Specifications & Routing
+          <Box size={14} /> Technical Specifications &amp; Routing
         </button>
         <button
-          className={`btn ${activeTab === 'terms' ? 'primary' : 'secondary'}`}
+          className={`bidding-tab-btn btn ${activeTab === 'terms' ? 'primary' : 'secondary'}`}
           onClick={() => setActiveTab('terms')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
         >
-          <Shield size={14} /> Commercial Terms & SLA Clauses
+          <Shield size={14} /> Commercial Terms &amp; SLA Clauses
         </button>
         <button
-          className={`btn ${activeTab === 'ledger' ? 'primary' : 'secondary'}`}
+          className={`bidding-tab-btn btn ${activeTab === 'ledger' ? 'primary' : 'secondary'}`}
           onClick={() => setActiveTab('ledger')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
         >
           <Activity size={14} /> Anonymized Market Ledger
         </button>
         <button
-          className={`btn ${activeTab === 'docs' ? 'primary' : 'secondary'}`}
+          className={`bidding-tab-btn btn ${activeTab === 'docs' ? 'primary' : 'secondary'}`}
           onClick={() => setActiveTab('docs')}
-          style={{ fontSize: '12px', fontWeight: 700 }}
         >
-          <FileText size={14} /> Document Vault & Compliance
+          <FileText size={14} /> Document Vault &amp; Compliance
         </button>
       </div>
 
@@ -442,7 +427,7 @@ export default function BidRoomPage() {
           </div>
 
           {/* Top 5 Information Blocks */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+          <div className="bidding-info-blocks">
             {/* Box 1: AUCTION DETAILS */}
             <div style={{ border: '1.5px solid #cbd5e1', borderRadius: '6px', background: '#ffffff', overflow: 'hidden' }}>
               <div style={{ background: '#334155', color: '#fff', fontSize: '10px', fontWeight: 800, padding: '5px 6px', textAlign: 'center', letterSpacing: '0.5px' }}>AUCTION DETAILS</div>
@@ -602,187 +587,367 @@ export default function BidRoomPage() {
               </div>
             </div>
 
-            <table className="table" style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', minWidth: '1350px' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', color: 'var(--fr8x-text)', borderBottom: '1px solid var(--fr8x-outline)' }}>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '110px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'left', width: '150px', borderRight: '1px solid var(--line-light)' }}>CONTAINER</th>
-                  <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--line-light)' }}>QTY</th>
+            {/* Desktop Rate Matrix Table */}
+            <div className="tablewrap bidding-desktop-matrix">
+              <table className="table" style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', minWidth: '1350px' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', color: 'var(--fr8x-text)', borderBottom: '1px solid var(--fr8x-outline)' }}>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', width: '110px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', width: '150px', borderRight: '1px solid var(--line-light)' }}>CONTAINER</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--line-light)' }}>QTY</th>
 
-                  {/* Ocean Charges Head with Currency */}
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: 800 }}>OCEAN FREIGHT</span>
-                      <select
-                        value={oceanCurrency}
-                        onChange={(e) => setOceanCurrency(e.target.value)}
-                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
-                        title="Ocean Freight Currency"
-                      >
-                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    F/S ({oceanCurrency})
-                  </th>
-
-                  {/* Origin Charges Head with Currency */}
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: 800 }}>ORIGIN TRANSPORT</span>
-                      <select
-                        value={originCurrency}
-                        onChange={(e) => setOriginCurrency(e.target.value)}
-                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
-                        title="Origin Charges Currency"
-                      >
-                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    ORIGIN CLEARANCE ({originCurrency})
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    ORIGIN LOCAL ({originCurrency})
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    ORIGIN ANCILLARY ({originCurrency})
-                  </th>
-
-                  {/* Destination Charges Head with Currency */}
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                      <span style={{ fontWeight: 800 }}>DEST. TRANSPORT</span>
-                      <select
-                        value={destCurrency}
-                        onChange={(e) => setDestCurrency(e.target.value)}
-                        style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
-                        title="Destination Charges Currency"
-                      >
-                        {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
-                    </div>
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    DEST. CLEARANCE ({destCurrency})
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    DEST. LOCAL ({destCurrency})
-                  </th>
-                  <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    DEST. ANCILLARY ({destCurrency})
-                  </th>
-
-                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
-                    ROW TOTAL (USD $)
-                  </th>
-                  <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', fontWeight: 800 }}>
-                    ROW TOTAL (EUR / INR)
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {chargeRows.map((r, i) => {
-                  const lineUSD = getRowLineTotalUSD(r);
-                  const lineEUR = convertUSDTo(lineUSD, 'EUR');
-                  const lineINR = convertUSDTo(lineUSD, 'INR');
-
-                  return (
-                    <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid var(--line-light)' }}>
-                      <td style={{ fontWeight: 700, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
-                        {r.equipment.split(' (')[0]}
-                      </td>
-                      <td style={{ fontWeight: 600, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                    {/* Ocean Charges Head with Currency */}
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontWeight: 800 }}>OCEAN FREIGHT</span>
                         <select
-                          value={r.equipment}
-                          onChange={(e) => {
-                            const newRows = [...chargeRows];
-                            newRows[i].equipment = e.target.value;
-                            setChargeRows(newRows);
-                          }}
-                          style={{ width: '100%', fontSize: '11px', padding: '3px 4px', border: '1px solid var(--fr8x-outline)', background: '#fff', borderRadius: '0px' }}
+                          value={oceanCurrency}
+                          onChange={(e) => setOceanCurrency(e.target.value)}
+                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          title="Ocean Freight Currency"
                         >
-                          <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
-                          <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
-                          <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
-                          <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
-                          <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
-                          <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
-                          <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
-                          <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
-                          <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
-                          <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
-                          <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
-                          <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
-                          <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
-                          <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
-                          <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
+                          {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
-                      </td>
-                      <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
-                        {r.qty}
-                      </td>
+                      </div>
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      F/S ({oceanCurrency})
+                    </th>
 
-                      {/* Ocean inputs */}
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
-                          value={r.oceanFreight} onChange={(e) => updateCharge(i, 'oceanFreight', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
-                          value={r.surcharges} onChange={(e) => updateCharge(i, 'surcharges', Number(e.target.value))} />
-                      </td>
+                    {/* Origin Charges Head with Currency */}
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontWeight: 800 }}>ORIGIN TRANSPORT</span>
+                        <select
+                          value={originCurrency}
+                          onChange={(e) => setOriginCurrency(e.target.value)}
+                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          title="Origin Charges Currency"
+                        >
+                          {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      ORIGIN CLEARANCE ({originCurrency})
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      ORIGIN LOCAL ({originCurrency})
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      ORIGIN ANCILLARY ({originCurrency})
+                    </th>
 
-                      {/* Origin inputs */}
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.originTransport} onChange={(e) => updateCharge(i, 'originTransport', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.originClearance} onChange={(e) => updateCharge(i, 'originClearance', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.originLocal} onChange={(e) => updateCharge(i, 'originLocal', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={0} onChange={() => {}} />
-                      </td>
+                    {/* Destination Charges Head with Currency */}
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                        <span style={{ fontWeight: 800 }}>DEST. TRANSPORT</span>
+                        <select
+                          value={destCurrency}
+                          onChange={(e) => setDestCurrency(e.target.value)}
+                          style={{ background: '#ffffff', fontSize: '10px', fontWeight: 800, border: '1px solid var(--fr8x-outline)', padding: '1px 4px', borderRadius: '0px' }}
+                          title="Destination Charges Currency"
+                        >
+                          {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      DEST. CLEARANCE ({destCurrency})
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      DEST. LOCAL ({destCurrency})
+                    </th>
+                    <th style={{ padding: '6px', textAlign: 'center', background: '#f8fafc', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      DEST. ANCILLARY ({destCurrency})
+                    </th>
 
-                      {/* Destination inputs */}
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.destTransport} onChange={(e) => updateCharge(i, 'destTransport', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.destClearance} onChange={(e) => updateCharge(i, 'destClearance', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={r.destLocal} onChange={(e) => updateCharge(i, 'destLocal', Number(e.target.value))} />
-                      </td>
-                      <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
-                        <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
-                          value={0} onChange={() => {}} />
-                      </td>
+                    <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', borderRight: '1px solid var(--line-light)', fontWeight: 800 }}>
+                      ROW TOTAL (USD $)
+                    </th>
+                    <th style={{ padding: '8px 6px', textAlign: 'right', background: '#f1f5f9', fontWeight: 800 }}>
+                      ROW TOTAL (EUR / INR)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {chargeRows.map((r, i) => {
+                    const lineUSD = getRowLineTotalUSD(r);
+                    const lineEUR = convertUSDTo(lineUSD, 'EUR');
+                    const lineINR = convertUSDTo(lineUSD, 'INR');
 
-                      {/* Total cells */}
-                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
-                        ${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>
-                        €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                    return (
+                      <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid var(--line-light)' }}>
+                        <td style={{ fontWeight: 700, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                          {r.equipment.split(' (')[0]}
+                        </td>
+                        <td style={{ fontWeight: 600, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                          <select
+                            value={r.equipment}
+                            onChange={(e) => {
+                              const newRows = [...chargeRows];
+                              newRows[i].equipment = e.target.value;
+                              setChargeRows(newRows);
+                            }}
+                            style={{ width: '100%', fontSize: '11px', padding: '3px 4px', border: '1px solid var(--fr8x-outline)', background: '#fff', borderRadius: '0px' }}
+                          >
+                            <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
+                            <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
+                            <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
+                            <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
+                            <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
+                            <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
+                            <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
+                            <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
+                            <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
+                            <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
+                            <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
+                            <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
+                            <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
+                            <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
+                            <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
+                          </select>
+                        </td>
+                        <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                          {r.qty}
+                        </td>
+
+                        {/* Ocean inputs */}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
+                            value={r.oceanFreight} onChange={(e) => updateCharge(i, 'oceanFreight', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 700, borderRadius: '0px' }}
+                            value={r.surcharges} onChange={(e) => updateCharge(i, 'surcharges', Number(e.target.value))} />
+                        </td>
+
+                        {/* Origin inputs */}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.originTransport} onChange={(e) => updateCharge(i, 'originTransport', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.originClearance} onChange={(e) => updateCharge(i, 'originClearance', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.originLocal} onChange={(e) => updateCharge(i, 'originLocal', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={0} onChange={() => {}} />
+                        </td>
+
+                        {/* Destination inputs */}
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.destTransport} onChange={(e) => updateCharge(i, 'destTransport', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.destClearance} onChange={(e) => updateCharge(i, 'destClearance', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={r.destLocal} onChange={(e) => updateCharge(i, 'destLocal', Number(e.target.value))} />
+                        </td>
+                        <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                          <input type="number" className="input" style={{ height: '28px', fontSize: '11px', textAlign: 'right', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', borderRadius: '0px' }}
+                            value={0} onChange={() => {}} />
+                        </td>
+
+                        {/* Total cells */}
+                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 800, color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
+                          ${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td style={{ textAlign: 'right', padding: '6px', fontWeight: 700, color: 'var(--fr8x-muted)', fontSize: '10.5px' }}>
+                          €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile / Tablet Touch-Friendly Bidding Matrix */}
+            <div className="bidding-mobile-matrix">
+              {chargeRows.map((r, i) => {
+                const lineUSD = getRowLineTotalUSD(r);
+                const lineEUR = convertUSDTo(lineUSD, 'EUR');
+                const lineINR = convertUSDTo(lineUSD, 'INR');
+
+                return (
+                  <div key={i} className="auction-mobile-card" style={{ padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {/* Header: Equipment, Quantity, Row Total */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 800, background: '#0f172a', color: '#ffffff', borderRadius: '4px', padding: '2px 6px' }}>
+                            {r.qty}x Qty
+                          </span>
+                          <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{r.equipment.split(' (')[0]}</b>
+                        </div>
+                        <small style={{ fontSize: '10.5px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
+                          {r.equipment}
+                        </small>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '9.5px', color: 'var(--mut)', fontWeight: 700, display: 'block' }}>ROW TOTAL</span>
+                        <b style={{ fontSize: '15px', color: 'var(--brand)' }}>${lineUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
+                      </div>
+                    </div>
+
+                    {/* Ocean Freight Section */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>🌊 Ocean Freight &amp; Surcharges</b>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <select
+                            value={oceanCurrency}
+                            onChange={(e) => setOceanCurrency(e.target.value)}
+                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                          >
+                            {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid g2" style={{ gap: '8px' }}>
+                        <div className="field">
+                          <label style={{ fontSize: '10.5px' }}>Base Ocean Freight ({oceanCurrency})</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '34px', fontSize: '12.5px', fontWeight: 700 }}
+                            value={r.oceanFreight}
+                            onChange={(e) => updateCharge(i, 'oceanFreight', Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: '10.5px' }}>Bunker / Surcharges ({oceanCurrency})</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '34px', fontSize: '12.5px', fontWeight: 700 }}
+                            value={r.surcharges}
+                            onChange={(e) => updateCharge(i, 'surcharges', Number(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Origin Local Charges Section */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>📍 Origin Local Charges</b>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <select
+                            value={originCurrency}
+                            onChange={(e) => setOriginCurrency(e.target.value)}
+                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                          >
+                            {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid g3" style={{ gap: '6px' }}>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Transport</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.originTransport}
+                            onChange={(e) => updateCharge(i, 'originTransport', Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Clearance</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.originClearance}
+                            onChange={(e) => updateCharge(i, 'originClearance', Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Local (OTHC)</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.originLocal}
+                            onChange={(e) => updateCharge(i, 'originLocal', Number(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Destination Local Charges Section */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '10px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <b style={{ fontSize: '11.5px', color: 'var(--fr8x-text)' }}>🏁 Destination Local Charges</b>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ fontSize: '10px', color: 'var(--mut)' }}>Curr:</span>
+                          <select
+                            value={destCurrency}
+                            onChange={(e) => setDestCurrency(e.target.value)}
+                            style={{ background: '#ffffff', fontSize: '10.5px', fontWeight: 700, border: '1px solid #cbd5e1', padding: '1px 6px', borderRadius: '4px' }}
+                          >
+                            {Object.keys(availableCurrencies).map((c) => <option key={c} value={c}>{c}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid g3" style={{ gap: '6px' }}>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Transport</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.destTransport}
+                            onChange={(e) => updateCharge(i, 'destTransport', Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Clearance</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.destClearance}
+                            onChange={(e) => updateCharge(i, 'destClearance', Number(e.target.value))}
+                          />
+                        </div>
+                        <div className="field">
+                          <label style={{ fontSize: '10px' }}>Local (DTHC)</label>
+                          <input
+                            type="number"
+                            className="input"
+                            style={{ height: '32px', fontSize: '11.5px' }}
+                            value={r.destLocal}
+                            onChange={(e) => updateCharge(i, 'destLocal', Number(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Row Multi-Currency Subtotal Bar */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f1f5f9', padding: '6px 10px', borderRadius: '6px', fontSize: '11px' }}>
+                      <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>Multi-Currency:</span>
+                      <b style={{ color: 'var(--ink)' }}>
+                        €{lineEUR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR · ₹{lineINR.toLocaleString('en-IN', { maximumFractionDigits: 0 })} INR
+                      </b>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
 
             {/* Live Exchange Engine & Grand Total in 4 Currencies Bar */}
             <div style={{ padding: '10px 14px', background: '#f8fafc', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -797,7 +962,7 @@ export default function BidRoomPage() {
                 <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)', fontWeight: 600 }}>{lastUpdatedTime}</span>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+              <div className="bidding-currency-grid">
                 <div style={{ padding: '8px 10px', background: '#ffffff', border: '1px solid var(--fr8x-outline)', textAlign: 'center' }}>
                   <small style={{ fontSize: '10px', fontWeight: 700, color: 'var(--fr8x-muted)', display: 'block' }}>TOTAL IN USD ($)</small>
                   <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>${grandTotalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b>
@@ -819,7 +984,7 @@ export default function BidRoomPage() {
           </div>
 
           {/* Bottom Grid: Audit + Conditions + Ranks (Lowest Offer L1) + Submission Actions */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 1.6fr 2.3fr', gap: '12px', alignItems: 'stretch' }}>
+          <div className="bidding-footer-grid">
             {/* Audit Box */}
             <div style={{ border: '1px solid var(--fr8x-outline)', borderRadius: '0px', background: '#ffffff', overflow: 'hidden' }}>
               <div style={{ background: '#f8fafc', color: 'var(--fr8x-text)', fontSize: '11px', fontWeight: 800, padding: '6px 8px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)' }}>
@@ -878,11 +1043,31 @@ export default function BidRoomPage() {
 
               <div style={{ padding: '0 10px 10px' }}>
                 <button
-                  className="btn primary sm"
-                  style={{ width: '100%', background: 'var(--fr8x-outline)', borderColor: 'var(--fr8x-outline)', fontSize: '11.5px', fontWeight: 700, borderRadius: '0px' }}
-                  onClick={() => toast('RFQ Conditions & Terms accepted.')}
+                  type="button"
+                  className="btn sm"
+                  style={{
+                    width: '100%',
+                    background: auctionConditionsAccepted ? '#16a34a' : 'var(--fr8x-outline)',
+                    borderColor: auctionConditionsAccepted ? '#16a34a' : 'var(--fr8x-outline)',
+                    color: '#ffffff',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    borderRadius: '0px',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                  }}
+                  onClick={() => {
+                    const next = !auctionConditionsAccepted;
+                    setAuctionConditionsAccepted(next);
+                    setConfirmTermsAccepted(next);
+                    toast(next ? '✓ RFQ Conditions & Terms accepted.' : 'RFQ Conditions Acceptance revoked.');
+                  }}
                 >
-                  <Check size={13} /> ACCEPT ALL CONDITIONS
+                  <Check size={14} strokeWidth={auctionConditionsAccepted ? 3 : 2} />
+                  {auctionConditionsAccepted ? '✓ CONDITIONS ACCEPTED (LOCKED)' : 'ACCEPT ALL CONDITIONS'}
                 </button>
               </div>
             </div>

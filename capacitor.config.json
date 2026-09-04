@@ -1,0 +1,23 @@
+{
+  "appId": "com.fr8x.app",
+  "appName": "FR8X | Global Freight Workspace",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://localhost:3000",
+    "cleartext": true,
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1800,
+      "launchAutoHide": true,
+      "backgroundColor": "#0284c7"
+    }
+  }
+}
