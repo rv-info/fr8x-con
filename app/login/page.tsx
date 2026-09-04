@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2 } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -616,6 +616,79 @@ export default function LoginPage() {
           </div>
         </div>
       )}
+
+      {/* Floating APK Download Pill on Bottom Right */}
+      <a
+        href="/fr8x-workspace-debug.apk"
+        download
+        title="Download FR8X Android Mobile App (.apk)"
+        style={{
+          position: 'fixed',
+          bottom: '22px',
+          right: '22px',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          padding: '9px 15px',
+          background: '#ffffff',
+          border: '1.5px solid #cbd5e1',
+          borderRadius: '50px',
+          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
+          textDecoration: 'none',
+          color: '#0f172a',
+          fontWeight: 700,
+          fontSize: '12px',
+          transition: 'all 0.15s ease',
+          cursor: 'pointer',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = '#16a34a';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 163, 74, 0.2)';
+          e.currentTarget.style.transform = 'translateY(-2px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = '#cbd5e1';
+          e.currentTarget.style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.12)';
+          e.currentTarget.style.transform = 'translateY(0)';
+        }}
+      >
+        <div
+          style={{
+            width: '28px',
+            height: '28px',
+            borderRadius: '50%',
+            background: '#16a34a',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+          }}
+        >
+          <Smartphone size={15} />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
+          <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Download Android App</span>
+          <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>v1.0 (.apk binary)</span>
+        </div>
+        <div
+          style={{
+            width: '24px',
+            height: '24px',
+            borderRadius: '50%',
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            color: '#16a34a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: '4px',
+          }}
+        >
+          <Download size={13} />
+        </div>
+      </a>
     </div>
   );
 }
