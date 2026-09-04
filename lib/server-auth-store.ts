@@ -2,6 +2,8 @@
 // Handles credential validation, failed login attempt tracking, account blocking,
 // daily OTP limits, salted password hashing, privileged session control, and audit logs.
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import { EmailService } from '@/lib/email-service';
 
 export interface ServerUserRecord {
@@ -93,6 +95,7 @@ export interface PasswordResetRecord {
 export interface ActivePasswordResetOTP {
   email: string;
   otp: string;
+  token?: string;
   expiresAt: number; // timestamp in ms
   attempts: number;
   ipAddress?: string;
@@ -118,7 +121,7 @@ export function hashPassword(password: string, salt: string): string {
   return 'sha256_sim_' + Math.abs(hash).toString(16).padStart(8, '0');
 }
 
-// Global in-memory server state (retained across requests in Node.js server lifecycle)
+// Global server state with file-backed persistence to prevent state loss across Next.js reloads
 class ServerSecurityStore {
   private users: Map<string, ServerUserRecord> = new Map();
   private blockedAccounts: Map<string, BlockedAccountRecord> = new Map();
@@ -127,12 +130,84 @@ class ServerSecurityStore {
   private verificationTokens: Map<string, string> = new Map(); // key: token -> email.toLowerCase()
   private resendLimits: Map<string, { count: number; windowStart: number }> = new Map(); // key: email.toLowerCase()
   private activeResetOtps: Map<string, ActivePasswordResetOTP> = new Map(); // key: email.toLowerCase()
+  private resetTokens: Map<string, string> = new Map(); // key: token -> email.toLowerCase()
   private passwordResets: PasswordResetRecord[] = [];
   private securityEvents: SecurityEventRecord[] = [];
   private activeGodfatherSessions: Set<string> = new Set();
 
   constructor() {
     this.seedRealTestingUsers();
+    this.loadPersistedState();
+  }
+
+  /**
+   * Persists registered users, verification tokens, and active reset OTPs to disk
+   * to ensure zero state loss during Next.js dev server reloads or multi-worker evaluation.
+   */
+  public persistState() {
+    try {
+      const dataDir = path.join(process.cwd(), '.knox');
+      if (!fs.existsSync(dataDir)) {
+        fs.mkdirSync(dataDir, { recursive: true });
+      }
+      const dataFile = path.join(dataDir, 'server-auth-data.json');
+      const payload = {
+        users: Array.from(this.users.entries()),
+        emailVerifications: Array.from(this.emailVerifications.entries()),
+        verificationTokens: Array.from(this.verificationTokens.entries()),
+        activeResetOtps: Array.from(this.activeResetOtps.entries()),
+        resetTokens: Array.from(this.resetTokens.entries()),
+        blockedAccounts: Array.from(this.blockedAccounts.entries()),
+      };
+      fs.writeFileSync(dataFile, JSON.stringify(payload, null, 2), 'utf8');
+    } catch (err: any) {
+      console.warn('[ServerSecurityStore] State persistence warning:', err.message);
+    }
+  }
+
+  /**
+   * Loads persisted users and active verification challenges from disk.
+   */
+  public loadPersistedState() {
+    try {
+      const dataFile = path.join(process.cwd(), '.knox', 'server-auth-data.json');
+      if (fs.existsSync(dataFile)) {
+        const raw = fs.readFileSync(dataFile, 'utf8');
+        const data = JSON.parse(raw);
+        if (Array.isArray(data.users)) {
+          for (const [k, u] of data.users) {
+            this.users.set(k, u);
+          }
+        }
+        if (Array.isArray(data.emailVerifications)) {
+          for (const [k, v] of data.emailVerifications) {
+            this.emailVerifications.set(k, v);
+          }
+        }
+        if (Array.isArray(data.verificationTokens)) {
+          for (const [k, t] of data.verificationTokens) {
+            this.verificationTokens.set(k, t);
+          }
+        }
+        if (Array.isArray(data.activeResetOtps)) {
+          for (const [k, r] of data.activeResetOtps) {
+            this.activeResetOtps.set(k, r);
+          }
+        }
+        if (Array.isArray(data.resetTokens)) {
+          for (const [k, t] of data.resetTokens) {
+            this.resetTokens.set(k, t);
+          }
+        }
+        if (Array.isArray(data.blockedAccounts)) {
+          for (const [k, b] of data.blockedAccounts) {
+            this.blockedAccounts.set(k, b);
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn('[ServerSecurityStore] Load persisted state warning:', err.message);
+    }
   }
 
   private seedRealTestingUsers() {
@@ -214,6 +289,16 @@ class ServerSecurityStore {
       this.users.set(u.uid.toLowerCase(), u);
       this.users.set(u.email.toLowerCase(), u);
     }
+  }
+
+  public getUser(emailOrUid: string): ServerUserRecord | undefined {
+    const clean = emailOrUid.trim().toLowerCase();
+    let user = this.users.get(clean);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(clean);
+    }
+    return user;
   }
 
   public registerUser(
@@ -314,8 +399,15 @@ class ServerSecurityStore {
       });
       this.verificationTokens.set(verificationToken, cleanEmail);
 
-      const origin = options?.origin || 'https://con.fr8x.in';
-      const verificationLink = `${origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+      const origin =
+        options?.origin ||
+        process.env.APP_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        'https://con.fr8x.in';
+      const verificationLink = `${origin}/verify-email/${verificationToken}`;
+
+      // Persist state to disk so reload / worker boundary never loses the account
+      this.persistState();
 
       // Dispatch verification email via EmailService (password@fr8x.in)
       EmailService.sendVerificationEmail({
@@ -327,6 +419,8 @@ class ServerSecurityStore {
       }).catch((err) => {
         console.error('[Security] Failed to dispatch verification email:', err.message);
       });
+    } else {
+      this.persistState();
     }
 
     return {
@@ -350,7 +444,11 @@ class ServerSecurityStore {
 
     // If token provided without email, look up email
     if (params.token && !cleanEmail) {
-      const mapped = this.verificationTokens.get(params.token.trim());
+      let mapped = this.verificationTokens.get(params.token.trim());
+      if (!mapped) {
+        this.loadPersistedState();
+        mapped = this.verificationTokens.get(params.token.trim());
+      }
       if (mapped) cleanEmail = mapped;
     }
 
@@ -358,8 +456,15 @@ class ServerSecurityStore {
       return { success: false, error: 'Email address or valid token is required for verification.' };
     }
 
-    const verificationRecord = this.emailVerifications.get(cleanEmail);
-    const user = this.users.get(cleanEmail);
+    let verificationRecord = this.emailVerifications.get(cleanEmail);
+    let user = this.users.get(cleanEmail);
+
+    // If not found in current memory, check persisted file before rejecting
+    if (!user || !verificationRecord) {
+      this.loadPersistedState();
+      user = this.users.get(cleanEmail);
+      verificationRecord = this.emailVerifications.get(cleanEmail);
+    }
 
     if (!user) {
       return { success: false, error: 'User account not found.' };
@@ -438,6 +543,7 @@ class ServerSecurityStore {
 
     this.emailVerifications.delete(cleanEmail);
     this.verificationTokens.delete(verificationRecord.token);
+    this.persistState();
 
     this.addSecurityEvent({
       type: 'ACCOUNT_UNBLOCKED',
@@ -460,10 +566,14 @@ class ServerSecurityStore {
    */
   public resendEmailVerification(
     email: string,
-    origin = 'https://con.fr8x.in'
+    origin?: string
   ): { success: boolean; message: string; remainingAttempts?: number } {
     const cleanEmail = email.trim().toLowerCase();
-    const user = this.users.get(cleanEmail);
+    let user = this.users.get(cleanEmail);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(cleanEmail);
+    }
 
     // Rate limiting
     const now = Date.now();
@@ -509,7 +619,14 @@ class ServerSecurityStore {
       });
       this.verificationTokens.set(verificationToken, cleanEmail);
 
-      const verificationLink = `${origin}/verify-email?token=${verificationToken}&email=${encodeURIComponent(cleanEmail)}`;
+      const baseOrigin =
+        origin ||
+        process.env.APP_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        'https://con.fr8x.in';
+      const verificationLink = `${baseOrigin}/verify-email/${verificationToken}`;
+
+      this.persistState();
 
       EmailService.sendVerificationEmail({
         to: cleanEmail,
@@ -852,9 +969,11 @@ class ServerSecurityStore {
   /**
    * Helper to dispatch secure password reset email via EmailService (password@fr8x.in)
    */
-  private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string) {
-    const origin = 'https://con.fr8x.in';
-    const resetLink = `${origin}/godfather/reset-password?email=${encodeURIComponent(user.email)}`;
+  private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string, token?: string) {
+    const origin = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://con.fr8x.in';
+    const resetLink = token
+      ? `${origin}/reset-password/${token}`
+      : `${origin}/reset-password?email=${encodeURIComponent(user.email)}`;
 
     EmailService.sendPasswordResetEmail({
       to: user.email,
@@ -867,9 +986,16 @@ class ServerSecurityStore {
   }
 
   // ─── Password Reset Requests (Generic non-leaking responses) ──────────────────
-  public requestPasswordReset(email: string, ip = '127.0.0.1'): { success: true; message: string; otpDispatched?: boolean } {
+  public requestPasswordReset(
+    email: string,
+    ip = '127.0.0.1'
+  ): { success: true; message: string; otpDispatched?: boolean; resetToken?: string } {
     const cleanEmail = email.trim().toLowerCase();
-    const user = this.users.get(cleanEmail);
+    let user = this.users.get(cleanEmail);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(cleanEmail);
+    }
 
     this.passwordResets.push({
       id: `pr-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
@@ -879,18 +1005,25 @@ class ServerSecurityStore {
       ipAddress: ip,
     });
 
+    let resetToken: string | undefined;
+
     if (user) {
       const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + 15 * 60 * 1000;
+
       this.activeResetOtps.set(cleanEmail, {
         email: user.email,
         otp: resetOtp,
+        token: resetToken,
         expiresAt,
         attempts: 0,
         ipAddress: ip,
       });
+      this.resetTokens.set(resetToken, cleanEmail);
+      this.persistState();
 
-      this.dispatchPasswordResetEmail(user, resetOtp, ip);
+      this.dispatchPasswordResetEmail(user, resetOtp, ip, resetToken);
 
       this.addSecurityEvent({
         type: 'PASSWORD_RESET_REQUEST',
@@ -898,7 +1031,7 @@ class ServerSecurityStore {
         userEmail: user.email,
         uid: user.uid,
         company: user.company,
-        details: `Password reset requested for valid account: ${user.email}. OTP dispatched.`,
+        details: `Password reset requested for valid account: ${user.email}. Token and OTP dispatched.`,
         ipAddress: ip,
       });
     } else {
@@ -914,8 +1047,9 @@ class ServerSecurityStore {
     // Always return generic response to prevent account enumeration
     return {
       success: true,
-      message: 'If an account matches this email, password reset instructions have been dispatched.',
+      message: 'If an account exists for this email address, password reset instructions have been sent.',
       otpDispatched: !!user,
+      resetToken: process.env.NODE_ENV === 'test' ? resetToken : undefined,
     };
   }
 
@@ -929,12 +1063,20 @@ class ServerSecurityStore {
     ip = '127.0.0.1'
   ): { success: boolean; message?: string; error?: string; user?: ServerUserRecord } {
     const cleanEmail = email.trim().toLowerCase();
-    const user = this.users.get(cleanEmail);
+    let user = this.users.get(cleanEmail);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(cleanEmail);
+    }
     if (!user) {
       return { success: false, error: 'User account not found.' };
     }
 
-    const resetRecord = this.activeResetOtps.get(cleanEmail);
+    let resetRecord = this.activeResetOtps.get(cleanEmail);
+    if (!resetRecord) {
+      this.loadPersistedState();
+      resetRecord = this.activeResetOtps.get(cleanEmail);
+    }
     if (!resetRecord) {
       return {
         success: false,
@@ -944,6 +1086,8 @@ class ServerSecurityStore {
 
     if (Date.now() > resetRecord.expiresAt) {
       this.activeResetOtps.delete(cleanEmail);
+      if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
+      this.persistState();
       return {
         success: false,
         error: 'The password reset OTP code has expired. Please request a new code.',
@@ -954,6 +1098,8 @@ class ServerSecurityStore {
       resetRecord.attempts += 1;
       if (resetRecord.attempts >= 5) {
         this.activeResetOtps.delete(cleanEmail);
+        if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
+        this.persistState();
         return {
           success: false,
           error: 'Too many invalid OTP verification attempts. Please request a new code.',
@@ -965,8 +1111,8 @@ class ServerSecurityStore {
       };
     }
 
-    if (!newPassword || newPassword.trim().length < 6) {
-      return { success: false, error: 'New password must be at least 6 characters long.' };
+    if (!newPassword || newPassword.trim().length < 8) {
+      return { success: false, error: 'New password must be at least 8 characters long.' };
     }
 
     // OTP verified successfully: update password, reset attempts, unlock account
@@ -979,6 +1125,8 @@ class ServerSecurityStore {
 
     this.blockedAccounts.delete(user.uid);
     this.activeResetOtps.delete(cleanEmail);
+    if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
+    this.persistState();
 
     this.addSecurityEvent({
       type: 'ACCOUNT_UNBLOCKED',
@@ -1006,10 +1154,128 @@ class ServerSecurityStore {
   }
 
   /**
+   * Verify Password Reset via Cryptographic URL Token and update credentials
+   */
+  public verifyAndResetPasswordByToken(params: {
+    token: string;
+    newPassword: string;
+    confirmPassword?: string;
+    ip?: string;
+  }): { success: boolean; message?: string; error?: string; user?: ServerUserRecord } {
+    const cleanToken = (params.token || '').trim();
+    if (!cleanToken) {
+      return { success: false, error: 'Password reset token is required.' };
+    }
+
+    if (params.confirmPassword !== undefined && params.newPassword !== params.confirmPassword) {
+      return { success: false, error: 'New password and confirm password do not match.' };
+    }
+
+    if (!params.newPassword || params.newPassword.trim().length < 8) {
+      return { success: false, error: 'Password must be at least 8 characters long.' };
+    }
+
+    let cleanEmail = this.resetTokens.get(cleanToken);
+    if (!cleanEmail) {
+      this.loadPersistedState();
+      cleanEmail = this.resetTokens.get(cleanToken);
+    }
+
+    if (!cleanEmail) {
+      for (const record of this.activeResetOtps.values()) {
+        if (record.token === cleanToken) {
+          cleanEmail = record.email.toLowerCase();
+          break;
+        }
+      }
+    }
+
+    if (!cleanEmail) {
+      return {
+        success: false,
+        error: 'Invalid or expired password reset token. Please request a new link.',
+      };
+    }
+
+    let user = this.users.get(cleanEmail);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(cleanEmail);
+    }
+
+    if (!user) {
+      return { success: false, error: 'User account not found.' };
+    }
+
+    const resetRecord = this.activeResetOtps.get(cleanEmail);
+    if (!resetRecord || (resetRecord.token && resetRecord.token !== cleanToken)) {
+      return {
+        success: false,
+        error: 'This password reset link has already been used or expired.',
+      };
+    }
+
+    if (Date.now() > resetRecord.expiresAt) {
+      this.activeResetOtps.delete(cleanEmail);
+      this.resetTokens.delete(cleanToken);
+      this.persistState();
+      return {
+        success: false,
+        error: 'This password reset link has expired. Please request a new one.',
+      };
+    }
+
+    // Invalidate reset token and OTP immediately (single-use enforced)
+    this.activeResetOtps.delete(cleanEmail);
+    this.resetTokens.delete(cleanToken);
+
+    user.salt = `fr8x_salt_${Date.now()}`;
+    user.passwordHash = hashPassword(params.newPassword.trim(), user.salt);
+    user.status = 'active';
+    user.failedLoginAttempts = 0;
+    user.blockedAt = undefined;
+    user.blockedReason = undefined;
+
+    this.blockedAccounts.delete(user.uid);
+    this.persistState();
+
+    const ip = params.ip || '127.0.0.1';
+    this.addSecurityEvent({
+      type: 'ACCOUNT_UNBLOCKED',
+      severity: 'INFO',
+      userEmail: user.email,
+      uid: user.uid,
+      company: user.company,
+      details: 'Password reset completed and account unblocked via secure URL token.',
+      ipAddress: ip,
+    });
+
+    EmailService.sendPasswordChangedEmail({
+      to: user.email,
+      ipAddress: ip,
+    }).catch((err) => {
+      console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
+    });
+
+    return {
+      success: true,
+      message: 'Your password has been successfully reset! You may now sign in.',
+      user,
+    };
+  }
+
+  /**
    * Helper to retrieve active OTP (for verification/testing)
    */
   public getActiveResetOtp(email: string): string | undefined {
     return this.activeResetOtps.get(email.trim().toLowerCase())?.otp;
+  }
+
+  /**
+   * Helper to retrieve active URL reset token (for verification/testing)
+   */
+  public getActiveResetToken(email: string): string | undefined {
+    return this.activeResetOtps.get(email.trim().toLowerCase())?.token;
   }
 
   public getPasswordResets(): PasswordResetRecord[] {

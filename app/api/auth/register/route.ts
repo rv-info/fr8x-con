@@ -44,7 +44,11 @@ export async function POST(req: NextRequest) {
 
     const uid = body.uid || `u-${Date.now()}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
-    const origin = req.nextUrl.origin;
+    const origin =
+      process.env.APP_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      req.nextUrl.origin ||
+      'https://con.fr8x.in';
 
     // Enforce "One User, One Login" duplicate check and generate email verification challenge
     const result = serverSecurityStore.registerUser(
@@ -93,8 +97,8 @@ export async function POST(req: NextRequest) {
           },
           demoCode:
             process.env.NODE_ENV === 'development' &&
-            !process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL &&
-            !process.env.ZOHO_FLOW_WEBHOOK_URL
+            !process.env.ZEPTO_MAIL_API_KEY &&
+            !process.env.ZOHO_ZEPTOMAIL_TOKEN
               ? result.verificationOtp
               : undefined,
         },

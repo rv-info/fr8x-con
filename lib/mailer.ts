@@ -14,9 +14,9 @@ const ZOHO_SMTP_HOST = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.in';
 const ZOHO_SMTP_PORT = Number(process.env.ZOHO_SMTP_PORT) || 465;
 const ZOHO_SMTP_USER = process.env.ZOHO_SMTP_USER || 'password@fr8x.in';
 const ZOHO_SMTP_PASSWORD = process.env.ZOHO_SMTP_PASSWORD || '';
-const ZOHO_ZEPTOMAIL_TOKEN = process.env.ZOHO_ZEPTOMAIL_TOKEN || '';
-const ZOHO_ZEPTOMAIL_URL = process.env.ZOHO_ZEPTOMAIL_URL || 'https://api.zeptomail.in/v1.1/email';
-const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || 'bounce@bounce.fr8x.in';
+const ZOHO_ZEPTOMAIL_TOKEN = process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN || '';
+const ZOHO_ZEPTOMAIL_URL = process.env.ZEPTO_MAIL_URL || process.env.ZOHO_ZEPTOMAIL_URL || 'https://api.zeptomail.in/v1.1/email';
+const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS = process.env.ZEPTO_MAIL_BOUNCE_ADDRESS || process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || 'bounce@bounce.fr8x.in';
 
 // Singleton nodemailer transporter instance
 let transporter: nodemailer.Transporter | null = null;
@@ -89,9 +89,9 @@ export async function sendViaZeptoMail(options: {
   const correlationId = options.correlationId || generateCorrelationId();
   const logId = `EML-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-  const token = (process.env.ZOHO_ZEPTOMAIL_TOKEN || '').trim();
+  const token = (process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN || '').trim();
   if (!token) {
-    throw new Error('ZOHO_ZEPTOMAIL_TOKEN is not configured in process environment');
+    throw new Error('ZEPTO_MAIL_API_KEY is not configured in process environment');
   }
 
   // Zoho ZeptoMail requires Authorization header to start with "Zoho-enczapikey "

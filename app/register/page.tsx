@@ -651,10 +651,11 @@ export default function RegisterPage() {
                     className="input"
                     style={{ fontSize: '20px', letterSpacing: '6px', textAlign: 'center', height: '44px' }}
                     maxLength={6}
-                    placeholder="492815"
+                    placeholder="••••••"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                     required
+                    disabled={isSubmitting}
                   />
                   {devCode && (
                     <small
@@ -683,10 +684,32 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   className="btn primary"
-                  style={{ width: '100%', height: '38px', fontSize: '13px' }}
+                  disabled={isSubmitting}
+                  style={{ width: '100%', height: '38px', fontSize: '13px', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  Verify OTP & Activate Workspace
+                  {isSubmitting ? 'Verifying Code...' : 'Verify OTP & Activate Workspace'}
                 </button>
+
+                <div style={{ textAlign: 'center', marginTop: '12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep('form');
+                      setErrorMessage('');
+                    }}
+                    disabled={isSubmitting}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--brand)',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    ← Back to Edit Registration Details
+                  </button>
+                </div>
               </form>
             </div>
           </div>
