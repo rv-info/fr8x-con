@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -82,18 +82,18 @@ const NAV_SECTIONS: NavSection[] = [
 export function GodfatherSidebar() {
   const pathname = usePathname();
   const { operator, operatorsList, switchOperator, environment, setEnvironment } = useGodfatherAuth();
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
-    Operations: true,
-    'Trust & Safety': true,
-    'Security & Auth': true,
-    'Commerce & Accounting': true,
-    'Platform & Governance': true,
-  });
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
 
   const toggleSection = (title: string) => {
     setOpenSections((prev) => ({ ...prev, [title]: prev[title] === false }));
   };
+
+  // Keep navigation calm: expand only the section containing the current page.
+  useEffect(() => {
+    const activeSection = NAV_SECTIONS.find((section) => section.items.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)));
+    if (activeSection) setOpenSections((prev) => ({ ...prev, [activeSection.title]: true }));
+  }, [pathname]);
 
   return (
     <aside className="gf-sidebar" style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>

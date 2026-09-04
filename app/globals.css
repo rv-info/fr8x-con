@@ -4129,14 +4129,65 @@ textarea.input {
 }
 
 .gf-nav-link.active {
-  background: var(--gf-brand-soft);
-  color: var(--gf-brand-dark);
-  font-weight: 750;
-  border-left-color: var(--gf-brand);
+  background: #0f4c81;
+  color: #ffffff;
+  font-weight: 800;
+  border-left-color: #38bdf8;
+  box-shadow: inset 0 0 0 1px #0b3b64, 0 1px 2px rgba(15, 76, 129, .18);
 }
 
 .gf-nav-link.active .lucide {
-  color: var(--gf-brand-dark);
+  color: #7dd3fc;
+}
+
+.gf-nav-link.active::after {
+  content: 'CURRENT';
+  margin-left: auto;
+  font-size: 8px;
+  letter-spacing: .06em;
+  color: #bae6fd;
+}
+
+/* ========================================================================== */
+/* GODFATHER WHITE ADMIN CONSOLE — hierarchy-first, data-dense, responsive    */
+/* ========================================================================== */
+.gf-app-layout { background: #f4f7fb; color: #182230; }
+.gf-sidebar-container { background: #fff; border-right: 1px solid #d9e2ef; box-shadow: 1px 0 0 rgba(15, 76, 129, .04); }
+.gf-sidebar { background: #fff; }
+.gf-sidebar-header { background: linear-gradient(180deg, #fff 0%, #f8fbff 100%) !important; }
+.gf-sidebar-nav { padding: 10px !important; }
+.gf-nav-section-header { color: #5f7188 !important; background: #f6f9fc !important; border: 1px solid #edf2f7 !important; margin-bottom: 3px; }
+.gf-nav-link { border-radius: 5px; height: 34px; color: #334155; font-size: 12px; }
+.gf-nav-link:hover { background: #eef6ff; color: #0f4c81; }
+.gf-main-container { background: #f4f7fb; }
+.gf-topbar { background: rgba(255,255,255,.96); border-bottom: 1px solid #d9e2ef; box-shadow: 0 1px 2px rgba(15,23,42,.03); }
+.gf-content-viewport { padding: 18px 22px 36px; }
+.gf-page-header { background: #fff; border: 1px solid #d9e2ef; border-left: 4px solid #0f4c81; padding: 15px 18px; margin-bottom: 14px; box-shadow: 0 1px 2px rgba(15,23,42,.03); }
+.gf-page-title { color: #102a43; font-size: 18px; letter-spacing: -.01em; }
+.gf-page-subtitle { color: #62748a; font-size: 12px; margin-top: 4px; }
+.gf-card { border: 1px solid #d9e2ef; border-radius: 5px; box-shadow: 0 1px 2px rgba(15,23,42,.035); background: #fff; }
+.gf-card-header { min-height: 40px; padding: 9px 13px; background: #f8fbfe; border-bottom-color: #d9e2ef; }
+.gf-card-title { color: #102a43; font-size: 11px; letter-spacing: .055em; }
+.gf-card-body { padding: 14px; }
+.gf-table-container,.gf-table-wrap { border: 1px solid #d9e2ef; border-radius: 5px; background: #fff; }
+.gf-table thead th,.gf-table th { background: #eaf1f8; color: #35516e; border-bottom: 1px solid #c7d6e6; font-size: 10px; font-weight: 800; letter-spacing: .045em; }
+.gf-table tbody tr:nth-child(even) td { background: #fbfdff; }
+.gf-table tbody tr:hover td { background: #eef6ff; }
+.gf-table td { border-bottom-color: #e3ebf3; color: #263b53; }
+.gf-btn,.gf-btn-primary,.gf-btn-secondary { border-radius: 4px; min-height: 32px; font-weight: 700; }
+.gf-btn-primary { background: #0f4c81; border-color: #0f4c81; }
+.gf-btn-primary:hover { background: #0b3b64; }
+.gf-badge { border-radius: 3px; font-weight: 800; letter-spacing: .03em; }
+@media (max-width: 1024px) { .gf-content-viewport { padding: 14px 14px 82px; } }
+@media (max-width: 640px) {
+  .gf-content-viewport { padding: 10px 9px 76px; }
+  .gf-page-header { padding: 11px; margin-bottom: 10px; }
+  .gf-page-title { font-size: 15px; }
+  .gf-page-subtitle { font-size: 11px; line-height: 1.4; }
+  .gf-card-body { padding: 10px; }
+  .gf-table { min-width: 680px; font-size: 10px; }
+  .gf-table thead th,.gf-table th { font-size: 9px; padding: 7px 6px; }
+  .gf-table td { padding: 7px 6px; }
 }
 
 .gf-nav-section {
