@@ -150,6 +150,104 @@ const WORKSPACE_CONTACTS: WorkspaceContact[] = [
   },
 ];
 
+// ── In-Feed Sponsored Ads Models & Datasets ─────────────────────────────────
+interface InFeedCompanyAd {
+  id: string;
+  type: 'company';
+  sponsorName: string;
+  sponsorRole: string;
+  companyName: string;
+  headline: string;
+  body: string;
+  tradeLanes: string[];
+  metrics: { label: string; value: string }[];
+  contactUid: string;
+  verified: boolean;
+}
+
+interface InFeedJobAd {
+  id: string;
+  type: 'job';
+  jobTitle: string;
+  companyName: string;
+  location: string;
+  salaryPackage: string;
+  employmentType: string;
+  experience: string;
+  headline: string;
+  skills: string[];
+  posterEmail: string;
+  contactUid: string;
+}
+
+const IN_FEED_COMPANY_ADS: InFeedCompanyAd[] = [
+  {
+    id: 'ad-comp-1',
+    type: 'company',
+    sponsorName: 'Sarah Jenkins',
+    sponsorRole: 'Key Accounts Director',
+    companyName: 'Maersk Line Direct Services',
+    headline: 'Guaranteed Equipment & Zero-Rollover Priority Slots · India-Europe Directs',
+    body: 'Lock in priority spot allocations for 20DV & 40HC dry containers from Nhava Sheva (INNSA) & Mundra (INMUN) to Rotterdam and Hamburg. Enjoy 21 days free detention and instant digital gate-in approval.',
+    tradeLanes: ['Nhava Sheva ➔ Rotterdam', 'Mundra ➔ Hamburg', 'Pipavav ➔ Felixstowe'],
+    metrics: [
+      { label: 'On-Time SLA', value: '98.6%' },
+      { label: 'Available TEUs', value: '140+ TEU' },
+      { label: 'Equipment Guarantee', value: 'Tier-1 Priority' },
+    ],
+    contactUid: 'u-sarah',
+    verified: true,
+  },
+  {
+    id: 'ad-comp-2',
+    type: 'company',
+    sponsorName: 'Capt. Kiran Rao',
+    sponsorRole: 'VP Middle East & Indian Ocean',
+    companyName: 'Hapag-Lloyd Ocean Express',
+    headline: 'Express Gulf & Red Sea Shuttle · 4 Days Rapid Transit to Jebel Ali',
+    body: 'Daily feeder frequency with guaranteed reefer plugs and pharmaceutical cold chain certification. Competitive spot freight matrices with zero destination congestion surcharges.',
+    tradeLanes: ['Mundra ➔ Jebel Ali', 'Nhava Sheva ➔ Dammam', 'Cochin ➔ Salalah'],
+    metrics: [
+      { label: 'Transit Time', value: '4 Days' },
+      { label: 'Detention Free', value: '24 Days' },
+      { label: 'Reefer Monitoring', value: '24/7 IoT' },
+    ],
+    contactUid: 'u-kiran',
+    verified: true,
+  },
+];
+
+const IN_FEED_JOB_ADS: InFeedJobAd[] = [
+  {
+    id: 'ad-job-1',
+    type: 'job',
+    jobTitle: 'Senior Ocean Freight Pricing & Trade Lead',
+    companyName: 'Atlas Global Logistics Pvt. Ltd.',
+    location: 'Mumbai (BKC Hub) · Hybrid',
+    salaryPackage: '₹18,00,000 – ₹24,00,000 LPA + Quarterly Incentives',
+    employmentType: 'Full-time',
+    experience: '5–8 Years Maritime Experience',
+    headline: 'Urgently Hiring: Lead containerized freight procurement across Asia-Europe lanes',
+    skills: ['FCL Spot Procurement', 'Carrier Space Contracts', 'P&L Management', 'UN/LOCODE'],
+    posterEmail: 'careers@atlaslogistics.com',
+    contactUid: 'u-arjun',
+  },
+  {
+    id: 'ad-job-2',
+    type: 'job',
+    jobTitle: 'Regional Port Operations & Demurrage Manager',
+    companyName: 'Pacific Star Liner Agency',
+    location: 'Mundra / Ahmedabad · On-site',
+    salaryPackage: '₹14,00,000 – ₹19,00,000 LPA',
+    employmentType: 'Full-time',
+    experience: '4–7 Years Port/Terminal Ops',
+    headline: 'High-Impact Role: Oversee container turnaround, terminal dwell time and CHA SLA delivery',
+    skills: ['Port Dwell Management', 'Demurrage Mitigation', 'ICEGATE Customs', 'Terminal Liaison'],
+    posterEmail: 'talent@pacificstarshipping.com',
+    contactUid: 'u-michael',
+  },
+];
+
 // ── AI Job Requirements Suggestion Component ─────────────────────────────────
 const AI_SUGGESTION_CATEGORIES: { label: string; color: string; chips: string[] }[] = [
   {
@@ -306,7 +404,7 @@ export default function FeedsPage() {
 
   // Navigation & Surface State
   const [activeSurface, setActiveSurface] = useState<FeedSurface>('home');
-  const [visiblePostCount, setVisiblePostCount] = useState(12);
+  const [visiblePostCount, setVisiblePostCount] = useState(25);
   const [selectedPostType, setSelectedPostType] = useState<string>('all');
   const [feedSearch, setFeedSearch] = useState('');
   const [showAllSearchResults, setShowAllSearchResults] = useState(false);
@@ -1620,13 +1718,14 @@ export default function FeedsPage() {
             </p>
           </div>
         ) : (
-          displayedPosts.map((post) => {
+          displayedPosts.map((post, postIndex) => {
             const isOwner = post.authorUid === user.uid;
             const isEditing = editingPostId === post.id;
             const postTypeConfig = POST_TYPE_LABELS[post.postType || 'general'] || POST_TYPE_LABELS.general;
 
             return (
-              <article key={post.id} className="card post-card" style={{ marginBottom: '16px', padding: '20px 22px' }}>
+              <React.Fragment key={post.id}>
+                <article className="card post-card" style={{ marginBottom: '16px', padding: '20px 22px' }}>
                 {/* Header */}
                 <div className="post-header" style={{ marginBottom: '12px' }}>
                   <div
@@ -2057,8 +2156,291 @@ export default function FeedsPage() {
                   </div>
                 )}
               </article>
-            );
-          })
+
+              {/* In-Feed Ads Injection Algorithm: Shows Company or Job Ad after every 10 posts */}
+              {((postIndex + 1) % 10 === 0) && (() => {
+                const adIndex = Math.floor((postIndex + 1) / 10) - 1;
+                const isCompany = adIndex % 2 === 0;
+
+                if (isCompany) {
+                  const companyAd = IN_FEED_COMPANY_ADS[adIndex % IN_FEED_COMPANY_ADS.length];
+                  const adTitle = (adIndex === 0 && bookedSlot1) ? bookedSlot1.headline : companyAd.headline;
+                  const adCompany = (adIndex === 0 && bookedSlot1) ? bookedSlot1.businessName : companyAd.companyName;
+                  const adBody = (adIndex === 0 && bookedSlot1) ? (bookedSlot1.description || companyAd.body) : companyAd.body;
+
+                  return (
+                    <div
+                      key={`ad-comp-${postIndex}`}
+                      className="card in-feed-ad-card"
+                      style={{
+                        marginBottom: '16px',
+                        padding: '16px 18px',
+                        background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 60%, #e0f2fe 100%)',
+                        border: '1.5px solid #0284c7',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 14px rgba(2, 132, 199, 0.12)',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              background: '#0284c7',
+                              color: '#ffffff',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              letterSpacing: '0.06em',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Sponsored Partner Showcase
+                          </span>
+                          <span style={{ fontSize: '10.5px', color: '#0369a1', fontWeight: 600 }}>
+                            ✦ Verified Freight Enterprise
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                          Ad · Direct Liner Placement
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                        <div
+                          style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            background: 'linear-gradient(135deg, #0369a1 0%, #0284c7 100%)',
+                            color: '#ffffff',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 800,
+                            fontSize: '13px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {adCompany.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <b style={{ fontSize: '13.5px', color: '#0f172a' }}>{adCompany}</b>
+                            <GoldenTick size={14} />
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#64748b' }}>
+                            {companyAd.sponsorName} · {companyAd.sponsorRole}
+                          </div>
+                        </div>
+                      </div>
+
+                      <b style={{ display: 'block', fontSize: '13px', color: '#0f172a', marginBottom: '5px', lineHeight: 1.35 }}>
+                        {adTitle}
+                      </b>
+                      <p style={{ fontSize: '11.5px', color: '#334155', lineHeight: 1.45, marginBottom: '10px' }}>
+                        {adBody}
+                      </p>
+
+                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        {companyAd.tradeLanes.map((lane) => (
+                          <span
+                            key={lane}
+                            style={{
+                              background: '#e0f2fe',
+                              color: '#0369a1',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #bae6fd',
+                            }}
+                          >
+                            {lane}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(3, 1fr)',
+                          gap: '8px',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid #bae6fd',
+                          borderRadius: '6px',
+                          padding: '8px 10px',
+                          marginBottom: '12px',
+                          textAlign: 'center',
+                        }}
+                      >
+                        {companyAd.metrics.map((m) => (
+                          <div key={m.label}>
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#0284c7' }}>{m.value}</div>
+                            <div style={{ fontSize: '9px', color: '#64748b', marginTop: '1px' }}>{m.label}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn primary sm"
+                          style={{
+                            background: '#0284c7',
+                            borderColor: '#0284c7',
+                            fontSize: '11px',
+                            padding: '5px 12px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                          }}
+                          onClick={() => {
+                            openChatWith(companyAd.contactUid, {
+                              type: 'company',
+                              id: companyAd.id,
+                              title: `Inquiry: ${adCompany}`,
+                            });
+                          }}
+                        >
+                          <MessageCircle size={12} /> Connect on Trade Chat
+                        </button>
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          style={{ fontSize: '11px', padding: '5px 12px' }}
+                          onClick={() => {
+                            toast(`Rate allocation inquiry sent to ${adCompany}. Priority spot response enabled.`);
+                          }}
+                        >
+                          Request Route Allocation
+                        </button>
+                      </div>
+                    </div>
+                  );
+                } else {
+                  const jobAd = IN_FEED_JOB_ADS[adIndex % IN_FEED_JOB_ADS.length];
+                  return (
+                    <div
+                      key={`ad-job-${postIndex}`}
+                      className="card in-feed-ad-card"
+                      style={{
+                        marginBottom: '16px',
+                        padding: '16px 18px',
+                        background: 'linear-gradient(135deg, #fff7ed 0%, #ffffff 60%, #ffedd5 100%)',
+                        border: '1.5px solid #f97316',
+                        borderRadius: '10px',
+                        boxShadow: '0 4px 14px rgba(249, 115, 22, 0.12)',
+                        position: 'relative',
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            style={{
+                              background: '#f97316',
+                              color: '#ffffff',
+                              fontSize: '9px',
+                              fontWeight: 800,
+                              letterSpacing: '0.06em',
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            Sponsored Maritime Career
+                          </span>
+                          <span style={{ fontSize: '10.5px', color: '#ea580c', fontWeight: 600 }}>
+                            ⚡ Hot Hiring Opening
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '10px', color: '#64748b' }}>
+                          Ad · Verified Employer
+                        </span>
+                      </div>
+
+                      <div style={{ marginBottom: '6px' }}>
+                        <b style={{ fontSize: '13.5px', color: '#0f172a', display: 'block' }}>{jobAd.jobTitle}</b>
+                        <div style={{ fontSize: '11px', color: '#475569', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <b>{jobAd.companyName}</b>
+                          <span>·</span>
+                          <span>{jobAd.location}</span>
+                          <span>·</span>
+                          <span className="badge green" style={{ fontSize: '9px', padding: '1px 5px' }}>{jobAd.employmentType}</span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0', flexWrap: 'wrap' }}>
+                        <span style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#059669', fontSize: '11px', fontWeight: 800, padding: '3px 8px', borderRadius: '4px' }}>
+                          💰 {jobAd.salaryPackage}
+                        </span>
+                        <span style={{ background: '#f1f5f9', color: '#475569', fontSize: '10.5px', fontWeight: 600, padding: '3px 8px', borderRadius: '4px' }}>
+                          ⏳ {jobAd.experience}
+                        </span>
+                      </div>
+
+                      <p style={{ fontSize: '11.5px', color: '#334155', lineHeight: 1.45, marginBottom: '8px' }}>
+                        {jobAd.headline}
+                      </p>
+
+                      <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
+                        {jobAd.skills.map((skill) => (
+                          <span
+                            key={skill}
+                            style={{
+                              background: '#ffedd5',
+                              color: '#c2410c',
+                              fontSize: '10px',
+                              fontWeight: 600,
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              border: '1px solid #fed7aa',
+                            }}
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className="btn primary sm"
+                          style={{
+                            background: '#f97316',
+                            borderColor: '#f97316',
+                            fontSize: '11px',
+                            padding: '5px 14px',
+                          }}
+                          onClick={() => {
+                            toast(`Application submitted successfully for ${jobAd.jobTitle} at ${jobAd.companyName}!`);
+                          }}
+                        >
+                          Quick Apply via FR8X
+                        </button>
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          style={{ fontSize: '11px', padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          onClick={() => {
+                            openChatWith(jobAd.contactUid, {
+                              type: 'job',
+                              id: jobAd.id,
+                              title: `Job Inquiry: ${jobAd.jobTitle}`,
+                            });
+                          }}
+                        >
+                          <MessageCircle size={12} /> Chat with Recruiter
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+              })()}
+            </React.Fragment>
+          );
+        })
         )}
 
         {/* Pagination & Infinite Scroll Trigger */}

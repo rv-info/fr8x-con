@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { verifyPassword } from '@/lib/crypto';
-
-const AUTHORISED_EMAIL = process.env.GODFATHER_OPERATOR_EMAIL?.trim().toLowerCase();
-const PASSWORD_HASH = process.env.GODFATHER_OPERATOR_PASSWORD_HASH;
-const PASSWORD_SALT = process.env.GODFATHER_OPERATOR_PASSWORD_SALT;
+import { getAuthorizedOperatorEmail, verifyOperatorPassword } from '@/lib/godfather/operator-store';
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -20,8 +16,9 @@ export async function POST(req: NextRequest) {
     }
 
     const normEmail = String(email).trim().toLowerCase();
+    const authorizedEmail = getAuthorizedOperatorEmail();
 
-    if (!AUTHORISED_EMAIL || !PASSWORD_HASH || !PASSWORD_SALT || normEmail !== AUTHORISED_EMAIL || !verifyPassword(String(password), PASSWORD_SALT, PASSWORD_HASH)) {
+    if (normEmail !== authorizedEmail || !verifyOperatorPassword(String(password))) {
       return NextResponse.json(
         { error: 'Invalid operator credentials. Please check your email and password.' },
         { status: 401 }
@@ -37,7 +34,7 @@ export async function POST(req: NextRequest) {
       sessionId,
       operator: {
         uid: 'gf-op-godfather',
-        email: AUTHORISED_EMAIL,
+        email: authorizedEmail,
         displayName: 'Chief Administrator',
         role: 'godfather_owner',
       },

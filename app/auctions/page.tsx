@@ -311,8 +311,8 @@ export default function AuctionsPage() {
         </div>
       </div>
 
-      {/* Top KPI Metrics Strip */}
-      <div className="metrics" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+      {/* Top KPI Metrics Strip - Responsive Grid */}
+      <div className="metrics auctions-kpi-metrics">
         <div className="metric">
           <small>Active Live Auctions</small>
           <b>{liveAuctions.length}</b>
@@ -340,69 +340,111 @@ export default function AuctionsPage() {
         </div>
       </div>
 
-      {/* 8-Tab Operational Navigation Bar */}
-      <div className="feed-header-bar" style={{ marginTop: '16px', marginBottom: '14px' }}>
-        <div className="feed-tabs" style={{ flexWrap: 'wrap' }}>
+      {/* 8-Tab Operational Navigation Bar with Improvised Alignment & Zero Wrap */}
+      <div style={{ marginTop: '14px', marginBottom: '14px', background: '#f8fafc', border: '1px solid var(--fr8x-outline, #cbd5e1)', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        {/* Horizontal Scrollable Tabs */}
+        <div className="auctions-tabs-scroll">
           <button
-            className={`feed-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
           >
-            All Overview ({auctions.length})
+            <span>All Overview</span>
+            <span className="auctions-tab-badge">{auctions.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'live' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'live' ? 'active' : ''}`}
             onClick={() => setActiveTab('live')}
           >
-            <Clock size={12} style={{ verticalAlign: '-1px' }} /> Live Bidding ({liveAuctions.length})
+            <Clock size={12} />
+            <span>Live Bidding</span>
+            <span className="auctions-tab-badge" style={{ background: activeTab === 'live' ? 'rgba(255,255,255,0.3)' : '#dcfce7', color: activeTab === 'live' ? '#fff' : '#15803d' }}>
+              {liveAuctions.length}
+            </span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'posted' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'posted' ? 'active' : ''}`}
             onClick={() => setActiveTab('posted')}
           >
-            <Gavel size={12} style={{ verticalAlign: '-1px' }} /> Bid Posted ({postedAuctions.length})
+            <Gavel size={12} />
+            <span>Bid Posted</span>
+            <span className="auctions-tab-badge">{postedAuctions.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'participated' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'participated' ? 'active' : ''}`}
             onClick={() => setActiveTab('participated')}
           >
-            <History size={12} style={{ verticalAlign: '-1px' }} /> Participated ({mySubmittedBids.length})
+            <History size={12} />
+            <span>Participated</span>
+            <span className="auctions-tab-badge">{mySubmittedBids.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'drafts' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'drafts' ? 'active' : ''}`}
             onClick={() => setActiveTab('drafts')}
           >
-            <FileText size={12} style={{ verticalAlign: '-1px' }} /> Drafts ({draftAuctions.length})
+            <FileText size={12} />
+            <span>Drafts</span>
+            <span className="auctions-tab-badge">{draftAuctions.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'results' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'results' ? 'active' : ''}`}
             onClick={() => setActiveTab('results')}
           >
-            <Award size={12} style={{ verticalAlign: '-1px' }} /> Awarded ({awardedAuctions.length})
+            <Award size={12} />
+            <span>Awarded</span>
+            <span className="auctions-tab-badge">{awardedAuctions.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
             onClick={() => setActiveTab('closed')}
           >
-            <Archive size={12} style={{ verticalAlign: '-1px' }} /> Closed ({closedAuctions.length})
+            <Archive size={12} />
+            <span>Closed</span>
+            <span className="auctions-tab-badge">{closedAuctions.length}</span>
           </button>
           <button
-            className={`feed-tab-btn ${activeTab === 'expired' ? 'active' : ''}`}
+            type="button"
+            className={`auctions-tab-btn ${activeTab === 'expired' ? 'active' : ''}`}
             onClick={() => setActiveTab('expired')}
           >
-            <XCircle size={12} style={{ verticalAlign: '-1px' }} /> Expired ({expiredAuctions.length})
+            <XCircle size={12} />
+            <span>Expired</span>
+            <span className="auctions-tab-badge">{expiredAuctions.length}</span>
           </button>
         </div>
 
-        <div className="feed-search-box" style={{ width: '300px' }}>
-          <Search size={14} className="search-icon" />
+        {/* Dedicated Search Bar */}
+        <div style={{ position: 'relative', width: '100%' }}>
+          <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
           <input
             type="text"
-            placeholder="Search auctions by ID, POL, POD, commodity…"
+            placeholder="Search auctions by ID, origin (POL), destination (POD), commodity, carrier…"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              height: '32px',
+              padding: '0 28px 0 30px',
+              fontSize: '11.5px',
+              border: '1px solid var(--fr8x-outline, #cbd5e1)',
+              borderRadius: '6px',
+              background: '#ffffff',
+              color: 'var(--fr8x-text)',
+              outline: 'none',
+            }}
           />
           {searchTerm && (
-            <button onClick={() => setSearchTerm('')} className="clear-search-btn">
+            <button
+              type="button"
+              onClick={() => setSearchTerm('')}
+              style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+            >
               ✕
             </button>
           )}
@@ -421,7 +463,7 @@ export default function AuctionsPage() {
             <small style={{ color: 'var(--mut)' }}>Real-time reverse auction ranking tracking</small>
           </div>
 
-          <div className="tablewrap flush">
+          <div className="tablewrap flush auctions-desktop-table">
             <table className="table">
               <thead>
                 <tr>
@@ -488,6 +530,57 @@ export default function AuctionsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Participated Mobile Cards View (< 1024px) */}
+          <div className="auctions-mobile-cards">
+            {mySubmittedBids.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <p style={{ color: 'var(--mut)', fontSize: '12px' }}>
+                  No bids submitted yet. Explore the <b>Live Bidding</b> tab to submit verified quotes (100% Free).
+                </p>
+              </div>
+            ) : (
+              mySubmittedBids.map((b) => {
+                const targetAuction = auctions.find((a) => a.id === b.auctionId);
+                return (
+                  <div key={`mob-bid-${b.id}`} className="auction-mobile-card">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <b style={{ color: 'var(--brand)', fontSize: '13px' }}>{b.auctionId}</b>
+                      <span className={`badge ${b.status === 'winning' ? 'green' : 'amber'}`} style={{ fontSize: '9.5px', padding: '1px 6px' }}>
+                        {b.status === 'winning' ? 'WINNING OFFER' : b.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                      {targetAuction?.shipment.pol?.split('(')[0]} ➔ {targetAuction?.shipment.pod?.split('(')[0]}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                      <div>
+                        <small style={{ display: 'block', fontSize: '9.5px', color: '#64748b' }}>My Total Bid</small>
+                        <b style={{ fontSize: '13px', color: 'var(--brand)' }}>${b.grandTotalUSD.toLocaleString()} {b.currency}</b>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <small style={{ display: 'block', fontSize: '9.5px', color: '#64748b' }}>Current Standing</small>
+                        <span className="badge blue" style={{ fontSize: '10px' }}>Rank #{b.rank}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+                      <span>Submitted: {b.submittedAt}</span>
+                      {targetAuction && (
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          style={{ fontSize: '11px', padding: '3px 8px' }}
+                          onClick={() => setSelectedAuctionModal(targetAuction)}
+                        >
+                          <Eye size={11} /> Details
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
       ) : (
         /* Standard Auctions List View */
@@ -511,7 +604,7 @@ export default function AuctionsPage() {
             </small>
           </div>
 
-          <div className="tablewrap flush">
+          <div className="tablewrap flush auctions-desktop-table">
             <table className="table">
               <thead>
                 <tr>
@@ -619,6 +712,122 @@ export default function AuctionsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Auction Cards (< 1024px) */}
+          <div className="auctions-mobile-cards">
+            {currentTabAuctions().length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '28px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                <Gavel size={24} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
+                <p style={{ color: 'var(--mut)', fontSize: '12px' }}>
+                  No auctions matching the selected filter or search keyword.
+                </p>
+              </div>
+            ) : (
+              currentTabAuctions().map((auction) => {
+                return (
+                  <div key={`mob-auc-${auction.id}`} className="auction-mobile-card">
+                    {/* Top Row: ID, Status Badge & Time/Date */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <b style={{ color: 'var(--brand)', fontSize: '13px' }}>{auction.id}</b>
+                        <span
+                          className={`badge ${
+                            auction.status === 'Live'
+                              ? 'green'
+                              : auction.status === 'Awarded'
+                              ? 'blue'
+                              : auction.status === 'Draft'
+                              ? 'grey'
+                              : auction.status === 'Expired'
+                              ? 'amber'
+                              : 'red'
+                          }`}
+                          style={{ fontSize: '9.5px', padding: '1px 6px' }}
+                        >
+                          {auction.status.toUpperCase()}
+                        </span>
+                      </div>
+                      {auction.status === 'Live' ? (
+                        <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                          <Clock size={11} /> {auction.timeLeft || 'Live'}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{auction.startDate}</span>
+                      )}
+                    </div>
+
+                    {/* Auction Title & Company */}
+                    <div style={{ marginBottom: '6px' }}>
+                      <b style={{ fontSize: '12.5px', color: '#0f172a', display: 'block', lineHeight: 1.3 }}>
+                        {auction.title}
+                      </b>
+                      <small style={{ color: '#64748b', fontSize: '11px' }}>{auction.creatorCompany}</small>
+                    </div>
+
+                    {/* Origin ➔ Destination Corridor Box */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '7px 10px', margin: '8px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>POL</small>
+                        <b style={{ fontSize: '11.5px', color: '#0f172a' }}>{auction.shipment.pol.split('(')[0].trim()}</b>
+                      </div>
+                      <div style={{ color: '#1985a1', padding: '0 8px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '8.5px', fontWeight: 700, color: '#0284c7', display: 'block' }}>DIRECT</span>
+                        <span>➔</span>
+                      </div>
+                      <div style={{ minWidth: 0, textAlign: 'right' }}>
+                        <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>POD</small>
+                        <b style={{ fontSize: '11.5px', color: '#0f172a' }}>{auction.shipment.pod.split('(')[0].trim()}</b>
+                      </div>
+                    </div>
+
+                    {/* Equipment & Bids Info */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', flexWrap: 'wrap', fontSize: '11px', color: '#475569', marginBottom: '10px' }}>
+                      <div>
+                        <span style={{ fontWeight: 700, color: '#0f172a' }}>{auction.containers.map((c) => `${c.quantity}x ${c.equipmentType}`).join(', ')}</span>
+                        <span style={{ color: '#64748b' }}> · {auction.shipment.commodity}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="badge grey" style={{ fontSize: '9px', padding: '1px 5px' }}>{auction.shipment.incoterm.split('-')[0].trim()}</span>
+                        <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '10px', fontWeight: 700, padding: '1px 6px', borderRadius: '4px' }}>
+                          {auction.bidsSubmittedCount} {auction.bidsSubmittedCount === 1 ? 'bid' : 'bids'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                      <button
+                        type="button"
+                        className="btn secondary sm"
+                        style={{ flex: 1, justifyContent: 'center', fontSize: '11px', padding: '5px' }}
+                        onClick={() => setSelectedAuctionModal(auction)}
+                      >
+                        <Eye size={12} /> {auction.status === 'Live' ? 'Details' : 'Audit Record'}
+                      </button>
+                      {auction.status === 'Live' && (
+                        <Link
+                          href={`/auctions/${auction.id}`}
+                          className="btn primary sm"
+                          style={{ flex: 1, justifyContent: 'center', fontSize: '11px', padding: '5px', background: '#1985a1', borderColor: '#1985a1' }}
+                        >
+                          <Gavel size={12} /> Enter Bid Room
+                        </Link>
+                      )}
+                      {auction.status === 'Draft' && (
+                        <Link
+                          href="/auctions/create"
+                          className="btn primary sm"
+                          style={{ flex: 1, justifyContent: 'center', fontSize: '11px', padding: '5px' }}
+                        >
+                          Resume Draft
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       )}

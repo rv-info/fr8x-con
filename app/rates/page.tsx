@@ -33,6 +33,7 @@ import {
   AlertTriangle,
   History,
   TrendingUp,
+  X,
 } from 'lucide-react';
 import {
   formatNumber,
@@ -55,6 +56,9 @@ export default function RatesPage() {
   // Edit mode state for Update button
   const [editingRateId, setEditingRateId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [polSearch, setPolSearch] = useState('');
+  const [podSearch, setPodSearch] = useState('');
+  const [searchMode, setSearchMode] = useState<'corridor' | 'global'>('corridor');
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
 
   // Rate Detail Modal
@@ -206,11 +210,39 @@ Generated via FR8X Freight Exchange
   const allAvailableRates = [...rates, ...myRates];
 
   const filteredRates = allAvailableRates.filter((r) => {
-    const matchesGlobal = (r.id + ' ' + r.sp + ' ' + r.carrier + ' ' + r.pol + ' ' + r.pod + ' ' + r.route)
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+    // 1. Global search query across all rate fields
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const textCorpus = (
+        (r.id || '') + ' ' +
+        (r.sp || '') + ' ' +
+        (r.carrier || '') + ' ' +
+        (r.por || '') + ' ' +
+        (r.pol || '') + ' ' +
+        (r.pod || '') + ' ' +
+        (r.fpod || '') + ' ' +
+        (r.route || '') + ' ' +
+        (r.remark || '') + ' ' +
+        (r.rateType || '') + ' ' +
+        (r.d20Type || '') + ' ' +
+        (r.h40Type || '')
+      ).toLowerCase();
+      if (!textCorpus.includes(q)) return false;
+    }
 
-    if (!matchesGlobal) return false;
+    // 2. Specific POL (Port of Loading / POR) corridor search
+    if (polSearch.trim()) {
+      const polQ = polSearch.toLowerCase().trim();
+      const matchesPol = (r.pol && r.pol.toLowerCase().includes(polQ)) || (r.por && r.por.toLowerCase().includes(polQ));
+      if (!matchesPol) return false;
+    }
+
+    // 3. Specific POD (Port of Discharge / FPOD) corridor search
+    if (podSearch.trim()) {
+      const podQ = podSearch.toLowerCase().trim();
+      const matchesPod = (r.pod && r.pod.toLowerCase().includes(podQ)) || (r.fpod && r.fpod.toLowerCase().includes(podQ));
+      if (!matchesPod) return false;
+    }
 
     // Per-column search
     if (colSearch.seq && !getRateSeq(r, allAvailableRates.indexOf(r)).toLowerCase().includes(colSearch.seq.toLowerCase())) return false;
@@ -1315,16 +1347,257 @@ Generated via FR8X Freight Exchange
                 </button>
               )}
             </div>
+          </div>
 
-            <div className="feed-search-box" style={{ width: '220px' }}>
-              <Search size={13} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Filter port, carrier…"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                style={{ borderRadius: '0px' }}
-              />
+          {/* Unified POL / POD Corridor Search & Global Search Deck */}
+          <div className="rates-search-deck" style={{ padding: '10px 14px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline, #cbd5e1)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', gap: '8px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'inline-flex', background: '#e2e8f0', padding: '2px', borderRadius: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setSearchMode('corridor')}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    background: searchMode === 'corridor' ? '#1985a1' : 'transparent',
+                    color: searchMode === 'corridor' ? '#ffffff' : '#475569',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <ArrowRightLeft size={12} />
+                  <span>POL ➔ POD Route</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSearchMode('global')}
+                  style={{
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer',
+                    background: searchMode === 'global' ? '#1985a1' : 'transparent',
+                    color: searchMode === 'global' ? '#ffffff' : '#475569',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Search size={12} />
+                  <span>Global Search</span>
+                </button>
+              </div>
+
+              {(polSearch || podSearch || searchQuery) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPolSearch('');
+                    setPodSearch('');
+                    setSearchQuery('');
+                  }}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '10.5px',
+                    color: '#dc2626',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    padding: '3px 8px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  <X size={11} /> Clear Filters
+                </button>
+              )}
+            </div>
+
+            {/* Active Mode Inputs */}
+            {searchMode === 'corridor' ? (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '6px' }}>
+                <div style={{ position: 'relative', minWidth: 0 }}>
+                  <MapPin size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#1985a1', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder="POL: Mundra, Nhava Sheva…"
+                    value={polSearch}
+                    onChange={(e) => setPolSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      padding: '0 24px 0 24px',
+                      fontSize: '11.5px',
+                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                      borderRadius: '6px',
+                      background: '#ffffff',
+                      color: 'var(--fr8x-text)',
+                      outline: 'none',
+                    }}
+                  />
+                  {polSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setPolSearch('')}
+                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  title="Swap POL and POD"
+                  onClick={() => {
+                    const tmp = polSearch;
+                    setPolSearch(podSearch);
+                    setPodSearch(tmp);
+                  }}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#ffffff',
+                    border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    color: '#1985a1',
+                    flexShrink: 0,
+                  }}
+                >
+                  <ArrowRightLeft size={13} />
+                </button>
+
+                <div style={{ position: 'relative', minWidth: 0 }}>
+                  <MapPin size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: '#059669', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    placeholder="POD: Jebel Ali, Rotterdam…"
+                    value={podSearch}
+                    onChange={(e) => setPodSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      height: '32px',
+                      padding: '0 24px 0 24px',
+                      fontSize: '11.5px',
+                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                      borderRadius: '6px',
+                      background: '#ffffff',
+                      color: 'var(--fr8x-text)',
+                      outline: 'none',
+                    }}
+                  />
+                  {podSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setPodSearch('')}
+                      style={{ position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ position: 'relative' }}>
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+                <input
+                  type="text"
+                  placeholder="Global Search: Carrier, Port, Container Type, Route, Remarks…"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    height: '32px',
+                    padding: '0 28px 0 30px',
+                    fontSize: '11.5px',
+                    border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                    borderRadius: '6px',
+                    background: '#ffffff',
+                    color: 'var(--fr8x-text)',
+                    outline: 'none',
+                  }}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8', padding: '2px' }}
+                  >
+                    <X size={12} />
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Quick Lane Chips */}
+            <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', marginTop: '7px', paddingBottom: '2px', scrollbarWidth: 'none' }}>
+              <button
+                type="button"
+                onClick={() => { setPolSearch(''); setPodSearch(''); setSearchQuery(''); }}
+                style={{
+                  padding: '2px 8px',
+                  fontSize: '10px',
+                  fontWeight: (!polSearch && !podSearch && !searchQuery) ? 700 : 500,
+                  borderRadius: '4px',
+                  border: '1px solid #cbd5e1',
+                  background: (!polSearch && !podSearch && !searchQuery) ? '#0f172a' : '#ffffff',
+                  color: (!polSearch && !podSearch && !searchQuery) ? '#ffffff' : '#475569',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+              >
+                All Lanes ({filteredRates.length})
+              </button>
+              {[
+                { label: 'Mundra ➔ Jebel Ali', pol: 'Mundra', pod: 'Jebel Ali' },
+                { label: 'Nhava Sheva ➔ Rotterdam', pol: 'Nhava Sheva', pod: 'Rotterdam' },
+                { label: 'Pipavav ➔ Singapore', pol: 'Pipavav', pod: 'Singapore' },
+                { label: 'Mundra ➔ Felixstowe', pol: 'Mundra', pod: 'Felixstowe' },
+              ].map((lane) => {
+                const isSelected = polSearch.toLowerCase().includes(lane.pol.toLowerCase()) && podSearch.toLowerCase().includes(lane.pod.toLowerCase());
+                return (
+                  <button
+                    key={lane.label}
+                    type="button"
+                    onClick={() => {
+                      setSearchMode('corridor');
+                      setPolSearch(lane.pol);
+                      setPodSearch(lane.pod);
+                      setSearchQuery('');
+                    }}
+                    style={{
+                      padding: '2px 8px',
+                      fontSize: '10px',
+                      fontWeight: isSelected ? 700 : 500,
+                      borderRadius: '4px',
+                      border: isSelected ? '1px solid #1985a1' : '1px solid #cbd5e1',
+                      background: isSelected ? '#e0f2fe' : '#ffffff',
+                      color: isSelected ? '#0369a1' : '#475569',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {lane.label}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

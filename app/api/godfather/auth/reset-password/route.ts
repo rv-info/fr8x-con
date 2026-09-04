@@ -8,9 +8,10 @@ import {
 } from '@/lib/crypto';
 import { sendPasswordChangedConfirmation, sendSecurityAlertEmail } from '@/lib/mailer';
 import { otpStore } from '@/lib/otp-store';
+import { updateOperatorPassword, getAuthorizedOperatorEmail } from '@/lib/godfather/operator-store';
 
 const FORGOT_NAMESPACE = 'forgot::';
-const AUTHORISED_OPERATOR = 'tech@fr8x.in';
+const AUTHORISED_OPERATOR = getAuthorizedOperatorEmail();
 
 /**
  * Validates password strength:
@@ -152,6 +153,9 @@ export async function POST(req: NextRequest) {
     // Single-use enforcement: immediately delete token so it cannot be reused
     await otpStore.delete(storeKey);
     clearRateLimit(storeKey);
+
+    // Update runtime operator credentials so new password takes immediate effect
+    updateOperatorPassword(newPassword);
 
     // Send confirmation email via password@fr8x.in
     await sendPasswordChangedConfirmation(normEmail, correlationId, ip);

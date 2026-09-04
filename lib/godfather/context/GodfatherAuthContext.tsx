@@ -202,8 +202,11 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(GF_LAST_ACTIVITY_KEY);
         } catch {}
 
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/godfather/login') && !window.location.pathname.startsWith('/GODFATHERON')) {
-          window.location.href = '/godfather/login?reason=session_expired';
+        if (typeof window !== 'undefined') {
+          const currentPath = window.location.pathname.toLowerCase();
+          if (!currentPath.startsWith('/godfather/login') && !currentPath.startsWith('/godfatheron')) {
+            window.location.href = '/godfather/login?reason=session_expired';
+          }
         }
       }
     };
