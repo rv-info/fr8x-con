@@ -113,16 +113,14 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
  */
 export function getEmailSendersStatus(): Record<EmailSenderType, EmailSenderStatus> {
   const supportWebhook =
-    process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim() ||
-    process.env.ZOHO_FLOW_WEBHOOK_URL?.trim();
+    process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim();
 
   const hasSupportFlow = Boolean(
     supportWebhook && supportWebhook !== 'undefined' && supportWebhook.length > 0
   );
 
   const passwordWebhook =
-    process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim() ||
-    process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL?.trim();
+    process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim();
 
   const hasDedicatedPasswordFlow = Boolean(
     passwordWebhook && passwordWebhook !== 'undefined' && passwordWebhook.length > 0
@@ -174,17 +172,13 @@ function sanitizeString(str: string): string {
 function resolveWebhookUrl(fromType: EmailSenderType): string | null {
   if (fromType === 'PASSWORD') {
     const customPassUrl =
-      process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim() ||
-      process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL?.trim();
+      process.env.ZOHO_PASSWORD_FLOW_WEBHOOK_URL?.trim();
     if (customPassUrl && customPassUrl !== 'undefined') {
       return customPassUrl;
     }
   }
 
-  // Support webhook URL or general fallback
-  const supportUrl =
-    process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim() ||
-    process.env.ZOHO_FLOW_WEBHOOK_URL?.trim();
+  const supportUrl = process.env.ZOHO_SUPPORT_FLOW_WEBHOOK_URL?.trim();
   if (supportUrl && supportUrl !== 'undefined') {
     return supportUrl;
   }
@@ -316,21 +310,16 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
       }
     }
 
-    const domain = cleanTo.split('@')[1] || 'unknown';
-    console.log(
-      `[EMAIL_SANDBOX_DISPATCH] From: ${senderAddress} (${params.fromType}) | Event: ${params.event} | Recipient: ***@${domain} | Correlation: ${correlationId}`
-    );
-
     return {
-      success: true,
-      messageId: `mock-flow-${Date.now()}`,
+      success: false,
       correlationId,
       event: params.event,
       fromType: params.fromType,
       sender: senderAddress,
       to: cleanTo,
-      provider: 'MOCK_SANDBOX',
+      provider: 'ZOHO_FLOW',
       isPasswordConfigured: isPasswordOperational,
+      error: `${params.fromType} Zoho Flow webhook is not configured.`,
     };
   }
 

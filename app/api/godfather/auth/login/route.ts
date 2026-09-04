@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
+import { verifyPassword } from '@/lib/crypto';
 
-const AUTHORISED_EMAIL = 'tech@fr8x.in';
-const AUTHORISED_PASS = 'Godfather@Sovereign1';
+const AUTHORISED_EMAIL = process.env.GODFATHER_OPERATOR_EMAIL?.trim().toLowerCase();
+const PASSWORD_HASH = process.env.GODFATHER_OPERATOR_PASSWORD_HASH;
+const PASSWORD_SALT = process.env.GODFATHER_OPERATOR_PASSWORD_SALT;
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
@@ -19,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     const normEmail = String(email).trim().toLowerCase();
 
-    if (normEmail !== AUTHORISED_EMAIL || password !== AUTHORISED_PASS) {
+    if (!AUTHORISED_EMAIL || !PASSWORD_HASH || !PASSWORD_SALT || normEmail !== AUTHORISED_EMAIL || !verifyPassword(String(password), PASSWORD_SALT, PASSWORD_HASH)) {
       return NextResponse.json(
         { error: 'Invalid operator credentials. Please check your email and password.' },
         { status: 401 }
@@ -36,7 +38,7 @@ export async function POST(req: NextRequest) {
       operator: {
         uid: 'gf-op-godfather',
         email: AUTHORISED_EMAIL,
-        displayName: 'Chief Administrator (tech@fr8x.in)',
+        displayName: 'Chief Administrator',
         role: 'godfather_owner',
       },
       correlationId,
@@ -71,7 +73,7 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (err: any) {
     return NextResponse.json(
-      { error: err.message || 'Authentication processing error' },
+      { error: 'Authentication processing error' },
       { status: 500 }
     );
   }

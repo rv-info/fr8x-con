@@ -156,6 +156,27 @@ a {
   overflow-x: hidden;
 }
 
+/* Spreadsheet-inspired compact workspace and small-screen ergonomics. */
+.card, .tablewrap, .table { border-radius: 0; }
+.table th { letter-spacing: .025em; font-size: 10px; }
+.gfl-runtime-health { display:flex; gap:10px; align-items:center; font:600 10px/1 ui-monospace, monospace; color:#64748b; }
+.gfl-runtime-health span { white-space:nowrap; }
+.gfl-runtime-health i { display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:4px; background:#22c55e; box-shadow:0 0 0 3px #dcfce7; }
+@media (max-width: 760px) {
+  html { font-size: 14px; }
+  .view { padding: 8px 8px 82px; }
+  .cardhead { padding: 8px; font-size: 11px; }
+  .cardbody { padding: 9px; }
+  .btn { min-height: 34px; font-size: 11px; }
+  .table { font-size: 10px; }
+  .table th, .table td { padding: 5px 4px; }
+  .head h1 { font-size: 15px; }
+  .dashboard-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+  .dashboard-kpi-card { padding: 9px; min-width: 0; }
+  .dashboard-kpi-value { font-size: 17px; }
+  .gfl-runtime-health { display:none; }
+}
+
 .app.collapsed-sidebar > main {
   margin-left: var(--sidebar-collapsed-width);
   width: calc(100% - var(--sidebar-collapsed-width));

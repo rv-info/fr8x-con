@@ -76,10 +76,6 @@ export async function POST(req: NextRequest) {
       message: 'If an account exists for this email address, password reset instructions have been sent.',
       correlationId,
       expiresAt: hashed.expiresAt,
-      demoCode:
-        process.env.NODE_ENV === 'development' && !process.env.ZOHO_FLOW_WEBHOOK_URL
-          ? otpCode
-          : undefined,
     });
   } catch (err: any) {
     console.error('[GODFATHER_FORGOT_PASSWORD_ERROR] Processing error:', err.message);

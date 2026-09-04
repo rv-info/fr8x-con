@@ -8,8 +8,6 @@ import { ROLE_PERMISSIONS } from '../utils/audit';
 // GODFATHER access is strictly limited to this one operator.
 // Password validation happens client-side before OTP dispatch;
 // server-side OTP verification is the true authentication gate.
-const AUTHORISED_OPERATOR_EMAIL = 'tech@fr8x.in';
-const AUTHORISED_OPERATOR_PASSWORD = 'Godfather@Sovereign1';
 
 // ─── Device-memory helpers (operator email only — no password stored) ─────────
 const GF_DEVICE_KEY = 'fr8x_gf_remembered_op_v1';
@@ -255,14 +253,9 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
    * Does NOT set isAuthenticated.
    */
   const validateCredentials = (email: string, pass: string): { success: boolean; error?: string } => {
-    // Only the single authorised operator is permitted
-    if (email.trim().toLowerCase() !== AUTHORISED_OPERATOR_EMAIL) {
-      return { success: false, error: 'Operator not authorised for GODFATHER access.' };
-    }
-    if (pass !== AUTHORISED_OPERATOR_PASSWORD) {
-      return { success: false, error: 'Invalid passphrase. Please verify and retry.' };
-    }
-    return { success: true };
+    return email.trim().length > 0 && pass.length > 0
+      ? { success: true }
+      : { success: false, error: 'Email and password are required.' };
   };
 
   /**
@@ -270,9 +263,6 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
    * This is also the legacy-compat path for GodfatherAuthContext usage.
    */
   const loginOperator = (email: string, pass: string, otp?: string): { success: boolean; requiresOtp?: boolean; error?: string } => {
-    const credsCheck = validateCredentials(email, pass);
-    if (!credsCheck.success) return { success: false, error: credsCheck.error };
-
     const found =
       operatorsList.find((o) => o.email.toLowerCase() === email.trim().toLowerCase()) ||
       INITIAL_GODFATHER_OPERATORS[0];

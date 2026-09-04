@@ -112,18 +112,10 @@ export async function POST(req: NextRequest) {
     const record = await otpStore.get(storeKey);
 
     // Development / mock fallback code allowance
-    const isDemoAccepted =
-      (process.env.NODE_ENV === 'development' || !process.env.ZOHO_FLOW_WEBHOOK_URL) &&
-      ['884210', '123456', '777777'].includes(otp.trim());
-
     let isOtpValid = false;
 
     if (record) {
       isOtpValid = verifyOtpHash(otp.trim(), record.salt, record.hash, record.expiresAt);
-    }
-
-    if (isDemoAccepted) {
-      isOtpValid = true;
     }
 
     if (!isOtpValid) {

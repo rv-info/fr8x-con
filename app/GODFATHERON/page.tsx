@@ -40,13 +40,32 @@ function LiveClock() {
   return <span className="gfl-clock-live">{time}</span>;
 }
 
+function RuntimeHealth() {
+  const [uptime, setUptime] = useState(0);
+  const [latency, setLatency] = useState<number | null>(null);
+  useEffect(() => {
+    const started = performance.now();
+    const update = () => {
+      setUptime(Math.floor((performance.now() - started) / 1000));
+      const connection = (navigator as Navigator & { connection?: { rtt?: number } }).connection;
+      setLatency(connection?.rtt ?? null);
+    };
+    update();
+    const id = window.setInterval(update, 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return <div className="gfl-runtime-health" aria-label="Runtime health">
+    <span><i /> Runtime online</span><span>Session {String(Math.floor(uptime / 60)).padStart(2, '0')}:{String(uptime % 60).padStart(2, '0')}</span><span>{latency ? `${latency} ms` : 'Network ready'}</span>
+  </div>;
+}
+
 export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
   const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
 
   const [mode, setMode] = useState<'login' | 'forgot' | 'success'>('login');
   const [email, setEmail] = useState('tech@fr8x.in');
-  const [password, setPassword] = useState('Godfather@Sovereign1');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(true);
 
@@ -233,6 +252,7 @@ export default function DedicatedGodfatherLoginPage() {
         </div>
         <div className="gfl-topbar-clock">
           <LiveClock />
+          <RuntimeHealth />
         </div>
       </header>
 
