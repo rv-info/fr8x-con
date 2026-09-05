@@ -15,8 +15,15 @@ const ZOHO_SMTP_PORT = Number(process.env.ZOHO_SMTP_PORT) || 465;
 const ZOHO_SMTP_USER = process.env.ZOHO_SMTP_USER || 'password@fr8x.in';
 const ZOHO_SMTP_PASSWORD = process.env.ZOHO_SMTP_PASSWORD || '';
 const ZOHO_ZEPTOMAIL_TOKEN = process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN || '';
-const ZOHO_ZEPTOMAIL_URL = process.env.ZEPTO_MAIL_URL || process.env.ZOHO_ZEPTOMAIL_URL || 'https://api.zeptomail.in/v1.1/email';
-const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS = process.env.ZEPTO_MAIL_BOUNCE_ADDRESS || process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || 'bounce@bounce.fr8x.in';
+const ZOHO_ZEPTOMAIL_URL =
+  process.env.ZEPTO_MAIL_API_URL ||
+  process.env.ZEPTO_MAIL_URL ||
+  process.env.ZOHO_ZEPTOMAIL_URL ||
+  'https://api.zeptomail.com/v1.1/email';
+const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS =
+  process.env.ZEPTO_MAIL_BOUNCE_ADDRESS ||
+  process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS ||
+  '';
 
 // Singleton nodemailer transporter instance
 let transporter: nodemailer.Transporter | null = null;
@@ -71,9 +78,7 @@ export interface SendEmailResult {
 
 /**
  * Sends transactional email via Zoho ZeptoMail REST API v1.1
- * Authentication: Authorization: Zoho-enczapikey <Send_Mail_Token>
- * Official India DC: https://api.zeptomail.in/v1.1/email
- * Official Global DC: https://api.zeptomail.com/v1.1/email
+ * Delegated to central EmailService with strict sender mapping, retries, and error redaction.
  */
 export async function sendViaZeptoMail(options: {
   recipient: string;
@@ -85,90 +90,50 @@ export async function sendViaZeptoMail(options: {
   fromName?: string;
   correlationId?: string;
   templateId?: string;
+  senderType?: EmailSenderType;
 }): Promise<SendEmailResult> {
   const correlationId = options.correlationId || generateCorrelationId();
   const logId = `EML-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-  const token = (process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN || '').trim();
-  if (!token) {
-    throw new Error('ZEPTO_MAIL_API_KEY is not configured in process environment');
+  let senderType: EmailSenderType = options.senderType || 'PASSWORD';
+  if (options.fromAddress) {
+    if (options.fromAddress.includes('support')) senderType = 'SUPPORT';
+    else if (options.fromAddress.includes('tech')) senderType = 'TECH';
+    else senderType = 'PASSWORD';
   }
 
-  // Zoho ZeptoMail requires Authorization header to start with "Zoho-enczapikey "
-  const authHeader = token.toLowerCase().startsWith('zoho-enczapikey')
-    ? token
-    : `Zoho-enczapikey ${token}`;
-
-  const endpoint = process.env.ZOHO_ZEPTOMAIL_URL?.trim() || ZOHO_ZEPTOMAIL_URL;
-  const bounceAddress = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() || ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS;
-  const fromAddress = options.fromAddress || process.env.ZOHO_PASSWORD_EMAIL || 'password@fr8x.in';
-  const fromName = options.fromName || 'FR8X Platform';
-
-  const payload = {
-    bounce_address: bounceAddress,
-    from: {
-      address: fromAddress,
-      name: fromName,
-    },
-    to: [
-      {
-        email_address: {
-          address: options.recipient,
-          name: options.recipientName || options.recipient.split('@')[0],
-        },
-      },
-    ],
+  const result = await EmailService.sendTransactionalEmail({
+    to: options.recipient,
+    recipientName: options.recipientName,
     subject: options.subject,
-    htmlbody: options.htmlBody,
-    textbody: options.textBody || options.htmlBody.replace(/<[^>]*>?/gm, ' ').trim(),
-  };
-
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      Authorization: authHeader,
-    },
-    body: JSON.stringify(payload),
+    html: options.htmlBody,
+    text: options.textBody,
+    senderType,
+    correlationId,
+    templateId: options.templateId,
   });
 
-  const resData = await response.json().catch(() => ({}));
-
-  if (response.ok) {
-    const messageId =
-      resData?.data?.[0]?.message_id ||
-      resData?.data?.[0]?.id ||
-      `zepto-${Date.now()}`;
-
-    console.log(`[ZOHO_ZEPTOMAIL_SUCCESS] LogID: ${logId} | Sent to ${options.recipient} | MsgID: ${messageId}`);
-
-    return {
-      success: true,
-      messageId,
-      correlationId,
-      logId,
-      provider: 'Zoho_ZeptoMail',
-      status: 'sent',
-      responsePayload: resData,
-    };
-  } else {
-    const errorMsg =
-      resData?.error?.message ||
-      resData?.message ||
-      JSON.stringify(resData?.error?.details || resData) ||
-      `HTTP ${response.status} ${response.statusText}`;
-    console.error('[ZOHO_ZEPTOMAIL_ERROR]', errorMsg);
-    throw new Error(`Zoho ZeptoMail API rejected dispatch: ${errorMsg}`);
+  if (!result.success) {
+    throw new Error(result.error || 'ZeptoMail dispatch failed');
   }
+
+  return {
+    success: true,
+    messageId: result.messageId,
+    correlationId,
+    logId,
+    provider: (result.provider as any) || 'Zoho_ZeptoMail',
+    status: 'sent',
+    responsePayload: result.details,
+  };
 }
 
 /**
  * Server-only Outbound Email Dispatcher
  * Priority:
  * 1. Explicit Preferred Provider (if specified in options)
- * 2. Zoho Flow Webhook (Primary corporate webhook)
- * 3. Zoho ZeptoMail REST API (High-volume transactional delivery)
+ * 2. Zoho ZeptoMail REST API (Direct transactional delivery - preferred)
+ * 3. Zoho Flow Webhook (Legacy corporate webhook failover)
  * 4. Direct Zoho SMTP (Nodemailer TLS port 465)
  * 5. Mock Sandbox (Development / test environments)
  */
@@ -189,6 +154,7 @@ export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEm
         htmlBody: options.htmlBody,
         textBody: options.textBody,
         fromAddress: fromSender,
+        senderType: fromType,
         correlationId,
         templateId: options.templateId,
       });
@@ -205,7 +171,27 @@ export async function sendSystemEmail(options: SendEmailOptions): Promise<SendEm
     }
   }
 
-  // 2. Check if Zoho Flow webhook is configured
+  // 2. Direct to Zoho ZeptoMail API (if configured - primary preference for FR8X Backend)
+  const zeptoApiKey = (process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN || '').trim();
+  if (zeptoApiKey && options.preferredProvider !== 'Zoho_Flow') {
+    try {
+      return await sendViaZeptoMail({
+        recipient: options.recipient,
+        recipientName: options.recipientName,
+        subject: options.subject,
+        htmlBody: options.htmlBody,
+        textBody: options.textBody,
+        fromAddress: fromSender,
+        senderType: fromType,
+        correlationId,
+        templateId: options.templateId,
+      });
+    } catch (zeptoErr: any) {
+      console.warn('[ZOHO_ZEPTOMAIL_FAILOVER_WARN] ZeptoMail dispatch failed, trying failovers:', zeptoErr.message);
+    }
+  }
+
+  // 3. Failover / Check if Zoho Flow webhook is configured
   const flowUrl = process.env.ZOHO_FLOW_WEBHOOK_URL;
   if (flowUrl && flowUrl.trim() && flowUrl !== 'undefined') {
     try {
@@ -324,9 +310,14 @@ export async function checkSmtpHealth(): Promise<{
 }> {
   const startTime = Date.now();
   const flowConfigured = Boolean(process.env.ZOHO_FLOW_WEBHOOK_URL);
-  const zeptoMailConfigured = Boolean(process.env.ZOHO_ZEPTOMAIL_TOKEN);
-  const zeptoMailEndpoint = process.env.ZOHO_ZEPTOMAIL_URL || ZOHO_ZEPTOMAIL_URL;
-  const zeptoMailBounceAddress = process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS;
+  const zeptoMailConfigured = Boolean(process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN);
+  const zeptoMailEndpoint =
+    process.env.ZEPTO_MAIL_API_URL ||
+    process.env.ZEPTO_MAIL_URL ||
+    process.env.ZOHO_ZEPTOMAIL_URL ||
+    'https://api.zeptomail.com/v1.1/email';
+  const zeptoMailBounceAddress =
+    process.env.ZEPTO_MAIL_BOUNCE_ADDRESS || process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || '';
 
   try {
     if (ZOHO_SMTP_PASSWORD) {

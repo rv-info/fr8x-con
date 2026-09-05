@@ -1,27 +1,65 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 import { sendSystemEmail } from '@/lib/mailer';
+import { EmailService } from '@/lib/email-service';
+import { serverSecurityStore } from '@/lib/server-auth-store';
 
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   try {
-    const body = await req.json();
-    const { recipient, templateId, reason, actorRole, actorUid, preferredProvider } = body;
+    // Protected backend test mechanism: verify authorized admin/godfather session or dev environment
+    const sessionCookie =
+      req.cookies.get('fr8x_godfather_session')?.value ||
+      req.cookies.get('__Secure-FR8X-Godfather-Session')?.value;
+    const authHeader = req.headers.get('authorization');
+    const adminKey = process.env.ADMIN_API_KEY || process.env.GODFATHER_ADMIN_KEY;
+    const isDev = process.env.NODE_ENV === 'development';
 
-    if (!recipient || !recipient.includes('@')) {
+    const body = await req.json().catch(() => ({}));
+    const { recipient, templateId, reason, actorRole, actorUid, preferredProvider, testType } = body;
+
+    const isAuthorized =
+      (sessionCookie && serverSecurityStore.isGodfatherSessionActive(sessionCookie)) ||
+      (adminKey && authHeader === `Bearer ${adminKey}`) ||
+      actorRole === 'godfather_owner' ||
+      actorRole === 'godfather_operations' ||
+      isDev;
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: 'Forbidden: Test email send is restricted to authorized Godfather administrators' },
+        { status: 403 }
+      );
+    }
+
+    const targetRecipient =
+      recipient || process.env.TEST_EMAIL_RECIPIENT || process.env.DEVELOPMENT_TEST_EMAIL || 'tech@fr8x.in';
+
+    if (!targetRecipient || !targetRecipient.includes('@')) {
       return NextResponse.json({ error: 'Valid recipient email is required' }, { status: 400 });
+    }
+
+    // Official ZeptoMail integration test mode (Subject: FR8X ZEPTOMAIL TEST, From: password@fr8x.in)
+    if (testType === 'zeptomail' || templateId === 'TMPL_ZEPTOMAIL_TEST' || preferredProvider === 'Zoho_ZeptoMail') {
+      const result = await EmailService.sendTestEmail({
+        to: targetRecipient,
+        correlationId,
+      });
+
+      return NextResponse.json({
+        success: result.success,
+        correlationId: result.correlationId,
+        messageId: result.messageId,
+        provider: result.provider,
+        sender: 'password@fr8x.in',
+        subject: 'FR8X ZEPTOMAIL TEST',
+        recipient: targetRecipient,
+        error: result.error,
+      });
     }
 
     if (!reason || reason.trim().length < 5) {
       return NextResponse.json({ error: 'Mandatory operational reason is required for test send' }, { status: 400 });
-    }
-
-    // Role check: restricted to godfather_owner or godfather_operations
-    if (actorRole && actorRole !== 'godfather_owner' && actorRole !== 'godfather_operations') {
-      return NextResponse.json(
-        { error: 'Forbidden: Test email send is restricted to godfather_owner and godfather_operations' },
-        { status: 403 }
-      );
     }
 
     const htmlBody = `
@@ -44,7 +82,7 @@ export async function POST(req: NextRequest) {
     `;
 
     const result = await sendSystemEmail({
-      recipient,
+      recipient: targetRecipient,
       subject: `[FR8X TEST] ${preferredProvider === 'Zoho_ZeptoMail' ? 'ZeptoMail' : 'Zoho Mail'} Diagnostic — ${correlationId}`,
       templateId: templateId || 'TMPL_DIAGNOSTIC_TEST',
       templateName: preferredProvider === 'Zoho_ZeptoMail' ? 'ZeptoMail Diagnostic Test' : 'Godfather SMTP Diagnostic Test',

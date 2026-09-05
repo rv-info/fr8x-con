@@ -59,11 +59,6 @@ export async function POST(req: NextRequest) {
       message: `Verification code dispatched to ${AUTHORISED_OPERATOR}`,
       correlationId,
       expiresAt: hashed.expiresAt,
-      // Only expose the demo code in development when SMTP is unconfigured
-      demoCode:
-        process.env.NODE_ENV === 'development' && !process.env.ZOHO_SMTP_PASSWORD
-          ? otpCode
-          : undefined,
     });
   } catch (err: any) {
     console.error('[SEND_OTP_ERROR]', err);

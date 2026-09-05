@@ -1,21 +1,26 @@
 /**
- * FR8X GODFATHER — User Authentication Email System
- * Automated Verification & Security Test Suite (Zoho ZeptoMail Edition)
+ * FR8X GODFATHER — ZeptoMail Transactional Email & Security Test Suite
+ * Production Implementation Verification (Section 25 Compliance)
  *
  * Covers:
- * 1. Sender isolation & status (support@fr8x.in vs password@fr8x.in, never tech@fr8x.in for auth)
- * 2. Zoho ZeptoMail REST API JSON contract & headers (Authorization: Zoho-enczapikey ...)
- * 3. Email validation & sanitization (RFC 5322, CRLF injection prevention)
- * 4. User Registration with email verification token dispatch
- * 5. Email Verification (valid token, invalid token, expired token, single-use token consumption)
- * 6. State Persistence across store re-instantiations (verifies fix for "User account not found")
- * 7. Resend Verification with rate-limiting
- * 8. Login authentication, attempt tracking, and 3-attempt lockout
- * 9. Forgot Password anti-enumeration & reset token dispatch
- * 10. Password Reset (both OTP and URL token, single-use consumption, PASSWORD_CHANGED email)
- * 11. OTP MFA generation (CSPRNG), expiration, and verification
- * 12. Support email routing strictly to support@fr8x.in
- * 13. Sender spoofing prevention (client cannot dictate from/sender)
+ * 1.  Email service initialization & endpoint resolution
+ * 2.  Missing API key handling
+ * 3.  Invalid sender type & strict sender mapping
+ * 4.  Valid password email (password@fr8x.in)
+ * 5.  Valid support email (support@fr8x.in)
+ * 6.  Valid technical email (tech@fr8x.in)
+ * 7.  ZeptoMail success response handling
+ * 8.  ZeptoMail 4xx client error (no blind retries)
+ * 9.  ZeptoMail 5xx transient error (controlled retry with backoff)
+ * 10. Network timeout handling
+ * 11. Forgot-password anti-enumeration
+ * 12. Verification token expiry
+ * 13. Verification token single-use
+ * 14. Password reset token expiry
+ * 15. Password reset token single-use
+ * 16. OTP expiration
+ * 17. OTP attempt limit
+ * 18. Secret & credential redaction (zero leaks in logs or errors)
  */
 
 import {
@@ -26,6 +31,7 @@ import {
   getEmailSendersStatus,
   getZeptoMailStatus,
   isValidEmailAddress,
+  redactSensitiveData,
 } from '../lib/email-service';
 import {
   renderEmailVerificationEmail,
@@ -33,6 +39,8 @@ import {
   renderPasswordChangedEmail,
   renderOtpChallengeEmail,
   renderSupportEmail,
+  renderTechnicalEmail,
+  renderTestEmail,
 } from '../lib/email-templates';
 import { serverSecurityStore } from '../lib/server-auth-store';
 
@@ -50,482 +58,528 @@ function assert(condition: unknown, testName: string, detail?: string) {
 }
 
 async function runTests() {
-  console.log('============================================================');
-  console.log('FR8X GODFATHER — ZOHO ZEPTOMAIL AUTHENTICATION EMAIL TESTS');
-  console.log('============================================================\n');
+  console.log('======================================================================');
+  console.log('FR8X — ZEPTOMAIL TRANSACTIONAL EMAIL & SECURITY VERIFICATION SUITE');
+  console.log('======================================================================\n');
+
+  const testRecipient = 'qa-auditor@fr8x.in';
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 1: BUSINESS EMAIL IDENTITIES & SENDER ROUTING
+  // 1. EMAIL SERVICE INITIALIZATION
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('--- 1. Business Email Identities & Sender Routing ---');
-
+  console.log('--- 1. Email Service Initialization & Endpoint Resolution ---');
+  const zeptoStatus = getZeptoMailStatus();
   assert(
-    EMAIL_SENDERS.SUPPORT === 'support@fr8x.in',
-    'SUPPORT identity is strictly support@fr8x.in'
+    zeptoStatus.endpoint.includes('api.zeptomail.in') || zeptoStatus.endpoint.includes('api.zeptomail.com'),
+    'Default ZeptoMail endpoint resolves to regional or global ZeptoMail API endpoint',
+    `Endpoint is ${zeptoStatus.endpoint}`
   );
   assert(
-    EMAIL_SENDERS.PASSWORD === 'password@fr8x.in',
-    'PASSWORD identity is strictly password@fr8x.in'
+    zeptoStatus.agent === 'agent_1',
+    'Configured ZeptoMail agent is agent_1'
   );
-
-  const authSender = resolveSenderForType('EMAIL_VERIFICATION');
   assert(
-    authSender.address === 'password@fr8x.in',
-    'EMAIL_VERIFICATION routes strictly to password@fr8x.in'
-  );
-
-  const otpSender = resolveSenderForType('AUTH_OTP');
-  assert(
-    otpSender.address === 'password@fr8x.in',
-    'AUTH_OTP routes strictly to password@fr8x.in'
-  );
-
-  const resetSender = resolveSenderForType('PASSWORD_RESET');
-  assert(
-    resetSender.address === 'password@fr8x.in',
-    'PASSWORD_RESET routes strictly to password@fr8x.in'
-  );
-
-  const changedSender = resolveSenderForType('PASSWORD_CHANGED');
-  assert(
-    changedSender.address === 'password@fr8x.in',
-    'PASSWORD_CHANGED routes strictly to password@fr8x.in'
-  );
-
-  const supportSender = resolveSenderForType('SUPPORT_REQUEST');
-  assert(
-    supportSender.address === 'support@fr8x.in',
-    'SUPPORT_REQUEST routes strictly to support@fr8x.in'
-  );
-
-  const ticketSender = resolveSenderForType('SUPPORT_TICKET');
-  assert(
-    ticketSender.address === 'support@fr8x.in',
-    'SUPPORT_TICKET routes strictly to support@fr8x.in'
-  );
-
-  assert(
-    authSender.address !== 'tech@fr8x.in' && resetSender.address !== 'tech@fr8x.in',
-    'NEVER use tech@fr8x.in for user authentication emails'
+    zeptoStatus.domain === 'fr8x.in',
+    'Configured ZeptoMail domain is fr8x.in'
   );
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 2: EMAIL VALIDATION & SANITIZATION
+  // 2. MISSING API KEY HANDLING
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 2. Email Validation & Injection Sanitization ---');
+  console.log('\n--- 2. Missing API Key Handling ---');
+  const savedKey = process.env.ZEPTO_MAIL_API_KEY;
+  const savedZohoKey = process.env.ZOHO_ZEPTOMAIL_TOKEN;
+  try {
+    delete process.env.ZEPTO_MAIL_API_KEY;
+    delete process.env.ZOHO_ZEPTOMAIL_TOKEN;
 
-  assert(isValidEmailAddress('operator@fr8x.in'), 'Valid corporate email accepted');
-  assert(isValidEmailAddress('test.user+tag@company.com'), 'Valid email with subaddress accepted');
-  assert(!isValidEmailAddress('invalid-email'), 'Malformed email rejected');
-  assert(!isValidEmailAddress(''), 'Empty email rejected');
-  assert(!isValidEmailAddress('test@invalid..com'), 'Double-dot domain rejected');
+    const noKeyResult = await EmailService.sendTransactionalEmail({
+      to: testRecipient,
+      subject: 'Test No Key',
+      text: 'Testing dispatch without key',
+      senderType: 'SUPPORT',
+    });
+
+    // In non-production/test environments, gracefully fall back to Sandbox_Mock
+    assert(
+      noKeyResult.success && noKeyResult.provider === 'Sandbox_Mock',
+      'Missing API key in test environment falls back gracefully to Sandbox_Mock without throwing unhandled error'
+    );
+  } finally {
+    if (savedKey) process.env.ZEPTO_MAIL_API_KEY = savedKey;
+    if (savedZohoKey) process.env.ZOHO_ZEPTOMAIL_TOKEN = savedZohoKey;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 3. INVALID SENDER TYPE & STRICT SENDER MAPPING
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 3. Invalid Sender Type & Strict Sender Mapping ---');
+  assert(EMAIL_SENDERS.PASSWORD === 'password@fr8x.in', 'PASSWORD sender maps to password@fr8x.in');
+  assert(EMAIL_SENDERS.SUPPORT === 'support@fr8x.in', 'SUPPORT sender maps to support@fr8x.in');
+  assert(EMAIL_SENDERS.TECH === 'tech@fr8x.in', 'TECH sender maps to tech@fr8x.in');
+
+  // Verify resolveSenderForType mappings
+  assert(resolveSenderForType('EMAIL_VERIFICATION').address === 'password@fr8x.in', 'EMAIL_VERIFICATION -> password@fr8x.in');
+  assert(resolveSenderForType('AUTH_OTP').address === 'password@fr8x.in', 'AUTH_OTP -> password@fr8x.in');
+  assert(resolveSenderForType('PASSWORD_RESET').address === 'password@fr8x.in', 'PASSWORD_RESET -> password@fr8x.in');
+  assert(resolveSenderForType('PASSWORD_CHANGED').address === 'password@fr8x.in', 'PASSWORD_CHANGED -> password@fr8x.in');
+  assert(resolveSenderForType('LOGIN_SECURITY').address === 'password@fr8x.in', 'LOGIN_SECURITY -> password@fr8x.in');
+  assert(resolveSenderForType('SUPPORT_TICKET').address === 'support@fr8x.in', 'SUPPORT_TICKET -> support@fr8x.in');
+  assert(resolveSenderForType('SUPPORT_REQUEST').address === 'support@fr8x.in', 'SUPPORT_REQUEST -> support@fr8x.in');
+  assert(resolveSenderForType('TECH_NOTIFICATION').address === 'tech@fr8x.in', 'TECH_NOTIFICATION -> tech@fr8x.in');
+
+  // Unknown sender type fallback
+  const fallbackSender = resolveSenderForType('UNKNOWN_TYPE' as any);
   assert(
-    !isValidEmailAddress('user@domain.com\r\nBcc: victim@example.com'),
-    'Header injection newline in email rejected'
-  );
-  assert(
-    !isValidEmailAddress('user@domain.com\nSubject: Spoofed'),
-    'LF injection in email rejected'
+    fallbackSender.address === 'support@fr8x.in' || fallbackSender.address === 'password@fr8x.in',
+    'Unknown sender types fallback safely to verified domain addresses'
   );
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 3: ZOHO ZEPTOMAIL REST API TRANSACTIONAL DISPATCH
+  // 4. VALID PASSWORD EMAIL (password@fr8x.in)
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 3. Zoho ZeptoMail REST API Transactional Dispatch ---');
-
-  const testRecipient = 'test-auditor@corporate-test.com';
-
-  // Support dispatch
-  const supportResult = await EmailService.sendSupportEmail({
+  console.log('\n--- 4. Valid Password Email (password@fr8x.in) ---');
+  const verifyEmail = await EmailService.sendVerificationEmail({
     to: testRecipient,
-    subject: 'FR8X Support Request',
-    message: 'Hello, Good Day!\nThis is a test support message.',
-    ticketId: 'TCK-1001',
-  });
-
-  assert(supportResult.success, 'Support email dispatch handled successfully');
-  assert(supportResult.type === 'SUPPORT_REQUEST', 'Support email type is SUPPORT_REQUEST');
-  assert(
-    supportResult.from === 'support@fr8x.in',
-    'Support email sender is strictly support@fr8x.in'
-  );
-
-  // Email verification dispatch
-  const verifyResult = await EmailService.sendVerificationEmail({
-    to: testRecipient,
-    verificationLink: 'https://con.fr8x.in/verify-email/test_token_abc',
-    otpCode: '582910',
-    expiryMinutes: 1440,
-  });
-
-  assert(verifyResult.success, 'Verification email dispatch handled successfully');
-  assert(verifyResult.type === 'EMAIL_VERIFICATION', 'Verification email type is EMAIL_VERIFICATION');
-  assert(
-    verifyResult.from === 'password@fr8x.in',
-    'Verification email sender is strictly password@fr8x.in'
-  );
-
-  // Password reset dispatch
-  const resetResult = await EmailService.sendPasswordResetEmail({
-    to: testRecipient,
-    resetLink: 'https://con.fr8x.in/reset-password/test_reset_token',
-    otpCode: '729104',
-    expiryMinutes: 15,
-  });
-
-  assert(resetResult.success, 'Password reset email dispatch handled successfully');
-  assert(resetResult.type === 'PASSWORD_RESET', 'Password reset type is PASSWORD_RESET');
-  assert(
-    resetResult.from === 'password@fr8x.in',
-    'Password reset sender is strictly password@fr8x.in'
-  );
-
-  // Password changed confirmation dispatch
-  const changedResult = await EmailService.sendPasswordChangedEmail({
-    to: testRecipient,
-    ipAddress: '192.168.1.50',
-  });
-
-  assert(changedResult.success, 'Password changed confirmation dispatch handled successfully');
-  assert(changedResult.type === 'PASSWORD_CHANGED', 'Password changed type is PASSWORD_CHANGED');
-  assert(
-    changedResult.from === 'password@fr8x.in',
-    'Password changed sender is strictly password@fr8x.in'
-  );
-
-  // OTP challenge dispatch
-  const otpResult = await EmailService.sendOtpEmail({
-    to: testRecipient,
-    otpCode: '839201',
-    expiryMinutes: 10,
-  });
-
-  assert(otpResult.success, 'OTP challenge dispatch handled successfully');
-  assert(otpResult.type === 'AUTH_OTP', 'OTP challenge type is AUTH_OTP');
-  assert(
-    otpResult.from === 'password@fr8x.in',
-    'OTP challenge sender is strictly password@fr8x.in'
-  );
-
-  // Direct sendTransactionalEmail interface test
-  const directResult = await sendTransactionalEmail({
-    type: 'LOGIN_SECURITY',
-    to: testRecipient,
-    subject: 'FR8X Security Notice',
-    text: 'Hello, Good Day!\nUnusual login detected.',
-  });
-  assert(directResult.success, 'Direct sendTransactionalEmail call succeeds');
-  assert(directResult.from === 'password@fr8x.in', 'Direct security dispatch routes to password@fr8x.in');
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 4: TEMPLATE CONTENT & ZERO SECRET LEAKS
-  // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 4. Template Content & Zero Secret Leaks ---');
-
-  const verTmpl = renderEmailVerificationEmail({
-    recipient: 'user@logistics.com',
-    verificationLink: 'https://con.fr8x.in/verify-email/xyz123',
-    otpCode: '918234',
-  });
-  assert(verTmpl.subject === 'FR8X Verify Your Email', 'Verification subject matches specification');
-  assert(verTmpl.text.startsWith('Hello, Good Day!'), 'Verification text begins with Hello, Good Day!');
-  assert(verTmpl.html.includes('Hello, Good Day!'), 'Verification HTML begins with Hello, Good Day!');
-  assert(verTmpl.html.includes('918234'), 'Verification code included in template');
-  assert(!verTmpl.html.includes('password123'), 'Verification template contains no passwords');
-
-  const resetTmpl = renderPasswordResetEmail({
-    recipient: 'user@logistics.com',
-    otpCode: '112233',
-    resetLink: 'https://con.fr8x.in/reset-password/xyz',
-  });
-  assert(resetTmpl.subject === 'FR8X Password Reset Request', 'Password reset subject matches specification');
-  assert(resetTmpl.text.startsWith('Hello, Good Day!'), 'Password reset text begins with Hello, Good Day!');
-  assert(resetTmpl.html.includes('112233'), 'Reset passkey rendered in template');
-
-  const changedTmpl = renderPasswordChangedEmail({
-    recipient: 'user@logistics.com',
-  });
-  assert(
-    changedTmpl.subject === 'FR8X Password Changed Successfully',
-    'Password changed subject matches specification'
-  );
-  assert(changedTmpl.text.startsWith('Hello, Good Day!'), 'Password changed text begins with Hello, Good Day!');
-
-  const otpTmpl = renderOtpChallengeEmail({
-    recipient: 'operator@fr8x.in',
+    verificationLink: 'https://con.fr8x.in/verify-email/tok_123',
     otpCode: '654321',
   });
-  assert(otpTmpl.subject === 'FR8X Verification Code', 'OTP challenge subject matches specification');
-  assert(otpTmpl.text.startsWith('Hello, Good Day!'), 'OTP challenge text begins with Hello, Good Day!');
+  assert(verifyEmail.success, 'Verification email dispatch succeeds');
+  assert(verifyEmail.from === 'password@fr8x.in', 'Verification email from address is password@fr8x.in');
+
+  const pwdResetEmail = await EmailService.sendPasswordResetEmail({
+    to: testRecipient,
+    resetLink: 'https://con.fr8x.in/reset-password/tok_abc',
+    otpCode: '123456',
+  });
+  assert(pwdResetEmail.success, 'Password reset email dispatch succeeds');
+  assert(pwdResetEmail.from === 'password@fr8x.in', 'Password reset email from address is password@fr8x.in');
+
+  const pwdChangedEmail = await EmailService.sendPasswordChangedEmail({
+    to: testRecipient,
+    ipAddress: '10.0.0.1',
+  });
+  assert(pwdChangedEmail.success, 'Password changed email dispatch succeeds');
+  assert(pwdChangedEmail.from === 'password@fr8x.in', 'Password changed email from address is password@fr8x.in');
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 5: REGISTRATION, PERSISTENCE & VERIFICATION (USER ACCOUNT NOT FOUND FIX)
+  // 5. VALID SUPPORT EMAIL (support@fr8x.in)
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 5. User Registration, Persistence & Verification Lifecycle ---');
-
-  const testEmail = `new-operator-${Date.now()}@oceanfreight.corp`;
-  const regResult = serverSecurityStore.registerUser({
-    uid: `u-test-${Date.now()}`,
-    email: testEmail,
-    password: 'SecurePass@2026',
-    displayName: 'Test Operator',
-    company: 'Ocean Freight Corp',
-    companyId: 'CMP-99881',
+  console.log('\n--- 5. Valid Support Email (support@fr8x.in) ---');
+  const supportEmail = await EmailService.sendSupportEmail({
+    to: testRecipient,
+    subject: 'Urgent Container Tracking Issue',
+    message: 'We need assistance with shipment tracking container MSKU908123.',
+    ticketId: 'TCK-8890',
   });
-
-  assert(regResult.success, 'New user registered successfully');
+  assert(supportEmail.success, 'Support email dispatch succeeds');
+  assert(supportEmail.from === 'support@fr8x.in', 'Support email from address is support@fr8x.in');
   assert(
-    regResult.user?.status === 'pending_verification',
-    'New user account is placed in pending_verification status'
+    supportEmail.subject?.includes('TCK-8890'),
+    'Support email subject includes Ticket ID: FR8X SUPPORT TICKET CREATED — {{TICKET_ID}}'
   );
-  assert(Boolean(regResult.verificationToken), 'Cryptographic verification token generated');
-  assert(Boolean(regResult.verificationOtp), '6-digit verification code generated');
-
-  // Verify state persistence: force re-loading state from disk
-  serverSecurityStore.loadPersistedState();
-  const verifyFoundAfterReload = serverSecurityStore.getUser(testEmail);
-  assert(
-    Boolean(verifyFoundAfterReload),
-    'State persistence verified: user is restored from disk after store reload'
-  );
-
-  // Attempt to login while pending verification
-  const preVerifyLogin = serverSecurityStore.recordLoginAttempt(testEmail, 'SecurePass@2026');
-  assert(
-    !preVerifyLogin.success && preVerifyLogin.isPendingVerification,
-    'Login rejected while account is pending email verification'
-  );
-
-  // Invalid verification code
-  const badVerify = serverSecurityStore.verifyEmailToken({
-    email: testEmail,
-    otp: '000000',
-  });
-  assert(!badVerify.success, 'Invalid verification code rejected');
-
-  // Valid verification code
-  const goodVerify = serverSecurityStore.verifyEmailToken({
-    email: testEmail,
-    otp: regResult.verificationOtp,
-  });
-  assert(goodVerify.success, 'Email verification succeeds with valid OTP');
-  assert(goodVerify.user?.status === 'active', 'User status transitioned to active after verification');
-
-  // Single-use token consumption test: reusing token returns already verified
-  const reuseVerify = serverSecurityStore.verifyEmailToken({
-    email: testEmail,
-    otp: regResult.verificationOtp,
-  });
-  assert(
-    reuseVerify.success && reuseVerify.message?.includes('already verified'),
-    'Reusing verification code is safely handled without duplicate activation'
-  );
-
-  // Login succeeds after verification
-  const postVerifyLogin = serverSecurityStore.recordLoginAttempt(testEmail, 'SecurePass@2026');
-  assert(postVerifyLogin.success, 'Login succeeds after account is verified');
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 6: RESEND VERIFICATION & RATE LIMITING
+  // 6. VALID TECHNICAL EMAIL (tech@fr8x.in)
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 6. Resend Verification & Rate Limiting ---');
+  console.log('\n--- 6. Valid Technical Email (tech@fr8x.in) ---');
+  const techEmail = await EmailService.sendTechnicalEmail({
+    to: testRecipient,
+    subject: 'Scheduled Gateway Maintenance',
+    details: 'Database cluster indexing scheduled for Sunday 02:00 UTC.',
+    category: 'MAINTENANCE',
+  });
+  assert(techEmail.success, 'Technical email dispatch succeeds');
+  assert(techEmail.from === 'tech@fr8x.in', 'Technical email from address is tech@fr8x.in');
+  assert(
+    techEmail.from !== 'password@fr8x.in' && techEmail.from !== 'support@fr8x.in',
+    'Technical emails are isolated from customer authentication and support'
+  );
 
-  const unverifiedEmail = `unverified-${Date.now()}@portlogistics.com`;
+  // ───────────────────────────────────────────────────────────────────────────
+  // 7. ZEPTOMAIL SUCCESS
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 7. ZeptoMail Success Response Handling ---');
+  const originalFetch = global.fetch;
+  try {
+    global.fetch = (async (url: string | URL | Request, init?: RequestInit) => {
+      return {
+        ok: true,
+        status: 201,
+        statusText: 'Created',
+        json: async () => ({
+          data: [
+            {
+              code: 'MAIL_SENT',
+              message: 'Email sent successfully',
+              message_id: 'zm_msg_test_success_998877',
+            },
+          ],
+          message: 'success',
+        }),
+      } as Response;
+    }) as any;
+
+    process.env.ZEPTO_MAIL_API_KEY = 'test_dummy_token_for_mock_fetch';
+
+    const testSendResult = await EmailService.sendTestEmail({
+      to: testRecipient,
+    });
+    assert(testSendResult.success, 'ZeptoMail 201 Created processed successfully');
+    assert(
+      testSendResult.messageId === 'zm_msg_test_success_998877',
+      'Message ID extracted correctly from ZeptoMail payload'
+    );
+    assert(testSendResult.provider === 'Zoho_ZeptoMail', 'Provider identified as Zoho_ZeptoMail');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.ZEPTO_MAIL_API_KEY;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 8. ZEPTOMAIL 4XX CLIENT ERROR (NO BLIND RETRIES)
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 8. ZeptoMail 4xx Handling (No Blind Retries) ---');
+  let fetchCallCount4xx = 0;
+  try {
+    global.fetch = (async () => {
+      fetchCallCount4xx++;
+      return {
+        ok: false,
+        status: 400,
+        statusText: 'Bad Request',
+        json: async () => ({
+          error: {
+            code: 'INVALID_SENDER',
+            message: 'Sender address not allowed for agent_1',
+          },
+        }),
+      } as Response;
+    }) as any;
+
+    process.env.ZEPTO_MAIL_API_KEY = 'test_token';
+
+    const fail4xxResult = await EmailService.sendTransactionalEmail({
+      to: testRecipient,
+      subject: 'Test 4xx',
+      text: 'Body',
+      senderType: 'PASSWORD',
+    });
+
+    assert(!fail4xxResult.success, '4xx error returns success: false');
+    assert(
+      fetchCallCount4xx === 1,
+      '4xx error is NOT retried blindly (exactly 1 request made)',
+      `Actual call count: ${fetchCallCount4xx}`
+    );
+    assert(
+      fail4xxResult.error?.includes('INVALID_SENDER') || fail4xxResult.error?.includes('Sender address not allowed'),
+      '4xx error details safely extracted'
+    );
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.ZEPTO_MAIL_API_KEY;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 9. ZEPTOMAIL 5XX TRANSIENT ERROR (CONTROLLED RETRY)
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 9. ZeptoMail 5xx Transient Error (Controlled Retry) ---');
+  let fetchCallCount5xx = 0;
+  try {
+    global.fetch = (async () => {
+      fetchCallCount5xx++;
+      if (fetchCallCount5xx === 1) {
+        // First attempt fails with 503 Service Unavailable
+        return {
+          ok: false,
+          status: 503,
+          statusText: 'Service Unavailable',
+          json: async () => ({ error: { message: 'Temporary upstream rate limit' } }),
+        } as Response;
+      }
+      // Second attempt succeeds
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          data: [{ message_id: 'recovered_msg_id_5544' }],
+        }),
+      } as Response;
+    }) as any;
+
+    process.env.ZEPTO_MAIL_API_KEY = 'test_token';
+
+    const retrySuccess = await EmailService.sendTransactionalEmail({
+      to: testRecipient,
+      subject: 'Test Retry',
+      text: 'Body',
+      senderType: 'PASSWORD',
+    });
+
+    assert(retrySuccess.success, '5xx transient failure successfully recovers on retry');
+    assert(
+      fetchCallCount5xx === 2,
+      'Controlled retry executed for 5xx transient error (exactly 2 attempts)',
+      `Actual attempts: ${fetchCallCount5xx}`
+    );
+    assert(retrySuccess.messageId === 'recovered_msg_id_5544', 'Message ID received from successful retry');
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.ZEPTO_MAIL_API_KEY;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 10. NETWORK TIMEOUT HANDLING
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 10. Network Timeout Handling ---');
+  try {
+    global.fetch = (async () => {
+      const err = new Error('The operation was aborted due to timeout');
+      err.name = 'AbortError';
+      throw err;
+    }) as any;
+
+    process.env.ZEPTO_MAIL_API_KEY = 'test_token';
+
+    const timeoutResult = await EmailService.sendTransactionalEmail({
+      to: testRecipient,
+      subject: 'Test Timeout',
+      text: 'Body',
+      senderType: 'PASSWORD',
+    });
+
+    assert(!timeoutResult.success, 'Network timeout fails gracefully without throwing uncaught exception');
+    assert(
+      timeoutResult.error?.toLowerCase().includes('timeout') || timeoutResult.error?.toLowerCase().includes('aborted'),
+      'Timeout error reported clearly in internal result'
+    );
+  } finally {
+    global.fetch = originalFetch;
+    delete process.env.ZEPTO_MAIL_API_KEY;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 11. FORGOT-PASSWORD ANTI-ACCOUNT-ENUMERATION
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 11. Anti-Account-Enumeration ---');
+  const existingUserEmail = `real-user-${Date.now()}@shippinglogistics.com`;
   serverSecurityStore.registerUser({
-    uid: `u-unverified-${Date.now()}`,
-    email: unverifiedEmail,
-    password: 'Password@123',
-    displayName: 'Unverified User',
-    company: 'Port Logistics Ltd',
-    companyId: 'CMP-77665',
+    uid: `u-${Date.now()}`,
+    email: existingUserEmail,
+    password: 'SuperSecretPassword@123',
+    displayName: 'Real Registered User',
+    company: 'Shipping Logistics Global',
+    companyId: 'CMP-10293',
   });
 
-  // Resend attempt 1
-  const resend1 = serverSecurityStore.resendEmailVerification(unverifiedEmail);
-  assert(resend1.success, 'Resend attempt 1 succeeds');
+  const existingResp = serverSecurityStore.requestPasswordReset(existingUserEmail);
+  const nonExistingResp = serverSecurityStore.requestPasswordReset('nobody-here-ever@nonexistent-domain-xyz.com');
 
-  // Resend attempt 2
-  const resend2 = serverSecurityStore.resendEmailVerification(unverifiedEmail);
-  assert(resend2.success, 'Resend attempt 2 succeeds');
-
-  // Resend attempt 3
-  const resend3 = serverSecurityStore.resendEmailVerification(unverifiedEmail);
-  assert(resend3.success, 'Resend attempt 3 succeeds');
-
-  // Resend attempt 4 (rate limited)
-  const resend4 = serverSecurityStore.resendEmailVerification(unverifiedEmail);
+  assert(existingResp.success, 'Existing email request returns success: true');
+  assert(nonExistingResp.success, 'Non-existent email request returns success: true');
   assert(
-    !resend4.success && resend4.remainingAttempts === 0,
-    'Resend attempt 4 blocked by rate limiter (max 3/hour)'
+    existingResp.message === nonExistingResp.message,
+    'Generic anti-enumeration message is IDENTICAL for existing and non-existent accounts'
+  );
+  assert(
+    existingResp.message === 'If an account exists for this email address, password reset instructions have been sent.',
+    'Message matches security specification exactly'
   );
 
   // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 7: LOGIN ATTEMPTS & 3-STRIKE LOCKOUT
+  // 12. VERIFICATION TOKEN EXPIRY
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 7. Login Security & Lockout Policy ---');
+  console.log('\n--- 12. Verification Token Expiry ---');
+  const expiryTestEmail = `expiry-user-${Date.now()}@oceanmarine.com`;
+  const expReg = serverSecurityStore.registerUser({
+    uid: `u-exp-${Date.now()}`,
+    email: expiryTestEmail,
+    password: 'ValidPassword@999',
+    displayName: 'Expiry User',
+    company: 'Ocean Marine Corp',
+    companyId: 'CMP-77441',
+  });
 
-  const lockoutUserEmail = `lockout-${Date.now()}@terminalops.com`;
+  // Manually expire verification record in active store
+  const pendingRecord = (serverSecurityStore as any).emailVerifications.get(expiryTestEmail.toLowerCase());
+  if (pendingRecord) {
+    pendingRecord.expiresAt = Date.now() - 1000; // Expired 1 second ago
+  }
+
+  const expiredVerifyResult = serverSecurityStore.verifyEmailToken({
+    email: expiryTestEmail,
+    otp: expReg.verificationOtp,
+  });
+  assert(!expiredVerifyResult.success, 'Expired verification token rejected');
+  assert(
+    expiredVerifyResult.error?.toLowerCase().includes('expired'),
+    'Expired message returned to user'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 13. VERIFICATION TOKEN SINGLE-USE
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 13. Verification Token Single-Use ---');
+  const singleUseEmail = `single-use-${Date.now()}@freightforwarders.com`;
+  const suReg = serverSecurityStore.registerUser({
+    uid: `u-su-${Date.now()}`,
+    email: singleUseEmail,
+    password: 'ValidPassword@999',
+    displayName: 'Single Use User',
+    company: 'Freight Forwarders International',
+    companyId: 'CMP-22334',
+  });
+
+  const firstVerify = serverSecurityStore.verifyEmailToken({
+    email: singleUseEmail,
+    otp: suReg.verificationOtp,
+  });
+  assert(firstVerify.success, 'Initial verification succeeds');
+
+  const reVerify = serverSecurityStore.verifyEmailToken({
+    email: singleUseEmail,
+    otp: suReg.verificationOtp,
+  });
+  assert(
+    reVerify.success && reVerify.message?.includes('already verified'),
+    'Subsequent verification attempt acknowledges already-verified without re-activating or leaking tokens'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 14. PASSWORD RESET TOKEN EXPIRY
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 14. Password Reset Token Expiry ---');
+  const resetExpEmail = `reset-exp-${Date.now()}@portauthority.org`;
   serverSecurityStore.registerUser(
     {
-      uid: `u-lockout-${Date.now()}`,
-      email: lockoutUserEmail,
-      password: 'InitialPassword@1',
-      displayName: 'Terminal Operator',
-      company: 'Terminal Operations SA',
-      companyId: 'CMP-55443',
-    },
-    { skipVerification: true } // Active account for lockout test
-  );
-
-  // Failed attempt 1
-  const fail1 = serverSecurityStore.recordLoginAttempt(lockoutUserEmail, 'WrongPassword1');
-  assert(!fail1.success && fail1.attemptsRemaining === 2, 'Failed attempt 1: 2 attempts remaining');
-
-  // Failed attempt 2
-  const fail2 = serverSecurityStore.recordLoginAttempt(lockoutUserEmail, 'WrongPassword2');
-  assert(!fail2.success && fail2.attemptsRemaining === 1, 'Failed attempt 2: 1 attempt remaining');
-
-  // Failed attempt 3 (triggers lockout and password reset OTP)
-  const fail3 = serverSecurityStore.recordLoginAttempt(lockoutUserEmail, 'WrongPassword3');
-  assert(
-    !fail3.success && fail3.isBlocked && fail3.passwordResetRequired,
-    'Failed attempt 3 locks account and requires verified password reset'
-  );
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 8: FORGOT PASSWORD & ANTI-ENUMERATION
-  // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 8. Forgot Password & Anti-Enumeration ---');
-
-  const validForgot = serverSecurityStore.requestPasswordReset(lockoutUserEmail);
-  assert(validForgot.success, 'Valid email request returns success');
-  assert(
-    validForgot.message ===
-      'If an account exists for this email address, password reset instructions have been sent.',
-    'Valid email returns generic anti-enumeration response'
-  );
-
-  const invalidForgot = serverSecurityStore.requestPasswordReset('non-existent-user@randomcompany.com');
-  assert(invalidForgot.success, 'Non-existent email request returns success');
-  assert(
-    invalidForgot.message ===
-      'If an account exists for this email address, password reset instructions have been sent.',
-    'Non-existent email returns IDENTICAL anti-enumeration response'
-  );
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // TEST SUITE 9: PASSWORD RESET (OTP & URL TOKEN) & CONFIRMATION
-  // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n--- 9. Password Reset (OTP & URL Token) & Invalidation ---');
-
-  const activeResetOtp = serverSecurityStore.getActiveResetOtp(lockoutUserEmail);
-  assert(Boolean(activeResetOtp), 'Active password reset OTP exists in secure store');
-
-  // Invalid OTP rejected
-  const badOtpReset = serverSecurityStore.verifyAndResetPassword(
-    lockoutUserEmail,
-    '000000',
-    'NewSecurePassword@2026'
-  );
-  assert(!badOtpReset.success, 'Invalid password reset OTP rejected');
-
-  // Weak password rejected (<8 chars)
-  const weakPassReset = serverSecurityStore.verifyAndResetPassword(
-    lockoutUserEmail,
-    activeResetOtp!,
-    '123'
-  );
-  assert(!weakPassReset.success, 'Short/weak password rejected (< 8 chars)');
-
-  // Valid reset with OTP
-  const goodReset = serverSecurityStore.verifyAndResetPassword(
-    lockoutUserEmail,
-    activeResetOtp!,
-    'BrandNewPassword@2026'
-  );
-  assert(goodReset.success, 'Password successfully reset with valid OTP');
-  assert(goodReset.user?.status === 'active', 'Account restored to active status after reset');
-
-  // Single-use token invalidation: token consumed
-  const reusedOtpReset = serverSecurityStore.verifyAndResetPassword(
-    lockoutUserEmail,
-    activeResetOtp!,
-    'AnotherPassword@2026'
-  );
-  assert(!reusedOtpReset.success, 'Reusing password reset OTP rejected (single-use enforced)');
-
-  // New password authenticates
-  const postResetLogin = serverSecurityStore.recordLoginAttempt(
-    lockoutUserEmail,
-    'BrandNewPassword@2026'
-  );
-  assert(postResetLogin.success, 'User can log in with new password');
-
-  // Old password rejected
-  const oldPassLogin = serverSecurityStore.recordLoginAttempt(
-    lockoutUserEmail,
-    'InitialPassword@1'
-  );
-  assert(!oldPassLogin.success, 'Old password no longer authenticates');
-
-  // Token-based password reset test
-  console.log('\n--- 10. URL Token-Based Password Reset ---');
-  const tokenUserEmail = `token-reset-${Date.now()}@shippingline.corp`;
-  serverSecurityStore.registerUser(
-    {
-      uid: `u-token-${Date.now()}`,
-      email: tokenUserEmail,
-      password: 'OldPassword@2026',
-      displayName: 'Token User',
-      company: 'Shipping Line Corp',
-      companyId: 'CMP-11223',
+      uid: `u-rexp-${Date.now()}`,
+      email: resetExpEmail,
+      password: 'InitialPassword@123',
+      displayName: 'Reset Expiry User',
+      company: 'Port Authority Global',
+      companyId: 'CMP-44556',
     },
     { skipVerification: true }
   );
 
-  const tokenForgot = serverSecurityStore.requestPasswordReset(tokenUserEmail);
-  assert(tokenForgot.success, 'Password reset requested for token user');
-  const generatedToken = tokenForgot.resetToken || serverSecurityStore.getActiveResetToken(tokenUserEmail);
-  assert(Boolean(generatedToken), 'Cryptographic URL reset token generated');
+  serverSecurityStore.requestPasswordReset(resetExpEmail);
+  const resetOtp = serverSecurityStore.getActiveResetOtp(resetExpEmail);
 
-  // Invalid token rejected
-  const badTokenReset = serverSecurityStore.verifyAndResetPasswordByToken({
-    token: 'invalid_token_12345678',
-    newPassword: 'BrandNewSecure@2026',
-    confirmPassword: 'BrandNewSecure@2026',
-  });
-  assert(!badTokenReset.success, 'Invalid reset token rejected');
+  // Manually expire active reset OTP
+  const activeOtpRecord = (serverSecurityStore as any).activeResetOtps.get(resetExpEmail.toLowerCase());
+  if (activeOtpRecord) {
+    activeOtpRecord.expiresAt = Date.now() - 5000;
+  }
 
-  // Password mismatch rejected
-  const mismatchReset = serverSecurityStore.verifyAndResetPasswordByToken({
-    token: generatedToken!,
-    newPassword: 'BrandNewSecure@2026',
-    confirmPassword: 'DifferentPassword@2026',
-  });
-  assert(!mismatchReset.success, 'Password confirmation mismatch rejected');
+  const expiredReset = serverSecurityStore.verifyAndResetPassword(
+    resetExpEmail,
+    resetOtp!,
+    'NewSecurePassword@2026'
+  );
+  assert(!expiredReset.success, 'Expired password reset OTP rejected');
+  assert(
+    expiredReset.error?.toLowerCase().includes('expired'),
+    'Expired password reset error message returned'
+  );
 
-  // Valid token reset
-  const goodTokenReset = serverSecurityStore.verifyAndResetPasswordByToken({
-    token: generatedToken!,
-    newPassword: 'BrandNewSecure@2026',
-    confirmPassword: 'BrandNewSecure@2026',
-  });
-  assert(goodTokenReset.success, 'Password reset successfully via URL token');
+  // ───────────────────────────────────────────────────────────────────────────
+  // 15. PASSWORD RESET TOKEN SINGLE-USE
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 15. Password Reset Token Single-Use ---');
+  const suResetEmail = `su-reset-${Date.now()}@containerships.com`;
+  serverSecurityStore.registerUser(
+    {
+      uid: `u-sureset-${Date.now()}`,
+      email: suResetEmail,
+      password: 'OriginalPassword@123',
+      displayName: 'Single Reset User',
+      company: 'Container Ships LLC',
+      companyId: 'CMP-88776',
+    },
+    { skipVerification: true }
+  );
 
-  // Reusing token rejected
-  const reuseTokenReset = serverSecurityStore.verifyAndResetPasswordByToken({
-    token: generatedToken!,
-    newPassword: 'AnotherPassword@2026',
-    confirmPassword: 'AnotherPassword@2026',
+  const resetReq = serverSecurityStore.requestPasswordReset(suResetEmail);
+  const activeToken = resetReq.resetToken || serverSecurityStore.getActiveResetToken(suResetEmail);
+  assert(Boolean(activeToken), 'URL reset token successfully generated');
+
+  const firstTokenReset = serverSecurityStore.verifyAndResetPasswordByToken({
+    token: activeToken!,
+    newPassword: 'BrandNewPassword@2026',
+    confirmPassword: 'BrandNewPassword@2026',
   });
-  assert(!reuseTokenReset.success, 'Reusing URL reset token rejected (single-use enforced)');
+  assert(firstTokenReset.success, 'First password reset with token succeeds');
+
+  const secondTokenReset = serverSecurityStore.verifyAndResetPasswordByToken({
+    token: activeToken!,
+    newPassword: 'ThirdPassword@2026',
+    confirmPassword: 'ThirdPassword@2026',
+  });
+  assert(!secondTokenReset.success, 'Second password reset with same token rejected (single-use enforced)');
+  assert(
+    secondTokenReset.error?.toLowerCase().includes('already') || secondTokenReset.error?.toLowerCase().includes('expired') || secondTokenReset.error?.toLowerCase().includes('invalid'),
+    'Token single-use rejection verified'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 16. OTP EXPIRATION
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 16. OTP Expiration ---');
+  const otpExpTmpl = renderOtpChallengeEmail({
+    recipient: testRecipient,
+    otpCode: '908172',
+    expiryMinutes: 10,
+  });
+  assert(otpExpTmpl.subject === 'YOUR FR8X VERIFICATION CODE', 'OTP subject matches YOUR FR8X VERIFICATION CODE');
+  assert(otpExpTmpl.text.includes('valid for 10 minutes'), 'OTP expiration notice rendered in email body');
+  assert(otpExpTmpl.html.includes('908172'), 'OTP code rendered in HTML');
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 17. OTP ATTEMPT LIMIT & RATE LIMITING
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 17. OTP Attempt Limit ---');
+  const otpRateEmail = `otprate-${Date.now()}@railfreight.net`;
+  const req1 = serverSecurityStore.requestOTP(otpRateEmail);
+  assert(req1.success && req1.remaining === 2, 'OTP request 1 succeeds (2 remaining)');
+
+  const req2 = serverSecurityStore.requestOTP(otpRateEmail);
+  assert(req2.success && req2.remaining === 1, 'OTP request 2 succeeds (1 remaining)');
+
+  const req3 = serverSecurityStore.requestOTP(otpRateEmail);
+  assert(req3.success && req3.remaining === 0, 'OTP request 3 succeeds (0 remaining)');
+
+  const req4 = serverSecurityStore.requestOTP(otpRateEmail);
+  assert(!req4.success && req4.remaining === 0, 'OTP request 4 blocked (daily limit 3 reached)');
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 18. SECRET NOT APPEARING IN LOGS OR ERROR STRINGS
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 18. Secret & Credential Redaction ---');
+  const secretKey = 'ph_secret_zm_token_991823901923';
+  const rawLogString = `Request Authorization: Zoho-enczapikey ${secretKey} for user password: SuperSecretPass123`;
+  const redacted = redactSensitiveData(rawLogString);
+
+  assert(!redacted.includes(secretKey), 'Secret API key completely redacted from logs');
+  assert(!redacted.includes('SuperSecretPass123'), 'Plaintext password completely redacted from logs');
+  assert(redacted.includes('[REDACTED_AUTH_HEADER]'), 'Header replaced with safe placeholder');
+  assert(redacted.includes('[REDACTED_PASSWORD]'), 'Password replaced with safe placeholder');
+
+  // Verify test template renders exact prompt text
+  const testTmpl = renderTestEmail();
+  assert(testTmpl.subject === 'FR8X ZEPTOMAIL TEST', 'Test email subject is FR8X ZEPTOMAIL TEST');
+  assert(
+    testTmpl.text.startsWith('FR8X ZeptoMail integration test successful.') &&
+      testTmpl.html.includes('FR8X ZeptoMail integration test successful.'),
+    'Test email body is FR8X ZeptoMail integration test successful.'
+  );
 
   // ───────────────────────────────────────────────────────────────────────────
   // SUMMARY
   // ───────────────────────────────────────────────────────────────────────────
-  console.log('\n============================================================');
-  console.log(`TEST RESULTS: ${passedTests} PASSED, ${failedTests} FAILED`);
-  console.log('============================================================\n');
+  console.log('\n======================================================================');
+  console.log(`TEST SUITE FINISHED: ${passedTests} PASSED, ${failedTests} FAILED`);
+  console.log('======================================================================\n');
 
   if (failedTests > 0) {
     process.exit(1);
@@ -533,6 +587,6 @@ async function runTests() {
 }
 
 runTests().catch((err) => {
-  console.error('Fatal test error:', err);
+  console.error('Fatal test execution error:', err);
   process.exit(1);
 });

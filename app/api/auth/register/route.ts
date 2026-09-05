@@ -95,12 +95,6 @@ export async function POST(req: NextRequest) {
             designation: designation || 'Freight Procurement Manager',
             status: user.status,
           },
-          demoCode:
-            process.env.NODE_ENV === 'development' &&
-            !process.env.ZEPTO_MAIL_API_KEY &&
-            !process.env.ZOHO_ZEPTOMAIL_TOKEN
-              ? result.verificationOtp
-              : undefined,
         },
         { status: 201 }
       );

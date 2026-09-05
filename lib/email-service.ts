@@ -1,18 +1,21 @@
 /**
  * FR8X Central Server-Side Email Service
  *
+ * Production ZeptoMail REST Email Sending API Implementation.
+ *
  * Architecture:
- * Godfather / FR8X UI -> FR8X Backend API -> Central Email Service -> Zoho ZeptoMail API -> Recipient
+ * FR8X FRONTEND -> FR8X BACKEND -> CENTRAL EMAIL SERVICE -> ZEPTOMAIL REST API -> USER EMAIL
  *
  * Senders & Strict Routing:
- * - AUTHENTICATION / SECURITY: password@fr8x.in
- *   (account verification, email verification, OTP, forgot password, password reset, password changed, login security)
+ * - PASSWORD / SECURITY: password@fr8x.in
+ *   (Email verification, OTP, Forgot password, Password reset, Password changed, Login security alert, Account security notification)
  * - SUPPORT: support@fr8x.in
- *   (support request, support ticket, contact support)
- * - NEVER use tech@fr8x.in for user authentication emails.
+ *   (Support ticket, Customer support, Complaint, Support response, Account assistance, General support communication)
+ * - TECHNICAL: tech@fr8x.in
+ *   (Technical notification, System maintenance, System incident, System recovery, Infrastructure/system notification)
  *
  * CRITICAL SECURITY POLICIES:
- * 1. The client must NEVER specify arbitrary sender, from_email, or smtp credentials.
+ * 1. The client must NEVER specify arbitrary sender, from_email, or credentials.
  *    Sender is strictly determined server-side by internal email type.
  * 2. ZeptoMail credentials / API key MUST remain strictly server-side (process.env only).
  * 3. Never log passwords, OTPs, verification/reset tokens, authorization headers, or ZeptoMail keys.
@@ -25,58 +28,81 @@ import {
   renderPasswordChangedEmail,
   renderOtpChallengeEmail,
   renderSupportEmail,
+  renderTechnicalEmail,
   renderSecurityAlertEmail,
+  renderTestEmail,
+  EmailVerificationTemplateParams,
+  PasswordResetTemplateParams,
+  PasswordChangedTemplateParams,
+  OtpChallengeTemplateParams,
+  SupportTemplateParams,
+  TechnicalNotificationTemplateParams,
+  SecurityAlertTemplateParams,
+  TestEmailTemplateParams,
 } from '@/lib/email-templates';
 
 export const EMAIL_SENDERS = {
-  SUPPORT: 'support@fr8x.in',
   PASSWORD: 'password@fr8x.in',
+  SUPPORT: 'support@fr8x.in',
+  TECH: 'tech@fr8x.in',
 } as const;
 
 export type EmailSenderType = keyof typeof EMAIL_SENDERS;
 
 export type TransactionalEmailType =
+  // Password & Security (password@fr8x.in)
   | 'PASSWORD_RESET'
   | 'EMAIL_VERIFICATION'
   | 'AUTH_OTP'
   | 'PASSWORD_OTP'
   | 'PASSWORD_CHANGED'
   | 'LOGIN_SECURITY'
+  | 'EMAIL_TEST'
+  // Customer & Platform Support (support@fr8x.in)
   | 'SUPPORT_REQUEST'
   | 'SUPPORT_TICKET'
   | 'CONTACT_SUPPORT'
   | 'SUPPORT_NOTIFICATION'
   | 'SUPPORT_CONTACT'
-  | 'EMAIL_TEST';
+  // Technical & System Infrastructure (tech@fr8x.in)
+  | 'TECH_NOTIFICATION'
+  | 'SYSTEM_MAINTENANCE'
+  | 'SYSTEM_INCIDENT'
+  | 'SERVICE_RESTORED';
 
 // Alias for backwards compatibility
 export type EmailEventType = TransactionalEmailType;
 
 export interface SendTransactionalEmailParams {
-  type: TransactionalEmailType;
+  type?: TransactionalEmailType;
+  senderType?: EmailSenderType;
   to: string;
   subject: string;
-  text: string;
+  text?: string;
   html?: string;
   recipientName?: string;
   correlationId?: string;
   metadata?: Record<string, unknown>;
+  replyTo?: string;
+  templateId?: string;
 }
 
 export interface TransactionalEmailResult {
   success: boolean;
   messageId?: string;
   correlationId: string;
-  type: TransactionalEmailType;
+  type?: TransactionalEmailType;
   from: string;
   to: string;
-  provider: 'ZOHO_ZEPTOMAIL' | 'MOCK_SANDBOX';
+  subject?: string;
+  provider: 'ZOHO_ZEPTOMAIL' | 'MOCK_SANDBOX' | 'Zoho_ZeptoMail' | 'Sandbox_Mock';
   error?: string;
+  details?: unknown;
 }
 
 // Backwards-compatible param and response interfaces
 export interface SendEmailParams {
-  fromType: EmailSenderType;
+  fromType?: EmailSenderType;
   to: string;
   subject: string;
   message: string;
@@ -84,6 +110,7 @@ export interface SendEmailParams {
   event: EmailEventType | string;
   correlationId?: string;
   metadata?: Record<string, unknown>;
+  recipientName?: string;
 }
 
 export interface SendEmailResponse {
@@ -94,7 +121,7 @@ export interface SendEmailResponse {
   fromType: EmailSenderType;
   sender: string;
   to: string;
-  provider: 'ZOHO_FLOW' | 'ZOHO_ZEPTOMAIL' | 'MOCK_SANDBOX';
+  provider: 'ZOHO_FLOW' | 'ZOHO_ZEPTOMAIL' | 'MOCK_SANDBOX' | 'Zoho_ZeptoMail' | 'Sandbox_Mock';
   isPasswordConfigured: boolean;
   error?: string;
 }
@@ -109,10 +136,11 @@ export interface EmailSenderStatus {
 export interface ZeptoMailConfigStatus {
   isOperational: boolean;
   endpoint: string;
-  bounceAddress: string;
   hasToken: boolean;
   tokenMasked?: string;
   notes: string;
+  agent: string;
+  domain: string;
 }
 
 /**
@@ -124,27 +152,27 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
     process.env.ZOHO_ZEPTOMAIL_TOKEN ||
     ''
   ).trim();
+
   const endpoint =
+    process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.in/v1.1/email';
-  const bounceAddress =
-    process.env.ZEPTO_MAIL_BOUNCE_ADDRESS?.trim() ||
-    process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() ||
-    'bounce@bounce.fr8x.in';
+    'https://api.zeptomail.com/v1.1/email';
+
   const hasToken = Boolean(token && token !== 'undefined' && token.length > 5);
 
   return {
     isOperational: hasToken,
     endpoint,
-    bounceAddress,
     hasToken,
     tokenMasked: hasToken
-      ? `${token.substring(0, 10)}••••••••${token.slice(-4)}`
+      ? `${token.substring(0, 6)}••••••••${token.slice(-4)}`
       : undefined,
     notes: hasToken
-      ? `Operational: Zoho ZeptoMail transactional API active (${endpoint}).`
-      : 'Pending: ZEPTO_MAIL_API_KEY is not configured in environment (operating in dev sandbox mode).',
+      ? `Operational: ZeptoMail REST API active (${endpoint}).`
+      : 'Pending: ZEPTO_MAIL_API_KEY is not configured in environment (operating in local sandbox mode).',
+    agent: 'agent_1',
+    domain: 'fr8x.in',
   };
 }
 
@@ -155,21 +183,29 @@ export function getEmailSendersStatus(): Record<EmailSenderType, EmailSenderStat
   const zeptoStatus = getZeptoMailStatus();
 
   return {
-    SUPPORT: {
-      sender: 'SUPPORT',
-      mailbox: EMAIL_SENDERS.SUPPORT,
-      isOperational: zeptoStatus.isOperational,
-      notes: zeptoStatus.isOperational
-        ? 'Operational: Support mail identity configured via Zoho ZeptoMail (support@fr8x.in).'
-        : 'Dev Mode: Configured with mock sandbox fallback until ZEPTO_MAIL_API_KEY is added.',
-    },
     PASSWORD: {
       sender: 'PASSWORD',
-      mailbox: EMAIL_SENDERS.PASSWORD,
+      mailbox: process.env.ZEPTO_MAIL_PASSWORD_FROM || EMAIL_SENDERS.PASSWORD,
       isOperational: zeptoStatus.isOperational,
       notes: zeptoStatus.isOperational
-        ? 'Operational: Dedicated authentication mailbox active via Zoho ZeptoMail (password@fr8x.in).'
-        : 'PASSWORD@FR8X.IN REQUIRES ZOHO FLOW MAIL CONNECTION/AUTHORIZATION or ZEPTO_MAIL_API_KEY.',
+        ? 'Operational: Dedicated password and security mailbox active via ZeptoMail (password@fr8x.in).'
+        : 'Sandbox Mode: Awaiting ZEPTO_MAIL_API_KEY.',
+    },
+    SUPPORT: {
+      sender: 'SUPPORT',
+      mailbox: process.env.ZEPTO_MAIL_SUPPORT_FROM || EMAIL_SENDERS.SUPPORT,
+      isOperational: zeptoStatus.isOperational,
+      notes: zeptoStatus.isOperational
+        ? 'Operational: Support mail identity configured via ZeptoMail (support@fr8x.in).'
+        : 'Sandbox Mode: Awaiting ZEPTO_MAIL_API_KEY.',
+    },
+    TECH: {
+      sender: 'TECH',
+      mailbox: process.env.ZEPTO_MAIL_TECH_FROM || EMAIL_SENDERS.TECH,
+      isOperational: zeptoStatus.isOperational,
+      notes: zeptoStatus.isOperational
+        ? 'Operational: Technical and infrastructure mailbox active via ZeptoMail (tech@fr8x.in).'
+        : 'Sandbox Mode: Awaiting ZEPTO_MAIL_API_KEY.',
     },
   };
 }
@@ -191,21 +227,38 @@ export function isValidEmailAddress(email: string): boolean {
 /**
  * Sanitizes input strings to prevent CRLF header injection.
  */
-function sanitizeString(str: string): string {
+export function sanitizeString(str: string): string {
   return str.replace(/[\r\n\t]/g, ' ').trim();
+}
+
+/**
+ * Redacts sensitive credentials, tokens, passwords, and authorization headers from logs and error strings.
+ */
+export function redactSensitiveData(input: string): string {
+  if (!input || typeof input !== 'string') return '';
+  return input
+    .replace(/(?:Zoho-enczapikey|Bearer)\s+[A-Za-z0-9_\-.~+/]+=*/gi, '[REDACTED_AUTH_HEADER]')
+    .replace(/(?:password|passkey|secret|token)\s*[:=]\s*[^\s,;]+/gi, (match) => {
+      const parts = match.split(/[:=]/);
+      return `${parts[0]}: [REDACTED_PASSWORD]`;
+    })
+    .replace(/\b(?:ph_|zm_)[A-Za-z0-9_]{10,}\b/gi, '[REDACTED_TOKEN]');
 }
 
 /**
  * Strict Server-Side Sender Routing:
  * The frontend/client must NEVER control the sender.
- * Auth & Security -> password@fr8x.in
- * Support -> support@fr8x.in
+ * - Password & Security -> password@fr8x.in
+ * - Support -> support@fr8x.in
+ * - Technical -> tech@fr8x.in
  */
 export function resolveSenderForType(type: TransactionalEmailType): {
   address: string;
   name: string;
   senderType: EmailSenderType;
 } {
+  const fromName = process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X';
+
   switch (type) {
     case 'SUPPORT_REQUEST':
     case 'SUPPORT_TICKET':
@@ -213,10 +266,21 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'SUPPORT_NOTIFICATION':
     case 'SUPPORT_CONTACT':
       return {
-        address: process.env.ZOHO_SUPPORT_EMAIL || EMAIL_SENDERS.SUPPORT,
-        name: process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X Support',
+        address: process.env.ZEPTO_MAIL_SUPPORT_FROM || EMAIL_SENDERS.SUPPORT,
+        name: `${fromName} Support`,
         senderType: 'SUPPORT',
       };
+
+    case 'TECH_NOTIFICATION':
+    case 'SYSTEM_MAINTENANCE':
+    case 'SYSTEM_INCIDENT':
+    case 'SERVICE_RESTORED':
+      return {
+        address: process.env.ZEPTO_MAIL_TECH_FROM || EMAIL_SENDERS.TECH,
+        name: `${fromName} Engineering`,
+        senderType: 'TECH',
+      };
+
     case 'PASSWORD_RESET':
     case 'EMAIL_VERIFICATION':
     case 'AUTH_OTP':
@@ -226,11 +290,69 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'EMAIL_TEST':
     default:
       return {
-        address: process.env.ZEPTO_MAIL_FROM_ADDRESS || EMAIL_SENDERS.PASSWORD,
-        name: process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X',
+        address: process.env.ZEPTO_MAIL_PASSWORD_FROM || EMAIL_SENDERS.PASSWORD,
+        name: `${fromName} Security`,
         senderType: 'PASSWORD',
       };
   }
+}
+
+/**
+ * Executes an HTTP fetch with controlled retries on transient errors (network failure, 5xx).
+ * Does NOT retry on 4xx (client, bad request, auth) errors.
+ */
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 2
+): Promise<Response> {
+  let attempt = 0;
+  let lastError: any = null;
+
+  while (attempt <= maxRetries) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // If response is transient server error (500, 502, 503, 504), retry
+      if (response.status >= 500 && response.status <= 504 && attempt < maxRetries) {
+        attempt++;
+        const backoffMs = attempt * 400;
+        console.warn(
+          `[ZEPTOMAIL_RETRY] Server returned ${response.status}. Retrying attempt ${attempt}/${maxRetries} in ${backoffMs}ms...`
+        );
+        await new Promise((r) => setTimeout(r, backoffMs));
+        continue;
+      }
+
+      return response;
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      lastError = err;
+      const isTransient = err.name === 'AbortError' || err.code === 'ECONNRESET' || err.code === 'ETIMEDOUT';
+
+      if (isTransient && attempt < maxRetries) {
+        attempt++;
+        const backoffMs = attempt * 400;
+        console.warn(
+          `[ZEPTOMAIL_RETRY] Transient network error (${err.message}). Retrying attempt ${attempt}/${maxRetries} in ${backoffMs}ms...`
+        );
+        await new Promise((r) => setTimeout(r, backoffMs));
+        continue;
+      }
+
+      throw err;
+    }
+  }
+
+  throw lastError || new Error('Request failed after retries');
 }
 
 /**
@@ -242,25 +364,44 @@ export async function sendTransactionalEmail(
 ): Promise<TransactionalEmailResult> {
   const correlationId =
     params.correlationId ||
-    `GF-EML-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+    `FR8X-EML-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
 
   const cleanTo = (params.to || '').trim().toLowerCase();
   const cleanSubject = sanitizeString(params.subject || '');
   const textContent = (params.text || '').trim();
   const htmlContent = params.html || `<pre style="font-family:sans-serif;">${textContent}</pre>`;
 
-  // Determine sender strictly server-side
-  const sender = resolveSenderForType(params.type);
+  const resolvedType =
+    params.type ||
+    (params.senderType === 'SUPPORT'
+      ? 'SUPPORT_REQUEST'
+      : params.senderType === 'TECH'
+        ? 'TECH_NOTIFICATION'
+        : 'EMAIL_VERIFICATION');
 
-  // Validate recipient
+  const sender = params.senderType
+    ? {
+        address: EMAIL_SENDERS[params.senderType] || EMAIL_SENDERS.PASSWORD,
+        name:
+          params.senderType === 'SUPPORT'
+            ? 'FR8X Support'
+            : params.senderType === 'TECH'
+              ? 'FR8X Systems'
+              : 'FR8X Security',
+        senderType: params.senderType,
+      }
+    : resolveSenderForType(resolvedType);
+
+  // Validate recipient format
   if (!isValidEmailAddress(cleanTo)) {
     return {
       success: false,
       correlationId,
-      type: params.type,
+      type: resolvedType,
       from: sender.address,
       to: cleanTo,
-      provider: 'ZOHO_ZEPTOMAIL',
+      subject: cleanSubject,
+      provider: 'Zoho_ZeptoMail',
       error: 'Invalid recipient email address format.',
     };
   }
@@ -270,10 +411,11 @@ export async function sendTransactionalEmail(
     return {
       success: false,
       correlationId,
-      type: params.type,
+      type: resolvedType,
       from: sender.address,
       to: cleanTo,
-      provider: 'ZOHO_ZEPTOMAIL',
+      subject: cleanSubject,
+      provider: 'Zoho_ZeptoMail',
       error: 'Email subject cannot be empty.',
     };
   }
@@ -283,30 +425,29 @@ export async function sendTransactionalEmail(
     return {
       success: false,
       correlationId,
-      type: params.type,
+      type: resolvedType,
       from: sender.address,
       to: cleanTo,
-      provider: 'ZOHO_ZEPTOMAIL',
+      subject: cleanSubject,
+      provider: 'Zoho_ZeptoMail',
       error: 'Email message content cannot be empty.',
     };
   }
 
-  // Check ZeptoMail configuration
+  // Resolve configuration
   const apiKey = (
     process.env.ZEPTO_MAIL_API_KEY ||
     process.env.ZOHO_ZEPTOMAIL_TOKEN ||
     ''
   ).trim();
+
   const endpoint =
+    process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.in/v1.1/email';
-  const bounceAddress =
-    process.env.ZEPTO_MAIL_BOUNCE_ADDRESS?.trim() ||
-    process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS?.trim() ||
-    'bounce@bounce.fr8x.in';
+    'https://api.zeptomail.com/v1.1/email';
 
-  // ── Production / Configured Dispatch via Zoho ZeptoMail REST API ─────────
+  // ── Production Dispatch via Zoho ZeptoMail REST API ───────────────────────
   if (apiKey && apiKey !== 'undefined') {
     const authHeader = apiKey.toLowerCase().startsWith('zoho-enczapikey')
       ? apiKey
@@ -315,8 +456,11 @@ export async function sendTransactionalEmail(
     const recipientName =
       params.recipientName || cleanTo.split('@')[0].replace(/[._-]/g, ' ');
 
-    const payload = {
-      bounce_address: bounceAddress,
+    const replyToAddress =
+      params.replyTo ||
+      (sender.senderType === 'SUPPORT' ? sender.address : 'support@fr8x.in');
+
+    const payload: Record<string, any> = {
       from: {
         address: sender.address,
         name: sender.name,
@@ -329,29 +473,42 @@ export async function sendTransactionalEmail(
           },
         },
       ],
+      reply_to: [
+        {
+          address: replyToAddress,
+          name: 'FR8X Support',
+        },
+      ],
       subject: cleanSubject,
       htmlbody: htmlContent,
       textbody: textContent || cleanSubject,
     };
 
-    // Strict 8-second timeout for serverless & low-latency execution
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
+    // Optional bounce address only if explicitly defined in environment
+    const bounceAddress = (
+      process.env.ZEPTO_MAIL_BOUNCE_ADDRESS ||
+      process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS ||
+      ''
+    ).trim();
+    if (bounceAddress) {
+      payload.bounce_address = bounceAddress;
+    }
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-          Authorization: authHeader,
-          'X-Correlation-ID': correlationId,
+      const response = await fetchWithRetry(
+        endpoint,
+        {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+            Authorization: authHeader,
+            'X-Correlation-ID': correlationId,
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
+        2
+      );
 
       const resData = await response.json().catch(() => ({}));
 
@@ -362,17 +519,19 @@ export async function sendTransactionalEmail(
           `zepto-${Date.now()}`;
 
         console.log(
-          `[ZOHO_ZEPTOMAIL_SUCCESS] Type: ${params.type} | Sender: ${sender.address} | Recipient: ${cleanTo} | MsgID: ${messageId}`
+          `[ZEPTOMAIL_SUCCESS] Type: ${resolvedType} | Sender: ${sender.address} | Recipient: ${cleanTo} | MsgID: ${messageId} | Corr: ${correlationId}`
         );
 
         return {
           success: true,
           messageId,
           correlationId,
-          type: params.type,
+          type: resolvedType,
           from: sender.address,
           to: cleanTo,
-          provider: 'ZOHO_ZEPTOMAIL',
+          subject: cleanSubject,
+          provider: 'Zoho_ZeptoMail',
+          details: resData,
         };
       } else {
         const errorDetail =
@@ -381,54 +540,60 @@ export async function sendTransactionalEmail(
           `HTTP ${response.status} ${response.statusText}`;
 
         console.error(
-          `[ZOHO_ZEPTOMAIL_ERROR] API rejection for ${cleanTo}: ${errorDetail}`
+          `[ZEPTOMAIL_API_ERROR] API rejection for ${cleanTo}: ${errorDetail}`
         );
 
         return {
           success: false,
           correlationId,
-          type: params.type,
+          type: resolvedType,
           from: sender.address,
           to: cleanTo,
-          provider: 'ZOHO_ZEPTOMAIL',
+          subject: cleanSubject,
+          provider: 'Zoho_ZeptoMail',
           error: `ZeptoMail rejected dispatch: ${errorDetail}`,
+          details: resData,
         };
       }
     } catch (err: any) {
-      clearTimeout(timeoutId);
-      const isTimeout = err.name === 'AbortError';
+      const isTimeout =
+        err.name === 'AbortError' ||
+        String(err.message || '').toLowerCase().includes('timeout') ||
+        String(err.message || '').toLowerCase().includes('aborted');
       const errorMsg = isTimeout
-        ? 'ZeptoMail API connection timed out after 8000ms.'
+        ? 'ZeptoMail API connection timed out after 8000ms (timeout).'
         : `ZeptoMail dispatch network error: ${err.message}`;
 
-      console.error(`[ZOHO_ZEPTOMAIL_NETWORK_FAIL] ${errorMsg}`);
+      console.error(`[ZEPTOMAIL_NETWORK_FAIL] ${errorMsg}`);
 
       return {
         success: false,
         correlationId,
-        type: params.type,
+        type: resolvedType,
         from: sender.address,
         to: cleanTo,
-        provider: 'ZOHO_ZEPTOMAIL',
+        subject: cleanSubject,
+        provider: 'Zoho_ZeptoMail',
         error: errorMsg,
       };
     }
   }
 
-  // ── Development Mock / Sandbox Fallback (when no API key configured) ────
-  // Enables automated testing and local verification without throwing unhandled exceptions
+  // ── Development Mock / Sandbox Fallback (when no API key configured) ──────
   console.log(
-    `[EMAIL_DEV_SANDBOX_DISPATCH] Simulating ${params.type} from ${sender.address} to ${cleanTo} (Subject: "${cleanSubject}")`
+    `[EMAIL_DEV_SANDBOX_DISPATCH] Simulating ${resolvedType} from ${sender.address} to ${cleanTo} (Subject: "${cleanSubject}")`
   );
 
   return {
     success: true,
     messageId: `mock-zepto-${Date.now()}`,
     correlationId,
-    type: params.type,
+    type: resolvedType,
     from: sender.address,
     to: cleanTo,
-    provider: 'MOCK_SANDBOX',
+    subject: cleanSubject,
+    provider: 'Sandbox_Mock',
+    details: { mode: 'sandbox' },
   };
 }
 
@@ -444,6 +609,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
   else if (rawEvent.includes('RESET')) mappedType = 'PASSWORD_RESET';
   else if (rawEvent.includes('CHANGED')) mappedType = 'PASSWORD_CHANGED';
   else if (rawEvent.includes('SECURITY')) mappedType = 'LOGIN_SECURITY';
+  else if (rawEvent.includes('TECH') || rawEvent.includes('MAINT') || rawEvent.includes('INCIDENT')) mappedType = 'TECH_NOTIFICATION';
   else if (rawEvent.includes('SUPPORT')) mappedType = 'SUPPORT_REQUEST';
 
   const result = await sendTransactionalEmail({
@@ -453,6 +619,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     text: params.message,
     html: params.htmlMessage,
     correlationId: params.correlationId,
+    recipientName: params.recipientName,
     metadata: params.metadata,
   });
 
@@ -479,19 +646,15 @@ export const EmailService = {
   sendTransactionalEmail,
 
   /**
-   * Account registration email verification: strictly routes to password@fr8x.in
-   * Subject: "FR8X Verify Your Email"
+   * Account registration email verification
+   * Sender: password@fr8x.in
+   * Subject: "VERIFY YOUR FR8X EMAIL ADDRESS"
    */
-  async sendVerificationEmail(params: {
-    to: string;
-    verificationLink?: string;
-    token?: string;
-    otpCode?: string;
-    expiryMinutes?: number;
-    correlationId?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendVerificationEmail(params: (EmailVerificationTemplateParams | { to: string; recipient?: string; recipientName?: string; verificationLink?: string; token?: string; otpCode?: string; expiryMinutes?: number }) & { correlationId?: string }): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
     const tmpl = renderEmailVerificationEmail({
-      recipient: params.to,
+      recipient: targetEmail,
+      recipientName: params.recipientName,
       verificationLink: params.verificationLink,
       otpCode: params.otpCode,
       expiryMinutes: params.expiryMinutes || 1440,
@@ -499,7 +662,8 @@ export const EmailService = {
 
     return sendTransactionalEmail({
       type: 'EMAIL_VERIFICATION',
-      to: params.to,
+      to: targetEmail,
+      recipientName: params.recipientName,
       subject: tmpl.subject,
       text: tmpl.text,
       html: tmpl.html,
@@ -508,17 +672,15 @@ export const EmailService = {
   },
 
   /**
-   * One-time passcode (OTP): strictly routes to password@fr8x.in
-   * Subject: "FR8X Verification Code"
+   * One-time passcode (OTP)
+   * Sender: password@fr8x.in
+   * Subject: "YOUR FR8X VERIFICATION CODE"
    */
-  async sendOtpEmail(params: {
-    to: string;
-    otpCode: string;
-    expiryMinutes?: number;
-    correlationId?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendOtpEmail(params: (OtpChallengeTemplateParams | { to: string; recipient?: string; recipientName?: string; otpCode: string; expiryMinutes?: number }) & { correlationId?: string }): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
     const tmpl = renderOtpChallengeEmail({
-      recipient: params.to,
+      recipient: targetEmail,
+      recipientName: params.recipientName,
       otpCode: params.otpCode,
       expiryMinutes: params.expiryMinutes || 10,
       correlationId: params.correlationId,
@@ -526,7 +688,8 @@ export const EmailService = {
 
     return sendTransactionalEmail({
       type: 'AUTH_OTP',
-      to: params.to,
+      to: targetEmail,
+      recipientName: params.recipientName,
       subject: tmpl.subject,
       text: tmpl.text,
       html: tmpl.html,
@@ -535,18 +698,15 @@ export const EmailService = {
   },
 
   /**
-   * Password reset request: strictly routes to password@fr8x.in
-   * Subject: "FR8X Password Reset Request"
+   * Password reset request
+   * Sender: password@fr8x.in
+   * Subject: "RESET YOUR FR8X PASSWORD"
    */
-  async sendPasswordResetEmail(params: {
-    to: string;
-    resetLink?: string;
-    otpCode?: string;
-    expiryMinutes?: number;
-    correlationId?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendPasswordResetEmail(params: (PasswordResetTemplateParams | { to: string; recipient?: string; recipientName?: string; resetLink?: string; otpCode?: string; expiryMinutes?: number }) & { correlationId?: string }): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
     const tmpl = renderPasswordResetEmail({
-      recipient: params.to,
+      recipient: targetEmail,
+      recipientName: params.recipientName,
       resetLink: params.resetLink,
       otpCode: params.otpCode,
       expiryMinutes: params.expiryMinutes || 15,
@@ -554,7 +714,8 @@ export const EmailService = {
 
     return sendTransactionalEmail({
       type: 'PASSWORD_RESET',
-      to: params.to,
+      to: targetEmail,
+      recipientName: params.recipientName,
       subject: tmpl.subject,
       text: tmpl.text,
       html: tmpl.html,
@@ -563,24 +724,24 @@ export const EmailService = {
   },
 
   /**
-   * Password changed confirmation: strictly routes to password@fr8x.in
-   * Subject: "FR8X Password Changed Successfully"
+   * Password changed confirmation
+   * Sender: password@fr8x.in
+   * Subject: "YOUR FR8X PASSWORD WAS CHANGED"
    */
-  async sendPasswordChangedEmail(params: {
-    to: string;
-    changedAt?: string;
-    ipAddress?: string;
-    correlationId?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendPasswordChangedEmail(params: (PasswordChangedTemplateParams | { to: string; recipient?: string; recipientName?: string; changedAt?: string; ipAddress?: string; securityLink?: string }) & { correlationId?: string }): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
     const tmpl = renderPasswordChangedEmail({
-      recipient: params.to,
+      recipient: targetEmail,
+      recipientName: params.recipientName,
       changedAt: params.changedAt || new Date().toUTCString(),
       ipAddress: params.ipAddress,
+      securityLink: params.securityLink,
     });
 
     return sendTransactionalEmail({
       type: 'PASSWORD_CHANGED',
-      to: params.to,
+      to: targetEmail,
+      recipientName: params.recipientName,
       subject: tmpl.subject,
       text: tmpl.text,
       html: tmpl.html,
@@ -589,15 +750,10 @@ export const EmailService = {
   },
 
   /**
-   * Security notifications: strictly routes to password@fr8x.in
+   * Security & Account Lockout notification
+   * Sender: password@fr8x.in
    */
-  async sendSecurityAlertEmail(params: {
-    to: string;
-    subject: string;
-    details: string;
-    correlationId?: string;
-    ipAddress?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendSecurityAlertEmail(params: SecurityAlertTemplateParams & { to: string }): Promise<TransactionalEmailResult> {
     const tmpl = renderSecurityAlertEmail({
       subject: params.subject,
       details: params.details,
@@ -616,32 +772,110 @@ export const EmailService = {
   },
 
   /**
-   * Customer / Member Support request: strictly routes to support@fr8x.in
-   * Subject: "FR8X Support Request"
+   * Customer / Member Support request
+   * Sender: support@fr8x.in
+   * Subject: "FR8X SUPPORT TICKET CREATED — {{TICKET_ID}}"
    */
-  async sendSupportEmail(params: {
-    to: string;
-    subject: string;
-    message: string;
-    ticketId?: string;
-    senderName?: string;
-    correlationId?: string;
-  }): Promise<TransactionalEmailResult> {
+  async sendSupportEmail(params: (SupportTemplateParams | { to: string; recipient?: string; recipientName?: string; ticketId?: string; subject?: string; message: string; senderName?: string; createdAt?: string }) & { correlationId?: string }): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
     const tmpl = renderSupportEmail({
-      recipient: params.to,
+      recipient: targetEmail,
+      recipientName: params.recipientName,
       subject: params.subject,
       message: params.message,
       ticketId: params.ticketId,
       senderName: params.senderName,
+      createdAt: params.createdAt,
     });
 
     return sendTransactionalEmail({
       type: 'SUPPORT_REQUEST',
-      to: params.to,
+      to: targetEmail,
+      recipientName: params.recipientName,
       subject: tmpl.subject,
       text: tmpl.text,
       html: tmpl.html,
-      recipientName: params.senderName,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Technical & Infrastructure notification
+   * Sender: tech@fr8x.in
+   */
+  async sendTechnicalEmail(
+    params:
+      | TechnicalNotificationTemplateParams
+      | ({
+          to: string;
+          recipient?: string;
+          recipientName?: string;
+          type?: 'MAINTENANCE' | 'INCIDENT' | 'RESTORED' | 'UPDATE';
+          category?: 'MAINTENANCE' | 'INCIDENT' | 'RESTORED' | 'UPDATE';
+          incidentId?: string;
+          title?: string;
+          subject?: string;
+          details: string;
+          scheduledTime?: string;
+          affectedServices?: string[];
+        } & { correlationId?: string })
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const resolvedType = params.type || (params as any).category || 'MAINTENANCE';
+    const resolvedTitle =
+      params.title || (params as any).subject || 'System Technical Notification';
+
+    const tmpl = renderTechnicalEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      type: resolvedType,
+      incidentId: params.incidentId,
+      title: resolvedTitle,
+      details: params.details,
+      scheduledTime: params.scheduledTime,
+      affectedServices: params.affectedServices,
+      correlationId: params.correlationId,
+    });
+
+    return sendTransactionalEmail({
+      type:
+        resolvedType === 'MAINTENANCE'
+          ? 'SYSTEM_MAINTENANCE'
+          : resolvedType === 'INCIDENT'
+            ? 'SYSTEM_INCIDENT'
+            : 'TECH_NOTIFICATION',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Diagnostic verification test email
+   * Sender: password@fr8x.in
+   * Subject: "FR8X ZEPTOMAIL TEST"
+   * Body: "FR8X ZeptoMail integration test successful."
+   */
+  async sendTestEmail(
+    params:
+      | TestEmailTemplateParams
+      | ({ to: string; recipient?: string } & { correlationId?: string })
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderTestEmail({
+      recipient: targetEmail,
+      correlationId: params.correlationId,
+    });
+
+    return sendTransactionalEmail({
+      type: 'EMAIL_TEST',
+      to: targetEmail,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
       correlationId: params.correlationId,
     });
   },
