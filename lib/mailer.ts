@@ -129,6 +129,39 @@ export async function sendViaZeptoMail(options: {
 }
 
 /**
+ * Sends transactional email via Direct Zoho SMTP (port 465 SSL)
+ */
+export async function sendViaSmtp(options: {
+  recipient: string;
+  recipientName?: string;
+  subject: string;
+  htmlBody: string;
+  textBody?: string;
+  fromAddress?: string;
+  correlationId?: string;
+}): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  try {
+    const mailClient = getTransporter();
+    const fromSender = options.fromAddress || ZOHO_SMTP_USER;
+    const info = await mailClient.sendMail({
+      from: `FR8X Platform <${fromSender}>`,
+      to: options.recipient,
+      subject: options.subject,
+      text: options.textBody || options.htmlBody.replace(/<[^>]*>?/gm, ''),
+      html: options.htmlBody,
+      headers: {
+        'X-FR8X-Correlation-ID': options.correlationId || '',
+      },
+    });
+    console.log(`[ZOHO_SMTP_SUCCESS] Direct SMTP sent to ${options.recipient} | MsgID: ${info.messageId}`);
+    return { success: true, messageId: info.messageId };
+  } catch (err: any) {
+    console.error(`[ZOHO_SMTP_ERROR] Direct SMTP failed for ${options.recipient}:`, err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
  * Server-only Outbound Email Dispatcher
  * Priority:
  * 1. Explicit Preferred Provider (if specified in options)

@@ -595,6 +595,80 @@ export async function sendTransactionalEmail(
           `[ZEPTOMAIL_API_ERROR] API rejection for ${cleanTo}: ${errorDetail}`
         );
 
+        // Intelligent handling for ZeptoMail Quota/Daily Limit Exceeded (TM_3601 / SM_151)
+        const isDailyLimitExceeded =
+          resData?.error?.code === 'TM_3601' ||
+          detailObj?.code === 'SM_151' ||
+          String(errorDetail).toLowerCase().includes('per day mail limit exceeded');
+
+        if (isDailyLimitExceeded) {
+          console.warn(
+            `[ZEPTOMAIL_DAILY_LIMIT_EXCEEDED] Zoho ZeptoMail Mail Agent daily limit (3 emails/day) exceeded for ${cleanTo}. To remove this limit in production, increase the daily quota in Zoho ZeptoMail Console (https://mailagent.zoho.in) under Mail Agents -> agent_1 -> Limits.`
+          );
+
+          // 1. Attempt Zoho SMTP Failover if credentials configured in .env
+          const smtpPassword = process.env.ZOHO_SMTP_PASSWORD?.trim();
+          if (smtpPassword) {
+            try {
+              console.log(`[SMTP_FAILOVER] Attempting failover delivery via Zoho SMTP for ${cleanTo}...`);
+              const { sendViaSmtp } = await import('@/lib/mailer');
+              const smtpRes = await sendViaSmtp({
+                recipient: cleanTo,
+                recipientName,
+                subject: cleanSubject,
+                htmlBody: htmlContent,
+                textBody: textContent,
+                fromAddress: sender.address,
+                correlationId,
+              });
+              if (smtpRes && smtpRes.success) {
+                return {
+                  success: true,
+                  messageId: smtpRes.messageId,
+                  correlationId,
+                  type: resolvedType,
+                  from: sender.address,
+                  to: cleanTo,
+                  subject: cleanSubject,
+                  provider: 'Zoho_SMTP' as any,
+                  details: { failoverFrom: 'Zoho_ZeptoMail (Daily Limit Exceeded)', smtpRes },
+                };
+              }
+            } catch (smtpErr: any) {
+              console.warn(`[SMTP_FAILOVER_FAIL] SMTP failover failed: ${smtpErr.message}`);
+            }
+          }
+
+          // 2. In development or testing environment, simulate dispatch so OTP and password resets do not block testers
+          const isDevOrTest =
+            process.env.NODE_ENV !== 'production' ||
+            process.env.ALLOW_DEV_EMAIL_FALLBACK === 'true';
+
+          if (isDevOrTest) {
+            console.log('\n================================================================================');
+            console.log(`⚡ [ZEPTOMAIL_CAP_DEV_FALLBACK] Simulated Delivery to: ${cleanTo}`);
+            console.log(`⚡ Subject: ${cleanSubject}`);
+            console.log(`⚡ Type: ${resolvedType}`);
+            console.log(`⚡ Notice: ZeptoMail daily cap of 3 emails was reached. Increase quota in mailagent.zoho.in.`);
+            console.log('================================================================================\n');
+
+            return {
+              success: true,
+              messageId: `dev-zepto-cap-${Date.now()}`,
+              correlationId,
+              type: resolvedType,
+              from: sender.address,
+              to: cleanTo,
+              subject: cleanSubject,
+              provider: 'Sandbox_Mock',
+              details: {
+                warning: 'ZeptoMail daily limit of 3 exceeded - fell back to development console dispatch',
+                originalError: errorDetail,
+              },
+            };
+          }
+        }
+
         return {
           success: false,
           correlationId,

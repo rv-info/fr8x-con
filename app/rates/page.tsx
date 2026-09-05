@@ -1835,6 +1835,19 @@ Generated via FR8X Freight Exchange
                           <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleOpenEmailModal(rate); }} title="Email Rate Quote to Service Provider">
                             <Mail size={11} />
                           </button>
+                          <button
+                            className="btn secondary sm"
+                            style={{ padding: '2px 5px' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const url = `https://con.fr8x.in/r/${rate.id}`;
+                              navigator.clipboard?.writeText?.(url);
+                              toast(`Smart i-Rate link copied: ${url}`);
+                            }}
+                            title="Copy Smart i-Rate Link (con.fr8x.in/r/...)"
+                          >
+                            <Share2 size={11} />
+                          </button>
                           <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }} title="Compare">
                             <ArrowRightLeft size={11} />
                           </button>
@@ -2034,6 +2047,19 @@ Generated via FR8X Freight Exchange
                       >
                         <Mail size={12} />
                         <span>Email</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="mobile-rate-action-btn"
+                        onClick={() => {
+                          const url = `https://con.fr8x.in/r/${rate.id}`;
+                          navigator.clipboard?.writeText?.(url);
+                          toast(`Smart i-Rate link copied: ${url}`);
+                        }}
+                        title="Share Smart i-Rate Link"
+                      >
+                        <Share2 size={12} />
+                        <span>Share</span>
                       </button>
                       <button
                         type="button"
