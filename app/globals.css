@@ -8365,10 +8365,11 @@ textarea.input {
 .login-viewport {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--fr8x-background, #f8fafc);
-  padding: 24px 16px;
+  padding: 32px 16px;
   box-sizing: border-box;
 }
 

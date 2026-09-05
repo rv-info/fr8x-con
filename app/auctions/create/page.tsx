@@ -208,6 +208,9 @@ export default function CreateReverseAuctionPage() {
   const [auctionReopening, setAuctionReopening] = useState(false);
   const [auctionWithdrawal, setAuctionWithdrawal] = useState<'Allowed' | 'Not Allowed'>('Allowed');
   const [generalBidding, setGeneralBidding] = useState(false);
+  const [askContainerNo, setAskContainerNo] = useState(false);
+  const [showCompetitionCeiling, setShowCompetitionCeiling] = useState(true);
+  const [competitionCeilingAmount, setCompetitionCeilingAmount] = useState<number>(2850);
 
   // Routing Requirements
   const [preferredShippingLine, setPreferredShippingLine] = useState('');
@@ -447,8 +450,12 @@ export default function CreateReverseAuctionPage() {
         hideCompetitorNames,
         bidderAnonymity,
         bidLimit: Number(bidLimit),
+        askContainerNo,
+        showCompetitionCeiling,
       },
-      competitionCeiling: 2850,
+      askContainerNo,
+      showCompetitionCeiling,
+      competitionCeiling: showCompetitionCeiling ? Number(competitionCeilingAmount || 2850) : 0,
     });
 
     setShowPreviewModal(false);
@@ -1612,6 +1619,50 @@ export default function CreateReverseAuctionPage() {
                       onChange={(e) => setBidderAnonymity(e.target.checked)}
                     />
                   </div>
+                  <div className="switchrow">
+                    <div>
+                      <span style={{ fontWeight: 600 }}>Competition Ceiling (Reverse Auction)</span>
+                      <small style={{ display: 'block', color: 'var(--mut)', fontSize: '10px' }}>
+                        Shows target budget ceiling to create transparent, fair competition among forwarders.
+                      </small>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="switch"
+                      checked={showCompetitionCeiling}
+                      onChange={(e) => setShowCompetitionCeiling(e.target.checked)}
+                    />
+                  </div>
+
+                  {showCompetitionCeiling && (
+                    <div className="field" style={{ marginTop: '4px', marginBottom: '8px' }}>
+                      <label style={{ fontSize: '10.5px', fontWeight: 700 }}>Competition Ceiling Amount (USD $)</label>
+                      <input
+                        type="number"
+                        className="input"
+                        style={{ height: '28px', fontWeight: 700 }}
+                        value={competitionCeilingAmount}
+                        onChange={(e) => setCompetitionCeilingAmount(Number(e.target.value))}
+                        placeholder="2850"
+                      />
+                    </div>
+                  )}
+
+                  <div className="switchrow">
+                    <div>
+                      <span style={{ fontWeight: 600 }}>Require Container No. in Bidding Matrix</span>
+                      <small style={{ display: 'block', color: 'var(--mut)', fontSize: '10px' }}>
+                        Only asks bidders for specific container numbers if explicitly requested in this post.
+                      </small>
+                    </div>
+                    <input
+                      type="checkbox"
+                      className="switch"
+                      checked={askContainerNo}
+                      onChange={(e) => setAskContainerNo(e.target.checked)}
+                    />
+                  </div>
+
                   <div className="switchrow">
                     <span>Lowest Bid as Ceiling</span>
                     <input

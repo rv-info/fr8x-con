@@ -28,6 +28,10 @@ function ResetPasswordInner() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // OTP Workflow State
+  const [otpStage, setOtpStage] = useState<'request' | 'verify'>('request');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,9 +44,58 @@ function ResetPasswordInner() {
 
     if (qToken) setToken(qToken.trim());
     if (qEmail) setEmail(qEmail.trim());
-    if (qOtp) setOtp(qOtp.replace(/\D/g, '').slice(0, 6));
+    if (qOtp) {
+      setOtp(qOtp.replace(/\D/g, '').slice(0, 6));
+      setOtpStage('verify');
+    }
   }, [searchParams]);
 
+  // Handle Resend Cooldown Timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  // 1. Request OTP Code to Email
+  const handleRequestOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    const targetEmail = email.toLowerCase().trim();
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setErrorMessage('Please enter a valid corporate email address.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, action: 'request' }),
+      });
+      const data = await res.json();
+      setIsSubmitting(false);
+
+      if (!res.ok || !data.success) {
+        setErrorMessage(data.error || 'Failed to dispatch OTP. Please verify email and try again.');
+        return;
+      }
+
+      setOtpStage('verify');
+      setResendCooldown(60);
+      setSuccessMessage(data.message || `A 6-digit recovery OTP has been dispatched to ${targetEmail}.`);
+    } catch {
+      setIsSubmitting(false);
+      setErrorMessage('Network connection error. Please try again.');
+    }
+  };
+
+  // 2. Verify OTP and Set New Password
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -94,7 +147,7 @@ function ResetPasswordInner() {
       setIsSubmitting(false);
 
       if (!res.ok || !data.success) {
-        setErrorMessage(data.error || 'Password reset failed. Please request a new link.');
+        setErrorMessage(data.error || 'Password reset failed. Please request a new OTP code.');
         return;
       }
 
@@ -219,39 +272,156 @@ function ResetPasswordInner() {
               Proceed to Sign In <ArrowRight size={16} />
             </button>
           </div>
+        ) : !token && otpStage === 'request' ? (
+          /* STEP 1: REQUEST OTP */
+          <form onSubmit={handleRequestOtp}>
+            <div
+              style={{
+                padding: '12px 14px',
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '8px',
+                marginBottom: '16px',
+                fontSize: '12px',
+                color: '#0369a1',
+                lineHeight: 1.45,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+              }}
+            >
+              <Mail size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
+              <span>
+                Enter your registered corporate email address. A secure 6-digit one-time password (OTP) will be dispatched to your inbox.
+              </span>
+            </div>
+
+            <div style={{ marginBottom: '18px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                Corporate Email Address <span style={{ color: '#ef4444' }}>*</span>
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  required
+                  style={{
+                    width: '100%',
+                    height: '40px',
+                    paddingLeft: '36px',
+                    paddingRight: '12px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    boxSizing: 'border-box',
+                  }}
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting || !email.trim()}
+              style={{
+                width: '100%',
+                height: '42px',
+                background: '#0284c7',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 600,
+                fontSize: '14px',
+                cursor: isSubmitting || !email.trim() ? 'not-allowed' : 'pointer',
+                opacity: isSubmitting || !email.trim() ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                transition: 'background 0.15s ease',
+              }}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" /> Dispatching Recovery OTP...
+                </>
+              ) : (
+                <>
+                  <span>Send Recovery OTP Code</span> <ArrowRight size={15} />
+                </>
+              )}
+            </button>
+          </form>
         ) : (
+          /* STEP 2: VERIFY OTP AND SET PASSWORD */
           <form onSubmit={handleSubmit}>
             {!token && (
               <>
-                <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    Corporate Email
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <Mail size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="corporate.email@company.com"
-                      required
-                      style={{
-                        width: '100%',
-                        height: '40px',
-                        paddingLeft: '36px',
-                        paddingRight: '12px',
-                        border: '1px solid #cbd5e1',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                      }}
-                    />
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    background: '#f8fafc',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '6px',
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    fontSize: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden' }}>
+                    <Mail size={14} style={{ color: '#0284c7', flexShrink: 0 }} />
+                    <span style={{ color: '#0f172a', fontWeight: 600, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      {email}
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOtpStage('request');
+                      setErrorMessage('');
+                      setSuccessMessage('');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0284c7',
+                      fontSize: '11.5px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '2px 4px',
+                    }}
+                  >
+                    Change Email
+                  </button>
                 </div>
 
                 <div style={{ marginBottom: '14px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                    6-Digit Recovery OTP
-                  </label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ fontSize: '12px', fontWeight: 600, color: '#334155' }}>
+                      6-Digit Recovery OTP <span style={{ color: '#ef4444' }}>*</span>
+                    </label>
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || isSubmitting}
+                      onClick={handleRequestOtp}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: resendCooldown > 0 ? '#94a3b8' : '#0284c7',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: resendCooldown > 0 ? 'default' : 'pointer',
+                        padding: 0,
+                      }}
+                    >
+                      {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend OTP Code'}
+                    </button>
+                  </div>
                   <input
                     type="text"
                     maxLength={6}
@@ -267,7 +437,9 @@ function ResetPasswordInner() {
                       textAlign: 'center',
                       border: '1px solid #cbd5e1',
                       borderRadius: '6px',
+                      boxSizing: 'border-box',
                     }}
+                    autoFocus
                   />
                 </div>
               </>
@@ -275,7 +447,7 @@ function ResetPasswordInner() {
 
             <div style={{ marginBottom: '14px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                New Password (minimum 8 characters)
+                New Password (minimum 8 characters) <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
@@ -293,6 +465,7 @@ function ResetPasswordInner() {
                     border: '1px solid #cbd5e1',
                     borderRadius: '6px',
                     fontSize: '13px',
+                    boxSizing: 'border-box',
                   }}
                 />
                 <button
@@ -307,7 +480,7 @@ function ResetPasswordInner() {
 
             <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
-                Confirm New Password
+                Confirm New Password <span style={{ color: '#ef4444' }}>*</span>
               </label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: '12px', top: '13px', color: '#94a3b8' }} />
@@ -325,6 +498,7 @@ function ResetPasswordInner() {
                     border: '1px solid #cbd5e1',
                     borderRadius: '6px',
                     fontSize: '13px',
+                    boxSizing: 'border-box',
                   }}
                 />
                 <button
@@ -339,7 +513,7 @@ function ResetPasswordInner() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || (!token && otp.length !== 6) || !newPassword}
               style={{
                 width: '100%',
                 height: '42px',
@@ -349,8 +523,8 @@ function ResetPasswordInner() {
                 borderRadius: '8px',
                 fontWeight: 600,
                 fontSize: '14px',
-                cursor: 'pointer',
-                opacity: isSubmitting ? 0.7 : 1,
+                cursor: isSubmitting || (!token && otp.length !== 6) || !newPassword ? 'not-allowed' : 'pointer',
+                opacity: isSubmitting || (!token && otp.length !== 6) || !newPassword ? 0.7 : 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

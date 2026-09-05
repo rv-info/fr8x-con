@@ -54,6 +54,10 @@ import {
   Upload,
   Image as ImageIcon,
   X,
+  KeyRound,
+  Copy,
+  ArrowRight,
+  EyeOff,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -524,13 +528,105 @@ export default function ProfilePage() {
     toast('Certification credentials saved.');
   };
 
-  const handleDownloadPassport = () => {
-    toast('Generating official verified B2B Freight Passport PDF…');
-  };
+  // Company Reference Code & Link Share
+  const companyRefNo = (user as any).companyRefNo ||
+    `REF-FR8X-${(user.companyId || user.company || 'CORP').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4).toUpperCase() || '8921'}-${(user.uid || '99').slice(-3).toUpperCase()}`;
+  const companyShareUrl = `https://con.fr8x.in/ref/${companyRefNo}`;
+  const [showShareModal, setShowShareModal] = useState(false);
+
+  // OTP Password Reset State
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetStep, setResetStep] = useState<'request' | 'verify'>('request');
+  const [resetOtp, setResetOtp] = useState('');
+  const [resetNewPass, setResetNewPass] = useState('');
+  const [resetConfirmPass, setResetConfirmPass] = useState('');
+  const [showResetPass, setShowResetPass] = useState(false);
+  const [showResetConfirmPass, setShowResetConfirmPass] = useState(false);
+  const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Handle Resend Cooldown
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
 
   const handleShareProfile = () => {
-    navigator.clipboard?.writeText?.(window.location.href);
-    toast('Public profile link copied to clipboard.');
+    navigator.clipboard?.writeText?.(companyShareUrl);
+    setShowShareModal(true);
+    toast(`Reference link copied: ${companyShareUrl}`);
+  };
+
+  const handleRequestProfileOtp = async () => {
+    setResetError('');
+    setIsResetSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, action: 'request' }),
+      });
+      const data = await res.json();
+      setIsResetSubmitting(false);
+      if (!res.ok || !data.success) {
+        setResetError(data.error || 'Failed to dispatch OTP. Please try again.');
+        return;
+      }
+      setResetStep('verify');
+      setResendCooldown(60);
+      toast(`Security OTP dispatched to ${user.email}.`);
+    } catch {
+      setIsResetSubmitting(false);
+      setResetError('Network error while dispatching OTP.');
+    }
+  };
+
+  const handleConfirmProfileReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+
+    if (resetNewPass.length < 8) {
+      setResetError('New password must be at least 8 characters in length.');
+      return;
+    }
+    if (resetNewPass !== resetConfirmPass) {
+      setResetError('New password and confirm password do not match.');
+      return;
+    }
+
+    setIsResetSubmitting(true);
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          otp: resetOtp.trim(),
+          newPassword: resetNewPass.trim(),
+          confirmPassword: resetConfirmPass.trim(),
+          action: 'verify_and_reset',
+        }),
+      });
+      const data = await res.json();
+      setIsResetSubmitting(false);
+      if (!res.ok || !data.success) {
+        setResetError(data.error || 'Failed to reset password. Please check OTP.');
+        return;
+      }
+      setShowResetModal(false);
+      setResetStep('request');
+      setResetOtp('');
+      setResetNewPass('');
+      setResetConfirmPass('');
+      toast('✓ Password updated successfully via OTP authentication.');
+    } catch {
+      setIsResetSubmitting(false);
+      setResetError('Network error while resetting password.');
+    }
   };
 
   return (
@@ -737,24 +833,238 @@ export default function ProfilePage() {
         </Modal>
       )}
 
+      {/* Company Link Share Modal */}
+      {showShareModal && (
+        <Modal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          title="Share Company Reference & Profile"
+          maxWidth="520px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+            <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', color: '#0369a1', lineHeight: 1.4 }}>
+              Share this official verified enterprise link with logistics partners, shippers, and carriers.
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                Company Reference Code
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ padding: '8px 12px', background: '#f8fafc', border: '1.5px dashed #cbd5e1', borderRadius: '6px', fontWeight: 800, fontSize: '14px', letterSpacing: '1px', color: '#0f172a', flex: 1 }}>
+                  {companyRefNo}
+                </div>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    navigator.clipboard?.writeText?.(companyRefNo);
+                    toast(`Company code ${companyRefNo} copied.`);
+                  }}
+                >
+                  <Copy size={13} /> Copy Code
+                </button>
+              </div>
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>
+                Live con.fr8x.in Reference URL
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <input
+                  className="input"
+                  readOnly
+                  value={companyShareUrl}
+                  style={{ fontSize: '12px', height: '36px', background: '#f8fafc', color: '#0284c7', fontWeight: 600 }}
+                />
+                <button
+                  type="button"
+                  className="btn primary"
+                  onClick={() => {
+                    navigator.clipboard?.writeText?.(companyShareUrl);
+                    toast('Reference link copied to clipboard.');
+                  }}
+                >
+                  <Copy size={13} /> Copy Link
+                </button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+              <button type="button" className="btn secondary" onClick={() => setShowShareModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* OTP Password Reset Modal */}
+      {showResetModal && (
+        <Modal
+          isOpen={showResetModal}
+          onClose={() => setShowResetModal(false)}
+          title="Account Password Reset via OTP"
+          maxWidth="460px"
+        >
+          {resetStep === 'request' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+              <div style={{ padding: '12px 14px', background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '8px', color: '#0369a1', lineHeight: 1.45, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Mail size={18} style={{ color: '#0284c7', flexShrink: 0 }} />
+                <span>
+                  Click below to dispatch a secure 6-digit recovery OTP code to your registered corporate email (<strong>{user.email}</strong>).
+                </span>
+              </div>
+
+              {resetError && (
+                <div style={{ padding: '8px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
+                  {resetError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+                <button type="button" className="btn secondary" onClick={() => setShowResetModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={isResetSubmitting}
+                  onClick={handleRequestProfileOtp}
+                >
+                  {isResetSubmitting ? 'Dispatching OTP…' : 'Send 6-Digit OTP Code'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleConfirmProfileReset} style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+              <div style={{ padding: '10px 12px', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '6px', color: '#15803d', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+                <span>6-digit OTP code dispatched to <strong>{user.email}</strong>. Enter it below to set your new password.</span>
+              </div>
+
+              {resetError && (
+                <div style={{ padding: '8px 10px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', color: '#dc2626', fontSize: '11.5px' }}>
+                  {resetError}
+                </div>
+              )}
+
+              <div className="field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>6-Digit OTP Code <span className="req">*</span></label>
+                  <button
+                    type="button"
+                    disabled={resendCooldown > 0 || isResetSubmitting}
+                    onClick={handleRequestProfileOtp}
+                    style={{ background: 'none', border: 'none', color: resendCooldown > 0 ? '#94a3b8' : 'var(--brand)', fontSize: '10.5px', cursor: resendCooldown > 0 ? 'default' : 'pointer', padding: 0 }}
+                  >
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend OTP'}
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={resetOtp}
+                  onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••••"
+                  required
+                  style={{ height: '38px', fontSize: '16px', letterSpacing: '5px', textAlign: 'center', width: '100%', boxSizing: 'border-box' }}
+                  className="input"
+                  autoFocus
+                />
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>New Password (min. 8 characters) <span className="req">*</span></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showResetPass ? 'text' : 'password'}
+                    value={resetNewPass}
+                    onChange={(e) => setResetNewPass(e.target.value)}
+                    placeholder="Enter new password"
+                    required
+                    style={{ height: '34px', fontSize: '12px', width: '100%', boxSizing: 'border-box', paddingRight: '32px' }}
+                    className="input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPass(!showResetPass)}
+                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  >
+                    {showResetPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '4px' }}>Confirm New Password <span className="req">*</span></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showResetConfirmPass ? 'text' : 'password'}
+                    value={resetConfirmPass}
+                    onChange={(e) => setResetConfirmPass(e.target.value)}
+                    placeholder="Confirm new password"
+                    required
+                    style={{ height: '34px', fontSize: '12px', width: '100%', boxSizing: 'border-box', paddingRight: '32px' }}
+                    className="input"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirmPass(!showResetConfirmPass)}
+                    style={{ position: 'absolute', right: '8px', top: '8px', background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8' }}
+                  >
+                    {showResetConfirmPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+                <button type="button" className="btn secondary" onClick={() => setShowResetModal(false)}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn primary"
+                  disabled={isResetSubmitting || resetOtp.length !== 6 || !resetNewPass}
+                >
+                  {isResetSubmitting ? 'Updating Password…' : 'Verify OTP & Update Password'}
+                </button>
+              </div>
+            </form>
+          )}
+        </Modal>
+      )}
+
       {/* Top Header */}
       <div className="head" style={{ marginBottom: 0 }}>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 style={{ margin: 0 }}>Enterprise Member Identity & Freight Passport</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0 }}>Enterprise Member Identity &amp; Freight Passport</h1>
             <span className="badge green" style={{ fontSize: '10.5px' }}>
               <ShieldCheck size={12} /> Level 3 Verified
+            </span>
+            <span className="badge blue" style={{ fontSize: '10.5px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Building2 size={12} /> Ref: {companyRefNo}
             </span>
           </div>
           <p style={{ marginTop: '4px' }}>
             Enterprise Freight Forwarding Identity, Statutory Registrations (GSTN/PAN/IEC/MTO), and Accredited Professional Records.
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button className="btn secondary" onClick={handleDownloadPassport} title="Download Verified B2B Passport PDF">
-            <Download size={14} /> Download Passport
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="btn secondary"
+            onClick={() => {
+              setShowResetModal(true);
+              setResetStep('request');
+              setResetError('');
+            }}
+            title="Reset Password via OTP"
+          >
+            <KeyRound size={14} /> Reset Password
           </button>
-          <button className="btn secondary" onClick={handleShareProfile} title="Share Profile Link">
+          <button className="btn secondary" onClick={handleShareProfile} title="Share Company Reference Link">
             <Share2 size={14} /> Share
           </button>
           <button

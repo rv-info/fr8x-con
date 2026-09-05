@@ -503,7 +503,11 @@ export interface Auction {
     hideCompetitorNames: boolean;
     bidderAnonymity: boolean;
     bidLimit: number;
+    askContainerNo?: boolean;
+    showCompetitionCeiling?: boolean;
   };
+  askContainerNo?: boolean;
+  showCompetitionCeiling?: boolean;
   competitionCeiling: number;
   bidsSubmittedCount: number;
   bids?: SubmittedBid[];

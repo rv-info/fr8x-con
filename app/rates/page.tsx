@@ -34,6 +34,8 @@ import {
   History,
   TrendingUp,
   X,
+  Sparkles,
+  Share2,
 } from 'lucide-react';
 import {
   formatNumber,
@@ -176,9 +178,10 @@ Generated via FR8X Freight Exchange
   const handleOpenEmailModal = (rate: RateItem) => {
     setEmailTargetRate(rate);
     const domain = rate.sp.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const smartUrl = `https://con.fr8x.in/r/${rate.id}`;
     setEmailRecipient(`bookings@${domain || 'carrierdesk'}.com`);
-    setEmailSubject(`FR8X Booking Inquiry & Rate Quote: ${rate.carrier} (${rate.pol} → ${rate.pod}) [${rate.id}]`);
-    setEmailBody(`Dear ${rate.sp} Commercial Desk,\n\nWe would like to book cargo under rate quotation ${rate.id} with specifications below:\n\n${formatRateQuote(rate)}\n\nPlease confirm vessel schedule, space allocation, and draft booking note.\n\nBest regards,\n${user.displayName}\n${user.company}\n${user.email}`);
+    setEmailSubject(`FR8X Rate Quotation & Booking Link: ${rate.carrier} (${rate.pol} → ${rate.pod}) [${rate.id}]`);
+    setEmailBody(`Dear Commercial Partner,\n\nPlease find the freight rate quotation for ${rate.carrier} (${rate.pol} → ${rate.pod}) under rate reference ${rate.id}:\n\n${formatRateQuote(rate)}\n\n🔗 VIEW LIVE INTERACTIVE RATE & 1-CLICK SPACE LOCK:\n${smartUrl}\n(Open this link in any browser to verify real-time validity, carrier terms, and reserve container space instantly.)\n\nBest regards,\n${user.displayName}\n${user.company}\n${user.email}`);
   };
 
   const handleSendEmail = () => {
@@ -610,6 +613,42 @@ Generated via FR8X Freight Exchange
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12px' }}>
+            {/* Smart Rate Capsule Link Box */}
+            <div
+              style={{
+                background: 'linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '10px 12px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <div>
+                <b style={{ color: 'var(--brand)', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Sparkles size={12} /> FR8X Smart Rate Link: con.fr8x.in/r/{emailTargetRate.id}
+                </b>
+                <span style={{ fontSize: '10.5px', color: 'var(--mut)', display: 'block' }}>
+                  Recipients can open this link to view live validity, liner terms, and request 1-click space booking.
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn secondary sm"
+                style={{ height: '26px', fontSize: '11px', padding: '0 8px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                onClick={() => {
+                  const url = `https://con.fr8x.in/r/${emailTargetRate.id}`;
+                  navigator.clipboard?.writeText?.(url);
+                  toast(`Smart Rate link copied: ${url}`);
+                }}
+              >
+                <Share2 size={11} /> Copy Smart Link
+              </button>
+            </div>
+
             <div className="field">
               <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)' }}>Recipient Email (Service Provider / Booking Desk)</label>
               <input

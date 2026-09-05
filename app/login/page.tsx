@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -417,6 +417,244 @@ export default function LoginPage() {
             <ShieldCheck size={13} style={{ color: '#16a34a' }} />
             <span>256-Bit TLS Bank-Grade Encrypted</span>
           </div>
+        </div>
+      </div>
+
+      {/* High-Grade Standalone Mobile APK Showcase Card */}
+      <div
+        className="login-apk-card"
+        style={{
+          marginTop: '16px',
+          width: '100%',
+          maxWidth: '420px',
+          background: 'linear-gradient(145deg, #0b1528 0%, #060c17 100%)',
+          border: '1.5px solid rgba(56, 189, 248, 0.35)',
+          borderRadius: '8px',
+          boxShadow: '0 10px 32px rgba(2, 6, 23, 0.45), 0 0 24px rgba(14, 165, 233, 0.12)',
+          padding: '18px 20px',
+          color: '#f8fafc',
+          position: 'relative',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Ambient Glow */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-50px',
+            right: '-50px',
+            width: '140px',
+            height: '140px',
+            background: 'radial-gradient(circle, rgba(14, 165, 233, 0.35) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Top Header Badge */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: '12px',
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '10px',
+              fontWeight: 800,
+              letterSpacing: '0.8px',
+              textTransform: 'uppercase',
+              color: '#38bdf8',
+            }}
+          >
+            <span
+              style={{
+                width: '7px',
+                height: '7px',
+                borderRadius: '50%',
+                background: '#10b981',
+                boxShadow: '0 0 8px #10b981',
+                display: 'inline-block',
+              }}
+            />
+            <span>Native Android Standalone</span>
+          </div>
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 700,
+              background: 'rgba(56, 189, 248, 0.14)',
+              border: '1px solid rgba(56, 189, 248, 0.3)',
+              color: '#7dd3fc',
+              padding: '2px 8px',
+              borderRadius: '20px',
+            }}
+          >
+            v2.4.0 • 189 KB
+          </span>
+        </div>
+
+        {/* App Title & Info */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #0284c7, #1e3a8a)',
+              border: '1.5px solid rgba(56, 189, 248, 0.5)',
+              boxShadow: '0 4px 14px rgba(14, 165, 233, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Smartphone size={22} style={{ color: '#ffffff' }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.2px' }}>
+              FR8X Mobile Enterprise
+            </h3>
+            <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8', lineHeight: 1.3 }}>
+              High-grade native APK with real-time auctions, trade chat &amp; zero-latency UX.
+            </p>
+          </div>
+        </div>
+
+        {/* Key Features Grid */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '8px',
+            marginBottom: '16px',
+          }}
+        >
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '7px 9px',
+              fontSize: '11px',
+              color: '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <Zap size={13} style={{ color: '#38bdf8', flexShrink: 0 }} />
+            <span>Pure Native Feel</span>
+          </div>
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '7px 9px',
+              fontSize: '11px',
+              color: '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <Sparkles size={13} style={{ color: '#f59e0b', flexShrink: 0 }} />
+            <span>Reverse Auctions</span>
+          </div>
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '7px 9px',
+              fontSize: '11px',
+              color: '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <CheckCircle2 size={13} style={{ color: '#10b981', flexShrink: 0 }} />
+            <span>Carrier Chat &amp; FX</span>
+          </div>
+          <div
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '6px',
+              padding: '7px 9px',
+              fontSize: '11px',
+              color: '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <ShieldCheck size={13} style={{ color: '#a855f7', flexShrink: 0 }} />
+            <span>Biometric Ready</span>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <a
+          href="/fr8x-enterprise-mobile-v2.4.apk"
+          download="fr8x-enterprise-mobile-v2.4.apk"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            width: '100%',
+            boxSizing: 'border-box',
+            padding: '11px 16px',
+            background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+            color: '#ffffff',
+            fontWeight: 800,
+            fontSize: '12px',
+            letterSpacing: '0.4px',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            boxShadow: '0 4px 18px rgba(14, 165, 233, 0.45)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            transition: 'all 0.15s ease',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-1px)';
+            e.currentTarget.style.boxShadow = '0 6px 22px rgba(14, 165, 233, 0.6)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 4px 18px rgba(14, 165, 233, 0.45)';
+          }}
+        >
+          <Download size={15} />
+          <span>DOWNLOAD ANDROID APP (.APK)</span>
+          <ArrowRight size={14} />
+        </a>
+
+        {/* Safety Note */}
+        <div
+          style={{
+            marginTop: '10px',
+            textAlign: 'center',
+            fontSize: '10.5px',
+            color: '#94a3b8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '5px',
+          }}
+        >
+          <CheckCircle2 size={12} style={{ color: '#10b981', flexShrink: 0 }} />
+          <span>Signed standalone APK • Compatible with Android 8.0+ • Direct Install</span>
         </div>
       </div>
 

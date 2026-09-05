@@ -1,16 +1,20 @@
 package com.fr8x.app;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.provider.MediaStore;
 import android.view.View;
 import android.webkit.CookieManager;
+import android.webkit.DownloadListener;
 import android.webkit.GeolocationPermissions;
+import android.webkit.URLUtil;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
@@ -21,29 +25,20 @@ import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+public class MainActivity extends Activity {
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
-public class MainActivity extends AppCompatActivity {
-
-    // Target Server URL: Points to local dev (10.0.2.2 for emulator / localhost) or production URL.
-    // Any deployment or update pushed to the web app automatically loads in this APK without reinstalling!
-    public static final String LIVE_WEB_APP_URL = "http://10.0.2.2:3000";
-    public static final String FALLBACK_LOCAL_URL = "http://localhost:3000";
+    // Primary Production Endpoint for Live Enterprise Freight Workspace
+    public static final String PRODUCTION_URL = "https://con.fr8x.in";
+    // Local development fallback
+    public static final String LOCAL_DEV_URL = "http://10.0.2.2:3000";
+    // Offline bundled workspace fallback (embedded in APK assets)
+    public static final String OFFLINE_URL = "file:///android_asset/mobile/index.html";
 
     private WebView mWebView;
-    private SwipeRefreshLayout mSwipeRefresh;
     private ProgressBar mProgressBar;
-    private ValueCallback<Uri[]> mUploadMessage;
-    private String mCameraPhotoPath;
-    private static final int INPUT_FILE_REQUEST_CODE = 1001;
+    private ValueCallback<Uri[]> mFilePathCallback;
+    private static final int FILE_CHOOSER_REQUEST_CODE = 2001;
+    private boolean mIsLoadingFallback = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -51,20 +46,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mWebView = findViewById(R.id.webview);
-        mSwipeRefresh = findViewById(R.id.swipe_refresh);
-        mProgressBar = findViewById(R.id.progress_bar);
+        mWebView = (WebView) findViewById(R.id.webview);
+        mProgressBar = (ProgressBar) findViewById(R.id.progress_bar);
 
         configureWebViewSettings();
         configureWebViewClients();
-        configureSwipeRefresh();
+        configureDownloadListener();
 
-        // Load Live Web App
+        // Load the live workspace URL
         loadWorkspaceUrl();
     }
 
     private void loadWorkspaceUrl() {
-        mWebView.loadUrl(LIVE_WEB_APP_URL);
+        mIsLoadingFallback = false;
+        mWebView.loadUrl(PRODUCTION_URL);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -95,36 +90,59 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
-                mProgressBar.setVisibility(View.VISIBLE);
+                if (mProgressBar != null) {
+                    mProgressBar.setVisibility(View.VISIBLE);
+                }
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                mProgressBar.setVisibility(View.GONE);
-                mSwipeRefresh.setRefreshing(false);
+                if (mProgressBar != null) {
+                    mProgressBar.setVisibility(View.GONE);
+                }
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
-                if (request.isForMainFrame()) {
-                    mProgressBar.setVisibility(View.GONE);
-                    mSwipeRefresh.setRefreshing(false);
-                    // Load fallback offline page from assets
-                    mWebView.loadUrl("file:///android_asset/offline.html");
+                // If main frame fails to load due to no internet, load bundled offline mobile interface
+                if (request.isForMainFrame() && !mIsLoadingFallback) {
+                    mIsLoadingFallback = true;
+                    if (mProgressBar != null) {
+                        mProgressBar.setVisibility(View.GONE);
+                    }
+                    mWebView.loadUrl(OFFLINE_URL);
                 }
+            }
+
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme();
+                if ("tel".equalsIgnoreCase(scheme) || "mailto".equalsIgnoreCase(scheme) || "whatsapp".equalsIgnoreCase(scheme)) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                        startActivity(intent);
+                        return true;
+                    } catch (Exception e) {
+                        return false;
+                    }
+                }
+                return false;
             }
         });
 
         mWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                mProgressBar.setProgress(newProgress);
-                if (newProgress == 100) {
-                    mProgressBar.setVisibility(View.GONE);
-                } else {
-                    mProgressBar.setVisibility(View.VISIBLE);
+                if (mProgressBar != null) {
+                    mProgressBar.setProgress(newProgress);
+                    if (newProgress >= 100) {
+                        mProgressBar.setVisibility(View.GONE);
+                    } else {
+                        mProgressBar.setVisibility(View.VISIBLE);
+                    }
                 }
             }
 
@@ -133,89 +151,83 @@ public class MainActivity extends AppCompatActivity {
                 callback.invoke(origin, true, false);
             }
 
-            // Handles Image and Document file selection for KYC uploads & profile photos
+            // File Chooser for KYC, GST, Passport and Document uploads
             @Override
             public boolean onShowFileChooser(WebView webView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
-                if (mUploadMessage != null) {
-                    mUploadMessage.onReceiveValue(null);
-                    mUploadMessage = null;
+                if (mFilePathCallback != null) {
+                    mFilePathCallback.onReceiveValue(null);
+                    mFilePathCallback = null;
                 }
-                mUploadMessage = filePathCallback;
+                mFilePathCallback = filePathCallback;
 
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    File photoFile = null;
-                    try {
-                        photoFile = createImageFile();
-                        takePictureIntent.putExtra("PhotoPath", mCameraPhotoPath);
-                    } catch (IOException ex) {
-                        Toast.makeText(MainActivity.this, "Camera initialization error", Toast.LENGTH_SHORT).show();
-                    }
+                try {
+                    Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
+                    contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
+                    contentSelectionIntent.setType("*/*");
 
-                    if (photoFile != null) {
-                        mCameraPhotoPath = "file:" + photoFile.getAbsolutePath();
-                        Uri photoURI = FileProvider.getUriForFile(MainActivity.this,
-                                getPackageName() + ".fileprovider", photoFile);
-                        takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-                    } else {
-                        takePictureIntent = null;
-                    }
+                    Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
+                    chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
+                    chooserIntent.putExtra(Intent.EXTRA_TITLE, "Upload Document or Photo");
+
+                    startActivityForResult(chooserIntent, FILE_CHOOSER_REQUEST_CODE);
+                    return true;
+                } catch (Exception e) {
+                    mFilePathCallback = null;
+                    Toast.makeText(MainActivity.this, "Unable to open file selector", Toast.LENGTH_SHORT).show();
+                    return false;
                 }
-
-                Intent contentSelectionIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                contentSelectionIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                contentSelectionIntent.setType("*/*");
-
-                Intent[] intentArray;
-                if (takePictureIntent != null) {
-                    intentArray = new Intent[]{takePictureIntent};
-                } else {
-                    intentArray = new Intent[0];
-                }
-
-                Intent chooserIntent = new Intent(Intent.ACTION_CHOOSER);
-                chooserIntent.putExtra(Intent.EXTRA_INTENT, contentSelectionIntent);
-                chooserIntent.putExtra(Intent.EXTRA_TITLE, "Select Document or Capture Photo");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, intentArray);
-
-                startActivityForResult(chooserIntent, INPUT_FILE_REQUEST_CODE);
-                return true;
             }
         });
     }
 
-    private File createImageFile() throws IOException {
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
-        String imageFileName = "FR8X_" + timeStamp + "_";
-        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(imageFileName, ".jpg", storageDir);
-    }
+    private void configureDownloadListener() {
+        mWebView.setDownloadListener(new DownloadListener() {
+            @Override
+            public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimeType, long contentLength) {
+                try {
+                    DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                    request.setMimeType(mimeType);
+                    String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                    request.setTitle(fileName);
+                    request.setDescription("Downloading file...");
+                    request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
 
-    private void configureSwipeRefresh() {
-        mSwipeRefresh.setColorSchemeColors(0xFF0284C7, 0xFF0D9488, 0xFF16A34A);
-        mSwipeRefresh.setOnRefreshListener(() -> mWebView.reload());
+                    DownloadManager dm = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                    if (dm != null) {
+                        dm.enqueue(request);
+                        Toast.makeText(MainActivity.this, "Downloading " + fileName, Toast.LENGTH_SHORT).show();
+                    }
+                } catch (Exception e) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
+                }
+            }
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == INPUT_FILE_REQUEST_CODE) {
-            if (mUploadMessage == null) return;
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (mFilePathCallback == null) return;
             Uri[] results = null;
 
-            if (resultCode == RESULT_OK) {
-                if (data == null || data.getData() == null) {
-                    if (mCameraPhotoPath != null) {
-                        results = new Uri[]{Uri.parse(mCameraPhotoPath)};
-                    }
-                } else {
-                    String dataString = data.getDataString();
-                    if (dataString != null) {
-                        results = new Uri[]{Uri.parse(dataString)};
+            if (resultCode == RESULT_OK && data != null) {
+                String dataString = data.getDataString();
+                if (dataString != null) {
+                    results = new Uri[]{Uri.parse(dataString)};
+                } else if (data.getClipData() != null) {
+                    final int count = data.getClipData().getItemCount();
+                    results = new Uri[count];
+                    for (int i = 0; i < count; i++) {
+                        results[i] = data.getClipData().getItemAt(i).getUri();
                     }
                 }
             }
-            mUploadMessage.onReceiveValue(results);
-            mUploadMessage = null;
+            mFilePathCallback.onReceiveValue(results);
+            mFilePathCallback = null;
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }

@@ -6,6 +6,7 @@ import { LocalTimeBadge } from './LocalTimeBadge';
 import { GoldenTick } from './GoldenTick';
 import { useChat } from '@/lib/context/ChatContext';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useToast } from '@/lib/context/ToastContext';
 import {
   MessageSquare,
   MapPin,
@@ -19,6 +20,8 @@ import {
   FileText,
   Star,
   Globe2,
+  Share2,
+  Copy,
 } from 'lucide-react';
 
 export interface ProfilePreviewData {
@@ -56,12 +59,18 @@ export function ProfilePreviewModal({
 }: ProfilePreviewModalProps) {
   const { openChatWith } = useChat();
   const { user } = useAuth();
+  const { toast } = useToast();
 
   const name = profile?.name || personName || 'Freight Member';
   const isSarah = name.toLowerCase().includes('sarah');
   const isKiran = name.toLowerCase().includes('kiran');
   const isPriya = name.toLowerCase().includes('priya');
   const isRavi = name.toLowerCase().includes('ravi');
+
+  const compCode = ((profile?.company || 'FR8X').replace(/[^a-zA-Z0-9]/g, '').slice(0, 4) || 'FR8X').toUpperCase();
+  const nameCode = (name.replace(/[^a-zA-Z0-9]/g, '').slice(-4) || '0000').toUpperCase();
+  const companyRefNo = (profile as any)?.companyRefNo || (name === user?.displayName ? (user as any)?.companyRefNo : null) || `REF-FR8X-${compCode}-${nameCode}`;
+  const shareUrl = `https://con.fr8x.in/ref/${companyRefNo}`;
 
   const resolvedProfile: ProfilePreviewData = profile || {
     name,
@@ -180,6 +189,37 @@ export function ProfilePreviewModal({
               <MapPin size={11} style={{ verticalAlign: '-2px', marginRight: '3px' }} />
               {resolvedProfile.location}
             </p>
+
+            {/* Company Reference No & Share Link */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <span
+                style={{
+                  fontFamily: 'monospace',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
+                  color: 'var(--brand)',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '4px',
+                  padding: '2px 6px',
+                  letterSpacing: '0.4px',
+                }}
+              >
+                {companyRefNo}
+              </span>
+              <button
+                type="button"
+                className="btn secondary sm"
+                style={{ height: '22px', fontSize: '10.5px', padding: '0 7px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                onClick={() => {
+                  navigator.clipboard?.writeText?.(shareUrl);
+                  toast(`Company link copied: ${shareUrl}`);
+                }}
+                title="Copy shareable reference link"
+              >
+                <Share2 size={10} /> Share Link
+              </button>
+            </div>
           </div>
 
           <LocalTimeBadge timezone={resolvedProfile.timezone || 'Asia/Kolkata'} boxFormat={true} />

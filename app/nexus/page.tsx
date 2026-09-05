@@ -178,10 +178,26 @@ export default function NexusPage() {
     setTopicReplyText('');
   };
 
+  // Owner permission check: Strictly only the creator can edit or delete their community topic
+  const isTopicOwner = (topic?: NexusTopic | null) => {
+    if (!topic || !user) return false;
+    if (topic.authorUid && user.uid) {
+      return topic.authorUid === user.uid;
+    }
+    return Boolean(
+      (topic.author && user.displayName && topic.author.trim().toLowerCase() === user.displayName.trim().toLowerCase()) ||
+      (topic.author && (user as any).name && topic.author.trim().toLowerCase() === (user as any).name.trim().toLowerCase())
+    );
+  };
+
   const handleUpdateTopic = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedTopic || !editTopicTitle.trim() || !editTopicBody.trim()) {
       toast('Title and content are required.');
+      return;
+    }
+    if (!isTopicOwner(selectedTopic)) {
+      toast('Permission denied: Only the topic owner can edit this community post.');
       return;
     }
     updateTopic(selectedTopic.id, editTopicTitle, editTopicCategory, editTopicBody);
@@ -200,6 +216,11 @@ export default function NexusPage() {
   };
 
   const handleDeleteTopic = (topicId: string) => {
+    const targetTopic = topics.find((t) => t.id === topicId) || selectedTopic;
+    if (!isTopicOwner(targetTopic)) {
+      toast('Permission denied: Only the topic owner can delete this community post.');
+      return;
+    }
     if (window.confirm('Are you sure you want to permanently delete this community topic?')) {
       deleteTopic(topicId);
       setSelectedTopic(null);
@@ -554,7 +575,7 @@ export default function NexusPage() {
                 {isTopicFullScreen ? 'Exit Full Screen' : 'Full Screen'}
               </button>
 
-              {(user.displayName === selectedTopic.author || user.role === 'super_admin' || user.role === 'company_admin' || (user as any).isSuperAdmin) && !isEditingTopic && (
+              {isTopicOwner(selectedTopic) && !isEditingTopic && (
                 <button
                   type="button"
                   className="btn secondary sm"
@@ -564,19 +585,19 @@ export default function NexusPage() {
                     setEditTopicCategory(selectedTopic.category);
                     setEditTopicBody(selectedTopic.text);
                   }}
-                  title="Edit Topic Content"
+                  title="Edit Topic Content (Owner Only)"
                   style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                 >
                   <Edit3 size={12} /> Edit
                 </button>
               )}
 
-              {(user.displayName === selectedTopic.author || user.uid === (selectedTopic as any).authorUid) && (
+              {isTopicOwner(selectedTopic) && (
                 <button
                   type="button"
                   className="btn secondary sm"
                   onClick={() => handleDeleteTopic(selectedTopic.id)}
-                  title="Delete Topic"
+                  title="Delete Topic (Owner Only)"
                   style={{ height: '28px', padding: '0 8px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px', color: '#dc2626' }}
                 >
                   <Trash2 size={12} /> Delete

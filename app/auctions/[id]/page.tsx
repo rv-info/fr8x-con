@@ -51,6 +51,7 @@ import { formatNumber } from '@/lib/utils';
 
 interface ChargeRow {
   equipment: string;
+  containerNo?: string;
   qty: number;
   oceanFreight: number;
   surcharges: number;
@@ -75,6 +76,19 @@ export default function BidRoomPage() {
   const { toast } = useToast();
 
   const auction = auctions.find((a) => a.id === auctionId) || auctions[0];
+
+  // Requirements 4 & 5: Conditional Container Number & Competition Ceiling visibility
+  const asksContainerNo = Boolean(
+    (auction as any)?.askContainerNo ||
+    (auction as any)?.requiresContainerNo ||
+    (auction?.rules as any)?.askContainerNo ||
+    auction?.containers?.some((c: any) => c.containerNo || c.requiresContainerNo || c.askContainerNo)
+  );
+
+  const [showCompetitionCeiling, setShowCompetitionCeiling] = useState<boolean>(
+    (auction as any)?.showCompetitionCeiling ?? (auction?.rules as any)?.showCompetitionCeiling ?? true
+  );
+
   const configuredBidLimit = Number(auction.rules?.bidLimit);
   const bidLimit = ([1, 3, 5] as number[]).includes(configuredBidLimit) ? configuredBidLimit : 5;
   const bidCount = (auction.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
@@ -371,10 +385,37 @@ export default function BidRoomPage() {
         {/* Ceiling & Overtime Status */}
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
           <div style={{ textAlign: 'right' }}>
-            <small style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase' }}>Competition Ceiling (Baseline)</small>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
-              ${ceiling.toFixed(2)} USD
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '5px' }}>
+              <small style={{ color: '#94a3b8', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                {showCompetitionCeiling ? 'COMPETITION CEILING (REVERSE AUCTION)' : 'COMPETITION CEILING'}
+              </small>
+              <button
+                type="button"
+                onClick={() => setShowCompetitionCeiling(!showCompetitionCeiling)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: showCompetitionCeiling ? '#38bdf8' : '#94a3b8',
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  padding: '1px 3px',
+                  textDecoration: 'underline',
+                }}
+                title="Toggle fair competition ceiling display"
+              >
+                {showCompetitionCeiling ? 'Hide' : 'Show'}
+              </button>
             </div>
+            {showCompetitionCeiling ? (
+              <div style={{ fontSize: '18px', fontWeight: 800, color: '#fbbf24' }}>
+                ${ceiling.toFixed(2)} USD
+              </div>
+            ) : (
+              <div style={{ fontSize: '11.5px', fontWeight: 700, color: '#94a3b8', marginTop: '3px', background: 'rgba(255,255,255,0.08)', padding: '2px 8px', borderRadius: '4px' }}>
+                Blind Sourcing (Masked)
+              </div>
+            )}
           </div>
           <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '6px 10px', borderRadius: '8px', textAlign: 'center' }}>
             <small style={{ color: '#38bdf8', fontSize: '9px', fontWeight: 800, display: 'block' }}>DYNAMIC OVERTIME</small>
@@ -592,8 +633,12 @@ export default function BidRoomPage() {
               <table className="table" style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', minWidth: '1350px' }}>
                 <thead>
                   <tr style={{ background: '#f1f5f9', color: 'var(--fr8x-text)', borderBottom: '1px solid var(--fr8x-outline)' }}>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', width: '110px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
-                    <th style={{ padding: '8px 6px', textAlign: 'left', width: '150px', borderRight: '1px solid var(--line-light)' }}>CONTAINER</th>
+                    <th style={{ padding: '8px 6px', textAlign: 'left', width: asksContainerNo ? '130px' : '170px', borderRight: '1px solid var(--line-light)' }}>EQUIPMENT</th>
+                    {asksContainerNo && (
+                      <th style={{ padding: '8px 6px', textAlign: 'left', width: '140px', borderRight: '1px solid var(--line-light)', background: '#f8fafc', color: 'var(--brand)' }}>
+                        CONTAINER NO.
+                      </th>
+                    )}
                     <th style={{ padding: '8px 6px', textAlign: 'center', width: '45px', borderRight: '1px solid var(--line-light)' }}>QTY</th>
 
                     {/* Ocean Charges Head with Currency */}
@@ -679,35 +724,24 @@ export default function BidRoomPage() {
                     return (
                       <tr key={i} style={{ background: i % 2 === 0 ? '#ffffff' : '#f8fafc', borderBottom: '1px solid var(--line-light)' }}>
                         <td style={{ fontWeight: 700, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
-                          {r.equipment.split(' (')[0]}
+                          {r.equipment}
                         </td>
-                        <td style={{ fontWeight: 600, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
-                          <select
-                            value={r.equipment}
-                            onChange={(e) => {
-                              const newRows = [...chargeRows];
-                              newRows[i].equipment = e.target.value;
-                              setChargeRows(newRows);
-                            }}
-                            style={{ width: '100%', fontSize: '11px', padding: '3px 4px', border: '1px solid var(--fr8x-outline)', background: '#fff', borderRadius: '0px' }}
-                          >
-                            <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
-                            <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
-                            <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
-                            <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
-                            <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
-                            <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
-                            <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
-                            <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
-                            <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
-                            <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
-                            <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
-                            <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
-                            <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
-                            <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
-                            <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
-                          </select>
-                        </td>
+                        {asksContainerNo && (
+                          <td style={{ padding: '4px', borderRight: '1px solid var(--line-light)' }}>
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ height: '28px', fontSize: '11px', textAlign: 'left', background: '#fff', border: '1px solid var(--fr8x-outline)', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
+                              placeholder="MSCU1234567"
+                              value={r.containerNo || ''}
+                              onChange={(e) => {
+                                const newRows = [...chargeRows];
+                                newRows[i].containerNo = e.target.value;
+                                setChargeRows(newRows);
+                              }}
+                            />
+                          </td>
+                        )}
                         <td style={{ textAlign: 'center', fontWeight: 800, padding: '6px', color: 'var(--ink)', borderRight: '1px solid var(--line-light)' }}>
                           {r.qty}
                         </td>
@@ -793,6 +827,23 @@ export default function BidRoomPage() {
                         <small style={{ fontSize: '10.5px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
                           {r.equipment}
                         </small>
+                        {asksContainerNo && (
+                          <div style={{ marginTop: '6px' }}>
+                            <label style={{ fontSize: '10px', fontWeight: 700, color: 'var(--ink)' }}>Container No. (Asked by Buyer)</label>
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ height: '26px', fontSize: '11px', marginTop: '2px' }}
+                              placeholder="e.g. MSCU1234567"
+                              value={r.containerNo || ''}
+                              onChange={(e) => {
+                                const newRows = [...chargeRows];
+                                newRows[i].containerNo = e.target.value;
+                                setChargeRows(newRows);
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                       <div style={{ textAlign: 'right' }}>
                         <span style={{ fontSize: '9.5px', color: 'var(--mut)', fontWeight: 700, display: 'block' }}>ROW TOTAL</span>
@@ -1084,21 +1135,51 @@ export default function BidRoomPage() {
                 </div>
 
                 <div style={{ background: '#ffffff', padding: '10px', border: '1px solid var(--fr8x-outline)', borderRadius: '0px', fontSize: '11px', color: 'var(--ink)' }}>
-                  <b style={{ color: 'var(--fr8x-text)', display: 'block', marginBottom: '5px', textTransform: 'uppercase', fontSize: '10.5px' }}>
-                    COMPETITION CEILING (REVERSE AUCTION)
-                  </b>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
-                    <span style={{ color: 'var(--fr8x-text)', fontWeight: 700 }}>L1 (Lowest / Best):</span>
-                    <b style={{ color: 'var(--fr8x-text)' }}>${l1Display.toFixed(2)} USD</b>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                    <b style={{ color: 'var(--fr8x-text)', textTransform: 'uppercase', fontSize: '10.5px' }}>
+                      COMPETITION CEILING (REVERSE AUCTION)
+                    </b>
+                    <button
+                      type="button"
+                      onClick={() => setShowCompetitionCeiling(!showCompetitionCeiling)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: showCompetitionCeiling ? 'var(--brand)' : 'var(--mut)',
+                        fontSize: '9.5px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                        fontWeight: 700,
+                        padding: '0 2px',
+                      }}
+                      title="Toggle visibility of competition ceiling"
+                    >
+                      {showCompetitionCeiling ? 'Hide Ceiling' : 'Show Ceiling'}
+                    </button>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
-                    <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>L2 (2nd Lowest):</span>
-                    <b>${l2Display.toFixed(2)} USD</b>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-                    <span style={{ color: 'var(--mut)' }}>L3 (3rd Lowest):</span>
-                    <b style={{ color: 'var(--mut)' }}>${l3Display.toFixed(2)} USD</b>
-                  </div>
+                  {showCompetitionCeiling ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
+                        <span style={{ color: 'var(--fr8x-text)', fontWeight: 700 }}>L1 (Lowest / Best):</span>
+                        <b style={{ color: 'var(--fr8x-text)' }}>${l1Display.toFixed(2)} USD</b>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', borderBottom: '1px solid var(--line-light)' }}>
+                        <span style={{ color: 'var(--fr8x-muted)', fontWeight: 600 }}>L2 (2nd Lowest):</span>
+                        <b>${l2Display.toFixed(2)} USD</b>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+                        <span style={{ color: 'var(--mut)' }}>L3 (3rd Lowest):</span>
+                        <b style={{ color: 'var(--mut)' }}>${l3Display.toFixed(2)} USD</b>
+                      </div>
+                      <div style={{ marginTop: '4px', fontSize: '9.5px', color: '#16a34a', fontWeight: 600 }}>
+                        ✓ Fair Competition Active: Ceiling ${ceiling.toFixed(2)} USD
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ padding: '6px 0', color: 'var(--mut)', fontSize: '10.5px' }}>
+                      <i>Blind Reverse Auction Active · Competition Ceiling Hidden by Buyer to encourage aggressive pricing.</i>
+                    </div>
+                  )}
                 </div>
               </div>
 
