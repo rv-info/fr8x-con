@@ -1411,7 +1411,13 @@ export default function FeedsPage() {
                 >
                   <div style={{ position: 'relative', flexShrink: 0 }}>
                     <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden' }}>
-                      <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {(contact as any).avatarUrl ? (
+                        <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '11px', fontWeight: 800 }}>
+                          {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
+                        </div>
+                      )}
                     </div>
                     {contact.isOnline && (
                       <span
@@ -1598,7 +1604,13 @@ export default function FeedsPage() {
         <div className="card compose-card" style={{ marginBottom: '12px', padding: '12px 14px' }}>
           <div className="compose-top">
             <div className="avatar" style={{ width: '36px', height: '36px', padding: 0, overflow: 'hidden' }}>
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                </div>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
@@ -1741,7 +1753,17 @@ export default function FeedsPage() {
                     style={{ cursor: 'pointer' }}
                   >
                     <div className="avatar" style={{ width: '38px', height: '38px', padding: 0, overflow: 'hidden', position: 'relative' }}>
-                      <Image src={post.authorPhotoUrl || "/profile-avatar.png"} alt={post.author} width={38} height={38} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {(() => {
+                        const photo = post.author === user.displayName ? user.avatarUrl : post.authorPhotoUrl;
+                        if (photo) {
+                          return <img src={photo} alt={post.author} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+                        }
+                        return (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                            {post.author.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div>
                       <div className="author-name-row">
@@ -2018,7 +2040,13 @@ export default function FeedsPage() {
                         <div key={comment.id} className="comment-item tier-1">
                           <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
-                              <img src="/profile-avatar.png" alt={comment.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                              {comment.author === user.displayName && user.avatarUrl ? (
+                                <img src={user.avatarUrl} alt={comment.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9.5px', fontWeight: 800 }}>
+                                  {comment.author.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                                </div>
+                              )}
                             </div>
                             <span
                               className="comment-author"
@@ -2080,7 +2108,13 @@ export default function FeedsPage() {
                               <div key={reply.id} className="comment-item tier-2">
                                 <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                   <div className="avatar" style={{ width: '20px', height: '20px', padding: 0, overflow: 'hidden' }}>
-                                    <img src="/profile-avatar.png" alt={reply.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                    {reply.author === user.displayName && user.avatarUrl ? (
+                                      <img src={user.avatarUrl} alt={reply.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                    ) : (
+                                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9px', fontWeight: 800 }}>
+                                        {reply.author.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                                      </div>
+                                    )}
                                   </div>
                                   <span
                                     className="comment-author"
@@ -2141,7 +2175,13 @@ export default function FeedsPage() {
                                     <div key={nested.id} className="comment-item tier-3">
                                       <div className="comment-header" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                         <div className="avatar" style={{ width: '18px', height: '18px', padding: 0, overflow: 'hidden' }}>
-                                          <img src="/profile-avatar.png" alt={nested.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                          {nested.author === user.displayName && user.avatarUrl ? (
+                                            <img src={user.avatarUrl} alt={nested.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                                          ) : (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '8px', fontWeight: 800 }}>
+                                              {nested.author.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                                            </div>
+                                          )}
                                         </div>
                                         <span
                                           className="comment-author"
@@ -2744,7 +2784,13 @@ export default function FeedsPage() {
                         style={{ cursor: 'pointer', accentColor: 'var(--brand, #1985a1)', width: '15px', height: '15px' }}
                       />
                       <div className="avatar" style={{ width: '26px', height: '26px', padding: 0, overflow: 'hidden', flexShrink: 0 }}>
-                        <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {(contact as any).avatarUrl ? (
+                          <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '10px', fontWeight: 800 }}>
+                            {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
+                          </div>
+                        )}
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -2843,7 +2889,13 @@ export default function FeedsPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ position: 'relative' }}>
                       <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
-                        <img src="/profile-avatar.png" alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        {(contact as any).avatarUrl ? (
+                          <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                            {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
+                          </div>
+                        )}
                       </div>
                       {contact.isOnline && (
                         <span

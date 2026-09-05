@@ -94,7 +94,13 @@ function SingleChatBox({
         title={`Restore chat with ${contact?.name || 'Contact'}`}
       >
         <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
-          <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+          {(contact as any)?.avatarUrl ? (
+            <img src={(contact as any).avatarUrl} alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9px', fontWeight: 800 }}>
+              {(contact?.name || 'C').split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+            </div>
+          )}
         </div>
         <span className="name" style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{contact?.name || 'Chat'}</span>
         {contact?.hasGoldenTick && <GoldenTick />}
@@ -123,7 +129,13 @@ function SingleChatBox({
           title="View profile"
         >
           <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden', flexShrink: 0 }}>
-            <img src="/profile-avatar.png" alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            {(contact as any)?.avatarUrl ? (
+              <img src={(contact as any).avatarUrl} alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            ) : (
+              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '11px', fontWeight: 800 }}>
+                {(contact?.name || 'C').split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+              </div>
+            )}
           </div>
           <div style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
             <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--fr8x-text, #1e293b)', fontWeight: 800, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -316,7 +328,13 @@ export function TradeChat() {
                     }}
                   >
                     <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden' }}>
-                      <img src="/profile-avatar.png" alt={c.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                      {(c as any).avatarUrl ? (
+                        <img src={(c as any).avatarUrl} alt={c.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                      ) : (
+                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '11px', fontWeight: 800 }}>
+                          {c.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <b>

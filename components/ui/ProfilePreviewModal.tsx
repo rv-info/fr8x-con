@@ -5,6 +5,7 @@ import { Modal } from './Modal';
 import { LocalTimeBadge } from './LocalTimeBadge';
 import { GoldenTick } from './GoldenTick';
 import { useChat } from '@/lib/context/ChatContext';
+import { useAuth } from '@/lib/context/AuthContext';
 import {
   MessageSquare,
   MapPin,
@@ -54,6 +55,7 @@ export function ProfilePreviewModal({
   personName,
 }: ProfilePreviewModalProps) {
   const { openChatWith } = useChat();
+  const { user } = useAuth();
 
   const name = profile?.name || personName || 'Freight Member';
   const isSarah = name.toLowerCase().includes('sarah');
@@ -144,7 +146,17 @@ export function ProfilePreviewModal({
         {/* Profile Header Block */}
         <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start', flexWrap: 'wrap', background: '#fafcff', padding: '16px', borderRadius: '10px', border: '1px solid var(--line)' }}>
           <div className="avatar big" style={{ width: '58px', height: '58px', padding: 0, overflow: 'hidden' }}>
-            <img src="/profile-avatar.png" alt={resolvedProfile.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            {(() => {
+              const photo = resolvedProfile.name === user?.displayName ? user?.avatarUrl : (resolvedProfile as any).avatarUrl;
+              if (photo) {
+                return <img src={photo} alt={resolvedProfile.name} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+              }
+              return (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '20px', fontWeight: 800 }}>
+                  {resolvedProfile.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'P'}
+                </div>
+              );
+            })()}
           </div>
           <div style={{ flex: 1, minWidth: '220px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
