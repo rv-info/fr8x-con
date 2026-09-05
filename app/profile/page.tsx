@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
@@ -78,8 +78,17 @@ export default function ProfilePage() {
   );
 
   // Profile Image & Company Logo State
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl || '/profile-avatar.png');
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl ? user.companyLogoUrl : null);
+
+  // Sync avatar and logo state whenever user object in AuthContext updates
+  useEffect(() => {
+    setAvatarUrl(user.avatarUrl ? user.avatarUrl : null);
+  }, [user.avatarUrl]);
+
+  useEffect(() => {
+    setCompanyLogoUrl(user.companyLogoUrl ? user.companyLogoUrl : null);
+  }, [user.companyLogoUrl]);
 
   // Address & Google Maps State
   const [city, setCity] = useState(user.city || 'Mumbai');
@@ -113,7 +122,7 @@ export default function ProfilePage() {
   const [editEmail, setEditEmail] = useState(user.email);
   const [editMobile, setEditMobile] = useState(user.mobile);
   const [editDesignation, setEditDesignation] = useState(user.designation);
-  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl || '/profile-avatar.png');
+  const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
   const [isChangingCompany, setIsChangingCompany] = useState(false);
   const [transferTargetCompany, setTransferTargetCompany] = useState('');
@@ -304,8 +313,8 @@ export default function ProfilePage() {
       company,
       mobile,
       summary,
-      avatarUrl: avatarUrl || undefined,
-      companyLogoUrl: companyLogoUrl || undefined,
+      avatarUrl: avatarUrl ? avatarUrl : '',
+      companyLogoUrl: companyLogoUrl ? companyLogoUrl : '',
       city,
       state: stateName,
       country,
@@ -756,7 +765,7 @@ export default function ProfilePage() {
               setEditEmail(user.email);
               setEditMobile(user.mobile);
               setEditDesignation(user.designation);
-              setEditAvatarUrl(avatarUrl || user.avatarUrl || '/profile-avatar.png');
+              setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
               setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
               setIsChangingCompany(false);
               setTransferTargetCompany('');
@@ -925,6 +934,38 @@ export default function ProfilePage() {
                   <Camera size={10} />
                   <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
                 </label>
+
+                {/* Remove Profile Photo Trigger (if photo exists) */}
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAvatarUrl(null);
+                      updateUser({ avatarUrl: '' });
+                      toast('Profile photo removed.');
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '-2px',
+                      left: '-2px',
+                      background: '#dc2626',
+                      color: '#fff',
+                      borderRadius: '50%',
+                      width: '22px',
+                      height: '22px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      boxShadow: 'var(--sh)',
+                      border: '1.5px solid #fff',
+                      zIndex: 5,
+                    }}
+                    title="Remove profile photo"
+                  >
+                    <Trash2 size={10} />
+                  </button>
+                )}
 
                 {/* Company Logo Badge — lower-left overlay */}
                 <div
@@ -1640,8 +1681,8 @@ export default function ProfilePage() {
               setLastName(editLastName);
               setMobile(editMobile);
               setDesignation(editDesignation);
-              setAvatarUrl(editAvatarUrl);
-              setCompanyLogoUrl(editCompanyLogoUrl);
+              setAvatarUrl(editAvatarUrl || null);
+              setCompanyLogoUrl(editCompanyLogoUrl || null);
 
               updateUser({
                 firstName: editFirstName,
@@ -1651,8 +1692,8 @@ export default function ProfilePage() {
                 mobile: editMobile,
                 designation: editDesignation,
                 company: finalCompany,
-                avatarUrl: editAvatarUrl || undefined,
-                companyLogoUrl: editCompanyLogoUrl || undefined,
+                avatarUrl: editAvatarUrl || '',
+                companyLogoUrl: editCompanyLogoUrl || '',
                 companyTransferStatus: newCompanyTransferStatus as any,
                 pendingCompany: newPendingCompany,
                 pendingEmail: newPendingEmail,

@@ -619,7 +619,7 @@ export default function LoginPage() {
 
       {/* Floating APK Download Pill on Bottom Right */}
       <a
-        href="/fr8x-workspace-debug.apk"
+        href="/fr8x-enterprise-mobile-v2.4.apk"
         download
         title="Download FR8X Android Mobile App (.apk)"
         style={{
@@ -643,8 +643,8 @@ export default function LoginPage() {
           cursor: 'pointer',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#16a34a';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(22, 163, 74, 0.2)';
+          e.currentTarget.style.borderColor = '#0ea5e9';
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(14, 165, 233, 0.25)';
           e.currentTarget.style.transform = 'translateY(-2px)';
         }}
         onMouseLeave={(e) => {
@@ -658,7 +658,7 @@ export default function LoginPage() {
             width: '28px',
             height: '28px',
             borderRadius: '50%',
-            background: '#16a34a',
+            background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
@@ -670,7 +670,7 @@ export default function LoginPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
           <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Download Android App</span>
-          <span style={{ fontSize: '9.5px', color: '#64748b', fontWeight: 600 }}>v1.0 (.apk binary)</span>
+          <span style={{ fontSize: '9.5px', color: '#0ea5e9', fontWeight: 700 }}>v2.4.0 Native Standalone (.apk)</span>
         </div>
         <div
           style={{

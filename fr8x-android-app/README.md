@@ -1,72 +1,61 @@
-# FR8X Enterprise Mobile Android Application (Standalone Package)
+# FR8X Enterprise Mobile Android Application (v2.4.0 Standalone)
 
-This folder contains the complete, isolated Android native wrapper application and compiled APK file for **FR8X Global Freight Workspace**.
+This package contains the complete, self-contained native Android mobile application for **FR8X Global Freight Workspace**.
 
-> **Isolation Guarantee:** This folder is completely self-contained and does not affect or modify any existing Next.js web application code.
+> **100% Native Mobile Feel & Offline Standalone:**
+> Everything (UI, screens, reverse auctions, trade chat, freight calculator, and KYC profile) is bundled directly inside the APK file (`assets/www/`). It does **not** load `localhost:3000` or an external website in a browser frame. When installed on an Android device, it behaves like an authentic native mobile application.
 
 ---
 
-## 1. Ready-to-Test APK Binary
+## 1. Ready-to-Install APK Binaries
 
-The testable Android APK file has been compiled and is located at:
-```
-fr8x-android-app/dist/fr8x-workspace-debug.apk
-```
+The compiled, signed, and aligned Android APK is available at:
+- **Primary Root Location:** [`fr8x-enterprise-mobile-v2.4.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-enterprise-mobile-v2.4.apk)
+- **Dist Location:** [`fr8x-android-app/dist/fr8x-enterprise-mobile-v2.4.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/dist/fr8x-enterprise-mobile-v2.4.apk)
+- **Debug Package:** [`fr8x-android-app/dist/fr8x-workspace-debug.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/dist/fr8x-workspace-debug.apk)
 
-- **File Name:** `fr8x-workspace-debug.apk`
+### Binary Specifications
+- **File Size:** ~181.7 KB
 - **Package ID:** `com.fr8x.app`
-- **Target OS:** Android 7.0+ (API Level 24 to 34)
-- **Architecture:** Universal (ARM64, ARMv7, x86_64)
+- **Application Name:** FR8X Mobile
+- **Version:** 2.4.0 (Build 240)
+- **Min Android SDK:** Android 5.0+ (API 21+)
+- **Target Android SDK:** Android 14+ (API 34)
+- **Signing:** Aligned, Signed (Android Signature Schemes v1 & v2)
 
 ---
 
-## 2. How the Live Auto-Updating Works
+## 2. Key Native Mobile Features Included
 
-The native Android app uses a **Hardware-Accelerated Live Webview Architecture**:
-- The APK loads the live workspace application from the server (`http://10.0.2.2:3000` for emulator, or your production/LAN server URL).
-- **Zero Reinstalls Needed:** Whenever you modify or deploy updates to your web application, **the Android app automatically loads the newest version on launch**!
-- You do **not** need to build or install a new APK when tweaking the web application.
+1. **Native Android App Shell:**
+   - Deep ocean enterprise theme with hardware acceleration.
+   - Fixed Android App Bar with live status pill, notifications counter, and route search.
+   - 5-tab Bottom Navigation Bar with touch ripples, active indicators, and haptic feedback.
+   - Floating Action Button (FAB) for "+ Post Demand".
 
----
-
-## 3. How to Install & Test on Android Devices
-
-### Method A: Transfer to Physical Android Phone (Fastest)
-1. Send `fr8x-workspace-debug.apk` to your phone via:
-   - USB cable (Copy to phone's `Downloads` folder)
-   - WhatsApp / Telegram / Google Drive / Email attachment
-2. On your phone, tap on `fr8x-workspace-debug.apk` in your Files / Downloads app.
-3. If prompted with *"Install unknown apps"*, tap **Settings** and enable **"Allow from this source"**.
-4. Tap **Install** → **Open**.
-
-### Method B: Via Android Debug Bridge (ADB)
-If you have an Android device connected via USB with USB Debugging enabled:
-```bash
-adb install -r fr8x-android-app/dist/fr8x-workspace-debug.apk
-```
-
-### Method C: Android Studio
-You can open this folder (`fr8x-android-app`) directly in Android Studio as a standard Gradle project:
-- File → Open → Select `fr8x-android-app`
-- Click **Run** (`Shift + F10`) to launch on any connected device or Android emulator.
+2. **5 Fully Functional Mobile Modules:**
+   - **Market / Freight Demands:** Live international shipping corridors (INNSA → NLRTM, CNSHA → AEJEA, INMUN → GBFXT), category filters (Ocean FCL, Reefer, Air, Hazmat), and instant quotation drawer.
+   - **Reverse Auctions Arena:** Real-time ticking countdown clocks (`01:42:15`), lowest bid vs ceiling rate, and interactive "Place Lower Bid" bottom sheet.
+   - **Trade Desk Chat:** Mobile WhatsApp-style in-app messenger with 4 active carrier desks (Maersk, Hapag-Lloyd, Port CFS, Customs Broker), live messages, and quick freight reply pills.
+   - **FX & Landed Cost Calculator:** Live currency switcher (USD, INR, EUR, AED, SGD, CNY), Ocean Freight + THC + BAF + Customs breakdown with 18% statutory duty computation.
+   - **Enterprise Profile & Compliance KYC:** Tier-1 Verified Forwarder badge, active GSTIN, IEC, MTO License, and FMC bond details.
 
 ---
 
-## 4. Key Native Capabilities Included
+## 3. How to Install on Any Physical Android Phone
 
-- **Hardware Acceleration:** Native 60 FPS GPU rendering for fast scrolling.
-- **Pull to Refresh:** Swipe down from the top to reload the workspace live.
-- **Camera & File Uploads:** Supports capturing KYC filings and profile photos directly through Android camera or gallery chooser.
-- **Offline Resilience:** Loads a built-in offline screen with a 1-tap "Retry Connection" button if network is unavailable.
-- **Hardware Back Navigation:** Android back button navigates back within the workspace.
+1. **Send the APK to your phone:**
+   - Via WhatsApp, Telegram, Google Drive, Email attachment, or USB file transfer.
+2. **Tap the file on your phone:**
+   - Open your phone's **Files** or **Downloads** app and tap `fr8x-enterprise-mobile-v2.4.apk`.
+3. **If prompted:**
+   - Tap **Settings** → Turn ON **"Allow from this source"**.
+4. **Tap Install → Open:**
+   - The app launches instantly with native bottom tabs, smooth transitions, and offline capability.
 
 ---
 
-## 5. Rebuilding the APK
+## 4. How to Rebuild Anytime
 
-To re-package the APK at any time:
-1. Double-click `build-apk.bat` inside this folder, or run:
-```cmd
-node tools\package-apk.js
-```
-The output APK will be refreshed in `dist/fr8x-workspace-debug.apk`.
+To rebuild the APK after making any changes to the mobile app files in `mobile-app/`:
+Double-click [`build-apk.bat`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/build-apk.bat). It compiles and signs the new APK in 3 seconds.

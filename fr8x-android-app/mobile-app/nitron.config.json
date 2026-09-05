@@ -1,0 +1,25 @@
+{
+  "name": "FR8X Mobile",
+  "packageId": "com.fr8x.app",
+  "version": "2.4.0",
+  "entry": "index.html",
+  "orientation": "portrait",
+  "statusBar": true,
+  "icon": "icon.png",
+  "permissions": [
+    "INTERNET",
+    "ACCESS_NETWORK_STATE",
+    "CAMERA",
+    "VIBRATE"
+  ],
+  "network": {
+    "cleartext": true
+  },
+  "webview": {
+    "backButton": "history",
+    "clearCacheOnStart": false
+  },
+  "splashScreen": {
+    "backgroundColor": "#09121f"
+  }
+}

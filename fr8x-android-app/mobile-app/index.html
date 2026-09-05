@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#070d18">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>FR8X Mobile Enterprise</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+  <div id="app-root">
+    
+    <!-- Native Android App Bar Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <!-- ISO Container Icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/>
+            <path d="m3.3 7 8.7 5 8.7-5"/>
+            <path d="M12 22V12"/>
+          </svg>
+        </div>
+        <div class="brand-title">
+          <div class="brand-name">FR8<span>X</span></div>
+          <div class="brand-tag">
+            <span class="pulse-dot"></span> LIVE CLOUD
+          </div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Quick Search -->
+        <button class="icon-btn touch-press" onclick="showToast('Global route search active')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+        <!-- Notifications with Alert Badge -->
+        <button class="icon-btn touch-press" onclick="showToast('You have 3 unread rate approvals')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path>
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path>
+          </svg>
+          <span class="badge-dot"></span>
+        </button>
+        <!-- User Avatar -->
+        <button class="avatar-btn touch-press" onclick="document.querySelector('[data-target=view-profile]').click()">
+          RK
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Viewport for Screens -->
+    <main class="viewport">
+
+      <!-- =================================================================== -->
+      <!-- VIEW 1: FREIGHT DEMANDS & SPOT FEED -->
+      <!-- =================================================================== -->
+      <section id="view-feed" class="view-page active">
+        <!-- Live Quick Stats -->
+        <div class="stats-strip">
+          <div class="stat-pill cyan">
+            <span class="stat-label">Active Demands</span>
+            <span class="stat-value">24</span>
+          </div>
+          <div class="stat-pill emerald">
+            <span class="stat-label">Live Tenders</span>
+            <span class="stat-value">8</span>
+          </div>
+          <div class="stat-pill amber">
+            <span class="stat-label">My Quotes</span>
+            <span class="stat-value">3</span>
+          </div>
+        </div>
+
+        <!-- Horizontal Category Filter Pills -->
+        <div class="filter-scroll">
+          <button class="filter-chip active touch-press" data-filter="all">All Routes</button>
+          <button class="filter-chip touch-press" data-filter="fcl">Ocean FCL</button>
+          <button class="filter-chip touch-press" data-filter="reefer">Reefer Cold</button>
+          <button class="filter-chip touch-press" data-filter="air">Air Freight</button>
+          <button class="filter-chip touch-press" data-filter="haz">Hazardous (IMO)</button>
+        </div>
+
+        <!-- Demands Card List -->
+        <div id="demands-list">
+          
+          <!-- Route Card 1 -->
+          <div class="route-card" data-category="fcl">
+            <div class="card-top">
+              <span class="status-badge badge-green">● READY TO LOAD</span>
+              <span class="cargo-ready-date">Vessel Cutoff: 18h</span>
+            </div>
+            <div class="corridor-row">
+              <div class="port-node">
+                <span class="port-code">INNSA</span>
+                <span class="port-city">Nhava Sheva, IN</span>
+              </div>
+              <div class="route-arrow-flow">
+                <span class="transit-time">19 DAYS DIRECT</span>
+                <div class="arrow-line"></div>
+              </div>
+              <div class="port-node" style="text-align: right;">
+                <span class="port-code">NLRTM</span>
+                <span class="port-city">Rotterdam, NL</span>
+              </div>
+            </div>
+            <div class="specs-grid">
+              <div class="spec-item">
+                <small>Volume</small>
+                <strong>5x 40' HC</strong>
+              </div>
+              <div class="spec-item">
+                <small>Commodity</small>
+                <strong>Textiles (Cotton)</strong>
+              </div>
+              <div class="spec-item">
+                <small>Carriers</small>
+                <strong>Maersk / MSC</strong>
+              </div>
+            </div>
+            <div class="card-bottom">
+              <div class="rate-box">
+                <span class="rate-label">Target Shipper Rate</span>
+                <span class="rate-amount">$1,950 <span style="font-size:11px;color:var(--text-muted);">/FEU</span></span>
+              </div>
+              <div class="card-actions">
+                <button class="btn-sm btn-secondary touch-press" onclick="openChatRoom('maersk', 'Maersk Ocean Desk')">Direct Chat</button>
+                <button class="btn-sm btn-primary touch-press" onclick="showToast('Spot quote of $1,950 sent to shipper')">Instant Quote</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route Card 2 -->
+          <div class="route-card" data-category="fcl">
+            <div class="card-top">
+              <span class="status-badge badge-cyan">● HIGH VOLUME</span>
+              <span class="cargo-ready-date">Ready: 08 Sep</span>
+            </div>
+            <div class="corridor-row">
+              <div class="port-node">
+                <span class="port-code">CNSHA</span>
+                <span class="port-city">Shanghai, CN</span>
+              </div>
+              <div class="route-arrow-flow">
+                <span class="transit-time">14 DAYS</span>
+                <div class="arrow-line"></div>
+              </div>
+              <div class="port-node" style="text-align: right;">
+                <span class="port-code">AEJEA</span>
+                <span class="port-city">Jebel Ali, UAE</span>
+              </div>
+            </div>
+            <div class="specs-grid">
+              <div class="spec-item">
+                <small>Volume</small>
+                <strong>12x 40' HC</strong>
+              </div>
+              <div class="spec-item">
+                <small>Commodity</small>
+                <strong>Solar PV Modules</strong>
+              </div>
+              <div class="spec-item">
+                <small>Free Time</small>
+                <strong>21 Days Detention</strong>
+              </div>
+            </div>
+            <div class="card-bottom">
+              <div class="rate-box">
+                <span class="rate-label">Target Shipper Rate</span>
+                <span class="rate-amount">$1,420 <span style="font-size:11px;color:var(--text-muted);">/FEU</span></span>
+              </div>
+              <div class="card-actions">
+                <button class="btn-sm btn-secondary touch-press" onclick="showToast('Added to watchlist')">Watch</button>
+                <button class="btn-sm btn-primary touch-press" onclick="initiateBid('auction-1', 1420, '12x 40HC Shanghai to Jebel Ali')">Place Bid</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Route Card 3 -->
+          <div class="route-card" data-category="reefer">
+            <div class="card-top">
+              <span class="status-badge badge-amber">● COLD CHAIN (-20°C)</span>
+              <span class="cargo-ready-date">Ready Now</span>
+            </div>
+            <div class="corridor-row">
+              <div class="port-node">
+                <span class="port-code">INMUN</span>
+                <span class="port-city">Mundra, IN</span>
+              </div>
+              <div class="route-arrow-flow">
+                <span class="transit-time">22 DAYS</span>
+                <div class="arrow-line"></div>
+              </div>
+              <div class="port-node" style="text-align: right;">
+                <span class="port-code">GBFXT</span>
+                <span class="port-city">Felixstowe, UK</span>
+              </div>
+            </div>
+            <div class="specs-grid">
+              <div class="spec-item">
+                <small>Volume</small>
+                <strong>4x 40' Reefer</strong>
+              </div>
+              <div class="spec-item">
+                <small>Cargo</small>
+                <strong>Frozen Seafood</strong>
+              </div>
+              <div class="spec-item">
+                <small>Genset</small>
+                <strong>Included</strong>
+              </div>
+            </div>
+            <div class="card-bottom">
+              <div class="rate-box">
+                <span class="rate-label">Target Rate</span>
+                <span class="rate-amount">$3,200 <span style="font-size:11px;color:var(--text-muted);">/unit</span></span>
+              </div>
+              <div class="card-actions">
+                <button class="btn-sm btn-primary touch-press" onclick="showToast('Reefer specification sheet requested')">Submit Quote</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 2: REVERSE AUCTIONS HALL -->
+      <!-- =================================================================== -->
+      <section id="view-auctions" class="view-page">
+        <div style="margin-bottom: 14px;">
+          <h2 style="font-size: 18px; font-weight: 800; color: #ffffff;">Live Reverse Auctions</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Real-time competitive bidding for container freight contracts</p>
+        </div>
+
+        <!-- Auction Card 1 -->
+        <div id="auction-1" class="auction-card hot">
+          <div class="auction-timer-banner">
+            <div class="timer-left">
+              <span>⚡ CLOSING IN</span>
+              <span class="countdown-digits" data-countdown="6135">01:42:15</span>
+            </div>
+            <span class="status-badge badge-amber bid-rank-tag">4 BIDS ACTIVE</span>
+          </div>
+
+          <h3 style="font-size: 15px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+            12x 40' HC — Shanghai (CNSHA) → Jebel Ali (AEJEA)
+          </h3>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">
+            Shipper: Global Electronics FZCO • Target Free Time: 14 Days
+          </p>
+
+          <div class="auction-comparison">
+            <div class="compare-col">
+              <small>Current Lowest Bid</small>
+              <span class="curr-bid">$1,420</span>
+              <div class="savings-chip">SAVED 13.9% ($230)</div>
+            </div>
+            <div class="compare-col" style="text-align: right;">
+              <small>Starting Ceiling Rate</small>
+              <span class="orig-rate">$1,650</span>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Forwarder #8942</div>
+            </div>
+          </div>
+
+          <button class="btn-bid touch-press" onclick="initiateBid('auction-1', 1420, '12x 40HC Shanghai to Jebel Ali')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+            PLACE LOWER BID (-$50)
+          </button>
+        </div>
+
+        <!-- Auction Card 2 -->
+        <div id="auction-2" class="auction-card">
+          <div class="auction-timer-banner">
+            <div class="timer-left">
+              <span>⚡ CLOSING IN</span>
+              <span class="countdown-digits" data-countdown="2320">00:38:40</span>
+            </div>
+            <span class="status-badge badge-green bid-rank-tag">HOT TENDER</span>
+          </div>
+
+          <h3 style="font-size: 15px; font-weight: 800; color: #ffffff; margin-bottom: 8px;">
+            8x 40' Reefer — Mundra (INMUN) → Felixstowe (GBFXT)
+          </h3>
+          <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px;">
+            Shipper: Ocean Frozen Foods Ltd • Guaranteed Temperature Data Logger
+          </p>
+
+          <div class="auction-comparison">
+            <div class="compare-col">
+              <small>Current Lowest Bid</small>
+              <span class="curr-bid">$3,050</span>
+              <div class="savings-chip">SAVED $350/FEU</div>
+            </div>
+            <div class="compare-col" style="text-align: right;">
+              <small>Starting Ceiling Rate</small>
+              <span class="orig-rate">$3,400</span>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px;">Kuehne+Nagel Tier 1</div>
+            </div>
+          </div>
+
+          <button class="btn-bid touch-press" onclick="initiateBid('auction-2', 3050, '8x 40Reefer Mundra to Felixstowe')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+              <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+            PLACE LOWER BID (-$50)
+          </button>
+        </div>
+
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 3: TRADE DESK CHAT -->
+      <!-- =================================================================== -->
+      <section id="view-chat" class="view-page">
+        <!-- Room List Screen -->
+        <div id="chat-rooms-screen">
+          <div style="margin-bottom: 14px;">
+            <h2 style="font-size: 18px; font-weight: 800; color: #ffffff;">Trade Desk Messages</h2>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Direct live carrier desks and customs clearance chat</p>
+          </div>
+
+          <div class="chat-rooms-list">
+            <!-- Room 1 -->
+            <div class="chat-room-item touch-press" onclick="openChatRoom('maersk', 'Maersk Ocean Desk')">
+              <div class="room-avatar">
+                MSK
+                <span class="online-indicator"></span>
+              </div>
+              <div class="room-details">
+                <div class="room-top">
+                  <span class="room-name">Maersk Ocean Desk</span>
+                  <span class="room-time">10:18 AM</span>
+                </div>
+                <div class="room-msg">Approved by pricing desk! Booking note draft has been issued.</div>
+              </div>
+            </div>
+
+            <!-- Room 2 -->
+            <div class="chat-room-item touch-press" onclick="openChatRoom('hapag', 'Hapag-Lloyd Spot Pricing')">
+              <div class="room-avatar">
+                HL
+                <span class="online-indicator"></span>
+              </div>
+              <div class="room-details">
+                <div class="room-top">
+                  <span class="room-name">Hapag-Lloyd Pricing</span>
+                  <span class="room-time">09:45 AM</span>
+                </div>
+                <div class="room-msg">Yes, looking for 3x20GP ready for loading by Tuesday.</div>
+              </div>
+            </div>
+
+            <!-- Room 3 -->
+            <div class="chat-room-item touch-press" onclick="openChatRoom('port', 'Nhava Sheva CFS Control')">
+              <div class="room-avatar">
+                CFS
+                <span class="online-indicator"></span>
+              </div>
+              <div class="room-details">
+                <div class="room-top">
+                  <span class="room-name">Nhava Sheva CFS Control</span>
+                  <span class="room-time">08:30 AM</span>
+                </div>
+                <div class="room-msg">Port CFS Gate Alert: Container BMOU482910 cleared.</div>
+              </div>
+            </div>
+
+            <!-- Room 4 -->
+            <div class="chat-room-item touch-press" onclick="openChatRoom('customs', 'TransWorld Customs Broker')">
+              <div class="room-avatar">
+                CB
+                <span class="online-indicator" style="background:#94a3b8;"></span>
+              </div>
+              <div class="room-details">
+                <div class="room-top">
+                  <span class="room-name">TransWorld Customs Broker</span>
+                  <span class="room-time">Yesterday</span>
+                </div>
+                <div class="room-msg">Shipping bill #892014 filing validated with ICEGATE.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Single Chat Window Screen -->
+        <div id="chat-window-screen" style="display: none;" class="chat-window">
+          <div class="chat-win-header">
+            <button class="back-chat-btn touch-press" onclick="closeChatWindow()">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="brand-title">
+              <span id="chat-active-name" style="font-size: 14px; font-weight: 800; color: #ffffff;">Desk</span>
+              <span style="font-size: 10px; color: var(--emerald-400);">● Online • Instant Quotes Enabled</span>
+            </div>
+          </div>
+
+          <div id="chat-messages-body" class="chat-body">
+            <!-- Populated dynamically via JS -->
+          </div>
+
+          <!-- Quick negotiation pills -->
+          <div class="quick-reply-scroll">
+            <button class="quick-pill touch-press" onclick="sendQuickReply('Confirm 5x40HC at target rate')">Confirm Space</button>
+            <button class="quick-pill touch-press" onclick="sendQuickReply('Can you offer 21 days detention?')">21 Days Free Time?</button>
+            <button class="quick-pill touch-press" onclick="sendQuickReply('Please share draft Bill of Lading')">Draft BL</button>
+            <button class="quick-pill touch-press" onclick="sendQuickReply('Provide shipping bill copy')">Shipping Bill</button>
+          </div>
+
+          <!-- Chat Input -->
+          <div class="chat-input-row">
+            <input type="text" id="chat-text-input" class="chat-input" placeholder="Type rate inquiry or message..." onkeydown="if(event.key==='Enter') sendChatMessage()">
+            <button class="btn-send touch-press" onclick="sendChatMessage()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 4: FX & LANDED COST CALCULATOR -->
+      <!-- =================================================================== -->
+      <section id="view-calc" class="view-page">
+        <div style="margin-bottom: 14px;">
+          <h2 style="font-size: 18px; font-weight: 800; color: #ffffff;">FX & Landed Cost Calculator</h2>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Calculate total landed container shipping costs with live currency valuation</p>
+        </div>
+
+        <div class="calc-card">
+          <div class="card-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-400)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            Freight Cost Inputs
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Select Currency</label>
+            <select id="calc-currency" class="input-field" style="background:var(--bg-primary);">
+              <option value="USD" selected>USD — US Dollar ($)</option>
+              <option value="INR">INR — Indian Rupee (₹)</option>
+              <option value="EUR">EUR — Euro (€)</option>
+              <option value="AED">AED — UAE Dirham (د.إ)</option>
+              <option value="SGD">SGD — Singapore Dollar (S$)</option>
+              <option value="CNY">CNY — Chinese Yuan (¥)</option>
+            </select>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <label class="input-label">Base Ocean Freight ($)</label>
+              <input type="number" id="calc-ocean" class="input-field" value="1950">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Origin THC ($)</label>
+              <input type="number" id="calc-thc" class="input-field" value="180">
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <label class="input-label">Bunker / BAF ($)</label>
+              <input type="number" id="calc-baf" class="input-field" value="120">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Customs & Port ($)</label>
+              <input type="number" id="calc-customs" class="input-field" value="85">
+            </div>
+          </div>
+
+          <!-- Total Breakdown Summary -->
+          <div class="cost-breakdown-list">
+            <div class="cost-row">
+              <span>Freight Subtotal</span>
+              <strong id="cost-subtotal">$2,335.00</strong>
+            </div>
+            <div class="cost-row">
+              <span>GST & Statutory Taxes (18%)</span>
+              <strong id="cost-tax">$420.30</strong>
+            </div>
+            <div class="cost-row total">
+              <span>Total Landed Freight Cost</span>
+              <span id="cost-total-display" style="font-family:var(--font-mono);font-size:18px;">USD 2,755.30</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =================================================================== -->
+      <!-- VIEW 5: ENTERPRISE PROFILE & COMPLIANCE KYC -->
+      <!-- =================================================================== -->
+      <section id="view-profile" class="view-page">
+        <div class="profile-hero">
+          <div class="profile-avatar-large">
+            RK
+          </div>
+          <h2 class="profile-name">Rajat Kumar Rai</h2>
+          <div class="profile-company">FR8X Global Freight Solutions Pvt Ltd</div>
+          <div class="kyc-verified-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Tier-1 Verified Forwarder
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 800; color: #ffffff; margin-bottom: 10px;">Enterprise Credentials</h3>
+        <div class="kyc-creds-list">
+          <div class="cred-card">
+            <div class="cred-info">
+              <small>GSTIN Tax Identification</small>
+              <strong>27AABCF1234F1Z8</strong>
+            </div>
+            <span class="status-badge badge-green">VERIFIED</span>
+          </div>
+
+          <div class="cred-card">
+            <div class="cred-info">
+              <small>Import Export Code (IEC)</small>
+              <strong>0319876543</strong>
+            </div>
+            <span class="status-badge badge-green">ACTIVE (DGFT)</span>
+          </div>
+
+          <div class="cred-card">
+            <div class="cred-info">
+              <small>Multimodal Operator License (MTO)</small>
+              <strong>MTO/DGS/2024/0984</strong>
+            </div>
+            <span class="status-badge badge-green">VALID</span>
+          </div>
+
+          <div class="cred-card">
+            <div class="cred-info">
+              <small>Federal Maritime Commission (FMC USA)</small>
+              <strong>FMC-028491 ($75k Bond)</strong>
+            </div>
+            <span class="status-badge badge-green">REGISTERED</span>
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; font-weight: 800; color: #ffffff; margin-top: 18px; margin-bottom: 10px;">App System Info</h3>
+        <div class="cred-card">
+          <div class="cred-info">
+            <small>Client Application</small>
+            <strong>FR8X Enterprise Mobile v2.4.0</strong>
+          </div>
+          <span class="status-badge badge-cyan">STANDALONE APK</span>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Action Button: Post Demand -->
+    <button id="fab-post-demand" class="fab-post touch-press" onclick="openBottomSheet('post-demand-modal')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      POST DEMAND
+    </button>
+
+    <!-- Native Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-tab active touch-press" data-target="view-feed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+        <span class="nav-label">Market</span>
+      </div>
+
+      <div class="nav-tab touch-press" data-target="view-auctions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+        </svg>
+        <span class="nav-label">Auctions</span>
+      </div>
+
+      <div class="nav-tab touch-press" data-target="view-chat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span class="nav-label">Trade Chat</span>
+      </div>
+
+      <div class="nav-tab touch-press" data-target="view-calc">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="2" width="16" height="20" rx="2"></rect>
+          <line x1="8" y1="6" x2="16" y2="6"></line>
+          <line x1="16" y1="14" x2="16" y2="18"></line>
+          <path d="M16 10h.01"></path>
+          <path d="M12 10h.01"></path>
+          <path d="M8 10h.01"></path>
+          <path d="M12 14h.01"></path>
+          <path d="M8 14h.01"></path>
+          <path d="M12 18h.01"></path>
+          <path d="M8 18h.01"></path>
+        </svg>
+        <span class="nav-label">FX & Calc</span>
+      </div>
+
+      <div class="nav-tab touch-press" data-target="view-profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        <span class="nav-label">Office</span>
+      </div>
+    </nav>
+
+    <!-- =================================================================== -->
+    <!-- BOTTOM SHEET: PLACE REVERSE BID -->
+    <!-- =================================================================== -->
+    <div id="bid-sheet-modal" class="bottom-sheet-overlay" onclick="if(event.target===this) closeBottomSheet('bid-sheet-modal')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3 class="sheet-title">Place Competitive Bid</h3>
+          <button class="sheet-close-btn touch-press" onclick="closeBottomSheet('bid-sheet-modal')">✕</button>
+        </div>
+
+        <p id="bid-lot-name" style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Lot</p>
+
+        <div style="background: var(--bg-tertiary); border-radius: var(--radius-md); padding: 14px; text-align: center; margin-bottom: 16px;">
+          <small style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Your Proposing Rate (/FEU)</small>
+          <div id="bid-target-display" style="font-family: var(--font-mono); font-size: 32px; font-weight: 900; color: var(--emerald-400); margin: 6px 0;">
+            $1,370
+          </div>
+          <small style="font-size: 11px; color: var(--text-secondary);">Current Best: <span id="bid-current-best" style="color:#ffffff;">$1,420/FEU</span></small>
+        </div>
+
+        <!-- Quick Adjustment Buttons -->
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;">
+          <button class="btn-sm btn-secondary touch-press" onclick="adjustBidAmount(-25)">-$25</button>
+          <button class="btn-sm btn-secondary touch-press" onclick="adjustBidAmount(-50)">-$50</button>
+          <button class="btn-sm btn-secondary touch-press" onclick="adjustBidAmount(-100)">-$100</button>
+        </div>
+
+        <button class="btn-bid touch-press" style="height: 48px; font-size: 15px;" onclick="submitBid()">
+          CONFIRM & SUBMIT BID
+        </button>
+      </div>
+    </div>
+
+    <!-- =================================================================== -->
+    <!-- BOTTOM SHEET: POST NEW FREIGHT DEMAND -->
+    <!-- =================================================================== -->
+    <div id="post-demand-modal" class="bottom-sheet-overlay" onclick="if(event.target===this) closeBottomSheet('post-demand-modal')">
+      <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <h3 class="sheet-title">Broadcast Freight Tender</h3>
+          <button class="sheet-close-btn touch-press" onclick="closeBottomSheet('post-demand-modal')">✕</button>
+        </div>
+
+        <form onsubmit="submitNewDemand(event)">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <label class="input-label">Origin Port</label>
+              <input type="text" id="demand-origin" class="input-field" value="INNSA" placeholder="e.g. INNSA" required>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Destination Port</label>
+              <input type="text" id="demand-dest" class="input-field" value="NLRTM" placeholder="e.g. NLRTM" required>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <div class="input-group">
+              <label class="input-label">Container Type</label>
+              <select id="demand-type" class="input-field" style="background:var(--bg-primary);">
+                <option value="40' High Cube">40' High Cube</option>
+                <option value="20' General Purpose">20' General Purpose</option>
+                <option value="40' Reefer (-20°C)">40' Reefer (-20°C)</option>
+                <option value="45' High Cube">45' High Cube</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label">Target Rate ($)</label>
+              <input type="number" id="demand-rate" class="input-field" value="1950" required>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label class="input-label">Cargo Readiness</label>
+            <input type="text" id="demand-ready" class="input-field" value="Ready in 48 Hours">
+          </div>
+
+          <button type="submit" class="btn-bid touch-press" style="height: 48px; font-size: 15px; margin-top: 10px; background:linear-gradient(135deg, var(--cyan-500), var(--cyan-600));">
+            BROADCAST TENDER TO CARRIERS
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

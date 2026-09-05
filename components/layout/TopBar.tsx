@@ -603,7 +603,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               className="user-top-btn"
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px' }} />
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', display: 'grid', placeItems: 'center', fontSize: '9.5px', fontWeight: 800 }}>
+                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                </div>
+              )}
               <span>{user.displayName}</span>
               {user.hasGoldenTick && <GoldenTick />}
               <ChevronDown size={13} style={{ color: 'var(--mut)' }} />
@@ -612,7 +618,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showUserDropdown && (
               <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid var(--fr8x-outline)' }}>
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '40px', height: '40px' }} />
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', display: 'grid', placeItems: 'center', fontSize: '14px', fontWeight: 800 }}>
+                      {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
                       {user.displayName}

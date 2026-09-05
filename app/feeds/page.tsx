@@ -1247,7 +1247,13 @@ export default function FeedsPage() {
         <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
             <div className="avatar big borderless" style={{ margin: '0 auto 10px', width: '74px', height: '74px', padding: 0, overflow: 'hidden', background: '#f1f5f9', border: '2px solid var(--fr8x-outline, #cbd5e1)', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
-              <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {user.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '24px', fontWeight: 800 }}>
+                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                </div>
+              )}
             </div>
             <b style={{ fontSize: '13.5px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
               {user.displayName}

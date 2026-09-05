@@ -16,6 +16,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
+  Smartphone,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -110,6 +111,37 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
 
       {/* Sidebar Footer */}
       <div className="sidefoot">
+        <a
+          href="/fr8x-enterprise-mobile-v2.4.apk"
+          download
+          className="sidelink"
+          title="Download FR8X Android Mobile App (.apk)"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: isCollapsed ? '8px 0' : '7px 10px',
+            marginBottom: '10px',
+            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(2, 132, 199, 0.18))',
+            border: '1px solid rgba(56, 189, 248, 0.3)',
+            borderRadius: '6px',
+            color: '#38bdf8',
+            fontWeight: 700,
+            fontSize: '11px',
+            textDecoration: 'none',
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <Smartphone size={15} style={{ flexShrink: 0, color: '#38bdf8' }} />
+          {!isCollapsed && (
+            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
+              <span style={{ color: '#ffffff', fontWeight: 800, fontSize: '11px' }}>Android App (.apk)</span>
+              <span style={{ fontSize: '9px', color: '#94a3b8' }}>v2.4 Standalone • 182 KB</span>
+            </div>
+          )}
+        </a>
+
         <Link
           href="/profile"
           className="user"
@@ -129,12 +161,30 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
               aspectRatio: '1 / 1',
               padding: 0,
               overflow: 'hidden',
-              borderRadius: '0px',
+              borderRadius: '50%',
               border: 'none',
               background: 'transparent',
             }}
           >
-            <img src="/profile-avatar.png" alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, #1168d7, #099889)',
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '11px',
+                }}
+              >
+                {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+              </div>
+            )}
           </div>
           {!isCollapsed && (
             <div className="user-meta" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
