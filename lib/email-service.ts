@@ -157,7 +157,7 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.com/v1.1/email';
+    'https://api.zeptomail.in/v1.1/email';
 
   const hasToken = Boolean(token && token !== 'undefined' && token.length > 5);
 
@@ -445,7 +445,7 @@ export async function sendTransactionalEmail(
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.com/v1.1/email';
+    'https://api.zeptomail.in/v1.1/email';
 
   // ── Production Dispatch via Zoho ZeptoMail REST API ───────────────────────
   if (apiKey && apiKey !== 'undefined') {
@@ -495,8 +495,9 @@ export async function sendTransactionalEmail(
     }
 
     try {
-      const response = await fetchWithRetry(
-        endpoint,
+      let currentEndpoint = endpoint;
+      let response = await fetchWithRetry(
+        currentEndpoint,
         {
           method: 'POST',
           headers: {
@@ -510,12 +511,58 @@ export async function sendTransactionalEmail(
         2
       );
 
-      const resData = await response.json().catch(() => ({}));
+      let resData = await response.json().catch(() => ({}));
+
+      // Intelligent Regional Failover: If 401 Unauthorized (Invalid API Token found) on .com, retry on .in (and vice versa)
+      if (
+        response.status === 401 &&
+        (resData?.error?.code === 'TM_4001' ||
+          String(resData?.error?.message || '').toLowerCase().includes('access denied'))
+      ) {
+        const alternateEndpoint = currentEndpoint.includes('api.zeptomail.com')
+          ? currentEndpoint.replace('api.zeptomail.com', 'api.zeptomail.in')
+          : currentEndpoint.includes('api.zeptomail.in')
+            ? currentEndpoint.replace('api.zeptomail.in', 'api.zeptomail.com')
+            : null;
+
+        if (alternateEndpoint) {
+          console.warn(
+            `[ZEPTOMAIL_REGION_FAILOVER] Token invalid on ${currentEndpoint}. Attempting alternate regional endpoint: ${alternateEndpoint}`
+          );
+          try {
+            const altResponse = await fetchWithRetry(
+              alternateEndpoint,
+              {
+                method: 'POST',
+                headers: {
+                  Accept: 'application/json',
+                  'Content-Type': 'application/json',
+                  Authorization: authHeader,
+                  'X-Correlation-ID': correlationId,
+                },
+                body: JSON.stringify(payload),
+              },
+              1
+            );
+            const altData = await altResponse.json().catch(() => ({}));
+            if (altResponse.ok) {
+              response = altResponse;
+              resData = altData;
+              currentEndpoint = alternateEndpoint;
+            }
+          } catch (altErr: any) {
+            console.warn(
+              `[ZEPTOMAIL_REGION_FAILOVER_FAIL] Alternate endpoint error: ${altErr.message}`
+            );
+          }
+        }
+      }
 
       if (response.ok) {
         const messageId =
           resData?.data?.[0]?.message_id ||
           resData?.data?.[0]?.id ||
+          resData?.request_id ||
           `zepto-${Date.now()}`;
 
         console.log(
@@ -534,10 +581,15 @@ export async function sendTransactionalEmail(
           details: resData,
         };
       } else {
-        const errorDetail =
-          resData?.error?.message ||
-          resData?.message ||
-          `HTTP ${response.status} ${response.statusText}`;
+        const detailObj = resData?.error?.details?.[0];
+        const detailMsg = detailObj?.message
+          ? `${detailObj.message}${detailObj.target_value ? ` (quota/limit: ${detailObj.target_value})` : ''}`
+          : null;
+        const errorDetail = detailMsg
+          ? `${resData?.error?.message || 'Request Denied'}: ${detailMsg}`
+          : resData?.error?.message ||
+            resData?.message ||
+            `HTTP ${response.status} ${response.statusText}`;
 
         console.error(
           `[ZEPTOMAIL_API_ERROR] API rejection for ${cleanTo}: ${errorDetail}`
@@ -633,7 +685,10 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     fromType: senderInfo.senderType,
     sender: result.from,
     to: result.to,
-    provider: result.provider === 'ZOHO_ZEPTOMAIL' ? 'ZOHO_ZEPTOMAIL' : 'MOCK_SANDBOX',
+    provider:
+      result.provider === 'ZOHO_ZEPTOMAIL' || result.provider === 'Zoho_ZeptoMail'
+        ? 'Zoho_ZeptoMail'
+        : 'Sandbox_Mock',
     isPasswordConfigured: Boolean(process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN),
     error: result.error,
   };
