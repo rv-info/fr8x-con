@@ -25,26 +25,26 @@ const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS =
   process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS ||
   '';
 
-// Singleton nodemailer transporter instance
-let transporter: nodemailer.Transporter | null = null;
-
+// Dynamic nodemailer transporter generator (reads live environment variables)
 function getTransporter(): nodemailer.Transporter {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: ZOHO_SMTP_HOST,
-      port: ZOHO_SMTP_PORT,
-      secure: ZOHO_SMTP_PORT === 465, // SSL for 465, STARTTLS for 587
-      auth: {
-        user: ZOHO_SMTP_USER,
-        pass: ZOHO_SMTP_PASSWORD,
-      },
-      tls: {
-        minVersion: 'TLSv1.2',
-        rejectUnauthorized: true,
-      },
-    });
-  }
-  return transporter;
+  const host = process.env.ZOHO_SMTP_HOST || process.env.SMTP_HOST || 'smtp.zoho.in';
+  const port = Number(process.env.ZOHO_SMTP_PORT || process.env.SMTP_PORT) || 465;
+  const user = process.env.ZOHO_SMTP_USER || process.env.SMTP_USER || 'password@fr8x.in';
+  const pass = (process.env.ZOHO_SMTP_PASSWORD || process.env.SMTP_PASSWORD || '').trim();
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure: port === 465,
+    auth: {
+      user,
+      pass,
+    },
+    tls: {
+      minVersion: 'TLSv1.2',
+      rejectUnauthorized: false,
+    },
+  });
 }
 
 export interface SendEmailOptions {

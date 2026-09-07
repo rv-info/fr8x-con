@@ -122,6 +122,12 @@
       <span>New enterprise? </span>
       <button type="button" class="register-link" onclick="showToast('Contact your FR8X account manager to register')">Request Access</button>
     </div>
+    <div class="login-legal-links" style="margin-top:14px;text-align:center;font-size:11px;color:var(--text-muted);">
+      By continuing, you agree to our 
+      <button type="button" class="legal-link" onclick="openPrivacySheet()" style="color:var(--cyan-400);background:none;border:none;padding:0;font-size:11px;text-decoration:underline;cursor:pointer;">Privacy Policy</button>
+      &bull;
+      <button type="button" class="legal-link" onclick="openTermsSheet()" style="color:var(--cyan-400);background:none;border:none;padding:0;font-size:11px;text-decoration:underline;cursor:pointer;">Terms of Service</button>
+    </div>
   </div>
 </div>
 
@@ -482,6 +488,16 @@
           <div class="menu-info"><div class="menu-title">Security &amp; 2FA</div><div class="menu-subtitle">Biometrics Active &bull; OTP Enabled</div></div>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
         </div>
+        <div class="menu-item touch-press" onclick="openPrivacySheet()">
+          <div class="menu-icon privacy" style="background:rgba(6,182,212,0.15);color:var(--cyan-400);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <div class="menu-info"><div class="menu-title">Privacy Policy &amp; Data Safety</div><div class="menu-subtitle">Google Play Data Safety &bull; Permissions</div></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
+        <div class="menu-item touch-press" onclick="openDeleteAccountSheet()">
+          <div class="menu-icon delete" style="background:rgba(244,63,94,0.15);color:#f43f5e;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></div>
+          <div class="menu-info"><div class="menu-title">Account &amp; Data Deletion</div><div class="menu-subtitle">Request permanent deletion of data</div></div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </div>
         <div class="menu-item touch-press danger" onclick="confirmLogout()">
           <div class="menu-icon logout"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
           <div class="menu-info"><div class="menu-title">Sign Out</div><div class="menu-subtitle">Log out of FR8X Workspace</div></div>
@@ -578,6 +594,82 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
         <button class="btn-sm btn-secondary touch-press" style="height:44px;font-size:14px;" onclick="closeBottomSheet('logout-confirm-sheet')">CANCEL</button>
         <button class="btn-sm touch-press" style="height:44px;font-size:14px;background:linear-gradient(135deg,#f43f5e,#be123c);color:#fff;border:none;border-radius:10px;font-weight:700;" onclick="doLogout()">SIGN OUT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRIVACY POLICY & DATA SAFETY SHEET -->
+  <div id="privacy-sheet-modal" class="bottom-sheet-overlay" onclick="if(event.target===this)closeBottomSheet('privacy-sheet-modal')" style="display:none;">
+    <div class="bottom-sheet" style="max-height:85vh;overflow-y:auto;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h3 class="sheet-title">Privacy Policy &amp; Data Safety</h3>
+        <button class="sheet-close-btn touch-press" onclick="closeBottomSheet('privacy-sheet-modal')">&#x2715;</button>
+      </div>
+      <div style="padding:4px 0 16px 0;font-size:12px;line-height:1.6;color:var(--text-secondary);">
+        <div style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.25);border-radius:8px;padding:10px;margin-bottom:12px;color:var(--cyan-400);font-size:11px;">
+          ✓ Verified Google Play &amp; Android 14 Policy Compliant &bull; Version 2.4.0
+        </div>
+        <h4 style="color:#fff;font-size:13px;margin:12px 0 4px 0;font-weight:700;">1. Personal Data We Collect</h4>
+        <p>FR8X collects corporate email, contact names, verified GSTIN/IEC documents, and location to facilitate container reverse auction bidding and logistics operations. We do not sell user data.</p>
+
+        <h4 style="color:#fff;font-size:13px;margin:12px 0 4px 0;font-weight:700;">2. Android Device Permissions</h4>
+        <ul style="padding-left:16px;margin:4px 0;">
+          <li><strong>POST_NOTIFICATIONS:</strong> Real-time auction bid updates &amp; rate counteroffers.</li>
+          <li><strong>CAMERA &amp; PHOTOS:</strong> Uploading Bill of Lading, KYC papers, &amp; container damage proofs.</li>
+          <li><strong>LOCATION:</strong> Geocoding nearest container depot &amp; origin ports.</li>
+        </ul>
+
+        <h4 style="color:#fff;font-size:13px;margin:12px 0 4px 0;font-weight:700;">3. Data Deletion &amp; Security</h4>
+        <p>All data in transit is encrypted using TLS 1.3. You have the right to request full account and data deletion at any time by tapping "Account &amp; Data Deletion" or emailing <code style="color:var(--cyan-400);">tech@fr8x.in</code>.</p>
+
+        <div style="margin-top:16px;display:flex;gap:8px;">
+          <button class="btn-sm btn-secondary touch-press" style="flex:1;" onclick="closeBottomSheet('privacy-sheet-modal')">CLOSE</button>
+          <button class="btn-sm touch-press" style="flex:1;background:var(--cyan-500);color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="window.open('https://con.fr8x.in/privacy','_blank');">WEB POLICY ↗</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERMS OF SERVICE SHEET -->
+  <div id="terms-sheet-modal" class="bottom-sheet-overlay" onclick="if(event.target===this)closeBottomSheet('terms-sheet-modal')" style="display:none;">
+    <div class="bottom-sheet" style="max-height:80vh;overflow-y:auto;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h3 class="sheet-title">Terms of Service</h3>
+        <button class="sheet-close-btn touch-press" onclick="closeBottomSheet('terms-sheet-modal')">&#x2715;</button>
+      </div>
+      <div style="padding:4px 0 16px 0;font-size:12px;line-height:1.6;color:var(--text-secondary);">
+        <p>By accessing FR8X Global Freight Workspace, you agree to trade responsibly in reverse auctions, submit legally binding freight spot bids, and maintain the confidentiality of your credentials.</p>
+        <button class="btn-sm btn-secondary touch-press" style="width:100%;margin-top:14px;" onclick="closeBottomSheet('terms-sheet-modal')">I UNDERSTAND</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT & DATA DELETION SHEET -->
+  <div id="delete-account-modal" class="bottom-sheet-overlay" onclick="if(event.target===this)closeBottomSheet('delete-account-modal')" style="display:none;">
+    <div class="bottom-sheet" style="max-height:85vh;overflow-y:auto;">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <h3 class="sheet-title" style="color:#f43f5e;">Request Account Deletion</h3>
+        <button class="sheet-close-btn touch-press" onclick="closeBottomSheet('delete-account-modal')">&#x2715;</button>
+      </div>
+      <div style="padding:4px 0 16px 0;font-size:12px;line-height:1.6;color:var(--text-secondary);">
+        <div style="background:rgba(244,63,94,0.1);border:1px solid rgba(244,63,94,0.25);border-radius:8px;padding:12px;margin-bottom:14px;color:#fda4af;">
+          <strong>Google Play User Data Compliance:</strong> Submitting this request will permanently delete your authentication record, personal profile, and uploaded documents from FR8X databases within 7 business days.
+        </div>
+        <div class="field-group" style="margin-bottom:12px;">
+          <label class="field-label">Confirm Corporate Email</label>
+          <input type="email" id="delete-account-email" class="input-field" placeholder="you@company.com" style="width:100%;">
+        </div>
+        <div class="field-group" style="margin-bottom:16px;">
+          <label class="field-label">Reason for deletion (Optional)</label>
+          <input type="text" id="delete-account-reason" class="input-field" placeholder="Switching vendors / Organization closing" style="width:100%;">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <button class="btn-sm btn-secondary touch-press" style="height:44px;" onclick="closeBottomSheet('delete-account-modal')">CANCEL</button>
+          <button class="btn-sm touch-press" style="height:44px;background:#f43f5e;color:#fff;border:none;border-radius:8px;font-weight:700;" onclick="submitAccountDeletionRequest()">SUBMIT REQUEST</button>
+        </div>
       </div>
     </div>
   </div>
