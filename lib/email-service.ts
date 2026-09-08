@@ -294,7 +294,7 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.com/v1.1/email';
+    'https://api.zeptomail.in/v1.1/email';
 
   const hasToken = Boolean(token && token !== 'undefined' && token.length > 5);
 
@@ -582,7 +582,7 @@ export async function sendTransactionalEmail(
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.com/v1.1/email';
+    'https://api.zeptomail.in/v1.1/email';
 
   // ── Production Dispatch via Zoho ZeptoMail REST API ───────────────────────
   if (apiKey && apiKey !== 'undefined') {

@@ -47,13 +47,21 @@ export async function POST(req: NextRequest) {
     }
 
     if (result.firstLoginRequired) {
+      if (result.emailPromise) {
+        try {
+          await result.emailPromise;
+        } catch (mailErr: any) {
+          console.error('[LoginAPI] First-login OTP email delivery error:', mailErr.message);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         firstLoginRequired: true,
         challengeToken: result.challengeToken,
         email: result.email,
         maskedEmail: result.maskedEmail,
-        expiresIn: result.expiresIn || 15,
+        expiresIn: result.expiresIn || 300,
         message: result.message,
       });
     }

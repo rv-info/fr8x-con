@@ -25,10 +25,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (resendResult.emailPromise) {
+      try {
+        await resendResult.emailPromise;
+      } catch (mailErr: any) {
+        console.error('[GodfatherResendAPI] OTP email delivery error:', mailErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'New verification code dispatched to registered email.',
-      expiresIn: resendResult.expiresIn,
+      expiresIn: resendResult.expiresIn || 300,
       correlationId,
     });
   } catch (err: any) {

@@ -168,7 +168,7 @@ export default function DedicatedGodfatherLoginPage() {
       // If first-time login verification is required: transition to OTP screen
       if (data.firstLoginRequired) {
         setFirstLoginChallengeToken(data.challengeToken);
-        setFirstLoginCountdown(data.expiresIn || 15);
+        setFirstLoginCountdown(data.expiresIn || 300);
         setFirstLoginOtp('');
         setMode('first_login_otp');
         setIsSubmitting(false);
@@ -267,7 +267,7 @@ export default function DedicatedGodfatherLoginPage() {
         return;
       }
 
-      setFirstLoginCountdown(data.expiresIn || 15);
+      setFirstLoginCountdown(data.expiresIn || 300);
       setFirstLoginOtp('');
     } catch {
       setErrorMessage('Failed to connect to authentication server.');
@@ -560,7 +560,8 @@ export default function DedicatedGodfatherLoginPage() {
                     color: firstLoginCountdown > 0 ? '#0284c7' : '#dc2626',
                   }}
                 >
-                  TIME LEFT: 00:{String(firstLoginCountdown).padStart(2, '0')}
+                  TIME LEFT: {String(Math.floor(firstLoginCountdown / 60)).padStart(2, '0')}:
+                  {String(firstLoginCountdown % 60).padStart(2, '0')}
                 </span>
                 {firstLoginCountdown <= 0 && (
                   <span style={{ fontSize: '12px', fontWeight: '600', color: '#dc2626' }}>

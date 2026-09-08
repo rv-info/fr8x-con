@@ -860,6 +860,7 @@ class ServerSecurityStore {
     email?: string;
     maskedEmail?: string;
     attemptsRemaining?: number;
+    emailPromise?: Promise<any>;
     message: string;
   } {
     const key = identifier.trim().toLowerCase();
@@ -1014,8 +1015,8 @@ class ServerSecurityStore {
         const salt = crypto.randomBytes(16).toString('hex');
         const hash = crypto.pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256').toString('hex');
         const challengeId = `CHAL-USR-${Date.now()}-${generateSecureToken(4).toUpperCase()}`;
-        const expiresAt = now + 15 * 1000; // 15 seconds validity!
-
+        const expiresAt = now + 300 * 1000; // 5 minutes validity
+ 
         this.activeFirstLoginOtps.set(cleanEmail, {
           salt,
           hash,
@@ -1034,14 +1035,15 @@ class ServerSecurityStore {
           expiresAt: now + 5 * 60 * 1000,
         });
 
-        EmailService.sendOtpEmail({
+        const emailPromise = EmailService.sendOtpEmail({
           to: user.email,
           recipientName: user.displayName || 'Member',
           otpCode: rawOtp,
-          expiryMinutes: 1,
+          expiryMinutes: 5,
           correlationId: `FR8X-AUTH-OTP-${challengeId}`,
         }).catch((err) => {
           console.error('[UserAuth] Failed to send first-login OTP email:', err.message);
+          return { success: false, error: err.message };
         });
 
         return {
@@ -1050,8 +1052,9 @@ class ServerSecurityStore {
           challengeToken,
           email: user.email,
           maskedEmail: maskEmail(user.email),
-          expiresIn: 15,
+          expiresIn: 300,
           message: 'First-time login verification required. A 6-digit code has been sent.',
+          emailPromise,
         };
       }
 
@@ -1228,7 +1231,7 @@ class ServerSecurityStore {
   public resendUserFirstLoginOtp(
     challengeToken: string,
     ip = '127.0.0.1'
-  ): { success: boolean; expiresIn?: number; error?: string } {
+  ): { success: boolean; expiresIn?: number; error?: string; emailPromise?: Promise<any> } {
     const tokenCheck = verifySignedSessionToken<{
       challengeId: string;
       email: string;
@@ -1271,7 +1274,7 @@ class ServerSecurityStore {
     const hash = crypto
       .pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256')
       .toString('hex');
-    const expiresAt = now + 15 * 1000; // 15 seconds!
+    const expiresAt = now + 300 * 1000; // 5 minutes validity
 
     this.activeFirstLoginOtps.set(cleanEmail, {
       salt,
@@ -1282,17 +1285,18 @@ class ServerSecurityStore {
     });
     validTimestamps.push(now);
 
-    EmailService.sendOtpEmail({
+    const emailPromise = EmailService.sendOtpEmail({
       to: cleanEmail,
       recipientName: user?.displayName || 'Member',
       otpCode: rawOtp,
-      expiryMinutes: 1,
+      expiryMinutes: 5,
       correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
     }).catch((err) => {
       console.error('[UserAuth] Failed to resend first-login OTP email:', err.message);
+      return { success: false, error: err.message };
     });
 
-    return { success: true, expiresIn: 15 };
+    return { success: true, expiresIn: 300, emailPromise };
   }
 
   public unblockAccount(
@@ -1581,13 +1585,13 @@ class ServerSecurityStore {
   /**
    * Helper to dispatch secure password reset email via EmailService (password@fr8x.in)
    */
-  private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string, token?: string) {
+  private dispatchPasswordResetEmail(user: ServerUserRecord, otp: string, ip: string, token?: string): Promise<any> {
     const origin = process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://con.fr8x.in';
     const resetLink = token
       ? `${origin}/reset-password/${token}`
       : `${origin}/reset-password?email=${encodeURIComponent(user.email)}`;
 
-    EmailService.sendPasswordResetEmail({
+    return EmailService.sendPasswordResetEmail({
       to: user.email,
       recipientName: user.displayName || user.email.split('@')[0],
       otpCode: otp,
@@ -1600,9 +1604,11 @@ class ServerSecurityStore {
         } else {
           console.log(`[Security] Password reset email dispatched to ${user.email}, msgId: ${res.messageId}`);
         }
+        return res;
       })
       .catch((err) => {
         console.error('[Security] Failed to dispatch password reset OTP email:', err.message);
+        return { success: false, error: err.message };
       });
   }
 
@@ -1610,7 +1616,7 @@ class ServerSecurityStore {
   public requestPasswordReset(
     email: string,
     ip = '127.0.0.1'
-  ): { success: true; message: string; otpDispatched?: boolean; resetToken?: string } {
+  ): { success: true; message: string; otpDispatched?: boolean; resetToken?: string; emailPromise?: Promise<any> } {
     const cleanEmail = email.trim().toLowerCase();
     let user = this.users.get(cleanEmail);
     if (!user) {
@@ -1633,6 +1639,7 @@ class ServerSecurityStore {
     });
 
     let resetToken: string | undefined;
+    let emailPromise: Promise<any> | undefined;
 
     if (user) {
       const existingReset = this.activeResetOtps.get(cleanEmail);
@@ -1654,7 +1661,7 @@ class ServerSecurityStore {
       this.resetTokens.set(resetToken, cleanEmail);
       this.persistState();
 
-      this.dispatchPasswordResetEmail(user, resetOtp, ip, resetToken);
+      emailPromise = this.dispatchPasswordResetEmail(user, resetOtp, ip, resetToken);
 
       this.addSecurityEvent({
         type: 'PASSWORD_RESET_REQUEST',
@@ -1681,6 +1688,7 @@ class ServerSecurityStore {
       message: 'If an account exists for this email address, password reset instructions have been sent.',
       otpDispatched: !!user,
       resetToken: process.env.NODE_ENV === 'test' ? resetToken : undefined,
+      emailPromise,
     };
   }
 
@@ -1692,7 +1700,7 @@ class ServerSecurityStore {
     otp: string,
     newPassword: string,
     ip = '127.0.0.1'
-  ): { success: boolean; message?: string; error?: string; user?: ServerUserRecord } {
+  ): { success: boolean; message?: string; error?: string; user?: ServerUserRecord; emailPromise?: Promise<any> } {
     const cleanEmail = email.trim().toLowerCase();
     let user = this.users.get(cleanEmail);
     if (!user) {
@@ -1773,17 +1781,19 @@ class ServerSecurityStore {
     });
 
     // Dispatch confirmation notice via password@fr8x.in
-    EmailService.sendPasswordChangedEmail({
+    const emailPromise = EmailService.sendPasswordChangedEmail({
       to: user.email,
       ipAddress: ip,
     }).catch((err) => {
       console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
+      return { success: false, error: err.message };
     });
 
     return {
       success: true,
       message: 'Password successfully reset. Account has been restored to active status.',
       user,
+      emailPromise,
     };
   }
 
@@ -1795,7 +1805,7 @@ class ServerSecurityStore {
     newPassword: string;
     confirmPassword?: string;
     ip?: string;
-  }): { success: boolean; message?: string; error?: string; user?: ServerUserRecord } {
+  }): { success: boolean; message?: string; error?: string; user?: ServerUserRecord; emailPromise?: Promise<any> } {
     const cleanToken = (params.token || '').trim();
     if (!cleanToken) {
       return { success: false, error: 'Password reset token is required.' };
@@ -1887,17 +1897,19 @@ class ServerSecurityStore {
       ipAddress: ip,
     });
 
-    EmailService.sendPasswordChangedEmail({
+    const emailPromise = EmailService.sendPasswordChangedEmail({
       to: user.email,
       ipAddress: ip,
     }).catch((err) => {
       console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
+      return { success: false, error: err.message };
     });
 
     return {
       success: true,
       message: 'Your password has been successfully reset! You may now sign in.',
       user,
+      emailPromise,
     };
   }
 

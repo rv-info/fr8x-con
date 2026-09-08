@@ -79,14 +79,11 @@ export async function POST(req: NextRequest) {
 
     const user = result.user!;
 
-    // If verification is required, dispatch email (bounded race for instant response on slow connections)
+    // If verification is required, dispatch email via Zoho ZeptoMail (guaranteed delivery)
     if (result.isVerificationRequired) {
       if (result.emailPromise) {
         try {
-          await Promise.race([
-            result.emailPromise,
-            new Promise((resolve) => setTimeout(resolve, 1200)),
-          ]);
+          await result.emailPromise;
         } catch (mailErr: any) {
           console.error('[RegisterAPI] Verification email delivery error:', mailErr.message);
         }
@@ -114,15 +111,17 @@ export async function POST(req: NextRequest) {
     }
 
     // Dispatch official Welcome onboarding email (FR8X_WELCOME_USER) from password@fr8x.in
-    EmailService.sendWelcomeEmail({
-      to: user.email,
-      firstName: user.displayName.split(' ')[0] || user.displayName,
-      fullName: user.displayName,
-      organizationName: user.company,
-      verificationUrl: `${origin}/feeds`,
-    }).catch((welcomeErr: any) => {
+    try {
+      await EmailService.sendWelcomeEmail({
+        to: user.email,
+        firstName: user.displayName.split(' ')[0] || user.displayName,
+        fullName: user.displayName,
+        organizationName: user.company,
+        verificationUrl: `${origin}/feeds`,
+      });
+    } catch (welcomeErr: any) {
       console.error('[RegisterAPI] Welcome email dispatch warning:', welcomeErr.message);
-    });
+    }
 
     const res = NextResponse.json(
       {

@@ -40,12 +40,20 @@ export async function POST(req: NextRequest) {
     }
 
     if (authResult.firstLoginRequired) {
+      if (authResult.emailPromise) {
+        try {
+          await authResult.emailPromise;
+        } catch (mailErr: any) {
+          console.error('[GodfatherAuthAPI] OTP email delivery error:', mailErr.message);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         firstLoginRequired: true,
         challengeToken: authResult.challengeToken,
         email: authorizedEmail,
-        expiresIn: authResult.expiresIn,
+        expiresIn: authResult.expiresIn || 300,
         correlationId,
       });
     }

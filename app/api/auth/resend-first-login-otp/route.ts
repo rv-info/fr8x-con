@@ -22,10 +22,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (resendResult.emailPromise) {
+      try {
+        await resendResult.emailPromise;
+      } catch (err: any) {
+        console.error('[ResendFirstLoginOtpAPI] OTP email delivery error:', err.message);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'New verification code dispatched.',
-      expiresIn: resendResult.expiresIn || 15,
+      expiresIn: resendResult.expiresIn || 300,
     });
   } catch (err: any) {
     return NextResponse.json(

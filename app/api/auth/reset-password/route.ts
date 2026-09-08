@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (result.emailPromise) {
+        try {
+          await result.emailPromise;
+        } catch (mailErr: any) {
+          console.error('[ResetPasswordAPI] Confirmation email error:', mailErr.message);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: result.message || 'Password successfully updated.',
@@ -104,6 +112,14 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (result.emailPromise) {
+        try {
+          await result.emailPromise;
+        } catch (mailErr: any) {
+          console.error('[ResetPasswordAPI] Confirmation email error:', mailErr.message);
+        }
+      }
+
       return NextResponse.json({
         success: true,
         message: result.message || 'Password successfully updated.',
@@ -127,6 +143,13 @@ export async function POST(req: NextRequest) {
     }
 
     const result = serverSecurityStore.requestPasswordReset(String(email).trim(), ip);
+    if (result.emailPromise) {
+      try {
+        await result.emailPromise;
+      } catch (mailErr: any) {
+        console.error('[ResetPasswordAPI] Reset OTP email delivery error:', mailErr.message);
+      }
+    }
     return NextResponse.json({
       success: true,
       message:

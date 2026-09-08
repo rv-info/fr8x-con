@@ -24,7 +24,7 @@ let dynamicOperatorCredential: OperatorCredential | null = null;
 // ─── First-Time Login & Lockout State ───────────────────────────────────────
 const MAX_PASSWORD_ATTEMPTS = 3;
 const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const OTP_VALIDITY_SECONDS = 15; // Strictly 15 seconds validity
+const OTP_VALIDITY_SECONDS = 300; // 5 minutes validity (300 seconds)
 const MAX_OTP_SENDS_IN_WINDOW = 3; // Maximum 3 sends
 const OTP_SECURITY_WINDOW_MS = 25 * 60 * 60 * 1000; // 25-hour window
 
@@ -138,6 +138,7 @@ export async function authenticateOperatorCredentials(
   firstLoginRequired?: boolean;
   challengeToken?: string;
   expiresIn?: number;
+  emailPromise?: Promise<any>;
   error?: string;
 }> {
   let email = getAuthorizedOperatorEmail();
@@ -231,14 +232,15 @@ export async function authenticateOperatorCredentials(
     });
 
     // Send OTP email using existing ZeptoMail template FR8X_SECURITY_OTP from password@fr8x.in
-    EmailService.sendOtpEmail({
+    const emailPromise = EmailService.sendOtpEmail({
       to: getAuthorizedOperatorEmail(),
       recipientName: 'Chief Administrator',
       otpCode: rawOtp,
-      expiryMinutes: 1, // 15 seconds display
+      expiryMinutes: 5,
       correlationId: `FR8X-AUTH-OTP-${challengeId}`,
     }).catch((err) => {
       console.error('[GodfatherOperator] Failed to send first-login OTP email:', err.message);
+      return { success: false, error: err.message };
     });
 
     return {
@@ -246,6 +248,7 @@ export async function authenticateOperatorCredentials(
       firstLoginRequired: true,
       challengeToken,
       expiresIn: OTP_VALIDITY_SECONDS,
+      emailPromise,
     };
   }
 
@@ -307,7 +310,7 @@ export function verifyOperatorFirstLoginOtp(
 export async function resendOperatorFirstLoginOtp(
   challengeToken: string,
   ip = '127.0.0.1'
-): Promise<{ success: boolean; expiresIn?: number; error?: string }> {
+): Promise<{ success: boolean; expiresIn?: number; error?: string; emailPromise?: Promise<any> }> {
   const tokenCheck = verifySignedSessionToken<{
     challengeId: string;
     email: string;
@@ -344,19 +347,21 @@ export async function resendOperatorFirstLoginOtp(
   };
   operatorSecurityState.otpSendTimestamps.push(now);
 
-  EmailService.sendOtpEmail({
+  const emailPromise = EmailService.sendOtpEmail({
     to: getAuthorizedOperatorEmail(),
     recipientName: 'Chief Administrator',
     otpCode: rawOtp,
-    expiryMinutes: 1,
+    expiryMinutes: 5,
     correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
   }).catch((err) => {
     console.error('[GodfatherOperator] Failed to resend first-login OTP email:', err.message);
+    return { success: false, error: err.message };
   });
 
   return {
     success: true,
     expiresIn: OTP_VALIDITY_SECONDS,
+    emailPromise,
   };
 }
 

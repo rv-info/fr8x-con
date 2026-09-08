@@ -111,7 +111,7 @@ export default function LoginPage() {
         if (json.firstLoginRequired) {
           // Intercept first-time login: show OTP challenge
           setFirstLoginChallengeToken(json.challengeToken);
-          setFirstLoginTimer(json.expiresIn || 15);
+          setFirstLoginTimer(json.expiresIn || 300);
           setFirstLoginOtp('');
           setFirstLoginError('');
           setFirstLoginModalOpen(true);
@@ -222,7 +222,7 @@ export default function LoginPage() {
 
       if (res.ok && json.success) {
         setFirstLoginChallengeToken(json.challengeToken);
-        setFirstLoginTimer(json.expiresIn || 15);
+        setFirstLoginTimer(json.expiresIn || 300);
         setFirstLoginOtp('');
         toast('New verification code sent.');
       } else {
@@ -810,7 +810,10 @@ export default function LoginPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <Clock size={16} />
-                  <span>TIME LEFT: 00:{firstLoginTimer < 10 ? `0${firstLoginTimer}` : firstLoginTimer}</span>
+                  <span>
+                    TIME LEFT: {String(Math.floor(firstLoginTimer / 60)).padStart(2, '0')}:
+                    {String(firstLoginTimer % 60).padStart(2, '0')}
+                  </span>
                 </div>
                 {firstLoginTimer === 0 && (
                   <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#e11d48' }}>Code expired.</span>

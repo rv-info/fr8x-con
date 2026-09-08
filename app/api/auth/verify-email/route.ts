@@ -47,15 +47,17 @@ export async function POST(req: NextRequest) {
       req.nextUrl.origin ||
       'https://con.fr8x.in';
 
-    EmailService.sendWelcomeEmail({
-      to: user.email,
-      firstName: user.displayName.split(' ')[0] || user.displayName,
-      fullName: user.displayName,
-      organizationName: user.company,
-      verificationUrl: `${origin}/feeds`,
-    }).catch((welcomeErr: any) => {
+    try {
+      await EmailService.sendWelcomeEmail({
+        to: user.email,
+        firstName: user.displayName.split(' ')[0] || user.displayName,
+        fullName: user.displayName,
+        organizationName: user.company,
+        verificationUrl: `${origin}/feeds`,
+      });
+    } catch (welcomeErr: any) {
       console.error('[VerifyEmailAPI] Welcome email dispatch warning:', welcomeErr.message);
-    });
+    }
 
     const res = NextResponse.json({
       success: true,

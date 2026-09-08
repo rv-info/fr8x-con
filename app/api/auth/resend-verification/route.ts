@@ -25,10 +25,7 @@ export async function POST(req: NextRequest) {
 
     if (result.emailPromise) {
       try {
-        await Promise.race([
-          result.emailPromise,
-          new Promise((resolve) => setTimeout(resolve, 1200)),
-        ]);
+        await result.emailPromise;
       } catch (mailErr: any) {
         console.error('[ResendAPI] Verification email delivery error:', mailErr.message);
       }

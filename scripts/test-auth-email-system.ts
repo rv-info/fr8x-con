@@ -594,7 +594,7 @@ async function runTests() {
   );
   assert(opAuthResult.success, 'Password authentication succeeds for valid credentials');
   assert(opAuthResult.firstLoginRequired === true, 'First login required flag returned');
-  assert(opAuthResult.expiresIn === 15, 'OTP expiresIn is strictly 15 seconds');
+  assert(opAuthResult.expiresIn === 300, 'OTP expiresIn is strictly 300 seconds (5 minutes)');
   assert(Boolean(opAuthResult.challengeToken), 'Server returns opaque challengeToken, not raw OTP or user session');
 
   // Verify that an invalid OTP is rejected
@@ -765,7 +765,7 @@ async function runTests() {
   );
   assert(initialAuth.success, 'Enterprise user password check succeeds');
   assert(initialAuth.firstLoginRequired === true, 'firstLoginRequired flag is true');
-  assert(initialAuth.expiresIn === 15, 'OTP expiresIn is strictly 15 seconds');
+  assert(initialAuth.expiresIn === 300, 'OTP expiresIn is strictly 300 seconds (5 minutes)');
   assert(Boolean(initialAuth.challengeToken), 'Server challengeToken generated for first login');
 
   // Extract active OTP challenge from store for test validation
