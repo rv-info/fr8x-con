@@ -25,6 +25,7 @@ function runTests() {
   assert(resEmail.success === true, 'Login with seed corporate email (arjun@atlaslogistics.com)');
 
   // 3. Login with invalid password
+  serverSecurityStore.unblockAccount('u-sarah');
   const resBadPass = serverSecurityStore.recordLoginAttempt('u-sarah', 'WrongPassword', '127.0.0.1');
   assert(resBadPass.success === false && resBadPass.attemptsRemaining === 2, 'Invalid password decrements remaining attempts');
 
@@ -57,25 +58,33 @@ function runTests() {
   );
 
   // 6. Clean new registration under One User, One Login
-  const newReg = serverSecurityStore.registerUser({
-    uid: 'u-neha-2026',
-    email: 'neha.sharma@gatewaylines.in',
-    password: 'Gateway@Pass2026',
-    displayName: 'Neha Sharma',
-    company: 'Gateway Container Lines Ltd.',
-    companyId: 'CMP-00888',
-    mobile: '+91 99887 76655',
-  });
-  assert(newReg.success === true && newReg.user?.uid === 'u-neha-2026', 'Register clean corporate user under One User, One Login');
+  const dynamicId = Date.now();
+  const testRegUid = `u-neha-${dynamicId}`;
+  const testRegEmail = `neha.${dynamicId}@gatewaylines.in`;
+  const testRegMobile = `+91 99${Math.floor(10000000 + Math.random() * 90000000)}`;
+
+  const newReg = serverSecurityStore.registerUser(
+    {
+      uid: testRegUid,
+      email: testRegEmail,
+      password: 'Gateway@Pass2026',
+      displayName: 'Neha Sharma',
+      company: 'Gateway Container Lines Ltd.',
+      companyId: 'CMP-00888',
+      mobile: testRegMobile,
+    },
+    { skipVerification: true, firstLoginCompleted: true }
+  );
+  assert(newReg.success === true && newReg.user?.uid === testRegUid, 'Register clean corporate user under One User, One Login');
 
   // 7. Login with newly registered user
-  const newLogin = serverSecurityStore.recordLoginAttempt('neha.sharma@gatewaylines.in', 'Gateway@Pass2026', '127.0.0.1');
+  const newLogin = serverSecurityStore.recordLoginAttempt(testRegEmail, 'Gateway@Pass2026', '127.0.0.1');
   assert(newLogin.success === true && newLogin.user?.displayName === 'Neha Sharma', 'Login successfully with newly registered user');
 
   // 8. Attempt duplicate registration of newly registered user
   const dupNewUser = serverSecurityStore.registerUser({
-    uid: 'u-neha-copy',
-    email: 'neha.sharma@gatewaylines.in',
+    uid: `u-neha-copy-${dynamicId}`,
+    email: testRegEmail,
     password: 'AnyPassword@123',
     displayName: 'Neha Sharma 2',
     company: 'Another Freight Org',
@@ -88,13 +97,13 @@ function runTests() {
 
   // 9. Attempt duplicate registration by mobile phone number
   const dupMobile = serverSecurityStore.registerUser({
-    uid: 'u-other-person',
-    email: 'other.person@gatewaylines.in',
+    uid: `u-other-person-${dynamicId}`,
+    email: `other.${dynamicId}@gatewaylines.in`,
     password: 'Password@123',
     displayName: 'Other Person',
     company: 'Gateway Container Lines Ltd.',
     companyId: 'CMP-00888',
-    mobile: '+91 99887 76655', // same mobile as Neha Sharma
+    mobile: testRegMobile, // same mobile as Neha Sharma
   });
   assert(
     dupMobile.success === false && dupMobile.error?.includes('mobile phone number'),

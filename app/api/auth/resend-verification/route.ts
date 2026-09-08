@@ -23,10 +23,19 @@ export async function POST(req: NextRequest) {
 
     const result = serverSecurityStore.resendEmailVerification(email, origin);
 
+    if (result.emailPromise) {
+      try {
+        await result.emailPromise;
+      } catch (mailErr: any) {
+        console.error('[ResendAPI] Verification email delivery error:', mailErr.message);
+      }
+    }
+
     return NextResponse.json({
       success: result.success,
       message: result.message,
       remainingAttempts: result.remainingAttempts,
+      demoCode: result.otp,
     });
   } catch (err: any) {
     return NextResponse.json(

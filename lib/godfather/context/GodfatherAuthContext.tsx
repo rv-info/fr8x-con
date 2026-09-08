@@ -122,7 +122,12 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        if (checkIsGodfatherSessionExpired()) {
+        const isLoginRoute =
+          typeof window !== 'undefined' &&
+          (window.location.pathname.toLowerCase().startsWith('/godfather/login') ||
+            window.location.pathname.toLowerCase().startsWith('/godfatheron'));
+
+        if (!isLoginRoute && checkIsGodfatherSessionExpired()) {
           sessionStorage.removeItem('fr8x_godfather_auth');
           localStorage.removeItem('fr8x_godfather_operator_uid');
           localStorage.removeItem(GF_SESSION_START_KEY);
@@ -140,7 +145,11 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
         if (activeSession === 'true') {
           setIsAuthenticated(true);
           try {
-            localStorage.setItem(GF_LAST_ACTIVITY_KEY, Date.now().toString());
+            const nowStr = Date.now().toString();
+            localStorage.setItem(GF_LAST_ACTIVITY_KEY, nowStr);
+            if (!localStorage.getItem(GF_SESSION_START_KEY)) {
+              localStorage.setItem(GF_SESSION_START_KEY, nowStr);
+            }
           } catch {}
         } else {
           const res = await fetch('/api/godfather/session');
@@ -149,7 +158,11 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
             setIsAuthenticated(true);
             sessionStorage.setItem('fr8x_godfather_auth', 'true');
             try {
-              localStorage.setItem(GF_LAST_ACTIVITY_KEY, Date.now().toString());
+              const nowStr = Date.now().toString();
+              localStorage.setItem(GF_LAST_ACTIVITY_KEY, nowStr);
+              if (!localStorage.getItem(GF_SESSION_START_KEY)) {
+                localStorage.setItem(GF_SESSION_START_KEY, nowStr);
+              }
             } catch {}
           }
         }

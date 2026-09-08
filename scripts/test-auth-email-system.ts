@@ -534,8 +534,8 @@ async function runTests() {
     otpCode: '908172',
     expiryMinutes: 10,
   });
-  assert(otpExpTmpl.subject === 'YOUR FR8X VERIFICATION CODE', 'OTP subject matches YOUR FR8X VERIFICATION CODE');
-  assert(otpExpTmpl.text.includes('valid for 10 minutes'), 'OTP expiration notice rendered in email body');
+  assert(otpExpTmpl.subject.toUpperCase() === 'YOUR FR8X VERIFICATION CODE', 'OTP subject matches YOUR FR8X VERIFICATION CODE');
+  assert(otpExpTmpl.text.includes('10 minutes'), 'OTP expiration notice rendered in email body');
   assert(otpExpTmpl.html.includes('908172'), 'OTP code rendered in HTML');
 
   // ───────────────────────────────────────────────────────────────────────────

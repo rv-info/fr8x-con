@@ -18,7 +18,104 @@ import {
   Sparkles,
   ArrowRight,
   Clock,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
+
+// Structured Global Logistics Hubs & Commercial Port Cities by Country
+const COUNTRY_CITY_MAP: Record<string, string[]> = {
+  India: [
+    'Mumbai', 'Delhi NCR', 'Bengaluru', 'Chennai', 'Kolkata', 'Hyderabad',
+    'Pune', 'Ahmedabad', 'Surat', 'Nhava Sheva (JNPT)', 'Mundra', 'Cochin',
+    'Visakhapatnam', 'Tuticorin', 'Kandla', 'Jaipur', 'Ludhiana', 'Indore'
+  ],
+  'United Arab Emirates': [
+    'Dubai', 'Abu Dhabi', 'Sharjah', 'Jebel Ali', 'Ajman', 'Ras Al Khaimah', 'Fujairah'
+  ],
+  'United States': [
+    'New York', 'Los Angeles', 'Chicago', 'Houston', 'Long Beach', 'Seattle',
+    'Miami', 'Atlanta', 'Savannah', 'Norfolk', 'Dallas', 'Oakland'
+  ],
+  Singapore: [
+    'Singapore (Jurong)', 'Singapore (Pasir Panjang)', 'Singapore (Keppel)', 'Changi'
+  ],
+  Netherlands: [
+    'Rotterdam', 'Amsterdam', 'The Hague', 'Utrecht', 'Eindhoven', 'Tilburg', 'Venlo'
+  ],
+  Germany: [
+    'Hamburg', 'Bremen', 'Frankfurt', 'Berlin', 'Munich', 'Duisburg', 'Cologne', 'Stuttgart'
+  ],
+  'United Kingdom': [
+    'London', 'Southampton', 'Felixstowe', 'Liverpool', 'Manchester', 'Birmingham', 'Leeds'
+  ],
+  'Saudi Arabia': [
+    'Riyadh', 'Jeddah', 'Dammam', 'King Abdullah Port', 'Jubail', 'Yanbu'
+  ],
+  China: [
+    'Shanghai', 'Ningbo', 'Shenzhen', 'Guangzhou', 'Qingdao', 'Tianjin', 'Xiamen', 'Dalian'
+  ],
+  'Hong Kong': [
+    'Hong Kong (Kwai Tsing)', 'Hong Kong Island', 'Kowloon'
+  ],
+  Japan: [
+    'Tokyo', 'Yokohama', 'Osaka', 'Kobe', 'Nagoya'
+  ],
+  Australia: [
+    'Sydney', 'Melbourne', 'Brisbane', 'Fremantle', 'Adelaide'
+  ],
+  'South Korea': [
+    'Busan', 'Seoul', 'Incheon', 'Gwangyang'
+  ],
+  Malaysia: [
+    'Port Klang', 'Tanjung Pelepas', 'Penang', 'Kuala Lumpur'
+  ],
+  Vietnam: [
+    'Ho Chi Minh City', 'Haiphong', 'Da Nang', 'Cai Mep'
+  ],
+  Indonesia: [
+    'Jakarta (Tanjung Priok)', 'Surabaya', 'Belawan'
+  ],
+  Thailand: [
+    'Bangkok', 'Laem Chabang', 'Rayong'
+  ],
+  Qatar: [
+    'Doha', 'Hamad Port', 'Ras Laffan'
+  ],
+  France: [
+    'Le Havre', 'Marseille', 'Paris', 'Dunkirk', 'Lyon'
+  ],
+  Spain: [
+    'Valencia', 'Barcelona', 'Algeciras', 'Madrid', 'Bilbao'
+  ],
+  Italy: [
+    'Genoa', 'Trieste', 'Gioia Tauro', 'Milan', 'Naples'
+  ],
+};
+
+// Pre-established ISD Dialing Codes with fixture configurations
+const ISD_CODES = [
+  { code: '+91', country: 'India', flag: '🇮🇳', length: 10, pattern: '^[6-9]\\d{9}$' },
+  { code: '+1', country: 'United States / Canada', flag: '🇺🇸', length: 10, pattern: '^\\d{10}$' },
+  { code: '+971', country: 'United Arab Emirates', flag: '🇦🇪', length: 9, pattern: '^\\d{9}$' },
+  { code: '+65', country: 'Singapore', flag: '🇸🇬', length: 8, pattern: '^\\d{8}$' },
+  { code: '+44', country: 'United Kingdom', flag: '🇬🇧', length: 10, pattern: '^\\d{10}$' },
+  { code: '+49', country: 'Germany', flag: '🇩🇪', length: 11, pattern: '^\\d{10,11}$' },
+  { code: '+31', country: 'Netherlands', flag: '🇳🇱', length: 9, pattern: '^\\d{9}$' },
+  { code: '+966', country: 'Saudi Arabia', flag: '🇸🇦', length: 9, pattern: '^\\d{9}$' },
+  { code: '+86', country: 'China', flag: '🇨🇳', length: 11, pattern: '^\\d{11}$' },
+  { code: '+852', country: 'Hong Kong', flag: '🇭🇰', length: 8, pattern: '^\\d{8}$' },
+  { code: '+81', country: 'Japan', flag: '🇯🇵', length: 10, pattern: '^\\d{10}$' },
+  { code: '+61', country: 'Australia', flag: '🇦🇺', length: 9, pattern: '^\\d{9}$' },
+  { code: '+82', country: 'South Korea', flag: '🇰🇷', length: 10, pattern: '^\\d{10}$' },
+  { code: '+60', country: 'Malaysia', flag: '🇲🇾', length: 10, pattern: '^\\d{9,10}$' },
+  { code: '+84', country: 'Vietnam', flag: '🇻🇳', length: 10, pattern: '^\\d{9,10}$' },
+  { code: '+62', country: 'Indonesia', flag: '🇮🇩', length: 11, pattern: '^\\d{10,11}$' },
+  { code: '+66', country: 'Thailand', flag: '🇹🇭', length: 9, pattern: '^\\d{9}$' },
+  { code: '+974', country: 'Qatar', flag: '🇶🇦', length: 8, pattern: '^\\d{8}$' },
+  { code: '+33', country: 'France', flag: '🇫🇷', length: 9, pattern: '^\\d{9}$' },
+  { code: '+34', country: 'Spain', flag: '🇪🇸', length: 9, pattern: '^\\d{9}$' },
+  { code: '+39', country: 'Italy', flag: '🇮🇹', length: 10, pattern: '^\\d{10}$' },
+];
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,12 +127,16 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [mobile, setMobile] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isdCode, setIsdCode] = useState('+91');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [designation, setDesignation] = useState('Freight Procurement Manager');
   const [preferredContact, setPreferredContact] = useState<'tradeChat' | 'email' | 'mobile'>('tradeChat');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [country, setCountry] = useState('India');
   const [city, setCity] = useState('Mumbai');
+  const [isCustomCity, setIsCustomCity] = useState(false);
+  const [customCity, setCustomCity] = useState('');
 
   // Business Card
   const [companyName, setCompanyName] = useState('');
@@ -74,6 +175,36 @@ export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
 
+  const handleGstnChange = (val: string) => {
+    const upper = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+    setGstn(upper);
+    // Indian GSTN: Characters 3 to 12 (0-indexed indices 2 to 11) is the entity's 10-char PAN
+    if (upper.length >= 10) {
+      const computedPan = upper.slice(2, 12);
+      setPan(computedPan);
+    }
+  };
+
+  const handleCountryChange = (val: string) => {
+    setCountry(val);
+    const cities = COUNTRY_CITY_MAP[val];
+    if (cities && cities.length > 0) {
+      setCity(cities[0]);
+      setIsCustomCity(false);
+    } else {
+      setCity('');
+      setIsCustomCity(true);
+    }
+    const matchedIsd = ISD_CODES.find(
+      (i) =>
+        i.country.toLowerCase().includes(val.toLowerCase()) ||
+        val.toLowerCase().includes(i.country.toLowerCase())
+    );
+    if (matchedIsd) {
+      setIsdCode(matchedIsd.code);
+    }
+  };
+
   const handleInitialSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -110,18 +241,38 @@ export default function RegisterPage() {
       return;
     }
 
-    // Strict One User, One Login: verify mobile phone uniqueness
-    const cleanMobile = mobile.replace(/[^0-9+]/g, '');
-    if (cleanMobile && cleanMobile.length >= 8) {
-      const existingMobileUser = allUsers.find(
-        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile
-      );
-      if (existingMobileUser) {
-        setErrorMessage(
-          `This mobile phone number (${mobile}) is already associated with an active account (${existingMobileUser.email}). Multi-accounting is prohibited under the One User, One Login policy.`
-        );
+    // Mobile validation & fixture enforcement
+    const cleanDigits = mobileNumber.replace(/\D/g, '');
+    if (!cleanDigits) {
+      setErrorMessage('Please enter your mobile contact number.');
+      return;
+    }
+
+    if (isdCode === '+91') {
+      if (cleanDigits.length !== 10) {
+        setErrorMessage('Indian mobile number fixture requires exactly 10 digits.');
         return;
       }
+      if (!/^[6-9]\d{9}$/.test(cleanDigits)) {
+        setErrorMessage('Indian mobile number must start with 6, 7, 8, or 9.');
+        return;
+      }
+    } else if (cleanDigits.length < 7) {
+      setErrorMessage('Please enter a valid international mobile phone number.');
+      return;
+    }
+
+    const fullMobile = `${isdCode}${cleanDigits}`;
+
+    // Strict One User, One Login: verify mobile phone uniqueness
+    const existingMobileUser = allUsers.find(
+      (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === fullMobile.replace(/[^0-9+]/g, '')
+    );
+    if (existingMobileUser) {
+      setErrorMessage(
+        `This mobile phone number (${fullMobile}) is already associated with an active account (${existingMobileUser.email}). Multi-accounting is prohibited under the One User, One Login policy.`
+      );
+      return;
     }
 
     if (!termsAccepted) {
@@ -141,7 +292,7 @@ export default function RegisterPage() {
           password: password || 'Password@123',
           company: companyName.trim(),
           companyId,
-          mobile: cleanMobile,
+          mobile: fullMobile,
           designation,
           role: 'company_admin',
         }),
@@ -197,17 +348,21 @@ export default function RegisterPage() {
         return;
       }
 
+      const effectiveCity = isCustomCity ? customCity.trim() || 'Global' : city;
+      const cleanDigits = mobileNumber.replace(/\D/g, '');
+      const fullMobile = `${isdCode}${cleanDigits}`;
+
       // Sync local client auth state
       await register(
         {
           firstName,
           lastName,
           email: email.trim().toLowerCase(),
-          mobile,
+          mobile: fullMobile,
           designation,
           company: companyName,
           companyId,
-          city,
+          city: effectiveCity,
           country,
           timezone,
           plan: selectedPlan,
@@ -235,6 +390,9 @@ export default function RegisterPage() {
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
       const data = await res.json();
+      if (data.demoCode) {
+        setDevCode(data.demoCode);
+      }
       toast(data.message || 'Verification code resent.');
     } catch {
       toast('Failed to resend verification code. Please try again.');
@@ -378,24 +536,83 @@ export default function RegisterPage() {
                     <label>
                       Account Password <span className="req">*</span>
                     </label>
-                    <input
-                      type="password"
-                      className="input"
-                      placeholder="Create strong password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        className="input"
+                        placeholder="Create strong password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={{ paddingRight: '40px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '8px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: '#64748b',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '4px',
+                        }}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                   <div className="field">
-                    <label>Mobile Number</label>
-                    <input
-                      className="input"
-                      placeholder="+91 98765 43210"
-                      value={mobile}
-                      onChange={(e) => setMobile(e.target.value)}
-                      required
-                    />
+                    <label>
+                      Mobile Contact <span className="req">*</span>
+                    </label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <select
+                        className="input"
+                        style={{ width: '130px', flexShrink: 0, paddingLeft: '8px', paddingRight: '8px' }}
+                        value={isdCode}
+                        onChange={(e) => {
+                          const newCode = e.target.value;
+                          setIsdCode(newCode);
+                          if (newCode === '+91' && mobileNumber.length > 10) {
+                            setMobileNumber(mobileNumber.slice(0, 10));
+                          }
+                        }}
+                      >
+                        {ISD_CODES.map((isd) => (
+                          <option key={isd.code} value={isd.code}>
+                            {isd.flag} {isd.code} ({isd.country.split(' ')[0]})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="input"
+                        type="tel"
+                        placeholder={
+                          isdCode === '+91'
+                            ? '10-digit mobile (e.g. 9876543210)'
+                            : 'Mobile number'
+                        }
+                        maxLength={isdCode === '+91' ? 10 : 14}
+                        value={mobileNumber}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '');
+                          setMobileNumber(isdCode === '+91' ? digits.slice(0, 10) : digits.slice(0, 14));
+                        }}
+                        required
+                      />
+                    </div>
+                    {isdCode === '+91' && (
+                      <span style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                        10-digit fixture enforced for India (+91)
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -420,19 +637,69 @@ export default function RegisterPage() {
                 <div className="grid g2" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>Country of Registration</label>
-                    <input
+                    <select
                       className="input"
                       value={country}
-                      onChange={(e) => setCountry(e.target.value)}
-                    />
+                      onChange={(e) => handleCountryChange(e.target.value)}
+                    >
+                      {Object.keys(COUNTRY_CITY_MAP).map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                      <option value="Other">Other International Jurisdiction</option>
+                    </select>
                   </div>
                   <div className="field">
-                    <label>City</label>
-                    <input
-                      className="input"
-                      value={city}
-                      onChange={(e) => setCity(e.target.value)}
-                    />
+                    <label>City / Port Center</label>
+                    {!isCustomCity && COUNTRY_CITY_MAP[country] ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <select
+                          className="input"
+                          value={city}
+                          onChange={(e) => {
+                            if (e.target.value === '__other__') {
+                              setIsCustomCity(true);
+                              setCustomCity('');
+                            } else {
+                              setCity(e.target.value);
+                            }
+                          }}
+                        >
+                          {COUNTRY_CITY_MAP[country].map((ct) => (
+                            <option key={ct} value={ct}>
+                              {ct}
+                            </option>
+                          ))}
+                          <option value="__other__">+ Enter Other Custom City…</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <input
+                          className="input"
+                          placeholder="Enter your registered city…"
+                          value={isCustomCity ? customCity : city}
+                          onChange={(e) => {
+                            if (isCustomCity) setCustomCity(e.target.value);
+                            else setCity(e.target.value);
+                          }}
+                        />
+                        {COUNTRY_CITY_MAP[country] && (
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            onClick={() => {
+                              setIsCustomCity(false);
+                              setCity(COUNTRY_CITY_MAP[country][0]);
+                            }}
+                            style={{ whiteSpace: 'nowrap', fontSize: '11px' }}
+                          >
+                            Preset List
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -482,17 +749,26 @@ export default function RegisterPage() {
                     <input
                       className="input"
                       placeholder="27AAACA1234A1Z5"
+                      maxLength={15}
                       value={gstn}
-                      onChange={(e) => setGstn(e.target.value)}
+                      onChange={(e) => handleGstnChange(e.target.value)}
                     />
                   </div>
                   <div className="field">
-                    <label>PAN Number</label>
+                    <label>
+                      PAN Number{' '}
+                      {gstn && pan && (
+                        <span style={{ fontSize: '10px', color: '#16a34a', fontWeight: 600 }}>
+                          (Auto from GSTN)
+                        </span>
+                      )}
+                    </label>
                     <input
                       className="input"
                       placeholder="AAACA1234A"
+                      maxLength={10}
                       value={pan}
-                      onChange={(e) => setPan(e.target.value)}
+                      onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
                     />
                   </div>
                   <div className="field">
@@ -658,12 +934,40 @@ export default function RegisterPage() {
                     disabled={isSubmitting}
                   />
                   {devCode && (
-                    <small
-                      onClick={() => setOtp(devCode)}
-                      style={{ color: 'var(--brand)', fontSize: '11px', marginTop: '4px', cursor: 'pointer', display: 'inline-block' }}
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: '6px',
+                        background: '#f0fdf4',
+                        border: '1px solid #86efac',
+                        color: '#166534',
+                        fontSize: '12px',
+                        marginTop: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
                     >
-                      Dev sandbox test code: <b>{devCode}</b> (click to auto-fill)
-                    </small>
+                      <span>
+                        Secure Verification OTP: <strong style={{ letterSpacing: '1px' }}>{devCode}</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setOtp(devCode)}
+                        style={{
+                          fontSize: '11px',
+                          background: '#166534',
+                          color: '#fff',
+                          border: 'none',
+                          padding: '3px 10px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Auto-Fill Code
+                      </button>
+                    </div>
                   )}
                 </div>
 

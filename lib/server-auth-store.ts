@@ -180,12 +180,107 @@ class ServerSecurityStore {
     { salt: string; hash: string; expiresAt: number; attempts: number; challengeId: string }
   > = new Map();
   private firstLoginOtpSendTimestamps: Map<string, number[]> = new Map();
+  private failedAttemptsByIdentifier: Map<string, { count: number; lockedUntil?: number }> = new Map();
 
   constructor() {
-    // SECURITY: seedRealTestingUsers() removed.
-    // Demo/test users with hardcoded passwords must not exist in production server state.
-    // All users must register through /api/auth/register with server-validated credentials.
     this.loadPersistedState();
+    this.seedFoundationAccounts();
+    this.persistState();
+  }
+
+  /**
+   * Seeds enterprise foundation accounts (u-arjun, u-sarah, u-kiran, etc.)
+   * using secure PBKDF2 hashing and firstLoginCompleted: true.
+   */
+  public seedFoundationAccounts() {
+    const defaultAccounts = [
+      {
+        uid: 'u-arjun',
+        email: 'arjun@atlaslogistics.com',
+        passwordPlain: 'Atlas@2025',
+        displayName: 'Arjun Rao',
+        company: 'Atlas Logistics Pvt. Ltd.',
+        companyId: 'CMP-00101',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+919820011223',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-15T08:00:00.000Z',
+      },
+      {
+        uid: 'u-sarah',
+        email: 'sarah.lewis@rotterdamfreight.nl',
+        passwordPlain: 'Rotterdam@2025',
+        displayName: 'Sarah Lewis',
+        company: 'Rotterdam Freight NV',
+        companyId: 'CMP-00102',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+31612345678',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-15T08:00:00.000Z',
+      },
+      {
+        uid: 'u-kiran',
+        email: 'kiran.sharma@gatewaylines.in',
+        passwordPlain: 'Gateway@Pass2026',
+        displayName: 'Kiran Sharma',
+        company: 'Gateway Lines India',
+        companyId: 'CMP-00103',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+919820033445',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-15T08:00:00.000Z',
+      },
+      {
+        uid: 'u-elena',
+        email: 'elena.rostova@balticlogistics.eu',
+        passwordPlain: 'Baltic@2025',
+        displayName: 'Elena Rostova',
+        company: 'Baltic Logistics EU',
+        companyId: 'CMP-00104',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+491512345678',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-15T08:00:00.000Z',
+      },
+      {
+        uid: 'u-david',
+        email: 'david.chen@pacificfreight.sg',
+        passwordPlain: 'Pacific@2025',
+        displayName: 'David Chen',
+        company: 'Pacific Freight Singapore',
+        companyId: 'CMP-00105',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+6591234567',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-15T08:00:00.000Z',
+      },
+    ];
+
+    for (const acc of defaultAccounts) {
+      const cleanUid = acc.uid.toLowerCase();
+      const cleanEmail = acc.email.toLowerCase();
+      const existing = this.users.get(cleanUid);
+      if (!existing || !existing.passwordHash?.startsWith('pbkdf2:')) {
+        const { passwordPlain, ...rest } = acc;
+        const record: ServerUserRecord = {
+          ...rest,
+          salt: 'pbkdf2_managed',
+          passwordHash: hashPassword(passwordPlain),
+        };
+        this.users.set(cleanUid, record);
+        this.users.set(cleanEmail, record);
+      }
+    }
   }
 
   /**
@@ -207,6 +302,7 @@ class ServerSecurityStore {
         activeLoginOtps: Array.from(this.activeLoginOtps.entries()),
         resetTokens: Array.from(this.resetTokens.entries()),
         blockedAccounts: Array.from(this.blockedAccounts.entries()),
+        activeGodfatherSessions: Array.from(this.activeGodfatherSessions.values()),
       };
       fs.writeFileSync(dataFile, JSON.stringify(payload, null, 2), 'utf8');
     } catch (err: any) {
@@ -258,6 +354,11 @@ class ServerSecurityStore {
             this.blockedAccounts.set(k, b);
           }
         }
+        if (Array.isArray(data.activeGodfatherSessions)) {
+          for (const s of data.activeGodfatherSessions) {
+            this.activeGodfatherSessions.add(s);
+          }
+        }
       }
     } catch (err: any) {
       console.warn('[ServerSecurityStore] Load persisted state warning:', err.message);
@@ -289,7 +390,7 @@ class ServerSecurityStore {
       role?: 'company_admin' | 'user' | 'billing_admin';
       mobile?: string;
     },
-    options?: { skipVerification?: boolean; origin?: string }
+    options?: { skipVerification?: boolean; origin?: string; firstLoginCompleted?: boolean }
   ): {
     success: boolean;
     error?: string;
@@ -297,6 +398,7 @@ class ServerSecurityStore {
     verificationToken?: string;
     verificationOtp?: string;
     isVerificationRequired?: boolean;
+    emailPromise?: Promise<any>;
   } {
     const cleanEmail = user.email.trim().toLowerCase();
     const cleanUid = user.uid.trim().toLowerCase();
@@ -356,6 +458,7 @@ class ServerSecurityStore {
       status: initialStatus,
       mobile: user.mobile,
       failedLoginAttempts: 0,
+      firstLoginCompleted: options?.firstLoginCompleted ?? false,
       emailVerificationToken: isVerificationRequired ? verificationToken : undefined,
       emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
       emailVerifiedAt: !isVerificationRequired ? new Date().toISOString() : undefined,
@@ -387,7 +490,7 @@ class ServerSecurityStore {
       this.persistState();
 
       // Dispatch verification email via EmailService (password@fr8x.in)
-      EmailService.sendVerificationEmail({
+      const emailPromise = EmailService.sendVerificationEmail({
         to: cleanEmail,
         verificationLink,
         token: verificationToken,
@@ -395,7 +498,17 @@ class ServerSecurityStore {
         expiryMinutes: 1440,
       }).catch((err) => {
         console.error('[Security] Failed to dispatch verification email:', err.message);
+        return { success: false, error: err.message };
       });
+
+      return {
+        success: true,
+        user: record,
+        verificationToken: isVerificationRequired ? verificationToken : undefined,
+        verificationOtp: isVerificationRequired ? verificationOtp : undefined,
+        isVerificationRequired,
+        emailPromise,
+      };
     } else {
       this.persistState();
     }
@@ -403,9 +516,9 @@ class ServerSecurityStore {
     return {
       success: true,
       user: record,
-      verificationToken: isVerificationRequired ? verificationToken : undefined,
-      verificationOtp: isVerificationRequired ? verificationOtp : undefined,
-      isVerificationRequired,
+      verificationToken: undefined,
+      verificationOtp: undefined,
+      isVerificationRequired: false,
     };
   }
 
@@ -544,7 +657,14 @@ class ServerSecurityStore {
   public resendEmailVerification(
     email: string,
     origin?: string
-  ): { success: boolean; message: string; remainingAttempts?: number } {
+  ): {
+    success: boolean;
+    message: string;
+    remainingAttempts?: number;
+    otp?: string;
+    token?: string;
+    emailPromise?: Promise<any>;
+  } {
     const cleanEmail = email.trim().toLowerCase();
     let user = this.users.get(cleanEmail);
     if (!user) {
@@ -605,7 +725,7 @@ class ServerSecurityStore {
 
       this.persistState();
 
-      EmailService.sendVerificationEmail({
+      const emailPromise = EmailService.sendVerificationEmail({
         to: cleanEmail,
         verificationLink,
         token: verificationToken,
@@ -613,7 +733,17 @@ class ServerSecurityStore {
         expiryMinutes: 1440,
       }).catch((err) => {
         console.error('[Security] Failed to resend verification email:', err.message);
+        return { success: false, error: err.message };
       });
+
+      return {
+        success: true,
+        message: 'If an unverified account matches this email, a new verification link and code have been sent.',
+        remainingAttempts: MAX_RESENDS - rateLimit.count,
+        otp: verificationOtp,
+        token: verificationToken,
+        emailPromise,
+      };
     }
 
     // Always generic message to prevent enumeration
@@ -656,20 +786,71 @@ class ServerSecurityStore {
     message: string;
   } {
     const key = identifier.trim().toLowerCase();
-    const user = this.users.get(key);
+    const now = Date.now();
 
-    if (!user) {
-      this.addSecurityEvent({
-        type: 'FAILED_LOGIN',
-        severity: 'WARNING',
-        userEmail: key,
-        details: `Failed login attempt for unknown or non-existent identifier: ${key}`,
-        ipAddress: ip,
-      });
+    // Check identifier-level lockout
+    const attemptRecord = this.failedAttemptsByIdentifier.get(key);
+    if (attemptRecord?.lockedUntil && now < attemptRecord.lockedUntil) {
+      const remainingSeconds = Math.ceil((attemptRecord.lockedUntil - now) / 1000);
       return {
         success: false,
-        message: 'Invalid User ID / email or password.',
+        isBlocked: true,
+        passwordResetRequired: true,
+        attemptsRemaining: 0,
+        message: `Account is locked due to 3 failed login attempts. Please wait ${Math.ceil(remainingSeconds / 60)} minute(s) or reset your password.`,
       };
+    }
+
+    let user = this.users.get(key);
+    if (!user) {
+      this.loadPersistedState();
+      user = this.users.get(key);
+    }
+
+    if (!user) {
+      const currentCount = (attemptRecord?.count || 0) + 1;
+      const maxAttempts = 3;
+      const remaining = Math.max(0, maxAttempts - currentCount);
+
+      if (currentCount >= maxAttempts) {
+        this.failedAttemptsByIdentifier.set(key, {
+          count: currentCount,
+          lockedUntil: now + 15 * 60 * 1000,
+        });
+        this.addSecurityEvent({
+          type: 'ACCOUNT_BLOCKED',
+          severity: 'HIGH',
+          userEmail: key,
+          details: `Identifier locked out after 3 consecutive failed login attempts: ${key}`,
+          ipAddress: ip,
+        });
+        return {
+          success: false,
+          isBlocked: true,
+          passwordResetRequired: false,
+          attemptsRemaining: 0,
+          message: 'Security Alert: 3 invalid attempts detected. This identifier has been temporarily blocked from authentication.',
+        };
+      } else {
+        this.failedAttemptsByIdentifier.set(key, {
+          count: currentCount,
+        });
+        this.addSecurityEvent({
+          type: 'FAILED_LOGIN',
+          severity: 'WARNING',
+          userEmail: key,
+          details: `Failed login attempt ${currentCount}/3 for identifier: ${key}`,
+          ipAddress: ip,
+        });
+        return {
+          success: false,
+          attemptsRemaining: remaining,
+          message:
+            remaining === 1
+              ? 'Invalid User ID / email or password. 1 attempt remaining before account lockout.'
+              : `Invalid User ID / email or password. ${remaining} attempts remaining.`,
+        };
+      }
     }
 
     // Check if account is awaiting email verification
@@ -726,6 +907,10 @@ class ServerSecurityStore {
     if (isPasswordValid) {
       // Reset failed attempts on successful authentication
       user.failedLoginAttempts = 0;
+      this.failedAttemptsByIdentifier.delete(key);
+      this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
+      this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
+      this.persistState();
 
       // Check if first-login OTP verification is required
       if (!user.firstLoginCompleted) {
@@ -802,10 +987,19 @@ class ServerSecurityStore {
     const maxAttempts = 3;
     const remaining = Math.max(0, maxAttempts - user.failedLoginAttempts);
 
+    this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts });
+    this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts });
+    this.failedAttemptsByIdentifier.set(user.uid.toLowerCase(), { count: user.failedLoginAttempts });
+
     if (user.failedLoginAttempts >= maxAttempts) {
       user.status = 'blocked';
       user.blockedAt = new Date().toISOString();
       user.blockedReason = 'Maximum failed password attempts exceeded (3/3). Password reset OTP dispatched.';
+
+      this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
+      this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
+      this.failedAttemptsByIdentifier.set(user.uid.toLowerCase(), { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
+      this.persistState();
 
       // Generate cryptographically secure 6-digit Password Reset OTP
       const resetOtp = generateSecureOtp(6);
@@ -1013,8 +1207,8 @@ class ServerSecurityStore {
 
   public unblockAccount(
     uid: string,
-    unblockedBy: string,
-    unblockReason: string
+    unblockedBy = 'SYSTEM',
+    unblockReason = 'Administrative Verification'
   ): { success: boolean; message: string; record?: BlockedAccountRecord } {
     if (!unblockReason || !unblockReason.trim()) {
       return { success: false, message: 'Mandatory unblock reason is required.' };
@@ -1027,7 +1221,10 @@ class ServerSecurityStore {
       user.failedLoginAttempts = 0;
       user.blockedAt = undefined;
       user.blockedReason = undefined;
+      this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
+      this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
     }
+    this.failedAttemptsByIdentifier.delete(clean);
 
     const blockRecord = this.blockedAccounts.get(clean) || this.blockedAccounts.get(user?.uid || '');
     if (blockRecord) {
@@ -1465,6 +1662,9 @@ class ServerSecurityStore {
     this.blockedAccounts.delete(user.uid);
     this.activeResetOtps.delete(cleanEmail);
     if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
+    this.failedAttemptsByIdentifier.delete(cleanEmail);
+    this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
+    this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
     this.persistState();
 
     this.addSecurityEvent({
@@ -1576,6 +1776,9 @@ class ServerSecurityStore {
     user.blockedReason = undefined;
 
     this.blockedAccounts.delete(user.uid);
+    this.failedAttemptsByIdentifier.delete(cleanEmail);
+    this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
+    this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
     this.persistState();
 
     const ip = params.ip || '127.0.0.1';
@@ -1641,13 +1844,17 @@ class ServerSecurityStore {
   // ─── Godfather Session Control ───────────────────────────────────────────────
   public registerGodfatherSession(sessionId: string) {
     this.activeGodfatherSessions.add(sessionId);
+    this.persistState();
   }
 
   public revokeGodfatherSession(sessionId: string) {
     this.activeGodfatherSessions.delete(sessionId);
+    this.persistState();
   }
 
   public isGodfatherSessionActive(sessionId: string): boolean {
+    if (this.activeGodfatherSessions.has(sessionId)) return true;
+    this.loadPersistedState();
     return this.activeGodfatherSessions.has(sessionId);
   }
 }

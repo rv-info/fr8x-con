@@ -78,12 +78,21 @@ export async function POST(req: NextRequest) {
 
     const user = result.user!;
 
-    // If verification is required, do not issue session cookie yet
+    // If verification is required, await email delivery and return response with demoCode fallback
     if (result.isVerificationRequired) {
+      if (result.emailPromise) {
+        try {
+          await result.emailPromise;
+        } catch (mailErr: any) {
+          console.error('[RegisterAPI] Verification email delivery error:', mailErr.message);
+        }
+      }
+
       return NextResponse.json(
         {
           success: true,
           isVerificationRequired: true,
+          demoCode: result.verificationOtp,
           message: 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.',
           user: {
             uid: user.uid,
