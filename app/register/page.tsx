@@ -626,7 +626,7 @@ export default function RegisterPage() {
         justifyContent: 'center',
       }}
     >
-      <div style={{ width: '100%', maxWidth: '820px' }}>
+      <div className="reg-container">
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <div
@@ -694,74 +694,89 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 1: Account and Contact Card */}
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <div className="cardhead">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="reg-section">
+              <div className="reg-section-head">
+                <span className="reg-section-title">
                   <User size={15} color="var(--brand)" /> 1. Account & Contact Details
                 </span>
-                <span className="sub">Professional Corporate Identity</span>
+                <span className="reg-section-sub">Professional Corporate Identity</span>
               </div>
-              <div className="cardbody">
-                <div className="grid g3">
-                  <div className="field">
-                    <label>
-                      First Name <span className="req">*</span>
+              <div className="reg-section-body">
+                {/* Row 1: First Name, Last Name, Designation */}
+                <div className="reg-grid-3">
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        First Name <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
                     </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="e.g. John"
                       required
                     />
                   </div>
-                  <div className="field">
-                    <label>
-                      Last Name <span className="req">*</span>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        Last Name <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
                     </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
+                      placeholder="e.g. Doe"
                       required
                     />
                   </div>
-                  <div className="field">
-                    <label>Designation / Title</label>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">Designation / Title</span>
+                    </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       value={designation}
                       onChange={(e) => setDesignation(e.target.value)}
+                      placeholder="e.g. Freight Procurement Manager"
                     />
                   </div>
                 </div>
 
-                <div className="grid g3" style={{ marginTop: '10px' }}>
-                  <div className="field">
-                    <label>
-                      Professional Corporate Email <span className="req">*</span>
+                {/* Row 2: Email, Password, Mobile Contact */}
+                <div className="reg-grid-3" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        Professional Corporate Email <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
                     </label>
                     <input
                       type="email"
-                      className="input"
+                      className="reg-input"
                       placeholder="name@company.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
-                  <div className="field">
-                    <label>
-                      Account Password <span className="req">*</span>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        Account Password <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
                     </label>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
                       <input
                         type={showPassword ? 'text' : 'password'}
-                        className="input"
+                        className="reg-input"
                         placeholder="Create strong password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        style={{ paddingRight: '40px' }}
+                        style={{ paddingRight: '36px' }}
                       />
                       <button
                         type="button"
@@ -785,12 +800,19 @@ export default function RegisterPage() {
                       </button>
                     </div>
                   </div>
-                  <div className="field">
-                    <label>
-                      Mobile Contact <span className="req">*</span>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        Mobile Contact <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
+                      {isdCode === '+91' && (
+                        <span className="reg-label-extra" style={{ color: 'var(--brand)', fontSize: '10px' }}>
+                          10 Digits
+                        </span>
+                      )}
                     </label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                      <div style={{ width: '195px', flexShrink: 0 }}>
+                    <div className="reg-mobile-group">
+                      <div style={{ width: '84px', flexShrink: 0 }}>
                         <SearchableDropdown
                           options={isdOptions}
                           value={isdCode}
@@ -800,13 +822,28 @@ export default function RegisterPage() {
                               setMobileNumber(mobileNumber.slice(0, 10));
                             }
                           }}
+                          triggerHeight="36px"
+                          triggerStyle={{
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+                            borderRight: 'none',
+                            padding: '0 6px 0 8px',
+                            background: '#f8fafc',
+                          }}
+                          renderTriggerValue={(opt, val) => (
+                            <span style={{ fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '14px' }}>{opt?.flag || '🌐'}</span>
+                              <span>{val || isdCode}</span>
+                            </span>
+                          )}
+                          popoverMinWidth="290px"
+                          showClear={false}
                           searchPlaceholder="Search country or code…"
                           maxHeight={280}
                         />
                       </div>
-
                       <input
-                        className="input"
+                        className="reg-input"
                         type="tel"
                         placeholder={
                           isdCode === '+91'
@@ -820,56 +857,69 @@ export default function RegisterPage() {
                           setMobileNumber(isdCode === '+91' ? digits.slice(0, 10) : digits.slice(0, 14));
                         }}
                         required
-                        style={{ height: '38px' }}
+                        style={{
+                          borderTopLeftRadius: 0,
+                          borderBottomLeftRadius: 0,
+                          flex: 1,
+                          minWidth: 0,
+                        }}
                       />
                     </div>
-                    {isdCode === '+91' && (
-                      <span style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
-                        10-digit fixture enforced for India (+91)
-                      </span>
-                    )}
                   </div>
                 </div>
 
-                <div className="grid g1" style={{ marginTop: '10px' }}>
-                  <div className="field">
-                    <label>Time Zone (IANA)</label>
+                {/* Row 3: Time Zone (IANA) full-width */}
+                <div className="reg-grid-1" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">Time Zone (IANA)</span>
+                    </label>
                     <SearchableDropdown
                       options={timezoneOptions}
                       value={timezone}
                       onChange={setTimezone}
                       searchPlaceholder="Search time zone…"
+                      triggerHeight="36px"
                     />
                   </div>
                 </div>
 
-                <div className="grid g2" style={{ marginTop: '10px' }}>
-                  <div className="field">
-                    <label>Country of Registration</label>
+                {/* Row 4: Country and State */}
+                <div className="reg-grid-2" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">Country of Registration</span>
+                    </label>
                     <SearchableDropdown
                       options={countryOptions}
                       value={country}
                       onChange={handleCountryChange}
                       searchPlaceholder="Search country…"
+                      triggerHeight="36px"
                     />
                   </div>
 
-                  <div className="field">
-                    <label>State / Province</label>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">State / Province</span>
+                    </label>
                     <SearchableDropdown
                       options={stateOptions}
                       value={state}
                       onChange={handleStateChange}
                       placeholder="Select State"
                       searchPlaceholder="Search"
+                      triggerHeight="36px"
                     />
                   </div>
                 </div>
 
-                <div className="grid g2" style={{ marginTop: '10px' }}>
-                  <div className="field">
-                    <label>
-                      City / Port Center {isLoadingCities && <span style={{ fontSize: '10.5px', color: 'var(--brand)' }}>(Loading…)</span>}
+                {/* Row 5: City and Postal Code */}
+                <div className="reg-grid-2" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">City / Port Center</span>
+                      {isLoadingCities && <span className="reg-label-extra" style={{ color: 'var(--brand)' }}>Loading…</span>}
                     </label>
                     {!isCustomCity ? (
                       <SearchableDropdown
@@ -878,15 +928,15 @@ export default function RegisterPage() {
                         onChange={handleCitySelect}
                         searchPlaceholder="Search city…"
                         allowCustom
+                        triggerHeight="36px"
                       />
                     ) : (
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input
-                          className="input"
+                          className="reg-input"
                           placeholder="Enter your registered city…"
                           value={customCity}
                           onChange={(e) => setCustomCity(e.target.value)}
-                          style={{ height: '38px' }}
                         />
                         <button
                           type="button"
@@ -899,7 +949,7 @@ export default function RegisterPage() {
                               'Mumbai';
                             setCity(fallback);
                           }}
-                          style={{ whiteSpace: 'nowrap', fontSize: '11px', height: '38px' }}
+                          style={{ whiteSpace: 'nowrap', fontSize: '11px', height: '36px', padding: '0 10px', borderRadius: '4px' }}
                         >
                           Preset List
                         </button>
@@ -907,14 +957,15 @@ export default function RegisterPage() {
                     )}
                   </div>
 
-                  <div className="field">
-                    <label>Postal Code / PIN Code</label>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">Postal Code / PIN Code</span>
+                    </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="e.g. 141001, 400001, 10001"
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
-                      style={{ height: '38px' }}
                     />
                   </div>
                 </div>
@@ -923,84 +974,101 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 2: Legal Business Card */}
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <div className="cardhead">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="reg-section">
+              <div className="reg-section-head">
+                <span className="reg-section-title">
                   <Building size={15} color="var(--brand)" /> 2. Legal Entity & Compliance Card
                 </span>
-                <span className="sub">Government & Trade Registry</span>
+                <span className="reg-section-sub">Government & Trade Registry</span>
               </div>
-              <div className="cardbody">
-                <div className="grid g2">
-                  <div className="field">
-                    <label>
-                      Legal Company Name <span className="req">*</span>
+              <div className="reg-section-body">
+                {/* Row 1: Legal Company Name and System Company ID */}
+                <div className="reg-grid-2">
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">
+                        Legal Company Name <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                      </span>
                     </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="e.g. Atlas Logistics Pvt. Ltd."
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
                       required
                     />
                   </div>
-                  <div className="field">
-                    <label>System Company ID (Generated)</label>
-                    <input className="input" value={companyId} readOnly />
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">System Company ID (Generated)</span>
+                    </label>
+                    <input className="reg-input" value={companyId} readOnly />
                   </div>
                 </div>
 
-                <div className="field" style={{ marginTop: '10px' }}>
-                  <label>Registered Corporate Address</label>
-                  <input
-                    className="input"
-                    placeholder="Head office or registered statutory address…"
-                    value={registeredAddress}
-                    onChange={(e) => setRegisteredAddress(e.target.value)}
-                  />
+                {/* Row 2: Registered Corporate Address full-width */}
+                <div className="reg-grid-1" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">Registered Corporate Address</span>
+                    </label>
+                    <input
+                      className="reg-input"
+                      placeholder="Head office or registered statutory address…"
+                      value={registeredAddress}
+                      onChange={(e) => setRegisteredAddress(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div className="grid g4" style={{ marginTop: '10px' }}>
-                  <div className="field">
-                    <label>GSTN (India)</label>
+                {/* Row 3: 4 Equal-Width Columns for GSTN, PAN, IEC, MTO */}
+                <div className="reg-grid-4" style={{ marginTop: '12px' }}>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">GSTN (India)</span>
+                    </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="27AAACA1234A1Z5"
                       maxLength={15}
                       value={gstn}
                       onChange={(e) => handleGstnChange(e.target.value)}
                     />
                   </div>
-                  <div className="field">
-                    <label>
-                      PAN Number{' '}
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">PAN Number</span>
                       {gstn && pan && (
-                        <span style={{ fontSize: '10px', color: '#16a34a', fontWeight: 600 }}>
-                          (Auto from GSTN)
+                        <span className="reg-label-extra" style={{ color: '#16a34a' }}>
+                          (Auto)
                         </span>
                       )}
                     </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="AAACA1234A"
                       maxLength={10}
                       value={pan}
                       onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
                     />
                   </div>
-                  <div className="field">
-                    <label>IEC Code</label>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">IEC Code</span>
+                    </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="0300123456"
                       value={iecCode}
                       onChange={(e) => setIecCode(e.target.value)}
                     />
                   </div>
-                  <div className="field">
-                    <label>MTO License No.</label>
+                  <div className="reg-field">
+                    <label className="reg-label">
+                      <span className="reg-label-text">MTO License No.</span>
+                    </label>
                     <input
-                      className="input"
+                      className="reg-input"
                       placeholder="MTO/DGS/2026/..."
                       value={mtoNumber}
                       onChange={(e) => setMtoNumber(e.target.value)}
@@ -1011,33 +1079,38 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 3: Plan Selection Card */}
-            <div className="card" style={{ marginBottom: '16px' }}>
-              <div className="cardhead">
-                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="reg-section">
+              <div className="reg-section-head">
+                <span className="reg-section-title">
                   <CreditCard size={15} color="var(--brand)" /> 3. Membership & Plan Tier
                 </span>
-                <span className="sub">Enterprise Discount Rules</span>
+                <span className="reg-section-sub">Enterprise Discount Rules</span>
               </div>
-              <div className="cardbody">
-                <div className="grid g3">
+              <div className="reg-section-body">
+                <div className="reg-plan-grid">
                   {/* Trial */}
                   <div
                     onClick={() => setSelectedPlan('trial')}
-                    className="card cardbody"
+                    className="reg-plan-card"
                     style={{
-                      cursor: 'pointer',
-                      border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--line)',
-                      background: selectedPlan === 'trial' ? '#f0f6ff' : '#fff',
+                      border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                      background: selectedPlan === 'trial' ? '#f0f6ff' : '#ffffff',
                     }}
                   >
-                    <b style={{ fontSize: '14px', display: 'block' }}>Trial Plan</b>
-                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ink)', margin: '4px 0', display: 'block' }}>
-                      Free
-                    </span>
-                    <small style={{ color: 'var(--mut)', display: 'block', marginBottom: '8px' }}>
-                      Valid for 2 days · 1 trial per company / year
-                    </small>
-                    <ul style={{ fontSize: '11px', color: 'var(--ink-secondary)', paddingLeft: '14px' }}>
+                    <div>
+                      <div className="reg-plan-header">
+                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Trial Plan</b>
+                      </div>
+                      <div className="reg-plan-price">
+                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
+                          Free
+                        </span>
+                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                          Valid for 2 days · 1 trial per company / year
+                        </small>
+                      </div>
+                    </div>
+                    <ul className="reg-plan-features">
                       <li>Standard reverse auctions</li>
                       <li>Standard bid posting (₹300/bid)</li>
                     </ul>
@@ -1046,21 +1119,26 @@ export default function RegisterPage() {
                   {/* Professional */}
                   <div
                     onClick={() => setSelectedPlan('professional')}
-                    className="card cardbody"
+                    className="reg-plan-card"
                     style={{
-                      cursor: 'pointer',
-                      border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--line)',
-                      background: selectedPlan === 'professional' ? '#f0f6ff' : '#fff',
+                      border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                      background: selectedPlan === 'professional' ? '#f0f6ff' : '#ffffff',
                     }}
                   >
-                    <b style={{ fontSize: '14px', display: 'block' }}>Professional</b>
-                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--brand)', margin: '4px 0', display: 'block' }}>
-                      ₹1,500 <small style={{ fontSize: '10px', color: 'var(--mut)' }}>/mo ($27 USD)</small>
-                    </span>
-                    <small style={{ color: 'var(--mut)', display: 'block', marginBottom: '8px' }}>
-                      Inclusive of GST / Tax
-                    </small>
-                    <ul style={{ fontSize: '11px', color: 'var(--ink-secondary)', paddingLeft: '14px' }}>
+                    <div>
+                      <div className="reg-plan-header">
+                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Professional</b>
+                      </div>
+                      <div className="reg-plan-price">
+                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
+                          ₹1,500 <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 500 }}>/mo ($27 USD)</small>
+                        </span>
+                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                          Inclusive of GST / Tax
+                        </small>
+                      </div>
+                    </div>
+                    <ul className="reg-plan-features">
                       <li>Full platform & market rates access</li>
                       <li>Standard bid posting (₹300/bid)</li>
                     </ul>
@@ -1069,24 +1147,29 @@ export default function RegisterPage() {
                   {/* Premium */}
                   <div
                     onClick={() => setSelectedPlan('premium')}
-                    className="card cardbody"
+                    className="reg-plan-card"
                     style={{
-                      cursor: 'pointer',
-                      border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--line)',
-                      background: selectedPlan === 'premium' ? '#fffdf7' : '#fff',
+                      border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--fr8x-outline)',
+                      background: selectedPlan === 'premium' ? '#fffdf7' : '#ffffff',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <b style={{ fontSize: '14px' }}>Premium</b>
-                      <span className="badge amber">Recommended</span>
+                    <div>
+                      <div className="reg-plan-header">
+                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Premium</b>
+                        <span className="badge amber" style={{ fontSize: '10px', padding: '1px 6px', fontWeight: 700 }}>
+                          Recommended
+                        </span>
+                      </div>
+                      <div className="reg-plan-price">
+                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
+                          ₹3,000 <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 500 }}>/mo ($50 USD)</small>
+                        </span>
+                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                          Golden Verified Tick + 40% Discount
+                        </small>
+                      </div>
                     </div>
-                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--gold)', margin: '4px 0', display: 'block' }}>
-                      ₹3,000 <small style={{ fontSize: '10px', color: 'var(--mut)' }}>/mo ($50 USD)</small>
-                    </span>
-                    <small style={{ color: 'var(--mut)', display: 'block', marginBottom: '8px' }}>
-                      Golden Verified Tick + 40% Discount
-                    </small>
-                    <ul style={{ fontSize: '11px', color: 'var(--ink-secondary)', paddingLeft: '14px' }}>
+                    <ul className="reg-plan-features">
                       <li>
                         <b>Golden Verified Badge (✓)</b>
                       </li>
@@ -1101,15 +1184,23 @@ export default function RegisterPage() {
             </div>
 
             {/* Legal Acceptance */}
-            <div className="card cardbody" style={{ marginBottom: '16px', background: '#fafcfe' }}>
-              <label className="check">
+            <div className="reg-section" style={{ background: '#fafcfe', padding: '12px 14px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
                 <input
                   type="checkbox"
                   checked={termsAccepted}
                   onChange={(e) => setTermsAccepted(e.target.checked)}
                   required
+                  style={{
+                    marginTop: '2px',
+                    width: '15px',
+                    height: '15px',
+                    accentColor: 'var(--brand)',
+                    cursor: 'pointer',
+                    flexShrink: 0,
+                  }}
                 />
-                <span>
+                <span style={{ fontSize: '11.5px', lineHeight: '1.45', color: 'var(--fr8x-text)' }}>
                   I confirm legal authority to represent <b>{companyName || 'this corporate entity'}</b> and agree to
                   the FR8X Master Terms of Service, anti-fraud, trade sanctions compliance, and bid fee regulations.
                 </span>
@@ -1119,9 +1210,27 @@ export default function RegisterPage() {
             <button
               type="submit"
               className="btn primary"
-              style={{ width: '100%', height: '42px', fontSize: '14px' }}
+              disabled={isSubmitting}
+              style={{
+                width: '100%',
+                height: '42px',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                letterSpacing: '0.3px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                borderRadius: '4px',
+                background: 'var(--brand)',
+                color: '#ffffff',
+              }}
             >
-              Continue to OTP Verification <ArrowRight size={15} />
+              {isSubmitting ? 'Submitting Registration…' : (
+                <>
+                  CONTINUE TO OTP VERIFICATION <ArrowRight size={15} />
+                </>
+              )}
             </button>
           </form>
         ) : (

@@ -24,6 +24,13 @@ export interface SearchableDropdownProps {
   allowCustom?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  triggerStyle?: React.CSSProperties;
+  triggerHeight?: number | string;
+  showSubLabelInTrigger?: boolean;
+  renderTriggerValue?: (selectedOption?: SearchableDropdownOption, value?: string) => React.ReactNode;
+  popoverWidth?: number | string;
+  popoverMinWidth?: number | string;
+  showClear?: boolean;
   id?: string;
   name?: string;
   maxHeight?: number;
@@ -53,6 +60,13 @@ export default function SearchableDropdown({
   allowCustom = false,
   className = '',
   style,
+  triggerStyle,
+  triggerHeight,
+  showSubLabelInTrigger = false,
+  renderTriggerValue,
+  popoverWidth,
+  popoverMinWidth,
+  showClear = true,
   id,
   name,
   maxHeight = 220,
@@ -218,6 +232,7 @@ export default function SearchableDropdown({
         id={inputId}
         role="combobox"
         aria-expanded={isOpen}
+        aria-controls={`${inputId}-listbox`}
         aria-haspopup="listbox"
         tabIndex={disabled ? -1 : 0}
         onClick={() => (isOpen ? handleClose() : handleOpen())}
@@ -226,41 +241,49 @@ export default function SearchableDropdown({
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          minHeight: '38px',
-          padding: '6px 12px',
+          height: triggerHeight || '36px',
+          minHeight: triggerHeight || '36px',
+          padding: '0 10px',
           background: disabled ? '#f9fafb' : '#ffffff',
-          border: isOpen ? '1px solid #0284c7' : '1px solid #d1d5db',
+          border: isOpen ? '1px solid var(--brand, #1985a1)' : '1px solid var(--fr8x-outline, #c5c3c6)',
           borderRadius: '4px',
-          boxShadow: isOpen ? '0 0 0 2px rgba(2, 132, 199, 0.15)' : 'none',
+          boxShadow: isOpen ? '0 0 0 2px rgba(25, 133, 161, 0.15)' : 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           boxSizing: 'border-box',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+          ...triggerStyle,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-          {selectedOption?.flag && <span style={{ fontSize: '15px', lineHeight: 1 }}>{selectedOption.flag}</span>}
-          <span
-            style={{
-              fontSize: '13.5px',
-              color: selectedOption ? '#0f172a' : '#64748b',
-              fontWeight: selectedOption ? 500 : 400,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {selectedOption ? selectedOption.label : value || placeholder}
-          </span>
-          {selectedOption?.subLabel && (
-            <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px' }}>
-              ({selectedOption.subLabel})
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflow: 'hidden', flex: 1, minWidth: 0 }}>
+          {renderTriggerValue ? (
+            renderTriggerValue(selectedOption, value)
+          ) : (
+            <>
+              {selectedOption?.flag && <span style={{ fontSize: '14px', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
+              <span
+                style={{
+                  fontSize: '12.5px',
+                  color: selectedOption ? 'var(--fr8x-text, #0f172a)' : 'var(--fr8x-muted, #64748b)',
+                  fontWeight: selectedOption ? 500 : 400,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {selectedOption ? selectedOption.label : value || placeholder}
+              </span>
+              {showSubLabelInTrigger && selectedOption?.subLabel && (
+                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  ({selectedOption.subLabel})
+                </span>
+              )}
+            </>
           )}
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0, marginLeft: '8px' }}>
-          {value && !disabled && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0, marginLeft: '6px' }}>
+          {showClear && value && !disabled && (
             <span
               onClick={(e) => {
                 e.stopPropagation();
@@ -271,12 +294,11 @@ export default function SearchableDropdown({
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '18px',
-                height: '18px',
+                width: '16px',
+                height: '16px',
                 borderRadius: '50%',
                 color: '#9ca3af',
                 cursor: 'pointer',
-                marginRight: '2px',
               }}
               onMouseEnter={(e) => (e.currentTarget.style.color = '#ef4444')}
               onMouseLeave={(e) => (e.currentTarget.style.color = '#9ca3af')}
@@ -285,11 +307,12 @@ export default function SearchableDropdown({
             </span>
           )}
           <ChevronDown
-            size={16}
+            size={15}
             color="#475569"
             style={{
               transition: 'transform 0.2s ease',
               transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              flexShrink: 0,
             }}
           />
         </div>
@@ -298,12 +321,15 @@ export default function SearchableDropdown({
       {/* Dropdown Popover Panel */}
       {isOpen && (
         <div
+          id={`${inputId}-listbox`}
           role="listbox"
           style={{
             position: 'absolute',
             top: 'calc(100% + 4px)',
             left: 0,
-            right: 0,
+            right: popoverWidth ? 'auto' : 0,
+            width: popoverWidth || '100%',
+            minWidth: popoverMinWidth || '100%',
             background: '#ffffff',
             border: '1px solid #d1d5db',
             borderRadius: '4px',

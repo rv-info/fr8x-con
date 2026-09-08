@@ -59,8 +59,8 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // Scripts: self + Firebase + Vercel analytics
-              "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://www.google.com https://apis.google.com https://va.vercel-scripts.com",
+              // Scripts: self + Firebase + Vercel analytics (unsafe-eval for Next.js dev)
+              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://www.gstatic.com https://www.google.com https://apis.google.com https://va.vercel-scripts.com`,
               // Styles: self + Google Fonts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Fonts
