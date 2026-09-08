@@ -285,17 +285,9 @@ export default function RegisterPage() {
           if (data.success && Array.isArray(data.cities) && data.cities.length > 0) {
             setCityList(data.cities);
             const matched = data.cities.find((c: any) => c.name.toLowerCase() === city.toLowerCase());
-            if (!matched && !isCustomCity) {
-              setCity(data.cities[0].name);
-              if (data.cities[0].postalCode) {
-                setPostalCode(data.cities[0].postalCode);
-              }
-            } else if (matched && matched.postalCode && !postalCode) {
+            if (matched && matched.postalCode && !postalCode) {
               setPostalCode(matched.postalCode);
             }
-          } else {
-            setCityList([]);
-            setIsCustomCity(true);
           }
           setIsLoadingCities(false);
         }
@@ -350,7 +342,15 @@ export default function RegisterPage() {
         const defaultState = code === 'IN' ? (states.find(s => s.isoCode === 'PB')?.name || states[0].name) : states[0].name;
         setState(defaultState);
         const sObj = states.find(s => s.name === defaultState);
-        if (sObj) setStateCode(sObj.isoCode);
+        if (sObj) {
+          setStateCode(sObj.isoCode);
+          const cList = CSC_City.getCitiesOfState(code, sObj.isoCode);
+          if (cList && cList.length > 0) {
+            const defC = sObj.isoCode === 'PB' ? (cList.find(c => c.name === 'Ludhiana')?.name || cList[0].name) : cList[0].name;
+            setCity(defC);
+            if (defC === 'Ludhiana') setPostalCode('141001');
+          }
+        }
       } else {
         setState('');
         setStateCode('');
@@ -371,8 +371,14 @@ export default function RegisterPage() {
       setStateCode(matched.isoCode);
       const cities = CSC_City.getCitiesOfState(countryCode, matched.isoCode);
       if (cities && cities.length > 0) {
-        setCity(cities[0].name);
+        const defaultCity = matched.isoCode === 'PB'
+          ? (cities.find(c => c.name === 'Ludhiana')?.name || cities[0].name)
+          : cities[0].name;
+        setCity(defaultCity);
         setIsCustomCity(false);
+        if (defaultCity === 'Ludhiana') {
+          setPostalCode('141001');
+        }
       }
     }
   };
@@ -641,10 +647,10 @@ export default function RegisterPage() {
           >
             f8
           </div>
-          <h1 style={{ fontSize: '22px', fontWeight: 700, margin: 0, color: 'var(--ink)' }}>
+          <h1 style={{ fontSize: '11pt', fontWeight: 700, margin: 0, color: 'var(--ink)', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", textTransform: 'uppercase', letterSpacing: '0.3px' }}>
             Enterprise Freight Entity Registration
           </h1>
-          <p style={{ fontSize: '12px', color: 'var(--mut)', margin: '4px 0 0' }}>
+          <p style={{ fontSize: '11pt', color: 'var(--mut)', margin: '4px 0 0', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
             Corporate KYC validation, professional email verification, and plan provisioning.
           </p>
         </div>
@@ -652,13 +658,14 @@ export default function RegisterPage() {
         {errorMessage && (
           <div
             style={{
-              padding: '12px 14px',
-              borderRadius: '8px',
+              padding: '10px 14px',
+              borderRadius: '4px',
               background: '#fff0f1',
               border: '1px solid #f0c8ce',
               color: 'var(--red)',
-              fontSize: '12px',
-              marginBottom: '16px',
+              fontSize: '11pt',
+              fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+              marginBottom: '14px',
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
@@ -674,13 +681,14 @@ export default function RegisterPage() {
             {/* One User, One Login Policy Banner */}
             <div
               style={{
-                padding: '10px 14px',
-                borderRadius: '8px',
+                padding: '8px 12px',
+                borderRadius: '4px',
                 background: '#f0fdf4',
                 border: '1px solid #bbf7d0',
                 color: '#166534',
-                fontSize: '11.5px',
-                marginBottom: '16px',
+                fontSize: '11pt',
+                fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                marginBottom: '14px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
@@ -694,14 +702,14 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 1: Account and Contact Card */}
-            <div className="reg-section">
+            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 40 }}>
               <div className="reg-section-head">
                 <span className="reg-section-title">
                   <User size={15} color="var(--brand)" /> 1. Account & Contact Details
                 </span>
                 <span className="reg-section-sub">Professional Corporate Identity</span>
               </div>
-              <div className="reg-section-body">
+              <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
                 {/* Row 1: First Name, Last Name, Designation */}
                 <div className="reg-grid-3">
                   <div className="reg-field">
@@ -812,7 +820,7 @@ export default function RegisterPage() {
                       )}
                     </label>
                     <div className="reg-mobile-group">
-                      <div style={{ width: '84px', flexShrink: 0 }}>
+                      <div style={{ width: '92px', flexShrink: 0 }}>
                         <SearchableDropdown
                           options={isdOptions}
                           value={isdCode}
@@ -822,7 +830,7 @@ export default function RegisterPage() {
                               setMobileNumber(mobileNumber.slice(0, 10));
                             }
                           }}
-                          triggerHeight="36px"
+                          triggerHeight="38px"
                           triggerStyle={{
                             borderTopRightRadius: 0,
                             borderBottomRightRadius: 0,
@@ -831,15 +839,15 @@ export default function RegisterPage() {
                             background: '#f8fafc',
                           }}
                           renderTriggerValue={(opt, val) => (
-                            <span style={{ fontWeight: 600, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '14px' }}>{opt?.flag || '🌐'}</span>
+                            <span style={{ fontWeight: 700, fontSize: '11pt', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '13pt' }}>{opt?.flag || '🌐'}</span>
                               <span>{val || isdCode}</span>
                             </span>
                           )}
                           popoverMinWidth="290px"
                           showClear={false}
                           searchPlaceholder="Search country or code…"
-                          maxHeight={280}
+                          maxHeight={300}
                         />
                       </div>
                       <input
@@ -879,7 +887,8 @@ export default function RegisterPage() {
                       value={timezone}
                       onChange={setTimezone}
                       searchPlaceholder="Search time zone…"
-                      triggerHeight="36px"
+                      triggerHeight="38px"
+                      maxHeight={300}
                     />
                   </div>
                 </div>
@@ -895,7 +904,8 @@ export default function RegisterPage() {
                       value={country}
                       onChange={handleCountryChange}
                       searchPlaceholder="Search country…"
-                      triggerHeight="36px"
+                      triggerHeight="38px"
+                      maxHeight={300}
                     />
                   </div>
 
@@ -909,7 +919,8 @@ export default function RegisterPage() {
                       onChange={handleStateChange}
                       placeholder="Select State"
                       searchPlaceholder="Search"
-                      triggerHeight="36px"
+                      triggerHeight="38px"
+                      maxHeight={300}
                     />
                   </div>
                 </div>
@@ -928,7 +939,8 @@ export default function RegisterPage() {
                         onChange={handleCitySelect}
                         searchPlaceholder="Search city…"
                         allowCustom
-                        triggerHeight="36px"
+                        triggerHeight="38px"
+                        maxHeight={300}
                       />
                     ) : (
                       <div style={{ display: 'flex', gap: '6px' }}>
@@ -949,7 +961,7 @@ export default function RegisterPage() {
                               'Mumbai';
                             setCity(fallback);
                           }}
-                          style={{ whiteSpace: 'nowrap', fontSize: '11px', height: '36px', padding: '0 10px', borderRadius: '4px' }}
+                          style={{ whiteSpace: 'nowrap', fontSize: '11pt', height: '38px', padding: '0 12px', borderRadius: '4px', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", fontWeight: 700 }}
                         >
                           Preset List
                         </button>
@@ -974,14 +986,14 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 2: Legal Business Card */}
-            <div className="reg-section">
+            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 30 }}>
               <div className="reg-section-head">
                 <span className="reg-section-title">
                   <Building size={15} color="var(--brand)" /> 2. Legal Entity & Compliance Card
                 </span>
                 <span className="reg-section-sub">Government & Trade Registry</span>
               </div>
-              <div className="reg-section-body">
+              <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
                 {/* Row 1: Legal Company Name and System Company ID */}
                 <div className="reg-grid-2">
                   <div className="reg-field">
@@ -1079,14 +1091,14 @@ export default function RegisterPage() {
             </div>
 
             {/* Card 3: Plan Selection Card */}
-            <div className="reg-section">
+            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 20 }}>
               <div className="reg-section-head">
                 <span className="reg-section-title">
                   <CreditCard size={15} color="var(--brand)" /> 3. Membership & Plan Tier
                 </span>
                 <span className="reg-section-sub">Enterprise Discount Rules</span>
               </div>
-              <div className="reg-section-body">
+              <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
                 <div className="reg-plan-grid">
                   {/* Trial */}
                   <div
@@ -1099,13 +1111,13 @@ export default function RegisterPage() {
                   >
                     <div>
                       <div className="reg-plan-header">
-                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Trial Plan</b>
+                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Plan</b>
                       </div>
                       <div className="reg-plan-price">
-                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
                           Free
                         </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
                           Valid for 2 days · 1 trial per company / year
                         </small>
                       </div>
@@ -1127,13 +1139,13 @@ export default function RegisterPage() {
                   >
                     <div>
                       <div className="reg-plan-header">
-                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Professional</b>
+                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional</b>
                       </div>
                       <div className="reg-plan-price">
-                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
-                          ₹1,500 <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 500 }}>/mo ($27 USD)</small>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
+                          ₹1,500 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/mo ($27 USD)</small>
                         </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
                           Inclusive of GST / Tax
                         </small>
                       </div>
@@ -1155,16 +1167,16 @@ export default function RegisterPage() {
                   >
                     <div>
                       <div className="reg-plan-header">
-                        <b style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--ink)' }}>Premium</b>
-                        <span className="badge amber" style={{ fontSize: '10px', padding: '1px 6px', fontWeight: 700 }}>
+                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium</b>
+                        <span className="badge amber" style={{ fontSize: '10pt', padding: '1px 6px', fontWeight: 700 }}>
                           Recommended
                         </span>
                       </div>
                       <div className="reg-plan-price">
-                        <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
-                          ₹3,000 <small style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 500 }}>/mo ($50 USD)</small>
+                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
+                          ₹3,000 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/mo ($50 USD)</small>
                         </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '2px', display: 'block' }}>
+                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
                           Golden Verified Tick + 40% Discount
                         </small>
                       </div>
@@ -1184,7 +1196,7 @@ export default function RegisterPage() {
             </div>
 
             {/* Legal Acceptance */}
-            <div className="reg-section" style={{ background: '#fafcfe', padding: '12px 14px' }}>
+            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 10, background: '#fafcfe', padding: '12px 14px' }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
                 <input
                   type="checkbox"

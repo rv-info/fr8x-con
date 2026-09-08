@@ -9591,6 +9591,7 @@ textarea.input {
   width: 100%;
   max-width: 820px;
   margin: 0 auto;
+  font-family: Calibri, 'Segoe UI', Arial, -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
 }
 
 .reg-section {
@@ -9599,7 +9600,22 @@ textarea.input {
   border-radius: 4px;
   background: #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Stacking context: Sections earlier in the form naturally render on top of subsequent sections */
+.reg-section:nth-child(1) { z-index: 50; }
+.reg-section:nth-child(2) { z-index: 40; }
+.reg-section:nth-child(3) { z-index: 30; }
+.reg-section:nth-child(4) { z-index: 20; }
+.reg-section:nth-child(5) { z-index: 10; }
+
+/* When any dropdown is open or focused inside a section, elevate that section to topmost */
+.reg-section:focus-within,
+.reg-section:has([data-open="true"]),
+.reg-section:has(.dropdown-open) {
+  z-index: 9999 !important;
 }
 
 .reg-section-head {
@@ -9615,19 +9631,42 @@ textarea.input {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: 11pt;
   font-weight: 700;
   color: var(--fr8x-text, #1e293b);
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
 }
 
 .reg-section-sub {
-  font-size: 10.5px;
+  font-size: 11pt;
   color: var(--fr8x-muted, #475569);
   font-weight: 500;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
 }
 
 .reg-section-body {
   padding: 14px 16px;
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Ensure grid rows inside section also stack naturally top-to-bottom so downward popovers never get occluded */
+.reg-section-body > div {
+  position: relative;
+  overflow: visible !important;
+}
+
+.reg-section-body > div:nth-child(1) { z-index: 25; }
+.reg-section-body > div:nth-child(2) { z-index: 23; }
+.reg-section-body > div:nth-child(3) { z-index: 21; }
+.reg-section-body > div:nth-child(4) { z-index: 19; }
+.reg-section-body > div:nth-child(5) { z-index: 17; }
+.reg-section-body > div:nth-child(6) { z-index: 15; }
+
+.reg-section-body > div:focus-within,
+.reg-section-body > div:has([data-open="true"]),
+.reg-section-body > div:has(.dropdown-open) {
+  z-index: 9998 !important;
 }
 
 .reg-grid-3 {
@@ -9663,33 +9702,36 @@ textarea.input {
   flex-direction: column;
   width: 100%;
   min-width: 0;
+  position: relative;
 }
 
 .reg-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 16px;
+  height: 18px;
   margin-bottom: 5px;
-  font-size: 10.5px;
+  font-size: 11pt;
   font-weight: 700;
   color: var(--fr8x-text, #1e293b);
   text-transform: uppercase;
-  letter-spacing: 0.25px;
-  line-height: 1;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
 }
 
 .reg-label-text {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 700;
 }
 
 .reg-label-extra {
-  font-size: 10px;
+  font-size: 9.5pt;
   font-weight: 600;
   text-transform: none;
   letter-spacing: normal;
@@ -9697,14 +9739,15 @@ textarea.input {
 
 .reg-input {
   width: 100%;
-  height: 36px;
+  height: 38px;
   border: 1px solid var(--fr8x-outline, #c5c3c6);
   border-radius: 4px;
   padding: 0 10px;
   background: #ffffff;
   color: var(--fr8x-text, #1e293b);
   font-weight: 500;
-  font-size: 12.5px;
+  font-size: 11pt;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
   box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -9724,7 +9767,7 @@ textarea.input {
 .reg-mobile-group {
   display: flex;
   width: 100%;
-  height: 36px;
+  height: 38px;
   box-sizing: border-box;
   position: relative;
 }
@@ -9746,14 +9789,17 @@ textarea.input {
   cursor: pointer;
   box-sizing: border-box;
   transition: border-color 0.15s ease, background-color 0.15s ease;
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
 }
 
 .reg-plan-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 22px;
+  min-height: 24px;
   margin-bottom: 4px;
+  font-size: 11pt;
+  font-weight: 700;
 }
 
 .reg-plan-price {
@@ -9768,9 +9814,10 @@ textarea.input {
   flex: 1;
   margin: 0;
   padding-left: 15px;
-  font-size: 11px;
+  font-size: 10pt;
   line-height: 1.5;
   color: var(--fr8x-muted, #475569);
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
 }
 
 @media (max-width: 820px) {

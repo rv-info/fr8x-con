@@ -98,19 +98,47 @@ export default function SearchableDropdown({
     return normalizedOptions.find((opt) => opt.value === value);
   }, [normalizedOptions, value]);
 
-  // Filtered options based on search query
+  // Filtered options based on search query with relevance ranking
   const filteredOptions = useMemo(() => {
     if (!searchTerm.trim()) {
       return normalizedOptions;
     }
     const q = searchTerm.toLowerCase().trim();
-    return normalizedOptions.filter((opt) => {
-      return (
-        opt.label.toLowerCase().includes(q) ||
-        opt.value.toLowerCase().includes(q) ||
-        (opt.subLabel && opt.subLabel.toLowerCase().includes(q))
-      );
-    });
+
+    const scored: { opt: SearchableDropdownOption; score: number }[] = [];
+
+    for (const opt of normalizedOptions) {
+      const labelLower = opt.label.toLowerCase();
+      const valLower = opt.value.toLowerCase();
+      const subLower = opt.subLabel ? opt.subLabel.toLowerCase() : '';
+
+      let score = 0;
+
+      if (labelLower === q || valLower === q) {
+        score = 100; // Exact match
+      } else if (labelLower.startsWith(q) || valLower.startsWith(q)) {
+        score = 80; // Starts with query (e.g. "India" starts with "in")
+      } else if (
+        labelLower.split(/[\s,()/-]+/).some((w) => w.startsWith(q)) ||
+        valLower.split(/[\s,()/-]+/).some((w) => w.startsWith(q))
+      ) {
+        score = 60; // Word within label starts with query
+      } else if (labelLower.includes(q) || valLower.includes(q)) {
+        score = 40; // Substring match
+      } else if (subLower.startsWith(q)) {
+        score = 30; // SubLabel starts with query
+      } else if (subLower.includes(q)) {
+        score = 20; // SubLabel contains query
+      }
+
+      if (score > 0) {
+        scored.push({ opt, score });
+      }
+    }
+
+    // Sort by score descending; if score equal, maintain original alphabetical ordering
+    scored.sort((a, b) => b.score - a.score);
+    return scored.map((s) => s.opt);
   }, [normalizedOptions, searchTerm]);
 
   // Open dropdown and focus search input
@@ -215,11 +243,14 @@ export default function SearchableDropdown({
   return (
     <div
       ref={containerRef}
-      className={`fr8x-searchable-dropdown-root ${className}`}
+      className={`fr8x-searchable-dropdown-root ${className} ${isOpen ? 'dropdown-open' : ''}`}
+      data-open={isOpen ? 'true' : 'false'}
       style={{
         position: 'relative',
         width: '100%',
         userSelect: 'none',
+        zIndex: isOpen ? 10000 : 'auto',
+        fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
         ...style,
       }}
       onKeyDown={handleKeyDown}
@@ -241,8 +272,8 @@ export default function SearchableDropdown({
           alignItems: 'center',
           justifyContent: 'space-between',
           width: '100%',
-          height: triggerHeight || '36px',
-          minHeight: triggerHeight || '36px',
+          height: triggerHeight || '38px',
+          minHeight: triggerHeight || '38px',
           padding: '0 10px',
           background: disabled ? '#f9fafb' : '#ffffff',
           border: isOpen ? '1px solid var(--brand, #1985a1)' : '1px solid var(--fr8x-outline, #c5c3c6)',
@@ -252,6 +283,8 @@ export default function SearchableDropdown({
           opacity: disabled ? 0.6 : 1,
           boxSizing: 'border-box',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
+          fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+          fontSize: '11pt',
           ...triggerStyle,
         }}
       >
@@ -260,11 +293,12 @@ export default function SearchableDropdown({
             renderTriggerValue(selectedOption, value)
           ) : (
             <>
-              {selectedOption?.flag && <span style={{ fontSize: '14px', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
+              {selectedOption?.flag && <span style={{ fontSize: '13pt', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
               <span
                 style={{
-                  fontSize: '12.5px',
-                  color: selectedOption ? 'var(--fr8x-text, #0f172a)' : 'var(--fr8x-muted, #64748b)',
+                  fontSize: '11pt',
+                  fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                  color: selectedOption ? 'var(--fr8x-text, #1e293b)' : 'var(--fr8x-muted, #64748b)',
                   fontWeight: selectedOption ? 500 : 400,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -274,7 +308,7 @@ export default function SearchableDropdown({
                 {selectedOption ? selectedOption.label : value || placeholder}
               </span>
               {showSubLabelInTrigger && selectedOption?.subLabel && (
-                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '9.5pt', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   ({selectedOption.subLabel})
                 </span>
               )}
@@ -330,21 +364,25 @@ export default function SearchableDropdown({
             right: popoverWidth ? 'auto' : 0,
             width: popoverWidth || '100%',
             minWidth: popoverMinWidth || '100%',
+            maxHeight: `${(maxHeight || 300) + 65}px`,
             background: '#ffffff',
-            border: '1px solid #d1d5db',
+            border: '1.5px solid #0284c7',
             borderRadius: '4px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+            boxShadow: '0 16px 36px -4px rgba(0, 0, 0, 0.35), 0 8px 16px -4px rgba(0, 0, 0, 0.2)',
             zIndex: 99999,
             overflow: 'hidden',
             boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {/* Top Search Input Box */}
           <div
             style={{
               padding: '8px',
-              borderBottom: '1px solid #f1f5f9',
-              background: '#ffffff',
+              borderBottom: '1px solid #e2e8f0',
+              background: '#f8fafc',
+              flexShrink: 0,
             }}
           >
             <div
@@ -356,7 +394,7 @@ export default function SearchableDropdown({
             >
               <Search
                 size={14}
-                color="#94a3b8"
+                color="#475569"
                 style={{
                   position: 'absolute',
                   left: '10px',
@@ -377,17 +415,18 @@ export default function SearchableDropdown({
                   height: '34px',
                   paddingLeft: '32px',
                   paddingRight: '10px',
-                  fontSize: '13px',
+                  fontSize: '11pt',
+                  fontWeight: 600,
                   color: '#0f172a',
                   background: '#ffffff',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid #94a3b8',
                   borderRadius: '4px',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  fontFamily: 'inherit',
+                  fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
                 }}
                 onFocus={(e) => (e.target.style.borderColor = '#0284c7')}
-                onBlur={(e) => (e.target.style.borderColor = '#d1d5db')}
+                onBlur={(e) => (e.target.style.borderColor = '#94a3b8')}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -397,35 +436,15 @@ export default function SearchableDropdown({
           <div
             ref={listRef}
             style={{
-              maxHeight: `${maxHeight}px`,
+              maxHeight: `${maxHeight || 300}px`,
+              minHeight: '140px',
               overflowY: 'auto',
               padding: '4px 0',
               scrollbarWidth: 'thin',
-              scrollbarColor: '#cbd5e1 #f8fafc',
+              scrollbarColor: '#94a3b8 #f1f5f9',
+              flex: 1,
             }}
           >
-            {/* Optional Default / Empty Select option if placeholder */}
-            {!searchTerm && placeholder && (
-              <div
-                data-dropdown-item
-                onClick={() => handleSelect('')}
-                style={{
-                  padding: '7px 12px',
-                  fontSize: '13.5px',
-                  color: !value ? '#0284c7' : '#64748b',
-                  fontWeight: !value ? 600 : 400,
-                  cursor: 'pointer',
-                  background: !value ? '#f0f9ff' : 'transparent',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = '#f1f5f9')}
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.background = !value ? '#f0f9ff' : 'transparent')
-                }
-              >
-                {placeholder}
-              </div>
-            )}
-
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt, idx) => {
                 const isSelected = opt.value === value;
@@ -440,10 +459,11 @@ export default function SearchableDropdown({
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '7px 12px',
-                      fontSize: '13.5px',
+                      padding: '8px 12px',
+                      fontSize: '11pt',
+                      fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
                       color: isSelected ? '#0284c7' : '#1e293b',
-                      fontWeight: isSelected ? 600 : 400,
+                      fontWeight: isSelected ? 700 : 400,
                       cursor: 'pointer',
                       background: isHighlighted
                         ? '#f1f5f9'
@@ -455,10 +475,10 @@ export default function SearchableDropdown({
                     onMouseEnter={() => setHighlightedIndex(idx)}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {opt.flag && <span style={{ fontSize: '15px' }}>{opt.flag}</span>}
-                      <span>{opt.label}</span>
+                      {opt.flag && <span style={{ fontSize: '13pt', lineHeight: 1 }}>{opt.flag}</span>}
+                      <span style={{ fontSize: '11pt' }}>{opt.label}</span>
                       {opt.subLabel && (
-                        <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '9.5pt', color: '#64748b' }}>
                           {opt.subLabel}
                         </span>
                       )}
