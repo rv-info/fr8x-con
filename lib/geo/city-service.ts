@@ -52,6 +52,7 @@ const KNOWN_POSTAL_CODES: Record<string, Record<string, string>> = {
   },
   US: {
     'New York': '10001',
+    'New York City': '10001',
     'Los Angeles': '90001',
     'Chicago': '60601',
     'Houston': '77001',
@@ -167,6 +168,7 @@ const KNOWN_UNLOCODES: Record<string, string> = {
   'Felixstowe': 'GBFXT',
   'Liverpool': 'GBLIV',
   'New York': 'USNYC',
+  'New York City': 'USNYC',
   'Los Angeles': 'USLAX',
   'Long Beach': 'USLGB',
   'Houston': 'USHOU',
@@ -273,33 +275,45 @@ export function searchCitiesGlobal(query: string, limit = 50): GlobalCityItem[] 
   if (!query || query.trim().length < 2) return [];
   const q = query.trim().toLowerCase();
   const allCountries = Country.getAllCountries();
-  const results: GlobalCityItem[] = [];
+  const scoredResults: { item: GlobalCityItem; score: number }[] = [];
 
   for (const country of allCountries) {
     const cities = City.getCitiesOfCountry(country.isoCode) || [];
     for (const city of cities) {
-      if (city.name.toLowerCase().includes(q)) {
+      const cityNameLower = city.name.toLowerCase();
+      if (cityNameLower.includes(q)) {
         const knownPostal = KNOWN_POSTAL_CODES[country.isoCode]?.[city.name];
         const unLocode = KNOWN_UNLOCODES[city.name];
 
-        results.push({
-          id: `${country.isoCode}-${city.stateCode || 'XX'}-${city.name.replace(/\s+/g, '-').toLowerCase()}`,
-          name: city.name,
-          country: country.name,
-          countryCode: country.isoCode,
-          stateCode: city.stateCode,
-          latitude: city.latitude ? parseFloat(city.latitude) : undefined,
-          longitude: city.longitude ? parseFloat(city.longitude) : undefined,
-          postalCode: knownPostal,
-          unLocode,
-        });
+        let score = 10;
+        if (cityNameLower === q) {
+          score = 100;
+        } else if (cityNameLower.startsWith(q)) {
+          score = 50;
+        }
+        if (unLocode) score += 15;
+        if (knownPostal) score += 10;
 
-        if (results.length >= limit) return results;
+        scoredResults.push({
+          score,
+          item: {
+            id: `${country.isoCode}-${city.stateCode || 'XX'}-${city.name.replace(/\s+/g, '-').toLowerCase()}`,
+            name: city.name,
+            country: country.name,
+            countryCode: country.isoCode,
+            stateCode: city.stateCode,
+            latitude: city.latitude ? parseFloat(city.latitude) : undefined,
+            longitude: city.longitude ? parseFloat(city.longitude) : undefined,
+            postalCode: knownPostal,
+            unLocode,
+          },
+        });
       }
     }
   }
 
-  return results;
+  scoredResults.sort((a, b) => b.score - a.score);
+  return scoredResults.slice(0, limit).map((r) => r.item);
 }
 
 export async function lookupPostalCode(

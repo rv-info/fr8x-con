@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Database,
   Search,
@@ -108,6 +108,8 @@ export default function MasterDataPage() {
     country: string;
     countryCode: string;
     region: string;
+    state: string;
+    postalCode: string;
     type: LocationType;
     isPOR: boolean;
     isPOL: boolean;
@@ -125,6 +127,8 @@ export default function MasterDataPage() {
     country: '',
     countryCode: '',
     region: '',
+    state: '',
+    postalCode: '',
     type: 'Seaport',
     isPOR: true,
     isPOL: true,
@@ -252,6 +256,97 @@ export default function MasterDataPage() {
     return list.sort();
   }, [masterLocations]);
 
+  // Global Cities Database State
+  const [globalCountries, setGlobalCountries] = useState<
+    { code: string; name: string; flag: string; phonecode: string; currency: string }[]
+  >([]);
+  const [selectedGeoCountry, setSelectedGeoCountry] = useState('IN');
+  const [geoCities, setGeoCities] = useState<GlobalCityItem[]>([]);
+  const [geoCitiesLoading, setGeoCitiesLoading] = useState(false);
+  const [geoCitySearch, setGeoCitySearch] = useState('');
+  const [promotedCityId, setPromotedCityId] = useState<string | null>(null);
+
+  // Fetch 250 global countries on component mount
+  useEffect(() => {
+    fetch('/api/geo/countries')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.countries)) {
+          setGlobalCountries(data.countries);
+        }
+      })
+      .catch((err) => console.error('Error fetching countries:', err));
+  }, []);
+
+  // Fetch cities whenever selected country or search query changes
+  useEffect(() => {
+    let isMounted = true;
+    setGeoCitiesLoading(true);
+    const params = new URLSearchParams();
+    if (selectedGeoCountry) params.set('country', selectedGeoCountry);
+    if (geoCitySearch.trim()) params.set('query', geoCitySearch.trim());
+    params.set('limit', '150');
+
+    fetch(`/api/geo/cities?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted) {
+          if (data.success && Array.isArray(data.cities)) {
+            setGeoCities(data.cities);
+          } else {
+            setGeoCities([]);
+          }
+          setGeoCitiesLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error('Error fetching cities:', err);
+          setGeoCitiesLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedGeoCountry, geoCitySearch]);
+
+  const handlePromoteCityToLocation = async (c: GlobalCityItem) => {
+    const generatedUnLocode =
+      c.unLocode ||
+      `${c.countryCode}${c.name.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}`;
+
+    await addMasterLocation(
+      {
+        unLocode: generatedUnLocode,
+        name: c.name,
+        country: c.country,
+        countryCode: c.countryCode,
+        region: c.state || 'International',
+        state: c.state,
+        postalCode: c.postalCode,
+        type: 'Inland Container Depot (ICD)',
+        capabilities: {
+          isPOR: true,
+          isPOL: false,
+          isPOD: false,
+          isFPOD: true,
+        },
+        terminals: ['Main City Freight Terminal', 'Local Container Depot'],
+        coordinates: {
+          lat: c.latitude || 0,
+          lng: c.longitude || 0,
+        },
+        status: 'active',
+        remarks: `Promoted from Global Cities Database. Postal: ${c.postalCode || 'Resolved on booking'}`,
+      },
+      `Promoted global city ${c.name} (${c.countryCode}) with postal ${c.postalCode || 'N/A'} to active exchange location`
+    );
+
+    setPromotedCityId(c.id);
+    setSyncStatus(`Promoted ${c.name} (${c.country}) to active exchange master locations!`);
+  };
+
   // Filtered Locations
   const filteredLocations = useMemo(() => {
     return masterLocations.filter((loc) => {
@@ -352,6 +447,8 @@ export default function MasterDataPage() {
         country: loc.country,
         countryCode: loc.countryCode,
         region: loc.region,
+        state: loc.state || '',
+        postalCode: loc.postalCode || '',
         type: loc.type,
         isPOR: loc.capabilities.isPOR,
         isPOL: loc.capabilities.isPOL,
@@ -372,6 +469,8 @@ export default function MasterDataPage() {
         country: 'India',
         countryCode: 'IN',
         region: '',
+        state: '',
+        postalCode: '',
         type: 'Seaport',
         isPOR: true,
         isPOL: true,
@@ -404,6 +503,8 @@ export default function MasterDataPage() {
           country: locationForm.country.trim(),
           countryCode: locationForm.countryCode.toUpperCase().trim(),
           region: locationForm.region.trim(),
+          state: locationForm.state.trim() || undefined,
+          postalCode: locationForm.postalCode.trim() || undefined,
           type: locationForm.type,
           capabilities: {
             isPOR: locationForm.isPOR,
@@ -426,6 +527,8 @@ export default function MasterDataPage() {
           country: locationForm.country.trim(),
           countryCode: locationForm.countryCode.toUpperCase().trim(),
           region: locationForm.region.trim(),
+          state: locationForm.state.trim() || undefined,
+          postalCode: locationForm.postalCode.trim() || undefined,
           type: locationForm.type,
           capabilities: {
             isPOR: locationForm.isPOR,
@@ -829,7 +932,7 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
       )}
 
       {/* Statistics Strip */}
-      <div className="gf-grid-6">
+      <div className="gf-grid-7">
         <div
           onClick={() => setActiveTab('locations')}
           className={`gf-stat-box ${activeTab === 'locations' ? 'active' : ''}`}
@@ -913,6 +1016,20 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
           </div>
           <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>Statutory GST & RCM</div>
         </div>
+
+        <div
+          onClick={() => setActiveTab('cities')}
+          className={`gf-stat-box ${activeTab === 'cities' ? 'active' : ''}`}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', color: '#64748b', marginBottom: '4px' }}>
+            <span style={{ fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Global Cities</span>
+            <Globe style={{ width: '15px', height: '15px', color: '#0284c7' }} />
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 900, color: '#0f172a', fontFamily: 'Consolas, monospace', lineHeight: 1.2 }}>
+            150,000+
+          </div>
+          <div style={{ fontSize: '10.5px', color: '#64748b', fontWeight: 600, marginTop: '2px' }}>250 Countries · Postal/ZIP</div>
+        </div>
       </div>
 
       {/* Tabs Bar */}
@@ -963,6 +1080,14 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
         >
           <Receipt style={{ width: '14px', height: '14px' }} />
           <span>Tax SAC Classification ({masterTaxCodes.length})</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('cities'); setSearchQuery(''); }}
+          className={`gf-tab-pill ${activeTab === 'cities' ? 'active' : ''}`}
+        >
+          <Globe style={{ width: '14px', height: '14px' }} />
+          <span>Global Cities & Postal Codes (150,000+)</span>
         </button>
       </div>
 
@@ -1121,6 +1246,12 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                       <div className="font-mono text-[10.5px] text-slate-600">
                         {loc.coordinates?.lat?.toFixed(4)}, {loc.coordinates?.lng?.toFixed(4)}
                       </div>
+                      {loc.postalCode && (
+                        <div className="font-mono text-[9.5px] text-emerald-700 font-bold flex items-center gap-1">
+                          <span>PIN:</span>
+                          <span>{loc.postalCode}</span>
+                        </div>
+                      )}
                       {loc.customsZoneCode && (
                         <div className="font-mono text-[9.5px] text-sky-700 font-bold">Zone: {loc.customsZoneCode}</div>
                       )}
@@ -1579,6 +1710,185 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
         </div>
       )}
 
+      {/* TAB 7: GLOBAL CITIES & POSTAL CODES DIRECTORY */}
+      {activeTab === 'cities' && (
+        <div className="space-y-4">
+          {/* Header & Filter Controls Bar */}
+          <div className="gf-card p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-sky-50 text-sky-600 border border-sky-100 flex items-center justify-center">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    Global Cities &amp; Postal Codes Directory
+                    <span className="gf-badge gf-badge-blue text-[10px]">150,000+ Cities</span>
+                    <span className="gf-badge gf-badge-green text-[10px]">250 Countries</span>
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Universal geo database across all nations with ISO codes, states, coordinates, and postal code resolution.
+                  </p>
+                </div>
+              </div>
+
+              {/* Country & City Search Controls */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-slate-600">Country:</span>
+                  <select
+                    value={selectedGeoCountry}
+                    onChange={(e) => {
+                      setSelectedGeoCountry(e.target.value);
+                      setGeoCitySearch('');
+                    }}
+                    className="gf-select text-xs min-w-[210px] font-medium"
+                  >
+                    {globalCountries.map((c) => (
+                      <option key={c.code} value={c.code}>
+                        {c.flag} {c.name} ({c.code}) · {c.phonecode}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* City Search */}
+                <div className="relative min-w-[220px]">
+                  <Search className="lucide w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search city in country..."
+                    value={geoCitySearch}
+                    onChange={(e) => setGeoCitySearch(e.target.value)}
+                    className="gf-input pl-8 text-xs h-8"
+                  />
+                  {geoCitySearch && (
+                    <button
+                      onClick={() => setGeoCitySearch('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cities Table */}
+          <div className="gf-card overflow-hidden">
+            <div className="gf-table-wrap">
+              <table className="gf-table">
+                <thead>
+                  <tr>
+                    <th>City / Logistics Center</th>
+                    <th>State / Province</th>
+                    <th>Country &amp; ISO</th>
+                    <th>Postal / PIN Code</th>
+                    <th>Coordinates</th>
+                    <th>UN/LOCODE</th>
+                    <th className="text-right">Action / Promotion</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {geoCitiesLoading ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-slate-500">
+                        <div className="flex items-center justify-center gap-2 text-xs">
+                          <RefreshCw className="w-4 h-4 animate-spin text-sky-600" />
+                          <span>Loading global cities from database...</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : geoCities.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="text-center py-12 text-slate-500 text-xs">
+                        No cities found matching &quot;{geoCitySearch}&quot; for selected country.
+                      </td>
+                    </tr>
+                  ) : (
+                    geoCities.map((c) => {
+                      const isPromoted = masterLocations.some(
+                        (l) =>
+                          l.name.toLowerCase() === c.name.toLowerCase() ||
+                          (c.unLocode && l.unLocode === c.unLocode)
+                      );
+                      const justPromoted = promotedCityId === c.id;
+
+                      return (
+                        <tr key={c.id} className="hover:bg-slate-50">
+                          <td>
+                            <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-sky-600 shrink-0" />
+                              <span>{c.name}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="text-xs text-slate-600">{c.state || c.stateCode || '—'}</span>
+                          </td>
+                          <td>
+                            <div className="flex items-center gap-1.5 text-xs">
+                              <span className="font-mono text-[10px] font-bold text-slate-700 uppercase bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                                {c.countryCode}
+                              </span>
+                              <span className="text-slate-700 font-medium">{c.country}</span>
+                            </div>
+                          </td>
+                          <td>
+                            {c.postalCode ? (
+                              <span className="font-mono font-bold text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded inline-block">
+                                {c.postalCode}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">Available via postal resolver</span>
+                            )}
+                          </td>
+                          <td>
+                            {c.latitude && c.longitude ? (
+                              <span className="font-mono text-[10.5px] text-slate-600">
+                                {c.latitude.toFixed(4)}, {c.longitude.toFixed(4)}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td>
+                            {c.unLocode ? (
+                              <span className="gf-badge gf-badge-blue font-mono text-[10px] font-bold">
+                                {c.unLocode}
+                              </span>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">—</span>
+                            )}
+                          </td>
+                          <td className="text-right">
+                            {isPromoted || justPromoted ? (
+                              <span className="gf-badge gf-badge-green text-[10px] font-bold inline-flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                <span>In Exchange Master</span>
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handlePromoteCityToLocation(c)}
+                                className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 hover:border-sky-500 hover:text-sky-600 transition-colors inline-flex items-center gap-1"
+                                title="Promote into active FR8X Exchange Locations master"
+                              >
+                                <Plus className="w-3 h-3" />
+                                <span>Add to Locations</span>
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* MODAL: ADD / EDIT LOCATION */}
       {isLocationModalOpen && (
         <div className="gf-modal-overlay" onClick={() => setIsLocationModalOpen(false)}>
@@ -1665,15 +1975,37 @@ Kuehne + Nagel (Blue Anchor Line),BANQ,KN,NVOCC,Global Forwarder,Switzerland,430
                   </div>
                 </div>
 
-                <div>
-                  <label className="gf-form-label">Region / State / Hinterland</label>
-                  <input
-                    type="text"
-                    value={locationForm.region}
-                    onChange={(e) => setLocationForm({ ...locationForm, region: e.target.value })}
-                    className="gf-input"
-                    placeholder="Maharashtra / West Coast"
-                  />
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <label className="gf-form-label">Region / Hinterland</label>
+                    <input
+                      type="text"
+                      value={locationForm.region}
+                      onChange={(e) => setLocationForm({ ...locationForm, region: e.target.value })}
+                      className="gf-input"
+                      placeholder="West Coast / Hinterland"
+                    />
+                  </div>
+                  <div>
+                    <label className="gf-form-label">State / Province</label>
+                    <input
+                      type="text"
+                      value={locationForm.state}
+                      onChange={(e) => setLocationForm({ ...locationForm, state: e.target.value })}
+                      className="gf-input"
+                      placeholder="e.g. Maharashtra"
+                    />
+                  </div>
+                  <div>
+                    <label className="gf-form-label">Postal Code / PIN Code</label>
+                    <input
+                      type="text"
+                      value={locationForm.postalCode}
+                      onChange={(e) => setLocationForm({ ...locationForm, postalCode: e.target.value })}
+                      className="gf-input font-mono"
+                      placeholder="e.g. 400001, 10001"
+                    />
+                  </div>
                 </div>
 
                 {/* Capabilities Checkboxes */}

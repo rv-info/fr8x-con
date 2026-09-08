@@ -134,9 +134,18 @@ export default function RegisterPage() {
   const [preferredContact, setPreferredContact] = useState<'tradeChat' | 'email' | 'mobile'>('tradeChat');
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [country, setCountry] = useState('India');
+  const [countryCode, setCountryCode] = useState('IN');
+  const [countryList, setCountryList] = useState<
+    { code: string; name: string; flag: string; phonecode: string }[]
+  >([]);
   const [city, setCity] = useState('Mumbai');
+  const [cityList, setCityList] = useState<
+    { name: string; state?: string; postalCode?: string }[]
+  >([]);
+  const [postalCode, setPostalCode] = useState('400001');
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [customCity, setCustomCity] = useState('');
+  const [isLoadingCities, setIsLoadingCities] = useState(false);
 
   // Business Card
   const [companyName, setCompanyName] = useState('');
@@ -159,6 +168,53 @@ export default function RegisterPage() {
   // Legal Acceptance
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+
+  // Fetch 250 global countries on mount
+  useEffect(() => {
+    fetch('/api/geo/countries')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.countries) && data.countries.length > 0) {
+          setCountryList(data.countries);
+        }
+      })
+      .catch((err) => console.error('Failed to load global countries:', err));
+  }, []);
+
+  // Fetch cities when countryCode changes
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingCities(true);
+    fetch(`/api/geo/cities?country=${encodeURIComponent(countryCode)}&limit=250`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted) {
+          if (data.success && Array.isArray(data.cities) && data.cities.length > 0) {
+            setCityList(data.cities);
+            const matched = data.cities.find((c: any) => c.name.toLowerCase() === city.toLowerCase());
+            if (!matched && !isCustomCity) {
+              setCity(data.cities[0].name);
+              if (data.cities[0].postalCode) {
+                setPostalCode(data.cities[0].postalCode);
+              }
+            } else if (matched && matched.postalCode && !postalCode) {
+              setPostalCode(matched.postalCode);
+            }
+          } else {
+            setCityList([]);
+            setIsCustomCity(true);
+          }
+          setIsLoadingCities(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setIsLoadingCities(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [countryCode]);
 
   useEffect(() => {
     let interval: any;
@@ -186,21 +242,39 @@ export default function RegisterPage() {
 
   const handleCountryChange = (val: string) => {
     setCountry(val);
-    const cities = COUNTRY_CITY_MAP[val];
-    if (cities && cities.length > 0) {
-      setCity(cities[0]);
-      setIsCustomCity(false);
+    const found = countryList.find((c) => c.name.toLowerCase() === val.toLowerCase());
+    if (found) {
+      setCountryCode(found.code);
+      if (found.phonecode) {
+        setIsdCode(found.phonecode);
+      }
     } else {
-      setCity('');
-      setIsCustomCity(true);
+      const code = val.slice(0, 2).toUpperCase();
+      setCountryCode(code);
     }
-    const matchedIsd = ISD_CODES.find(
-      (i) =>
-        i.country.toLowerCase().includes(val.toLowerCase()) ||
-        val.toLowerCase().includes(i.country.toLowerCase())
-    );
-    if (matchedIsd) {
-      setIsdCode(matchedIsd.code);
+  };
+
+  const handleCitySelect = (selectedCityName: string) => {
+    if (selectedCityName === '__other__') {
+      setIsCustomCity(true);
+      setCustomCity('');
+      setPostalCode('');
+    } else {
+      setCity(selectedCityName);
+      setIsCustomCity(false);
+      const foundCity = cityList.find((c) => c.name === selectedCityName);
+      if (foundCity && foundCity.postalCode) {
+        setPostalCode(foundCity.postalCode);
+      } else {
+        fetch(`/api/geo/postal?country=${encodeURIComponent(countryCode)}&city=${encodeURIComponent(selectedCityName)}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success && data.data?.postalCode) {
+              setPostalCode(data.data.postalCode);
+            }
+          })
+          .catch(() => {});
+      }
     }
   };
 
@@ -373,6 +447,7 @@ export default function RegisterPage() {
           companyId,
           city: effectiveCity,
           country,
+          postalCode: postalCode.trim() || undefined,
           timezone,
           plan: selectedPlan,
           hasGoldenTick: selectedPlan === 'premium',
@@ -652,7 +727,7 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                <div className="grid g2" style={{ marginTop: '10px' }}>
+                <div className="grid g3" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>Country of Registration</label>
                     <select
@@ -660,31 +735,37 @@ export default function RegisterPage() {
                       value={country}
                       onChange={(e) => handleCountryChange(e.target.value)}
                     >
-                      {Object.keys(COUNTRY_CITY_MAP).map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                      <option value="Other">Other International Jurisdiction</option>
+                      {countryList.length > 0 ? (
+                        countryList.map((c) => (
+                          <option key={c.code} value={c.name}>
+                            {c.flag} {c.name} ({c.code})
+                          </option>
+                        ))
+                      ) : (
+                        Object.keys(COUNTRY_CITY_MAP).map((c) => (
+                          <option key={c} value={c}>
+                            {c}
+                          </option>
+                        ))
+                      )}
                     </select>
                   </div>
+
                   <div className="field">
-                    <label>City / Port Center</label>
-                    {!isCustomCity && COUNTRY_CITY_MAP[country] ? (
+                    <label>
+                      City / Port Center {isLoadingCities && <span style={{ fontSize: '10.5px', color: 'var(--brand)' }}>(Loading…)</span>}
+                    </label>
+                    {!isCustomCity && (cityList.length > 0 || COUNTRY_CITY_MAP[country]) ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         <select
                           className="input"
                           value={city}
-                          onChange={(e) => {
-                            if (e.target.value === '__other__') {
-                              setIsCustomCity(true);
-                              setCustomCity('');
-                            } else {
-                              setCity(e.target.value);
-                            }
-                          }}
+                          onChange={(e) => handleCitySelect(e.target.value)}
                         >
-                          {COUNTRY_CITY_MAP[country].map((ct) => (
+                          {(cityList.length > 0
+                            ? cityList.map((c) => c.name)
+                            : COUNTRY_CITY_MAP[country] || []
+                          ).map((ct) => (
                             <option key={ct} value={ct}>
                               {ct}
                             </option>
@@ -703,13 +784,17 @@ export default function RegisterPage() {
                             else setCity(e.target.value);
                           }}
                         />
-                        {COUNTRY_CITY_MAP[country] && (
+                        {(cityList.length > 0 || COUNTRY_CITY_MAP[country]) && (
                           <button
                             type="button"
                             className="btn secondary sm"
                             onClick={() => {
                               setIsCustomCity(false);
-                              setCity(COUNTRY_CITY_MAP[country][0]);
+                              const fallback =
+                                cityList[0]?.name ||
+                                COUNTRY_CITY_MAP[country]?.[0] ||
+                                'Mumbai';
+                              setCity(fallback);
                             }}
                             style={{ whiteSpace: 'nowrap', fontSize: '11px' }}
                           >
@@ -718,6 +803,16 @@ export default function RegisterPage() {
                         )}
                       </div>
                     )}
+                  </div>
+
+                  <div className="field">
+                    <label>Postal Code / PIN Code</label>
+                    <input
+                      className="input"
+                      placeholder="e.g. 400001, 10001, 3011"
+                      value={postalCode}
+                      onChange={(e) => setPostalCode(e.target.value)}
+                    />
                   </div>
                 </div>
               </div>
