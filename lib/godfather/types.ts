@@ -534,6 +534,8 @@ export interface MasterLocation {
   country: string;
   countryCode: string;
   region: string;
+  state?: string;
+  postalCode?: string;
   type: LocationType;
   capabilities: {
     isPOR: boolean; // Place of Receipt
@@ -552,6 +554,8 @@ export interface MasterLocation {
   createdAt: string;
   updatedAt: string;
 }
+
+export type { GlobalCityItem } from '@/lib/types';
 
 export type CarrierType =
   | 'MLO' // Main Line Operator / Vessel Operating Common Carrier

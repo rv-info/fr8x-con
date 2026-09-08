@@ -75,6 +75,7 @@ export interface UserProfile {
   city: string;
   state: string;
   country: string;
+  postalCode?: string;
   formattedAddress?: string;
   coordinates?: Coordinates;
   mobile: string;
@@ -675,6 +676,8 @@ export interface LocationMasterItem {
   country: string;
   countryCode: string;
   region: string;
+  state?: string;
+  postalCode?: string;
   type: LocationType;
   capabilities: {
     isPOR: boolean; // Place of Receipt
@@ -690,6 +693,20 @@ export interface LocationMasterItem {
   customsZoneCode?: string;
   status: 'active' | 'maintenance' | 'restricted' | 'inactive';
   remarks?: string;
+}
+
+export interface GlobalCityItem {
+  id: string;
+  name: string;
+  country: string;
+  countryCode: string;
+  state?: string;
+  stateCode?: string;
+  latitude?: number;
+  longitude?: number;
+  postalCode?: string;
+  postalCodes?: string[];
+  unLocode?: string;
 }
 
 export type CarrierType =

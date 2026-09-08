@@ -5238,14 +5238,34 @@ textarea.input {
   margin-bottom: 12px;
 }
 
+.gf-grid-7 {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 1400px) {
+  .gf-grid-7 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .gf-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .gf-grid-7 {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
 @media (max-width: 640px) {
   .gf-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .gf-grid-7 {
     grid-template-columns: repeat(2, 1fr);
   }
 }
