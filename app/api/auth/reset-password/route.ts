@@ -143,6 +143,14 @@ export async function POST(req: NextRequest) {
     }
 
     const result = serverSecurityStore.requestPasswordReset(String(email).trim(), ip);
+    if (!result.success && result.error) {
+      const isCooldown = result.error.includes('wait');
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: isCooldown ? 429 : 403 }
+      );
+    }
+
     if (result.emailPromise) {
       try {
         await result.emailPromise;

@@ -182,6 +182,7 @@ class ServerSecurityStore {
   > = new Map();
   private firstLoginOtpSendTimestamps: Map<string, number[]> = new Map();
   private failedAttemptsByIdentifier: Map<string, { count: number; lockedUntil?: number }> = new Map();
+  private otpCooldowns: Map<string, number> = new Map();
 
   constructor() {
     this.loadPersistedState();
@@ -767,6 +768,18 @@ class ServerSecurityStore {
       };
     }
 
+    // 60-second cooldown guard
+    const lastSentAt = this.otpCooldowns.get(`verify:${cleanEmail}`) || 0;
+    if (now - lastSentAt < 60 * 1000) {
+      const waitSeconds = Math.ceil((60 * 1000 - (now - lastSentAt)) / 1000);
+      return {
+        success: false,
+        message: `Please wait ${waitSeconds} second(s) before requesting another verification code.`,
+        remainingAttempts: Math.max(0, MAX_RESENDS - rateLimit.count),
+      };
+    }
+    this.otpCooldowns.set(`verify:${cleanEmail}`, now);
+
     rateLimit.count += 1;
     this.resendLimits.set(cleanEmail, rateLimit);
 
@@ -949,34 +962,19 @@ class ServerSecurityStore {
         userEmail: user.email,
         uid: user.uid,
         company: user.company,
-        details: `Login attempt on blocked account: ${user.email}`,
+        details: `Login attempt on blocked account: ${user.email}. Denied. Godfather unblock required.`,
         ipAddress: ip,
       });
-
-      // Ensure active password reset OTP exists or send fresh OTP with rotated digits
-      let activeOtp = this.activeResetOtps.get(user.email.toLowerCase());
-      if (!activeOtp || Date.now() > activeOtp.expiresAt) {
-        const resetOtp = generateSecureOtp(6, activeOtp?.otp);
-        activeOtp = {
-          email: user.email,
-          otp: resetOtp,
-          expiresAt: Date.now() + 15 * 60 * 1000,
-          attempts: 0,
-          ipAddress: ip,
-        };
-        this.activeResetOtps.set(user.email.toLowerCase(), activeOtp);
-        this.dispatchPasswordResetEmail(user, resetOtp, ip);
-      }
 
       return {
         success: false,
         isBlocked: true,
-        passwordResetRequired: true,
+        passwordResetRequired: false,
         email: user.email,
         maskedEmail: maskEmail(user.email),
         attemptsRemaining: 0,
         user,
-        message: `Account is locked due to 3 failed login attempts. A password reset OTP has been sent from the server to your registered email (${maskEmail(user.email)}).`,
+        message: `Your account has been locked due to 3 consecutive failed password attempts. Only the Godfather administrator can remove the block upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
       };
     }
 
@@ -1080,27 +1078,14 @@ class ServerSecurityStore {
     if (user.failedLoginAttempts >= maxAttempts) {
       user.status = 'blocked';
       user.blockedAt = new Date().toISOString();
-      user.blockedReason = 'Maximum failed password attempts exceeded (3/3). Password reset OTP dispatched.';
+      user.blockedReason = 'Account locked after 3 consecutive failed password attempts. Godfather unblock required.';
 
-      this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
-      this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
-      this.failedAttemptsByIdentifier.set(user.uid.toLowerCase(), { count: user.failedLoginAttempts, lockedUntil: now + 15 * 60 * 1000 });
+      this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts });
+      this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts });
+      this.failedAttemptsByIdentifier.set(user.uid.toLowerCase(), { count: user.failedLoginAttempts });
       this.persistState();
 
-      // Generate cryptographically secure 6-digit Password Reset OTP
-      const existingReset = this.activeResetOtps.get(user.email.toLowerCase());
-      const resetOtp = generateSecureOtp(6, existingReset?.otp);
-      const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes validity
-      this.activeResetOtps.set(user.email.toLowerCase(), {
-        email: user.email,
-        otp: resetOtp,
-        expiresAt,
-        attempts: 0,
-        ipAddress: ip,
-      });
-
-      // Dispatch real email via sendSystemEmail from lib/mailer
-      this.dispatchPasswordResetEmail(user, resetOtp, ip);
+      // Dispatch account blocked security notification (NO reset OTP!)
       this.dispatchAccountBlockedEmail(user, ip, user.blockedReason);
 
       const blockRecord: BlockedAccountRecord = {
@@ -1118,6 +1103,7 @@ class ServerSecurityStore {
         ipAddress: ip,
       };
       this.blockedAccounts.set(user.uid, blockRecord);
+      this.blockedAccounts.set(user.email.toLowerCase(), blockRecord);
 
       this.addSecurityEvent({
         type: 'ACCOUNT_BLOCKED',
@@ -1125,19 +1111,19 @@ class ServerSecurityStore {
         userEmail: user.email,
         uid: user.uid,
         company: user.company,
-        details: `Account automatically locked after 3 consecutive failed password attempts. Password reset OTP sent to ${user.email}.`,
+        details: `Account automatically locked after 3 consecutive failed password attempts. Godfather unblock required upon email receipt.`,
         ipAddress: ip,
       });
 
       return {
         success: false,
         isBlocked: true,
-        passwordResetRequired: true,
+        passwordResetRequired: false,
         email: user.email,
         maskedEmail: maskEmail(user.email),
         attemptsRemaining: 0,
         user,
-        message: `Security Alert: 3 invalid attempts detected. A password reset OTP has been sent from the server to your registered email (${maskEmail(user.email)}).`,
+        message: `Your account has been locked after 3 consecutive failed password attempts. Only the Godfather administrator can remove this block upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
       };
     }
 
@@ -1262,6 +1248,17 @@ class ServerSecurityStore {
       };
     }
 
+    // 60-second cooldown guard
+    const lastSentAt = this.otpCooldowns.get(`first_login:${cleanEmail}`) || 0;
+    if (now - lastSentAt < 60 * 1000) {
+      const waitSeconds = Math.ceil((60 * 1000 - (now - lastSentAt)) / 1000);
+      return {
+        success: false,
+        error: `Please wait ${waitSeconds} second(s) before requesting another verification code.`,
+      };
+    }
+    this.otpCooldowns.set(`first_login:${cleanEmail}`, now);
+
     const user = this.users.get(cleanEmail);
     const existingFirstLogin = this.activeFirstLoginOtps.get(cleanEmail);
     const rawOtp = generateSecureOtp(
@@ -1300,16 +1297,25 @@ class ServerSecurityStore {
   }
 
   public unblockAccount(
-    uid: string,
-    unblockedBy = 'SYSTEM',
+    uidOrEmail: string,
+    unblockedBy = 'Godfather Administrator',
     unblockReason = 'Administrative Verification'
   ): { success: boolean; message: string; record?: BlockedAccountRecord } {
     if (!unblockReason || !unblockReason.trim()) {
       return { success: false, message: 'Mandatory unblock reason is required.' };
     }
 
-    const clean = uid.toLowerCase();
-    const user = this.users.get(clean);
+    const clean = uidOrEmail.trim().toLowerCase();
+    let user = this.users.get(clean);
+    if (!user) {
+      for (const u of this.users.values()) {
+        if (u.uid.toLowerCase() === clean || u.email.toLowerCase() === clean) {
+          user = u;
+          break;
+        }
+      }
+    }
+
     if (user) {
       user.status = 'active';
       user.failedLoginAttempts = 0;
@@ -1317,10 +1323,24 @@ class ServerSecurityStore {
       user.blockedReason = undefined;
       this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
       this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
+
+      // Send unblock confirmation email to user's registered corporate email
+      EmailService.sendSupportEmail({
+        to: user.email,
+        recipientName: user.displayName || 'Member',
+        subject: `FR8X Account Unblocked — ${user.email}`,
+        message: `Your FR8X account (${user.email}) has been reviewed and successfully unblocked by the Godfather administrator (${unblockedBy}).\n\nReason: ${unblockReason.trim()}\n\nYou may now sign in to your FR8X account using your credentials.`,
+      }).catch((err) => {
+        console.error(`[Security] Failed to dispatch unblock email to ${user.email}:`, err.message);
+      });
     }
+
     this.failedAttemptsByIdentifier.delete(clean);
 
-    const blockRecord = this.blockedAccounts.get(clean) || this.blockedAccounts.get(user?.uid || '');
+    const blockRecord =
+      this.blockedAccounts.get(clean) ||
+      (user ? this.blockedAccounts.get(user.uid) || this.blockedAccounts.get(user.email.toLowerCase()) : undefined);
+
     if (blockRecord) {
       blockRecord.status = 'unblocked';
       blockRecord.unblockedBy = unblockedBy;
@@ -1340,11 +1360,11 @@ class ServerSecurityStore {
       });
 
       this.persistState();
-      return { success: true, message: 'Account successfully unblocked.', record: blockRecord };
+      return { success: true, message: `Account ${blockRecord.email} successfully unblocked by Godfather.`, record: blockRecord };
     }
 
     this.persistState();
-    return { success: true, message: 'Account status reset to active.' };
+    return { success: true, message: `Account status reset to active for ${clean}.` };
   }
 
   /**
@@ -1416,7 +1436,7 @@ class ServerSecurityStore {
     EmailService.sendSecurityAlertEmail({
       to: user.email,
       subject: `Account Blocked: ${user.email}`,
-      details: `Your FR8X Sovereign Platform account (${user.email}) has been locked due to security policy enforcement: ${blockReason}. Origin Network IP: ${ip}. A separate password reset recovery email has been sent containing your single-use recovery code. If you did not initiate these actions, alert platform security at password@fr8x.in immediately.`,
+      details: `Your FR8X account (${user.email}) has been locked after 3 consecutive failed password attempts (${blockReason}). Origin Network IP: ${ip}. For security policy enforcement, this block CANNOT be removed automatically and self-service password reset is disabled. To request account review and unblocking, you must send an email from this registered email address (${user.email}) to support@fr8x.in for administrator verification by the Godfather admin.`,
       ipAddress: ip,
     })
       .then((res) => {
@@ -1444,9 +1464,35 @@ class ServerSecurityStore {
     email: string,
     ip = '127.0.0.1'
   ): { success: boolean; remaining: number; message: string; date: string; otpDispatched?: boolean } {
+    const cleanEmail = email.trim().toLowerCase();
     const today = new Date().toISOString().split('T')[0];
-    const key = `${email.trim().toLowerCase()}:${today}`;
+    const key = `${cleanEmail}:${today}`;
     let record = this.otpRecords.get(key);
+
+    // Check if account is blocked
+    const user = this.users.get(cleanEmail);
+    if (user && user.status === 'blocked') {
+      return {
+        success: false,
+        remaining: 0,
+        date: today,
+        message: `Your account is locked due to 3 failed password attempts. OTP generation is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
+      };
+    }
+
+    // 60-second cooldown guard
+    const now = Date.now();
+    const OTP_COOLDOWN_MS = 60 * 1000;
+    const lastSentAt = this.otpCooldowns.get(`otp:${cleanEmail}`) || 0;
+    if (now - lastSentAt < OTP_COOLDOWN_MS) {
+      const waitSeconds = Math.ceil((OTP_COOLDOWN_MS - (now - lastSentAt)) / 1000);
+      return {
+        success: false,
+        remaining: Math.max(0, 3 - (record?.attempts || 0)),
+        date: today,
+        message: `Please wait ${waitSeconds} second(s) before requesting another verification code.`,
+      };
+    }
 
     if (!record) {
       record = {
@@ -1484,6 +1530,7 @@ class ServerSecurityStore {
     const existingLoginOtp = this.activeLoginOtps.get(email.trim().toLowerCase());
     const otpCode = generateSecureOtp(6, existingLoginOtp?.otp);
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes validity
+    this.otpCooldowns.set(`otp:${cleanEmail}`, now);
     this.activeLoginOtps.set(email.trim().toLowerCase(), {
       email: email.trim().toLowerCase(),
       otp: otpCode,
@@ -1616,13 +1663,35 @@ class ServerSecurityStore {
   public requestPasswordReset(
     email: string,
     ip = '127.0.0.1'
-  ): { success: true; message: string; otpDispatched?: boolean; resetToken?: string; emailPromise?: Promise<any> } {
+  ): { success: boolean; message?: string; error?: string; otpDispatched?: boolean; resetToken?: string; emailPromise?: Promise<any> } {
     const cleanEmail = email.trim().toLowerCase();
     let user = this.users.get(cleanEmail);
     if (!user) {
       this.loadPersistedState();
       user = this.users.get(cleanEmail);
     }
+
+    // Refuse reset if user is blocked
+    if (user && user.status === 'blocked') {
+      return {
+        success: false,
+        error: `Your account is locked due to 3 failed password attempts. Self-service password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
+        otpDispatched: false,
+      };
+    }
+
+    // 60-second cooldown guard
+    const now = Date.now();
+    const lastSentAt = this.otpCooldowns.get(`reset:${cleanEmail}`) || 0;
+    if (now - lastSentAt < 60 * 1000) {
+      const waitSeconds = Math.ceil((60 * 1000 - (now - lastSentAt)) / 1000);
+      return {
+        success: false,
+        error: `Please wait ${waitSeconds} second(s) before requesting another password reset code.`,
+        otpDispatched: false,
+      };
+    }
+    this.otpCooldowns.set(`reset:${cleanEmail}`, now);
 
     if (!user) {
       // SECURITY: Auto-provisioning of test users removed.
@@ -1754,15 +1823,17 @@ class ServerSecurityStore {
       return { success: false, error: 'New password must be at least 8 characters long.' };
     }
 
-    // OTP verified successfully: update password with PBKDF2, reset attempts, unlock account
-    user.salt = 'pbkdf2_managed'; // Salt embedded in passwordHash
-    user.passwordHash = hashPassword(newPassword.trim()); // PBKDF2 format: pbkdf2:<salt>:<hash>
-    user.status = 'active';
-    user.failedLoginAttempts = 0;
-    user.blockedAt = undefined;
-    user.blockedReason = undefined;
+    if (user.status === 'blocked') {
+      return {
+        success: false,
+        error: 'Your account is locked due to 3 failed password attempts. Password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered email address.',
+      };
+    }
 
-    this.blockedAccounts.delete(user.uid);
+    // OTP verified successfully: update password credentials
+    user.salt = 'pbkdf2_managed';
+    user.passwordHash = hashPassword(newPassword.trim());
+    user.failedLoginAttempts = 0;
     this.activeResetOtps.delete(cleanEmail);
     if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
     this.failedAttemptsByIdentifier.delete(cleanEmail);
@@ -1851,6 +1922,13 @@ class ServerSecurityStore {
       return { success: false, error: 'User account not found.' };
     }
 
+    if (user.status === 'blocked') {
+      return {
+        success: false,
+        error: 'Your account is locked due to 3 failed password attempts. Password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered email address.',
+      };
+    }
+
     const resetRecord = this.activeResetOtps.get(cleanEmail);
     if (!resetRecord || (resetRecord.token && resetRecord.token !== cleanToken)) {
       return {
@@ -1875,15 +1953,7 @@ class ServerSecurityStore {
 
     user.salt = 'pbkdf2_managed'; // Salt embedded in passwordHash
     user.passwordHash = hashPassword(params.newPassword.trim()); // PBKDF2 format: pbkdf2:<salt>:<hash>
-    user.status = 'active';
     user.failedLoginAttempts = 0;
-    user.blockedAt = undefined;
-    user.blockedReason = undefined;
-
-    this.blockedAccounts.delete(user.uid);
-    this.failedAttemptsByIdentifier.delete(cleanEmail);
-    this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
-    this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
     this.persistState();
 
     const ip = params.ip || '127.0.0.1';

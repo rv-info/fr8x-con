@@ -7,7 +7,9 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
 import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
+import SearchableDropdown from '@/components/ui/SearchableDropdown';
 import { RateItem } from '@/lib/types';
+
 import {
   BarChart3,
   Plus,
@@ -44,7 +46,44 @@ import {
   getEquipmentCategoryIcon,
 } from '@/lib/utils';
 
+const CONTAINER_20_OPTIONS = [
+  { value: "20' Standard (20DV)", label: "20' Standard Dry (20DV)" },
+  { value: "20' High Cube (20HC)", label: "20' High Cube (20HC)" },
+  { value: "20' Reefer (20RF)", label: "20' Reefer (20RF)" },
+  { value: "20' Open Top (20OT)", label: "20' Open Top (20OT)" },
+  { value: "20' Flat Rack (20FR)", label: "20' Flat Rack (20FR)" },
+  { value: "20' Platform (20PL)", label: "20' Platform (20PL)" },
+  { value: "20' ISO Tank (20TK)", label: "20' ISO Tank (20TK)" },
+  { value: "20' Bulk (20BK)", label: "20' Bulk (20BK)" },
+  { value: "20' Ventilated (20VN)", label: "20' Ventilated (20VN)" },
+  { value: "20' Insulated (20IN)", label: "20' Insulated (20IN)" },
+  { value: "20' Hard Top (20HT)", label: "20' Hard Top (20HT)" },
+];
+
+const CONTAINER_40_OPTIONS = [
+  { value: "40' High Cube (40HC)", label: "40' High Cube (40HC)" },
+  { value: "40' Standard (40DV)", label: "40' Standard Dry (40DV)" },
+  { value: "40' Reefer (40RF)", label: "40' Reefer (40RF)" },
+  { value: "40' Reefer HC (40HR)", label: "40' Reefer High Cube (40HR)" },
+  { value: "40' Open Top (40OT)", label: "40' Open Top (40OT)" },
+  { value: "40' Open Top HC (40OH)", label: "40' Open Top High Cube (40OH)" },
+  { value: "40' Flat Rack (40FR)", label: "40' Flat Rack (40FR)" },
+  { value: "40' Flat Rack Collapsible (40FC)", label: "40' Flat Rack Collapsible (40FC)" },
+  { value: "40' Platform (40PL)", label: "40' Platform (40PL)" },
+  { value: "45' High Cube (45HC)", label: "45' High Cube (45HC)" },
+  { value: "40' ISO Tank (40TK)", label: "40' ISO Tank (40TK)" },
+  { value: "40' Pallet Wide (40PW)", label: "40' Pallet Wide (40PW)" },
+];
+
+const RATE_TYPE_OPTIONS = [
+  { value: "Direct Spot", label: "Direct Spot" },
+  { value: "Contract", label: "Contract" },
+  { value: "NAC", label: "NAC" },
+  { value: "Coloader", label: "Coloader" },
+];
+
 export default function RatesPage() {
+
   const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
@@ -1171,94 +1210,73 @@ Generated via FR8X Freight Exchange
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 TYPE</label>
-                  <select
-                    className="input"
-                    style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }}
+                  <SearchableDropdown
+                    options={CONTAINER_20_OPTIONS}
                     value={d20Type}
-                    onChange={(e) => setD20Type(e.target.value)}
-                  >
-                    <option value="20' Standard (20DV)">20&apos; Standard Dry (20DV)</option>
-                    <option value="20' High Cube (20HC)">20&apos; High Cube (20HC)</option>
-                    <option value="20' Reefer (20RF)">20&apos; Reefer (20RF)</option>
-                    <option value="20' Open Top (20OT)">20&apos; Open Top (20OT)</option>
-                    <option value="20' Flat Rack (20FR)">20&apos; Flat Rack (20FR)</option>
-                    <option value="20' Platform (20PL)">20&apos; Platform (20PL)</option>
-                    <option value="20' ISO Tank (20TK)">20&apos; ISO Tank (20TK)</option>
-                    <option value="20' Bulk (20BK)">20&apos; Bulk (20BK)</option>
-                    <option value="20' Ventilated (20VN)">20&apos; Ventilated (20VN)</option>
-                    <option value="20' Insulated (20IN)">20&apos; Insulated (20IN)</option>
-                    <option value="20' Hard Top (20HT)">20&apos; Hard Top (20HT)</option>
-                  </select>
+                    onChange={setD20Type}
+                    searchPlaceholder="Search 20' type…"
+                    style={{ fontSize: '11px' }}
+                  />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={d20 || ''} onChange={(e) => setD20(Number(e.target.value))} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={d20 || ''} onChange={(e) => setD20(Number(e.target.value))} />
                 </div>
               </div>
               {/* Row 5: 40 TYPE (All Container Types Dropdown) + 40HC [USD] */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40 TYPE</label>
-                  <select
-                    className="input"
-                    style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }}
+                  <SearchableDropdown
+                    options={CONTAINER_40_OPTIONS}
                     value={h40Type}
-                    onChange={(e) => setH40Type(e.target.value)}
-                  >
-                    <option value="40' High Cube (40HC)">40&apos; High Cube (40HC)</option>
-                    <option value="40' Standard (40DV)">40&apos; Standard Dry (40DV)</option>
-                    <option value="40' Reefer (40RF)">40&apos; Reefer (40RF)</option>
-                    <option value="40' Reefer HC (40HR)">40&apos; Reefer High Cube (40HR)</option>
-                    <option value="40' Open Top (40OT)">40&apos; Open Top (40OT)</option>
-                    <option value="40' Open Top HC (40OH)">40&apos; Open Top High Cube (40OH)</option>
-                    <option value="40' Flat Rack (40FR)">40&apos; Flat Rack (40FR)</option>
-                    <option value="40' Flat Rack Collapsible (40FC)">40&apos; Flat Rack Collapsible (40FC)</option>
-                    <option value="40' Platform (40PL)">40&apos; Platform (40PL)</option>
-                    <option value="45' High Cube (45HC)">45&apos; High Cube (45HC)</option>
-                    <option value="40' ISO Tank (40TK)">40&apos; ISO Tank (40TK)</option>
-                    <option value="40' Pallet Wide (40PW)">40&apos; Pallet Wide (40PW)</option>
-                  </select>
+                    onChange={setH40Type}
+                    searchPlaceholder="Search 40' type…"
+                    style={{ fontSize: '11px' }}
+                  />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40HC [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={h40 || ''} onChange={(e) => setH40(Number(e.target.value))} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={h40 || ''} onChange={(e) => setH40(Number(e.target.value))} />
                 </div>
               </div>
               {/* Row 6: FREE TIME + VALIDITY */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>FREE TIME</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 14 days" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 14 days" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
                 </div>
               </div>
               {/* Row 7: TRANSIT + ROUTING */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>TRANSIT</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>ROUTING</label>
-                  <input className="input" style={{ fontSize: '11px', height: '32px', padding: '0 6px', borderRadius: '0px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
+                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
                 </div>
               </div>
               {/* Row 8: VALIDITY TYPE */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY TYPE</label>
-                  <select className="input" style={{ fontSize: '11px', height: '32px', padding: '0 4px', borderRadius: '0px' }} value={rateType} onChange={(e) => setRateType(e.target.value)}>
-                    <option value="Direct Spot">Direct Spot</option>
-                    <option value="Contract">Contract</option>
-                    <option value="NAC">NAC</option>
-                    <option value="Coloader">Coloader</option>
-                  </select>
+                  <SearchableDropdown
+                    options={RATE_TYPE_OPTIONS}
+                    value={rateType}
+                    onChange={setRateType}
+                    searchPlaceholder="Search validity type…"
+                    style={{ fontSize: '11px' }}
+                  />
                 </div>
                 <div />
               </div>
+
               {/* Row 9: REMARKS full width */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', alignItems: 'flex-start' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>

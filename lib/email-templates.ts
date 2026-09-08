@@ -207,17 +207,19 @@ export interface TestEmailTemplateParams {
  */
 function wrapEmailHtml(content: string, preheader = ''): string {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FR8X Platform</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>FR8X</title>
   <style>
     body {
       margin: 0;
       padding: 0;
       background-color: #ffffff !important;
-      color: #111827;
+      color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
       line-height: 1.6;
@@ -229,156 +231,160 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     }
     .email-container {
       max-width: 600px;
-      margin: 24px auto;
+      margin: 32px auto;
       background-color: #ffffff;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
       overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
     }
     .email-header {
-      padding: 24px 32px;
+      padding: 28px 36px;
       background-color: #ffffff;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #f1f5f9;
     }
     .brand-title {
-      font-size: 22px;
-      font-weight: 800;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      font-size: 26px;
+      font-weight: 900;
       color: #0f172a;
       margin: 0;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
+      line-height: 1;
     }
     .brand-accent {
       color: #0284c7;
     }
     .brand-tag {
       display: inline-block;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 11px;
-      font-weight: 600;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #64748b;
-      margin-top: 4px;
+      letter-spacing: 0.12em;
+      color: #0284c7;
+      margin-top: 6px;
     }
     .email-body {
-      padding: 32px;
+      padding: 36px;
       background-color: #ffffff;
-      color: #1f2937;
+      color: #334155;
       font-size: 15px;
-      line-height: 1.65;
+      line-height: 1.7;
     }
     .email-footer {
-      padding: 24px 32px;
+      padding: 28px 36px;
       background-color: #ffffff;
-      border-top: 1px solid #e5e7eb;
+      border-top: 1px solid #f1f5f9;
       font-size: 12px;
-      color: #6b7280;
+      color: #64748b;
       text-align: center;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .btn-primary {
       display: inline-block;
       background-color: #0f172a;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 13px 28px;
-      border-radius: 6px;
+      padding: 14px 32px;
+      border-radius: 8px;
       font-weight: 700;
       font-size: 13px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      margin: 20px 0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      margin: 22px 0;
+      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
     }
     .btn-danger {
       display: inline-block;
       background-color: #be123c;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 13px 28px;
-      border-radius: 6px;
+      padding: 14px 32px;
+      border-radius: 8px;
       font-weight: 700;
       font-size: 13px;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
       text-transform: uppercase;
-      margin: 20px 0;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      margin: 22px 0;
+      box-shadow: 0 2px 4px rgba(190, 18, 60, 0.2);
     }
     .code-box {
       background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
       padding: 24px;
       text-align: center;
       margin: 24px 0;
     }
     .code-digits {
-      font-family: 'SFMono-Regular', Consolas, Monaco, monospace;
-      font-size: 36px;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      font-size: 38px;
       font-weight: 800;
-      letter-spacing: 8px;
+      letter-spacing: 10px;
       color: #0f172a;
     }
     .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #0f172a;
+      font-size: 11px;
+      font-weight: 800;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.08em;
       margin: 24px 0 10px 0;
     }
     .detail-card {
-      background-color: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      padding: 16px 20px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 18px 22px;
       margin: 16px 0;
-      color: #1f2937;
+      color: #334155;
       font-size: 14px;
       line-height: 1.6;
     }
     .detail-row {
-      margin: 6px 0;
+      margin: 8px 0;
     }
     .detail-label {
       font-weight: 700;
-      color: #111827;
+      color: #0f172a;
     }
     .detail-value {
-      color: #374151;
+      color: #334155;
     }
     .warning-box {
       background-color: #fff1f2;
-      border-left: 3px solid #e11d48;
-      padding: 14px 18px;
-      border-radius: 4px;
+      border-left: 4px solid #e11d48;
+      padding: 16px 20px;
+      border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
       color: #9f1239;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .info-box {
       background-color: #f0fdf4;
-      border-left: 3px solid #16a34a;
-      padding: 14px 18px;
-      border-radius: 4px;
+      border-left: 4px solid #16a34a;
+      padding: 16px 20px;
+      border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
       color: #166534;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .security-notice {
       background-color: #fefce8;
-      border-left: 3px solid #ca8a04;
-      padding: 14px 18px;
-      border-radius: 4px;
+      border-left: 4px solid #ca8a04;
+      padding: 16px 20px;
+      border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
       color: #854d0e;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     p {
       margin: 14px 0;
-      color: #1f2937;
+      color: #334155;
     }
     a {
       color: #0284c7;
@@ -393,18 +399,19 @@ function wrapEmailHtml(content: string, preheader = ''): string {
   ${preheader ? `<span style="display:none;font-size:1px;color:#ffffff;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</span>` : ''}
   <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
     <tr>
-      <td align="center" style="padding: 20px 10px;">
+      <td align="center" style="padding: 24px 12px; background-color: #ffffff;">
         <div class="email-container">
           <div class="email-header">
-            <div class="brand-title">fr<span class="brand-accent">8</span>x <span style="font-size: 14px; font-weight: 500; color: #64748b;">· Sovereign Enterprise Platform</span></div>
-            <div class="brand-tag">Security &amp; Communications</div>
+            <div class="brand-title">FR<span class="brand-accent">8</span>X</div>
+            <div class="brand-tag">FR8X TEAM</div>
           </div>
           <div class="email-body">
             ${content}
           </div>
           <div class="email-footer">
-            <div>This is an official transactional communication from FR8X Platform (<a href="https://fr8x.in" style="color: #6b7280; text-decoration: underline;">fr8x.in</a>).</div>
-            <div style="margin-top: 6px;">&copy; ${new Date().getFullYear()} FR8X Sovereign Platform Technologies. All rights reserved.</div>
+            <div style="font-weight: 700; color: #0f172a; font-size: 12px; letter-spacing: 0.05em; margin-bottom: 4px;">FR8X TEAM</div>
+            <div>This is an official communication from FR8X (<a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>).</div>
+            <div style="margin-top: 6px; color: #94a3b8; font-size: 11px;">&copy; ${new Date().getFullYear()} FR8X. All rights reserved.</div>
           </div>
         </div>
       </td>
@@ -450,13 +457,13 @@ export function renderWelcomeEmail(params: WelcomeTemplateParams): {
     </div>
 
     <p style="font-size: 13px; color: #4b5563;">
-      If you did not create this account, please contact FR8X Support immediately.
+      If you did not create this account, please contact FR8X Team immediately.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, `Welcome to FR8X, ${firstName}. Please verify your email.`);
 
@@ -475,12 +482,12 @@ Organization: ${organizationName}
 To get started, please verify your email address:
 ${verificationUrl}
 
-If you did not create this account, please contact FR8X Support immediately.
+If you did not create this account, please contact FR8X Team immediately.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -530,8 +537,8 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'Please verify your email address to activate your FR8X account.');
 
@@ -550,8 +557,8 @@ If you did not create an FR8X account, you can safely ignore this email.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -586,8 +593,8 @@ export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
     <div class="section-title">SECURITY NOTICE</div>
     <div class="security-notice">
       <p style="margin: 4px 0; font-weight: 700;">Never share this code with anyone.</p>
-      <p style="margin: 4px 0;">FR8X Support will never ask you to provide your OTP, password, or security code.</p>
-      <p style="margin: 4px 0;">If you did not request this code, please secure your account and contact FR8X Support.</p>
+      <p style="margin: 4px 0;">FR8X Team will never ask you to provide your OTP, password, or security code.</p>
+      <p style="margin: 4px 0;">If you did not request this code, please secure your account and contact FR8X Team.</p>
     </div>
 
     ${params.correlationId ? `
@@ -598,8 +605,8 @@ export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, `Your FR8X verification code is ${params.otpCode}`);
 
@@ -615,14 +622,14 @@ SECURITY NOTICE
 
 Never share this code with anyone.
 
-FR8X Support will never ask you to provide your OTP, password, or security code.
+FR8X Team will never ask you to provide your OTP, password, or security code.
 
-If you did not request this code, please secure your account and contact FR8X Support.
+If you did not request this code, please secure your account and contact FR8X Team.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -670,8 +677,8 @@ export function renderForgotPasswordEmail(params: ForgotPasswordTemplateParams):
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'Instructions to reset your FR8X password.');
 
@@ -692,8 +699,8 @@ Your current password will remain unchanged.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -742,13 +749,13 @@ export function renderPasswordChangedEmail(params: PasswordChangedTemplateParams
     </div>
 
     <p style="font-size: 13px; color: #6b7280;">
-      If you need assistance, contact FR8X Support.
+      If you need assistance, contact FR8X Team.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'Your FR8X account password was successfully changed.');
 
@@ -766,12 +773,12 @@ If you made this change, no further action is required.
 If you did not change your password, your account may be at risk:
 ${securityLink}
 
-If you need assistance, contact FR8X Support.
+If you need assistance, contact FR8X Team.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -821,13 +828,13 @@ export function renderLoginSecurityAlertEmail(params: LoginSecurityAlertTemplate
     </div>
 
     <p style="font-size: 13px; color: #6b7280;">
-      If you need assistance, contact FR8X Support.
+      If you need assistance, contact FR8X Team.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Security Team</strong><br>
-      <a href="mailto:password@fr8x.in" style="color: #0284c7;">password@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'A new login to your FR8X account was detected.');
 
@@ -848,12 +855,12 @@ If this was you, no action is required.
 If you do not recognize this activity, secure your account immediately:
 ${securityLink}
 
-If you need assistance, contact FR8X Support.
+If you need assistance, contact FR8X Team.
 
 Regards,
 
-FR8X Security Team
-password@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -917,13 +924,13 @@ export function renderPricingPlanUpdateEmail(params: PricingPlanUpdateTemplatePa
     </div>
 
     <p style="font-size: 13px; color: #6b7280;">
-      If you have questions about pricing, billing, or available plans, please contact FR8X Support.
+      If you have questions about pricing, billing, or available plans, please contact FR8X Team.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Support Team</strong><br>
-      <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'Your FR8X account plan and pricing details.');
 
@@ -945,12 +952,12 @@ ${planDescription}
 You can review your account and available plans from your FR8X dashboard:
 ${dashboardUrl}
 
-If you have questions about pricing, billing, or available plans, please contact FR8X Support.
+If you have questions about pricing, billing, or available plans, please contact FR8X Team.
 
 Regards,
 
-FR8X Support Team
-support@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -994,13 +1001,13 @@ export function renderBillingIssueEmail(params: BillingIssueTemplateParams): {
     </div>
 
     <p style="font-size: 13px; color: #6b7280;">
-      If you believe this message was sent in error or need assistance, contact FR8X Support.
+      If you believe this message was sent in error or need assistance, contact FR8X Team.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Support Team</strong><br>
-      <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, 'Action required regarding your latest FR8X billing transaction.');
 
@@ -1019,12 +1026,12 @@ Status: ${paymentStatus}
 Please review your billing information and take the necessary action:
 ${billingUrl}
 
-If you believe this message was sent in error or need assistance, contact FR8X Support.
+If you believe this message was sent in error or need assistance, contact FR8X Team.
 
 Regards,
 
-FR8X Support Team
-support@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -1074,8 +1081,8 @@ export function renderSupportEmail(params: SupportTemplateParams): {
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Support Team</strong><br>
-      <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, `FR8X Support Request Received — Ticket ID: ${ticketId}`);
 
@@ -1101,8 +1108,8 @@ ${ticketUrl}
 
 Regards,
 
-FR8X Support Team
-support@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -1117,7 +1124,7 @@ export function renderSupportReplyEmail(params: SupportReplyTemplateParams): {
   text: string;
 } {
   const firstName = params.firstName || (params.recipientName ? params.recipientName.split(' ')[0] : 'Member');
-  const agentName = params.agentName || 'FR8X Support Specialist';
+  const agentName = params.agentName || 'FR8X Team Specialist';
   const subject = `Re: [${params.ticketId}] ${params.originalSubject || 'FR8X Support Update'}`;
 
   const html = wrapEmailHtml(`
@@ -1130,8 +1137,8 @@ export function renderSupportReplyEmail(params: SupportReplyTemplateParams): {
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Support Team</strong><br>
-      <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, `Update on Ticket ${params.ticketId}`);
 
@@ -1142,8 +1149,8 @@ A response has been posted to Ticket ${params.ticketId} by ${agentName}:
 ${params.replyMessage}
 
 Regards,
-FR8X Support Team
-support@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -1195,8 +1202,8 @@ export function renderSystemIssueEmail(params: SystemIssueTemplateParams): {
 
     <p style="margin-top: 28px; color: #374151;">
       Regards,<br><br>
-      <strong style="color: #111827;">FR8X Technical Team</strong><br>
-      <a href="mailto:tech@fr8x.in" style="color: #0284c7;">tech@fr8x.in</a>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
     </p>
   `, `FR8X Technical Notice: ${incidentTitle}`);
 
@@ -1226,8 +1233,8 @@ ${serviceStatusUrl}
 
 Regards,
 
-FR8X Technical Team
-tech@fr8x.in`;
+FR8X Team
+https://fr8x.in`;
 
   return { subject, html, text };
 }
@@ -1300,7 +1307,23 @@ export function renderTestEmail(params?: TestEmailTemplateParams): {
     <div class="info-box">
       <strong>Verification Status:</strong> Connection Active · Credentials Validated
     </div>
+
+    <p style="margin-top: 28px; color: #374151;">
+      Regards,<br><br>
+      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
+      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
+    </p>
   `, 'FR8X ZeptoMail Test');
-  const text = 'FR8X ZeptoMail integration test successful.';
+
+  const text = `FR8X Integration Test
+
+FR8X ZeptoMail integration test successful.
+
+Verification Status: Connection Active · Credentials Validated
+
+Regards,
+
+FR8X Team
+https://fr8x.in`;
   return { subject, html, text };
 }

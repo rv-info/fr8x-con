@@ -54,22 +54,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
           const rates = data.rates || data.usd || {};
           if (rates && Object.keys(rates).length > 0) {
             const numericRates: Record<string, number> = {};
+            for (const [currCode, rawVal] of Object.entries(rates)) {
 
-            const inr = Number(rates.INR || rates.inr);
-            const eur = Number(rates.EUR || rates.eur);
-            const gbp = Number(rates.GBP || rates.gbp);
-            const aed = Number(rates.AED || rates.aed);
-            const sgd = Number(rates.SGD || rates.sgd);
-            const cny = Number(rates.CNY || rates.cny);
-            const jpy = Number(rates.JPY || rates.jpy);
-
-            if (inr) numericRates.INR = inr;
-            if (eur) numericRates.EUR = eur;
-            if (gbp) numericRates.GBP = gbp;
-            if (aed) numericRates.AED = aed;
-            if (sgd) numericRates.SGD = sgd;
-            if (cny) numericRates.CNY = cny;
-            if (jpy) numericRates.JPY = jpy;
+              const code = currCode.toUpperCase();
+              const num = Number(rawVal);
+              if (!isNaN(num) && num > 0) {
+                numericRates[code] = num;
+              }
+            }
 
             // Update in-memory global baseline as well
             updateGlobalCurrencyRates(numericRates);
@@ -79,10 +71,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
               for (const [k, v] of Object.entries(numericRates)) {
                 if (updated[k]) {
                   updated[k] = { ...updated[k], rateFromUSD: v };
+                } else {
+                  updated[k] = { symbol: `${k} `, rateFromUSD: v, name: k };
                 }
               }
               return updated;
             });
+
 
             setIsLiveRates(true);
             setRateSource(source);

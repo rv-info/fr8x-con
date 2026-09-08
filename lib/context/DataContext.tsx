@@ -1880,10 +1880,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
         if (!isMounted) return;
 
         if (postsRes && postsRes.posts.length > 0) {
-          setPosts(postsRes.posts);
-          try {
-            localStorage.setItem('fr8x_feed_posts', JSON.stringify(postsRes.posts));
-          } catch {}
+          setPosts((prev) => {
+            const map = new Map<string, FeedPost>();
+            postsRes.posts.forEach((p) => map.set(String(p.id), p));
+            prev.forEach((p) => {
+              if (!map.has(String(p.id))) {
+                map.set(String(p.id), p);
+              }
+            });
+            const merged = Array.from(map.values());
+            try {
+              localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged));
+            } catch {}
+            return merged;
+          });
         }
 
         // Secondary data queries (auctions and rates)
@@ -1897,20 +1907,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
           if (!isMounted) return;
 
           if (auctionsRes.status === 'fulfilled' && auctionsRes.value.length > 0) {
-            setAuctions(auctionsRes.value);
-            try {
-              localStorage.setItem('fr8x_auctions', JSON.stringify(auctionsRes.value));
-            } catch {}
+            setAuctions((prev) => {
+              const map = new Map<string, Auction>();
+              auctionsRes.value.forEach((a) => map.set(a.id, a));
+              prev.forEach((a) => {
+                if (!map.has(a.id)) {
+                  map.set(a.id, a);
+                }
+              });
+              const merged = Array.from(map.values());
+              try {
+                localStorage.setItem('fr8x_auctions', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
           }
 
           if (ratesRes.status === 'fulfilled' && ratesRes.value.length > 0) {
-            setRates(ratesRes.value);
-            setMyRates(ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner));
-            try {
-              localStorage.setItem('fr8x_rates', JSON.stringify(ratesRes.value));
-              localStorage.setItem('fr8x_my_rates', JSON.stringify(ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner)));
-            } catch {}
+            setRates((prev) => {
+              const map = new Map<string, RateItem>();
+              ratesRes.value.forEach((r) => map.set(r.id, r));
+              prev.forEach((r) => {
+                if (!map.has(r.id)) {
+                  map.set(r.id, r);
+                }
+              });
+              const merged = Array.from(map.values());
+              try {
+                localStorage.setItem('fr8x_rates', JSON.stringify(merged));
+                localStorage.setItem('fr8x_my_rates', JSON.stringify(merged.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted)));
+              } catch {}
+              return merged;
+            });
+            setMyRates((prev) => {
+              const myFromCloud = ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
+              const map = new Map<string, RateItem>();
+              myFromCloud.forEach((r) => map.set(r.id, r));
+              prev.forEach((r) => {
+                if (!map.has(r.id)) {
+                  map.set(r.id, r);
+                }
+              });
+              const merged = Array.from(map.values());
+              try {
+                localStorage.setItem('fr8x_my_rates', JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
           }
+
 
           // 3. Revalidate from authoritative server-side DBMS (.knox/dbms)
           fetch('/api/rates')
@@ -1943,17 +1988,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
             .then((data) => {
               if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
                 setPosts((prev) => {
-                  const merged = new Map<string, FeedPost>();
-                  prev.forEach((p) => merged.set(String(p.id), p));
-                  data.posts.forEach((p: FeedPost) => merged.set(String(p.id), p));
-                  const result = Array.from(merged.values());
-                  try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(result)); } catch {}
-                  return result;
+                  const map = new Map<string, FeedPost>();
+                  data.posts.forEach((p: FeedPost) => map.set(String(p.id), p));
+                  prev.forEach((p) => {
+                    if (!map.has(String(p.id))) {
+                      map.set(String(p.id), p);
+                    }
+                  });
+                  const merged = Array.from(map.values());
+                  try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
+                  return merged;
                 });
               }
             })
             .catch(() => {});
         };
+
 
         if (isLowBandwidth) {
           // Defer heavy secondary queries on flaky 3G to keep main thread unblocked

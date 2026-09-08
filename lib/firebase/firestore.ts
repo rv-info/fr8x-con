@@ -92,11 +92,26 @@ export async function getPostsFromDB(options?: {
 
     const lastVisibleDoc = snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null;
     return { posts, lastVisibleDoc };
-  } catch (err) {
-    console.warn('[Firestore] Error fetching posts:', err);
-    return { posts: [], lastVisibleDoc: null };
+  } catch (err: any) {
+    console.warn('[Firestore] Error fetching posts with composite query, attempting fallback query:', err?.message || err);
+    try {
+      const coll = collection(db, COLLECTIONS.POSTS);
+      const fallbackSnap = await getDocs(query(coll, firestoreLimit(options?.limitCount || 50)));
+      const posts: FeedPost[] = fallbackSnap.docs
+        .map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<FeedPost, 'id'>),
+        }))
+        .filter((p) => p.status !== 'deleted')
+        .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+      return { posts, lastVisibleDoc: null };
+    } catch (fallbackErr) {
+      console.warn('[Firestore] Fallback query also failed:', fallbackErr);
+      return { posts: [], lastVisibleDoc: null };
+    }
   }
 }
+
 
 export async function upsertPostInDB(post: FeedPost): Promise<void> {
   const docRef = doc(db, COLLECTIONS.POSTS, post.id);

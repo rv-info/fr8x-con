@@ -13,6 +13,8 @@ import {
 } from '@/lib/utils';
 import Link from 'next/link';
 import { NetworkStatusPill } from './NetworkStatusPill';
+import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+
 import {
   MapPin,
   Bell,
@@ -408,26 +410,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       </div>
                       <div>
                         <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>From</label>
-                        <select
+                        <SearchableDropdown
+                          options={Object.entries(availableCurrencies).map(([c, info]) => ({
+                            value: c,
+                            label: `${c} (${info.symbol})`,
+                            subLabel: info.name,
+                          }))}
                           value={calcSourceCurrency}
-                          onChange={(e) => setCalcSourceCurrency(e.target.value)}
-                          style={{
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            padding: '6px 8px',
-                            height: '34px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            borderRadius: '6px',
-                            border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                            background: '#ffffff',
-                            color: 'var(--fr8x-text, #0f172a)',
-                          }}
-                        >
-                          {Object.keys(availableCurrencies).map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
+                          onChange={setCalcSourceCurrency}
+                          searchPlaceholder="Search currency…"
+                          maxHeight={160}
+                        />
                       </div>
                     </div>
 
@@ -455,7 +448,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             width: '100%',
                             boxSizing: 'border-box',
                             padding: '0 10px',
-                            height: '34px',
+                            height: '38px',
                             display: 'flex',
                             alignItems: 'center',
                             background: '#ecfdf5',
@@ -474,28 +467,20 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       </div>
                       <div>
                         <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>To</label>
-                        <select
+                        <SearchableDropdown
+                          options={Object.entries(availableCurrencies).map(([c, info]) => ({
+                            value: c,
+                            label: `${c} (${info.symbol})`,
+                            subLabel: info.name,
+                          }))}
                           value={calcTargetCurrency}
-                          onChange={(e) => setCalcTargetCurrency(e.target.value)}
-                          style={{
-                            width: '100%',
-                            boxSizing: 'border-box',
-                            padding: '6px 8px',
-                            height: '34px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            borderRadius: '6px',
-                            border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                            background: '#ffffff',
-                            color: 'var(--fr8x-text, #0f172a)',
-                          }}
-                        >
-                          {Object.keys(availableCurrencies).map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </select>
+                          onChange={setCalcTargetCurrency}
+                          searchPlaceholder="Search currency…"
+                          maxHeight={160}
+                        />
                       </div>
                     </div>
+
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <small style={{ color: 'var(--mut)', fontSize: '10px' }}>
                         1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}

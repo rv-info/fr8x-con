@@ -88,7 +88,7 @@ function VerifyEmailContent() {
             FR8X Email Verification
           </h1>
           <p style={{ fontSize: '13px', color: '#64748b', margin: '6px 0 0' }}>
-            Sovereign Enterprise Identity &amp; Governance
+            FR8X Team · Official Account Verification
           </p>
         </div>
 

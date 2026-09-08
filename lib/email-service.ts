@@ -394,7 +394,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
   name: string;
   senderType: EmailSenderType;
 } {
-  const fromName = process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X';
+  const fromName = 'FR8X Team';
 
   switch (type) {
     case 'SUPPORT_REQUEST':
@@ -404,7 +404,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'SUPPORT_CONTACT':
       return {
         address: process.env.ZEPTO_MAIL_SUPPORT_FROM || EMAIL_SENDERS.SUPPORT,
-        name: `${fromName} Support`,
+        name: fromName,
         senderType: 'SUPPORT',
       };
 
@@ -414,7 +414,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'SERVICE_RESTORED':
       return {
         address: process.env.ZEPTO_MAIL_TECH_FROM || EMAIL_SENDERS.TECH,
-        name: `${fromName} Engineering`,
+        name: fromName,
         senderType: 'TECH',
       };
 
@@ -428,7 +428,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     default:
       return {
         address: process.env.ZEPTO_MAIL_PASSWORD_FROM || EMAIL_SENDERS.PASSWORD,
-        name: `${fromName} Security`,
+        name: fromName,
         senderType: 'PASSWORD',
       };
   }

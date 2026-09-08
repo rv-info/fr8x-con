@@ -102,7 +102,7 @@ async function dispatchFromAllSenders() {
     type: 'MAINTENANCE',
     incidentId: 'INC-2026-SYS-09',
     title: 'Global Freight Index Cache Optimization',
-    details: 'The sovereign pricing index and reverse auction cluster are undergoing routine zero-downtime optimization. All real-time bid streams remain fully operational.',
+    details: 'The FR8X pricing index and reverse auction cluster are undergoing routine zero-downtime optimization. All real-time bid streams remain fully operational.',
     scheduledTime: 'Saturday, 05 Sep 2026 23:00 UTC',
     affectedServices: ['Rates Search Cache', 'Live Vessel AIS Feeds'],
     correlationId: `${correlationIdBase}-TEC`,

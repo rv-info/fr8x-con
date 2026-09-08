@@ -21,6 +21,19 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+import { Country as CSC_Country, State as CSC_State, City as CSC_City } from 'country-state-city';
+import {
+  getAllGlobalISDCodes,
+  getAllGlobalCountries,
+  getStatesForCountry,
+  getCitiesForState,
+  getCitiesForCountry,
+  getAllGlobalTimezones,
+  GlobalISDEntry,
+} from '@/lib/geo/global-geo';
+
+
 
 // Structured Global Logistics Hubs & Commercial Port Cities by Country
 const COUNTRY_CITY_MAP: Record<string, string[]> = {
@@ -135,17 +148,97 @@ export default function RegisterPage() {
   const [timezone, setTimezone] = useState('Asia/Kolkata');
   const [country, setCountry] = useState('India');
   const [countryCode, setCountryCode] = useState('IN');
+  const [state, setState] = useState('Punjab');
+  const [stateCode, setStateCode] = useState('PB');
   const [countryList, setCountryList] = useState<
     { code: string; name: string; flag: string; phonecode: string }[]
   >([]);
-  const [city, setCity] = useState('Mumbai');
+  const [city, setCity] = useState('Ludhiana');
   const [cityList, setCityList] = useState<
     { name: string; state?: string; postalCode?: string }[]
   >([]);
-  const [postalCode, setPostalCode] = useState('400001');
+  const [postalCode, setPostalCode] = useState('141001');
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [customCity, setCustomCity] = useState('');
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+
+  // Complete Global Geography Datasets (All 250 Countries, 418 Timezones, Global States & Cities)
+  const globalIsdEntries: GlobalISDEntry[] = React.useMemo(() => getAllGlobalISDCodes(), []);
+  const globalCountries = React.useMemo(() => getAllGlobalCountries(), []);
+  const globalTimezones = React.useMemo(() => getAllGlobalTimezones(), []);
+
+  const isdOptions: DropdownOption[] = React.useMemo(() => {
+    return globalIsdEntries.map((isd) => ({
+      value: isd.code,
+      label: `${isd.isoCode} ${isd.code} (${isd.country})`,
+      flag: isd.flag,
+      subLabel: `${isd.country} · ISO: ${isd.isoCode}`,
+    }));
+  }, [globalIsdEntries]);
+
+  const timezoneOptions: DropdownOption[] = React.useMemo(() => {
+    return globalTimezones.map((tz) => ({
+      value: tz.value,
+      label: tz.label,
+      subLabel: tz.region,
+    }));
+  }, [globalTimezones]);
+
+  const countryOptions: DropdownOption[] = React.useMemo(() => {
+    return globalCountries.map((c) => ({
+      value: c.name,
+      label: `${c.name} (${c.isoCode})`,
+      flag: c.flag,
+      subLabel: c.phonecode ? `Dial: +${c.phonecode}` : c.currency || '',
+    }));
+  }, [globalCountries]);
+
+  const stateOptions: DropdownOption[] = React.useMemo(() => {
+    const states = getStatesForCountry(countryCode);
+    if (!states || states.length === 0) {
+      return [{ value: country, label: `National Capital / Territory (${country})` }];
+    }
+    return [
+      { value: '', label: 'Select State' },
+      ...states.map((s) => ({
+        value: s.name,
+        label: s.name,
+        subLabel: s.isoCode,
+      })),
+    ];
+  }, [countryCode, country]);
+
+  const cityOptions: DropdownOption[] = React.useMemo(() => {
+    if (state) {
+      const states = getStatesForCountry(countryCode);
+      const matchedState = states.find(
+        (s) => s.name.toLowerCase() === state.toLowerCase() || s.isoCode.toLowerCase() === state.toLowerCase()
+      );
+      if (matchedState) {
+        const stateCities = getCitiesForState(countryCode, matchedState.isoCode);
+        if (stateCities && stateCities.length > 0) {
+          return [
+            ...stateCities.map((c) => ({ value: c.name, label: c.name })),
+            { value: '__other__', label: '+ Enter Custom City / Port…' },
+          ];
+        }
+      }
+    }
+    const countryCities = getCitiesForCountry(countryCode);
+    if (countryCities && countryCities.length > 0) {
+      return [
+        ...countryCities.slice(0, 500).map((c) => ({ value: c.name, label: c.name })),
+        { value: '__other__', label: '+ Enter Custom City / Port…' },
+      ];
+    }
+    const fallbackList = COUNTRY_CITY_MAP[country] || ['Mumbai', 'Delhi NCR', 'Bengaluru'];
+    return [
+      ...fallbackList.map((c) => ({ value: c, label: c })),
+      { value: '__other__', label: '+ Enter Custom City / Port…' },
+    ];
+  }, [countryCode, state, country]);
+
+
 
   // Business Card
   const [companyName, setCompanyName] = useState('');
@@ -242,17 +335,48 @@ export default function RegisterPage() {
 
   const handleCountryChange = (val: string) => {
     setCountry(val);
-    const found = countryList.find((c) => c.name.toLowerCase() === val.toLowerCase());
+    const found =
+      countryList.find((c) => c.name.toLowerCase() === val.toLowerCase()) ||
+      CSC_Country.getAllCountries().find((c) => c.name.toLowerCase() === val.toLowerCase());
     if (found) {
-      setCountryCode(found.code);
-      if (found.phonecode) {
-        setIsdCode(found.phonecode);
+      const code = 'code' in found ? found.code : found.isoCode;
+      setCountryCode(code);
+      const phone = 'phonecode' in found ? found.phonecode : (found as any).phonecode;
+      if (phone) {
+        setIsdCode(phone.startsWith('+') ? phone : `+${phone}`);
+      }
+      const states = CSC_State.getStatesOfCountry(code);
+      if (states.length > 0) {
+        const defaultState = code === 'IN' ? (states.find(s => s.isoCode === 'PB')?.name || states[0].name) : states[0].name;
+        setState(defaultState);
+        const sObj = states.find(s => s.name === defaultState);
+        if (sObj) setStateCode(sObj.isoCode);
+      } else {
+        setState('');
+        setStateCode('');
       }
     } else {
       const code = val.slice(0, 2).toUpperCase();
       setCountryCode(code);
     }
   };
+
+  const handleStateChange = (val: string) => {
+    setState(val);
+    const states = CSC_State.getStatesOfCountry(countryCode);
+    const matched = states.find(
+      (s) => s.name.toLowerCase() === val.toLowerCase() || s.isoCode.toLowerCase() === val.toLowerCase()
+    );
+    if (matched) {
+      setStateCode(matched.isoCode);
+      const cities = CSC_City.getCitiesOfState(countryCode, matched.isoCode);
+      if (cities && cities.length > 0) {
+        setCity(cities[0].name);
+        setIsCustomCity(false);
+      }
+    }
+  };
+
 
   const handleCitySelect = (selectedCityName: string) => {
     if (selectedCityName === '__other__') {
@@ -471,7 +595,7 @@ export default function RegisterPage() {
 
   const handleResendCode = async () => {
     setCanResend(false);
-    setOtpTimer(30);
+    setOtpTimer(60);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -665,25 +789,22 @@ export default function RegisterPage() {
                     <label>
                       Mobile Contact <span className="req">*</span>
                     </label>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <select
-                        className="input"
-                        style={{ width: '130px', flexShrink: 0, paddingLeft: '8px', paddingRight: '8px' }}
-                        value={isdCode}
-                        onChange={(e) => {
-                          const newCode = e.target.value;
-                          setIsdCode(newCode);
-                          if (newCode === '+91' && mobileNumber.length > 10) {
-                            setMobileNumber(mobileNumber.slice(0, 10));
-                          }
-                        }}
-                      >
-                        {ISD_CODES.map((isd) => (
-                          <option key={isd.code} value={isd.code}>
-                            {isd.flag} {isd.code} ({isd.country.split(' ')[0]})
-                          </option>
-                        ))}
-                      </select>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                      <div style={{ width: '195px', flexShrink: 0 }}>
+                        <SearchableDropdown
+                          options={isdOptions}
+                          value={isdCode}
+                          onChange={(newCode) => {
+                            setIsdCode(newCode);
+                            if (newCode === '+91' && mobileNumber.length > 10) {
+                              setMobileNumber(mobileNumber.slice(0, 10));
+                            }
+                          }}
+                          searchPlaceholder="Search country or code…"
+                          maxHeight={280}
+                        />
+                      </div>
+
                       <input
                         className="input"
                         type="tel"
@@ -699,6 +820,7 @@ export default function RegisterPage() {
                           setMobileNumber(isdCode === '+91' ? digits.slice(0, 10) : digits.slice(0, 14));
                         }}
                         required
+                        style={{ height: '38px' }}
                       />
                     </div>
                     {isdCode === '+91' && (
@@ -712,95 +834,75 @@ export default function RegisterPage() {
                 <div className="grid g1" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>Time Zone (IANA)</label>
-                    <select
-                      className="input"
+                    <SearchableDropdown
+                      options={timezoneOptions}
                       value={timezone}
-                      onChange={(e) => setTimezone(e.target.value)}
-                    >
-                      <option value="Asia/Kolkata">Asia/Kolkata (IST +05:30)</option>
-                      <option value="Europe/Amsterdam">Europe/Amsterdam (CET +01:00)</option>
-                      <option value="Asia/Dubai">Asia/Dubai (GST +04:00)</option>
-                      <option value="Asia/Singapore">Asia/Singapore (SGT +08:00)</option>
-                      <option value="Europe/London">Europe/London (GMT +00:00)</option>
-                      <option value="America/New_York">America/New_York (EST -05:00)</option>
-                    </select>
+                      onChange={setTimezone}
+                      searchPlaceholder="Search time zone…"
+                    />
                   </div>
                 </div>
 
-                <div className="grid g3" style={{ marginTop: '10px' }}>
+                <div className="grid g2" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>Country of Registration</label>
-                    <select
-                      className="input"
+                    <SearchableDropdown
+                      options={countryOptions}
                       value={country}
-                      onChange={(e) => handleCountryChange(e.target.value)}
-                    >
-                      {countryList.length > 0 ? (
-                        countryList.map((c) => (
-                          <option key={c.code} value={c.name}>
-                            {c.flag} {c.name} ({c.code})
-                          </option>
-                        ))
-                      ) : (
-                        Object.keys(COUNTRY_CITY_MAP).map((c) => (
-                          <option key={c} value={c}>
-                            {c}
-                          </option>
-                        ))
-                      )}
-                    </select>
+                      onChange={handleCountryChange}
+                      searchPlaceholder="Search country…"
+                    />
                   </div>
 
+                  <div className="field">
+                    <label>State / Province</label>
+                    <SearchableDropdown
+                      options={stateOptions}
+                      value={state}
+                      onChange={handleStateChange}
+                      placeholder="Select State"
+                      searchPlaceholder="Search"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid g2" style={{ marginTop: '10px' }}>
                   <div className="field">
                     <label>
                       City / Port Center {isLoadingCities && <span style={{ fontSize: '10.5px', color: 'var(--brand)' }}>(Loading…)</span>}
                     </label>
-                    {!isCustomCity && (cityList.length > 0 || COUNTRY_CITY_MAP[country]) ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <select
-                          className="input"
-                          value={city}
-                          onChange={(e) => handleCitySelect(e.target.value)}
-                        >
-                          {(cityList.length > 0
-                            ? cityList.map((c) => c.name)
-                            : COUNTRY_CITY_MAP[country] || []
-                          ).map((ct) => (
-                            <option key={ct} value={ct}>
-                              {ct}
-                            </option>
-                          ))}
-                          <option value="__other__">+ Enter Other Custom City…</option>
-                        </select>
-                      </div>
+                    {!isCustomCity ? (
+                      <SearchableDropdown
+                        options={cityOptions}
+                        value={city}
+                        onChange={handleCitySelect}
+                        searchPlaceholder="Search city…"
+                        allowCustom
+                      />
                     ) : (
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <input
                           className="input"
                           placeholder="Enter your registered city…"
-                          value={isCustomCity ? customCity : city}
-                          onChange={(e) => {
-                            if (isCustomCity) setCustomCity(e.target.value);
-                            else setCity(e.target.value);
-                          }}
+                          value={customCity}
+                          onChange={(e) => setCustomCity(e.target.value)}
+                          style={{ height: '38px' }}
                         />
-                        {(cityList.length > 0 || COUNTRY_CITY_MAP[country]) && (
-                          <button
-                            type="button"
-                            className="btn secondary sm"
-                            onClick={() => {
-                              setIsCustomCity(false);
-                              const fallback =
-                                cityList[0]?.name ||
-                                COUNTRY_CITY_MAP[country]?.[0] ||
-                                'Mumbai';
-                              setCity(fallback);
-                            }}
-                            style={{ whiteSpace: 'nowrap', fontSize: '11px' }}
-                          >
-                            Preset List
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          onClick={() => {
+                            setIsCustomCity(false);
+                            const fallback =
+                              cityList[0]?.name ||
+                              COUNTRY_CITY_MAP[country]?.[0] ||
+                              'Mumbai';
+                            setCity(fallback);
+                          }}
+                          style={{ whiteSpace: 'nowrap', fontSize: '11px', height: '38px' }}
+                        >
+                          Preset List
+                        </button>
                       </div>
                     )}
                   </div>
@@ -809,12 +911,14 @@ export default function RegisterPage() {
                     <label>Postal Code / PIN Code</label>
                     <input
                       className="input"
-                      placeholder="e.g. 400001, 10001, 3011"
+                      placeholder="e.g. 141001, 400001, 10001"
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
+                      style={{ height: '38px' }}
                     />
                   </div>
                 </div>
+
               </div>
             </div>
 

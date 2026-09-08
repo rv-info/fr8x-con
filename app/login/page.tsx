@@ -42,16 +42,17 @@ export default function LoginPage() {
   const [firstLoginTimer, setFirstLoginTimer] = useState(15);
   const [firstLoginSubmitting, setFirstLoginSubmitting] = useState(false);
   const [firstLoginResending, setFirstLoginResending] = useState(false);
+  const [firstLoginResendCooldown, setFirstLoginResendCooldown] = useState(60);
 
-  // Countdown timer for first-login OTP (15 seconds strict)
+  // Countdown timer for first-login OTP (15 seconds strict) and 60-second resend cooldown
   useEffect(() => {
     if (!firstLoginModalOpen) return;
-    if (firstLoginTimer <= 0) return;
     const interval = setInterval(() => {
       setFirstLoginTimer((prev) => (prev > 0 ? prev - 1 : 0));
+      setFirstLoginResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [firstLoginModalOpen, firstLoginTimer]);
+  }, [firstLoginModalOpen]);
 
   // Read URL reason parameter (session_expired, inactivity, not_found)
   useEffect(() => {
@@ -223,6 +224,7 @@ export default function LoginPage() {
       if (res.ok && json.success) {
         setFirstLoginChallengeToken(json.challengeToken);
         setFirstLoginTimer(json.expiresIn || 300);
+        setFirstLoginResendCooldown(60);
         setFirstLoginOtp('');
         toast('New verification code sent.');
       } else {
@@ -864,11 +866,15 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={handleFirstLoginResend}
-                  disabled={firstLoginResending}
+                  disabled={firstLoginResending || firstLoginResendCooldown > 0}
                   className="btn secondary sm"
                   style={{ fontSize: '11.5px' }}
                 >
-                  {firstLoginResending ? 'Resending…' : 'Resend Code'}
+                  {firstLoginResending
+                    ? 'Resending…'
+                    : firstLoginResendCooldown > 0
+                    ? `Resend in ${firstLoginResendCooldown}s`
+                    : 'Resend Code'}
                 </button>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button
