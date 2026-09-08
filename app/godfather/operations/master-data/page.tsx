@@ -19,6 +19,7 @@ import {
   Scale,
   Receipt,
   MapPin,
+  Globe,
   ExternalLink,
   ShieldCheck,
   Tag,
@@ -43,6 +44,7 @@ import {
   CarrierType,
   CarrierAlliance,
   EquipmentCategory,
+  GlobalCityItem,
 } from '@/lib/godfather/types';
 import {
   getLocationTypeIcon,
@@ -52,7 +54,7 @@ import {
 } from '@/lib/utils';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
 
-type ActiveTab = 'locations' | 'carriers' | 'equipment' | 'commodities' | 'incoterms' | 'tax';
+type ActiveTab = 'locations' | 'carriers' | 'equipment' | 'commodities' | 'incoterms' | 'tax' | 'cities';
 
 export default function MasterDataPage() {
   const {
