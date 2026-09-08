@@ -25,7 +25,10 @@ export async function POST(req: NextRequest) {
 
     if (result.emailPromise) {
       try {
-        await result.emailPromise;
+        await Promise.race([
+          result.emailPromise,
+          new Promise((resolve) => setTimeout(resolve, 1200)),
+        ]);
       } catch (mailErr: any) {
         console.error('[ResendAPI] Verification email delivery error:', mailErr.message);
       }
@@ -35,7 +38,6 @@ export async function POST(req: NextRequest) {
       success: result.success,
       message: result.message,
       remainingAttempts: result.remainingAttempts,
-      demoCode: result.otp,
     });
   } catch (err: any) {
     return NextResponse.json(

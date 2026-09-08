@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
-import { hashOtp, checkRateLimit, recordFailedAttempt } from '@/lib/crypto';
+import { hashOtp, checkRateLimit, recordFailedAttempt, generateSecureOtp } from '@/lib/crypto';
 import { sendPasswordResetOtpEmail } from '@/lib/mailer';
 import { otpStore } from '@/lib/otp-store';
 
@@ -59,8 +59,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Generate cryptographically secure 6-digit OTP
-    const otpCode = crypto.randomInt(100_000, 999_999).toString();
+    // Generate cryptographically secure 6-digit OTP distinct from any existing active code
+    const existing = await otpStore.get(storeKey);
+    const otpCode = generateSecureOtp(
+      6,
+      existing ? { salt: existing.salt, hash: existing.hash } : undefined
+    );
     const hashed = hashOtp(otpCode);
     await otpStore.set(storeKey, hashed);
 

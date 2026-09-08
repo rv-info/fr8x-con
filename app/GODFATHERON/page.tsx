@@ -88,7 +88,6 @@ export default function DedicatedGodfatherLoginPage() {
   const [showForgotConfirmPass, setShowForgotConfirmPass] = useState(false);
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotTimer, setForgotTimer] = useState(0);
-  const [forgotDemoCode, setForgotDemoCode] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState(false);
   const [smtpStatusMessage, setSmtpStatusMessage] = useState<string | null>(null);
 
@@ -281,7 +280,6 @@ export default function DedicatedGodfatherLoginPage() {
   const handleSendRecoveryOtp = async () => {
     setErrorMessage('');
     setSmtpStatusMessage(null);
-    setForgotDemoCode(null);
     setIsSubmitting(true);
 
     try {
@@ -291,7 +289,6 @@ export default function DedicatedGodfatherLoginPage() {
         body: JSON.stringify({ email: forgotEmail }),
       });
       const data = await res.json();
-      if (data.demoCode) setForgotDemoCode(data.demoCode);
       setForgotSent(true);
       setForgotTimer(60);
       setSmtpStatusMessage(data.message || 'Recovery code dispatched to your registered email.');
@@ -692,19 +689,6 @@ export default function DedicatedGodfatherLoginPage() {
                     </button>
                   ) : (
                     <>
-                      {forgotDemoCode && (
-                        <div className="gfl-demo-hint-box">
-                          <span>Verification Code: <strong>{forgotDemoCode}</strong></span>
-                          <button
-                            type="button"
-                            onClick={() => setForgotOtp(forgotDemoCode)}
-                            className="gfl-demo-autofill-btn"
-                          >
-                            Autofill
-                          </button>
-                        </div>
-                      )}
-
                       <div className="gfl-clean-field">
                         <label className="gfl-clean-label">Enter 6-Digit Code</label>
                         <input

@@ -159,9 +159,9 @@ export async function submitBidInDB(auctionId: string, bid: SubmittedBid): Promi
 export async function getRatesFromDB(ownerUid?: string): Promise<RateItem[]> {
   try {
     const coll = collection(db, COLLECTIONS.RATES);
-    let q = query(coll, orderBy('valid', 'desc'), firestoreLimit(100));
+    let q = query(coll, firestoreLimit(100));
     if (ownerUid) {
-      q = query(coll, where('ownerUid', '==', ownerUid), orderBy('valid', 'desc'));
+      q = query(coll, where('ownerUid', '==', ownerUid), firestoreLimit(100));
     }
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({
@@ -169,25 +169,62 @@ export async function getRatesFromDB(ownerUid?: string): Promise<RateItem[]> {
       ...(d.data() as Omit<RateItem, 'id'>),
     }));
   } catch (err) {
-    console.warn('[Firestore] Error fetching rates:', err);
+    console.warn('[Firestore] Error fetching rates from Cloud:', err);
     return [];
   }
 }
 
 export async function upsertRateInDB(rate: RateItem): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.RATES, rate.id);
-  const now = new Date().toISOString();
-  await setDoc(
-    docRef,
-    {
-      ...rate,
-      schemaVersion: 2,
-      updatedAt: now,
-      createdAt: rate.createdAt || now,
-      status: rate.status || 'active',
-    },
-    { merge: true }
-  );
+  try {
+    const docRef = doc(db, COLLECTIONS.RATES, rate.id);
+    const now = new Date().toISOString();
+    await setDoc(
+      docRef,
+      {
+        ...rate,
+        schemaVersion: 2,
+        updatedAt: now,
+        createdAt: rate.createdAt || now,
+        status: rate.status || 'active',
+      },
+      { merge: true }
+    );
+  } catch (err) {
+    console.warn('[Firestore] Error upserting rate in Cloud:', err);
+  }
+}
+
+export async function deleteRateInDB(rateId: string): Promise<void> {
+  try {
+    const docRef = doc(db, COLLECTIONS.RATES, rateId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore] Error deleting rate in Cloud:', err);
+  }
+}
+
+export async function batchUpsertRatesInDB(rates: RateItem[]): Promise<void> {
+  try {
+    const batch = writeBatch(db);
+    const now = new Date().toISOString();
+    for (const r of rates) {
+      const docRef = doc(db, COLLECTIONS.RATES, r.id);
+      batch.set(
+        docRef,
+        {
+          ...r,
+          schemaVersion: 2,
+          updatedAt: now,
+          createdAt: r.createdAt || now,
+          status: r.status || 'active',
+        },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+  } catch (err) {
+    console.warn('[Firestore] Error batch upserting rates in Cloud:', err);
+  }
 }
 
 export async function batchUpdateRatesInDB(

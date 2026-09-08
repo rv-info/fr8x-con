@@ -327,7 +327,11 @@ export async function resendOperatorFirstLoginOtp(
   }
 
   const now = Date.now();
-  const rawOtp = generateSecureOtp(6);
+  const existingChallenge = operatorSecurityState.activeFirstLoginOtp;
+  const rawOtp = generateSecureOtp(
+    6,
+    existingChallenge ? { salt: existingChallenge.salt, hash: existingChallenge.hash } : undefined
+  );
   const { salt, hash } = hashOtp(rawOtp);
   const expiresAt = now + OTP_VALIDITY_SECONDS * 1000;
 

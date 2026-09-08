@@ -45,6 +45,8 @@ import {
   submitBidInDB,
   getRatesFromDB,
   upsertRateInDB,
+  deleteRateInDB,
+  batchUpsertRatesInDB,
   batchUpdateRatesInDB,
 } from '@/lib/firebase/firestore';
 import { eventBus } from '@/lib/intelligence/events';
@@ -1833,8 +1835,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (savedJobs) setJobs(JSON.parse(savedJobs));
       const savedAuctions = localStorage.getItem('fr8x_auctions');
       if (savedAuctions) setAuctions(JSON.parse(savedAuctions));
+
       const savedRates = localStorage.getItem('fr8x_rates');
-      if (savedRates) setRates(JSON.parse(savedRates));
+      if (savedRates) {
+        try {
+          const parsed = JSON.parse(savedRates);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setRates(parsed);
+          }
+        } catch {}
+      }
+
+      const savedMyRates = localStorage.getItem('fr8x_my_rates');
+      if (savedMyRates) {
+        try {
+          const parsed = JSON.parse(savedMyRates);
+          if (Array.isArray(parsed)) {
+            setMyRates(parsed);
+          }
+        } catch {}
+      } else if (savedRates) {
+        try {
+          const parsed = JSON.parse(savedRates);
+          if (Array.isArray(parsed)) {
+            setMyRates(parsed.filter((r: any) => r.isOwner || r.ownerUid === user?.uid || r.isSelfPosted));
+          }
+        } catch {}
+      }
 
       const savedLocs = localStorage.getItem('fr8x_gf_master_locations');
       if (savedLocs) setMasterLocations(JSON.parse(savedLocs));
@@ -1881,8 +1908,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setMyRates(ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner));
             try {
               localStorage.setItem('fr8x_rates', JSON.stringify(ratesRes.value));
+              localStorage.setItem('fr8x_my_rates', JSON.stringify(ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner)));
             } catch {}
           }
+
+          // 3. Revalidate from authoritative server-side DBMS (.knox/dbms)
+          fetch('/api/rates')
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.success && Array.isArray(data.rates) && data.rates.length > 0) {
+                setRates((prev) => {
+                  const merged = new Map<string, RateItem>();
+                  prev.forEach((r) => merged.set(r.id, r));
+                  data.rates.forEach((r: RateItem) => merged.set(r.id, r));
+                  const result = Array.from(merged.values());
+                  try { localStorage.setItem('fr8x_rates', JSON.stringify(result)); } catch {}
+                  return result;
+                });
+                setMyRates((prev) => {
+                  const myFromApi = data.rates.filter((r: RateItem) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
+                  const merged = new Map<string, RateItem>();
+                  prev.forEach((r) => merged.set(r.id, r));
+                  myFromApi.forEach((r: RateItem) => merged.set(r.id, r));
+                  const result = Array.from(merged.values());
+                  try { localStorage.setItem('fr8x_my_rates', JSON.stringify(result)); } catch {}
+                  return result;
+                });
+              }
+            })
+            .catch(() => {});
+
+          fetch('/api/feed')
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
+                setPosts((prev) => {
+                  const merged = new Map<string, FeedPost>();
+                  prev.forEach((p) => merged.set(String(p.id), p));
+                  data.posts.forEach((p: FeedPost) => merged.set(String(p.id), p));
+                  const result = Array.from(merged.values());
+                  try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(result)); } catch {}
+                  return result;
+                });
+              }
+            })
+            .catch(() => {});
         };
 
         if (isLowBandwidth) {
@@ -1948,8 +2018,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Offline queueing + live sync
+    // Offline queueing + server DBMS sync + live cloud sync
     queueAction('create_post', newPost, user.uid);
+    fetch('/api/feed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newPost),
+    }).catch(() => {});
     upsertPostInDB(newPost).catch(() => {});
     eventBus.recordEvent({
       eventType: 'post_create',
@@ -1999,7 +2074,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setPosts((prev) => prev.filter((p) => String(p.id) !== String(postId)));
+    setPosts((prev) => {
+      const next = prev.filter((p) => String(p.id) !== String(postId));
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    fetch(`/api/feed?id=${encodeURIComponent(String(postId))}`, {
+      method: 'DELETE',
+    }).catch(() => {});
     deletePostInDB(String(postId)).catch(() => {});
     toast('Post removed from feed.');
   };
@@ -2739,8 +2821,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
       status: 'active',
       schemaVersion: 2,
     };
-    setMyRates((prev) => [newRate, ...prev]);
-    setRates((prev) => [newRate, ...prev]);
+    setMyRates((prev) => {
+      const next = [newRate, ...prev];
+      try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setRates((prev) => {
+      const next = [newRate, ...prev];
+      try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // Server DBMS persistence
+    fetch('/api/rates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newRate),
+    }).catch(() => {});
+
+    // Cloud Firestore sync
     upsertRateInDB(newRate).catch(() => {});
     eventBus.recordEvent({
       eventType: 'rate_edit',
@@ -2753,8 +2852,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteMyRate = (rateId: string) => {
-    setMyRates((prev) => prev.filter((r) => r.id !== rateId));
-    setRates((prev) => prev.filter((r) => r.id !== rateId));
+    setMyRates((prev) => {
+      const next = prev.filter((r) => r.id !== rateId);
+      try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setRates((prev) => {
+      const next = prev.filter((r) => r.id !== rateId);
+      try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // Server DBMS deletion
+    fetch(`/api/rates?id=${encodeURIComponent(rateId)}`, {
+      method: 'DELETE',
+    }).catch(() => {});
+
+    // Cloud Firestore deletion
+    deleteRateInDB(rateId).catch(() => {});
     toast(`Rate ${rateId} removed from inventory.`);
   };
 
@@ -2804,12 +2919,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     setRates(updatedRates);
-    setMyRates((prev) =>
-      prev.map((r) => {
+    try { localStorage.setItem('fr8x_rates', JSON.stringify(updatedRates)); } catch {}
+    setMyRates((prev) => {
+      const next = prev.map((r) => {
         const match = updatedRates.find((ur) => ur.id === r.id);
         return match || r;
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // Server DBMS bulk update
+    fetch('/api/rates/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rates: updatedRates }),
+    }).catch(() => {});
 
     try {
       await batchUpdateRatesInDB(updateBatch);
@@ -2864,8 +2989,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     if (validRows.length > 0) {
-      setMyRates((prev) => [...validRows, ...prev]);
-      setRates((prev) => [...validRows, ...prev]);
+      setMyRates((prev) => {
+        const next = [...validRows, ...prev];
+        try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
+        return next;
+      });
+      setRates((prev) => {
+        const next = [...validRows, ...prev];
+        try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
+        return next;
+      });
+
+      // Server DBMS persistence
+      fetch('/api/rates/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rates: validRows }),
+      }).catch(() => {});
+
+      // Cloud Firestore batch upsert
+      batchUpsertRatesInDB(validRows).catch(() => {});
+
       toast(`Successfully imported ${validRows.length} valid rates into i-Rates inventory.`);
     }
 

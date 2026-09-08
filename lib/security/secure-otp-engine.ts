@@ -46,6 +46,10 @@ export interface CreateOtpOptions {
   alphanumeric?: boolean;
   /** Optional contextual metadata to bind to the challenge (blinded in ticket) */
   metadata?: Record<string, unknown>;
+  /** Optional previous plaintext OTP to exclude so resend strictly rotates digits */
+  excludePreviousOtp?: string | string[];
+  /** Optional previous challenge ticket to rotate away from and incinerate on resend */
+  previousChallengeTicket?: string;
 }
 
 export interface OtpChallengeResult {
@@ -177,8 +181,50 @@ export class UntraceableSecureOtpEngine {
       throw new Error('[SecureOtpEngine] OTP length must be between 4 and 16 characters.');
     }
 
-    // 1. CSPRNG Generation (Zero modulo bias)
-    const plainOtp = this.generateCsprngCode(length, alphanumeric);
+    let previousChallenge: VaultEntry | undefined;
+    if (options.previousChallengeTicket) {
+      const parsed = this.verifyAndParseTicket(options.previousChallengeTicket);
+      if (parsed) {
+        previousChallenge = this.vault.get(parsed.cid);
+        // Incinerate the old challenge on resend so it cannot be used
+        if (previousChallenge) {
+          this.vault.delete(parsed.cid);
+        }
+      }
+    }
+
+    const excludeSet = new Set(
+      Array.isArray(options.excludePreviousOtp)
+        ? options.excludePreviousOtp
+        : options.excludePreviousOtp
+        ? [options.excludePreviousOtp]
+        : []
+    );
+
+    // 1. CSPRNG Generation (Zero modulo bias) with strict rotation guarantee
+    let plainOtp = this.generateCsprngCode(length, alphanumeric);
+    let attempts = 0;
+    while (attempts < 50) {
+      let collides = excludeSet.has(plainOtp);
+      if (!collides && previousChallenge) {
+        const testHash = this.computeOtpHmac(
+          plainOtp,
+          previousChallenge.salt,
+          previousChallenge.blindedSubject,
+          previousChallenge.purpose,
+          previousChallenge.challengeId
+        );
+        if (crypto.timingSafeEqual(Buffer.from(testHash, 'hex'), Buffer.from(previousChallenge.otpHash, 'hex'))) {
+          collides = true;
+        }
+      }
+      if (collides) {
+        plainOtp = this.generateCsprngCode(length, alphanumeric);
+        attempts++;
+      } else {
+        break;
+      }
+    }
 
     // 2. Blind identity via HMAC digest (untraceable subject fingerprint)
     const blindedSubject = this.computeHmac(subject.trim().toLowerCase());

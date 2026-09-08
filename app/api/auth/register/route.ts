@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isCorporateEmail } from '@/lib/utils';
 import { createSignedSessionToken } from '@/lib/crypto';
+import { EmailService } from '@/lib/email-service';
 
 /**
  * POST /api/auth/register
@@ -32,12 +33,12 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Verify corporate email policy
+    // Verify corporate email policy (strictly rejects personal/free webmail without revealing list)
     if (!isCorporateEmail(cleanEmail)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Registration requires a corporate email domain. Free email services are strictly prohibited.',
+          error: 'Please provide a valid corporate organization email address.',
         },
         { status: 400 }
       );
@@ -78,11 +79,14 @@ export async function POST(req: NextRequest) {
 
     const user = result.user!;
 
-    // If verification is required, await email delivery and return response with demoCode fallback
+    // If verification is required, dispatch email (bounded race for instant response on slow connections)
     if (result.isVerificationRequired) {
       if (result.emailPromise) {
         try {
-          await result.emailPromise;
+          await Promise.race([
+            result.emailPromise,
+            new Promise((resolve) => setTimeout(resolve, 1200)),
+          ]);
         } catch (mailErr: any) {
           console.error('[RegisterAPI] Verification email delivery error:', mailErr.message);
         }
@@ -92,7 +96,6 @@ export async function POST(req: NextRequest) {
         {
           success: true,
           isVerificationRequired: true,
-          demoCode: result.verificationOtp,
           message: 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.',
           user: {
             uid: user.uid,
@@ -110,10 +113,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Dispatch official Welcome onboarding email (FR8X_WELCOME_USER) from password@fr8x.in
+    EmailService.sendWelcomeEmail({
+      to: user.email,
+      firstName: user.displayName.split(' ')[0] || user.displayName,
+      fullName: user.displayName,
+      organizationName: user.company,
+      verificationUrl: `${origin}/feeds`,
+    }).catch((welcomeErr: any) => {
+      console.error('[RegisterAPI] Welcome email dispatch warning:', welcomeErr.message);
+    });
+
     const res = NextResponse.json(
       {
         success: true,
         message: 'Account successfully registered under One User, One Login policy.',
+        welcomeEmailSent: true,
         user: {
           uid: user.uid,
           email: user.email,

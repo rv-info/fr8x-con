@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { createSignedSessionToken } from '@/lib/crypto';
+import { EmailService } from '@/lib/email-service';
 
 /**
  * GET /api/auth/verify-email?token=...&email=...
@@ -38,9 +39,28 @@ export async function POST(req: NextRequest) {
     }
 
     const user = result.user!;
+
+    // Dispatch official Welcome Onboarding email (FR8X_WELCOME_USER) from password@fr8x.in
+    const origin =
+      process.env.APP_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      req.nextUrl.origin ||
+      'https://con.fr8x.in';
+
+    EmailService.sendWelcomeEmail({
+      to: user.email,
+      firstName: user.displayName.split(' ')[0] || user.displayName,
+      fullName: user.displayName,
+      organizationName: user.company,
+      verificationUrl: `${origin}/feeds`,
+    }).catch((welcomeErr: any) => {
+      console.error('[VerifyEmailAPI] Welcome email dispatch warning:', welcomeErr.message);
+    });
+
     const res = NextResponse.json({
       success: true,
       message: result.message || 'Email verified successfully!',
+      welcomeEmailSent: true,
       user: {
         uid: user.uid,
         email: user.email,

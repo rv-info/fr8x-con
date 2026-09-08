@@ -13,6 +13,7 @@ import {
   createSignedSessionToken,
   verifySignedSessionToken,
 } from '@/lib/crypto';
+import { isCorporateEmail } from '@/lib/utils';
 
 export interface ServerUserRecord {
   uid: string;
@@ -294,6 +295,36 @@ class ServerSecurityStore {
         fs.mkdirSync(dataDir, { recursive: true });
       }
       const dataFile = path.join(dataDir, 'server-auth-data.json');
+
+      // Always merge existing disk data before writing so concurrent workers never overwrite user registrations
+      if (fs.existsSync(dataFile)) {
+        try {
+          const raw = fs.readFileSync(dataFile, 'utf8');
+          const diskData = JSON.parse(raw);
+          if (Array.isArray(diskData.users)) {
+            for (const [k, u] of diskData.users) {
+              if (!this.users.has(k)) {
+                this.users.set(k, u);
+              }
+            }
+          }
+          if (Array.isArray(diskData.blockedAccounts)) {
+            for (const [k, b] of diskData.blockedAccounts) {
+              if (!this.blockedAccounts.has(k)) {
+                this.blockedAccounts.set(k, b);
+              }
+            }
+          }
+          if (Array.isArray(diskData.activeGodfatherSessions)) {
+            for (const s of diskData.activeGodfatherSessions) {
+              this.activeGodfatherSessions.add(s);
+            }
+          }
+        } catch {
+          // Ignore disk read/parse errors
+        }
+      }
+
       const payload = {
         users: Array.from(this.users.entries()),
         emailVerifications: Array.from(this.emailVerifications.entries()),
@@ -404,6 +435,14 @@ class ServerSecurityStore {
     const cleanUid = user.uid.trim().toLowerCase();
     const cleanMobile = user.mobile ? user.mobile.replace(/[^0-9+]/g, '') : undefined;
 
+    // Enforce corporate organization email policy (strictly blocks personal/free webmail)
+    if (!isCorporateEmail(cleanEmail)) {
+      return {
+        success: false,
+        error: 'Please provide a valid corporate organization email address.',
+      };
+    }
+
     // Check if email or UID is already registered
     const existingByEmailOrUid = this.users.get(cleanEmail) || this.users.get(cleanUid);
     if (existingByEmailOrUid) {
@@ -441,9 +480,13 @@ class ServerSecurityStore {
     const isVerificationRequired = !options?.skipVerification;
     const initialStatus = isVerificationRequired ? 'pending_verification' : 'active';
 
-    // Generate cryptographic email verification token and 6-digit OTP
+    // Clean up any existing verification token and ensure new OTP is distinct from old
+    const existingVerif = this.emailVerifications.get(cleanEmail);
+    if (existingVerif?.token) {
+      this.verificationTokens.delete(existingVerif.token);
+    }
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationOtp = crypto.randomInt(100_000, 999_999).toString();
+    const verificationOtp = generateSecureOtp(6, existingVerif?.otp);
     const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
     const record: ServerUserRecord = {
@@ -532,7 +575,7 @@ class ServerSecurityStore {
   }): { success: boolean; error?: string; message?: string; user?: ServerUserRecord } {
     let cleanEmail = (params.email || '').trim().toLowerCase();
 
-    // If token provided without email, look up email
+    // 1. If token provided without email, look up email
     if (params.token && !cleanEmail) {
       let mapped = this.verificationTokens.get(params.token.trim());
       if (!mapped) {
@@ -542,22 +585,55 @@ class ServerSecurityStore {
       if (mapped) cleanEmail = mapped;
     }
 
+    // 2. If OTP is provided, locate active verification challenge by email or by OTP code
+    if (params.otp) {
+      const inputOtp = params.otp.trim();
+      // Ensure latest state from disk is loaded across concurrent worker processes
+      if (!cleanEmail || !this.emailVerifications.has(cleanEmail) || !this.users.has(cleanEmail)) {
+        this.loadPersistedState();
+      }
+
+      // If email didn't match directly, scan active verification challenges for the exact OTP
+      if (!cleanEmail || !this.emailVerifications.has(cleanEmail)) {
+        for (const [em, rec] of this.emailVerifications.entries()) {
+          if (rec.otp === inputOtp && Date.now() <= rec.expiresAt) {
+            cleanEmail = em;
+            break;
+          }
+        }
+      }
+    }
+
     if (!cleanEmail) {
-      return { success: false, error: 'Email address or valid token is required for verification.' };
+      return { success: false, error: 'Corporate email address or 6-digit verification code is required.' };
     }
 
     let verificationRecord = this.emailVerifications.get(cleanEmail);
     let user = this.users.get(cleanEmail);
 
-    // If not found in current memory, check persisted file before rejecting
+    // If not found in current memory, reload from persisted disk store
     if (!user || !verificationRecord) {
       this.loadPersistedState();
       user = this.users.get(cleanEmail);
       verificationRecord = this.emailVerifications.get(cleanEmail);
     }
 
+    // If user object not mapped by email key directly, search by user.email property
     if (!user) {
-      return { success: false, error: 'User account not found.' };
+      for (const u of this.users.values()) {
+        if (u.email && u.email.toLowerCase() === cleanEmail) {
+          user = u;
+          this.users.set(cleanEmail, u);
+          break;
+        }
+      }
+    }
+
+    if (!user) {
+      return {
+        success: false,
+        error: 'Registration record not found or verification session expired. Please resend the code or re-enter your details.',
+      };
     }
 
     if (user.status === 'active') {
@@ -695,16 +771,17 @@ class ServerSecurityStore {
     this.resendLimits.set(cleanEmail, rateLimit);
 
     if (user && user.status === 'pending_verification') {
+      // Clean up old token if mapped and grab previous OTP to guarantee new OTP rotates
+      const existing = this.emailVerifications.get(cleanEmail);
+      if (existing?.token) this.verificationTokens.delete(existing.token);
+
+      const oldOtp = existing?.otp;
       const verificationToken = crypto.randomBytes(32).toString('hex');
-      const verificationOtp = crypto.randomInt(100_000, 999_999).toString();
+      const verificationOtp = generateSecureOtp(6, oldOtp);
       const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
 
       user.emailVerificationToken = verificationToken;
       user.emailVerificationExpiresAt = tokenExpiresAt;
-
-      // Clean up old token if mapped
-      const existing = this.emailVerifications.get(cleanEmail);
-      if (existing?.token) this.verificationTokens.delete(existing.token);
 
       this.emailVerifications.set(cleanEmail, {
         email: cleanEmail,
@@ -875,10 +952,10 @@ class ServerSecurityStore {
         ipAddress: ip,
       });
 
-      // Ensure active password reset OTP exists or send fresh OTP
+      // Ensure active password reset OTP exists or send fresh OTP with rotated digits
       let activeOtp = this.activeResetOtps.get(user.email.toLowerCase());
       if (!activeOtp || Date.now() > activeOtp.expiresAt) {
-        const resetOtp = generateSecureOtp(6);
+        const resetOtp = generateSecureOtp(6, activeOtp?.otp);
         activeOtp = {
           email: user.email,
           otp: resetOtp,
@@ -927,7 +1004,13 @@ class ServerSecurityStore {
           };
         }
 
-        const rawOtp = generateSecureOtp(6);
+        const existingFirstLogin = this.activeFirstLoginOtps.get(cleanEmail);
+        const rawOtp = generateSecureOtp(
+          6,
+          existingFirstLogin
+            ? { salt: existingFirstLogin.salt, hash: existingFirstLogin.hash, iterations: 100_000, keylen: 32, digest: 'sha256' }
+            : undefined
+        );
         const salt = crypto.randomBytes(16).toString('hex');
         const hash = crypto.pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256').toString('hex');
         const challengeId = `CHAL-USR-${Date.now()}-${generateSecureToken(4).toUpperCase()}`;
@@ -1002,7 +1085,8 @@ class ServerSecurityStore {
       this.persistState();
 
       // Generate cryptographically secure 6-digit Password Reset OTP
-      const resetOtp = generateSecureOtp(6);
+      const existingReset = this.activeResetOtps.get(user.email.toLowerCase());
+      const resetOtp = generateSecureOtp(6, existingReset?.otp);
       const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes validity
       this.activeResetOtps.set(user.email.toLowerCase(), {
         email: user.email,
@@ -1176,7 +1260,13 @@ class ServerSecurityStore {
     }
 
     const user = this.users.get(cleanEmail);
-    const rawOtp = generateSecureOtp(6);
+    const existingFirstLogin = this.activeFirstLoginOtps.get(cleanEmail);
+    const rawOtp = generateSecureOtp(
+      6,
+      existingFirstLogin
+        ? { salt: existingFirstLogin.salt, hash: existingFirstLogin.hash, iterations: 100_000, keylen: 32, digest: 'sha256' }
+        : undefined
+    );
     const salt = crypto.randomBytes(16).toString('hex');
     const hash = crypto
       .pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256')
@@ -1386,8 +1476,9 @@ class ServerSecurityStore {
     record.lastRequestedAt = new Date().toISOString();
     const remaining = MAX_DAILY_OTP - record.attempts;
 
-    // Generate cryptographically secure 6-digit OTP
-    const otpCode = crypto.randomInt(100_000, 999_999).toString();
+    // Generate cryptographically secure 6-digit OTP distinct from previous
+    const existingLoginOtp = this.activeLoginOtps.get(email.trim().toLowerCase());
+    const otpCode = generateSecureOtp(6, existingLoginOtp?.otp);
     const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes validity
     this.activeLoginOtps.set(email.trim().toLowerCase(), {
       email: email.trim().toLowerCase(),
@@ -1544,7 +1635,11 @@ class ServerSecurityStore {
     let resetToken: string | undefined;
 
     if (user) {
-      const resetOtp = generateSecureOtp(6);
+      const existingReset = this.activeResetOtps.get(cleanEmail);
+      if (existingReset?.token) {
+        this.resetTokens.delete(existingReset.token);
+      }
+      const resetOtp = generateSecureOtp(6, existingReset?.otp);
       resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + 15 * 60 * 1000;
 

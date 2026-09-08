@@ -88,9 +88,9 @@ export default function LoginPage() {
       return;
     }
 
-    // If looks like email, enforce corporate domain
+    // If looks like email, enforce corporate domain (without revealing personal provider list)
     if (id.includes('@') && !isCorporateEmail(id)) {
-      setErrorMessage('Free email domains (Gmail, Yahoo, Outlook, etc.) are not permitted.');
+      setErrorMessage('Please provide a valid corporate organization email address.');
       return;
     }
 

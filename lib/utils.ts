@@ -20,21 +20,48 @@ export function updateGlobalCurrencyRates(newRates: Record<string, number>) {
 
 export const BLOCKED_EMAIL_DOMAINS = new Set([
   'gmail.com',
+  'googlemail.com',
   'yahoo.com',
   'yahoo.co.in',
   'yahoo.co.uk',
+  'yahoo.com.au',
+  'ymail.com',
+  'rocketmail.com',
   'outlook.com',
   'hotmail.com',
   'live.com',
   'msn.com',
   'icloud.com',
+  'me.com',
+  'mac.com',
   'aol.com',
+  'aim.com',
   'proton.me',
   'protonmail.com',
+  'pm.me',
   'mail.com',
   'zoho.com',
+  'zohomail.com',
   'yandex.com',
+  'yandex.ru',
   'gmx.com',
+  'gmx.net',
+  'rediffmail.com',
+  'inbox.com',
+  'fastmail.com',
+  'hey.com',
+  'qq.com',
+  '163.com',
+  '126.com',
+  'sina.com',
+  'naver.com',
+  'daum.net',
+  'tutanota.com',
+  'tutamail.com',
+  'tempmail.com',
+  'guerrillamail.com',
+  'mailinator.com',
+  'trashmail.com',
 ]);
 
 export function isCorporateEmail(email: string): boolean {
@@ -42,7 +69,14 @@ export function isCorporateEmail(email: string): boolean {
   const parts = email.trim().toLowerCase().split('@');
   if (parts.length !== 2) return false;
   const domain = parts[1];
-  return !BLOCKED_EMAIL_DOMAINS.has(domain);
+  if (!domain || !domain.includes('.')) return false;
+  if (BLOCKED_EMAIL_DOMAINS.has(domain)) return false;
+  for (const blocked of BLOCKED_EMAIL_DOMAINS) {
+    if (domain === blocked || domain.endsWith(`.${blocked}`)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 export const CURRENCY_LOCALES: Record<string, string> = {

@@ -173,7 +173,6 @@ export default function RegisterPage() {
   }, [step, otpTimer]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
 
   const handleGstnChange = (val: string) => {
     const upper = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
@@ -215,9 +214,7 @@ export default function RegisterPage() {
     }
 
     if (!isCorporateEmail(email)) {
-      setErrorMessage(
-        'Registration requires a verified corporate email domain. Free email services (Gmail, Yahoo, Outlook, Hotmail, iCloud, Proton) are strictly restricted.'
-      );
+      setErrorMessage('Please provide a valid corporate organization email address.');
       return;
     }
 
@@ -281,10 +278,14 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           firstName: firstName.trim(),
           lastName: lastName.trim(),
@@ -297,6 +298,7 @@ export default function RegisterPage() {
           role: 'company_admin',
         }),
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
       setIsSubmitting(false);
@@ -308,15 +310,17 @@ export default function RegisterPage() {
 
       // Advance to OTP verification
       setStep('otp');
-      setOtpTimer(60);
+      setOtpTimer(30);
       setCanResend(false);
-      if (data.demoCode) {
-        setDevCode(data.demoCode);
-      }
-      toast(data.message || `Verification email sent from password@fr8x.in to ${email}.`);
-    } catch {
+      toast(data.message || `Verification email dispatched to ${email}.`);
+    } catch (err: any) {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
-      setErrorMessage('Network connection error. Please try again.');
+      if (err.name === 'AbortError') {
+        setErrorMessage('Network request timed out. Please check your connectivity and try again — your details are saved.');
+      } else {
+        setErrorMessage('Network connection slow or unavailable. Please try again.');
+      }
     }
   };
 
@@ -330,15 +334,20 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch('/api/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
           otp: otp.trim(),
         }),
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
       setIsSubmitting(false);
@@ -372,30 +381,39 @@ export default function RegisterPage() {
         password || 'Password@123'
       );
 
-      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
+      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan). A welcome confirmation email has been dispatched to ${email.trim().toLowerCase()}.`);
       router.push('/feeds');
-    } catch {
+    } catch (err: any) {
+      clearTimeout(timeoutId);
       setIsSubmitting(false);
-      setErrorMessage('Network error during verification. Please try again.');
+      if (err.name === 'AbortError') {
+        setErrorMessage('Verification request timed out. Please check your internet connection and try again.');
+      } else {
+        setErrorMessage('Network error during verification. Please try again.');
+      }
     }
   };
 
   const handleResendCode = async () => {
     setCanResend(false);
-    setOtpTimer(60);
+    setOtpTimer(30);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
+      clearTimeout(timeoutId);
+
       const data = await res.json();
-      if (data.demoCode) {
-        setDevCode(data.demoCode);
-      }
-      toast(data.message || 'Verification code resent.');
-    } catch {
-      toast('Failed to resend verification code. Please try again.');
+      toast(data.message || 'Verification code resent to your corporate mailbox.');
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      toast('Network slow or unavailable. Please try resending shortly.');
     }
   };
 
@@ -933,42 +951,25 @@ export default function RegisterPage() {
                     required
                     disabled={isSubmitting}
                   />
-                  {devCode && (
-                    <div
-                      style={{
-                        padding: '10px 12px',
-                        borderRadius: '6px',
-                        background: '#f0fdf4',
-                        border: '1px solid #86efac',
-                        color: '#166534',
-                        fontSize: '12px',
-                        marginTop: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <span>
-                        Secure Verification OTP: <strong style={{ letterSpacing: '1px' }}>{devCode}</strong>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => setOtp(devCode)}
-                        style={{
-                          fontSize: '11px',
-                          background: '#166534',
-                          color: '#fff',
-                          border: 'none',
-                          padding: '3px 10px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontWeight: 600,
-                        }}
-                      >
-                        Auto-Fill Code
-                      </button>
+                  <div
+                    style={{
+                      padding: '11px 13px',
+                      borderRadius: '8px',
+                      background: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      color: '#334155',
+                      fontSize: '11.5px',
+                      marginTop: '12px',
+                      lineHeight: '1.45',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <ShieldCheck size={16} color="var(--brand)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                      <div>
+                        <strong>Instant Corporate Mail Dispatch:</strong> A 6-digit one-time passkey has been dispatched from <code>password@fr8x.in</code>. If it does not arrive in your inbox within seconds, please inspect your corporate <strong>Spam / Junk</strong> folder or company email quarantine.
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -988,10 +989,10 @@ export default function RegisterPage() {
                 <button
                   type="submit"
                   className="btn primary"
-                  disabled={isSubmitting}
-                  style={{ width: '100%', height: '38px', fontSize: '13px', opacity: isSubmitting ? 0.7 : 1 }}
+                  disabled={isSubmitting || otp.length !== 6}
+                  style={{ width: '100%', height: '40px', fontSize: '13px', opacity: isSubmitting ? 0.7 : 1 }}
                 >
-                  {isSubmitting ? 'Verifying Code...' : 'Verify OTP & Activate Workspace'}
+                  {isSubmitting ? 'Verifying Code…' : 'Verify OTP & Activate Workspace'}
                 </button>
 
                 <div style={{ textAlign: 'center', marginTop: '12px' }}>

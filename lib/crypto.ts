@@ -180,10 +180,42 @@ export function clearRateLimit(identifier: string): void {
  * Generates a cryptographically secure numeric OTP of specified length.
  * Backed by Node.js crypto.randomInt (CSPRNG).
  */
-export function generateSecureOtp(length = 6): string {
+export function generateSecureOtp(
+  length = 6,
+  exclude?:
+    | string
+    | string[]
+    | { salt: string; hash: string; iterations?: number; keylen?: number; digest?: string }
+): string {
   const min = Math.pow(10, length - 1);
   const max = Math.pow(10, length) - 1;
-  return crypto.randomInt(min, max + 1).toString();
+
+  if (exclude && typeof exclude === 'object' && !Array.isArray(exclude)) {
+    const { salt, hash, iterations = PBKDF2_ITERATIONS, keylen = PBKDF2_KEYLEN, digest = PBKDF2_DIGEST } = exclude;
+    let code: string;
+    let attempts = 0;
+    do {
+      code = crypto.randomInt(min, max + 1).toString();
+      attempts++;
+      try {
+        const derived = crypto.pbkdf2Sync(code, salt, iterations, keylen, digest);
+        const matches = crypto.timingSafeEqual(derived, Buffer.from(hash, 'hex'));
+        if (!matches) return code;
+      } catch {
+        return code;
+      }
+    } while (attempts < 100);
+    return code;
+  }
+
+  const excludeSet = new Set(Array.isArray(exclude) ? exclude : exclude ? [exclude] : []);
+  let code: string;
+  let attempts = 0;
+  do {
+    code = crypto.randomInt(min, max + 1).toString();
+    attempts++;
+  } while (excludeSet.has(code) && attempts < 100);
+  return code;
 }
 
 /**
