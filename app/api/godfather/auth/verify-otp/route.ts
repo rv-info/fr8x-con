@@ -39,18 +39,11 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Demo codes accepted only in development / when SMTP is unconfigured
-    const isDemoAccepted =
-      (process.env.NODE_ENV === 'development' || !process.env.ZOHO_SMTP_PASSWORD) &&
-      ['884210', '123456', '777777'].includes(otp);
-
     let isValid = false;
 
     if (record) {
       isValid = verifyOtpHash(otp, record.salt, record.hash, record.expiresAt);
     }
-
-    if (isDemoAccepted) isValid = true;
 
     if (!isValid) {
       const attemptResult = recordFailedAttempt(emailKey);

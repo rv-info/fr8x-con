@@ -27,6 +27,8 @@ import {
   EmailService,
   EMAIL_SENDERS,
   sendTransactionalEmail,
+  sendTemplateEmail,
+  ZEPTOMAIL_TEMPLATES,
   resolveSenderForType,
   getEmailSendersStatus,
   getZeptoMailStatus,
@@ -43,6 +45,7 @@ import {
   renderTestEmail,
 } from '../lib/email-templates';
 import { serverSecurityStore } from '../lib/server-auth-store';
+import { operatorStore } from '../lib/godfather/operator-store';
 
 let passedTests = 0;
 let failedTests = 0;
@@ -573,6 +576,232 @@ async function runTests() {
       testTmpl.html.includes('FR8X ZeptoMail integration test successful.'),
     'Test email body is FR8X ZeptoMail integration test successful.'
   );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────────
+  // 19. GODFATHER OPERATOR FIRST-LOGIN & 15-SECOND OTP LIFETIME
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 19. Godfather Operator First-Login & 15-Second OTP Lifetime ---');
+  // Reset operator security state to require first login
+  operatorStore.resetOperatorFirstLoginStatus(false);
+  operatorStore.updateOperatorPassword('SecureOpPassword@123');
+  const operatorEmail = operatorStore.getAuthorizedOperatorEmail();
+
+  // Attempt login with valid credentials
+  const opAuthResult = await operatorStore.authenticateOperatorCredentials(
+    operatorEmail,
+    'SecureOpPassword@123'
+  );
+  assert(opAuthResult.success, 'Password authentication succeeds for valid credentials');
+  assert(opAuthResult.firstLoginRequired === true, 'First login required flag returned');
+  assert(opAuthResult.expiresIn === 15, 'OTP expiresIn is strictly 15 seconds');
+  assert(Boolean(opAuthResult.challengeToken), 'Server returns opaque challengeToken, not raw OTP or user session');
+
+  // Verify that an invalid OTP is rejected
+  const wrongOtpResult = operatorStore.verifyOperatorFirstLoginOtp(opAuthResult.challengeToken!, '000000');
+  assert(!wrongOtpResult.success, 'Invalid OTP rejected on first login verification');
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 20. 15-SECOND OTP EXPIRATION ENFORCEMENT
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 20. 15-Second OTP Expiration Enforcement ---');
+  const secState = operatorStore.getSecurityState();
+  assert(Boolean(secState.activeFirstLoginOtp), 'Operator has active firstLoginOtp in server store');
+
+  if (secState.activeFirstLoginOtp) {
+    // Artificially expire the OTP by setting expiresAt to past
+    operatorStore._setSecurityState({
+      activeFirstLoginOtp: {
+        ...secState.activeFirstLoginOtp,
+        expiresAt: Date.now() - 1000,
+      },
+    });
+    const expiredRes = operatorStore.verifyOperatorFirstLoginOtp(
+      opAuthResult.challengeToken!,
+      '123456'
+    );
+    assert(!expiredRes.success, 'Expired OTP rejected after 15-second window');
+    assert(
+      expiredRes.error?.toLowerCase().includes('expired'),
+      'Safe "Code expired." error message returned'
+    );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 21. 25-HOUR ROLLING WINDOW (MAX 3 SENDS) RATE LIMITING
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 21. 25-Hour Rolling Window (Max 3 Sends) Rate Limiting ---');
+  // Operator already had 1 OTP send during authenticateOperatorCredentials
+  const resend1 = await operatorStore.resendOperatorFirstLoginOtp(opAuthResult.challengeToken!);
+  assert(resend1.success, 'OTP Resend 1 succeeds (send count 2 of 3)');
+
+  const resend2 = await operatorStore.resendOperatorFirstLoginOtp(opAuthResult.challengeToken!);
+  assert(resend2.success, 'OTP Resend 2 succeeds (send count 3 of 3)');
+
+  const resend3 = await operatorStore.resendOperatorFirstLoginOtp(opAuthResult.challengeToken!);
+  assert(!resend3.success, 'OTP Resend 3 blocked by 25-hour 3-send rate limit policy');
+  assert(
+    !resend3.error?.includes('3') && !resend3.error?.includes('25'),
+    'Resend error does not leak numeric policy limit (3 sends / 25 hours)'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 22. PASSWORD WRONG-ATTEMPT COUNTER & 3-STRIKE LOCKOUT
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 22. Server-side Password Attempt Counter & 3-Attempt Lockout ---');
+  const enterpriseUserEmail = `lockout-${Date.now()}@oceanfreight.com`;
+  serverSecurityStore.registerUser(
+    {
+      uid: `u-lockout-${Date.now()}`,
+      email: enterpriseUserEmail,
+      password: 'CorrectEnterprisePass@123',
+      displayName: 'Lockout Test User',
+      company: 'Ocean Freight Logistics',
+      companyId: 'CMP-77665',
+    },
+    { skipVerification: true }
+  );
+
+  // Attempt 1: Wrong password
+  const fail1 = serverSecurityStore.recordLoginAttempt(enterpriseUserEmail, 'WrongPassword1');
+  assert(!fail1.success, 'Failed attempt 1 rejected with generic error');
+
+  // Attempt 2: Wrong password
+  const fail2 = serverSecurityStore.recordLoginAttempt(enterpriseUserEmail, 'WrongPassword2');
+  assert(!fail2.success, 'Failed attempt 2 rejected with generic error');
+
+  // Attempt 3: Wrong password
+  const fail3 = serverSecurityStore.recordLoginAttempt(enterpriseUserEmail, 'WrongPassword3');
+  assert(!fail3.success, 'Failed attempt 3 rejected with lockout warning');
+
+  // Attempt 4: Even with CORRECT password, account is locked!
+  const fail4 = serverSecurityStore.recordLoginAttempt(enterpriseUserEmail, 'CorrectEnterprisePass@123');
+  assert(!fail4.success && fail4.isBlocked === true, 'Account is strictly locked after 3 failed attempts');
+  const lockoutMsg = fail4.message || '';
+  assert(
+    lockoutMsg.toLowerCase().includes('lock') || lockoutMsg.toLowerCase().includes('reset') || lockoutMsg.toLowerCase().includes('blocked'),
+    'Safe generic lockout message returned without exposing credentials or internal state'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 23. ZEPTOMAIL STORED TEMPLATE CATALOG & MERGE INFO
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 23. ZeptoMail Stored Templates & Merge Info API ---');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_WELCOME_USER), 'FR8X_WELCOME_USER template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_SECURITY_OTP), 'FR8X_SECURITY_OTP template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_EMAIL_VERIFICATION), 'FR8X_EMAIL_VERIFICATION template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_FORGOT_PASSWORD), 'FR8X_FORGOT_PASSWORD template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_PASSWORD_CHANGED), 'FR8X_PASSWORD_CHANGED template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_LOGIN_SECURITY_ALERT), 'FR8X_LOGIN_SECURITY_ALERT template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_PRICING_PLAN_UPDATE), 'FR8X_PRICING_PLAN_UPDATE template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_BILLING_ISSUE), 'FR8X_BILLING_ISSUE template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_SUPPORT_TICKET), 'FR8X_SUPPORT_TICKET template registered');
+  assert(Boolean(ZEPTOMAIL_TEMPLATES.FR8X_SYSTEM_ISSUE), 'FR8X_SYSTEM_ISSUE template registered');
+
+  // Test dispatching template email via EmailService
+  const templateDispatchRes = await sendTemplateEmail({
+    template: 'FR8X_SECURITY_OTP',
+    to: testRecipient,
+    recipientName: 'Audit User',
+    mergeInfo: {
+      first_name: 'Audit',
+      otp: '777888',
+      otp_expiry: '15 seconds',
+    },
+    clientReference: `TEST-REF-${Date.now()}`,
+  });
+  assert(templateDispatchRes.success, 'sendTemplateEmail dispatches successfully');
+  assert(templateDispatchRes.from === 'password@fr8x.in', 'sendTemplateEmail uses password@fr8x.in for PASSWORD senderType');
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 24. EMAIL IDEMPOTENCY CACHE & AUDIT EVENT STORE
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 24. Email Idempotency Cache & Audit Event Store ---');
+  const duplicateClientRef = `IDEMP-${Date.now()}`;
+  const firstSend = await EmailService.sendWelcomeEmail({
+    to: testRecipient,
+    firstName: 'Audit',
+    fullName: 'Audit User',
+    organizationName: 'FR8X Testing Corp',
+    clientReference: duplicateClientRef,
+  });
+  assert(firstSend.success, 'Initial welcome email dispatches');
+
+  // Rapid duplicate attempt with exact same clientReference
+  const duplicateSend = await EmailService.sendWelcomeEmail({
+    to: testRecipient,
+    firstName: 'Audit',
+    fullName: 'Audit User',
+    organizationName: 'FR8X Testing Corp',
+    clientReference: duplicateClientRef,
+  });
+  assert(duplicateSend.success, 'Duplicate call returned cached/idempotent success');
+  assert(
+    duplicateSend.messageId === firstSend.messageId,
+    'Idempotent call reuses prior messageId to prevent duplicate delivery'
+  );
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // 25. FIRST-LOGIN STATE TRANSITION TO AUTHENTICATED
+  // ───────────────────────────────────────────────────────────────────────────
+  console.log('\n--- 25. First-Login State Transition & Successful Verification ---');
+  const firstLoginEnterpriseEmail = `firstlogin-${Date.now()}@terminallogistics.com`;
+  serverSecurityStore.registerUser(
+    {
+      uid: `u-first-${Date.now()}`,
+      email: firstLoginEnterpriseEmail,
+      password: 'InitialUserPass@123',
+      displayName: 'First Time Enterprise User',
+      company: 'Terminal Logistics',
+      companyId: 'CMP-11223',
+    },
+    { skipVerification: true }
+  );
+
+  // User authenticates for the first time
+  const initialAuth = serverSecurityStore.recordLoginAttempt(
+    firstLoginEnterpriseEmail,
+    'InitialUserPass@123'
+  );
+  assert(initialAuth.success, 'Enterprise user password check succeeds');
+  assert(initialAuth.firstLoginRequired === true, 'firstLoginRequired flag is true');
+  assert(initialAuth.expiresIn === 15, 'OTP expiresIn is strictly 15 seconds');
+  assert(Boolean(initialAuth.challengeToken), 'Server challengeToken generated for first login');
+
+  // Extract active OTP challenge from store for test validation
+  const activeChallenge = serverSecurityStore.getActiveFirstLoginChallenge(firstLoginEnterpriseEmail);
+  assert(Boolean(activeChallenge), 'Server holds active firstLoginOtp challenge with secure hash');
+
+  // Verify that an incorrect code is rejected
+  const wrongRes = serverSecurityStore.verifyUserFirstLoginOtp(
+    initialAuth.challengeToken!,
+    '000000'
+  );
+  assert(!wrongRes.success, 'Incorrect OTP rejected on first-login verification');
+
+  // Verify with matching test code by simulating user typing matching code
+  if (activeChallenge) {
+    const testOtp = '654321';
+    const salt = require('crypto').randomBytes(16).toString('hex');
+    const hash = require('crypto').pbkdf2Sync(testOtp, salt, 100_000, 32, 'sha256').toString('hex');
+    activeChallenge.salt = salt;
+    activeChallenge.hash = hash;
+
+    const verifyRes = serverSecurityStore.verifyUserFirstLoginOtp(
+      initialAuth.challengeToken!,
+      testOtp
+    );
+    assert(verifyRes.success, 'First-login OTP verification succeeds');
+    assert(verifyRes.user?.firstLoginCompleted === true, 'User record marked firstLoginCompleted: true');
+  }
+
+  // Subsequent login for verified user
+  const subsequentUserAuth = serverSecurityStore.recordLoginAttempt(
+    firstLoginEnterpriseEmail,
+    'InitialUserPass@123'
+  );
+  assert(subsequentUserAuth.success, 'Subsequent login succeeds');
+  assert(subsequentUserAuth.firstLoginRequired === false, 'Subsequent login does NOT require first-login OTP');
 
   // ───────────────────────────────────────────────────────────────────────────
   // SUMMARY

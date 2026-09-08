@@ -66,10 +66,12 @@ export async function POST(req: NextRequest) {
       fromType = 'PASSWORD';
     } else if (normalizedType === 'SUPPORT') {
       fromType = 'SUPPORT';
+    } else if (normalizedType === 'TECH' || normalizedType === 'TECHNICAL') {
+      fromType = 'TECH';
     } else {
       return NextResponse.json(
         {
-          error: "Invalid email sender type. Permitted types: 'support', 'password'.",
+          error: "Invalid email sender type. Permitted types: 'support', 'password', 'tech'.",
           correlationId,
         },
         { status: 400 }
@@ -82,6 +84,8 @@ export async function POST(req: NextRequest) {
         ? event.trim().toUpperCase()
         : fromType === 'PASSWORD'
         ? 'PASSWORD_SECURITY_NOTICE'
+        : fromType === 'TECH'
+        ? 'TECHNICAL_NOTICE'
         : 'SUPPORT_MESSAGE';
 
     // Dispatch via central email service

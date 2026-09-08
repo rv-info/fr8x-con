@@ -31,6 +31,15 @@ import {
   renderTechnicalEmail,
   renderSecurityAlertEmail,
   renderTestEmail,
+  renderForgotPasswordEmail,
+  renderSupportReplyEmail,
+  renderTechnicalMaintenanceEmail,
+  renderTechnicalIncidentEmail,
+  renderTechnicalRecoveryEmail,
+  renderWelcomeEmail,
+  renderPricingPlanUpdateEmail,
+  renderBillingIssueEmail,
+  renderSystemIssueEmail,
   EmailVerificationTemplateParams,
   PasswordResetTemplateParams,
   PasswordChangedTemplateParams,
@@ -39,6 +48,15 @@ import {
   TechnicalNotificationTemplateParams,
   SecurityAlertTemplateParams,
   TestEmailTemplateParams,
+  ForgotPasswordTemplateParams,
+  SupportReplyTemplateParams,
+  TechnicalMaintenanceTemplateParams,
+  TechnicalIncidentTemplateParams,
+  TechnicalRecoveryTemplateParams,
+  WelcomeTemplateParams,
+  PricingPlanUpdateTemplateParams,
+  BillingIssueTemplateParams,
+  SystemIssueTemplateParams,
 } from '@/lib/email-templates';
 
 export const EMAIL_SENDERS = {
@@ -100,6 +118,125 @@ export interface TransactionalEmailResult {
   details?: unknown;
 }
 
+export type ZeptoMailTemplateIdentifier =
+  | 'FR8X_WELCOME_USER'
+  | 'FR8X_EMAIL_VERIFICATION'
+  | 'FR8X_SECURITY_OTP'
+  | 'FR8X_FORGOT_PASSWORD'
+  | 'FR8X_PASSWORD_CHANGED'
+  | 'FR8X_LOGIN_SECURITY_ALERT'
+  | 'FR8X_PRICING_PLAN_UPDATE'
+  | 'FR8X_BILLING_ISSUE'
+  | 'FR8X_SUPPORT_TICKET'
+  | 'FR8X_SYSTEM_ISSUE';
+
+export const ZEPTOMAIL_TEMPLATES: Record<
+  ZeptoMailTemplateIdentifier,
+  {
+    templateKeyEnvVar: string;
+    defaultKey: string;
+    senderType: EmailSenderType;
+    defaultSubject: string;
+  }
+> = {
+  FR8X_WELCOME_USER: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_WELCOME_USER',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a0-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'Welcome to the FR8X Sovereign Platform',
+  },
+  FR8X_EMAIL_VERIFICATION: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_EMAIL_VERIFICATION',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a1-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'VERIFY YOUR FR8X EMAIL ADDRESS',
+  },
+  FR8X_SECURITY_OTP: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_SECURITY_OTP',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a2-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'YOUR FR8X VERIFICATION CODE',
+  },
+  FR8X_FORGOT_PASSWORD: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_FORGOT_PASSWORD',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a3-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'FORGOT PASSWORD REQUEST — FR8X',
+  },
+  FR8X_PASSWORD_CHANGED: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_PASSWORD_CHANGED',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a4-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'YOUR FR8X PASSWORD WAS CHANGED',
+  },
+  FR8X_LOGIN_SECURITY_ALERT: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_LOGIN_SECURITY_ALERT',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a5-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'PASSWORD',
+    defaultSubject: 'FR8X LOGIN SECURITY ALERT',
+  },
+  FR8X_PRICING_PLAN_UPDATE: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_PRICING_PLAN_UPDATE',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a6-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'SUPPORT',
+    defaultSubject: 'FR8X Subscription Plan Update',
+  },
+  FR8X_BILLING_ISSUE: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_BILLING_ISSUE',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a7-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'SUPPORT',
+    defaultSubject: 'FR8X Billing Notice',
+  },
+  FR8X_SUPPORT_TICKET: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_SUPPORT_TICKET',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a8-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'SUPPORT',
+    defaultSubject: 'FR8X SUPPORT TICKET CREATED',
+  },
+  FR8X_SYSTEM_ISSUE: {
+    templateKeyEnvVar: 'ZEPTO_TEMPLATE_FR8X_SYSTEM_ISSUE',
+    defaultKey: '2518b.7300c3b061031d8e.k1.7cbfe1a9-1234-11ef-8f6b-5254005d5e56',
+    senderType: 'TECH',
+    defaultSubject: 'FR8X SYSTEM NOTIFICATION',
+  },
+};
+
+export interface SendTemplateEmailParams {
+  template: ZeptoMailTemplateIdentifier;
+  to: string;
+  recipientName?: string;
+  mergeInfo?: Record<string, string | number | boolean | undefined>;
+  clientReference?: string;
+  correlationId?: string;
+  fallbackSubject?: string;
+  fallbackHtml?: string;
+  fallbackText?: string;
+}
+
+export interface SendTemplateEmailResult extends TransactionalEmailResult {
+  template: ZeptoMailTemplateIdentifier;
+  templateKey?: string;
+}
+
+export interface EmailEventRecord {
+  id: string;
+  eventId: string;
+  clientReference: string;
+  template?: string;
+  templateKey?: string;
+  sender: string;
+  recipient: string;
+  provider: 'Zoho_ZeptoMail' | 'Sandbox_Mock' | 'Zoho_SMTP';
+  providerMessageId?: string;
+  status: 'sent' | 'processed' | 'delivered' | 'soft_bounce' | 'hard_bounce' | 'failed';
+  createdAt: string;
+  sentAt?: string;
+  deliveredAt?: string;
+  failedAt?: string;
+  failureCode?: string;
+  failureReason?: string;
+}
+
 // Backwards-compatible param and response interfaces
 export interface SendEmailParams {
   fromType?: EmailSenderType;
@@ -157,7 +294,7 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.in/v1.1/email';
+    'https://api.zeptomail.com/v1.1/email';
 
   const hasToken = Boolean(token && token !== 'undefined' && token.length > 5);
 
@@ -445,7 +582,7 @@ export async function sendTransactionalEmail(
     process.env.ZEPTO_MAIL_API_URL?.trim() ||
     process.env.ZEPTO_MAIL_URL?.trim() ||
     process.env.ZOHO_ZEPTOMAIL_URL?.trim() ||
-    'https://api.zeptomail.in/v1.1/email';
+    'https://api.zeptomail.com/v1.1/email';
 
   // ── Production Dispatch via Zoho ZeptoMail REST API ───────────────────────
   if (apiKey && apiKey !== 'undefined') {
@@ -680,12 +817,11 @@ export async function sendTransactionalEmail(
           }
         }
 
-        // 3. In development or testing environment, simulate dispatch so OTP and password resets do not block testers
-        const isDevOrTest =
-          process.env.NODE_ENV !== 'production' ||
-          process.env.ALLOW_DEV_EMAIL_FALLBACK === 'true';
+        // 3. Fallback to simulated delivery ONLY when ALLOW_DEV_EMAIL_FALLBACK is explicitly enabled AND it is specifically a quota exhaustion
+        const isQuotaFallbackAllowed =
+          isDailyLimitExceeded && process.env.ALLOW_DEV_EMAIL_FALLBACK === 'true';
 
-        if (isDevOrTest) {
+        if (isQuotaFallbackAllowed) {
           console.log('\n================================================================================');
           console.log(`⚡ [EMAIL_DEV_FALLBACK_DISPATCH] Simulated Delivery to: ${cleanTo}`);
           console.log(`⚡ Subject: ${cleanSubject}`);
@@ -707,7 +843,7 @@ export async function sendTransactionalEmail(
             subject: cleanSubject,
             provider: 'Sandbox_Mock',
             details: {
-              warning: 'ZeptoMail daily limit reached or rejected - fell back to development console dispatch',
+              warning: 'ZeptoMail daily limit reached - fell back to development console dispatch',
               originalError: errorDetail,
             },
           };
@@ -765,6 +901,281 @@ export async function sendTransactionalEmail(
     provider: 'Sandbox_Mock',
     details: { mode: 'sandbox' },
   };
+}
+
+// ─── Email Event Model & Idempotency Store ──────────────────────────────────
+const emailEventStore: EmailEventRecord[] = [];
+const MAX_EMAIL_EVENTS = 500;
+const idempotencyCache = new Map<string, { timestamp: number; result: SendTemplateEmailResult }>();
+const IDEMPOTENCY_WINDOW_MS = 10_000; // 10 seconds duplicate suppression
+
+export function recordEmailEvent(
+  event: Omit<EmailEventRecord, 'id' | 'createdAt'>
+): EmailEventRecord {
+  const fullEvent: EmailEventRecord = {
+    id: `eml-evt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    createdAt: new Date().toISOString(),
+    ...event,
+  };
+  emailEventStore.unshift(fullEvent);
+  if (emailEventStore.length > MAX_EMAIL_EVENTS) {
+    emailEventStore.pop();
+  }
+  return fullEvent;
+}
+
+export function getEmailEvents(): EmailEventRecord[] {
+  return [...emailEventStore];
+}
+
+/**
+ * ZeptoMail Template API Dispatcher
+ * Directly communicates with https://api.zeptomail.com/v1.1/email/template
+ */
+export async function sendTemplateEmail(
+  params: SendTemplateEmailParams
+): Promise<SendTemplateEmailResult> {
+  const templateConfig = ZEPTOMAIL_TEMPLATES[params.template];
+  const templateKey =
+    process.env[templateConfig.templateKeyEnvVar]?.trim() || templateConfig.defaultKey;
+  const correlationId =
+    params.correlationId ||
+    `FR8X-EML-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+  const clientReference =
+    params.clientReference ||
+    `FR8X-${params.template}-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+  // Idempotency check: prevent duplicate sends within rapid window
+  const now = Date.now();
+  const cached = idempotencyCache.get(clientReference);
+  if (cached && now - cached.timestamp < IDEMPOTENCY_WINDOW_MS) {
+    console.log(
+      `[EMAIL_IDEMPOTENCY] Suppressed duplicate email send for clientReference: ${clientReference}`
+    );
+    return {
+      ...cached.result,
+      template: params.template,
+      templateKey,
+    };
+  }
+
+  const cleanTo = (params.to || '').trim().toLowerCase();
+  if (!isValidEmailAddress(cleanTo)) {
+    const error = `Invalid recipient email address: "${cleanTo}"`;
+    recordEmailEvent({
+      eventId: correlationId,
+      clientReference,
+      template: params.template,
+      templateKey,
+      sender: EMAIL_SENDERS[templateConfig.senderType],
+      recipient: cleanTo,
+      provider: 'Zoho_ZeptoMail',
+      status: 'failed',
+      failureCode: 'INVALID_RECIPIENT',
+      failureReason: error,
+    });
+    return {
+      success: false,
+      correlationId,
+      template: params.template,
+      templateKey,
+      from: EMAIL_SENDERS[templateConfig.senderType],
+      to: cleanTo,
+      provider: 'Zoho_ZeptoMail',
+      error,
+    };
+  }
+
+  const senderAddress =
+    (templateConfig.senderType === 'PASSWORD'
+      ? process.env.ZEPTO_MAIL_PASSWORD_FROM
+      : templateConfig.senderType === 'SUPPORT'
+        ? process.env.ZEPTO_MAIL_SUPPORT_FROM
+        : process.env.ZEPTO_MAIL_TECH_FROM) || EMAIL_SENDERS[templateConfig.senderType];
+
+  const senderName = `${process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X'} Security`;
+
+  const token = (
+    process.env.ZEPTO_MAIL_API_KEY ||
+    process.env.ZOHO_ZEPTOMAIL_TOKEN ||
+    ''
+  ).trim();
+  const hasToken = Boolean(token && token !== 'undefined' && token.length > 5);
+
+  if (!hasToken) {
+    console.log(
+      `[EMAIL_DEV_TEMPLATE_DISPATCH] Simulating template ${params.template} to ${cleanTo} via ${senderAddress}`
+    );
+    const mockResult: SendTemplateEmailResult = {
+      success: true,
+      messageId: `mock-zepto-tmpl-${Date.now()}`,
+      correlationId,
+      template: params.template,
+      templateKey,
+      from: senderAddress,
+      to: cleanTo,
+      subject: params.fallbackSubject || templateConfig.defaultSubject,
+      provider: 'Sandbox_Mock',
+      details: { mode: 'sandbox', mergeInfo: params.mergeInfo },
+    };
+    recordEmailEvent({
+      eventId: correlationId,
+      clientReference,
+      template: params.template,
+      templateKey,
+      sender: senderAddress,
+      recipient: cleanTo,
+      provider: 'Sandbox_Mock',
+      providerMessageId: mockResult.messageId,
+      status: 'sent',
+      sentAt: new Date().toISOString(),
+    });
+    idempotencyCache.set(clientReference, { timestamp: now, result: mockResult });
+    return mockResult;
+  }
+
+  // Live ZeptoMail Template API dispatch
+  const templateEndpoint =
+    process.env.ZEPTO_MAIL_TEMPLATE_URL?.trim() ||
+    'https://api.zeptomail.com/v1.1/email/template';
+
+  const authHeader = token.startsWith('Zoho-enczapikey') ? token : `Zoho-enczapikey ${token}`;
+  const payload = {
+    template_key: templateKey,
+    bounce_address: process.env.ZEPTO_MAIL_BOUNCE_ADDRESS?.trim() || undefined,
+    from: {
+      address: senderAddress,
+      name: senderName,
+    },
+    to: [
+      {
+        email_address: {
+          address: cleanTo,
+          name: params.recipientName || cleanTo,
+        },
+      },
+    ],
+    merge_info: params.mergeInfo || {},
+    client_reference: clientReference,
+  };
+
+  try {
+    const res = await fetch(templateEndpoint, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Content-Type': 'application/json',
+        Authorization: authHeader,
+        'X-Correlation-ID': correlationId,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const resData = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      const messageId =
+        resData?.data?.[0]?.message_id ||
+        resData?.data?.[0]?.id ||
+        resData?.request_id ||
+        `zepto-tmpl-${Date.now()}`;
+
+      const result: SendTemplateEmailResult = {
+        success: true,
+        messageId,
+        correlationId,
+        template: params.template,
+        templateKey,
+        from: senderAddress,
+        to: cleanTo,
+        subject: params.fallbackSubject || templateConfig.defaultSubject,
+        provider: 'Zoho_ZeptoMail',
+        details: resData,
+      };
+
+      recordEmailEvent({
+        eventId: correlationId,
+        clientReference,
+        template: params.template,
+        templateKey,
+        sender: senderAddress,
+        recipient: cleanTo,
+        provider: 'Zoho_ZeptoMail',
+        providerMessageId: messageId,
+        status: 'sent',
+        sentAt: new Date().toISOString(),
+      });
+
+      idempotencyCache.set(clientReference, { timestamp: now, result });
+      return result;
+    }
+
+    // Fallback gracefully to pre-rendered HTML transactional send if template key is not provisioned on live ZeptoMail
+    if (params.fallbackHtml) {
+      console.warn(
+        `[ZEPTOMAIL_TEMPLATE_FALLBACK] Template API returned ${res.status}. Falling back to pre-rendered HTML dispatch.`
+      );
+      const fallbackResult = await sendTransactionalEmail({
+        type:
+          templateConfig.senderType === 'PASSWORD'
+            ? 'AUTH_OTP'
+            : templateConfig.senderType === 'SUPPORT'
+              ? 'SUPPORT_REQUEST'
+              : 'TECH_NOTIFICATION',
+        to: cleanTo,
+        recipientName: params.recipientName,
+        subject: params.fallbackSubject || templateConfig.defaultSubject,
+        html: params.fallbackHtml,
+        text: params.fallbackText,
+        correlationId,
+      });
+
+      return {
+        ...fallbackResult,
+        template: params.template,
+        templateKey,
+      };
+    }
+
+    const errorMsg = resData?.error?.message || `HTTP ${res.status} ${res.statusText}`;
+    recordEmailEvent({
+      eventId: correlationId,
+      clientReference,
+      template: params.template,
+      templateKey,
+      sender: senderAddress,
+      recipient: cleanTo,
+      provider: 'Zoho_ZeptoMail',
+      status: 'failed',
+      failedAt: new Date().toISOString(),
+      failureCode: String(res.status),
+      failureReason: errorMsg,
+    });
+
+    return {
+      success: false,
+      correlationId,
+      template: params.template,
+      templateKey,
+      from: senderAddress,
+      to: cleanTo,
+      provider: 'Zoho_ZeptoMail',
+      error: `ZeptoMail Template API rejected dispatch: ${errorMsg}`,
+      details: resData,
+    };
+  } catch (err: any) {
+    const errorMsg = `ZeptoMail template connection failed: ${err.message}`;
+    return {
+      success: false,
+      correlationId,
+      template: params.template,
+      templateKey,
+      from: senderAddress,
+      to: cleanTo,
+      provider: 'Zoho_ZeptoMail',
+      error: errorMsg,
+    };
+  }
 }
 
 /**
@@ -1027,6 +1438,285 @@ export const EmailService = {
   },
 
   /**
+   * Forgot password recovery email
+   * Sender: password@fr8x.in
+   * Subject: "FORGOT PASSWORD REQUEST — FR8X"
+   */
+  async sendForgotPasswordEmail(
+    params: (ForgotPasswordTemplateParams | { to: string; recipient?: string; recipientName?: string; resetLink?: string; otpCode?: string; expiryMinutes?: number }) & { correlationId?: string }
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderForgotPasswordEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      resetLink: params.resetLink,
+      otpCode: params.otpCode,
+      expiryMinutes: params.expiryMinutes || 15,
+    });
+
+    return sendTransactionalEmail({
+      type: 'PASSWORD_RESET',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Customer / Member Support reply
+   * Sender: support@fr8x.in
+   */
+  async sendSupportReplyEmail(
+    params: (SupportReplyTemplateParams | { to: string; recipient?: string; recipientName?: string; ticketId: string; replyMessage: string; agentName?: string; originalSubject?: string }) & { correlationId?: string }
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderSupportReplyEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      ticketId: params.ticketId,
+      replyMessage: params.replyMessage,
+      agentName: params.agentName,
+      originalSubject: params.originalSubject,
+    });
+
+    return sendTransactionalEmail({
+      type: 'SUPPORT_REQUEST',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Technical maintenance notice
+   * Sender: tech@fr8x.in
+   */
+  async sendMaintenanceEmail(
+    params: (TechnicalMaintenanceTemplateParams | { to: string; recipient?: string; recipientName?: string; scheduledTime: string; details: string; affectedServices?: string[] }) & { correlationId?: string }
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderTechnicalMaintenanceEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      scheduledTime: params.scheduledTime,
+      details: params.details,
+      affectedServices: params.affectedServices,
+      correlationId: params.correlationId,
+    });
+
+    return sendTransactionalEmail({
+      type: 'SYSTEM_MAINTENANCE',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Technical incident notice
+   * Sender: tech@fr8x.in
+   */
+  async sendIncidentEmail(
+    params: (TechnicalIncidentTemplateParams | { to: string; recipient?: string; recipientName?: string; incidentId: string; details: string; severity?: string; affectedServices?: string[] }) & { correlationId?: string }
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderTechnicalIncidentEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      incidentId: params.incidentId,
+      details: params.details,
+      severity: params.severity,
+      affectedServices: params.affectedServices,
+      correlationId: params.correlationId,
+    });
+
+    return sendTransactionalEmail({
+      type: 'SYSTEM_INCIDENT',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Technical service restored notice
+   * Sender: tech@fr8x.in
+   */
+  async sendRecoveryEmail(
+    params: (TechnicalRecoveryTemplateParams | { to: string; recipient?: string; recipientName?: string; incidentId: string; details: string; resolvedTime?: string; affectedServices?: string[] }) & { correlationId?: string }
+  ): Promise<TransactionalEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderTechnicalRecoveryEmail({
+      recipient: targetEmail,
+      recipientName: params.recipientName,
+      incidentId: params.incidentId,
+      details: params.details,
+      resolvedTime: params.resolvedTime,
+      affectedServices: params.affectedServices,
+      correlationId: params.correlationId,
+    });
+
+    return sendTransactionalEmail({
+      type: 'SERVICE_RESTORED',
+      to: targetEmail,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      text: tmpl.text,
+      html: tmpl.html,
+      correlationId: params.correlationId,
+    });
+  },
+
+  /**
+   * Welcome onboarding email (FR8X_WELCOME_USER)
+   * Sender: password@fr8x.in
+   */
+  async sendWelcomeEmail(
+    params: (WelcomeTemplateParams | { to?: string; recipient?: string; firstName?: string; fullName?: string; organizationName?: string; verificationUrl?: string }) & { correlationId?: string; clientReference?: string }
+  ): Promise<SendTemplateEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderWelcomeEmail({
+      recipient: targetEmail,
+      firstName: params.firstName,
+      fullName: params.fullName,
+      organizationName: params.organizationName,
+      verificationUrl: params.verificationUrl,
+    });
+    const firstName = params.firstName || (params.fullName ? params.fullName.split(' ')[0] : 'Member');
+    return sendTemplateEmail({
+      template: 'FR8X_WELCOME_USER',
+      to: targetEmail,
+      recipientName: params.fullName || firstName,
+      mergeInfo: {
+        first_name: firstName,
+        full_name: params.fullName || firstName,
+        organization_name: params.organizationName || 'FR8X Network',
+        verification_url: params.verificationUrl || '',
+      },
+      clientReference: params.clientReference,
+      correlationId: params.correlationId,
+      fallbackSubject: tmpl.subject,
+      fallbackHtml: tmpl.html,
+      fallbackText: tmpl.text,
+    });
+  },
+
+  /**
+   * Commercial pricing tier update (FR8X_PRICING_PLAN_UPDATE)
+   * Sender: support@fr8x.in
+   */
+  async sendPricingEmail(
+    params: (PricingPlanUpdateTemplateParams | { to?: string; recipient?: string; firstName?: string; planName: string; effectiveDate?: string; dashboardUrl?: string }) & { correlationId?: string; clientReference?: string }
+  ): Promise<SendTemplateEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderPricingPlanUpdateEmail({
+      recipient: targetEmail,
+      firstName: params.firstName,
+      planName: params.planName,
+      effectiveDate: params.effectiveDate,
+      dashboardUrl: params.dashboardUrl,
+    });
+    return sendTemplateEmail({
+      template: 'FR8X_PRICING_PLAN_UPDATE',
+      to: targetEmail,
+      recipientName: params.firstName,
+      mergeInfo: {
+        first_name: params.firstName || 'Member',
+        plan_name: params.planName,
+        effective_date: params.effectiveDate || new Date().toISOString(),
+        dashboard_url: params.dashboardUrl || '',
+      },
+      clientReference: params.clientReference,
+      correlationId: params.correlationId,
+      fallbackSubject: tmpl.subject,
+      fallbackHtml: tmpl.html,
+      fallbackText: tmpl.text,
+    });
+  },
+
+  /**
+   * Commercial billing notice (FR8X_BILLING_ISSUE)
+   * Sender: support@fr8x.in
+   */
+  async sendBillingIssueEmail(
+    params: (BillingIssueTemplateParams | { to?: string; recipient?: string; firstName?: string; invoiceId: string; amount: string; dueDate?: string; billingUrl?: string }) & { correlationId?: string; clientReference?: string }
+  ): Promise<SendTemplateEmailResult> {
+    const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const tmpl = renderBillingIssueEmail({
+      recipient: targetEmail,
+      firstName: params.firstName,
+      invoiceId: params.invoiceId,
+      amount: params.amount,
+      dueDate: params.dueDate,
+      billingUrl: params.billingUrl,
+    });
+    return sendTemplateEmail({
+      template: 'FR8X_BILLING_ISSUE',
+      to: targetEmail,
+      recipientName: params.firstName,
+      mergeInfo: {
+        first_name: params.firstName || 'Member',
+        invoice_id: params.invoiceId,
+        amount: params.amount,
+        due_date: params.dueDate || 'Immediate',
+        billing_url: params.billingUrl || '',
+      },
+      clientReference: params.clientReference,
+      correlationId: params.correlationId,
+      fallbackSubject: tmpl.subject,
+      fallbackHtml: tmpl.html,
+      fallbackText: tmpl.text,
+    });
+  },
+
+  /**
+   * Platform system incident / issue notice (FR8X_SYSTEM_ISSUE)
+   * Sender: tech@fr8x.in
+   */
+  async sendSystemIssueEmail(
+    params: SystemIssueTemplateParams & { correlationId?: string; clientReference?: string }
+  ): Promise<SendTemplateEmailResult> {
+    const tmpl = renderSystemIssueEmail(params);
+    return sendTemplateEmail({
+      template: 'FR8X_SYSTEM_ISSUE',
+      to: params.recipient,
+      recipientName: params.firstName,
+      mergeInfo: {
+        first_name: params.firstName || 'Technical Contact',
+        incident_id: params.incidentId,
+        incident_title: params.incidentTitle,
+        service_name: params.serviceName,
+        detected_at: params.detectedAt || new Date().toUTCString(),
+        status: params.status,
+        incident_description: params.incidentDescription,
+        service_status_url: params.serviceStatusUrl || '',
+      },
+      clientReference: params.clientReference,
+      correlationId: params.correlationId,
+      fallbackSubject: tmpl.subject,
+      fallbackHtml: tmpl.html,
+      fallbackText: tmpl.text,
+    });
+  },
+
+  /**
+   * Direct template email dispatcher
+   */
+  sendTemplateEmail,
+
+  /**
    * Diagnostic verification test email
    * Sender: password@fr8x.in
    * Subject: "FR8X ZEPTOMAIL TEST"
@@ -1055,5 +1745,8 @@ export const EmailService = {
 
   getStatus: getEmailSendersStatus,
   getZeptoMailStatus,
+  getEmailEvents,
+  recordEmailEvent,
   validateEmail: isValidEmailAddress,
 };
+

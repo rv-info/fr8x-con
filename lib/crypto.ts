@@ -174,5 +174,89 @@ export function clearRateLimit(identifier: string): void {
   loginAttemptStore.delete(identifier);
 }
 
+// ─── CSPRNG Helpers ─────────────────────────────────────────────────────────
+
+/**
+ * Generates a cryptographically secure numeric OTP of specified length.
+ * Backed by Node.js crypto.randomInt (CSPRNG).
+ */
+export function generateSecureOtp(length = 6): string {
+  const min = Math.pow(10, length - 1);
+  const max = Math.pow(10, length) - 1;
+  return crypto.randomInt(min, max + 1).toString();
+}
+
+/**
+ * Generates a cryptographically secure random token in hex format.
+ */
+export function generateSecureToken(bytes = 32): string {
+  return crypto.randomBytes(bytes).toString('hex');
+}
+
+// ─── HMAC-SHA256 Cryptographic Session Signing ─────────────────────────────
+
+function getSessionSecret(): string {
+  return (
+    process.env.GODFATHER_SESSION_SECRET?.trim() ||
+    process.env.GODFATHER_KMS_ENCRYPTION_KEY?.trim() ||
+    'fr8x-platform-internal-session-signing-key-2026-production'
+  );
+}
+
+/**
+ * Creates a cryptographically signed session token: payloadBase64.signatureHex
+ */
+export function createSignedSessionToken(
+  payload: Record<string, any> | object | string,
+  secret?: string
+): string {
+  const key = secret || getSessionSecret();
+  const rawPayload = typeof payload === 'string' ? payload : JSON.stringify(payload);
+  const payloadB64 = Buffer.from(rawPayload, 'utf8').toString('base64url');
+  const signature = crypto.createHmac('sha256', key).update(payloadB64).digest('hex');
+  return `${payloadB64}.${signature}`;
+}
+
+/**
+ * Constant-time verification of a signed session token.
+ * Returns { valid: true, payload } or { valid: false }.
+ */
+export function verifySignedSessionToken<T = any>(
+  token: string,
+  secret?: string
+): { valid: boolean; payload?: T } {
+  if (!token || typeof token !== 'string' || !token.includes('.')) {
+    return { valid: false };
+  }
+  const parts = token.split('.');
+  if (parts.length !== 2) {
+    return { valid: false };
+  }
+  const [payloadB64, providedSig] = parts;
+  const key = secret || getSessionSecret();
+
+  try {
+    const expectedSig = crypto.createHmac('sha256', key).update(payloadB64).digest('hex');
+    const providedBuffer = Buffer.from(providedSig, 'hex');
+    const expectedBuffer = Buffer.from(expectedSig, 'hex');
+
+    if (providedBuffer.length !== expectedBuffer.length) {
+      return { valid: false };
+    }
+
+    const isSigMatch = crypto.timingSafeEqual(providedBuffer, expectedBuffer);
+    if (!isSigMatch) {
+      return { valid: false };
+    }
+
+    const jsonStr = Buffer.from(payloadB64, 'base64url').toString('utf8');
+    const payload = JSON.parse(jsonStr) as T;
+    return { valid: true, payload };
+  } catch {
+    return { valid: false };
+  }
+}
+
 // Legacy export kept for backward-compat
 export const activeOtpStore = new Map<string, { salt: string; hash: string; expiresAt: string }>();
+

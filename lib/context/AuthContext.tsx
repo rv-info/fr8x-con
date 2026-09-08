@@ -3,132 +3,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, PlanTier, UserRole } from '@/lib/types';
 
-// ─── Multi-Organization Initial User Directory ──────────────────────────────
-export const INITIAL_USERS: UserProfile[] = [
-  {
-    uid: 'u-arjun',
-    email: 'arjun@atlaslogistics.com',
-    firstName: 'Arjun',
-    lastName: 'Rao',
-    displayName: 'Arjun Rao',
-    designation: 'Freight Procurement Director',
-    company: 'Atlas Logistics Pvt. Ltd.',
-    companyId: 'CMP-00101',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    mobile: '+91 98765 43210',
-    timezone: 'Asia/Kolkata',
-    preferredContactMethod: 'tradeChat',
-    contactAvailability: '09:00 - 18:30 IST',
-    plan: 'premium',
-    hasGoldenTick: true,
-    isVerified: true,
-    role: 'company_admin',
-    avatarUrl: '',
-    bio: 'Freight procurement specialist with 9+ years managing ocean FCL and OOG breakbulk across Asia-Europe and US West Coast corridors.',
-    summary: 'Expertise in carrier contract negotiations, multimodal inland haulage, customs liaison, and real-time reverse auction execution.',
-    specializations: ['FCL Ocean', 'OOG Breakbulk', 'Reefer Logistics', 'Customs Clearance'],
-    skills: ['Rate Procurement', 'Carrier Negotiation', 'UN/LOCODE Routing', 'ERP Logistics'],
-    languages: ['English', 'Hindi', 'Marathi'],
-  },
-  {
-    uid: 'u-sarah',
-    email: 'sarah.lewis@rotterdamfreight.nl',
-    firstName: 'Sarah',
-    lastName: 'Lewis',
-    displayName: 'Sarah Lewis',
-    designation: 'Ocean Freight Lead',
-    company: 'Rotterdam Freight NV',
-    companyId: 'CMP-00102',
-    city: 'Rotterdam',
-    state: 'South Holland',
-    country: 'Netherlands',
-    mobile: '+31 10 123 4567',
-    timezone: 'Europe/Amsterdam',
-    preferredContactMethod: 'email',
-    contactAvailability: '08:30 - 17:00 CET',
-    plan: 'professional',
-    hasGoldenTick: false,
-    isVerified: true,
-    role: 'company_admin',
-    avatarUrl: '',
-    bio: 'North Continent port logistics specialist and container supply chain manager.',
-    languages: ['English', 'Dutch', 'German'],
-  },
-  {
-    uid: 'u-kiran',
-    email: 'kiran.mehta@indoocean.com',
-    firstName: 'Kiran',
-    lastName: 'Mehta',
-    displayName: 'Kiran Mehta',
-    designation: 'Trade Lane Manager',
-    company: 'Indo Ocean Lines',
-    companyId: 'CMP-00103',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    mobile: '+91 98111 22334',
-    timezone: 'Asia/Kolkata',
-    preferredContactMethod: 'whatsapp',
-    contactAvailability: '10:00 - 19:00 IST',
-    plan: 'trial',
-    hasGoldenTick: false,
-    isVerified: true,
-    role: 'user',
-    avatarUrl: '',
-    bio: 'Direct carrier relations manager specializing in Asia-Europe and Middle East trade lanes.',
-    languages: ['English', 'Hindi', 'Gujarati'],
-  },
-  {
-    uid: 'u-elena',
-    email: 'elena.rossi@mediterraneanlines.it',
-    firstName: 'Elena',
-    lastName: 'Rossi',
-    displayName: 'Elena Rossi',
-    designation: 'Commercial Director',
-    company: 'Mediterranean Shipping Agency S.p.A.',
-    companyId: 'CMP-00104',
-    city: 'Genoa',
-    state: 'Liguria',
-    country: 'Italy',
-    mobile: '+39 010 555 9812',
-    timezone: 'Europe/Rome',
-    preferredContactMethod: 'tradeChat',
-    contactAvailability: '08:30 - 17:30 CET',
-    plan: 'premium',
-    hasGoldenTick: true,
-    isVerified: true,
-    role: 'company_admin',
-    avatarUrl: '',
-    bio: 'Mediterranean and Black Sea carrier booking specialist with 12+ years liner agency experience.',
-    languages: ['Italian', 'English', 'French'],
-  },
-  {
-    uid: 'u-david',
-    email: 'david.chen@pacificcargo.sg',
-    firstName: 'David',
-    lastName: 'Chen',
-    displayName: 'David Chen',
-    designation: 'VP Global Forwarding',
-    company: 'Pacific Maritime Cargo Pte. Ltd.',
-    companyId: 'CMP-00105',
-    city: 'Singapore',
-    state: 'Singapore',
-    country: 'Singapore',
-    mobile: '+65 6789 0123',
-    timezone: 'Asia/Singapore',
-    preferredContactMethod: 'tradeChat',
-    contactAvailability: '09:00 - 18:00 SGT',
-    plan: 'premium',
-    hasGoldenTick: true,
-    isVerified: true,
-    role: 'company_admin',
-    avatarUrl: '',
-    bio: 'Intra-Asia and Transpacific container rate negotiator and reverse auction specialist.',
-    languages: ['English', 'Mandarin'],
-  },
-];
+// SECURITY: INITIAL_USERS seed data removed.
+// Demo/test users must NOT be hardcoded in client-side code.
+// Authentication is exclusively handled via /api/auth/login (server-side).
+// No plaintext passwords are stored or compared client-side.
+
+// ─── Empty starting user list — populated from server session only ─────────
+export const INITIAL_USERS: UserProfile[] = [];
 
 // ─── Default Safe Guest User (Used when NOT authenticated) ──────────────────
 export const GUEST_USER: UserProfile = {
@@ -153,21 +34,16 @@ export const GUEST_USER: UserProfile = {
   role: 'user',
 };
 
-// ─── Seed Passwords (uid → password) ─────────────────────────────────────────
-const DEFAULT_PASSWORDS: Record<string, string> = {
-  'u-arjun': 'Atlas@2025',
-  'u-sarah': 'Rotterdam@2025',
-  'u-kiran': 'IndoOcean@2025',
-  'u-elena': 'MedLines@2025',
-  'u-david': 'Pacific@2025',
-};
+// SECURITY: DEFAULT_PASSWORDS removed. Client code must NEVER store or compare passwords.
+// All authentication is performed exclusively server-side via /api/auth/login.
 
 // ─── Storage Keys ────────────────────────────────────────────────────────────
 const USERS_STORAGE_KEY = 'fr8x_all_users_v2';
-const PASSWORDS_STORAGE_KEY = 'fr8x_user_passwords_v2';
+// SECURITY: PASSWORDS_STORAGE_KEY removed — passwords must not be stored client-side.
 const ACTIVE_SESSION_KEY = 'fr8x_active_user_uid';
 const STATUS_KEY = 'fr8x_user_status';
-const DEVICE_KEY = 'fr8x_remembered_creds_v2';
+// DEVICE_KEY now stores only the remembered email, not the password.
+const DEVICE_EMAIL_KEY = 'fr8x_remembered_email_v3';
 const SESSION_START_KEY = 'fr8x_session_start_time';
 const LAST_ACTIVITY_KEY = 'fr8x_last_activity_time';
 
@@ -192,26 +68,23 @@ function checkIsSessionExpired(): boolean {
   }
 }
 
-// ─── Device-memory helpers ───────────────────────────────────────────────────
-function saveToDevice(userId: string, password: string) {
+// ─── Device-memory helpers — EMAIL ONLY, never password ──────────────────────
+// SECURITY: Only the email address is stored for "Remember Me" UX convenience.
+// Passwords are NEVER stored client-side in any form.
+function saveRememberedEmail(email: string) {
+  try { localStorage.setItem(DEVICE_EMAIL_KEY, email.trim().toLowerCase()); } catch {}
+}
+
+function loadRememberedEmail(): string | null {
+  try { return localStorage.getItem(DEVICE_EMAIL_KEY) || null; } catch { return null; }
+}
+
+function clearRememberedEmail() {
   try {
-    const payload = btoa(JSON.stringify({ userId, password }));
-    localStorage.setItem(DEVICE_KEY, payload);
+    localStorage.removeItem(DEVICE_EMAIL_KEY);
+    // Also clear any legacy credential store from previous version
+    localStorage.removeItem('fr8x_remembered_creds_v2');
   } catch {}
-}
-
-function loadFromDevice(): { userId: string; password: string } | null {
-  try {
-    const raw = localStorage.getItem(DEVICE_KEY);
-    if (!raw) return null;
-    return JSON.parse(atob(raw));
-  } catch {
-    return null;
-  }
-}
-
-function clearDevice() {
-  try { localStorage.removeItem(DEVICE_KEY); } catch {}
 }
 
 export type UserStatus = 'available' | 'offline';
@@ -227,10 +100,13 @@ interface AuthContextType {
   switchUser: (uid: string) => void;
   updateUser: (updatedFields: Partial<UserProfile>) => void;
   upgradePlan: (plan: PlanTier) => void;
-  /** Accepts uid OR email + password. Returns true on success. */
+  /**
+   * Finalises client-side session after server authentication succeeds.
+   * MUST be called with serverVerifiedUser from /api/auth/login response.
+   * Never performs its own password check.
+   */
   login: (
     identifier: string,
-    pass: string,
     remember?: boolean,
     serverVerifiedUser?: Partial<UserProfile>
   ) => boolean;
@@ -244,7 +120,8 @@ interface AuthContextType {
     newPassword: string
   ) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: (reason?: string) => void;
-  loadRemembered: () => { userId: string; password: string } | null;
+  /** Returns only the remembered email (never a password). */
+  loadRememberedEmail: () => string | null;
   bidPostingFee: number;
   bidDiscountPercentage: number;
 }
@@ -254,7 +131,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [allUsers, setAllUsers] = useState<UserProfile[]>(INITIAL_USERS);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [userPasswords, setUserPasswords] = useState<Record<string, string>>(DEFAULT_PASSWORDS);
+  // SECURITY: No password state — passwords never held in client memory.
   const [userStatus, setUserStatusState] = useState<UserStatus>('offline');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -264,59 +141,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const lastTrackedTimeRef = React.useRef<number>(Date.now());
 
-  // Initial load: restore registered users and active session from localStorage
+  // Initial load: restore active session from localStorage (profile only, never password)
   useEffect(() => {
     try {
-      // 1. Load registered users with One User One Login deduplication
+      // 1. Load registered user profiles (no passwords, no demo seed data)
       const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
-      let usersList = INITIAL_USERS;
+      let usersList: UserProfile[] = [];
       if (storedUsersRaw) {
         try {
           const parsed = JSON.parse(storedUsersRaw);
           if (Array.isArray(parsed) && parsed.length > 0) {
-            // Deduplicate by normalized email to enforce One User, One Login
+            // Deduplicate by normalized email
             const seenEmails = new Set<string>();
             const deduped: UserProfile[] = [];
             for (const u of parsed) {
               const emailKey = (u.email || '').trim().toLowerCase();
-              if (emailKey && !seenEmails.has(emailKey)) {
+              // Filter out any legacy seeded demo users by their known UIDs
+              const isDemoUser = ['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david'].includes(u.uid);
+              if (emailKey && !seenEmails.has(emailKey) && !isDemoUser) {
                 seenEmails.add(emailKey);
                 deduped.push(u);
               }
             }
-            // Also ensure initial seed users are included if not present
-            for (const initUser of INITIAL_USERS) {
-              const initKey = initUser.email.trim().toLowerCase();
-              if (!seenEmails.has(initKey)) {
-                seenEmails.add(initKey);
-                deduped.push(initUser);
-              }
-            }
-            usersList = deduped.length > 0 ? deduped : INITIAL_USERS;
+            usersList = deduped;
           }
         } catch {}
       }
       setAllUsers(usersList);
 
-      // 2. Load stored passwords
-      const storedPasswordsRaw = localStorage.getItem(PASSWORDS_STORAGE_KEY);
-      let passwordsMap = DEFAULT_PASSWORDS;
-      if (storedPasswordsRaw) {
-        try {
-          const parsed = JSON.parse(storedPasswordsRaw);
-          if (parsed && typeof parsed === 'object') {
-            passwordsMap = { ...DEFAULT_PASSWORDS, ...parsed };
-          }
-        } catch {}
-      }
-      setUserPasswords(passwordsMap);
+      // SECURITY: No password loading from localStorage.
+      // Passwords are validated exclusively server-side via /api/auth/login.
+      // Clear any legacy password store that may exist from previous versions.
+      try { localStorage.removeItem('fr8x_user_passwords_v2'); } catch {}
 
-      // 3. Restore active session ONLY if explicitly saved and NOT expired
+      // 2. Restore active session ONLY if explicitly saved and NOT expired
       const savedUid = localStorage.getItem(ACTIVE_SESSION_KEY);
       if (savedUid) {
         const isExpired = checkIsSessionExpired();
         if (isExpired) {
-          // Session expired due to inactivity / timeout while browser was closed or dormant
           localStorage.removeItem(ACTIVE_SESSION_KEY);
           localStorage.removeItem(SESSION_START_KEY);
           localStorage.removeItem(LAST_ACTIVITY_KEY);
@@ -328,19 +190,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCurrentUser(found);
             const savedStatus = (localStorage.getItem(STATUS_KEY) as UserStatus) || 'available';
             setUserStatusState(savedStatus);
-            // Refresh activity timestamp
-            try {
-              localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString());
-            } catch {}
+            try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch {}
           } else {
-            // Stale UID — clear
+            // Stale UID — clear session
             localStorage.removeItem(ACTIVE_SESSION_KEY);
             setCurrentUser(null);
             setUserStatusState('offline');
           }
         }
       } else {
-        // No session stored — start completely unauthenticated
         setCurrentUser(null);
         setUserStatusState('offline');
       }
@@ -396,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Inactivity or max session duration exceeded
         setCurrentUser(null);
         setUserStatusState('offline');
-        clearDevice();
+        clearRememberedEmail();
         try {
           localStorage.removeItem(ACTIVE_SESSION_KEY);
           localStorage.removeItem(SESSION_START_KEY);
@@ -459,18 +317,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Login by User ID or Corporate Email.
-   * Enforces single exclusive active session.
+   * Finalises client-side session after server authentication succeeds.
+   *
+   * SECURITY CONTRACT:
+   * - This function NEVER validates a password.
+   * - It must ONLY be called after /api/auth/login returns success.
+   * - serverVerifiedUser is required — the profile comes from the server response.
+   * - No local fallback authentication is performed.
    */
   const login = (
     identifier: string,
-    pass: string,
     remember = false,
     serverVerifiedUser?: Partial<UserProfile>
   ): boolean => {
-    const id = identifier.trim().toLowerCase();
+    if (!serverVerifiedUser || !serverVerifiedUser.uid) {
+      console.error('[Auth] login() called without server-verified user. Refusing to authenticate.');
+      return false;
+    }
 
-    // Purge any preexisting active session data to ensure one user, one login
+    // Purge any preexisting active session data to enforce one user, one login
     try {
       localStorage.removeItem(ACTIVE_SESSION_KEY);
       localStorage.removeItem(STATUS_KEY);
@@ -478,54 +343,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(LAST_ACTIVITY_KEY);
     } catch {}
 
-    // Find user by uid or email
-    let found = allUsers.find(
-      (u) => u.uid.toLowerCase() === id || u.email.toLowerCase() === id
-    );
+    // Build user profile from server-returned data
+    const serverUser = serverVerifiedUser;
+    const found: UserProfile = {
+      uid: serverUser.uid!,
+      email: serverUser.email || identifier,
+      firstName: serverUser.firstName || serverUser.displayName?.split(' ')[0] || 'User',
+      lastName: serverUser.lastName || serverUser.displayName?.split(' ').slice(1).join(' ') || '',
+      displayName: serverUser.displayName || identifier,
+      designation: serverUser.designation || 'Freight Procurement Manager',
+      company: serverUser.company || 'Enterprise Logistics Co.',
+      companyId: serverUser.companyId || 'CMP-00000',
+      city: serverUser.city || '',
+      state: serverUser.state || '',
+      country: serverUser.country || '',
+      mobile: serverUser.mobile || '',
+      timezone: serverUser.timezone || 'Asia/Kolkata',
+      preferredContactMethod: serverUser.preferredContactMethod || 'tradeChat',
+      contactAvailability: serverUser.contactAvailability || '09:00 - 18:00',
+      plan: serverUser.plan || 'trial',
+      hasGoldenTick: serverUser.hasGoldenTick || false,
+      isVerified: true,
+      role: serverUser.role || 'user',
+    };
 
-    // If server already authenticated and provided details, adopt user if missing in allUsers
-    if (!found && serverVerifiedUser && serverVerifiedUser.uid) {
-      found = {
-        uid: serverVerifiedUser.uid,
-        email: serverVerifiedUser.email || identifier,
-        firstName: serverVerifiedUser.firstName || serverVerifiedUser.displayName?.split(' ')[0] || 'User',
-        lastName: serverVerifiedUser.lastName || serverVerifiedUser.displayName?.split(' ').slice(1).join(' ') || '',
-        displayName: serverVerifiedUser.displayName || identifier,
-        designation: serverVerifiedUser.designation || 'Freight Procurement Manager',
-        company: serverVerifiedUser.company || 'Enterprise Logistics Co.',
-        companyId: serverVerifiedUser.companyId || 'CMP-00000',
-        city: serverVerifiedUser.city || 'Mumbai',
-        state: serverVerifiedUser.state || '',
-        country: serverVerifiedUser.country || 'India',
-        mobile: serverVerifiedUser.mobile || '+91 90000 00000',
-        timezone: serverVerifiedUser.timezone || 'Asia/Kolkata',
-        preferredContactMethod: 'tradeChat',
-        contactAvailability: '09:00 - 18:00',
-        plan: serverVerifiedUser.plan || 'professional',
-        hasGoldenTick: false,
-        isVerified: true,
-        role: serverVerifiedUser.role || 'company_admin',
-      };
-      setAllUsers((prev) => [found!, ...prev.filter((u) => u.uid !== found!.uid && u.email.toLowerCase() !== found!.email.toLowerCase())]);
-    }
-
-    if (!found) {
-      return false;
-    }
-
-    // Validate password if not verified already by server
-    if (!serverVerifiedUser) {
-      const expectedPass = userPasswords[found.uid] || DEFAULT_PASSWORDS[found.uid];
-      if (expectedPass && pass !== expectedPass) {
-        return false;
-      }
-    }
+    // Upsert profile into local list (no passwords stored)
+    setAllUsers((prev) => [
+      found,
+      ...prev.filter((u) => u.uid !== found.uid && u.email.toLowerCase() !== found.email.toLowerCase()),
+    ]);
 
     setCurrentUser(found);
     setUserStatus('available');
 
     const now = Date.now().toString();
     try {
+      // Persist only the user profile and session timestamps — never a password
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([found]));
       localStorage.setItem(ACTIVE_SESSION_KEY, found.uid);
       localStorage.setItem(STATUS_KEY, 'available');
       localStorage.setItem(SESSION_START_KEY, now);
@@ -533,13 +387,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {}
 
     if (remember) {
-      saveToDevice(found.uid, pass);
+      // Store only email for UX convenience — NEVER store password
+      saveRememberedEmail(found.email);
+    } else {
+      clearRememberedEmail();
     }
 
     return true;
   };
 
-  const loadRemembered = () => loadFromDevice();
+  const loadRememberedEmailFn = () => loadRememberedEmail();
 
   /**
    * Register a new freight organization and user account.
@@ -631,18 +488,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.warn('[Auth] Server register request skipped, using client registry:', err);
     }
 
-    // 4. Save to local storage as single exclusive session
+    // 4. Save profile only to local storage — never password
     const nextUsers = [newUser, ...allUsers.filter((u) => u.email.trim().toLowerCase() !== cleanEmail)];
     setAllUsers(nextUsers);
 
-    // Save password
-    const nextPasswords = { ...userPasswords, [newUid]: password };
-    setUserPasswords(nextPasswords);
-
+    // SECURITY: Password is NOT stored client-side.
     const now = Date.now().toString();
     try {
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(nextUsers));
-      localStorage.setItem(PASSWORDS_STORAGE_KEY, JSON.stringify(nextPasswords));
       localStorage.setItem(ACTIVE_SESSION_KEY, newUid);
       localStorage.setItem(STATUS_KEY, 'available');
       localStorage.setItem(SESSION_START_KEY, now);
@@ -680,16 +533,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: json.error || 'Password reset failed.' };
       }
 
-      // Update client password store if matching user exists locally
-      const cleanEmail = email.trim().toLowerCase();
-      const matched = allUsers.find((u) => u.email.trim().toLowerCase() === cleanEmail);
-      if (matched) {
-        const nextPasswords = { ...userPasswords, [matched.uid]: newPassword };
-        setUserPasswords(nextPasswords);
-        try {
-          localStorage.setItem(PASSWORDS_STORAGE_KEY, JSON.stringify(nextPasswords));
-        } catch {}
-      }
+      // SECURITY: Client-side password store removed.
+      // Server has updated the password. No client-side action needed.
 
       return { success: true, message: json.message || 'Password successfully reset.' };
     } catch (err: any) {
@@ -703,7 +548,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = (reason?: string) => {
     setCurrentUser(null);
     setUserStatusState('offline');
-    clearDevice();
+    clearRememberedEmail();
     try {
       localStorage.removeItem(ACTIVE_SESSION_KEY);
       localStorage.removeItem(SESSION_START_KEY);
@@ -711,7 +556,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STATUS_KEY, 'offline');
     } catch {}
 
-    if (reason && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+    if (reason && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
       window.location.href = `/login?reason=${encodeURIComponent(reason)}`;
     }
   };
@@ -738,7 +583,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         resetPasswordWithOtp,
         logout,
-        loadRemembered,
+        loadRememberedEmail: loadRememberedEmailFn,
         bidPostingFee,
         bidDiscountPercentage,
       }}

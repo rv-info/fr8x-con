@@ -17,6 +17,7 @@ import {
   HelpCircle,
   Send,
   Sparkles,
+  KeyRound,
 } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -63,7 +64,7 @@ export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
   const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
 
-  const [mode, setMode] = useState<'login' | 'forgot' | 'success'>('login');
+  const [mode, setMode] = useState<'login' | 'first_login_otp' | 'forgot' | 'success'>('login');
   const [email, setEmail] = useState('tech@fr8x.in');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -72,6 +73,11 @@ export default function DedicatedGodfatherLoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // First-login OTP challenge state
+  const [firstLoginChallengeToken, setFirstLoginChallengeToken] = useState('');
+  const [firstLoginOtp, setFirstLoginOtp] = useState('');
+  const [firstLoginCountdown, setFirstLoginCountdown] = useState(15);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('tech@fr8x.in');
@@ -114,12 +120,20 @@ export default function DedicatedGodfatherLoginPage() {
 
   useEffect(() => {
     if (forgotTimer > 0) {
-      const t = setTimeout(() => setForgotTimer(s => s - 1), 1000);
+      const t = setTimeout(() => setForgotTimer((s) => s - 1), 1000);
       return () => clearTimeout(t);
     }
   }, [forgotTimer]);
 
-  /* ── Direct 1-Step Sign In (No OTP Required) ── */
+  // First-login OTP real-time countdown timer
+  useEffect(() => {
+    if (mode === 'first_login_otp' && firstLoginCountdown > 0) {
+      const timer = setTimeout(() => setFirstLoginCountdown((c) => c - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [mode, firstLoginCountdown]);
+
+  /* ── Sign In (Credentials Verification) ── */
   const handleDirectSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -147,7 +161,71 @@ export default function DedicatedGodfatherLoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setErrorMessage(data.error || 'Authentication failed. Please verify your credentials.');
+        setErrorMessage(data.error || 'Unable to sign in. Please check your credentials.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // If first-time login verification is required: transition to OTP screen
+      if (data.firstLoginRequired) {
+        setFirstLoginChallengeToken(data.challengeToken);
+        setFirstLoginCountdown(data.expiresIn || 15);
+        setFirstLoginOtp('');
+        setMode('first_login_otp');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Existing verified operator: direct session established
+      if (rememberDevice) {
+        rememberOperator(email);
+      } else {
+        forgetOperator();
+      }
+
+      loginOperator(email, password);
+      setMode('success');
+
+      setTimeout(() => {
+        window.location.href = '/godfather';
+      }, 400);
+    } catch {
+      setErrorMessage('Failed to connect to authentication server.');
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ── First-Login OTP Verification ── */
+  const handleVerifyFirstLoginOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage('');
+
+    if (firstLoginOtp.length !== 6) {
+      setErrorMessage('Please enter the 6-digit verification code.');
+      return;
+    }
+
+    if (firstLoginCountdown <= 0) {
+      setErrorMessage('Code expired.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/godfather/auth/verify-first-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: firstLoginChallengeToken,
+          otp: firstLoginOtp,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Verification failed. Please check your code.');
         setIsSubmitting(false);
         return;
       }
@@ -166,6 +244,35 @@ export default function DedicatedGodfatherLoginPage() {
       }, 400);
     } catch {
       setErrorMessage('Failed to connect to authentication server.');
+      setIsSubmitting(false);
+    }
+  };
+
+  /* ── First-Login Resend OTP ── */
+  const handleResendFirstLoginOtp = async () => {
+    setErrorMessage('');
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch('/api/godfather/auth/resend-first-login-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeToken: firstLoginChallengeToken }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMessage(data.error || 'Failed to resend verification code.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setFirstLoginCountdown(data.expiresIn || 15);
+      setFirstLoginOtp('');
+    } catch {
+      setErrorMessage('Failed to connect to authentication server.');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -376,6 +483,132 @@ export default function DedicatedGodfatherLoginPage() {
                   </>
                 )}
               </button>
+            </form>
+          )}
+
+          {/* ── MODE: FIRST-TIME LOGIN OTP VERIFICATION ── */}
+          {mode === 'first_login_otp' && (
+            <form onSubmit={handleVerifyFirstLoginOtp} className="gfl-clean-form">
+              <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    padding: '10px',
+                    borderRadius: '50%',
+                    background: '#eff6ff',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <ShieldCheck className="w-6 h-6 text-blue-600" />
+                </div>
+                <h2
+                  style={{
+                    fontSize: '16px',
+                    fontWeight: '700',
+                    color: '#1e293b',
+                    margin: '0 0 4px 0',
+                  }}
+                >
+                  Enter the verification code
+                </h2>
+                <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                  A verification code has been dispatched to your registered address.
+                </p>
+              </div>
+
+              <div className="gfl-clean-field">
+                <label htmlFor="gfl-first-login-otp" className="gfl-clean-label">
+                  Verification Code
+                </label>
+                <div className="gfl-clean-input-box">
+                  <KeyRound className="gfl-clean-input-icon" />
+                  <input
+                    id="gfl-first-login-otp"
+                    type="text"
+                    required
+                    maxLength={6}
+                    autoFocus
+                    value={firstLoginOtp}
+                    onChange={(e) => setFirstLoginOtp(e.target.value.replace(/\D/g, ''))}
+                    placeholder="6-digit code"
+                    className="gfl-clean-input"
+                    style={{
+                      letterSpacing: '4px',
+                      fontFamily: 'monospace',
+                      fontSize: '18px',
+                      textAlign: 'center',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Time Left Live Countdown */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  margin: '12px 0 16px 0',
+                  padding: '10px 14px',
+                  borderRadius: '8px',
+                  background: firstLoginCountdown > 0 ? '#f8fafc' : '#fef2f2',
+                  border: `1px solid ${firstLoginCountdown > 0 ? '#e2e8f0' : '#fecaca'}`,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    fontFamily: 'monospace',
+                    color: firstLoginCountdown > 0 ? '#0284c7' : '#dc2626',
+                  }}
+                >
+                  TIME LEFT: 00:{String(firstLoginCountdown).padStart(2, '0')}
+                </span>
+                {firstLoginCountdown <= 0 && (
+                  <span style={{ fontSize: '12px', fontWeight: '600', color: '#dc2626' }}>
+                    Code expired.
+                  </span>
+                )}
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  type="submit"
+                  disabled={
+                    isSubmitting ||
+                    firstLoginCountdown <= 0 ||
+                    firstLoginOtp.length !== 6
+                  }
+                  className="gfl-clean-btn gfl-clean-btn-primary"
+                  style={{ flex: 1 }}
+                >
+                  {isSubmitting ? 'Verifying…' : 'Verify'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendFirstLoginOtp}
+                  disabled={isSubmitting}
+                  className="gfl-clean-btn gfl-clean-btn-secondary"
+                  style={{ width: 'auto', padding: '0 16px' }}
+                >
+                  Resend
+                </button>
+              </div>
+
+              <div style={{ textAlign: 'center', marginTop: '14px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMode('login');
+                    setFirstLoginOtp('');
+                    setErrorMessage('');
+                  }}
+                  className="gfl-clean-text-link"
+                >
+                  Back to Sign In
+                </button>
+              </div>
             </form>
           )}
 

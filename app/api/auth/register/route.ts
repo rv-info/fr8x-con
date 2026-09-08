@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isCorporateEmail } from '@/lib/utils';
+import { createSignedSessionToken } from '@/lib/crypto';
 
 /**
  * POST /api/auth/register
@@ -118,8 +119,16 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
 
-    // Set exclusive session cookie
-    res.cookies.set('fr8x_session', user.uid, {
+    // Set cryptographically signed exclusive session cookie
+    const userSessionToken = createSignedSessionToken({
+      uid: user.uid,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+      issuedAt: Date.now(),
+    });
+
+    res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

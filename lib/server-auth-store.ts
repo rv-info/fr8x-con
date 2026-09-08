@@ -1,10 +1,18 @@
 // Server-side Authentication, Security, and State Management Engine
 // Handles credential validation, failed login attempt tracking, account blocking,
-// daily OTP limits, salted password hashing, privileged session control, and audit logs.
+// daily OTP limits, salted PBKDF2 password hashing, privileged session control, and audit logs.
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { EmailService } from '@/lib/email-service';
+import {
+  hashPassword as pbkdf2HashPassword,
+  verifyPassword as pbkdf2VerifyPassword,
+  generateSecureOtp,
+  generateSecureToken,
+  createSignedSessionToken,
+  verifySignedSessionToken,
+} from '@/lib/crypto';
 
 export interface ServerUserRecord {
   uid: string;
@@ -24,6 +32,7 @@ export interface ServerUserRecord {
   emailVerificationToken?: string;
   emailVerificationExpiresAt?: number;
   emailVerifiedAt?: string;
+  firstLoginCompleted?: boolean;
   createdAt: string;
 }
 
@@ -109,16 +118,44 @@ export function maskEmail(email: string): string {
   return `${name[0]}***${name[name.length - 1]}@${domain}`;
 }
 
-// Simple deterministic salt+hash for runtime demo environment
-export function hashPassword(password: string, salt: string): string {
-  let hash = 0;
-  const combined = `${salt}:${password}:${salt}`;
-  for (let i = 0; i < combined.length; i++) {
-    const char = combined.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
+/**
+ * SECURITY: Uses PBKDF2-HMAC-SHA512 with 200,000 iterations.
+ * The old 32-bit rolling hash ('sha256_sim_...') has been replaced.
+ * @deprecated Pass only 1 argument (plaintext) — the salt is generated internally.
+ * Legacy 2-arg form is accepted for backward compat but now uses PBKDF2.
+ */
+export function hashPassword(password: string, _legacySalt?: string): string {
+  // PBKDF2 path — returns "salt:hash" encoded as hex, prefixed for identification
+  const { salt, hash } = pbkdf2HashPassword(password);
+  return `pbkdf2:${salt}:${hash}`;
+}
+
+/**
+ * Verifies a password produced by hashPassword().
+ * Handles both the new PBKDF2 format and detects the old weak format.
+ */
+export function verifyHashedPassword(plaintext: string, stored: string): boolean {
+  if (stored.startsWith('pbkdf2:')) {
+    const parts = stored.split(':');
+    if (parts.length !== 3) return false;
+    const [, salt, hash] = parts;
+    return pbkdf2VerifyPassword(plaintext, salt, hash);
   }
-  return 'sha256_sim_' + Math.abs(hash).toString(16).padStart(8, '0');
+  // Legacy weak hash detected — refuse to authenticate and log
+  console.error('[ServerSecurityStore] CRITICAL: Refusing auth against legacy weak hash. Password must be reset.');
+  return false;
+}
+
+// Production environment guard
+if (process.env.NODE_ENV === 'production') {
+  const KMS_KEY = process.env.GODFATHER_KMS_ENCRYPTION_KEY;
+  const DEFAULT_HEX = 'e1a3b5c7d9f2e4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4';
+  if (!KMS_KEY || KMS_KEY === DEFAULT_HEX) {
+    console.error(
+      '[ServerSecurityStore] CRITICAL: GODFATHER_KMS_ENCRYPTION_KEY is using the default fallback value in production. ' +
+      'All field-encrypted data is at risk. Set a unique 64-hex-char key in Vercel environment variables immediately.'
+    );
+  }
 }
 
 // Global server state with file-backed persistence to prevent state loss across Next.js reloads
@@ -138,9 +175,16 @@ class ServerSecurityStore {
   private passwordResets: PasswordResetRecord[] = [];
   private securityEvents: SecurityEventRecord[] = [];
   private activeGodfatherSessions: Set<string> = new Set();
+  private activeFirstLoginOtps: Map<
+    string,
+    { salt: string; hash: string; expiresAt: number; attempts: number; challengeId: string }
+  > = new Map();
+  private firstLoginOtpSendTimestamps: Map<string, number[]> = new Map();
 
   constructor() {
-    this.seedRealTestingUsers();
+    // SECURITY: seedRealTestingUsers() removed.
+    // Demo/test users with hardcoded passwords must not exist in production server state.
+    // All users must register through /api/auth/register with server-validated credentials.
     this.loadPersistedState();
   }
 
@@ -220,125 +264,9 @@ class ServerSecurityStore {
     }
   }
 
-  private seedRealTestingUsers() {
-    const salt1 = 'fr8x_salt_arjun_2026';
-    const salt2 = 'fr8x_salt_sarah_2026';
-    const salt3 = 'fr8x_salt_kiran_2026';
-    const salt4 = 'fr8x_salt_elena_2026';
-    const salt5 = 'fr8x_salt_david_2026';
-
-    const usersList: ServerUserRecord[] = [
-      {
-        uid: 'u-arjun',
-        email: 'arjun@atlaslogistics.com',
-        salt: salt1,
-        passwordHash: hashPassword('Atlas@2025', salt1),
-        displayName: 'Arjun Rao',
-        company: 'Atlas Logistics Pvt. Ltd.',
-        companyId: 'CMP-00101',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-01-15T08:00:00.000Z',
-      },
-      {
-        uid: 'u-sarah',
-        email: 'sarah.lewis@rotterdamfreight.nl',
-        salt: salt2,
-        passwordHash: hashPassword('Rotterdam@2025', salt2),
-        displayName: 'Sarah Lewis',
-        company: 'Rotterdam Freight NV',
-        companyId: 'CMP-00102',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-01-20T09:30:00.000Z',
-      },
-      {
-        uid: 'u-kiran',
-        email: 'kiran.mehta@indoocean.com',
-        salt: salt3,
-        passwordHash: hashPassword('IndoOcean@2025', salt3),
-        displayName: 'Kiran Mehta',
-        company: 'Indo Ocean Lines',
-        companyId: 'CMP-00103',
-        role: 'user',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-02-01T11:15:00.000Z',
-      },
-      {
-        uid: 'u-elena',
-        email: 'elena.rossi@mediterraneanlines.it',
-        salt: salt4,
-        passwordHash: hashPassword('MedLines@2025', salt4),
-        displayName: 'Elena Rossi',
-        company: 'Mediterranean Shipping Agency S.p.A.',
-        companyId: 'CMP-00104',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-02-10T10:00:00.000Z',
-      },
-      {
-        uid: 'u-david',
-        email: 'david.chen@pacificcargo.sg',
-        salt: salt5,
-        passwordHash: hashPassword('Pacific@2025', salt5),
-        displayName: 'David Chen',
-        company: 'Pacific Maritime Cargo Pte. Ltd.',
-        companyId: 'CMP-00105',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-02-15T14:30:00.000Z',
-      },
-      {
-        uid: 'u-tech',
-        email: 'tech@fr8x.in',
-        salt: 'fr8x_salt_tech_2026',
-        passwordHash: hashPassword('FR8X@Tech2026', 'fr8x_salt_tech_2026'),
-        displayName: 'FR8X Technical Operations',
-        company: 'FR8X Sovereign Platform',
-        companyId: 'CMP-FR8X',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
-      {
-        uid: 'u-support',
-        email: 'support@fr8x.in',
-        salt: 'fr8x_salt_support_2026',
-        passwordHash: hashPassword('FR8X@Support2026', 'fr8x_salt_support_2026'),
-        displayName: 'FR8X Member Support',
-        company: 'FR8X Sovereign Platform',
-        companyId: 'CMP-FR8X',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
-      {
-        uid: 'u-password',
-        email: 'password@fr8x.in',
-        salt: 'fr8x_salt_password_2026',
-        passwordHash: hashPassword('FR8X@Password2026', 'fr8x_salt_password_2026'),
-        displayName: 'FR8X Security & Authentication',
-        company: 'FR8X Sovereign Platform',
-        companyId: 'CMP-FR8X',
-        role: 'company_admin',
-        status: 'active',
-        failedLoginAttempts: 0,
-        createdAt: '2026-01-01T00:00:00.000Z',
-      },
-    ];
-
-    for (const u of usersList) {
-      this.users.set(u.uid.toLowerCase(), u);
-      this.users.set(u.email.toLowerCase(), u);
-    }
-  }
+  // seedRealTestingUsers() removed for production security.
+  // No demo/test users are seeded at runtime.
+  // See SECURITY AUDIT 2026-09: C-05 remediation.
 
   public getUser(emailOrUid: string): ServerUserRecord | undefined {
     const clean = emailOrUid.trim().toLowerCase();
@@ -419,8 +347,8 @@ class ServerSecurityStore {
     const record: ServerUserRecord = {
       uid: user.uid,
       email: user.email,
-      salt,
-      passwordHash: hashPassword(user.password, salt),
+      salt: 'pbkdf2_managed', // Salt is embedded in passwordHash for PBKDF2
+      passwordHash: hashPassword(user.password), // PBKDF2 hash, format: pbkdf2:<salt>:<hash>
       displayName: user.displayName,
       company: user.company,
       companyId: user.companyId,
@@ -719,6 +647,9 @@ class ServerSecurityStore {
     isBlocked?: boolean;
     isPendingVerification?: boolean;
     passwordResetRequired?: boolean;
+    firstLoginRequired?: boolean;
+    challengeToken?: string;
+    expiresIn?: number;
     email?: string;
     maskedEmail?: string;
     attemptsRemaining?: number;
@@ -766,7 +697,7 @@ class ServerSecurityStore {
       // Ensure active password reset OTP exists or send fresh OTP
       let activeOtp = this.activeResetOtps.get(user.email.toLowerCase());
       if (!activeOtp || Date.now() > activeOtp.expiresAt) {
-        const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const resetOtp = generateSecureOtp(6);
         activeOtp = {
           email: user.email,
           otp: resetOtp,
@@ -790,12 +721,75 @@ class ServerSecurityStore {
       };
     }
 
-    const expectedHash = hashPassword(passwordAttempt, user.salt);
-    if (expectedHash === user.passwordHash) {
+    // Verify password using PBKDF2 constant-time comparison
+    const isPasswordValid = verifyHashedPassword(passwordAttempt, user.passwordHash);
+    if (isPasswordValid) {
       // Reset failed attempts on successful authentication
       user.failedLoginAttempts = 0;
+
+      // Check if first-login OTP verification is required
+      if (!user.firstLoginCompleted) {
+        const cleanEmail = user.email.toLowerCase();
+        const now = Date.now();
+        const sendTimestamps = this.firstLoginOtpSendTimestamps.get(cleanEmail) || [];
+        const validTimestamps = sendTimestamps.filter((t) => t > now - 25 * 60 * 60 * 1000);
+        this.firstLoginOtpSendTimestamps.set(cleanEmail, validTimestamps);
+
+        if (validTimestamps.length >= 3) {
+          return {
+            success: false,
+            message: 'Unable to sign in. Please try again later or contact platform support.',
+          };
+        }
+
+        const rawOtp = generateSecureOtp(6);
+        const salt = crypto.randomBytes(16).toString('hex');
+        const hash = crypto.pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256').toString('hex');
+        const challengeId = `CHAL-USR-${Date.now()}-${generateSecureToken(4).toUpperCase()}`;
+        const expiresAt = now + 15 * 1000; // 15 seconds validity!
+
+        this.activeFirstLoginOtps.set(cleanEmail, {
+          salt,
+          hash,
+          expiresAt,
+          attempts: 0,
+          challengeId,
+        });
+        validTimestamps.push(now);
+
+        const challengeToken = createSignedSessionToken({
+          challengeId,
+          email: user.email,
+          uid: user.uid,
+          type: 'user_first_login_challenge',
+          issuedAt: now,
+          expiresAt: now + 5 * 60 * 1000,
+        });
+
+        EmailService.sendOtpEmail({
+          to: user.email,
+          recipientName: user.displayName || 'Member',
+          otpCode: rawOtp,
+          expiryMinutes: 1,
+          correlationId: `FR8X-AUTH-OTP-${challengeId}`,
+        }).catch((err) => {
+          console.error('[UserAuth] Failed to send first-login OTP email:', err.message);
+        });
+
+        return {
+          success: true,
+          firstLoginRequired: true,
+          challengeToken,
+          email: user.email,
+          maskedEmail: maskEmail(user.email),
+          expiresIn: 15,
+          message: 'First-time login verification required. A 6-digit code has been sent.',
+        };
+      }
+
       return {
         success: true,
+        firstLoginRequired: false,
         user,
         message: 'Authentication successful.',
       };
@@ -813,8 +807,8 @@ class ServerSecurityStore {
       user.blockedAt = new Date().toISOString();
       user.blockedReason = 'Maximum failed password attempts exceeded (3/3). Password reset OTP dispatched.';
 
-      // Generate 6-digit Password Reset OTP
-      const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      // Generate cryptographically secure 6-digit Password Reset OTP
+      const resetOtp = generateSecureOtp(6);
       const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes validity
       this.activeResetOtps.set(user.email.toLowerCase(), {
         email: user.email,
@@ -829,7 +823,7 @@ class ServerSecurityStore {
       this.dispatchAccountBlockedEmail(user, ip, user.blockedReason);
 
       const blockRecord: BlockedAccountRecord = {
-        id: `blk-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        id: `blk-${Date.now()}-${generateSecureToken(4)}`,
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
@@ -885,6 +879,136 @@ class ServerSecurityStore {
           ? 'Invalid password. 1 attempt remaining before password reset OTP is dispatched.'
           : `Invalid password. ${remaining} attempts remaining.`,
     };
+  }
+
+  public getActiveFirstLoginChallenge(email: string) {
+    return this.activeFirstLoginOtps.get(email.toLowerCase());
+  }
+
+  public verifyUserFirstLoginOtp(
+    challengeToken: string,
+    candidateOtp: string
+  ): { success: boolean; user?: ServerUserRecord; error?: string } {
+    if (!candidateOtp || typeof candidateOtp !== 'string' || candidateOtp.trim().length === 0) {
+      return { success: false, error: 'Please enter a valid verification code.' };
+    }
+
+    const tokenCheck = verifySignedSessionToken<{
+      challengeId: string;
+      email: string;
+      uid: string;
+      type: string;
+    }>(challengeToken);
+
+    if (
+      !tokenCheck.valid ||
+      !tokenCheck.payload ||
+      tokenCheck.payload.type !== 'user_first_login_challenge'
+    ) {
+      return { success: false, error: 'Invalid or expired authentication challenge.' };
+    }
+
+    const cleanEmail = tokenCheck.payload.email.toLowerCase();
+    const activeOtp = this.activeFirstLoginOtps.get(cleanEmail);
+    if (!activeOtp || activeOtp.challengeId !== tokenCheck.payload.challengeId) {
+      return {
+        success: false,
+        error: 'No active verification code found. Please request a new code.',
+      };
+    }
+
+    const now = Date.now();
+    if (now > activeOtp.expiresAt) {
+      this.activeFirstLoginOtps.delete(cleanEmail);
+      return { success: false, error: 'Code expired.' };
+    }
+
+    activeOtp.attempts += 1;
+    const derived = crypto.pbkdf2Sync(candidateOtp.trim(), activeOtp.salt, 100_000, 32, 'sha256');
+    const isMatch = crypto.timingSafeEqual(derived, Buffer.from(activeOtp.hash, 'hex'));
+
+    if (!isMatch) {
+      if (activeOtp.attempts >= 3) {
+        this.activeFirstLoginOtps.delete(cleanEmail);
+        return {
+          success: false,
+          error: 'Verification failed. Please request a new verification code.',
+        };
+      }
+      return { success: false, error: 'Invalid verification code.' };
+    }
+
+    this.activeFirstLoginOtps.delete(cleanEmail);
+    const user = this.users.get(cleanEmail);
+    if (user) {
+      user.firstLoginCompleted = true;
+      this.persistState();
+    }
+    return { success: true, user };
+  }
+
+  public resendUserFirstLoginOtp(
+    challengeToken: string,
+    ip = '127.0.0.1'
+  ): { success: boolean; expiresIn?: number; error?: string } {
+    const tokenCheck = verifySignedSessionToken<{
+      challengeId: string;
+      email: string;
+      uid: string;
+      type: string;
+    }>(challengeToken);
+
+    if (
+      !tokenCheck.valid ||
+      !tokenCheck.payload ||
+      tokenCheck.payload.type !== 'user_first_login_challenge'
+    ) {
+      return { success: false, error: 'Invalid or expired authentication challenge.' };
+    }
+
+    const cleanEmail = tokenCheck.payload.email.toLowerCase();
+    const now = Date.now();
+    const sendTimestamps = this.firstLoginOtpSendTimestamps.get(cleanEmail) || [];
+    const validTimestamps = sendTimestamps.filter(
+      (t) => t > now - 25 * 60 * 60 * 1000
+    );
+    this.firstLoginOtpSendTimestamps.set(cleanEmail, validTimestamps);
+
+    if (validTimestamps.length >= 3) {
+      return {
+        success: false,
+        error: 'Unable to resend code. Please try again later or contact platform support.',
+      };
+    }
+
+    const user = this.users.get(cleanEmail);
+    const rawOtp = generateSecureOtp(6);
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto
+      .pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256')
+      .toString('hex');
+    const expiresAt = now + 15 * 1000; // 15 seconds!
+
+    this.activeFirstLoginOtps.set(cleanEmail, {
+      salt,
+      hash,
+      expiresAt,
+      attempts: 0,
+      challengeId: tokenCheck.payload.challengeId,
+    });
+    validTimestamps.push(now);
+
+    EmailService.sendOtpEmail({
+      to: cleanEmail,
+      recipientName: user?.displayName || 'Member',
+      otpCode: rawOtp,
+      expiryMinutes: 1,
+      correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
+    }).catch((err) => {
+      console.error('[UserAuth] Failed to resend first-login OTP email:', err.message);
+    });
+
+    return { success: true, expiresIn: 15 };
   }
 
   public unblockAccount(
@@ -956,7 +1080,7 @@ class ServerSecurityStore {
     user.blockedReason = reason.trim() || 'Blocked by system administrator';
 
     const blockRecord: BlockedAccountRecord = {
-      id: `blk-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: `blk-${Date.now()}-${generateSecureToken(4)}`,
       uid: user.uid,
       email: user.email,
       displayName: user.displayName,
@@ -1207,30 +1331,13 @@ class ServerSecurityStore {
     }
 
     if (!user) {
-      // In development or for fr8x.in domain, auto-provision test user so testing works
-      if (cleanEmail.includes('fr8x.in') || process.env.NODE_ENV !== 'production') {
-        const salt = 'fr8x_test_salt_' + Date.now();
-        user = {
-          uid: `u-test-${Date.now()}`,
-          email: cleanEmail,
-          salt,
-          passwordHash: hashPassword('FR8X@Test2026', salt),
-          displayName: cleanEmail.split('@')[0].toUpperCase(),
-          company: 'FR8X Test Enterprise',
-          companyId: 'CMP-TEST',
-          role: 'company_admin',
-          status: 'active',
-          failedLoginAttempts: 0,
-          createdAt: new Date().toISOString(),
-        };
-        this.users.set(cleanEmail, user);
-        this.users.set(user.uid, user);
-        this.persistState();
-      }
+      // SECURITY: Auto-provisioning of test users removed.
+      // fr8x.in domain users and dev accounts must register through /api/auth/register.
+      // Auto-provisioning was a backdoor that allowed any fr8x.in email to gain access.
     }
 
     this.passwordResets.push({
-      id: `pr-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: `pr-${Date.now()}-${generateSecureToken(4)}`,
       email: cleanEmail,
       requestedAt: new Date().toISOString(),
       status: user ? 'pending' : 'completed',
@@ -1240,7 +1347,7 @@ class ServerSecurityStore {
     let resetToken: string | undefined;
 
     if (user) {
-      const resetOtp = Math.floor(100000 + Math.random() * 900000).toString();
+      const resetOtp = generateSecureOtp(6);
       resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + 15 * 60 * 1000;
 
@@ -1347,9 +1454,9 @@ class ServerSecurityStore {
       return { success: false, error: 'New password must be at least 8 characters long.' };
     }
 
-    // OTP verified successfully: update password, reset attempts, unlock account
-    user.salt = `fr8x_salt_${Date.now()}`;
-    user.passwordHash = hashPassword(newPassword.trim(), user.salt);
+    // OTP verified successfully: update password with PBKDF2, reset attempts, unlock account
+    user.salt = 'pbkdf2_managed'; // Salt embedded in passwordHash
+    user.passwordHash = hashPassword(newPassword.trim()); // PBKDF2 format: pbkdf2:<salt>:<hash>
     user.status = 'active';
     user.failedLoginAttempts = 0;
     user.blockedAt = undefined;
@@ -1461,8 +1568,8 @@ class ServerSecurityStore {
     this.activeResetOtps.delete(cleanEmail);
     this.resetTokens.delete(cleanToken);
 
-    user.salt = `fr8x_salt_${Date.now()}`;
-    user.passwordHash = hashPassword(params.newPassword.trim(), user.salt);
+    user.salt = 'pbkdf2_managed'; // Salt embedded in passwordHash
+    user.passwordHash = hashPassword(params.newPassword.trim()); // PBKDF2 format: pbkdf2:<salt>:<hash>
     user.status = 'active';
     user.failedLoginAttempts = 0;
     user.blockedAt = undefined;
@@ -1517,7 +1624,7 @@ class ServerSecurityStore {
   // ─── Security Events ─────────────────────────────────────────────────────────
   public addSecurityEvent(event: Omit<SecurityEventRecord, 'id' | 'timestamp'>) {
     const record: SecurityEventRecord = {
-      id: `sec-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+      id: `sec-${Date.now()}-${generateSecureToken(4)}`,
       timestamp: new Date().toISOString(),
       ...event,
     };

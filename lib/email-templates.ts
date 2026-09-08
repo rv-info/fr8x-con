@@ -622,3 +622,467 @@ FR8X Platform Security`;
 
   return { subject, html, text };
 }
+
+/**
+ * 9. FORGOT PASSWORD REQUEST TEMPLATE
+ * Sender: password@fr8x.in
+ * Subject: FORGOT PASSWORD REQUEST — FR8X
+ */
+export interface ForgotPasswordTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  resetLink?: string;
+  otpCode?: string;
+  expiryMinutes?: number;
+}
+
+export function renderForgotPasswordEmail(params: ForgotPasswordTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const expiry = params.expiryMinutes || 15;
+  const subject = 'FORGOT PASSWORD REQUEST — FR8X';
+  const firstName = params.recipientName ? params.recipientName.split(' ')[0] : 'Member';
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello ${firstName},</p>
+    <p>We received a request to recover the password for your FR8X account associated with <strong style="color: #f8fafc;">${params.recipient}</strong>.</p>
+
+    ${params.otpCode ? `
+    <div class="code-box">
+      <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.08em; margin-bottom: 8px;">Recovery Security Code</div>
+      <div class="code-digits">${params.otpCode}</div>
+      <div style="font-size: 11px; color: #64748b; margin-top: 8px;">Expires in ${expiry} minutes · Single use</div>
+    </div>
+    ` : ''}
+
+    ${params.resetLink ? `
+    <p style="text-align: center; margin: 24px 0;">
+      <a href="${params.resetLink}" class="btn-primary" target="_blank" rel="noopener noreferrer">CHOOSE NEW PASSWORD</a>
+    </p>
+    <p style="font-size: 11px; color: #64748b; word-break: break-all;">
+      Or paste this URL into your browser:<br>
+      <a href="${params.resetLink}" style="color: #38bdf8;">${params.resetLink}</a>
+    </p>
+    ` : ''}
+
+    <div class="info-box">
+      <strong>Security Notice:</strong> If you did not request this password recovery, someone may have entered your email by mistake. Your account remains protected. Do not forward this code or link.
+    </div>
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>FR8X Security Team</strong><br>
+      <a href="mailto:password@fr8x.in" style="color: #38bdf8;">password@fr8x.in</a>
+    </p>
+  `, 'Forgot password recovery instructions');
+
+  const text = `Hello ${firstName},
+
+We received a request to recover the password for your FR8X account (${params.recipient}).
+
+${params.otpCode ? `Recovery Code: ${params.otpCode} (Valid for ${expiry} minutes)\n` : ''}${params.resetLink ? `Recovery Link: ${params.resetLink}\n` : ''}
+This recovery token is single-use and expires in ${expiry} minutes. If you did not request this, you may safely ignore this email.
+
+Regards,
+FR8X Security Team
+password@fr8x.in`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 10. SUPPORT REPLY TEMPLATE
+ * Sender: support@fr8x.in
+ * Subject: RE: FR8X SUPPORT TICKET — {{TICKET_ID}}
+ */
+export interface SupportReplyTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  ticketId: string;
+  replyMessage: string;
+  agentName?: string;
+  originalSubject?: string;
+}
+
+export function renderSupportReplyEmail(params: SupportReplyTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `RE: FR8X SUPPORT TICKET — ${params.ticketId}${params.originalSubject ? ` (${params.originalSubject})` : ''}`;
+  const userName = params.recipientName || 'Member';
+  const agent = params.agentName || 'FR8X Support Representative';
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello ${userName},</p>
+    <p>A response has been added to your support ticket <strong style="color: #38bdf8;">${params.ticketId}</strong> by ${agent}:</p>
+
+    <div style="background: #020617; border-left: 3px solid #38bdf8; border-radius: 6px; padding: 18px; margin: 20px 0;">
+      <div style="color: #f8fafc; white-space: pre-wrap; font-size: 14px; line-height: 1.6;">${params.replyMessage}</div>
+    </div>
+
+    <p style="font-size: 13px; color: #94a3b8;">
+      You can reply directly to this email to continue the conversation with the support team.
+    </p>
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>${agent}</strong><br>
+      FR8X Customer Operations<br>
+      <a href="mailto:support@fr8x.in" style="color: #38bdf8;">support@fr8x.in</a>
+    </p>
+  `, `Update on Ticket ${params.ticketId}`);
+
+  const text = `Hello ${userName},
+
+A response has been added to your support ticket ${params.ticketId} by ${agent}:
+
+${params.replyMessage}
+
+You can reply directly to this email to continue this conversation.
+
+Regards,
+${agent}
+FR8X Customer Operations
+support@fr8x.in`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 11. TECHNICAL MAINTENANCE NOTIFICATION TEMPLATE
+ * Sender: tech@fr8x.in
+ */
+export interface TechnicalMaintenanceTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  scheduledTime: string;
+  details: string;
+  affectedServices?: string[];
+  correlationId?: string;
+}
+
+export function renderTechnicalMaintenanceEmail(params: TechnicalMaintenanceTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  return renderTechnicalEmail({
+    recipient: params.recipient,
+    recipientName: params.recipientName,
+    type: 'MAINTENANCE',
+    scheduledTime: params.scheduledTime,
+    details: params.details,
+    affectedServices: params.affectedServices,
+    correlationId: params.correlationId,
+  });
+}
+
+/**
+ * 12. TECHNICAL INCIDENT NOTIFICATION TEMPLATE
+ * Sender: tech@fr8x.in
+ */
+export interface TechnicalIncidentTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  incidentId: string;
+  details: string;
+  severity?: string;
+  affectedServices?: string[];
+  correlationId?: string;
+}
+
+export function renderTechnicalIncidentEmail(params: TechnicalIncidentTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  return renderTechnicalEmail({
+    recipient: params.recipient,
+    recipientName: params.recipientName,
+    type: 'INCIDENT',
+    incidentId: params.incidentId,
+    title: `FR8X SYSTEM INCIDENT [${params.severity || 'MAJOR'}] — ${params.incidentId}`,
+    details: params.details,
+    affectedServices: params.affectedServices,
+    correlationId: params.correlationId,
+  });
+}
+
+/**
+ * 13. TECHNICAL SERVICE RESTORED TEMPLATE
+ * Sender: tech@fr8x.in
+ */
+export interface TechnicalRecoveryTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  incidentId: string;
+  details: string;
+  resolvedTime?: string;
+  affectedServices?: string[];
+  correlationId?: string;
+}
+
+export function renderTechnicalRecoveryEmail(params: TechnicalRecoveryTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  return renderTechnicalEmail({
+    recipient: params.recipient,
+    recipientName: params.recipientName,
+    type: 'RESTORED',
+    incidentId: params.incidentId,
+    title: `FR8X SYSTEM SERVICE RESTORED — ${params.incidentId}`,
+    details: `${params.details}${params.resolvedTime ? `\nResolved At: ${params.resolvedTime}` : ''}`,
+    affectedServices: params.affectedServices,
+    correlationId: params.correlationId,
+  });
+}
+
+/**
+ * 14. WELCOME EMAIL (FR8X_WELCOME_USER)
+ * Sender: password@fr8x.in
+ * Subject: Welcome to FR8X Sovereign Platform
+ */
+export interface WelcomeTemplateParams {
+  recipient: string;
+  firstName?: string;
+  fullName?: string;
+  organizationName?: string;
+  verificationUrl?: string;
+}
+
+export function renderWelcomeEmail(params: WelcomeTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const firstName = params.firstName || (params.fullName ? params.fullName.split(' ')[0] : 'Member');
+  const org = params.organizationName ? ` at ${params.organizationName}` : '';
+  const subject = 'Welcome to the FR8X Sovereign Platform';
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Welcome, ${firstName}!</p>
+    <p>Your FR8X account${org} has been registered on the Sovereign Enterprise Logistics Platform.</p>
+
+    <div class="info-box">
+      <strong>Account Reference:</strong> ${params.recipient}<br>
+      ${params.organizationName ? `<strong>Organization:</strong> ${params.organizationName}<br>` : ''}
+      <strong>Status:</strong> Provisioned
+    </div>
+
+    ${params.verificationUrl ? `
+    <p style="text-align: center; margin: 24px 0;">
+      <a href="${params.verificationUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">ACTIVATE ACCOUNT</a>
+    </p>
+    ` : ''}
+
+    <p style="font-size: 13px; color: #94a3b8;">
+      Please keep your account credentials secure. For questions, contact <a href="mailto:support@fr8x.in" style="color: #38bdf8;">support@fr8x.in</a>.
+    </p>
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>FR8X Member Onboarding</strong><br>
+      <a href="mailto:password@fr8x.in" style="color: #38bdf8;">password@fr8x.in</a>
+    </p>
+  `, 'Welcome to the FR8X Platform');
+
+  const text = `Welcome, ${firstName}!
+
+Your FR8X account${org} has been provisioned on the Sovereign Enterprise Platform.
+
+Account: ${params.recipient}
+${params.verificationUrl ? `Activation URL: ${params.verificationUrl}\n` : ''}
+Regards,
+FR8X Member Onboarding
+password@fr8x.in`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 15. PRICING PLAN UPDATE (FR8X_PRICING_PLAN_UPDATE)
+ * Sender: support@fr8x.in
+ */
+export interface PricingPlanUpdateTemplateParams {
+  recipient: string;
+  firstName?: string;
+  planName: string;
+  effectiveDate?: string;
+  dashboardUrl?: string;
+}
+
+export function renderPricingPlanUpdateEmail(params: PricingPlanUpdateTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const firstName = params.firstName || 'Member';
+  const subject = `FR8X Subscription Plan Update: ${params.planName}`;
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello ${firstName},</p>
+    <p>This is an official notice regarding your FR8X platform commercial tier update.</p>
+
+    <div class="info-box">
+      <strong>Plan Tier:</strong> ${params.planName}<br>
+      ${params.effectiveDate ? `<strong>Effective Date:</strong> ${params.effectiveDate}<br>` : ''}
+      <strong>Account:</strong> ${params.recipient}
+    </div>
+
+    ${params.dashboardUrl ? `
+    <p style="text-align: center; margin: 20px 0;">
+      <a href="${params.dashboardUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">VIEW PLAN DETAILS</a>
+    </p>
+    ` : ''}
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>FR8X Commercial Operations</strong><br>
+      <a href="mailto:support@fr8x.in" style="color: #38bdf8;">support@fr8x.in</a>
+    </p>
+  `, subject);
+
+  const text = `Hello ${firstName},
+
+Your FR8X subscription plan has been updated to: ${params.planName}
+${params.effectiveDate ? `Effective Date: ${params.effectiveDate}\n` : ''}
+Regards,
+FR8X Commercial Operations
+support@fr8x.in`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 16. BILLING ISSUE (FR8X_BILLING_ISSUE)
+ * Sender: support@fr8x.in
+ */
+export interface BillingIssueTemplateParams {
+  recipient: string;
+  firstName?: string;
+  invoiceId: string;
+  amount: string;
+  dueDate?: string;
+  billingUrl?: string;
+}
+
+export function renderBillingIssueEmail(params: BillingIssueTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const firstName = params.firstName || 'Member';
+  const subject = `FR8X Billing Notice: Invoice ${params.invoiceId}`;
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Hello ${firstName},</p>
+    <p>We are contacting you regarding an outstanding payment or processing issue with your FR8X invoice.</p>
+
+    <div class="warning-box">
+      <strong>Invoice Reference:</strong> ${params.invoiceId}<br>
+      <strong>Amount:</strong> ${params.amount}<br>
+      ${params.dueDate ? `<strong>Due Date:</strong> ${params.dueDate}<br>` : ''}
+      Status: Pending Resolution
+    </div>
+
+    ${params.billingUrl ? `
+    <p style="text-align: center; margin: 20px 0;">
+      <a href="${params.billingUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer" style="background-color: #dc2626;">RESOLVE INVOICE</a>
+    </p>
+    ` : ''}
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>FR8X Billing Operations</strong><br>
+      <a href="mailto:support@fr8x.in" style="color: #38bdf8;">support@fr8x.in</a>
+    </p>
+  `, subject);
+
+  const text = `Hello ${firstName},
+
+FR8X Billing Notice:
+Invoice: ${params.invoiceId}
+Amount: ${params.amount}
+${params.dueDate ? `Due Date: ${params.dueDate}\n` : ''}
+Please resolve at your earliest convenience to maintain uninterrupted access.
+
+Regards,
+FR8X Billing Operations
+support@fr8x.in`;
+
+  return { subject, html, text };
+}
+
+/**
+ * 17. SYSTEM ISSUE (FR8X_SYSTEM_ISSUE)
+ * Sender: tech@fr8x.in
+ */
+export interface SystemIssueTemplateParams {
+  recipient: string;
+  firstName?: string;
+  incidentId: string;
+  incidentTitle: string;
+  serviceName: string;
+  detectedAt?: string;
+  status: string;
+  incidentDescription: string;
+  serviceStatusUrl?: string;
+}
+
+export function renderSystemIssueEmail(params: SystemIssueTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const subject = `FR8X SYSTEM ISSUE [${params.status}] — ${params.incidentId}`;
+  const firstName = params.firstName || 'Technical Contact';
+
+  const html = wrapEmailHtml(`
+    <p style="font-size: 16px; font-weight: 600; color: #ffffff; margin-top: 0;">Attention: ${firstName},</p>
+    <p>An infrastructure incident has been detected affecting the FR8X Sovereign Platform.</p>
+
+    <div class="warning-box">
+      <strong>Incident ID:</strong> ${params.incidentId}<br>
+      <strong>Service:</strong> ${params.serviceName}<br>
+      <strong>Title:</strong> ${params.incidentTitle}<br>
+      <strong>Status:</strong> ${params.status}<br>
+      ${params.detectedAt ? `<strong>Detected At:</strong> ${params.detectedAt}<br>` : ''}
+    </div>
+
+    <div style="background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 18px; margin: 20px 0;">
+      <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px;">Description</div>
+      <div style="color: #e2e8f0; white-space: pre-wrap; font-size: 13px;">${params.incidentDescription}</div>
+    </div>
+
+    ${params.serviceStatusUrl ? `
+    <p style="text-align: center; margin: 20px 0;">
+      <a href="${params.serviceStatusUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">VIEW STATUS PAGE</a>
+    </p>
+    ` : ''}
+
+    <p style="margin-top: 24px; color: #cbd5e1;">
+      Regards,<br>
+      <strong>FR8X Platform Reliability Engineering</strong><br>
+      <a href="mailto:tech@fr8x.in" style="color: #38bdf8;">tech@fr8x.in</a>
+    </p>
+  `, subject);
+
+  const text = `Attention: ${firstName},
+
+FR8X SYSTEM ISSUE [${params.status}] — ${params.incidentId}
+Service: ${params.serviceName}
+Title: ${params.incidentTitle}
+Description:
+${params.incidentDescription}
+
+Regards,
+FR8X Platform Reliability Engineering
+tech@fr8x.in`;
+
+  return { subject, html, text };
+}

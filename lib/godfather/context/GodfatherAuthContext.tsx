@@ -91,7 +91,7 @@ interface GodfatherAuthContextType {
   isStepUpValid: boolean;
   stepUpPromptAction: string | null;
   requestStepUpVerification: (actionName: string) => Promise<boolean>;
-  submitStepUpOtp: (otp: string) => boolean;
+  submitStepUpOtp: (otp: string) => Promise<boolean>;
   cancelStepUp: () => void;
   permissions: typeof ROLE_PERMISSIONS['godfather_owner'];
   checkPermission: (permissionKey: keyof typeof ROLE_PERMISSIONS['godfather_owner']) => boolean;
@@ -312,17 +312,26 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const submitStepUpOtp = (otp: string): boolean => {
-    // Step-up OTP verified against server — accept any 6-digit code that reached here
-    // In production: call /api/godfather/auth/verify-otp for step-up as well
-    if (otp.length === 6) {
-      setStepUpVerifiedUntil(Date.now() + 15 * 60 * 1000);
-      setStepUpPromptAction(null);
-      if (stepUpResolver) stepUpResolver(true);
-      setStepUpResolver(null);
-      return true;
+  const submitStepUpOtp = async (otp: string): Promise<boolean> => {
+    if (!otp || otp.trim().length !== 6) return false;
+    try {
+      const res = await fetch('/api/godfather/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: operator.email, otp: otp.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        setStepUpVerifiedUntil(Date.now() + 15 * 60 * 1000);
+        setStepUpPromptAction(null);
+        if (stepUpResolver) stepUpResolver(true);
+        setStepUpResolver(null);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
     }
-    return false;
   };
 
   const cancelStepUp = () => {

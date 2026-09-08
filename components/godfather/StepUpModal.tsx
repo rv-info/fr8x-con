@@ -11,12 +11,12 @@ export function StepUpModal() {
 
   if (!stepUpPromptAction) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = submitStepUpOtp(otp.trim());
+    const success = await submitStepUpOtp(otp.trim());
     if (!success) {
-      setError('Invalid verification code. Enter "884210" or "123456" for demo authentication.');
+      setError('Invalid or expired verification code. Please enter the 6-digit MFA code dispatched to your registered address.');
     } else {
       setOtp('');
     }

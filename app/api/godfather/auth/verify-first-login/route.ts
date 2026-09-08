@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 import {
   getAuthorizedOperatorEmail,
-  authenticateOperatorCredentials,
+  verifyOperatorFirstLoginOtp,
 } from '@/lib/godfather/operator-store';
 import { createSignedSessionToken, generateSecureToken } from '@/lib/crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
@@ -11,49 +11,28 @@ export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   try {
     const body = await req.json().catch(() => ({}));
-    const { email, password } = body;
+    const { challengeToken, otp } = body;
 
-    if (!email || !password) {
+    if (!challengeToken || !otp) {
       return NextResponse.json(
-        { error: 'Email and password are required.' },
+        { error: 'Challenge token and verification code are required.', correlationId },
         { status: 400 }
       );
     }
 
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
-    const normEmail = String(email).trim().toLowerCase();
+    const verifyResult = verifyOperatorFirstLoginOtp(String(challengeToken), String(otp));
+    if (!verifyResult.success) {
+      return NextResponse.json(
+        { error: verifyResult.error || 'Verification failed.', correlationId },
+        { status: 400 }
+      );
+    }
+
+    // Upon successful OTP verification, create full sovereign operator session
     const authorizedEmail = getAuthorizedOperatorEmail();
-
-    if (normEmail !== authorizedEmail) {
-      return NextResponse.json(
-        { error: 'Unable to sign in. Please check your credentials.' },
-        { status: 401 }
-      );
-    }
-
-    const authResult = await authenticateOperatorCredentials(String(password), ip);
-    if (!authResult.success) {
-      return NextResponse.json(
-        { error: authResult.error || 'Unable to sign in. Please check your credentials.' },
-        { status: authResult.isLocked ? 403 : 401 }
-      );
-    }
-
-    if (authResult.firstLoginRequired) {
-      return NextResponse.json({
-        success: true,
-        firstLoginRequired: true,
-        challengeToken: authResult.challengeToken,
-        email: authorizedEmail,
-        expiresIn: authResult.expiresIn,
-        correlationId,
-      });
-    }
-
     const sessionId = `SESS-${Date.now()}-${generateSecureToken(8).toUpperCase()}`;
     const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
 
-    // Register active session in server security store
     serverSecurityStore.registerGodfatherSession(sessionId);
 
     const sessionPayload = {
@@ -69,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     const response = NextResponse.json({
       success: true,
-      message: 'Authentication successful',
+      message: 'First-time authentication verified. Session created.',
       sessionId,
       operator: {
         uid: 'gf-op-godfather',
@@ -83,7 +62,6 @@ export async function POST(req: NextRequest) {
 
     const isHttps = req.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production';
 
-    // Cryptographically signed session cookie (httpOnly, secure in production)
     response.cookies.set({
       name: 'fr8x_godfather_session',
       value: signedSessionToken,
@@ -109,7 +87,7 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (err: any) {
     return NextResponse.json(
-      { error: 'Authentication processing error' },
+      { error: 'An error occurred during first-login verification.', correlationId },
       { status: 500 }
     );
   }

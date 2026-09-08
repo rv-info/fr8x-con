@@ -19,7 +19,7 @@ const ZOHO_ZEPTOMAIL_URL =
   process.env.ZEPTO_MAIL_API_URL ||
   process.env.ZEPTO_MAIL_URL ||
   process.env.ZOHO_ZEPTOMAIL_URL ||
-  'https://api.zeptomail.in/v1.1/email';
+  'https://api.zeptomail.com/v1.1/email';
 const ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS =
   process.env.ZEPTO_MAIL_BOUNCE_ADDRESS ||
   process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS ||
@@ -42,7 +42,8 @@ function getTransporter(): nodemailer.Transporter {
     },
     tls: {
       minVersion: 'TLSv1.2',
-      rejectUnauthorized: false,
+      // SECURITY: Certificate verification enabled. Do not disable in production.
+      rejectUnauthorized: true,
     },
   });
 }
@@ -348,7 +349,7 @@ export async function checkSmtpHealth(): Promise<{
     process.env.ZEPTO_MAIL_API_URL ||
     process.env.ZEPTO_MAIL_URL ||
     process.env.ZOHO_ZEPTOMAIL_URL ||
-    'https://api.zeptomail.in/v1.1/email';
+    'https://api.zeptomail.com/v1.1/email';
   const zeptoMailBounceAddress =
     process.env.ZEPTO_MAIL_BOUNCE_ADDRESS || process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || '';
 

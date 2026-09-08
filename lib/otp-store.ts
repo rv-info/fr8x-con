@@ -22,9 +22,10 @@ async function getRedis() {
   if (redisClient) return redisClient;
   if (!process.env.REDIS_URL) return null;
   try {
-    // Dynamic load so Webpack does not trace ioredis at build time when optional
-    const req = (globalThis as any).require || eval('require');
-    const Redis = req('ioredis');
+    // Dynamic optional module resolution avoids TypeScript compile errors when ioredis is not installed
+    const moduleName = 'ioredis';
+    const Redis = typeof require !== 'undefined' ? require(moduleName) : null;
+    if (!Redis) return null;
     redisClient = new Redis(process.env.REDIS_URL, { lazyConnect: false, connectTimeout: 3000 });
     return redisClient;
   } catch {

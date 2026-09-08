@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { createSignedSessionToken } from '@/lib/crypto';
 
 /**
  * POST /api/auth/login
@@ -45,6 +46,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (result.firstLoginRequired) {
+      return NextResponse.json({
+        success: true,
+        firstLoginRequired: true,
+        challengeToken: result.challengeToken,
+        email: result.email,
+        maskedEmail: result.maskedEmail,
+        expiresIn: result.expiresIn || 15,
+        message: result.message,
+      });
+    }
+
     const user = result.user!;
     const res = NextResponse.json({
       success: true,
@@ -57,8 +70,16 @@ export async function POST(req: NextRequest) {
       status: user.status,
     });
 
-    // Secure httpOnly session cookie
-    res.cookies.set('fr8x_session', user.uid, {
+    // Cryptographically signed httpOnly session cookie
+    const userSessionToken = createSignedSessionToken({
+      uid: user.uid,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+      issuedAt: Date.now(),
+    });
+
+    res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

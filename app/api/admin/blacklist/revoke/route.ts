@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     const body = await req.json();
-    const { caseId, reason, operatorUid } = body;
+    const { caseId, reason } = body;
+    const operatorUid = auth.operator!.uid;
 
     if (!caseId || !reason) {
       return NextResponse.json({ error: 'Missing case ID or mandatory revocation rationale' }, { status: 400 });

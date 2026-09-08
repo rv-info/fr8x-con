@@ -10,7 +10,7 @@ import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert,
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loadRemembered, userStatus, resetPasswordWithOtp } = useAuth();
+  const { login, loadRememberedEmail, userStatus, resetPasswordWithOtp } = useAuth();
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState(''); // uid or email
@@ -31,6 +31,25 @@ export default function LoginPage() {
   const [resetError, setResetError] = useState('');
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
 
+  // First-login OTP verification state
+  const [firstLoginModalOpen, setFirstLoginModalOpen] = useState(false);
+  const [firstLoginChallengeToken, setFirstLoginChallengeToken] = useState('');
+  const [firstLoginOtp, setFirstLoginOtp] = useState('');
+  const [firstLoginError, setFirstLoginError] = useState('');
+  const [firstLoginTimer, setFirstLoginTimer] = useState(15);
+  const [firstLoginSubmitting, setFirstLoginSubmitting] = useState(false);
+  const [firstLoginResending, setFirstLoginResending] = useState(false);
+
+  // Countdown timer for first-login OTP (15 seconds strict)
+  useEffect(() => {
+    if (!firstLoginModalOpen) return;
+    if (firstLoginTimer <= 0) return;
+    const interval = setInterval(() => {
+      setFirstLoginTimer((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [firstLoginModalOpen, firstLoginTimer]);
+
   // Read URL reason parameter (session_expired, inactivity, not_found)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -46,15 +65,14 @@ export default function LoginPage() {
     }
   }, []);
 
-  // Restore remembered credentials on mount
+  // Restore remembered email on mount (password is never stored)
   useEffect(() => {
-    const saved = loadRemembered();
-    if (saved) {
-      setIdentifier(saved.userId);
-      setPassword(saved.password);
+    const savedEmail = loadRememberedEmail();
+    if (savedEmail) {
+      setIdentifier(savedEmail);
       setRemember(true);
     }
-  }, [loadRemembered]);
+  }, [loadRememberedEmail]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,8 +105,19 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (res.ok && json.success) {
-        // Successful server authentication
-        const loggedIn = login(id, password, remember, json);
+        if (json.firstLoginRequired) {
+          // Intercept first-time login: show OTP challenge
+          setFirstLoginChallengeToken(json.challengeToken);
+          setFirstLoginTimer(json.expiresIn || 15);
+          setFirstLoginOtp('');
+          setFirstLoginError('');
+          setFirstLoginModalOpen(true);
+          toast(json.message || 'First-login verification code sent to your registered email.');
+          return;
+        }
+
+        // Server authenticated — hand off verified profile to client session
+        const loggedIn = login(id, remember, json);
         if (loggedIn) {
           toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
           router.push('/feeds');
@@ -113,13 +142,6 @@ export default function LoginPage() {
             setErrorMessage(json.error || 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
           }
         } else {
-          // Check client-side registered accounts fallback (e.g. newly registered organizations)
-          const localSuccess = login(id, password, remember);
-          if (localSuccess) {
-            toast('Logged in successfully to FR8X Workspace.');
-            router.push('/feeds');
-            return;
-          }
           const remainingMsg =
             typeof json.attemptsRemaining === 'number'
               ? ` (${json.attemptsRemaining} attempt${json.attemptsRemaining === 1 ? '' : 's'} remaining)`
@@ -129,14 +151,83 @@ export default function LoginPage() {
       }
     } catch {
       setIsLoading(false);
-      // Fallback local verification
-      const success = login(id, password, remember);
-      if (success) {
-        toast('Logged in successfully to FR8X Workspace.');
-        router.push('/feeds');
+      setErrorMessage('Unable to reach authentication server. Please check your connection and try again.');
+    }
+  };
+
+  const handleFirstLoginVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!firstLoginOtp.trim() || firstLoginOtp.trim().length !== 6) {
+      setFirstLoginError('Please enter a valid 6-digit verification code.');
+      return;
+    }
+    if (firstLoginTimer <= 0) {
+      setFirstLoginError('Code expired.');
+      return;
+    }
+
+    setFirstLoginSubmitting(true);
+    setFirstLoginError('');
+
+    try {
+      const res = await fetch('/api/auth/verify-first-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: firstLoginChallengeToken,
+          otp: firstLoginOtp.trim(),
+        }),
+      });
+
+      const json = await res.json();
+      setFirstLoginSubmitting(false);
+
+      if (res.ok && json.success) {
+        setFirstLoginModalOpen(false);
+        const loggedIn = login(identifier.trim(), remember, json);
+        if (loggedIn) {
+          toast(`First-login verified! Logged in as ${json.displayName || identifier.trim()}.`);
+          router.push('/feeds');
+        } else {
+          setFirstLoginError('Session initialization failed. Please try again.');
+        }
       } else {
-        setErrorMessage('Invalid User ID / email or incorrect password. Please try again.');
+        setFirstLoginError(json.error || 'Verification failed. Please check the code and try again.');
       }
+    } catch {
+      setFirstLoginSubmitting(false);
+      setFirstLoginError('Unable to connect to verification server. Please try again.');
+    }
+  };
+
+  const handleFirstLoginResend = async () => {
+    if (firstLoginResending) return;
+    setFirstLoginResending(true);
+    setFirstLoginError('');
+
+    try {
+      const res = await fetch('/api/auth/resend-first-login-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: firstLoginChallengeToken,
+        }),
+      });
+
+      const json = await res.json();
+      setFirstLoginResending(false);
+
+      if (res.ok && json.success) {
+        setFirstLoginChallengeToken(json.challengeToken);
+        setFirstLoginTimer(json.expiresIn || 15);
+        setFirstLoginOtp('');
+        toast('New verification code sent.');
+      } else {
+        setFirstLoginError(json.error || 'Failed to resend verification code. Please try again.');
+      }
+    } catch {
+      setFirstLoginResending(false);
+      setFirstLoginError('Unable to contact server to resend code.');
     }
   };
 
@@ -613,6 +704,125 @@ export default function LoginPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* First-Login Security Verification Modal */}
+      {firstLoginModalOpen && (
+        <div className="gf-modal-backdrop">
+          <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
+            <div className="gf-modal-header">
+              <div className="gf-modal-title flex items-center gap-2">
+                <ShieldCheck className="lucide w-4 h-4 text-emerald-600" />
+                <span>First-Login Security Verification</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFirstLoginModalOpen(false)}
+                className="gf-modal-close-btn"
+              >
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleFirstLoginVerify} style={{ padding: '18px 20px' }} className="space-y-4">
+              <p style={{ fontSize: '12px', color: 'var(--mut)', margin: 0, lineHeight: 1.5 }}>
+                Enter the verification code dispatched to your registered email to complete your first-time authentication.
+              </p>
+
+              {/* Countdown Timer Display */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  background: firstLoginTimer > 0 ? '#f0fdf4' : '#fff1f2',
+                  border: `1px solid ${firstLoginTimer > 0 ? '#bbf7d0' : '#fecdd3'}`,
+                  color: firstLoginTimer > 0 ? '#166534' : '#9f1239',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Clock size={16} />
+                  <span>TIME LEFT: 00:{firstLoginTimer < 10 ? `0${firstLoginTimer}` : firstLoginTimer}</span>
+                </div>
+                {firstLoginTimer === 0 && (
+                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#e11d48' }}>Code expired.</span>
+                )}
+              </div>
+
+              {firstLoginError && (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    background: '#fff0f1',
+                    border: '1px solid #f0c8ce',
+                    color: 'var(--red)',
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {firstLoginError}
+                </div>
+              )}
+
+              <div className="field">
+                <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                  Enter Verification Code <span className="req">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  maxLength={6}
+                  placeholder="------"
+                  value={firstLoginOtp}
+                  onChange={(e) => setFirstLoginOtp(e.target.value.replace(/\D/g, ''))}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    height: '42px',
+                    fontSize: '18px',
+                    fontWeight: 800,
+                    letterSpacing: '6px',
+                    textAlign: 'center',
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={handleFirstLoginResend}
+                  disabled={firstLoginResending}
+                  className="btn secondary sm"
+                  style={{ fontSize: '11.5px' }}
+                >
+                  {firstLoginResending ? 'Resending…' : 'Resend Code'}
+                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFirstLoginModalOpen(false)}
+                    className="btn secondary sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={firstLoginSubmitting || firstLoginOtp.trim().length !== 6 || firstLoginTimer <= 0}
+                    className="btn primary sm"
+                  >
+                    {firstLoginSubmitting ? 'Verifying…' : 'Verify & Continue'}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

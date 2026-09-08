@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { createSignedSessionToken } from '@/lib/crypto';
 
 /**
  * GET /api/auth/verify-email?token=...&email=...
@@ -51,8 +52,16 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Set authenticated session cookie
-    res.cookies.set('fr8x_session', user.uid, {
+    // Set authenticated cryptographically signed session cookie
+    const userSessionToken = createSignedSessionToken({
+      uid: user.uid,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+      issuedAt: Date.now(),
+    });
+
+    res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -109,8 +118,16 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Set authenticated session cookie
-    res.cookies.set('fr8x_session', user.uid, {
+    // Set authenticated cryptographically signed session cookie
+    const userSessionToken = createSignedSessionToken({
+      uid: user.uid,
+      email: user.email,
+      role: user.role,
+      companyId: user.companyId,
+      issuedAt: Date.now(),
+    });
+
+    res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
