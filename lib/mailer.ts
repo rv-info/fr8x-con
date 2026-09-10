@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 import { EmailLog } from '@/lib/godfather/types';
-import { sendEmail, EMAIL_SENDERS, EmailSenderType } from '@/lib/email-service';
+import { EmailService, sendEmail, EMAIL_SENDERS, EmailSenderType } from '@/lib/email-service';
 import {
   renderPasswordResetEmail,
   renderPasswordChangedEmail,
@@ -349,7 +349,7 @@ export async function checkSmtpHealth(): Promise<{
     process.env.ZEPTO_MAIL_API_URL ||
     process.env.ZEPTO_MAIL_URL ||
     process.env.ZOHO_ZEPTOMAIL_URL ||
-    'https://api.zeptomail.com/v1.1/email';
+    'https://api.zeptomail.in/v1.1/email';
   const zeptoMailBounceAddress =
     process.env.ZEPTO_MAIL_BOUNCE_ADDRESS || process.env.ZOHO_ZEPTOMAIL_BOUNCE_ADDRESS || '';
 
@@ -390,7 +390,6 @@ export async function checkSmtpHealth(): Promise<{
   }
 }
 
-import { EmailService } from '@/lib/email-service';
 
 /**
  * Helper to dispatch email verification email

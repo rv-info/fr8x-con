@@ -20,7 +20,22 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
-    serverSecurityStore.requestPasswordReset(email.trim(), ip);
+    const result = serverSecurityStore.requestPasswordReset(email.trim(), ip);
+
+    if (!result.success && result.error && result.error.includes('wait')) {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: 429 }
+      );
+    }
+
+    if (result.emailPromise) {
+      try {
+        await result.emailPromise;
+      } catch (mailErr: any) {
+        console.error('[ForgotPasswordAPI] Reset OTP email delivery error:', mailErr.message);
+      }
+    }
 
     return NextResponse.json({
       success: true,

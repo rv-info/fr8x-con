@@ -5018,7 +5018,8 @@ textarea.input {
 }
 
 /* ── MODALS & DIALOGS (CRITICAL FIX FOR BULK/ACTION DIALOGS) ── */
-.gf-modal-overlay {
+.gf-modal-overlay,
+.gf-modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.65);
@@ -5026,7 +5027,7 @@ textarea.input {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 1000;
   padding: 16px;
 }
 
@@ -6329,7 +6330,8 @@ textarea.input {
 }
 
 /* Modal Core Styles */
-.gf-modal-overlay {
+.gf-modal-overlay,
+.gf-modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.75);

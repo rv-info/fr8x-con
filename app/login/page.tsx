@@ -33,6 +33,7 @@ export default function LoginPage() {
   const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
   const [resetError, setResetError] = useState('');
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
+  const [resetResendCooldown, setResetResendCooldown] = useState(0);
 
   // First-login OTP verification state
   const [firstLoginModalOpen, setFirstLoginModalOpen] = useState(false);
@@ -53,6 +54,15 @@ export default function LoginPage() {
     }, 1000);
     return () => clearInterval(interval);
   }, [firstLoginModalOpen]);
+
+  // Countdown timer for password reset OTP 60-second resend cooldown
+  useEffect(() => {
+    if (resetResendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResetResendCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resetResendCooldown]);
 
   // Read URL reason parameter (session_expired, inactivity, not_found)
   useEffect(() => {
@@ -236,9 +246,21 @@ export default function LoginPage() {
     }
   };
 
-  const handleRequestResetOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetEmail.trim()) return;
+  const openForgotModal = () => {
+    if (!resetEmail && identifier.trim() && identifier.includes('@')) {
+      setResetEmail(identifier.trim());
+    }
+    setResetError('');
+    setResetStep('request');
+    setIsForgotModalOpen(true);
+  };
+
+  const handleRequestResetOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!resetEmail.trim()) {
+      setResetError('Please enter your corporate email address.');
+      return;
+    }
 
     setResetError('');
     setIsResetSubmitting(true);
@@ -246,18 +268,29 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail.trim() }),
+        body: JSON.stringify({ email: resetEmail.trim(), action: 'request' }),
       });
 
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) {
+        setResetError(json.error || 'Failed to dispatch verification code. Please try again.');
+        setIsResetSubmitting(false);
+        return;
+      }
+
       toast(json.message || 'If an account matches this email, password reset instructions have been dispatched.');
       setResetStep('otp');
-    } catch {
-      toast('Verification code dispatched. Please check your registered email.');
-      setResetStep('otp');
+      setResetResendCooldown(60);
+    } catch (err: any) {
+      setResetError(err.message || 'Unable to contact authentication server. Please check your connection.');
     } finally {
       setIsResetSubmitting(false);
     }
+  };
+
+  const handleResendResetOtp = async () => {
+    if (resetResendCooldown > 0 || isResetSubmitting || !resetEmail.trim()) return;
+    await handleRequestResetOtp();
   };
 
   const handleVerifyOtpAndReset = async (e: React.FormEvent) => {
@@ -268,8 +301,8 @@ export default function LoginPage() {
       setResetError('Please enter a valid 6-digit verification code.');
       return;
     }
-    if (!resetNewPassword || resetNewPassword.length < 6) {
-      setResetError('New password must be at least 6 characters long.');
+    if (!resetNewPassword || resetNewPassword.length < 8) {
+      setResetError('New password must be at least 8 characters long.');
       return;
     }
     if (resetNewPassword !== resetConfirmPassword) {
@@ -302,6 +335,7 @@ export default function LoginPage() {
       setResetNewPassword('');
       setResetConfirmPassword('');
       setResetStep('request');
+      setResetResendCooldown(0);
     } catch (err: any) {
       setResetError(err.message || 'Password reset failed.');
     } finally {
@@ -420,7 +454,7 @@ export default function LoginPage() {
                   href="#"
                   onClick={(e) => {
                     e.preventDefault();
-                    setIsForgotModalOpen(true);
+                    openForgotModal();
                   }}
                   style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600, padding: '2px 4px' }}
                 >
@@ -541,7 +575,7 @@ export default function LoginPage() {
 
       {/* Forgot Password Modal with OTP Workflow */}
       {isForgotModalOpen && (
-        <div className="gf-modal-backdrop">
+        <div className="gf-modal-overlay gf-modal-backdrop">
           <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
             <div className="gf-modal-header">
               <div className="gf-modal-title flex items-center gap-2">
@@ -554,7 +588,11 @@ export default function LoginPage() {
               </div>
               <button
                 type="button"
-                onClick={() => setIsForgotModalOpen(false)}
+                onClick={() => {
+                  setIsForgotModalOpen(false);
+                  setResetError('');
+                  setResetStep('request');
+                }}
                 className="gf-modal-close-btn"
               >
                 <X className="lucide w-4 h-4" />
@@ -600,7 +638,10 @@ export default function LoginPage() {
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '8px' }}>
                   <button
                     type="button"
-                    onClick={() => setIsForgotModalOpen(false)}
+                    onClick={() => {
+                      setIsForgotModalOpen(false);
+                      setResetError('');
+                    }}
                     className="btn secondary sm"
                   >
                     Cancel
@@ -683,7 +724,7 @@ export default function LoginPage() {
                     <input
                       type={showResetNewPassword ? 'text' : 'password'}
                       required
-                      placeholder="At least 6 characters"
+                      placeholder="At least 8 characters"
                       value={resetNewPassword}
                       onChange={(e) => setResetNewPassword(e.target.value)}
                       className="input"
@@ -742,24 +783,48 @@ export default function LoginPage() {
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setResetStep('request')}
-                    style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
-                  >
-                    Change Email / Resend
-                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setResetStep('request');
+                        setResetError('');
+                      }}
+                      style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '11px', cursor: 'pointer', padding: 0 }}
+                    >
+                      Change Email
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleResendResetOtp}
+                      disabled={resetResendCooldown > 0 || isResetSubmitting}
+                      className="btn secondary sm"
+                      style={{ fontSize: '11px', padding: '3px 8px', height: '26px' }}
+                    >
+                      {resetResendCooldown > 0 ? `Resend in ${resetResendCooldown}s` : 'Resend Code'}
+                    </button>
+                  </div>
                   <div style={{ display: 'flex', gap: '8px' }}>
                     <button
                       type="button"
-                      onClick={() => setIsForgotModalOpen(false)}
+                      onClick={() => {
+                        setIsForgotModalOpen(false);
+                        setResetError('');
+                        setResetStep('request');
+                      }}
                       className="btn secondary sm"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      disabled={isResetSubmitting || resetOtp.length !== 6 || !resetNewPassword}
+                      disabled={
+                        isResetSubmitting ||
+                        resetOtp.length !== 6 ||
+                        resetNewPassword.length < 8 ||
+                        !resetConfirmPassword ||
+                        resetNewPassword !== resetConfirmPassword
+                      }
                       className="btn primary sm"
                     >
                       {isResetSubmitting ? 'Verifying…' : 'Verify & Reset Password'}
@@ -774,7 +839,7 @@ export default function LoginPage() {
 
       {/* First-Login Security Verification Modal */}
       {firstLoginModalOpen && (
-        <div className="gf-modal-backdrop">
+        <div className="gf-modal-overlay gf-modal-backdrop">
           <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
             <div className="gf-modal-header">
               <div className="gf-modal-title flex items-center gap-2">

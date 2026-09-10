@@ -19,15 +19,54 @@ export async function POST(req: NextRequest) {
     const cleanEmail = email.trim().toLowerCase();
     const candidateOtp = otp || code;
 
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const pwdToSet = body.newPassword || body.newpass;
+
     // Verification mode
-    if (candidateOtp || action === 'verify') {
+    if (candidateOtp || action === 'verify' || action === 'verify_and_reset' || pwdToSet) {
       if (!candidateOtp) {
         return NextResponse.json(
           { success: false, error: 'Verification code is required.' },
           { status: 400 }
         );
       }
+
+      // If new password is provided, perform full password reset with OTP
+      if (pwdToSet) {
+        if (String(pwdToSet).trim().length < 8) {
+          return NextResponse.json(
+            { success: false, error: 'New password must be at least 8 characters long.' },
+            { status: 400 }
+          );
+        }
+        const resetResult = serverSecurityStore.verifyAndResetPassword(
+          cleanEmail,
+          String(candidateOtp).trim(),
+          String(pwdToSet).trim(),
+          ip
+        );
+        if (resetResult.emailPromise) {
+          try {
+            await resetResult.emailPromise;
+          } catch (mailErr: any) {
+            console.error('[OTPAPI] Password changed confirmation email error:', mailErr.message);
+          }
+        }
+        return NextResponse.json(
+          { success: resetResult.success, message: resetResult.message, error: resetResult.error },
+          { status: resetResult.success ? 200 : 400 }
+        );
+      }
+
       const verifyResult = serverSecurityStore.verifyOTP(cleanEmail, String(candidateOtp).trim());
+      // Also check if valid active reset OTP if login OTP failed
+      if (!verifyResult.success) {
+        const activeReset = serverSecurityStore.getActiveResetOtp(cleanEmail);
+        if (activeReset && activeReset === String(candidateOtp).trim()) {
+          return NextResponse.json({ success: true, message: 'OTP verified successfully.' }, { status: 200 });
+        }
+      }
+
       return NextResponse.json(
         verifyResult,
         { status: verifyResult.success ? 200 : 400 }
@@ -35,7 +74,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Dispatch mode
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     const result = serverSecurityStore.requestOTP(cleanEmail, ip);
 
     if (!result.success) {
