@@ -62,12 +62,13 @@ export async function POST(req: NextRequest) {
 
     const isHttps = req.nextUrl.protocol === 'https:' && process.env.NODE_ENV === 'production';
 
+    // SECURITY: SameSite=Strict for Godfather cookie — panel is never accessed via external link.
     response.cookies.set({
       name: 'fr8x_godfather_session',
       value: signedSessionToken,
       httpOnly: true,
       secure: isHttps,
-      sameSite: 'lax',
+      sameSite: 'strict',
       path: '/',
       maxAge: 60 * 60 * 12,
     });
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
         value: signedSessionToken,
         httpOnly: true,
         secure: true,
-        sameSite: 'lax',
+        sameSite: 'strict',
         path: '/',
         maxAge: 60 * 60 * 12,
       });

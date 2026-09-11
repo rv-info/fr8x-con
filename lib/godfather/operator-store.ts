@@ -24,7 +24,9 @@ let dynamicOperatorCredential: OperatorCredential | null = null;
 // ─── First-Time Login & Lockout State ───────────────────────────────────────
 const MAX_PASSWORD_ATTEMPTS = 3;
 const LOCKOUT_DURATION_MS = 30 * 60 * 1000; // 30 minutes
-const OTP_VALIDITY_SECONDS = 300; // 5 minutes validity (300 seconds)
+// SECURITY: OTP validity is 15 seconds per FR8X specification (server-enforced).
+const OTP_VALIDITY_SECONDS = 15;
+const OTP_VALIDITY_MS = OTP_VALIDITY_SECONDS * 1000;
 const MAX_OTP_SENDS_IN_WINDOW = 3; // Maximum 3 sends
 const OTP_SECURITY_WINDOW_MS = 25 * 60 * 60 * 1000; // 25-hour window
 
@@ -228,7 +230,7 @@ export async function authenticateOperatorCredentials(
       email: getAuthorizedOperatorEmail(),
       type: 'godfather_first_login_challenge',
       issuedAt: now,
-      expiresAt: now + 5 * 60 * 1000,
+      expiresAt: now + OTP_VALIDITY_MS,
     });
 
     // Send OTP email using existing ZeptoMail template FR8X_SECURITY_OTP from password@fr8x.in
@@ -236,7 +238,7 @@ export async function authenticateOperatorCredentials(
       to: getAuthorizedOperatorEmail(),
       recipientName: 'Chief Administrator',
       otpCode: rawOtp,
-      expiryMinutes: 5,
+      expiryMinutes: 1,
       correlationId: `FR8X-AUTH-OTP-${challengeId}`,
     }).catch((err) => {
       console.error('[GodfatherOperator] Failed to send first-login OTP email:', err.message);
@@ -336,7 +338,7 @@ export async function resendOperatorFirstLoginOtp(
     existingChallenge ? { salt: existingChallenge.salt, hash: existingChallenge.hash } : undefined
   );
   const { salt, hash } = hashOtp(rawOtp);
-  const expiresAt = now + OTP_VALIDITY_SECONDS * 1000;
+  const expiresAt = now + OTP_VALIDITY_MS;
 
   operatorSecurityState.activeFirstLoginOtp = {
     salt,
@@ -351,7 +353,7 @@ export async function resendOperatorFirstLoginOtp(
     to: getAuthorizedOperatorEmail(),
     recipientName: 'Chief Administrator',
     otpCode: rawOtp,
-    expiryMinutes: 5,
+    expiryMinutes: 1,
     correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
   }).catch((err) => {
     console.error('[GodfatherOperator] Failed to resend first-login OTP email:', err.message);

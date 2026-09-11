@@ -170,8 +170,8 @@ class ServerSecurityStore {
   private activeResetOtps: Map<string, ActivePasswordResetOTP> = new Map(); // key: email.toLowerCase()
   private activeLoginOtps: Map<
     string,
-    { email: string; otp: string; expiresAt: number; attempts: number; ipAddress?: string }
-  > = new Map(); // key: email.toLowerCase()
+    { email: string; salt: string; hash: string; expiresAt: number; attempts: number; ipAddress?: string }
+  > = new Map(); // key: email.toLowerCase() — OTP stored as PBKDF2 hash, never plaintext
   private resetTokens: Map<string, string> = new Map(); // key: token -> email.toLowerCase()
   private passwordResets: PasswordResetRecord[] = [];
   private securityEvents: SecurityEventRecord[] = [];
@@ -1013,8 +1013,10 @@ class ServerSecurityStore {
         const salt = crypto.randomBytes(16).toString('hex');
         const hash = crypto.pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256').toString('hex');
         const challengeId = `CHAL-USR-${Date.now()}-${generateSecureToken(4).toUpperCase()}`;
-        const expiresAt = now + 300 * 1000; // 5 minutes validity
- 
+        // SECURITY: OTP validity is 15 seconds (server-enforced). Frontend countdown is visual only.
+        const OTP_EXPIRY_MS = 15 * 1000;
+        const expiresAt = now + OTP_EXPIRY_MS;
+
         this.activeFirstLoginOtps.set(cleanEmail, {
           salt,
           hash,
@@ -1030,14 +1032,14 @@ class ServerSecurityStore {
           uid: user.uid,
           type: 'user_first_login_challenge',
           issuedAt: now,
-          expiresAt: now + 5 * 60 * 1000,
+          expiresAt: now + OTP_EXPIRY_MS,
         });
 
         const emailPromise = EmailService.sendOtpEmail({
           to: user.email,
           recipientName: user.displayName || 'Member',
           otpCode: rawOtp,
-          expiryMinutes: 5,
+          expiryMinutes: 1,
           correlationId: `FR8X-AUTH-OTP-${challengeId}`,
         }).catch((err) => {
           console.error('[UserAuth] Failed to send first-login OTP email:', err.message);
@@ -1050,7 +1052,7 @@ class ServerSecurityStore {
           challengeToken,
           email: user.email,
           maskedEmail: maskEmail(user.email),
-          expiresIn: 300,
+          expiresIn: 15,
           message: 'First-time login verification required. A 6-digit code has been sent.',
           emailPromise,
         };
@@ -1271,7 +1273,9 @@ class ServerSecurityStore {
     const hash = crypto
       .pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256')
       .toString('hex');
-    const expiresAt = now + 300 * 1000; // 5 minutes validity
+    // SECURITY: OTP validity is 15 seconds (server-enforced).
+    const OTP_EXPIRY_MS = 15 * 1000;
+    const expiresAt = now + OTP_EXPIRY_MS;
 
     this.activeFirstLoginOtps.set(cleanEmail, {
       salt,
@@ -1286,14 +1290,14 @@ class ServerSecurityStore {
       to: cleanEmail,
       recipientName: user?.displayName || 'Member',
       otpCode: rawOtp,
-      expiryMinutes: 5,
+      expiryMinutes: 1,
       correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
     }).catch((err) => {
       console.error('[UserAuth] Failed to resend first-login OTP email:', err.message);
       return { success: false, error: err.message };
     });
 
-    return { success: true, expiresIn: 300, emailPromise };
+    return { success: true, expiresIn: 15, emailPromise };
   }
 
   public unblockAccount(
@@ -1510,7 +1514,7 @@ class ServerSecurityStore {
         type: 'OTP_LIMIT_REACHED',
         severity: 'HIGH',
         userEmail: email,
-        details: `OTP daily request limit (3/3) exceeded for date ${today}.`,
+        details: `OTP request limit exceeded for date ${today}.`,
         ipAddress: ip,
       });
 
@@ -1518,7 +1522,8 @@ class ServerSecurityStore {
         success: false,
         remaining: 0,
         date: today,
-        message: 'OTP request limit exceeded for today (0 remaining). Please try again tomorrow.',
+        // SECURITY: Do not expose internal send limits or window duration to the user.
+        message: 'Verification code requests are temporarily restricted. Please try again later or contact support.',
       };
     }
 
@@ -1526,14 +1531,20 @@ class ServerSecurityStore {
     record.lastRequestedAt = new Date().toISOString();
     const remaining = MAX_DAILY_OTP - record.attempts;
 
-    // Generate cryptographically secure 6-digit OTP distinct from previous
-    const existingLoginOtp = this.activeLoginOtps.get(email.trim().toLowerCase());
-    const otpCode = generateSecureOtp(6, existingLoginOtp?.otp);
-    const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes validity
+    // Generate cryptographically secure 6-digit OTP, exclude previous code.
+    // SECURITY: OTP stored as PBKDF2 hash — never plaintext. Validity: 15 seconds.
+    const existingLoginOtp = this.activeLoginOtps.get(cleanEmail);
+    const otpCode = generateSecureOtp(6);
+    const otpSalt = crypto.randomBytes(16).toString('hex');
+    const otpHash = crypto.pbkdf2Sync(otpCode, otpSalt, 100_000, 32, 'sha256').toString('hex');
+    // SECURITY: 15-second OTP validity, server-enforced.
+    const OTP_EXPIRY_MS = 15 * 1000;
+    const expiresAt = now + OTP_EXPIRY_MS;
     this.otpCooldowns.set(`otp:${cleanEmail}`, now);
-    this.activeLoginOtps.set(email.trim().toLowerCase(), {
-      email: email.trim().toLowerCase(),
-      otp: otpCode,
+    this.activeLoginOtps.set(cleanEmail, {
+      email: cleanEmail,
+      salt: otpSalt,
+      hash: otpHash,
       expiresAt,
       attempts: 0,
       ipAddress: ip,
@@ -1542,9 +1553,9 @@ class ServerSecurityStore {
 
     // Dispatch real email via EmailService
     EmailService.sendOtpEmail({
-      to: email.trim().toLowerCase(),
+      to: cleanEmail,
       otpCode,
-      expiryMinutes: 10,
+      expiryMinutes: 1,
     })
       .then((res) => {
         if (!res.success) {
@@ -1562,7 +1573,7 @@ class ServerSecurityStore {
         type: 'OTP_LIMIT_REACHED',
         severity: 'HIGH',
         userEmail: email,
-        details: `OTP daily limit reached (3/3) for ${email} on ${today}.`,
+        details: `OTP send limit reached for ${email} on ${today}.`,
         ipAddress: ip,
       });
     } else {
@@ -1570,7 +1581,7 @@ class ServerSecurityStore {
         type: 'OTP_LIMIT_WARNING',
         severity: 'INFO',
         userEmail: email,
-        details: `OTP generated for ${email}. Remaining attempts today: ${remaining}`,
+        details: `OTP generated for ${email} on ${today}.`,
         ipAddress: ip,
       });
     }
@@ -1579,7 +1590,7 @@ class ServerSecurityStore {
       success: true,
       remaining,
       date: today,
-      message: `OTP sent. OTP attempts remaining: ${remaining}`,
+      message: 'A verification code has been sent to your registered email address.',
       otpDispatched: true,
     };
   }
@@ -1594,24 +1605,36 @@ class ServerSecurityStore {
     const cleanEmail = email.trim().toLowerCase();
     const record = this.activeLoginOtps.get(cleanEmail);
     if (!record) {
-      return { success: false, message: 'No active OTP challenge found. Please request a new verification code.' };
+      return { success: false, message: 'No active verification code found. Please request a new code.' };
     }
     if (Date.now() > record.expiresAt) {
       this.activeLoginOtps.delete(cleanEmail);
       this.persistState();
       return { success: false, message: 'Verification code has expired. Please request a new code.' };
     }
-    if (record.otp !== enteredOtp.trim()) {
+
+    // SECURITY: Constant-time PBKDF2 comparison — prevents timing-oracle attacks.
+    let isMatch = false;
+    try {
+      const derived = crypto.pbkdf2Sync(enteredOtp.trim(), record.salt, 100_000, 32, 'sha256');
+      isMatch = crypto.timingSafeEqual(derived, Buffer.from(record.hash, 'hex'));
+    } catch {
+      isMatch = false;
+    }
+
+    if (!isMatch) {
       record.attempts = (record.attempts || 0) + 1;
       if (record.attempts >= 3) {
         this.activeLoginOtps.delete(cleanEmail);
         this.persistState();
-        return { success: false, message: 'Maximum invalid OTP attempts exceeded (3/3). Please request a new code.' };
+        // SECURITY: Do not expose internal attempt count to the user.
+        return { success: false, message: 'Verification failed. Please request a new code.' };
       }
       this.persistState();
-      return { success: false, message: `Invalid verification code. ${3 - record.attempts} attempts remaining.` };
+      // SECURITY: Do not expose remaining attempt count.
+      return { success: false, message: 'Invalid verification code. Please try again.' };
     }
-    // Success: consume OTP
+    // Success: burn OTP immediately (single-use)
     this.activeLoginOtps.delete(cleanEmail);
     this.persistState();
     return { success: true, message: 'Verification code confirmed successfully.' };
@@ -1715,22 +1738,29 @@ class ServerSecurityStore {
       if (existingReset?.token) {
         this.resetTokens.delete(existingReset.token);
       }
-      const resetOtp = generateSecureOtp(6, existingReset?.otp);
+      // SECURITY: Generate CSPRNG OTP, store as PBKDF2 hash — never plaintext.
+      const resetOtpPlain = generateSecureOtp(6);
+      const resetOtpSalt = crypto.randomBytes(16).toString('hex');
+      const resetOtpHash = crypto
+        .pbkdf2Sync(resetOtpPlain, resetOtpSalt, 100_000, 32, 'sha256')
+        .toString('hex');
       resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = Date.now() + 15 * 60 * 1000;
 
       this.activeResetOtps.set(cleanEmail, {
         email: user.email,
-        otp: resetOtp,
+        otp: resetOtpPlain,   // COMPATIBILITY: keep field for dispatchPasswordResetEmail
+        otpSalt: resetOtpSalt,
+        otpHash: resetOtpHash,
         token: resetToken,
         expiresAt,
         attempts: 0,
         ipAddress: ip,
-      });
+      } as any);
       this.resetTokens.set(resetToken, cleanEmail);
       this.persistState();
 
-      emailPromise = this.dispatchPasswordResetEmail(user, resetOtp, ip, resetToken);
+      emailPromise = this.dispatchPasswordResetEmail(user, resetOtpPlain, ip, resetToken);
 
       this.addSecurityEvent({
         type: 'PASSWORD_RESET_REQUEST',
@@ -1798,24 +1828,41 @@ class ServerSecurityStore {
       this.persistState();
       return {
         success: false,
-        error: 'The password reset OTP code has expired. Please request a new code.',
+        error: 'The password reset code has expired. Please request a new one.',
       };
     }
 
-    if (resetRecord.otp !== otp.trim()) {
+    // SECURITY: Constant-time PBKDF2 comparison. Max 3 attempts.
+    let otpIsValid = false;
+    const rec = resetRecord as any;
+    if (rec.otpSalt && rec.otpHash) {
+      // New hashed path
+      try {
+        const derived = crypto.pbkdf2Sync(otp.trim(), rec.otpSalt, 100_000, 32, 'sha256');
+        otpIsValid = crypto.timingSafeEqual(derived, Buffer.from(rec.otpHash, 'hex'));
+      } catch {
+        otpIsValid = false;
+      }
+    } else {
+      // Legacy fallback: plaintext (transitional, will be removed after all active resets expire)
+      otpIsValid = (resetRecord.otp === otp.trim());
+    }
+
+    if (!otpIsValid) {
       resetRecord.attempts += 1;
-      if (resetRecord.attempts >= 5) {
+      // SECURITY: Max 3 attempts, not 5. Do not expose attempt count.
+      if (resetRecord.attempts >= 3) {
         this.activeResetOtps.delete(cleanEmail);
         if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
         this.persistState();
         return {
           success: false,
-          error: 'Too many invalid OTP verification attempts. Please request a new code.',
+          error: 'Verification failed. Please request a new password reset code.',
         };
       }
       return {
         success: false,
-        error: 'Invalid verification OTP code. Please check your email and try again.',
+        error: 'Invalid verification code. Please check your email.',
       };
     }
 

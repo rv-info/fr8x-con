@@ -53,50 +53,104 @@ export function updateGlobalCurrencyRates(newRates: Record<string, number>) {
   }
 }
 
+/**
+ * FR8X Personal Email Domain Denylist
+ * Server-enforced: only corporate/organisation email addresses are accepted.
+ * Blocks personal webmail, free hosting, disposable/temp mail, and privacy services.
+ *
+ * MAINTENANCE: To add new domains, append to this Set and deploy.
+ * Do NOT expose which specific domains are blocked in any client-facing error message.
+ */
 export const BLOCKED_EMAIL_DOMAINS = new Set([
-  'gmail.com',
-  'googlemail.com',
-  'yahoo.com',
-  'yahoo.co.in',
-  'yahoo.co.uk',
-  'yahoo.com.au',
-  'ymail.com',
-  'rocketmail.com',
-  'outlook.com',
-  'hotmail.com',
-  'live.com',
-  'msn.com',
-  'icloud.com',
-  'me.com',
-  'mac.com',
-  'aol.com',
-  'aim.com',
-  'proton.me',
-  'protonmail.com',
-  'pm.me',
-  'mail.com',
-  'zoho.com',
-  'zohomail.com',
-  'yandex.com',
-  'yandex.ru',
-  'gmx.com',
-  'gmx.net',
-  'rediffmail.com',
-  'inbox.com',
-  'fastmail.com',
-  'hey.com',
-  'qq.com',
-  '163.com',
-  '126.com',
-  'sina.com',
-  'naver.com',
-  'daum.net',
-  'tutanota.com',
-  'tutamail.com',
-  'tempmail.com',
-  'guerrillamail.com',
-  'mailinator.com',
-  'trashmail.com',
+  // ── Google ────────────────────────────────────────────────────────────────────
+  'gmail.com', 'googlemail.com', 'google.com',
+
+  // ── Microsoft / Outlook ──────────────────────────────────────────────────────
+  'outlook.com', 'hotmail.com', 'live.com', 'live.in', 'live.co.uk',
+  'live.com.au', 'live.ca', 'msn.com', 'windowslive.com', 'passport.com',
+
+  // ── Yahoo ────────────────────────────────────────────────────────────────────
+  'yahoo.com', 'yahoo.co.in', 'yahoo.co.uk', 'yahoo.co.jp', 'yahoo.co.id',
+  'yahoo.com.au', 'yahoo.com.br', 'yahoo.com.ar', 'yahoo.de', 'yahoo.fr',
+  'yahoo.it', 'yahoo.es', 'yahoo.ca', 'yahoo.com.mx', 'yahoo.com.ph',
+  'ymail.com', 'rocketmail.com',
+
+  // ── Apple / iCloud ───────────────────────────────────────────────────────────
+  'icloud.com', 'me.com', 'mac.com',
+
+  // ── AOL / AIM ────────────────────────────────────────────────────────────────
+  'aol.com', 'aim.com',
+
+  // ── Proton Mail ──────────────────────────────────────────────────────────────
+  'proton.me', 'protonmail.com', 'protonmail.ch', 'pm.me',
+
+  // ── Zoho (personal tiers) ────────────────────────────────────────────────────
+  'zoho.com', 'zohomail.com',
+
+  // ── GMX ──────────────────────────────────────────────────────────────────────
+  'gmx.com', 'gmx.net', 'gmx.de', 'gmx.at', 'gmx.ch', 'gmx.us', 'gmx.org',
+
+  // ── Web.de / mail.com family ────────────────────────────────────────────────
+  'web.de', 'mail.com', 'email.com', 'usa.com', 'post.com',
+
+  // ── Yandex ──────────────────────────────────────────────────────────────────
+  'yandex.com', 'yandex.ru', 'yandex.ua', 'yandex.by', 'yandex.kz', 'ya.ru',
+
+  // ── Indian personal mail ─────────────────────────────────────────────────────
+  'rediffmail.com', 'indiatimes.com', 'sify.com', 'indianmail.com',
+  'in.com', 'hotmail.co.in',
+
+  // ── HEY / Fastmail / Basecamp ────────────────────────────────────────────────
+  'hey.com', 'fastmail.com', 'fastmail.fm', 'fastmail.org',
+  'fastmail.to', 'fastmail.net', 'fastmail.cn', 'fastmail.es',
+  'fastmail.de', 'fastmail.jp',
+
+  // ── Chinese providers ────────────────────────────────────────────────────────
+  'qq.com', '163.com', '126.com', 'sina.com', 'sina.cn',
+  '139.com', '189.cn', 'yeah.net', 'vip.qq.com', 'foxmail.com',
+
+  // ── Korean providers ─────────────────────────────────────────────────────────
+  'naver.com', 'daum.net', 'hanmail.net', 'nate.com',
+
+  // ── Russian / Eastern European ───────────────────────────────────────────────
+  'mail.ru', 'list.ru', 'bk.ru', 'inbox.ru', 'rambler.ru', 'ro.ru',
+  'i.ua', 'meta.ua', 'ukr.net',
+
+  // ── Middle Eastern ───────────────────────────────────────────────────────────
+  'maktoob.com', 'hotmail.com.ar',
+
+  // ── Indonesian ───────────────────────────────────────────────────────────────
+  'plasa.com', 'telkom.net',
+
+  // ── Privacy-focused mail ─────────────────────────────────────────────────────
+  'tutanota.com', 'tutamail.com', 'tuta.io', 'keemail.me',
+  'mailfence.com', 'disroot.org', 'posteo.de', 'posteo.net',
+  'mailbox.org', 'cock.li', 'airmail.cc', 'ctemplar.com',
+  'guerrillamail.info', 'guerrillamail.com', 'guerrillamail.org',
+  'guerrillamail.net', 'guerrillamail.de',
+
+  // ── Disposable / Temp mail ───────────────────────────────────────────────────
+  'tempmail.com', 'temp-mail.org', 'throwam.com', 'throwaway.email',
+  'mailinator.com', 'trashmail.com', 'trashmail.net', 'trashmail.me',
+  'trashmail.at', 'trashmail.io', 'spamgourmet.com',
+  'fakeinbox.com', 'yopmail.com', 'yopmail.fr', 'spam4.me',
+  'mailnull.com', 'dispostable.com', 'sharklasers.com', 'guerrillamailblock.com',
+  'grr.la', 'spam.la', 'spamhereplease.com', 'spamherelots.com',
+  'binkmail.com', 'bob.email', 'clrmail.com', 'discard.email',
+  'discardmail.com', 'discardmail.de', 'maildrop.cc', 'mailnesia.com',
+  'mailnull.com', 'nwldx.com', 'objectmail.com', 'odaymail.com',
+  'oneoffmail.com', 'onewaymail.com', 'poczta.onet.pl',
+  'sharklasers.com', 'sogetthis.com', 'spamgob.com', 'spamgourmet.net',
+  'spamgourmet.org', 'spamherelots.com', 'superrito.com', 'tempr.email',
+  'ten-minute-mail.com', 'tgasa.com', 'throwam.com', 'throwaway.email',
+  'trashmail.at', 'trashmail.io', 'trbvm.com', 'uggsrock.com',
+  'vomoto.com', 'wegwerfmail.de', 'wegwerfmail.net', 'wegwerfmail.org',
+  'whyspam.me', 'wilemail.com', 'willhackforfood.biz', 'wpg.im',
+  'xagloo.com', 'xemaps.com', 'xents.com', 'xmaily.com',
+  'xoxy.net', 'yep.it', 'za.com',
+
+  // ── Generic consumer hosting ─────────────────────────────────────────────────
+  'inbox.com', 'hushmail.com',
 ]);
 
 export function isCorporateEmail(email: string): boolean {

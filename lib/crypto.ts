@@ -292,3 +292,64 @@ export function verifySignedSessionToken<T = any>(
 // Legacy export kept for backward-compat
 export const activeOtpStore = new Map<string, { salt: string; hash: string; expiresAt: string }>();
 
+// ─── CSRF Token Helpers ──────────────────────────────────────────────────────
+
+/**
+ * Returns the CSRF signing secret from env, falling back to session secret.
+ * Set CSRF_SECRET in Vercel environment variables for production.
+ */
+function getCsrfSecret(): string {
+  return (
+    process.env.CSRF_SECRET?.trim() ||
+    process.env.GODFATHER_SESSION_SECRET?.trim() ||
+    process.env.GODFATHER_KMS_ENCRYPTION_KEY?.trim() ||
+    'fr8x-csrf-default-DO-NOT-USE-IN-PRODUCTION'
+  );
+}
+
+/**
+ * Generates a CSRF token bound to the given session ID.
+ * Format: {timestampHex}.{nonce}.{hmacHex}
+ * Valid for 1 hour.
+ */
+export function generateCsrfToken(sessionId: string): string {
+  const timestamp = Date.now().toString(16); // hex
+  const nonce = crypto.randomBytes(8).toString('hex');
+  const message = `${timestamp}.${nonce}.${sessionId}`;
+  const secret = getCsrfSecret();
+  const hmac = crypto.createHmac('sha256', secret).update(message).digest('hex');
+  return `${timestamp}.${nonce}.${hmac}`;
+}
+
+/**
+ * Verifies a CSRF token against the session ID it was issued for.
+ * Returns false if the token is invalid, expired (>1h), or the session ID does not match.
+ */
+export function verifyCsrfToken(token: string, sessionId: string): boolean {
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  if (parts.length !== 3) return false;
+  const [timestampHex, nonce, providedHmac] = parts;
+
+  // Check expiry (1 hour)
+  try {
+    const issuedAt = parseInt(timestampHex, 16);
+    if (isNaN(issuedAt) || Date.now() - issuedAt > 60 * 60 * 1000) return false;
+  } catch {
+    return false;
+  }
+
+  const message = `${timestampHex}.${nonce}.${sessionId}`;
+  const secret = getCsrfSecret();
+  const expectedHmac = crypto.createHmac('sha256', secret).update(message).digest('hex');
+
+  // Constant-time comparison
+  try {
+    const providedBuf = Buffer.from(providedHmac, 'hex');
+    const expectedBuf = Buffer.from(expectedHmac, 'hex');
+    if (providedBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(providedBuf, expectedBuf);
+  } catch {
+    return false;
+  }
+}
