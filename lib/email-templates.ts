@@ -203,7 +203,8 @@ export interface TestEmailTemplateParams {
 // ─── Pure White & Dark Text HTML Container Wrapper ───────────────────────────
 
 /**
- * Standardized pure white email container with dark text and crisp contrast
+ * Standardized executive email container with 600px constraint, MSO Outlook support,
+ * and high-contrast enterprise styling.
  */
 function wrapEmailHtml(content: string, preheader = ''): string {
   return `<!DOCTYPE html>
@@ -214,123 +215,76 @@ function wrapEmailHtml(content: string, preheader = ''): string {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="x-apple-disable-message-reformatting">
   <title>FR8X</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
   <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+    img { -ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none; }
     body {
       margin: 0;
       padding: 0;
-      background-color: #ffffff !important;
+      width: 100% !important;
+      height: 100% !important;
+      background-color: #f8fafc;
       color: #0f172a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
       line-height: 1.6;
     }
     table {
-      border-collapse: collapse;
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
-    }
-    .email-container {
-      max-width: 600px;
-      margin: 32px auto;
-      background-color: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-    }
-    .email-header {
-      padding: 28px 36px;
-      background-color: #ffffff;
-      border-bottom: 1px solid #f1f5f9;
-    }
-    .brand-title {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      font-size: 26px;
-      font-weight: 900;
-      color: #0f172a;
-      margin: 0;
-      letter-spacing: -0.03em;
-      line-height: 1;
-    }
-    .brand-accent {
-      color: #0284c7;
-    }
-    .brand-tag {
-      display: inline-block;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: #0284c7;
-      margin-top: 6px;
-    }
-    .email-body {
-      padding: 36px;
-      background-color: #ffffff;
-      color: #334155;
-      font-size: 15px;
-      line-height: 1.7;
-    }
-    .email-footer {
-      padding: 28px 36px;
-      background-color: #ffffff;
-      border-top: 1px solid #f1f5f9;
-      font-size: 12px;
-      color: #64748b;
-      text-align: center;
-      line-height: 1.6;
+      border-collapse: collapse !important;
     }
     .btn-primary {
       display: inline-block;
       background-color: #0284c7;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 14px 36px;
+      padding: 13px 34px;
       border-radius: 8px;
-      font-weight: 700;
+      font-weight: 600;
       font-size: 14px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin: 22px 0;
-      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+      letter-spacing: 0.02em;
     }
     .btn-danger {
       display: inline-block;
       background-color: #be123c;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 14px 32px;
+      padding: 13px 30px;
       border-radius: 8px;
-      font-weight: 700;
+      font-weight: 600;
       font-size: 13px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      margin: 22px 0;
-      box-shadow: 0 2px 4px rgba(190, 18, 60, 0.2);
     }
     .code-box {
       background-color: #f8fafc;
-      border: 1px solid #cbd5e1;
+      border: 1px solid #e2e8f0;
       border-radius: 10px;
-      padding: 24px;
+      padding: 20px 24px;
       text-align: center;
-      margin: 24px 0;
+      margin: 22px 0;
     }
     .code-digits {
       font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-      font-size: 38px;
-      font-weight: 800;
-      letter-spacing: 10px;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 8px;
       color: #0f172a;
     }
     .section-title {
       font-size: 11px;
-      font-weight: 800;
+      font-weight: 700;
       color: #64748b;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      margin: 24px 0 10px 0;
+      margin: 22px 0 8px 0;
     }
     .detail-card {
       background-color: #f8fafc;
@@ -346,7 +300,7 @@ function wrapEmailHtml(content: string, preheader = ''): string {
       margin: 8px 0;
     }
     .detail-label {
-      font-weight: 700;
+      font-weight: 600;
       color: #0f172a;
     }
     .detail-value {
@@ -354,8 +308,8 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     }
     .warning-box {
       background-color: #fff1f2;
-      border-left: 4px solid #e11d48;
-      padding: 16px 20px;
+      border-left: 3px solid #e11d48;
+      padding: 14px 18px;
       border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
@@ -364,8 +318,8 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     }
     .info-box {
       background-color: #f0fdf4;
-      border-left: 4px solid #16a34a;
-      padding: 16px 20px;
+      border-left: 3px solid #16a34a;
+      padding: 14px 18px;
       border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
@@ -373,18 +327,20 @@ function wrapEmailHtml(content: string, preheader = ''): string {
       line-height: 1.6;
     }
     .security-notice {
-      background-color: #fefce8;
-      border-left: 4px solid #ca8a04;
-      padding: 16px 20px;
+      background-color: #f8fafc;
+      border-left: 3px solid #94a3b8;
+      padding: 14px 18px;
       border-radius: 6px;
       margin: 20px 0;
       font-size: 13px;
-      color: #854d0e;
+      color: #475569;
       line-height: 1.6;
     }
     p {
       margin: 14px 0;
       color: #334155;
+      font-size: 15px;
+      line-height: 1.65;
     }
     a {
       color: #0284c7;
@@ -395,34 +351,68 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     }
   </style>
 </head>
-<body style="background-color: #ffffff; margin: 0; padding: 0;">
-  ${preheader ? `<span style="display:none;font-size:1px;color:#ffffff;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</span>` : ''}
-  <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color: #ffffff;">
+<body style="background-color: #f8fafc; margin: 0; padding: 0;">
+  ${preheader ? `<span style="display:none;font-size:1px;color:#f8fafc;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}</span>` : ''}
+  <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #f8fafc; margin: 0; padding: 0;">
     <tr>
-      <td align="center" style="padding: 24px 12px; background-color: #ffffff;">
-        <div class="email-container">
-          <div class="email-header" style="padding: 24px 32px; background-color: #ffffff; border-bottom: 2px solid #0284c7;">
-            <table width="100%" border="0" cellpadding="0" cellspacing="0">
-              <tr>
-                <td valign="middle">
-                  <div class="brand-title" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: -0.03em; line-height: 1;">FR<span class="brand-accent" style="color: #0284c7;">8</span>X</div>
-                  <div class="brand-tag" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #0284c7; margin-top: 4px;">Enterprise Freight Platform</div>
-                </td>
-                <td align="right" valign="middle">
-                  <span style="display: inline-block; padding: 5px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #166534; letter-spacing: 0.05em;">SECURITY DISPATCH</span>
-                </td>
-              </tr>
-            </table>
-          </div>
-          <div class="email-body">
-            ${content}
-          </div>
-          <div class="email-footer">
-            <div style="font-weight: 700; color: #0f172a; font-size: 12px; letter-spacing: 0.05em; margin-bottom: 4px;">FR8X TEAM</div>
-            <div>This is an official communication from FR8X (<a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>).</div>
-            <div style="margin-top: 6px; color: #94a3b8; font-size: 11px;">&copy; ${new Date().getFullYear()} FR8X. All rights reserved.</div>
-          </div>
-        </div>
+      <td align="center" style="padding: 32px 16px; background-color: #f8fafc;">
+        <!--[if (gte mso 9)|(IE)]>
+        <table width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td>
+        <![endif]-->
+        <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 28px 36px 20px; background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+              <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+                <tr>
+                  <td valign="middle">
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.02em; line-height: 1;">
+                      FR<span style="color: #0284c7;">8</span>X
+                    </div>
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px;">
+                      Enterprise Logistics Platform
+                    </div>
+                  </td>
+                  <td align="right" valign="middle">
+                    <span style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; background-color: #f1f5f9; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.04em; text-transform: uppercase;">
+                      Official Notice
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Body Content -->
+          <tr>
+            <td style="padding: 36px; background-color: #ffffff; color: #334155; font-size: 15px; line-height: 1.65;">
+              ${content}
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 24px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center;">
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">
+                FR8X Enterprise Network
+              </div>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; color: #64748b; line-height: 1.6;">
+                This communication was issued by FR8X Infrastructure (<a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>).<br>
+                Support: <a href="mailto:support@fr8x.in" style="color: #0284c7; text-decoration: none;">support@fr8x.in</a> &nbsp;&bull;&nbsp; 
+                Security: <a href="mailto:password@fr8x.in" style="color: #0284c7; text-decoration: none;">password@fr8x.in</a> &nbsp;&bull;&nbsp; 
+                Portal: <a href="https://con.fr8x.in" style="color: #0284c7; text-decoration: none;">con.fr8x.in</a>
+              </div>
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; color: #94a3b8; margin-top: 8px;">
+                &copy; ${new Date().getFullYear()} FR8X Technologies Inc. All rights reserved.
+              </div>
+            </td>
+          </tr>
+        </table>
+        <!--[if (gte mso 9)|(IE)]>
+            </td>
+          </tr>
+        </table>
+        <![endif]-->
       </td>
     </tr>
   </table>
@@ -448,54 +438,60 @@ export function renderWelcomeEmail(params: WelcomeTemplateParams): {
   const subject = 'Welcome to FR8X — Your Account Has Been Created';
 
   const html = wrapEmailHtml(`
-    <p style="font-size: 16px; font-weight: 600; color: #111827; margin-top: 0;">Hello ${firstName},</p>
-    <p>Welcome to FR8X.</p>
-    <p>Your FR8X account has been successfully created.</p>
-
-    <div class="section-title">ACCOUNT DETAILS</div>
-    <div class="detail-card">
-      <div class="detail-row"><span class="detail-label">Name:</span> <span class="detail-value">${fullName}</span></div>
-      <div class="detail-row"><span class="detail-label">Email:</span> <span class="detail-value">${email}</span></div>
-      <div class="detail-row"><span class="detail-label">Organization:</span> <span class="detail-value">${organizationName}</span></div>
-    </div>
-
-    <p>To get started, please verify your email address.</p>
-
-    <div style="text-align: center; margin: 24px 0;">
-      <a href="${verificationUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">VERIFY EMAIL ADDRESS</a>
-    </div>
-
-    <p style="font-size: 13px; color: #4b5563;">
-      If you did not create this account, please contact FR8X Team immediately.
+    <p style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Welcome to FR8X, ${firstName},</p>
+    <p style="font-size: 15px; color: #334155; line-height: 1.65; margin: 0 0 20px 0;">
+      We are pleased to welcome you to the FR8X Enterprise Freight Network. Your organization account has been established and configured for real-time logistics operations.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
-  `, `Welcome to FR8X, ${firstName}. Please verify your email.`);
+    <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin: 24px 0 8px 0;">
+      ENTERPRISE CREDENTIAL DOSSIER
+    </div>
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 22px; margin: 12px 0 24px 0; font-size: 14px; line-height: 1.6;">
+      <div style="margin: 6px 0;"><span style="font-weight: 600; color: #0f172a;">Account Holder:</span> <span style="color: #334155;">${fullName}</span></div>
+      <div style="margin: 6px 0;"><span style="font-weight: 600; color: #0f172a;">Corporate Email:</span> <span style="color: #334155;">${email}</span></div>
+      <div style="margin: 6px 0;"><span style="font-weight: 600; color: #0f172a;">Organization:</span> <span style="color: #334155;">${organizationName}</span></div>
+      <div style="margin: 6px 0;"><span style="font-weight: 600; color: #0f172a;">Platform Status:</span> <span style="color: #16a34a; font-weight: 600;">Active & Provisioned</span></div>
+    </div>
 
-  const text = `Hello ${firstName},
+    <!-- Primary Action Button -->
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 28px auto;">
+      <tr>
+        <td align="center" style="border-radius: 8px; background-color: #0284c7;">
+          <a href="${verificationUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 14px 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff !important; text-decoration: none; border-radius: 8px; letter-spacing: 0.01em; background-color: #0284c7;">
+            Access Logistics Workspace &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
 
-Welcome to FR8X.
+    <div style="margin-top: 24px; padding: 14px 18px; background-color: #f8fafc; border-left: 3px solid #0284c7; border-radius: 4px; font-size: 12px; color: #475569; line-height: 1.5;">
+      <strong>Dedicated Concierge Desk:</strong> As a verified corporate partner, your account manager is available to assist with trade-lane rate integrations, custom matrices, and API connectivity: <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>.
+    </div>
 
-Your FR8X account has been successfully created.
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
+  `, `Welcome to FR8X, ${firstName}. Your enterprise workspace is active.`);
 
-ACCOUNT DETAILS
+  const text = `Dear ${firstName},
 
+Welcome to FR8X. Your enterprise freight organization workspace has been created.
+
+ENTERPRISE CREDENTIAL DOSSIER:
 Name: ${fullName}
 Email: ${email}
 Organization: ${organizationName}
+Status: Active & Provisioned
 
-To get started, please verify your email address:
+Access your enterprise freight workspace:
 ${verificationUrl}
 
-If you did not create this account, please contact FR8X Team immediately.
+Dedicated Concierge Support: support@fr8x.in
 
-Regards,
-
-FR8X Team
+Sincerely,
+The FR8X Enterprise Team
 https://fr8x.in`;
 
   return { subject, html, text };
@@ -519,81 +515,86 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
   const subject = 'Verify Your FR8X Email Address';
 
   const html = wrapEmailHtml(`
-    <p style="font-size: 16px; font-weight: 600; color: #111827; margin-top: 0;">Hello ${firstName},</p>
-    <p style="font-size: 15px; color: #334155; line-height: 1.6;">
-      Thank you for registering with FR8X. Please verify your corporate email address to activate your account and access your enterprise freight workspace.
+    <p style="font-size: 17px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">Dear ${firstName},</p>
+    <p style="font-size: 15px; color: #334155; line-height: 1.65; margin: 0 0 20px 0;">
+      Thank you for choosing FR8X. Your enterprise freight organization workspace has been created. To activate your corporate credentials and access live rate matrices, container tenders, and verified trade lanes, please verify your email address.
     </p>
 
-    <!-- Primary Action: Verify Email Button -->
-    <div style="text-align: center; margin: 32px 0;">
-      <a href="${verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 14px 36px; background-color: #0284c7; color: #ffffff !important; text-decoration: none; font-weight: 700; border-radius: 8px; font-size: 15px; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">Verify Email Address</a>
-    </div>
+    <!-- Primary Action Button -->
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 28px auto;">
+      <tr>
+        <td align="center" style="border-radius: 8px; background-color: #0284c7;">
+          <a href="${verificationLink}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 14px 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; font-weight: 600; color: #ffffff !important; text-decoration: none; border-radius: 8px; letter-spacing: 0.01em; background-color: #0284c7;">
+            Verify Corporate Email &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>
 
     ${params.otpCode ? `
-    <!-- Alternative 6-Digit Verification Code -->
-    <div style="text-align: center; margin: 24px 0 28px; padding: 18px 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
-      <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
-        Your 6-Digit Verification Code
+    <!-- 6-Digit Verification Code -->
+    <div style="margin: 28px 0; padding: 20px 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; text-align: center;">
+      <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px;">
+        Single-Use Verification Code
       </div>
-      <div style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #0284c7;">
+      <div style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #0f172a;">
         ${params.otpCode}
       </div>
-      <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">
-        Single-use verification code · Valid for ${expiryMinutes} minutes
+      <div style="font-size: 12px; color: #94a3b8; margin-top: 6px;">
+        Valid for ${expiryMinutes} minutes &bull; Single-use security token
       </div>
     </div>
     ` : ''}
 
-    <p style="font-size: 14px; color: #374151; font-weight: 500;">
-      ⏳ This verification link and code will expire in <strong>${expiryTime}</strong>.
+    <p style="font-size: 14px; color: #475569; margin: 20px 0 0 0;">
+      This cryptographic verification link will remain valid for <strong>${expiryTime}</strong>.
     </p>
 
     <!-- Direct Fallback Link Box -->
-    <div style="margin-top: 24px; padding: 14px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
-      <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;">
-        If you are having trouble clicking the <strong>Verify Email Address</strong> button above, copy and paste the following verification URL directly into your web browser:
+    <div style="margin-top: 24px; padding: 14px 18px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+      <p style="font-size: 12px; color: #64748b; margin: 0 0 6px 0; line-height: 1.5;">
+        If the button above does not open directly, copy and paste this verification URL into your web browser:
       </p>
-      <p style="font-size: 12px; word-break: break-all; margin: 0;">
+      <div style="font-size: 12px; word-break: break-all; color: #0284c7; font-family: monospace;">
         <a href="${verificationLink}" style="color: #0284c7; text-decoration: underline;">${verificationLink}</a>
-      </p>
+      </div>
     </div>
 
-    <!-- Security Notice -->
-    <div class="security-notice" style="margin-top: 24px; padding: 14px 16px; background-color: #fefce8; border-left: 4px solid #ca8a04; border-radius: 6px; font-size: 13px; color: #854d0e;">
-      <strong>Security Notice:</strong> For your security, never forward this email or share your verification link or code with anyone. FR8X Team will never ask you for your verification credentials.
+    <!-- Security Advisory -->
+    <div style="margin-top: 24px; padding: 14px 18px; background-color: #f8fafc; border-left: 3px solid #94a3b8; border-radius: 4px; font-size: 12px; color: #475569; line-height: 1.5;">
+      <strong>Security Advisory:</strong> This verification link is unique to your corporate account and will expire in ${expiryTime}. FR8X team members will never ask for your password, verification link, or credentials.
     </div>
 
-    <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-      If you did not create an FR8X account, please ignore this email or contact <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>.
+    <p style="font-size: 13px; color: #64748b; margin-top: 20px;">
+      If you did not register for an FR8X account, please disregard this email or contact <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
-  `, 'Please verify your email address to activate your FR8X account.');
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
+  `, 'Please verify your corporate email address to activate your FR8X account.');
 
-  const text = `Hello ${firstName},
+  const text = `Dear ${firstName},
 
-Please verify your email address to activate your FR8X account.
+Thank you for choosing FR8X. Your enterprise freight organization workspace has been created.
 
-Verify Email Link:
+Please verify your corporate email address to activate your account:
 ${verificationLink}
 ${params.otpCode ? `\nYour 6-Digit Verification Code:\n${params.otpCode}\n` : ''}
-This verification link and code will expire in ${expiryTime}.
+This verification link will expire in ${expiryTime}.
 
-If you are having trouble clicking the button or link above, copy and paste the URL into your web browser:
+If you are having trouble clicking the button, copy and paste this URL into your browser:
 ${verificationLink}
 
-SECURITY NOTICE:
+SECURITY ADVISORY:
 Never share this verification link or code with anyone. FR8X Team will never ask you for your verification credentials.
 
 If you did not create an FR8X account, please ignore this email or contact support@fr8x.in.
 
-Regards,
-
-FR8X Team
+Sincerely,
+The FR8X Enterprise Team
 https://fr8x.in`;
 
   return { subject, html, text };
@@ -639,11 +640,11 @@ export function renderOtpChallengeEmail(params: OtpChallengeTemplateParams): {
     </div>
     ` : ''}
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, `Your FR8X verification code is ${params.otpCode}`);
 
   const text = `Hello ${firstName},
@@ -711,11 +712,11 @@ export function renderForgotPasswordEmail(params: ForgotPasswordTemplateParams):
       Your current password will remain unchanged.
     </div>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'Instructions to reset your FR8X password.');
 
   const text = `Hello ${firstName},
@@ -788,11 +789,11 @@ export function renderPasswordChangedEmail(params: PasswordChangedTemplateParams
       If you need assistance, contact FR8X Team.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'Your FR8X account password was successfully changed.');
 
   const text = `Hello ${firstName},
@@ -867,11 +868,11 @@ export function renderLoginSecurityAlertEmail(params: LoginSecurityAlertTemplate
       If you need assistance, contact FR8X Team.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'A new login to your FR8X account was detected.');
 
   const text = `Hello ${firstName},
@@ -963,11 +964,11 @@ export function renderPricingPlanUpdateEmail(params: PricingPlanUpdateTemplatePa
       If you have questions about pricing, billing, or available plans, please contact FR8X Team.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'Your FR8X account plan and pricing details.');
 
   const text = `Hello ${firstName},
@@ -1040,11 +1041,11 @@ export function renderBillingIssueEmail(params: BillingIssueTemplateParams): {
       If you believe this message was sent in error or need assistance, contact FR8X Team.
     </p>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'Action required regarding your latest FR8X billing transaction.');
 
   const text = `Hello ${firstName},
@@ -1115,11 +1116,11 @@ export function renderSupportEmail(params: SupportTemplateParams): {
       <a href="${ticketUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">VIEW SUPPORT TICKET</a>
     </div>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, `FR8X Support Request Received — Ticket ID: ${ticketId}`);
 
   const text = `Hello ${firstName},
@@ -1171,11 +1172,11 @@ export function renderSupportReplyEmail(params: SupportReplyTemplateParams): {
       ${params.replyMessage}
     </div>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, `Update on Ticket ${params.ticketId}`);
 
   const text = `Hello ${firstName},
@@ -1236,11 +1237,11 @@ export function renderSystemIssueEmail(params: SystemIssueTemplateParams): {
       <a href="${serviceStatusUrl}" class="btn-primary" target="_blank" rel="noopener noreferrer">VIEW SERVICE STATUS</a>
     </div>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, `FR8X Technical Notice: ${incidentTitle}`);
 
   const text = `Hello ${firstName},
@@ -1344,11 +1345,11 @@ export function renderTestEmail(params?: TestEmailTemplateParams): {
       <strong>Verification Status:</strong> Connection Active · Credentials Validated
     </div>
 
-    <p style="margin-top: 28px; color: #374151;">
-      Regards,<br><br>
-      <strong style="color: #0f172a; font-size: 15px;">FR8X Team</strong><br>
-      <a href="https://fr8x.in" style="color: #0284c7; text-decoration: none; font-weight: 600;">fr8x.in</a>
-    </p>
+    <div style="margin-top: 32px; font-size: 14px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 15px;">The FR8X Enterprise Team</strong><br>
+      <span style="color: #64748b; font-size: 13px;">Global Logistics & Freight Infrastructure</span>
+    </div>
   `, 'FR8X ZeptoMail Test');
 
   const text = `FR8X Integration Test

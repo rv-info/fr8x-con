@@ -128,8 +128,31 @@ export async function GET(req: NextRequest) {
     }
 
     const user = result.user!;
+
+    // If newly verified (not already verified), dispatch welcome onboarding email
+    if (result.code !== 'ALREADY_VERIFIED') {
+      const origin =
+        process.env.APP_URL ||
+        process.env.NEXT_PUBLIC_APP_URL ||
+        req.nextUrl.origin ||
+        'https://con.fr8x.in';
+
+      try {
+        await EmailService.sendWelcomeEmail({
+          to: user.email,
+          firstName: user.displayName.split(' ')[0] || user.displayName,
+          fullName: user.displayName,
+          organizationName: user.company,
+          verificationUrl: `${origin}/feeds`,
+        });
+      } catch (welcomeErr: any) {
+        console.error('[VerifyEmailAPI-GET] Welcome email dispatch warning:', welcomeErr.message);
+      }
+    }
+
     const res = NextResponse.json({
       success: true,
+      alreadyVerified: result.code === 'ALREADY_VERIFIED',
       message: result.message || 'Email verified successfully!',
       user: {
         uid: user.uid,

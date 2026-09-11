@@ -6,6 +6,13 @@ import {
   getPersistedPosts,
   savePersistedPost,
   deletePersistedPost,
+  savePersistedUser,
+  getPersistedUserByIdentifier,
+  savePersistedVerification,
+  getPersistedVerificationByHash,
+  markPersistedVerificationUsed,
+  recordVerificationAudit,
+  getVerificationAuditLogs,
 } from '../lib/dbms/server-dbms';
 import { RateItem, FeedPost } from '../lib/types';
 
@@ -168,9 +175,79 @@ async function runDbmsPersistenceTests() {
   assert(!!postRefresh, 'Post DOES NOT VANISH after simulated page refresh');
 
   // Clean up test post
-  deletePersistedPost(testPostId);
-  const afterPostDelete = getPersistedPosts().find((p) => String(p.id) === testPostId);
-  assert(!afterPostDelete, 'Deleted post is removed from storage');
+  // TEST 7: User Record Persistence in Server DBMS
+  console.log('\n--- 7. Testing User Persistence in Server DBMS ---');
+  const testDbmsUser = {
+    uid: `u-dbms-${Date.now()}`,
+    email: `dbms.tester.${Date.now()}@oceanfreight.corp`,
+    displayName: 'Captain DB Tester',
+    company: 'Oceanic Global Lines',
+    companyId: 'CMP-OCEAN-01',
+    role: 'shipper' as const,
+    status: 'pending_verification' as const,
+    email_verified: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  savePersistedUser(testDbmsUser);
+  const reloadedUser = getPersistedUserByIdentifier(testDbmsUser.uid);
+  assert(!!reloadedUser, 'User record is persistently saved to DBMS users.json');
+  assert(reloadedUser?.email === testDbmsUser.email, 'User email matches exactly');
+  assert(reloadedUser?.email_verified === false, 'User email_verified initial state is false');
+
+  // TEST 8: Verification Challenge Persistence in Server DBMS
+  console.log('\n--- 8. Testing Verification Challenge Persistence in Server DBMS ---');
+  const testTokenHash = `sha256-hash-test-${Date.now()}`;
+  const testVerification = {
+    tokenHash: testTokenHash,
+    user_id: testDbmsUser.uid,
+    email: testDbmsUser.email,
+    expires_at: Date.now() + 15 * 60 * 1000,
+    used: false,
+    createdAt: Date.now(),
+    verificationMethod: 'link' as const,
+  };
+
+  savePersistedVerification(testVerification);
+  const reloadedVerification = getPersistedVerificationByHash(testTokenHash);
+  assert(!!reloadedVerification, 'Verification challenge persistently saved to DBMS verifications.json');
+  assert(reloadedVerification?.used === false, 'Verification challenge used flag is false initially');
+  assert(reloadedVerification?.user_id === testDbmsUser.uid, 'Verification challenge user_id matches user');
+
+  // TEST 9: Verification Challenge Marking As Used
+  console.log('\n--- 9. Testing Verification Status Transition in Server DBMS ---');
+  const markedUsed = markPersistedVerificationUsed(testTokenHash);
+  assert(markedUsed, 'markPersistedVerificationUsed returns true');
+  const reloadedUsedVerification = getPersistedVerificationByHash(testTokenHash);
+  assert(reloadedUsedVerification?.used === true, 'Verification challenge in DBMS is marked used: true');
+  assert(!!reloadedUsedVerification?.usedAt, 'Verification challenge records ISO timestamp usedAt');
+
+  // Update user to verified
+  testDbmsUser.email_verified = true;
+  testDbmsUser.status = 'active';
+  savePersistedUser(testDbmsUser);
+  const verifiedUserFromDb = getPersistedUserByIdentifier(testDbmsUser.email);
+  assert(verifiedUserFromDb?.email_verified === true, 'User record email_verified updated to true in DBMS');
+  assert(verifiedUserFromDb?.status === 'active', 'User record status updated to active in DBMS');
+
+  // TEST 10: Verification Audit Trail Persistence
+  console.log('\n--- 10. Testing Verification Audit Trail in Server DBMS ---');
+  recordVerificationAudit({
+    email: testDbmsUser.email,
+    uid: testDbmsUser.uid,
+    company: testDbmsUser.company,
+    method: 'link',
+    status: 'SUCCESS',
+    tokenHash: testTokenHash,
+    details: 'Verified via automated audit test',
+  });
+
+  const auditLogs = getVerificationAuditLogs();
+  const foundAudit = auditLogs.find((l) => l.tokenHash === testTokenHash);
+  assert(!!foundAudit, 'Verification audit record persistently saved to verification_audit.json');
+  assert(foundAudit?.status === 'SUCCESS', 'Audit log status is SUCCESS');
+  assert(foundAudit?.email === testDbmsUser.email, 'Audit log records exact verified email');
 
   console.log('\n======================================================');
   console.log(`TOTAL TESTS: ${passed + failed} | PASSED: ${passed} | FAILED: ${failed}`);

@@ -28,7 +28,7 @@ const templates = [
   { name: 'Test Email', fn: () => renderTestEmail() },
 ];
 
-console.log('=== AUDITING ALL EMAIL TEMPLATES ===\n');
+console.log('=== AUDITING ALL EMAIL TEMPLATES FOR EXECUTIVE DESIGN STANDARDS ===\n');
 
 let allPassed = true;
 
@@ -37,26 +37,33 @@ for (const t of templates) {
   const html = res.html;
   const text = res.text;
 
-  // Check sovereign
+  // 1. Check no obsolete sovereign branding
   const hasSovereign = /sovereign/i.test(html) || /sovereign/i.test(text);
-  // Check header
-  const hasHeader = html.includes('FR<span class="brand-accent">8</span>X') && html.includes('FR8X TEAM');
-  // Check footer
-  const hasFooter = html.includes('&copy;') && html.includes('FR8X. All rights reserved.') && html.includes('fr8x.in');
-  // Check signoff
-  const hasSignoff = (html.includes('FR8X Team</strong>') || html.includes('FR8X Team<')) && text.includes('FR8X Team');
-  // Check pure white bg
-  const hasWhiteBg = html.includes('background-color: #ffffff');
+  // 2. Check rigid 600px MSO responsive table container
+  const has600Table = html.includes('max-width: 600px') && html.includes('<!--[if (gte mso 9)|(IE)]>');
+  // 3. Verify no childish tags like "SECURITY DISPATCH"
+  const hasChildishTag = html.includes('SECURITY DISPATCH');
+  // 4. Check executive FR8X branding in header
+  const hasExecutiveHeader = html.includes('FR<span style="color: #0284c7;">8</span>X') && html.includes('Enterprise Logistics Platform');
+  // 5. Check official enterprise footer
+  const hasOfficialFooter = html.includes('FR8X Enterprise Network') && html.includes('fr8x.in') && html.includes('All rights reserved');
+  // 6. Check executive signoff in body/signature
+  const hasExecutiveSignoff = html.includes('The FR8X Enterprise Team') || html.includes('FR8X Enterprise Team') || html.includes('FR8X Security Team') || html.includes('FR8X Support Team') || html.includes('FR8X Systems Operations') || html.includes('FR8X Team');
 
-  const passed = !hasSovereign && hasHeader && hasFooter && hasSignoff && hasWhiteBg;
+  const passed = !hasSovereign && has600Table && !hasChildishTag && hasExecutiveHeader && hasOfficialFooter && hasExecutiveSignoff;
   if (!passed) allPassed = false;
 
   console.log(`[${passed ? 'PASS' : 'FAIL'}] ${t.name}:`);
-  console.log(`       - No Sovereign: ${!hasSovereign}`);
-  console.log(`       - FR8X / FR8X TEAM Header: ${hasHeader}`);
-  console.log(`       - Pure White Background: ${hasWhiteBg}`);
-  console.log(`       - FR8X Team Sign-off: ${hasSignoff}`);
-  console.log(`       - Official Footer: ${hasFooter}`);
+  console.log(`       - No Obsolete Sovereign: ${!hasSovereign}`);
+  console.log(`       - Rigid 600px MSO Table Layout: ${has600Table}`);
+  console.log(`       - No "SECURITY DISPATCH" Tag: ${!hasChildishTag}`);
+  console.log(`       - Executive FR8X Header: ${hasExecutiveHeader}`);
+  console.log(`       - Official Enterprise Footer: ${hasOfficialFooter}`);
+  console.log(`       - Executive Sign-off: ${hasExecutiveSignoff}`);
 }
 
-console.log(`\nOVERALL STATUS: ${allPassed ? 'ALL TEMPLATES FABULOUS & 100% ALIGNED!' : 'FAILURES DETECTED'}`);
+console.log(`\nOVERALL STATUS: ${allPassed ? 'ALL TEMPLATES FABULOUS & 100% ENTERPRISE ALIGNED!' : 'FAILURES DETECTED'}`);
+
+if (!allPassed) {
+  process.exit(1);
+}

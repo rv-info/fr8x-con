@@ -14,6 +14,16 @@ import {
   verifySignedSessionToken,
 } from '@/lib/crypto';
 import { isCorporateEmail } from '@/lib/utils';
+import {
+  savePersistedUser,
+  getPersistedUsers,
+  getPersistedUserByIdentifier,
+  savePersistedVerification,
+  getPersistedVerifications,
+  getPersistedVerificationByHash,
+  markPersistedVerificationUsed,
+  recordVerificationAudit,
+} from '@/lib/dbms/server-dbms';
 
 export interface ServerUserRecord {
   uid: string;
@@ -431,6 +441,40 @@ class ServerSecurityStore {
     } catch (err: any) {
       console.warn('[ServerSecurityStore] Load persisted state warning:', err.message);
     }
+
+    // Sync users from authoritative DBMS (users.json)
+    try {
+      const dbmsUsers = getPersistedUsers();
+      for (const u of dbmsUsers) {
+        if (u.uid && !this.users.has(u.uid.toLowerCase())) {
+          this.users.set(u.uid.toLowerCase(), u as unknown as ServerUserRecord);
+        }
+        if (u.email && !this.users.has(u.email.toLowerCase())) {
+          this.users.set(u.email.toLowerCase(), u as unknown as ServerUserRecord);
+        }
+      }
+    } catch (dbmsUserErr: any) {
+      console.warn('[ServerSecurityStore] DBMS users sync warning:', dbmsUserErr.message);
+    }
+
+    // Sync verification tokens from authoritative DBMS (verifications.json)
+    try {
+      const dbmsVerifs = getPersistedVerifications();
+      for (const v of dbmsVerifs) {
+        if (v.tokenHash && !this.verificationTokenRecords.has(v.tokenHash)) {
+          this.verificationTokenRecords.set(v.tokenHash, {
+            tokenHash: v.tokenHash,
+            user_id: v.user_id,
+            email: v.email,
+            expires_at: v.expires_at,
+            used: v.used,
+            createdAt: v.createdAt,
+          });
+        }
+      }
+    } catch (dbmsVerifErr: any) {
+      console.warn('[ServerSecurityStore] DBMS verifications sync warning:', dbmsVerifErr.message);
+    }
   }
 
   // seedRealTestingUsers() removed for production security.
@@ -443,6 +487,14 @@ class ServerSecurityStore {
     if (!user) {
       this.loadPersistedState();
       user = this.users.get(clean);
+    }
+    if (!user) {
+      const dbmsUser = getPersistedUserByIdentifier(clean);
+      if (dbmsUser) {
+        user = dbmsUser as unknown as ServerUserRecord;
+        if (user.uid) this.users.set(user.uid.toLowerCase(), user);
+        if (user.email) this.users.set(user.email.toLowerCase(), user);
+      }
     }
     return user;
   }
@@ -548,6 +600,29 @@ class ServerSecurityStore {
     this.users.set(cleanUid, record);
     this.users.set(cleanEmail, record);
 
+    // Persist registered user record into authoritative DBMS (users.json)
+    try {
+      savePersistedUser({
+        uid: record.uid,
+        email: record.email,
+        passwordHash: record.passwordHash,
+        salt: record.salt,
+        displayName: record.displayName,
+        company: record.company,
+        companyId: record.companyId,
+        role: record.role,
+        status: record.status,
+        mobile: record.mobile,
+        email_verified: record.email_verified,
+        emailVerificationExpiresAt: record.emailVerificationExpiresAt,
+        emailVerifiedAt: record.emailVerifiedAt,
+        firstLoginCompleted: record.firstLoginCompleted,
+        createdAt: record.createdAt,
+      });
+    } catch (dbmsSaveErr: any) {
+      console.warn('[ServerSecurityStore] Failed to save user to DBMS:', dbmsSaveErr.message);
+    }
+
     if (isVerificationRequired) {
       // Store ONLY the hashed token in the database
       this.verificationTokenRecords.set(tokenHash, {
@@ -558,6 +633,21 @@ class ServerSecurityStore {
         used: false,
         createdAt: Date.now(),
       });
+
+      // Persist verification record to authoritative DBMS (verifications.json)
+      try {
+        savePersistedVerification({
+          tokenHash,
+          user_id: user.uid,
+          email: cleanEmail,
+          expires_at: tokenExpiresAt,
+          used: false,
+          createdAt: Date.now(),
+          verificationMethod: 'link',
+        });
+      } catch (dbmsVerifSaveErr: any) {
+        console.warn('[ServerSecurityStore] Failed to save verification challenge to DBMS:', dbmsVerifSaveErr.message);
+      }
 
       // Backward-compatibility mappings
       this.emailVerifications.set(cleanEmail, {
@@ -637,6 +727,22 @@ class ServerSecurityStore {
         tokenRecord = this.verificationTokenRecords.get(tokenHash);
       }
 
+      // Check authoritative DBMS verifications if not in memory
+      if (!tokenRecord) {
+        const dbmsRecord = getPersistedVerificationByHash(tokenHash);
+        if (dbmsRecord) {
+          tokenRecord = {
+            tokenHash: dbmsRecord.tokenHash,
+            user_id: dbmsRecord.user_id,
+            email: dbmsRecord.email,
+            expires_at: dbmsRecord.expires_at,
+            used: dbmsRecord.used,
+            createdAt: dbmsRecord.createdAt,
+          };
+          this.verificationTokenRecords.set(tokenHash, tokenRecord);
+        }
+      }
+
       if (tokenRecord) {
         cleanEmail = tokenRecord.email.toLowerCase();
         let user = this.users.get(tokenRecord.user_id) || this.users.get(cleanEmail);
@@ -645,8 +751,38 @@ class ServerSecurityStore {
           user = this.users.get(tokenRecord.user_id) || this.users.get(cleanEmail);
         }
 
+        // Fallback to DBMS users table
+        if (!user) {
+          const dbmsUser = getPersistedUserByIdentifier(tokenRecord.user_id) || getPersistedUserByIdentifier(cleanEmail);
+          if (dbmsUser) {
+            user = dbmsUser as unknown as ServerUserRecord;
+            this.users.set(user.uid.toLowerCase(), user);
+            this.users.set(user.email.toLowerCase(), user);
+          }
+        }
+
         // Check if token was already used
         if (tokenRecord.used) {
+          // If the user's account is already verified and active (e.g. from email link scanner or page refresh),
+          // return success so the user can enter their workspace seamlessly!
+          if (user && user.email_verified && user.status === 'active') {
+            return {
+              success: true,
+              code: 'ALREADY_VERIFIED',
+              message: 'Your corporate email address has already been verified and your account is active.',
+              user,
+            };
+          }
+
+          recordVerificationAudit({
+            email: tokenRecord.email,
+            uid: tokenRecord.user_id,
+            company: user?.company,
+            method: 'link',
+            status: 'ALREADY_USED',
+            tokenHash,
+            details: 'Verification attempted with an already used token link.',
+          });
           return {
             success: false,
             code: 'TOKEN_ALREADY_USED',
@@ -657,6 +793,15 @@ class ServerSecurityStore {
 
         // Check if token has expired (15 minutes limit)
         if (Date.now() > tokenRecord.expires_at) {
+          recordVerificationAudit({
+            email: tokenRecord.email,
+            uid: tokenRecord.user_id,
+            company: user?.company,
+            method: 'link',
+            status: 'EXPIRED',
+            tokenHash,
+            details: 'Verification attempted with an expired token link (past 15-minute window).',
+          });
           return {
             success: false,
             code: 'TOKEN_EXPIRED',
@@ -666,6 +811,14 @@ class ServerSecurityStore {
         }
 
         if (!user) {
+          recordVerificationAudit({
+            email: tokenRecord.email,
+            uid: tokenRecord.user_id,
+            method: 'link',
+            status: 'FAILED',
+            tokenHash,
+            details: 'User account associated with this verification link was not found.',
+          });
           return {
             success: false,
             code: 'USER_NOT_FOUND',
@@ -673,9 +826,10 @@ class ServerSecurityStore {
           };
         }
 
-        // Single-use: immediately invalidate token by marking used = true
+        // Single-use: immediately invalidate token by marking used = true in memory & DBMS
         tokenRecord.used = true;
         this.verificationTokenRecords.set(tokenHash, tokenRecord);
+        markPersistedVerificationUsed(tokenHash);
 
         // Mark user's email as verified and activate account
         user.email_verified = true;
@@ -683,6 +837,35 @@ class ServerSecurityStore {
         user.emailVerifiedAt = new Date().toISOString();
         user.emailVerificationToken = undefined;
         user.emailVerificationExpiresAt = undefined;
+
+        // Keep both key references in sync in memory
+        this.users.set(user.uid.toLowerCase(), user);
+        this.users.set(user.email.toLowerCase(), user);
+
+        // Persist verified state into authoritative DBMS users table
+        try {
+          savePersistedUser({
+            ...user,
+            email_verified: true,
+            status: 'active',
+            emailVerifiedAt: user.emailVerifiedAt,
+            emailVerificationToken: undefined,
+            emailVerificationExpiresAt: undefined,
+          });
+        } catch (dbmsUserUpdateErr: any) {
+          console.warn('[ServerSecurityStore] Failed to update user in DBMS:', dbmsUserUpdateErr.message);
+        }
+
+        // Record verification audit entry in DBMS
+        recordVerificationAudit({
+          email: user.email,
+          uid: user.uid,
+          company: user.company,
+          method: 'link',
+          status: 'SUCCESS',
+          tokenHash,
+          details: 'Account email successfully verified via 15-minute secure single-use token link.',
+        });
 
         // Clean up legacy verification mappings
         this.emailVerifications.delete(cleanEmail);
@@ -834,6 +1017,31 @@ class ServerSecurityStore {
     user.emailVerifiedAt = new Date().toISOString();
     user.emailVerificationToken = undefined;
     user.emailVerificationExpiresAt = undefined;
+
+    this.users.set(user.uid.toLowerCase(), user);
+    this.users.set(cleanEmail, user);
+
+    try {
+      savePersistedUser({
+        ...user,
+        email_verified: true,
+        status: 'active',
+        emailVerifiedAt: user.emailVerifiedAt,
+        emailVerificationToken: undefined,
+        emailVerificationExpiresAt: undefined,
+      });
+    } catch (dbmsUserUpdateErr: any) {
+      console.warn('[ServerSecurityStore] Failed to update user in DBMS via OTP:', dbmsUserUpdateErr.message);
+    }
+
+    recordVerificationAudit({
+      email: cleanEmail,
+      uid: user.uid,
+      company: user.company,
+      method: 'otp',
+      status: 'SUCCESS',
+      details: 'Account email successfully verified via 6-digit verification code.',
+    });
 
     this.emailVerifications.delete(cleanEmail);
     this.verificationTokens.delete(verificationRecord.token);

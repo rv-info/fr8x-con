@@ -115,13 +115,20 @@ async function runTests() {
   console.log('  ✅ Token validated successfully');
   console.log('  ✅ User email_verified marked true and status marked active');
 
-  // ─── Test 5: Re-use of Single-Use Token ──────────────────────────────────
-  console.log('\nTest 5: Testing single-use token replay protection...');
+  // ─── Test 5: Re-use of Verification Token & Safe Scanner Handling ────────
+  console.log('\nTest 5: Testing verification token re-use and SafeLinks resilience...');
   const secondVerify = serverSecurityStore.verifyEmailToken({ token: rawToken });
-  if (secondVerify.success) {
-    throw new Error('Test 5 Failed: Single-use token was accepted a second time!');
+  if (!secondVerify.success || secondVerify.code !== 'ALREADY_VERIFIED') {
+    throw new Error(`Test 5 Failed: Expected ALREADY_VERIFIED for pre-verified user, got: ${JSON.stringify(secondVerify)}`);
   }
-  console.log(`  ✅ Token replay blocked with code: ${secondVerify.code || 'TOKEN_INVALID'}`);
+  console.log('  ✅ Re-opening verified link returns ALREADY_VERIFIED gracefully (SafeLinks/refresh friendly)');
+
+  // Test that an invalid/tampered token is blocked
+  const invalidVerify = serverSecurityStore.verifyEmailToken({ token: 'invalid-token-1234567890abcdef1234567890' });
+  if (invalidVerify.success) {
+    throw new Error('Test 5 Failed: Invalid token was accepted!');
+  }
+  console.log(`  ✅ Invalid token rejected with code: ${invalidVerify.code || 'TOKEN_INVALID'}`);
 
   // ─── Test 6: Resend Verification & Rate Limiting ─────────────────────────
   console.log('\nTest 6: Testing resend verification rate limiting and cooldown...');
