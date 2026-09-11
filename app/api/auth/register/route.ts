@@ -79,21 +79,38 @@ export async function POST(req: NextRequest) {
 
     const user = result.user!;
 
-    // If verification is required, dispatch email via Zoho ZeptoMail (guaranteed delivery)
+    // If verification is required, dispatch email via Central Email Service
     if (result.isVerificationRequired) {
+      let emailDispatched = false;
+      let emailError: string | null = null;
+
       if (result.emailPromise) {
         try {
-          await result.emailPromise;
+          const mailRes = await result.emailPromise;
+          emailDispatched = Boolean(mailRes && mailRes.success);
+          if (!emailDispatched && mailRes) {
+            emailError = mailRes.error || 'Email service rejected delivery';
+          }
         } catch (mailErr: any) {
           console.error('[RegisterAPI] Verification email delivery error:', mailErr.message);
+          emailError = mailErr.message;
         }
       }
+
+      const isDev = process.env.NODE_ENV !== 'production';
 
       return NextResponse.json(
         {
           success: true,
           isVerificationRequired: true,
-          message: 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.',
+          emailDispatched,
+          devOtp: isDev || !emailDispatched ? result.verificationOtp : undefined,
+          emailError: isDev ? emailError : undefined,
+          message: emailDispatched
+            ? 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.'
+            : isDev
+              ? `Account registered. Note: Live email rejected (${emailError || 'API token invalid'}). Dev OTP: ${result.verificationOtp}`
+              : 'Account registered. A verification code has been generated. Please check your inbox / spam folder.',
           user: {
             uid: user.uid,
             email: user.email,

@@ -444,15 +444,15 @@ class ServerSecurityStore {
       };
     }
 
-    // Check if email or UID is already registered
+    // Check if email or UID is already registered and verified
     const existingByEmailOrUid = this.users.get(cleanEmail) || this.users.get(cleanUid);
-    if (existingByEmailOrUid) {
+    if (existingByEmailOrUid && existingByEmailOrUid.status === 'active') {
       const isSameCompany =
         existingByEmailOrUid.company.trim().toLowerCase() === user.company.trim().toLowerCase();
       if (isSameCompany) {
         return {
           success: false,
-          error: `An account with this corporate email (${user.email}) is already registered under ${existingByEmailOrUid.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
+          error: `An account with this corporate email (${user.email}) is already registered and verified under ${existingByEmailOrUid.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
         };
       } else {
         return {
@@ -462,12 +462,12 @@ class ServerSecurityStore {
       }
     }
 
-    // Check if mobile number is already registered
+    // Check if mobile number is already registered to another active account
     if (cleanMobile && cleanMobile.length >= 8) {
       for (const existing of this.users.values()) {
-        if (existing.mobile) {
+        if (existing.mobile && existing.status === 'active') {
           const norm = existing.mobile.replace(/[^0-9+]/g, '');
-          if (norm === cleanMobile) {
+          if (norm === cleanMobile && existing.email.toLowerCase() !== cleanEmail) {
             return {
               success: false,
               error: `This mobile phone number (${user.mobile}) is already associated with an active account (${existing.email}). Multi-accounting is prohibited under the One User, One Login policy.`,
@@ -828,7 +828,7 @@ class ServerSecurityStore {
 
       return {
         success: true,
-        message: 'If an unverified account matches this email, a new verification link and code have been sent.',
+        message: `A new 6-digit verification code has been dispatched to ${cleanEmail}.`,
         remainingAttempts: MAX_RESENDS - rateLimit.count,
         otp: verificationOtp,
         token: verificationToken,

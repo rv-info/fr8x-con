@@ -410,29 +410,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const cleanCompany = (profile.company || '').trim();
     const cleanMobile = (profile.mobile || '').replace(/[^0-9+]/g, '');
 
-    // 1. One User, One Login check: duplicate email across same or different orgs
+    // 1. One User, One Login check: duplicate email across same or different orgs (only verified accounts block)
     const existingByEmail = allUsers.find(
-      (u) => u.email.trim().toLowerCase() === cleanEmail
+      (u) => u.email.trim().toLowerCase() === cleanEmail && u.isVerified
     );
     if (existingByEmail) {
       const isSameOrg = existingByEmail.company.trim().toLowerCase() === cleanCompany.toLowerCase();
       if (isSameOrg) {
         return {
           success: false,
-          error: `An account with this corporate email (${profile.email}) is already registered in ${existingByEmail.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
+          error: `An account with this corporate email (${profile.email}) is already registered and verified in ${existingByEmail.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
         };
       } else {
         return {
           success: false,
-          error: `This corporate email (${profile.email}) is already associated with another organization (${existingByEmail.company}). Multi-accounting across different organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
+          error: `This corporate email (${profile.email}) is already associated with another verified organization (${existingByEmail.company}). Multi-accounting across different organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
         };
       }
     }
 
-    // 2. One User, One Login check: duplicate mobile phone number
+    // 2. One User, One Login check: duplicate mobile phone number (only verified accounts block)
     if (cleanMobile && cleanMobile.length >= 8) {
       const existingByMobile = allUsers.find(
-        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile
+        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile && u.isVerified && u.email.trim().toLowerCase() !== cleanEmail
       );
       if (existingByMobile) {
         return {

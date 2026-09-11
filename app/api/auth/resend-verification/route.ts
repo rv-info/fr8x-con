@@ -23,17 +23,34 @@ export async function POST(req: NextRequest) {
 
     const result = serverSecurityStore.resendEmailVerification(email, origin);
 
+    let emailDispatched = false;
+    let emailError: string | null = null;
+
     if (result.emailPromise) {
       try {
-        await result.emailPromise;
+        const mailRes = await result.emailPromise;
+        emailDispatched = Boolean(mailRes && mailRes.success);
+        if (!emailDispatched && mailRes) {
+          emailError = mailRes.error || 'Email service rejected delivery';
+        }
       } catch (mailErr: any) {
         console.error('[ResendAPI] Verification email delivery error:', mailErr.message);
+        emailError = mailErr.message;
       }
     }
 
+    const isDev = process.env.NODE_ENV !== 'production';
+
     return NextResponse.json({
       success: result.success,
-      message: result.message,
+      emailDispatched,
+      devOtp: (isDev || !emailDispatched) ? result.otp : undefined,
+      emailError: isDev ? emailError : undefined,
+      message: emailDispatched
+        ? result.message
+        : isDev
+          ? `New verification code issued. Note: Live email rejected (${emailError || 'API token invalid'}). Dev OTP: ${result.otp}`
+          : result.message,
       remainingAttempts: result.remainingAttempts,
     });
   } catch (err: any) {

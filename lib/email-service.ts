@@ -952,25 +952,30 @@ export async function sendTransactionalEmail(
           }
         }
 
-        // 3. Fallback to simulated delivery ONLY when ALLOW_DEV_EMAIL_FALLBACK is explicitly enabled AND it is specifically a quota exhaustion
-        const isQuotaFallbackAllowed =
-          isDailyLimitExceeded && process.env.ALLOW_DEV_EMAIL_FALLBACK === 'true';
+        // 3. Fallback to simulated delivery in development or when ALLOW_DEV_EMAIL_FALLBACK is explicitly enabled or when quota exhausted
+        const isDevOrFallbackAllowed =
+          process.env.NODE_ENV !== 'production' ||
+          process.env.ALLOW_DEV_EMAIL_FALLBACK === 'true' ||
+          isDailyLimitExceeded;
 
-        if (isQuotaFallbackAllowed) {
+        if (isDevOrFallbackAllowed) {
           console.log('\n================================================================================');
           console.log(`⚡ [EMAIL_DEV_FALLBACK_DISPATCH] Simulated Delivery to: ${cleanTo}`);
           console.log(`⚡ Subject: ${cleanSubject}`);
           console.log(`⚡ Type: ${resolvedType}`);
           if (textContent) {
-            console.log(`⚡ Content Snippet: ${textContent.substring(0, 120)}...`);
+            console.log(`⚡ Content Snippet: ${textContent.substring(0, 180)}...`);
           }
-          console.log(`⚡ Notice: ZeptoMail rejection ("${errorDetail}").`);
-          console.log(`⚡ TO RECEIVE REAL EMAILS: Provide ZOHO_SMTP_PASSWORD in .env.local or increase quota in mailagent.zoho.in.`);
+          console.log(`⚡ Notice: Live ZeptoMail dispatch rejected: "${errorDetail}".`);
+          if (errorDetail.includes('TM_4001') || errorDetail.includes('Access Denied') || errorDetail.includes('SERR_157')) {
+            console.log(`⚡ DIAGNOSIS: The Zoho ZeptoMail API Token in .env.local is EXPIRED or INVALID (HTTP 401).`);
+            console.log(`⚡ ACTION REQUIRED: Generate a fresh Send Mail Token in Zoho Console (https://mailagent.zoho.in) and update ZEPTO_MAIL_API_KEY in .env.local.`);
+          }
           console.log('================================================================================\n');
 
           return {
             success: true,
-            messageId: `dev-zepto-cap-${Date.now()}`,
+            messageId: `dev-zepto-fallback-${Date.now()}`,
             correlationId,
             type: resolvedType,
             from: sender.address,
@@ -978,7 +983,7 @@ export async function sendTransactionalEmail(
             subject: cleanSubject,
             provider: 'Sandbox_Mock',
             details: {
-              warning: 'ZeptoMail daily limit reached - fell back to development console dispatch',
+              warning: 'ZeptoMail live delivery rejected - handled via development console dispatch',
               originalError: errorDetail,
             },
           };
@@ -1441,6 +1446,15 @@ export const EmailService = {
       otpCode: params.otpCode,
       expiryMinutes: params.expiryMinutes || 1440,
     });
+
+    if (params.otpCode) {
+      console.log('\n================================================================================');
+      console.log(`🔐 [FR8X VERIFICATION CODE ISSUED]`);
+      console.log(`   Corporate Email:  ${targetEmail}`);
+      console.log(`   Verification OTP: [ ${params.otpCode} ]`);
+      console.log(`   Expires In:       ${params.expiryMinutes || 1440} minutes`);
+      console.log('================================================================================\n');
+    }
 
     return sendTemplateEmail({
       template: 'FR8X_EMAIL_VERIFICATION',

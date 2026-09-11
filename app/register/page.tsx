@@ -132,7 +132,7 @@ const ISD_CODES = [
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, allUsers } = useAuth();
+  const { register, login, allUsers } = useAuth();
   const { toast } = useToast();
 
   // Form State
@@ -161,6 +161,7 @@ export default function RegisterPage() {
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [customCity, setCustomCity] = useState('');
   const [isLoadingCities, setIsLoadingCities] = useState(false);
+  const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
 
   // Complete Global Geography Datasets (All 250 Countries, 418 Timezones, Global States & Cities)
   const globalIsdEntries: GlobalISDEntry[] = React.useMemo(() => getAllGlobalISDCodes(), []);
@@ -422,21 +423,21 @@ export default function RegisterPage() {
       return;
     }
 
-    // Strict One User, One Login: verify email uniqueness across all existing organizations
+    // Strict One User, One Login: verify email uniqueness across verified active accounts
     const cleanEmail = email.trim().toLowerCase();
     const existingUser = allUsers.find(
-      (u) => u.email.trim().toLowerCase() === cleanEmail
+      (u) => u.email.trim().toLowerCase() === cleanEmail && u.isVerified
     );
     if (existingUser) {
       const isSameCompany =
         existingUser.company.trim().toLowerCase() === companyName.trim().toLowerCase();
       if (isSameCompany) {
         setErrorMessage(
-          `An account with this corporate email (${email}) is already registered in ${existingUser.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`
+          `An account with this corporate email (${email}) is already registered and verified in ${existingUser.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`
         );
       } else {
         setErrorMessage(
-          `This corporate email (${email}) is already associated with another organization (${existingUser.company}). Multi-accounting across organizations is strictly prohibited under the One User, One Login policy. Each individual is permitted only one active login account.`
+          `This corporate email (${email}) is already associated with another verified organization (${existingUser.company}). Multi-accounting across organizations is strictly prohibited under the One User, One Login policy. Each individual is permitted only one active login account.`
         );
       }
       return;
@@ -465,9 +466,9 @@ export default function RegisterPage() {
 
     const fullMobile = `${isdCode}${cleanDigits}`;
 
-    // Strict One User, One Login: verify mobile phone uniqueness
+    // Strict One User, One Login: verify mobile phone uniqueness against verified accounts
     const existingMobileUser = allUsers.find(
-      (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === fullMobile.replace(/[^0-9+]/g, '')
+      (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === fullMobile.replace(/[^0-9+]/g, '') && u.isVerified && u.email.trim().toLowerCase() !== cleanEmail
     );
     if (existingMobileUser) {
       setErrorMessage(
@@ -516,6 +517,9 @@ export default function RegisterPage() {
       setStep('otp');
       setOtpTimer(30);
       setCanResend(false);
+      if (data.devOtp) {
+        setDevOtpHint(data.devOtp);
+      }
       toast(data.message || `Verification email dispatched to ${email}.`);
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -557,6 +561,13 @@ export default function RegisterPage() {
       setIsSubmitting(false);
 
       if (!res.ok || !data.success) {
+        // If already active or verified, log in directly and transition
+        if (data.message?.toLowerCase().includes('already verified') || data.message?.toLowerCase().includes('already active')) {
+          toast('Account is already verified! Accessing your workspace...');
+          login(email.trim().toLowerCase(), false, data.user || { email });
+          router.push('/feeds');
+          return;
+        }
         setErrorMessage(data.error || 'Verification failed. Please check your verification code.');
         return;
       }
@@ -565,28 +576,25 @@ export default function RegisterPage() {
       const cleanDigits = mobileNumber.replace(/\D/g, '');
       const fullMobile = `${isdCode}${cleanDigits}`;
 
-      // Sync local client auth state
-      await register(
-        {
-          firstName,
-          lastName,
-          email: email.trim().toLowerCase(),
-          mobile: fullMobile,
-          designation,
-          company: companyName,
-          companyId,
-          city: effectiveCity,
-          country,
-          postalCode: postalCode.trim() || undefined,
-          timezone,
-          plan: selectedPlan,
-          hasGoldenTick: selectedPlan === 'premium',
-          isVerified: true,
-        },
-        password || 'Password@123'
-      );
+      // Finalize client-side session using verified user from server (avoids circular duplicate checks)
+      login(email.trim().toLowerCase(), false, {
+        ...(data.user || {}),
+        firstName,
+        lastName,
+        displayName: `${firstName} ${lastName}`.trim(),
+        company: companyName,
+        companyId,
+        city: effectiveCity,
+        country,
+        postalCode: postalCode.trim() || undefined,
+        timezone,
+        mobile: fullMobile,
+        plan: selectedPlan,
+        hasGoldenTick: selectedPlan === 'premium',
+        isVerified: true,
+      });
 
-      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan). A welcome confirmation email has been dispatched to ${email.trim().toLowerCase()}.`);
+      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
       router.push('/feeds');
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -615,6 +623,9 @@ export default function RegisterPage() {
       clearTimeout(timeoutId);
 
       const data = await res.json();
+      if (data.devOtp) {
+        setDevOtpHint(data.devOtp);
+      }
       toast(data.message || 'Verification code resent to your corporate mailbox.');
     } catch (err: any) {
       clearTimeout(timeoutId);
@@ -1259,6 +1270,38 @@ export default function RegisterPage() {
               </p>
 
               <form onSubmit={handleVerifyOtp}>
+                {devOtpHint && (
+                  <div
+                    style={{
+                      padding: '10px 12px',
+                      borderRadius: '6px',
+                      background: '#f0fdf4',
+                      border: '1px solid #bbf7d0',
+                      color: '#166534',
+                      fontSize: '12px',
+                      marginBottom: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                    }}
+                  >
+                    <div>
+                      <span style={{ fontWeight: 700 }}>Dev / Sandbox Passcode:</span>{' '}
+                      <code style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '2px', background: '#dcfce7', padding: '2px 6px', borderRadius: '4px' }}>
+                        {devOtpHint}
+                      </code>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn secondary sm"
+                      style={{ padding: '3px 10px', fontSize: '11px', height: '26px' }}
+                      onClick={() => setOtp(devOtpHint)}
+                    >
+                      Autofill OTP
+                    </button>
+                  </div>
+                )}
                 <div className="field" style={{ marginBottom: '14px' }}>
                   <label>Enter 6-Digit OTP</label>
                   <input
