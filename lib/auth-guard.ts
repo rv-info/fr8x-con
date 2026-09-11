@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySignedSessionToken } from '@/lib/crypto';
+import { verifySignedSessionToken, verifyCsrfToken } from '@/lib/crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 
 export interface AuthenticatedGodfatherOperator {
@@ -177,3 +177,48 @@ export function authenticateUserSession(req: NextRequest): {
     },
   };
 }
+
+/**
+ * Validates the CSRF token on mutating requests (POST, PUT, DELETE, PATCH).
+ * Token is verified against the authenticated session ID via HMAC-SHA256.
+ */
+export function validateCsrfHeader(
+  req: NextRequest,
+  sessionId: string
+): {
+  valid: boolean;
+  errorResponse?: NextResponse;
+} {
+  const token = req.headers.get('x-csrf-token') || req.headers.get('csrf-token');
+  if (!token) {
+    return {
+      valid: false,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: 'Forbidden: Missing CSRF protection token.',
+          code: 'CSRF_TOKEN_MISSING',
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  const isValid = verifyCsrfToken(token, sessionId);
+  if (!isValid) {
+    return {
+      valid: false,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: 'Forbidden: Invalid or expired CSRF token.',
+          code: 'CSRF_TOKEN_INVALID',
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { valid: true };
+}
+

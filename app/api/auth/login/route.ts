@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
         challengeToken: result.challengeToken,
         email: result.email,
         maskedEmail: result.maskedEmail,
-        expiresIn: result.expiresIn || 300,
+        expiresIn: result.expiresIn || 15,
         message: result.message,
       });
     }

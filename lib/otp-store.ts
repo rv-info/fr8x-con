@@ -22,6 +22,8 @@ const OTP_TTL_SECONDS = 30; // 15s validity + 15s delivery buffer
 
 // ── In-memory fallback (dev only) ────────────────────────────────────────────
 const memStore = new Map<string, OtpRecord>();
+const memTimestamps = new Map<string, number[]>();
+const memCooldowns = new Map<string, number>();
 
 // ── Vercel KV client (lazy, optional) ────────────────────────────────────────
 let kvClient: any = null;
@@ -173,5 +175,149 @@ export const otpStore = {
 
     // In-memory fallback
     memStore.delete(fullKey);
+  },
+
+  /**
+   * Distributed OTP send-limit tracking (default: max 3 sends per 25-hour window).
+   * Ensures limit is enforced across distributed serverless instances.
+   */
+  async recordOtpSend(
+    identifier: string,
+    maxSends = 3,
+    windowSeconds = 25 * 60 * 60
+  ): Promise<{ allowed: boolean; remaining: number; count: number }> {
+    const key = `rate:send:${identifier.trim().toLowerCase()}`;
+    const fullKey = `${KEY_PREFIX}${key}`;
+
+    // 1. Vercel KV
+    const kv = await getVercelKV();
+    if (kv) {
+      try {
+        const count = await kv.incr(fullKey);
+        if (count === 1) {
+          await kv.expire(fullKey, windowSeconds);
+        }
+        const allowed = count <= maxSends;
+        const remaining = Math.max(0, maxSends - count);
+        return { allowed, remaining, count };
+      } catch (err: any) {
+        console.error('[OTP Store] Vercel KV recordOtpSend failed:', err.message);
+      }
+    }
+
+    // 2. ioredis
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const count = await redis.incr(fullKey);
+        if (count === 1) {
+          await redis.expire(fullKey, windowSeconds);
+        }
+        const allowed = count <= maxSends;
+        const remaining = Math.max(0, maxSends - count);
+        return { allowed, remaining, count };
+      } catch (err: any) {
+        console.error('[OTP Store] ioredis recordOtpSend failed:', err.message);
+      }
+    }
+
+    // 3. In-memory fallback (local dev)
+    const now = Date.now();
+    const existing = memTimestamps.get(fullKey) || [];
+    const windowMs = windowSeconds * 1000;
+    const valid = existing.filter((t) => t > now - windowMs);
+    if (valid.length >= maxSends) {
+      return { allowed: false, remaining: 0, count: valid.length };
+    }
+    valid.push(now);
+    memTimestamps.set(fullKey, valid);
+    return {
+      allowed: true,
+      remaining: Math.max(0, maxSends - valid.length),
+      count: valid.length,
+    };
+  },
+
+  /**
+   * Distributed cooldown check (default: 60 seconds).
+   */
+  async checkCooldown(
+    identifier: string,
+    cooldownSeconds = 60
+  ): Promise<{ inCooldown: boolean; waitSeconds: number }> {
+    const key = `cooldown:${identifier.trim().toLowerCase()}`;
+    const fullKey = `${KEY_PREFIX}${key}`;
+
+    // 1. Vercel KV
+    const kv = await getVercelKV();
+    if (kv) {
+      try {
+        const ttl = await kv.ttl(fullKey);
+        if (typeof ttl === 'number' && ttl > 0) {
+          return { inCooldown: true, waitSeconds: ttl };
+        }
+        return { inCooldown: false, waitSeconds: 0 };
+      } catch (err: any) {
+        console.error('[OTP Store] Vercel KV checkCooldown failed:', err.message);
+      }
+    }
+
+    // 2. ioredis
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        const ttl = await redis.ttl(fullKey);
+        if (typeof ttl === 'number' && ttl > 0) {
+          return { inCooldown: true, waitSeconds: ttl };
+        }
+        return { inCooldown: false, waitSeconds: 0 };
+      } catch (err: any) {
+        console.error('[OTP Store] ioredis checkCooldown failed:', err.message);
+      }
+    }
+
+    // 3. In-memory fallback (local dev)
+    const now = Date.now();
+    const lastTime = memCooldowns.get(fullKey) || 0;
+    const elapsed = now - lastTime;
+    const cooldownMs = cooldownSeconds * 1000;
+    if (elapsed < cooldownMs) {
+      const waitSeconds = Math.ceil((cooldownMs - elapsed) / 1000);
+      return { inCooldown: true, waitSeconds };
+    }
+    return { inCooldown: false, waitSeconds: 0 };
+  },
+
+  /**
+   * Records the start of a cooldown.
+   */
+  async recordCooldown(
+    identifier: string,
+    cooldownSeconds = 60
+  ): Promise<void> {
+    const key = `cooldown:${identifier.trim().toLowerCase()}`;
+    const fullKey = `${KEY_PREFIX}${key}`;
+
+    const kv = await getVercelKV();
+    if (kv) {
+      try {
+        await kv.setex(fullKey, cooldownSeconds, '1');
+        return;
+      } catch (err: any) {
+        console.error('[OTP Store] Vercel KV recordCooldown failed:', err.message);
+      }
+    }
+
+    const redis = await getRedis();
+    if (redis) {
+      try {
+        await redis.set(fullKey, '1', 'EX', cooldownSeconds);
+        return;
+      } catch (err: any) {
+        console.error('[OTP Store] ioredis recordCooldown failed:', err.message);
+      }
+    }
+
+    memCooldowns.set(fullKey, Date.now());
   },
 };

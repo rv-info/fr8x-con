@@ -169,16 +169,15 @@ export async function GET() {
 
 /**
  * Returns the in-memory email delivery event log (for Godfather admin audit).
- * Only callable server-side — never exported to the client.
  */
-export function getEmailDeliveryLog(): DeliveryEvent[] {
+function getEmailDeliveryLog(): DeliveryEvent[] {
   return [...getDeliveryLog()];
 }
 
 /**
  * Returns delivery statistics summary.
  */
-export function getEmailDeliveryStats(): {
+function getEmailDeliveryStats(): {
   total: number;
   delivered: number;
   bounced: number;
