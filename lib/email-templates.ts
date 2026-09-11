@@ -283,17 +283,17 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     }
     .btn-primary {
       display: inline-block;
-      background-color: #0f172a;
+      background-color: #0284c7;
       color: #ffffff !important;
       text-decoration: none;
-      padding: 14px 32px;
+      padding: 14px 36px;
       border-radius: 8px;
       font-weight: 700;
-      font-size: 13px;
-      letter-spacing: 0.05em;
+      font-size: 14px;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
       margin: 22px 0;
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.15);
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
     }
     .btn-danger {
       display: inline-block;
@@ -401,9 +401,18 @@ function wrapEmailHtml(content: string, preheader = ''): string {
     <tr>
       <td align="center" style="padding: 24px 12px; background-color: #ffffff;">
         <div class="email-container">
-          <div class="email-header">
-            <div class="brand-title">FR<span class="brand-accent">8</span>X</div>
-            <div class="brand-tag">FR8X TEAM</div>
+          <div class="email-header" style="padding: 24px 32px; background-color: #ffffff; border-bottom: 2px solid #0284c7;">
+            <table width="100%" border="0" cellpadding="0" cellspacing="0">
+              <tr>
+                <td valign="middle">
+                  <div class="brand-title" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 26px; font-weight: 900; color: #0f172a; letter-spacing: -0.03em; line-height: 1;">FR<span class="brand-accent" style="color: #0284c7;">8</span>X</div>
+                  <div class="brand-tag" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #0284c7; margin-top: 4px;">Enterprise Freight Platform</div>
+                </td>
+                <td align="right" valign="middle">
+                  <span style="display: inline-block; padding: 5px 12px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; color: #166534; letter-spacing: 0.05em;">SECURITY DISPATCH</span>
+                </td>
+              </tr>
+            </table>
           </div>
           <div class="email-body">
             ${content}
@@ -502,38 +511,60 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
   html: string;
   text: string;
 } {
-  const firstName = params.firstName || (params.recipientName ? params.recipientName.split(' ')[0] : 'Member');
-  const expiryTime = '15 minutes';
+  const resolvedName = (params.firstName || params.recipientName || '').trim();
+  const firstName = resolvedName ? resolvedName.split(' ')[0] : 'Member';
+  const expiryMinutes = params.expiryMinutes || 15;
+  const expiryTime = `${expiryMinutes} minutes`;
   const verificationLink = params.verificationLink || 'https://con.fr8x.in/verify-email';
   const subject = 'Verify Your FR8X Email Address';
 
   const html = wrapEmailHtml(`
     <p style="font-size: 16px; font-weight: 600; color: #111827; margin-top: 0;">Hello ${firstName},</p>
-    <p>Please verify your email address to activate your account and access all features.</p>
-
-    <div style="text-align: center; margin: 28px 0;">
-      <a href="${verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 28px; background-color: #0284c7; color: #ffffff; text-decoration: none; font-weight: 700; border-radius: 6px; font-size: 15px;">Verify Email</a>
-    </div>
-
-    <p style="font-size: 14px; color: #374151; font-weight: 500;">
-      ⏳ This verification link expires in <strong>${expiryTime}</strong>.
+    <p style="font-size: 15px; color: #334155; line-height: 1.6;">
+      Thank you for registering with FR8X. Please verify your corporate email address to activate your account and access your enterprise freight workspace.
     </p>
 
-    <div style="margin-top: 24px; padding: 14px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+    <!-- Primary Action: Verify Email Button -->
+    <div style="text-align: center; margin: 32px 0;">
+      <a href="${verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 14px 36px; background-color: #0284c7; color: #ffffff !important; text-decoration: none; font-weight: 700; border-radius: 8px; font-size: 15px; letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);">Verify Email Address</a>
+    </div>
+
+    ${params.otpCode ? `
+    <!-- Alternative 6-Digit Verification Code -->
+    <div style="text-align: center; margin: 24px 0 28px; padding: 18px 24px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;">
+      <div style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;">
+        Your 6-Digit Verification Code
+      </div>
+      <div style="font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 32px; font-weight: 800; letter-spacing: 8px; color: #0284c7;">
+        ${params.otpCode}
+      </div>
+      <div style="font-size: 11px; color: #94a3b8; margin-top: 6px;">
+        Single-use verification code · Valid for ${expiryMinutes} minutes
+      </div>
+    </div>
+    ` : ''}
+
+    <p style="font-size: 14px; color: #374151; font-weight: 500;">
+      ⏳ This verification link and code will expire in <strong>${expiryTime}</strong>.
+    </p>
+
+    <!-- Direct Fallback Link Box -->
+    <div style="margin-top: 24px; padding: 14px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
       <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;">
-        If you are having trouble clicking the <strong>Verify Email</strong> button above, copy and paste the following verification URL into your web browser:
+        If you are having trouble clicking the <strong>Verify Email Address</strong> button above, copy and paste the following verification URL directly into your web browser:
       </p>
       <p style="font-size: 12px; word-break: break-all; margin: 0;">
         <a href="${verificationLink}" style="color: #0284c7; text-decoration: underline;">${verificationLink}</a>
       </p>
     </div>
 
-    <div class="security-notice" style="margin-top: 24px;">
-      <strong>Security Notice:</strong> For your security, do not forward this email or share the verification link with anyone.
+    <!-- Security Notice -->
+    <div class="security-notice" style="margin-top: 24px; padding: 14px 16px; background-color: #fefce8; border-left: 4px solid #ca8a04; border-radius: 6px; font-size: 13px; color: #854d0e;">
+      <strong>Security Notice:</strong> For your security, never forward this email or share your verification link or code with anyone. FR8X Team will never ask you for your verification credentials.
     </div>
 
     <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
-      If you did not create an FR8X account, you can safely ignore this email.
+      If you did not create an FR8X account, please ignore this email or contact <a href="mailto:support@fr8x.in" style="color: #0284c7;">support@fr8x.in</a>.
     </p>
 
     <p style="margin-top: 28px; color: #374151;">
@@ -545,18 +576,20 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
 
   const text = `Hello ${firstName},
 
-Please verify your email address to activate your account.
+Please verify your email address to activate your FR8X account.
 
 Verify Email Link:
 ${verificationLink}
+${params.otpCode ? `\nYour 6-Digit Verification Code:\n${params.otpCode}\n` : ''}
+This verification link and code will expire in ${expiryTime}.
 
-This link expires in ${expiryTime}.
+If you are having trouble clicking the button or link above, copy and paste the URL into your web browser:
+${verificationLink}
 
-If you cannot click the button or link above, copy and paste the URL into your browser.
+SECURITY NOTICE:
+Never share this verification link or code with anyone. FR8X Team will never ask you for your verification credentials.
 
-For your security, do not forward this email or share the verification link with anyone.
-
-If you did not create an FR8X account, you can safely ignore this email.
+If you did not create an FR8X account, please ignore this email or contact support@fr8x.in.
 
 Regards,
 

@@ -568,21 +568,54 @@ export default function RegisterPage() {
       }}
     >
       <div className="reg-container">
-        {/* Header */}
+        {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div
-            className="mark"
+          <Link
+            href="/"
             style={{
-              width: '38px',
-              height: '38px',
-              margin: '0 auto 10px',
-              fontSize: '14px',
-              borderRadius: '10px',
+              display: 'inline-flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textDecoration: 'none',
+              marginBottom: '10px',
             }}
           >
-            f8
-          </div>
-          <h1 style={{ fontSize: '11pt', fontWeight: 700, margin: 0, color: 'var(--ink)', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", textTransform: 'uppercase', letterSpacing: '0.3px' }}>
+            <img
+              src="/logo.png"
+              alt="FR8X"
+              style={{
+                width: '52px',
+                height: '52px',
+                margin: '0 auto 8px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+            <div
+              style={{
+                fontSize: '24px',
+                fontWeight: 900,
+                color: 'var(--ink, #0f172a)',
+                letterSpacing: '-0.03em',
+                lineHeight: 1,
+              }}
+            >
+              fr<span style={{ color: 'var(--brand, #0284c7)' }}>8</span>x
+            </div>
+            <div
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: 'var(--brand, #0284c7)',
+                marginTop: '3px',
+              }}
+            >
+              Enterprise Logistics Platform
+            </div>
+          </Link>
+          <h1 style={{ fontSize: '12pt', fontWeight: 700, margin: '4px 0 0', color: 'var(--ink)', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif", textTransform: 'uppercase', letterSpacing: '0.3px' }}>
             Enterprise Freight Entity Registration
           </h1>
           <p style={{ fontSize: '11pt', color: 'var(--mut)', margin: '4px 0 0', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
@@ -1227,8 +1260,8 @@ export default function RegisterPage() {
                 <Clock size={16} /> 15-Minute Expiration Notice
               </div>
               <div>
-                Click the <strong>Verify Email</strong> button inside the email within 15 minutes to confirm your account and activate your workspace.
-                If you do not see it in your inbox, please check your <strong>Spam / Junk</strong> folder.
+                Click the <strong>Verify Email Address</strong> button inside the email within 15 minutes to confirm your account and activate your workspace.
+                You can also enter your 6-digit code or paste the direct link. If you do not see the email in your inbox, please check your <strong>Spam / Junk</strong> folder.
               </div>
             </div>
 

@@ -100,6 +100,7 @@ export interface SendTransactionalEmailParams {
   html?: string;
   recipientName?: string;
   correlationId?: string;
+  clientReference?: string;
   metadata?: Record<string, unknown>;
   replyTo?: string;
   templateId?: string;
@@ -534,7 +535,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
   name: string;
   senderType: EmailSenderType;
 } {
-  const fromName = 'FR8X Team';
+  const brandName = process.env.ZEPTO_MAIL_FROM_NAME || 'FR8X';
 
   switch (type) {
     case 'SUPPORT_REQUEST':
@@ -544,7 +545,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'SUPPORT_CONTACT':
       return {
         address: process.env.ZEPTO_MAIL_SUPPORT_FROM || EMAIL_SENDERS.SUPPORT,
-        name: fromName,
+        name: `${brandName} Support`,
         senderType: 'SUPPORT',
       };
 
@@ -554,7 +555,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     case 'SERVICE_RESTORED':
       return {
         address: process.env.ZEPTO_MAIL_TECH_FROM || EMAIL_SENDERS.TECH,
-        name: fromName,
+        name: `${brandName} Systems`,
         senderType: 'TECH',
       };
 
@@ -568,7 +569,7 @@ export function resolveSenderForType(type: TransactionalEmailType): {
     default:
       return {
         address: process.env.ZEPTO_MAIL_PASSWORD_FROM || EMAIL_SENDERS.PASSWORD,
-        name: fromName,
+        name: `${brandName} Security`,
         senderType: 'PASSWORD',
       };
   }
@@ -758,6 +759,7 @@ export async function sendTransactionalEmail(
       subject: cleanSubject,
       htmlbody: htmlContent,
       textbody: textContent || cleanSubject,
+      client_reference: params.clientReference || correlationId,
     };
 
     // Optional bounce address only if explicitly defined in environment
@@ -1185,6 +1187,61 @@ export async function sendTemplateEmail(
     return mockResult;
   }
 
+  // When pre-rendered HTML is provided (and remote unstyled templates are not explicitly forced),
+  // dispatch directly via sendTransactionalEmail so that pixel-perfect FR8X branded HTML, CTA buttons,
+  // 6-digit codes, and links are delivered with 100% fidelity.
+  if (params.fallbackHtml && process.env.ZEPTO_MAIL_PREFER_REMOTE_TEMPLATES !== 'true') {
+    const txResult = await sendTransactionalEmail({
+      type:
+        templateConfig.senderType === 'PASSWORD'
+          ? 'EMAIL_VERIFICATION'
+          : templateConfig.senderType === 'SUPPORT'
+            ? 'SUPPORT_REQUEST'
+            : 'TECH_NOTIFICATION',
+      senderType: templateConfig.senderType,
+      to: cleanTo,
+      recipientName: params.recipientName,
+      subject: params.fallbackSubject || templateConfig.defaultSubject,
+      html: params.fallbackHtml,
+      text: params.fallbackText,
+      correlationId,
+      clientReference,
+    });
+
+    const finalResult: SendTemplateEmailResult = {
+      success: txResult.success,
+      messageId: txResult.messageId,
+      correlationId: txResult.correlationId,
+      template: params.template,
+      templateKey,
+      templateAlias: configuredAlias,
+      from: txResult.from,
+      to: txResult.to,
+      subject: txResult.subject,
+      provider: txResult.provider as any,
+      error: txResult.error,
+      details: txResult.details,
+    };
+
+    if (txResult.success) {
+      recordEmailEvent({
+        eventId: correlationId,
+        clientReference,
+        template: params.template,
+        templateKey,
+        sender: txResult.from,
+        recipient: cleanTo,
+        provider: txResult.provider as any,
+        providerMessageId: txResult.messageId,
+        status: 'sent',
+        sentAt: new Date().toISOString(),
+      });
+      idempotencyCache.set(clientReference, { timestamp: now, result: finalResult });
+    }
+
+    return finalResult;
+  }
+
   // Live ZeptoMail Template API dispatch
   const templateEndpoint =
     process.env.ZEPTO_MAIL_TEMPLATE_URL?.trim() ||
@@ -1465,22 +1522,16 @@ export const EmailService = {
     console.log(`   Expires In:        ${expiryMinutes} minutes`);
     console.log('================================================================================\n');
 
-    return sendTemplateEmail({
-      template: 'FR8X_EMAIL_VERIFICATION',
+    return sendTransactionalEmail({
+      type: 'EMAIL_VERIFICATION',
+      senderType: 'PASSWORD',
       to: targetEmail,
       recipientName: params.recipientName,
-      mergeInfo: {
-        first_name: params.recipientName || 'Member',
-        recipient_name: params.recipientName || targetEmail,
-        verification_link: params.verificationLink || '',
-        otp_code: params.otpCode || '',
-        expiry_minutes: expiryMinutes,
-      },
-      clientReference: params.clientReference,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
       correlationId: params.correlationId,
-      fallbackSubject: tmpl.subject,
-      fallbackHtml: tmpl.html,
-      fallbackText: tmpl.text,
+      clientReference: params.clientReference,
     });
   },
 
@@ -1502,30 +1553,25 @@ export const EmailService = {
     ) & { correlationId?: string; clientReference?: string }
   ): Promise<TransactionalEmailResult> {
     const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const expiryMinutes = params.expiryMinutes || 1;
     const tmpl = renderOtpChallengeEmail({
       recipient: targetEmail,
       recipientName: params.recipientName,
       otpCode: params.otpCode,
-      expiryMinutes: params.expiryMinutes || 1,
+      expiryMinutes,
       correlationId: params.correlationId,
     });
 
-    return sendTemplateEmail({
-      template: 'FR8X_SECURITY_OTP',
+    return sendTransactionalEmail({
+      type: 'AUTH_OTP',
+      senderType: 'PASSWORD',
       to: targetEmail,
       recipientName: params.recipientName,
-      mergeInfo: {
-        first_name: params.recipientName || 'Member',
-        recipient_name: params.recipientName || targetEmail,
-        otp_code: params.otpCode,
-        expiry_minutes: params.expiryMinutes || 1,
-        challenge_id: params.correlationId || '',
-      },
-      clientReference: params.clientReference,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
       correlationId: params.correlationId,
-      fallbackSubject: tmpl.subject,
-      fallbackHtml: tmpl.html,
-      fallbackText: tmpl.text,
+      clientReference: params.clientReference,
     });
   },
 
@@ -1548,30 +1594,25 @@ export const EmailService = {
     ) & { correlationId?: string; clientReference?: string }
   ): Promise<TransactionalEmailResult> {
     const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const expiryMinutes = params.expiryMinutes || 15;
     const tmpl = renderPasswordResetEmail({
       recipient: targetEmail,
       recipientName: params.recipientName,
       resetLink: params.resetLink,
       otpCode: params.otpCode,
-      expiryMinutes: params.expiryMinutes || 15,
+      expiryMinutes,
     });
 
-    return sendTemplateEmail({
-      template: 'FR8X_FORGOT_PASSWORD',
+    return sendTransactionalEmail({
+      type: 'PASSWORD_RESET',
+      senderType: 'PASSWORD',
       to: targetEmail,
       recipientName: params.recipientName,
-      mergeInfo: {
-        first_name: params.recipientName || 'Member',
-        recipient_name: params.recipientName || targetEmail,
-        reset_link: params.resetLink || '',
-        otp_code: params.otpCode || '',
-        expiry_minutes: params.expiryMinutes || 15,
-      },
-      clientReference: params.clientReference,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
       correlationId: params.correlationId,
-      fallbackSubject: tmpl.subject,
-      fallbackHtml: tmpl.html,
-      fallbackText: tmpl.text,
+      clientReference: params.clientReference,
     });
   },
 
@@ -1602,22 +1643,16 @@ export const EmailService = {
       securityLink: params.securityLink,
     });
 
-    return sendTemplateEmail({
-      template: 'FR8X_PASSWORD_CHANGED',
+    return sendTransactionalEmail({
+      type: 'PASSWORD_CHANGED',
+      senderType: 'PASSWORD',
       to: targetEmail,
       recipientName: params.recipientName,
-      mergeInfo: {
-        first_name: params.recipientName || 'Member',
-        recipient_name: params.recipientName || targetEmail,
-        changed_at: params.changedAt || new Date().toUTCString(),
-        ip_address: params.ipAddress || '',
-        security_link: params.securityLink || '',
-      },
-      clientReference: params.clientReference,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
       correlationId: params.correlationId,
-      fallbackSubject: tmpl.subject,
-      fallbackHtml: tmpl.html,
-      fallbackText: tmpl.text,
+      clientReference: params.clientReference,
     });
   },
 
@@ -1635,24 +1670,16 @@ export const EmailService = {
       ipAddress: params.ipAddress,
     });
 
-    return sendTemplateEmail({
-      template: 'FR8X_LOGIN_SECURITY_ALERT',
+    return sendTransactionalEmail({
+      type: 'LOGIN_SECURITY',
+      senderType: 'PASSWORD',
       to: params.to,
       recipientName: 'Valued Member',
-      mergeInfo: {
-        first_name: 'Member',
-        recipient_name: params.to,
-        login_time: new Date().toUTCString(),
-        ip_address: params.ipAddress || 'Unknown',
-        location: 'Detected Session',
-        device: params.details || 'Web Client',
-        security_link: `${process.env.APP_URL || 'https://con.fr8x.in'}/reset-password`,
-      },
-      clientReference: params.clientReference,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
       correlationId: params.correlationId,
-      fallbackSubject: tmpl.subject,
-      fallbackHtml: tmpl.html,
-      fallbackText: tmpl.text,
+      clientReference: params.clientReference,
     });
   },
 

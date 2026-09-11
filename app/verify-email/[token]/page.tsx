@@ -119,27 +119,55 @@ export default function TokenVerifyEmailPage() {
         }}
       >
         <div style={{ marginBottom: '20px' }}>
-          <div
+          <Link
+            href="/"
             style={{
-              width: '48px',
-              height: '48px',
-              margin: '0 auto 12px',
-              borderRadius: '12px',
-              background: '#0284c7',
-              color: '#ffffff',
-              display: 'flex',
+              display: 'inline-flex',
+              flexDirection: 'column',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-              fontWeight: 800,
+              textDecoration: 'none',
+              marginBottom: '10px',
             }}
           >
-            f8
-          </div>
-          <h1 style={{ fontSize: '20px', fontWeight: 700, margin: 0, color: '#0f172a' }}>
+            <img
+              src="/logo.png"
+              alt="FR8X"
+              style={{
+                width: '54px',
+                height: '54px',
+                margin: '0 auto 8px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+            <div
+              style={{
+                fontSize: '24px',
+                fontWeight: 900,
+                color: '#0f172a',
+                letterSpacing: '-0.03em',
+                lineHeight: 1,
+              }}
+            >
+              fr<span style={{ color: '#0284c7' }}>8</span>x
+            </div>
+            <div
+              style={{
+                fontSize: '10.5px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                color: '#0284c7',
+                marginTop: '3px',
+              }}
+            >
+              Enterprise Logistics Platform
+            </div>
+          </Link>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, margin: '6px 0 0', color: '#0f172a' }}>
             FR8X Email Verification
           </h1>
-          <p style={{ fontSize: '13px', color: '#64748b', margin: '6px 0 0' }}>
+          <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
             FR8X Team · Official Account Verification
           </p>
         </div>
