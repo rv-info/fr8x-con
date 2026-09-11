@@ -259,5 +259,110 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update, delete: if isPlatformAdmin();
     }
+
+    // =========================================================================
+    // CORE ENTERPRISE COLLECTIONS (SECTION 13 SPECIFICATION)
+    // =========================================================================
+
+    // Organizations & Member Scopes
+    match /organizations/{organizationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isPlatformAdmin() || (isAuthenticated() && request.auth.uid in resource.data.adminUids);
+      allow delete: if isPlatformAdmin();
+
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        allow write: if isPlatformAdmin() || (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/organizations/$(organizationId)).data.adminUids);
+      }
+    }
+
+    // Server-Only Authentication & Security Collections (Client-Writable: FORBIDDEN)
+    match /securityLoginAttempts/{attemptId} {
+      allow read: if isGodfather();
+      allow write: if false; // Strict Server-Side Only
+    }
+
+    match /securityOtps/{otpId} {
+      allow read, write: if false; // Strict Server-Side Only (Never exposed to client)
+    }
+
+    match /emailEvents/{eventId} {
+      allow read: if isGodfather();
+      allow write: if false; // Immutable Audit Log (Server-Side Only)
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isGodfather();
+      allow write: if false; // Cryptographically Immutable Audit Log
+    }
+
+    match /supportTickets/{ticketId} {
+      allow read: if isPlatformAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isPlatformAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['message', 'updatedAt', 'comments']));
+      allow delete: if isPlatformAdmin();
+    }
+
+    match /promotionalSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /pricingPlans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if hasGodfatherRole('godfather_finance');
+    }
+
+    // Application Logistics & Tender Collections
+    match /shipments/{shipmentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
+      allow update: if isPlatformAdmin() || (isAuthenticated() && resource.data.ownerUid == request.auth.uid);
+      allow delete: if isPlatformAdmin();
+
+      match /shipmentCargo/{cargoId} {
+        allow read: if isAuthenticated();
+        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
+      }
+
+      match /shipmentEquipment/{equipId} {
+        allow read: if isAuthenticated();
+        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
+      }
+
+      match /shipmentRouting/{routingId} {
+        allow read: if isAuthenticated();
+        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
+      }
+    }
+
+    match /systemIssues/{issueId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /jobApplications/{appId} {
+      allow read: if isPlatformAdmin() || (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.posterUid == request.auth.uid));
+      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin() || (isAuthenticated() && resource.data.applicantUid == request.auth.uid);
+    }
+
+    match /auctionBids/{bidId} {
+      allow read: if isAuthenticated() && (resource.data.bidderUid == request.auth.uid || isPlatformAdmin());
+      allow create: if isAuthenticated() && request.resource.data.bidderUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    match /blacklist/{entryId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /threads/{threadId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
+    }
   }
 }

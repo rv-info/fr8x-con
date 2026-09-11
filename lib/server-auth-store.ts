@@ -183,6 +183,9 @@ class ServerSecurityStore {
   private firstLoginOtpSendTimestamps: Map<string, number[]> = new Map();
   private failedAttemptsByIdentifier: Map<string, { count: number; lockedUntil?: number }> = new Map();
   private otpCooldowns: Map<string, number> = new Map();
+  private activeOtpSendLocks: Set<string> = new Set();
+  private passwordResetSendTimestamps: Map<string, number[]> = new Map();
+  private passwordChangeTimestamps: Map<string, number[]> = new Map();
 
   constructor() {
     this.loadPersistedState();
@@ -540,7 +543,7 @@ class ServerSecurityStore {
         token: verificationToken,
         otpCode: verificationOtp,
         expiryMinutes: 1440,
-      }).catch((err) => {
+      }).catch((err: any) => {
         console.error('[Security] Failed to dispatch verification email:', err.message);
         return { success: false, error: err.message };
       });
@@ -821,7 +824,7 @@ class ServerSecurityStore {
         token: verificationToken,
         otpCode: verificationOtp,
         expiryMinutes: 1440,
-      }).catch((err) => {
+      }).catch((err: any) => {
         console.error('[Security] Failed to resend verification email:', err.message);
         return { success: false, error: err.message };
       });
@@ -974,7 +977,7 @@ class ServerSecurityStore {
         maskedEmail: maskEmail(user.email),
         attemptsRemaining: 0,
         user,
-        message: `Your account has been locked due to 3 consecutive failed password attempts. Only the Godfather administrator can remove the block upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
+        message: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
       };
     }
 
@@ -993,15 +996,23 @@ class ServerSecurityStore {
         const cleanEmail = user.email.toLowerCase();
         const now = Date.now();
         const sendTimestamps = this.firstLoginOtpSendTimestamps.get(cleanEmail) || [];
-        const validTimestamps = sendTimestamps.filter((t) => t > now - 25 * 60 * 60 * 1000);
+        const validTimestamps = sendTimestamps.filter((t) => t > now - 24 * 60 * 60 * 1000);
         this.firstLoginOtpSendTimestamps.set(cleanEmail, validTimestamps);
 
         if (validTimestamps.length >= 3) {
           return {
             success: false,
-            message: 'Unable to sign in. Please try again later or contact platform support.',
+            message: 'Maximum daily verification code requests reached. Please try again later or contact tech@fr8x.in.',
           };
         }
+
+        if (this.activeOtpSendLocks.has(cleanEmail)) {
+          return {
+            success: false,
+            message: 'A verification code is already being sent. Please check your inbox.',
+          };
+        }
+        this.activeOtpSendLocks.add(cleanEmail);
 
         const existingFirstLogin = this.activeFirstLoginOtps.get(cleanEmail);
         const rawOtp = generateSecureOtp(
@@ -1041,10 +1052,14 @@ class ServerSecurityStore {
           otpCode: rawOtp,
           expiryMinutes: 1,
           correlationId: `FR8X-AUTH-OTP-${challengeId}`,
-        }).catch((err) => {
-          console.error('[UserAuth] Failed to send first-login OTP email:', err.message);
-          return { success: false, error: err.message };
-        });
+        })
+          .catch((err: any) => {
+            console.error('[UserAuth] Failed to send first-login OTP email:', err.message);
+            return { success: false, error: err.message };
+          })
+          .finally(() => {
+            this.activeOtpSendLocks.delete(cleanEmail);
+          });
 
         return {
           success: true,
@@ -1080,7 +1095,7 @@ class ServerSecurityStore {
     if (user.failedLoginAttempts >= maxAttempts) {
       user.status = 'blocked';
       user.blockedAt = new Date().toISOString();
-      user.blockedReason = 'Account locked after 3 consecutive failed password attempts. Godfather unblock required.';
+      user.blockedReason = 'Account locked after 3 consecutive failed password attempts. Contact tech@fr8x.in.';
 
       this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts });
       this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts });
@@ -1125,7 +1140,7 @@ class ServerSecurityStore {
         maskedEmail: maskEmail(user.email),
         attemptsRemaining: 0,
         user,
-        message: `Your account has been locked after 3 consecutive failed password attempts. Only the Godfather administrator can remove this block upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
+        message: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
       };
     }
 
@@ -1143,10 +1158,7 @@ class ServerSecurityStore {
       success: false,
       attemptsRemaining: remaining,
       user,
-      message:
-        remaining === 1
-          ? 'Invalid password. 1 attempt remaining before password reset OTP is dispatched.'
-          : `Invalid password. ${remaining} attempts remaining.`,
+      message: 'Invalid password. Please check your credentials and try again.',
     };
   }
 
@@ -1239,14 +1251,21 @@ class ServerSecurityStore {
     const now = Date.now();
     const sendTimestamps = this.firstLoginOtpSendTimestamps.get(cleanEmail) || [];
     const validTimestamps = sendTimestamps.filter(
-      (t) => t > now - 25 * 60 * 60 * 1000
+      (t) => t > now - 24 * 60 * 60 * 1000
     );
     this.firstLoginOtpSendTimestamps.set(cleanEmail, validTimestamps);
 
     if (validTimestamps.length >= 3) {
       return {
         success: false,
-        error: 'Unable to resend code. Please try again later or contact platform support.',
+        error: 'Maximum daily verification code requests reached. Please try again later or contact tech@fr8x.in.',
+      };
+    }
+
+    if (this.activeOtpSendLocks.has(cleanEmail)) {
+      return {
+        success: false,
+        error: 'A verification code is currently being sent. Please check your inbox.',
       };
     }
 
@@ -1286,16 +1305,21 @@ class ServerSecurityStore {
     });
     validTimestamps.push(now);
 
+    this.activeOtpSendLocks.add(cleanEmail);
     const emailPromise = EmailService.sendOtpEmail({
       to: cleanEmail,
       recipientName: user?.displayName || 'Member',
       otpCode: rawOtp,
       expiryMinutes: 1,
       correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
-    }).catch((err) => {
-      console.error('[UserAuth] Failed to resend first-login OTP email:', err.message);
-      return { success: false, error: err.message };
-    });
+    })
+      .catch((err: any) => {
+        console.error('[UserAuth] Failed to resend first-login OTP email:', err.message);
+        return { success: false, error: err.message };
+      })
+      .finally(() => {
+        this.activeOtpSendLocks.delete(cleanEmail);
+      });
 
     return { success: true, expiresIn: 15, emailPromise };
   }
@@ -1334,7 +1358,7 @@ class ServerSecurityStore {
         recipientName: user.displayName || 'Member',
         subject: `FR8X Account Unblocked — ${user.email}`,
         message: `Your FR8X account (${user.email}) has been reviewed and successfully unblocked by the Godfather administrator (${unblockedBy}).\n\nReason: ${unblockReason.trim()}\n\nYou may now sign in to your FR8X account using your credentials.`,
-      }).catch((err) => {
+      }).catch((err: any) => {
         console.error(`[Security] Failed to dispatch unblock email to ${user.email}:`, err.message);
       });
     }
@@ -1440,17 +1464,17 @@ class ServerSecurityStore {
     EmailService.sendSecurityAlertEmail({
       to: user.email,
       subject: `Account Blocked: ${user.email}`,
-      details: `Your FR8X account (${user.email}) has been locked after 3 consecutive failed password attempts (${blockReason}). Origin Network IP: ${ip}. For security policy enforcement, this block CANNOT be removed automatically and self-service password reset is disabled. To request account review and unblocking, you must send an email from this registered email address (${user.email}) to support@fr8x.in for administrator verification by the Godfather admin.`,
+      details: `Your FR8X account (${user.email}) has been locked after 3 consecutive failed password attempts (${blockReason}). Origin Network IP: ${ip}. For security policy enforcement, this block CANNOT be removed automatically and self-service password reset is disabled. To request account review and unblocking, contact tech@fr8x.in from this registered email address (${user.email}).`,
       ipAddress: ip,
     })
-      .then((res) => {
+      .then((res: any) => {
         if (!res.success) {
           console.error(`[Security] Failed to dispatch account blocked security email to ${user.email}:`, res.error);
         } else {
           console.log(`[Security] Account blocked security email dispatched to ${user.email}, msgId: ${res.messageId}`);
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error(`[Security] Failed to dispatch account blocked security email to ${user.email}:`, err.message);
       });
   }
@@ -1557,14 +1581,14 @@ class ServerSecurityStore {
       otpCode,
       expiryMinutes: 1,
     })
-      .then((res) => {
+      .then((res: any) => {
         if (!res.success) {
           console.error(`[Security] Failed to dispatch OTP email to ${email}:`, res.error);
         } else {
           console.log(`[Security] OTP email successfully dispatched to ${email}, msgId: ${res.messageId}`);
         }
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error(`[Security] Failed to dispatch OTP email to ${email}:`, err.message);
       });
 
@@ -1668,7 +1692,7 @@ class ServerSecurityStore {
       resetLink,
       expiryMinutes: 15,
     })
-      .then((res) => {
+      .then((res: any) => {
         if (!res.success) {
           console.error(`[Security] Failed to dispatch password reset OTP email to ${user.email}:`, res.error);
         } else {
@@ -1676,7 +1700,7 @@ class ServerSecurityStore {
         }
         return res;
       })
-      .catch((err) => {
+      .catch((err: any) => {
         console.error('[Security] Failed to dispatch password reset OTP email:', err.message);
         return { success: false, error: err.message };
       });
@@ -1698,13 +1722,26 @@ class ServerSecurityStore {
     if (user && user.status === 'blocked') {
       return {
         success: false,
-        error: `Your account is locked due to 3 failed password attempts. Self-service password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered corporate email (${maskEmail(user.email)}).`,
+        error: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
         otpDispatched: false,
       };
     }
 
-    // 60-second cooldown guard
     const now = Date.now();
+    const resetTimestamps = this.passwordResetSendTimestamps.get(cleanEmail) || [];
+    const validResetTimestamps = resetTimestamps.filter((t) => t > now - 24 * 60 * 60 * 1000);
+    this.passwordResetSendTimestamps.set(cleanEmail, validResetTimestamps);
+
+    if (validResetTimestamps.length >= 3) {
+      return {
+        success: false,
+        error: 'Maximum daily password reset requests reached. Please try again later or contact tech@fr8x.in.',
+        otpDispatched: false,
+      };
+    }
+    validResetTimestamps.push(now);
+
+    // 60-second cooldown guard
     const lastSentAt = this.otpCooldowns.get(`reset:${cleanEmail}`) || 0;
     if (now - lastSentAt < 60 * 1000) {
       const waitSeconds = Math.ceil((60 * 1000 - (now - lastSentAt)) / 1000);
@@ -1873,9 +1910,21 @@ class ServerSecurityStore {
     if (user.status === 'blocked') {
       return {
         success: false,
-        error: 'Your account is locked due to 3 failed password attempts. Password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered email address.',
+        error: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
       };
     }
+
+    const changeTimestamps = this.passwordChangeTimestamps.get(cleanEmail) || [];
+    const validChangeTimestamps = changeTimestamps.filter((t) => t > Date.now() - 24 * 60 * 60 * 1000);
+    this.passwordChangeTimestamps.set(cleanEmail, validChangeTimestamps);
+
+    if (validChangeTimestamps.length >= 3) {
+      return {
+        success: false,
+        error: 'Maximum daily password changes reached. Please contact tech@fr8x.in.',
+      };
+    }
+    validChangeTimestamps.push(Date.now());
 
     // OTP verified successfully: update password credentials
     user.salt = 'pbkdf2_managed';
@@ -1902,7 +1951,7 @@ class ServerSecurityStore {
     const emailPromise = EmailService.sendPasswordChangedEmail({
       to: user.email,
       ipAddress: ip,
-    }).catch((err) => {
+    }).catch((err: any) => {
       console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
       return { success: false, error: err.message };
     });
@@ -1972,7 +2021,7 @@ class ServerSecurityStore {
     if (user.status === 'blocked') {
       return {
         success: false,
-        error: 'Your account is locked due to 3 failed password attempts. Password reset is disabled. Only the Godfather administrator can unblock your account upon receiving an email request from your registered email address.',
+        error: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
       };
     }
 
@@ -2017,7 +2066,7 @@ class ServerSecurityStore {
     const emailPromise = EmailService.sendPasswordChangedEmail({
       to: user.email,
       ipAddress: ip,
-    }).catch((err) => {
+    }).catch((err: any) => {
       console.error('[Security] Failed to dispatch password changed confirmation email:', err.message);
       return { success: false, error: err.message };
     });

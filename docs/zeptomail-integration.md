@@ -39,8 +39,9 @@ The following variables should be added to your deployment environment (Vercel, 
 
 | Variable Name | Required | Default / Recommended Value | Description |
 | :--- | :---: | :--- | :--- |
-| `ZEPTO_MAIL_API_URL` | Optional | `https://api.zeptomail.in/v1.1/email` | Regional ZeptoMail REST API endpoint (India DC: `.in`, Global DC: `.com`) |
-| `ZEPTO_MAIL_API_KEY` | **Required** | *(Entered securely via dashboard / secrets manager)* | ZeptoMail Send Mail Token for `agent_1` |
+| `ZEPTO_MAIL_API_URL` | Optional | `https://api.zeptomail.in/v1.1/email` | Regional ZeptoMail REST API endpoint (India DC: `api.zeptomail.in`) |
+| `ZEPTO_MAIL_API_KEY` | **Required** | *(Entered securely via dashboard / secrets manager)* | ZeptoMail Send Mail Token for `FR8X_PRODUCTION` |
+| `ZEPTO_MAIL_AGENT` | Optional | `FR8X_PRODUCTION` | Agent Name (Alias: `1581021668e479ce`) |
 | `ZEPTO_MAIL_FROM_NAME` | Optional | `FR8X` | Display sender name |
 | `ZEPTO_MAIL_PASSWORD_FROM` | Optional | `password@fr8x.in` | Dedicated identity for password and security notifications |
 | `ZEPTO_MAIL_SUPPORT_FROM` | Optional | `support@fr8x.in` | Dedicated identity for customer support and tickets |
@@ -55,7 +56,7 @@ Template values are committed in `.env.example`. Never commit the actual `.env` 
 ## 3. How to Configure the Send Mail Token Securely
 
 1. In the ZeptoMail Web Console:
-   - Navigate to **Mail Agents** &rarr; Select `agent_1`.
+   - Navigate to **Mail Agents** &rarr; Select `FR8X_PRODUCTION` (Alias: `1581021668e479ce`).
    - Verify that `fr8x.in` is active and marked as **Verified**.
    - Go to **SMTP / API** &rarr; **API** tab.
    - Click **Generate Token** (or use existing agent Send Mail Token).
@@ -169,7 +170,7 @@ This sends an email from `password@fr8x.in` with subject `FR8X ZEPTOMAIL TEST` a
 
 If a token is suspected of being exposed or during scheduled rotation:
 
-1. Log in to ZeptoMail Console &rarr; **Mail Agents** &rarr; `agent_1`.
+1. Log in to ZeptoMail Console &rarr; **Mail Agents** &rarr; `FR8X_PRODUCTION` (Alias: `1581021668e479ce`).
 2. Go to **SMTP / API** &rarr; **API** &rarr; Generate a **NEW** token.
 3. Update the deployment environment variable `ZEPTO_MAIL_API_KEY` with the new token.
 4. Redeploy the server application or restart container processes.

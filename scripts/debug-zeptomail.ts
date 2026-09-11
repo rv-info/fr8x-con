@@ -101,9 +101,7 @@ async function debugZeptoMail() {
   const testRecipient = 'password@fr8x.in';
 
   console.log(`[CONFIG] Endpoint:        ${endpoint}`);
-  console.log(`[CONFIG] Has API Key:     ${Boolean(apiKey)}`);
-  console.log(`[CONFIG] Key Prefix:      ${apiKey ? apiKey.substring(0, 20) + '...' : 'NONE'}`);
-  console.log(`[CONFIG] Key Length:      ${apiKey.length} chars`);
+  console.log(`[CONFIG] Key Status:      ${apiKey ? 'CONFIGURED' : 'NOT CONFIGURED'}`);
   console.log(`[CONFIG] Test Recipient:  ${testRecipient}`);
   console.log('--------------------------------------------------------------------------------');
 

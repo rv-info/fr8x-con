@@ -42,15 +42,42 @@ import {
 
 // ─── COLLECTIONS ─────────────────────────────────────────────────────────────
 export const COLLECTIONS = {
+  // Core Collections (Section 13)
+  USERS: 'users',
+  ORGANIZATIONS: 'organizations',
+  ORGANIZATION_MEMBERS: 'members', // subcollection: organizations/{organizationId}/members
+  SECURITY_LOGIN_ATTEMPTS: 'securityLoginAttempts',
+  SECURITY_OTPS: 'securityOtps',
+  SECURITY_EVENTS: 'securityEvents',
+  EMAIL_EVENTS: 'emailEvents',
+  SUPPORT_TICKETS: 'supportTickets',
+  PROMOTIONAL_SETTINGS: 'promotionalSettings',
+  PRICING_PLANS: 'pricingPlans',
+  AUDIT_LOGS: 'auditLogs',
+
+  // Application Collections (Section 13)
+  PROFILES: 'profiles',
+  FEEDS: 'feeds',
   POSTS: 'posts',
   COMMENTS: 'comments',
-  AUCTIONS: 'auctions',
-  BIDS: 'bids',
-  RATES: 'rates',
-  TOPICS: 'nexusTopics',
+  THREADS: 'threads',
   REVIEWS: 'reviews',
-  CASES: 'blacklistCases',
+  BLACKLIST: 'blacklist',
+  JOBS: 'jobs',
+  JOB_APPLICATIONS: 'jobApplications',
+  AUCTIONS: 'auctions',
+  AUCTION_BIDS: 'auctionBids',
+  RATES: 'rates',
+  SHIPMENTS: 'shipments',
+  SHIPMENT_CARGO: 'shipmentCargo',
+  SHIPMENT_EQUIPMENT: 'shipmentEquipment',
+  SHIPMENT_ROUTING: 'shipmentRouting',
   NOTIFICATIONS: 'notifications',
+  SYSTEM_ISSUES: 'systemIssues',
+
+  // Additional Operational Collections
+  TOPICS: 'nexusTopics',
+  CASES: 'blacklistCases',
   EVENTS: 'events',
   PRESENCE: 'presence',
   CONFIGS: 'rankingConfigs',
@@ -58,6 +85,7 @@ export const COLLECTIONS = {
   KYC: 'kyc_records',
   BIDDER_GROUPS: 'bidderGroups',
   ADS: 'ads',
+  BIDS: 'bids',
 } as const;
 
 // ─── POSTS REPOSITORY ────────────────────────────────────────────────────────

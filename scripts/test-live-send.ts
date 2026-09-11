@@ -27,7 +27,7 @@ async function testLiveSend() {
 
   console.log('Sending live test to:', targetEmail);
   console.log('ZeptoMail URL:', url);
-  console.log('Auth Header:', apiKey.substring(0, 30) + '...');
+  console.log('ZeptoMail Token: CONFIGURED');
 
   const authHeader = apiKey.toLowerCase().startsWith('zoho-enczapikey')
     ? apiKey

@@ -21,7 +21,7 @@
  * 3. Never log passwords, OTPs, verification/reset tokens, authorization headers, or ZeptoMail keys.
  * 4. Communicates directly with official Zoho ZeptoMail transactional REST API (JSON payload, TLS 1.2+).
  */
-
+import crypto from 'crypto';
 import {
   renderEmailVerificationEmail,
   renderPasswordResetEmail,
@@ -356,20 +356,25 @@ export interface SendTemplateEmailResult extends TransactionalEmailResult {
 export interface EmailEventRecord {
   id: string;
   eventId: string;
+  userId?: string;
   clientReference: string;
   template?: string;
   templateKey?: string;
   sender: string;
   recipient: string;
+  recipientHash?: string;
+  eventType?: string;
   provider: 'Zoho_ZeptoMail' | 'Sandbox_Mock' | 'Zoho_SMTP';
   providerMessageId?: string;
   status: 'sent' | 'processed' | 'delivered' | 'soft_bounce' | 'hard_bounce' | 'failed';
   createdAt: string;
+  completedAt?: string;
   sentAt?: string;
   deliveredAt?: string;
   failedAt?: string;
   failureCode?: string;
   failureReason?: string;
+  failureCategory?: string;
 }
 
 // Backwards-compatible param and response interfaces
@@ -437,13 +442,11 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
     isOperational: hasToken,
     endpoint,
     hasToken,
-    tokenMasked: hasToken
-      ? `${token.substring(0, 6)}••••••••${token.slice(-4)}`
-      : undefined,
+    tokenMasked: hasToken ? 'CONFIGURED' : undefined,
     notes: hasToken
       ? `Operational: ZeptoMail REST API active (${endpoint}).`
       : 'Pending: ZEPTO_MAIL_API_KEY is not configured in environment (operating in local sandbox mode).',
-    agent: 'agent_1',
+    agent: process.env.ZEPTO_MAIL_AGENT || 'FR8X_PRODUCTION',
     domain: 'fr8x.in',
   };
 }
@@ -721,9 +724,8 @@ export async function sendTransactionalEmail(
 
   // ── Production Dispatch via Zoho ZeptoMail REST API ───────────────────────
   if (apiKey && apiKey !== 'undefined') {
-    const authHeader = apiKey.toLowerCase().startsWith('zoho-enczapikey')
-      ? apiKey
-      : `Zoho-enczapikey ${apiKey}`;
+    const cleanToken = apiKey.replace(/^zoho-enczapikey\s+/i, '').trim();
+    const authHeader = `Zoho-enczapikey ${cleanToken}`;
 
     const recipientName =
       params.recipientName || cleanTo.split('@')[0].replace(/[._-]/g, ' ');
@@ -1050,18 +1052,49 @@ const idempotencyCache = new Map<string, { timestamp: number; result: SendTempla
 const IDEMPOTENCY_WINDOW_MS = 10_000; // 10 seconds duplicate suppression
 
 export function recordEmailEvent(
-  event: Omit<EmailEventRecord, 'id' | 'createdAt'>
+  event: Omit<EmailEventRecord, 'id' | 'createdAt'> & Partial<Pick<EmailEventRecord, 'createdAt'>>
 ): EmailEventRecord {
+  const cleanRecipient = (event.recipient || '').trim().toLowerCase();
+  const recipientHash =
+    event.recipientHash ||
+    (cleanRecipient ? crypto.createHash('sha256').update(cleanRecipient).digest('hex').substring(0, 16) : undefined);
+
   const fullEvent: EmailEventRecord = {
     id: `eml-evt-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    createdAt: new Date().toISOString(),
+    createdAt: event.createdAt || new Date().toISOString(),
+    completedAt:
+      event.completedAt ||
+      (event.status === 'sent' || event.status === 'delivered' || event.status === 'failed'
+        ? new Date().toISOString()
+        : undefined),
     ...event,
+    recipientHash,
   };
-  emailEventStore.unshift(fullEvent);
+
+  // Redact any accidental credential leaks before storing
+  const sanitized: EmailEventRecord = JSON.parse(
+    JSON.stringify(fullEvent, (key, value) => {
+      const lower = key.toLowerCase();
+      if (
+        lower.includes('token') && key !== 'clientReference' ||
+        lower.includes('password') ||
+        lower.includes('secret') ||
+        lower.includes('apikey') ||
+        lower.includes('auth') && key !== 'failureCategory' ||
+        lower === 'otp' ||
+        lower === 'otpcode'
+      ) {
+        return undefined;
+      }
+      return value;
+    })
+  );
+
+  emailEventStore.unshift(sanitized);
   if (emailEventStore.length > MAX_EMAIL_EVENTS) {
     emailEventStore.pop();
   }
-  return fullEvent;
+  return sanitized;
 }
 
 export function getEmailEvents(): EmailEventRecord[] {
@@ -1183,9 +1216,10 @@ export async function sendTemplateEmail(
   // Live ZeptoMail Template API dispatch
   const templateEndpoint =
     process.env.ZEPTO_MAIL_TEMPLATE_URL?.trim() ||
-    'https://api.zeptomail.com/v1.1/email/template';
+    'https://api.zeptomail.in/v1.1/email/template';
 
-  const authHeader = token.startsWith('Zoho-enczapikey') ? token : `Zoho-enczapikey ${token}`;
+  const cleanToken = token.replace(/^zoho-enczapikey\s+/i, '').trim();
+  const authHeader = `Zoho-enczapikey ${cleanToken}`;
   const payload: Record<string, any> = {
     bounce_address: process.env.ZEPTO_MAIL_BOUNCE_ADDRESS?.trim() || undefined,
     from: {
@@ -1298,6 +1332,7 @@ export async function sendTemplateEmail(
       });
 
       idempotencyCache.set(clientReference, { timestamp: now, result });
+      return result;
     }
 
     // Fallback gracefully to pre-rendered HTML transactional send if template key is not provisioned on live ZeptoMail
@@ -1923,6 +1958,38 @@ export const EmailService = {
       html: tmpl.html,
       correlationId: params.correlationId,
     });
+  },
+
+  // ── Section 6 Exact Standard Methods ─────────────────────────────────────────
+  sendWelcome(params: any): Promise<TransactionalEmailResult> {
+    return this.sendWelcomeEmail(params);
+  },
+  sendVerification(params: any): Promise<TransactionalEmailResult> {
+    return this.sendVerificationEmail(params);
+  },
+  sendSecurityOtp(params: any): Promise<TransactionalEmailResult> {
+    return this.sendOtpEmail(params);
+  },
+  sendForgotPassword(params: any): Promise<TransactionalEmailResult> {
+    return this.sendPasswordResetEmail(params);
+  },
+  sendPasswordChanged(params: any): Promise<TransactionalEmailResult> {
+    return this.sendPasswordChangedEmail(params);
+  },
+  sendLoginSecurityAlert(params: any): Promise<TransactionalEmailResult> {
+    return this.sendSecurityAlertEmail(params);
+  },
+  sendPricingPlanUpdate(params: any): Promise<TransactionalEmailResult> {
+    return this.sendPricingEmail(params);
+  },
+  sendBillingIssue(params: any): Promise<TransactionalEmailResult> {
+    return this.sendBillingIssueEmail(params);
+  },
+  sendSupportTicket(params: any): Promise<TransactionalEmailResult> {
+    return this.sendSupportEmail(params);
+  },
+  sendSystemIssue(params: any): Promise<TransactionalEmailResult> {
+    return this.sendTechnicalEmail(params);
   },
 
   getStatus: getEmailSendersStatus,

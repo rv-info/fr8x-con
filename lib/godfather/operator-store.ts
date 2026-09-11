@@ -240,7 +240,7 @@ export async function authenticateOperatorCredentials(
       otpCode: rawOtp,
       expiryMinutes: 1,
       correlationId: `FR8X-AUTH-OTP-${challengeId}`,
-    }).catch((err) => {
+    }).catch((err: any) => {
       console.error('[GodfatherOperator] Failed to send first-login OTP email:', err.message);
       return { success: false, error: err.message };
     });
@@ -355,7 +355,7 @@ export async function resendOperatorFirstLoginOtp(
     otpCode: rawOtp,
     expiryMinutes: 1,
     correlationId: `FR8X-AUTH-OTP-${tokenCheck.payload.challengeId}`,
-  }).catch((err) => {
+  }).catch((err: any) => {
     console.error('[GodfatherOperator] Failed to resend first-login OTP email:', err.message);
     return { success: false, error: err.message };
   });
