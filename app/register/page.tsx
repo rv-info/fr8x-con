@@ -20,6 +20,7 @@ import {
   Clock,
   Eye,
   EyeOff,
+  Mail,
 } from 'lucide-react';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { Country as CSC_Country, State as CSC_State, City as CSC_City } from 'country-state-city';
@@ -253,11 +254,12 @@ export default function RegisterPage() {
   // Plan Selection
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('premium');
 
-  // OTP Verification Card
-  const [step, setStep] = useState<'form' | 'otp'>('form');
-  const [otp, setOtp] = useState('');
-  const [otpTimer, setOtpTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
+  // Verification Card
+  const [step, setStep] = useState<'form' | 'verify_pending'>('form');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [resendError, setResendError] = useState<string | null>(null);
+  const [isResending, setIsResending] = useState(false);
 
   // Legal Acceptance
   const [termsAccepted, setTermsAccepted] = useState(false);
@@ -303,16 +305,12 @@ export default function RegisterPage() {
   }, [countryCode]);
 
   useEffect(() => {
-    let interval: any;
-    if (step === 'otp' && otpTimer > 0) {
-      interval = setInterval(() => {
-        setOtpTimer((prev) => prev - 1);
-      }, 1000);
-    } else if (otpTimer === 0) {
-      setCanResend(true);
-    }
+    if (resendCooldown <= 0) return;
+    const interval = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
     return () => clearInterval(interval);
-  }, [step, otpTimer]);
+  }, [resendCooldown]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -419,7 +417,7 @@ export default function RegisterPage() {
     }
 
     if (!isCorporateEmail(email)) {
-      setErrorMessage('Please provide a valid corporate organization email address.');
+      setErrorMessage('Please provide a valid email address.');
       return;
     }
 
@@ -513,14 +511,12 @@ export default function RegisterPage() {
         return;
       }
 
-      // Advance to OTP verification
-      setStep('otp');
-      setOtpTimer(30);
-      setCanResend(false);
-      if (data.devOtp) {
-        setDevOtpHint(data.devOtp);
-      }
-      toast(data.message || `Verification email dispatched to ${email}.`);
+      // Advance to Email-link verification notice screen
+      setStep('verify_pending');
+      setResendCooldown(60);
+      setResendMessage(null);
+      setResendError(null);
+      toast(data.message || `Verification email dispatched to ${cleanEmail}.`);
     } catch (err: any) {
       clearTimeout(timeoutId);
       setIsSubmitting(false);
@@ -532,104 +528,32 @@ export default function RegisterPage() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage('');
-
-    if (!otp || otp.trim().length !== 6) {
-      setErrorMessage('Please enter a valid 6-digit verification code.');
-      return;
-    }
-
-    setIsSubmitting(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-    try {
-      const res = await fetch('/api/auth/verify-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
-          otp: otp.trim(),
-        }),
-      });
-      clearTimeout(timeoutId);
-
-      const data = await res.json();
-      setIsSubmitting(false);
-
-      if (!res.ok || !data.success) {
-        // If already active or verified, log in directly and transition
-        if (data.message?.toLowerCase().includes('already verified') || data.message?.toLowerCase().includes('already active')) {
-          toast('Account is already verified! Accessing your workspace...');
-          login(email.trim().toLowerCase(), false, data.user || { email });
-          router.push('/feeds');
-          return;
-        }
-        setErrorMessage(data.error || 'Verification failed. Please check your verification code.');
-        return;
-      }
-
-      const effectiveCity = isCustomCity ? customCity.trim() || 'Global' : city;
-      const cleanDigits = mobileNumber.replace(/\D/g, '');
-      const fullMobile = `${isdCode}${cleanDigits}`;
-
-      // Finalize client-side session using verified user from server (avoids circular duplicate checks)
-      login(email.trim().toLowerCase(), false, {
-        ...(data.user || {}),
-        firstName,
-        lastName,
-        displayName: `${firstName} ${lastName}`.trim(),
-        company: companyName,
-        companyId,
-        city: effectiveCity,
-        country,
-        postalCode: postalCode.trim() || undefined,
-        timezone,
-        mobile: fullMobile,
-        plan: selectedPlan,
-        hasGoldenTick: selectedPlan === 'premium',
-        isVerified: true,
-      });
-
-      toast(`Registration verified! Welcome to FR8X Workspace (${selectedPlan.toUpperCase()} Plan).`);
-      router.push('/feeds');
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      setIsSubmitting(false);
-      if (err.name === 'AbortError') {
-        setErrorMessage('Verification request timed out. Please check your internet connection and try again.');
-      } else {
-        setErrorMessage('Network error during verification. Please try again.');
-      }
-    }
-  };
-
-  const handleResendCode = async () => {
-    setCanResend(false);
-    setOtpTimer(60);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const handleResendVerification = async () => {
+    setResendMessage(null);
+    setResendError(null);
+    setIsResending(true);
 
     try {
       const res = await fetch('/api/auth/resend-verification', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
         body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
-      clearTimeout(timeoutId);
-
       const data = await res.json();
-      if (data.devOtp) {
-        setDevOtpHint(data.devOtp);
+      setIsResending(false);
+
+      if (res.ok && data.success) {
+        setResendMessage(data.message || `A fresh 15-minute verification link has been sent to ${email}.`);
+        setResendCooldown(60);
+      } else {
+        setResendError(data.error || 'Failed to resend verification email.');
+        if (data.retryAfterSeconds) {
+          setResendCooldown(data.retryAfterSeconds);
+        }
       }
-      toast(data.message || 'Verification code resent to your corporate mailbox.');
-    } catch (err: any) {
-      clearTimeout(timeoutId);
-      toast('Network slow or unavailable. Please try resending shortly.');
+    } catch {
+      setIsResending(false);
+      setResendError('Network error while requesting verification email.');
     }
   };
 
@@ -1251,134 +1175,163 @@ export default function RegisterPage() {
             >
               {isSubmitting ? 'Submitting Registration…' : (
                 <>
-                  CONTINUE TO OTP VERIFICATION <ArrowRight size={15} />
+                  CREATE ACCOUNT &amp; VERIFY EMAIL <ArrowRight size={15} />
                 </>
               )}
             </button>
           </form>
         ) : (
-          /* Card 4: OTP Verification Screen */
-          <div className="card" style={{ maxWidth: '440px', margin: '0 auto' }}>
-            <div className="cardhead">
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <KeyRound size={15} color="var(--brand)" /> 4. One-Time Password (OTP) Verification
-              </span>
+          /* Card 4: Email-Link Verification Screen */
+          <div className="card" style={{ maxWidth: '480px', margin: '0 auto', textAlign: 'center', padding: '36px 28px' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: '#e0f2fe',
+                color: '#0284c7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 18px',
+                boxShadow: '0 4px 14px rgba(2, 132, 199, 0.15)',
+              }}
+            >
+              <Mail size={32} />
             </div>
-            <div className="cardbody">
-              <p style={{ fontSize: '12.5px', color: 'var(--ink-secondary)', marginBottom: '14px' }}>
-                A secure 6-digit authentication OTP was generated and sent to corporate email: <b>{email}</b>.
-              </p>
 
-              <form onSubmit={handleVerifyOtp}>
-                {devOtpHint && (
-                  <div
-                    style={{
-                      padding: '10px 12px',
-                      borderRadius: '6px',
-                      background: '#f0fdf4',
-                      border: '1px solid #bbf7d0',
-                      color: '#166534',
-                      fontSize: '12px',
-                      marginBottom: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontWeight: 700 }}>Dev / Sandbox Passcode:</span>{' '}
-                      <code style={{ fontSize: '14px', fontWeight: 800, letterSpacing: '2px', background: '#dcfce7', padding: '2px 6px', borderRadius: '4px' }}>
-                        {devOtpHint}
-                      </code>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn secondary sm"
-                      style={{ padding: '3px 10px', fontSize: '11px', height: '26px' }}
-                      onClick={() => setOtp(devOtpHint)}
-                    >
-                      Autofill OTP
-                    </button>
-                  </div>
-                )}
-                <div className="field" style={{ marginBottom: '14px' }}>
-                  <label>Enter 6-Digit OTP</label>
-                  <input
-                    className="input"
-                    style={{ fontSize: '20px', letterSpacing: '6px', textAlign: 'center', height: '44px' }}
-                    maxLength={6}
-                    placeholder="••••••"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                    required
-                    disabled={isSubmitting}
-                  />
-                  <div
-                    style={{
-                      padding: '11px 13px',
-                      borderRadius: '8px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
-                      color: '#334155',
-                      fontSize: '11.5px',
-                      marginTop: '12px',
-                      lineHeight: '1.45',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                      <ShieldCheck size={16} color="var(--brand)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                      <div>
-                        <strong>Instant Corporate Mail Dispatch:</strong> A 6-digit one-time passkey has been dispatched from <code>password@fr8x.in</code>. If it does not arrive in your inbox within seconds, please inspect your corporate <strong>Spam / Junk</strong> folder or company email quarantine.
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--fr8x-text)', margin: '0 0 8px' }}>
+              Verify Your Email Address
+            </h2>
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                  <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
-                    Resend in {otpTimer > 0 ? `${otpTimer}s` : 'Ready'}
-                  </span>
-                  <button
-                    type="button"
-                    className="btn secondary sm"
-                    disabled={!canResend || isSubmitting}
-                    onClick={handleResendCode}
-                  >
-                    Resend Code
-                  </button>
-                </div>
+            <p style={{ fontSize: '13.5px', color: 'var(--ink-secondary)', margin: '0 0 20px', lineHeight: 1.5 }}>
+              We have dispatched a single-use verification link to:
+              <br />
+              <strong style={{ color: '#0f172a', wordBreak: 'break-all' }}>{email}</strong>
+            </p>
 
-                <button
-                  type="submit"
-                  className="btn primary"
-                  disabled={isSubmitting || otp.length !== 6}
-                  style={{ width: '100%', height: '40px', fontSize: '13px', opacity: isSubmitting ? 0.7 : 1 }}
+            <div
+              style={{
+                background: '#f8fafc',
+                border: '1px solid #e2e8f0',
+                borderRadius: '10px',
+                padding: '16px',
+                textAlign: 'left',
+                marginBottom: '24px',
+                fontSize: '12.5px',
+                color: '#334155',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, color: '#0369a1', marginBottom: '6px' }}>
+                <Clock size={16} /> 15-Minute Expiration Notice
+              </div>
+              <div>
+                Click the <strong>Verify Email</strong> button inside the email within 15 minutes to confirm your account and activate your workspace.
+                If you do not see it in your inbox, please check your <strong>Spam / Junk</strong> folder.
+              </div>
+            </div>
+
+            {/* Resend Verification Email Section */}
+            <div style={{ marginBottom: '20px' }}>
+              {resendError && (
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: '#b91c1c',
+                    background: '#fee2e2',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    marginBottom: '12px',
+                    textAlign: 'left',
+                  }}
                 >
-                  {isSubmitting ? 'Verifying Code…' : 'Verify OTP & Activate Workspace'}
-                </button>
-
-                <div style={{ textAlign: 'center', marginTop: '12px' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStep('form');
-                      setErrorMessage('');
-                    }}
-                    disabled={isSubmitting}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'var(--brand)',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      textDecoration: 'underline',
-                    }}
-                  >
-                    ← Back to Edit Registration Details
-                  </button>
+                  {resendError}
                 </div>
-              </form>
+              )}
+
+              {resendMessage && (
+                <div
+                  style={{
+                    fontSize: '12px',
+                    color: '#15803d',
+                    background: '#dcfce7',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    marginBottom: '12px',
+                    textAlign: 'left',
+                  }}
+                >
+                  {resendMessage}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={isResending || resendCooldown > 0}
+                onClick={handleResendVerification}
+                style={{
+                  width: '100%',
+                  height: '42px',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isResending ? (
+                  <>Sending new link...</>
+                ) : resendCooldown > 0 ? (
+                  <>
+                    <Clock size={15} /> Resend Link in {resendCooldown}s
+                  </>
+                ) : (
+                  <>
+                    <Mail size={15} /> Resend Verification Email
+                  </>
+                )}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <Link
+                href="/login"
+                className="btn primary"
+                style={{
+                  width: '100%',
+                  height: '40px',
+                  fontSize: '13px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textDecoration: 'none',
+                }}
+              >
+                Proceed to Sign In <ArrowRight size={15} style={{ marginLeft: '6px' }} />
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('form');
+                  setErrorMessage('');
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--brand)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  textDecoration: 'underline',
+                  padding: '6px 0',
+                }}
+              >
+                ← Back to Edit Registration Details
+              </button>
             </div>
           </div>
         )}

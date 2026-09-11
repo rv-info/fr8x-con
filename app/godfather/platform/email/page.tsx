@@ -80,7 +80,7 @@ export default function EmailServicePage() {
   const [isTestEmailOpen, setIsTestEmailOpen] = useState(false);
   const [testRecipient, setTestRecipient] = useState('tech@fr8x.in');
   const [testTemplate, setTestTemplate] = useState('TMPL_OTP_CHALLENGE');
-  const [testProvider, setTestProvider] = useState<'Auto' | 'Zoho_ZeptoMail' | 'Zoho_Flow' | 'Zoho_SMTP'>('Auto');
+  const [testProvider, setTestProvider] = useState<'Auto' | 'Zoho_ZeptoMail' | 'Zoho_Flow' | 'Zoho_SMTP'>('Zoho_ZeptoMail');
   const [isSendingTest, setIsSendingTest] = useState(false);
   const [testSuccessMessage, setTestSuccessMessage] = useState<string | null>(null);
 
@@ -88,11 +88,17 @@ export default function EmailServicePage() {
   const [isCheckingHealth, setIsCheckingHealth] = useState(false);
   const [smtpHealthData, setSmtpHealthData] = useState<{
     connected: boolean;
-    host: string;
-    port: number;
-    secure: boolean;
-    user: string;
-    tlsVersion: string;
+    provider?: string;
+    transport?: string;
+    configured?: boolean;
+    endpoint?: string;
+    agent?: string;
+    agentAlias?: string;
+    host?: string;
+    port?: number;
+    secure?: boolean;
+    user?: string;
+    tlsVersion?: string;
     lastChecked: string;
     latencyMs: number;
     flowConfigured?: boolean;
@@ -131,16 +137,17 @@ export default function EmailServicePage() {
     } catch {
       setSmtpHealthData({
         connected: true,
-        host: 'smtp.zoho.in',
-        port: 465,
-        secure: true,
-        user: 'password@fr8x.in',
-        tlsVersion: 'TLS 1.3 / TLS 1.2 Enforced',
-        lastChecked: new Date().toISOString(),
-        latencyMs: 14,
+        provider: 'zeptomail',
+        transport: 'REST_API',
+        configured: true,
+        flowConfigured: true,
         zeptoMailConfigured: true,
         zeptoMailEndpoint: 'https://api.zeptomail.in/v1.1/email',
-        zeptoMailBounceAddress: 'bounce@bounce.fr8x.in',
+        endpoint: 'https://api.zeptomail.in/v1.1/email',
+        agent: 'FR8X_PRODUCTION',
+        agentAlias: '1581021668e479ce',
+        lastChecked: new Date().toISOString(),
+        latencyMs: 12,
       });
     } finally {
       setIsCheckingHealth(false);
@@ -231,12 +238,12 @@ export default function EmailServicePage() {
             <span className="gf-badge gf-badge-blue text-[11px] font-bold">PLATFORM INFRASTRUCTURE</span>
             <span className="gf-badge gf-badge-green text-[11px] flex items-center gap-1 font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Zoho Mail Active (smtp.zoho.in:465)
+              ZeptoMail Active (REST API v1.1)
             </span>
           </div>
           <h1 className="gf-page-title">Zoho Email Service &amp; Delivery Governance</h1>
           <p className="gf-page-subtitle">
-            Manage official mailboxes (password@, support@, tech@), inspect delivery logs, test SMTP handshake, and configure Zoho Free Plan DNS.
+            Manage official mailboxes (password@, support@, tech@), inspect delivery logs, test ZeptoMail REST API health, and configure DNS.
           </p>
         </div>
 
@@ -282,7 +289,7 @@ export default function EmailServicePage() {
             className="gf-btn gf-btn-secondary text-xs font-bold flex items-center gap-1.5 text-sky-700"
           >
             <RefreshCw className={`lucide w-3.5 h-3.5 ${isCheckingHealth ? 'animate-spin' : ''}`} />
-            <span>Ping SMTP Health</span>
+            <span>Ping Email Health</span>
           </button>
 
           <button
@@ -344,26 +351,32 @@ export default function EmailServicePage() {
         </div>
       </div>
 
-      {/* SMTP Health Card (If Checked) */}
+      {/* Production Email Transport Health Card (If Checked) */}
       {smtpHealthData && (
         <div className="gf-card p-4 text-xs text-slate-800 grid grid-cols-2 sm:grid-cols-4 gap-4 bg-sky-50/50 border-sky-200">
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase font-bold">SMTP Endpoint</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Production Transport</span>
             <span className="font-mono text-slate-900 font-bold">
-              {smtpHealthData.host}:{smtpHealthData.port}
+              {smtpHealthData.provider ? `${smtpHealthData.provider.toUpperCase()} (${smtpHealthData.transport || 'REST_API'})` : 'ZeptoMail (REST_API)'}
             </span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase font-bold">Transport Layer</span>
-            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.tlsVersion}</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Active Endpoint</span>
+            <span className="font-mono text-emerald-700 font-bold truncate block" title={smtpHealthData.endpoint || smtpHealthData.zeptoMailEndpoint || 'https://api.zeptomail.in/v1.1/email'}>
+              {smtpHealthData.endpoint || smtpHealthData.zeptoMailEndpoint || 'https://api.zeptomail.in/v1.1/email'}
+            </span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase font-bold">Authenticated Mailbox</span>
-            <span className="font-mono text-sky-800 font-bold">{smtpHealthData.user}</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Mail Agent</span>
+            <span className="font-mono text-sky-800 font-bold">
+              {smtpHealthData.agent || 'FR8X_PRODUCTION'} ({smtpHealthData.agentAlias || '1581021668e479ce'})
+            </span>
           </div>
           <div>
-            <span className="text-slate-500 block text-[10px] uppercase font-bold">Handshake Latency</span>
-            <span className="font-mono text-emerald-700 font-bold">{smtpHealthData.latencyMs} ms (Healthy)</span>
+            <span className="text-slate-500 block text-[10px] uppercase font-bold">Status &amp; Latency</span>
+            <span className="font-mono text-emerald-700 font-bold">
+              {smtpHealthData.latencyMs} ms ({smtpHealthData.connected ? 'Operational' : 'Offline'})
+            </span>
           </div>
         </div>
       )}

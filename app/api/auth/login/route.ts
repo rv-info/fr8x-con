@@ -35,6 +35,19 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (result.isPendingVerification) {
+      return NextResponse.json(
+        {
+          success: false,
+          isPendingVerification: true,
+          email: result.email,
+          maskedEmail: result.maskedEmail,
+          error: result.message,
+        },
+        { status: 403 }
+      );
+    }
+
     if (!result.success) {
       return NextResponse.json(
         {

@@ -21,6 +21,7 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   // Forgot password modal state
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -99,9 +100,9 @@ export default function LoginPage() {
       return;
     }
 
-    // If looks like email, enforce corporate domain (without revealing personal provider list)
+    // If looks like email, validate format
     if (id.includes('@') && !isCorporateEmail(id)) {
-      setErrorMessage('Please provide a valid corporate organization email address.');
+      setErrorMessage('Please provide a valid email address.');
       return;
     }
 
@@ -139,6 +140,12 @@ export default function LoginPage() {
           setErrorMessage('Session initialization failed. Please try again.');
         }
       } else {
+        if (json.isPendingVerification) {
+          setPendingVerificationEmail(json.email || (id.includes('@') ? id : null));
+          setErrorMessage(json.error || 'Your account is pending email verification. Please check your email for your 15-minute verification link.');
+          return;
+        }
+
         if (json.isBlocked || res.status === 403) {
           setIsBlocked(true);
           if (json.passwordResetRequired) {
@@ -424,6 +431,41 @@ export default function LoginPage() {
                 <AlertCircle size={15} style={{ flexShrink: 0, color: 'var(--fr8x-outline)' }} />
               )}
               <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {pendingVerificationEmail && (
+            <div
+              style={{
+                padding: '10px 14px',
+                borderRadius: '8px',
+                background: '#eff6ff',
+                border: '1px solid #bfdbfe',
+                color: '#1e40af',
+                fontSize: '12px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Mail size={15} style={{ color: '#0284c7', flexShrink: 0 }} />
+                <span>Need a fresh 15-minute verification link?</span>
+              </div>
+              <Link
+                href={`/verify-email?email=${encodeURIComponent(pendingVerificationEmail)}`}
+                style={{
+                  fontWeight: 700,
+                  color: '#0284c7',
+                  textDecoration: 'underline',
+                  whiteSpace: 'nowrap',
+                  fontSize: '12px',
+                }}
+              >
+                Resend Verification Link →
+              </Link>
             </div>
           )}
 

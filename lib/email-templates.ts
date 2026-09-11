@@ -503,35 +503,36 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
   text: string;
 } {
   const firstName = params.firstName || (params.recipientName ? params.recipientName.split(' ')[0] : 'Member');
-  const expiryTime = params.expiryTime || (params.expiryMinutes ? (params.expiryMinutes >= 60 ? `${Math.round(params.expiryMinutes / 60)} hours` : `${params.expiryMinutes} minutes`) : '24 hours');
+  const expiryTime = '15 minutes';
   const verificationLink = params.verificationLink || 'https://con.fr8x.in/verify-email';
   const subject = 'Verify Your FR8X Email Address';
 
   const html = wrapEmailHtml(`
     <p style="font-size: 16px; font-weight: 600; color: #111827; margin-top: 0;">Hello ${firstName},</p>
-    <p>Please verify your email address to activate your FR8X account.</p>
+    <p>Please verify your email address to activate your account and access all features.</p>
 
-    ${params.otpCode ? `
-    <div class="code-box">
-      <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #64748b; letter-spacing: 0.06em; margin-bottom: 8px;">6-Digit Verification Code</div>
-      <div class="code-digits">${params.otpCode}</div>
-      <div style="font-size: 12px; color: #64748b; margin-top: 8px;">Expires in ${expiryTime}</div>
-    </div>
-    ` : ''}
-
-    <div style="text-align: center; margin: 24px 0;">
-      <a href="${verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer">VERIFY MY EMAIL</a>
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="${verificationLink}" class="btn-primary" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 12px 28px; background-color: #0284c7; color: #ffffff; text-decoration: none; font-weight: 700; border-radius: 6px; font-size: 15px;">Verify Email</a>
     </div>
 
-    <p style="font-size: 14px; color: #374151;">
-      This verification link will expire in <strong>${expiryTime}</strong>.
+    <p style="font-size: 14px; color: #374151; font-weight: 500;">
+      ⏳ This verification link expires in <strong>${expiryTime}</strong>.
     </p>
 
-    <div class="security-notice">
+    <div style="margin-top: 24px; padding: 14px 16px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px;">
+      <p style="font-size: 13px; color: #475569; margin: 0 0 6px 0;">
+        If you are having trouble clicking the <strong>Verify Email</strong> button above, copy and paste the following verification URL into your web browser:
+      </p>
+      <p style="font-size: 12px; word-break: break-all; margin: 0;">
+        <a href="${verificationLink}" style="color: #0284c7; text-decoration: underline;">${verificationLink}</a>
+      </p>
+    </div>
+
+    <div class="security-notice" style="margin-top: 24px;">
       <strong>Security Notice:</strong> For your security, do not forward this email or share the verification link with anyone.
     </div>
 
-    <p style="font-size: 13px; color: #6b7280;">
+    <p style="font-size: 13px; color: #6b7280; margin-top: 20px;">
       If you did not create an FR8X account, you can safely ignore this email.
     </p>
 
@@ -544,12 +545,14 @@ export function renderEmailVerificationEmail(params: EmailVerificationTemplatePa
 
   const text = `Hello ${firstName},
 
-Please verify your email address to activate your FR8X account.
+Please verify your email address to activate your account.
 
-${params.otpCode ? `Your 6-digit verification code is: ${params.otpCode}\n\n` : ''}Verification Link:
+Verify Email Link:
 ${verificationLink}
 
-This verification link will expire in ${expiryTime}.
+This link expires in ${expiryTime}.
+
+If you cannot click the button or link above, copy and paste the URL into your browser.
 
 For your security, do not forward this email or share the verification link with anyone.
 

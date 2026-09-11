@@ -86,6 +86,7 @@ export interface UserProfile {
   plan: PlanTier;
   hasGoldenTick: boolean;
   isVerified: boolean;
+  email_verified?: boolean;
   role: UserRole;
   avatarUrl?: string;
   companyLogoUrl?: string;

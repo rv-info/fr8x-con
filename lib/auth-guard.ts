@@ -167,6 +167,22 @@ export function authenticateUserSession(req: NextRequest): {
     };
   }
 
+  // Feature Guard: Unverified users cannot access protected features
+  if (userRecord.email_verified === false || userRecord.status === 'pending_verification') {
+    return {
+      authenticated: false,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: 'Email verification required. Please verify your email address to access this feature.',
+          code: 'EMAIL_NOT_VERIFIED',
+          email: userRecord.email,
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
   return {
     authenticated: true,
     user: {

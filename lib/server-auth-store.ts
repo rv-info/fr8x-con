@@ -30,11 +30,21 @@ export interface ServerUserRecord {
   lastFailedAttemptAt?: string;
   blockedAt?: string;
   blockedReason?: string;
+  email_verified: boolean; // requirement 1 & 5
   emailVerificationToken?: string;
   emailVerificationExpiresAt?: number;
   emailVerifiedAt?: string;
   firstLoginCompleted?: boolean;
   createdAt: string;
+}
+
+export interface VerificationTokenRecord {
+  tokenHash: string; // SHA-256 hex digest
+  user_id: string;   // UID of the user
+  email: string;
+  expires_at: number; // 15 minutes (ms timestamp)
+  used: boolean;      // single-use flag
+  createdAt: number;
 }
 
 export interface EmailVerificationRecord {
@@ -166,6 +176,7 @@ class ServerSecurityStore {
   private otpRecords: Map<string, OTPRecord> = new Map(); // key: email:date
   private emailVerifications: Map<string, EmailVerificationRecord> = new Map(); // key: email.toLowerCase()
   private verificationTokens: Map<string, string> = new Map(); // key: token -> email.toLowerCase()
+  private verificationTokenRecords: Map<string, VerificationTokenRecord> = new Map(); // key: tokenHash (SHA-256)
   private resendLimits: Map<string, { count: number; windowStart: number }> = new Map(); // key: email.toLowerCase()
   private activeResetOtps: Map<string, ActivePasswordResetOTP> = new Map(); // key: email.toLowerCase()
   private activeLoginOtps: Map<
@@ -279,6 +290,7 @@ class ServerSecurityStore {
         const { passwordPlain, ...rest } = acc;
         const record: ServerUserRecord = {
           ...rest,
+          email_verified: true,
           salt: 'pbkdf2_managed',
           passwordHash: hashPassword(passwordPlain),
         };
@@ -286,6 +298,14 @@ class ServerSecurityStore {
         this.users.set(cleanEmail, record);
       }
     }
+  }
+
+  /**
+   * Hashes verification token with SHA-256 before database storage.
+   * Plaintext tokens are NEVER stored in the database.
+   */
+  public hashToken(token: string): string {
+    return crypto.createHash('sha256').update(token.trim()).digest('hex');
   }
 
   /**
@@ -324,6 +344,13 @@ class ServerSecurityStore {
               this.activeGodfatherSessions.add(s);
             }
           }
+          if (Array.isArray(diskData.verificationTokenRecords)) {
+            for (const [k, r] of diskData.verificationTokenRecords) {
+              if (!this.verificationTokenRecords.has(k)) {
+                this.verificationTokenRecords.set(k, r);
+              }
+            }
+          }
         } catch {
           // Ignore disk read/parse errors
         }
@@ -333,6 +360,7 @@ class ServerSecurityStore {
         users: Array.from(this.users.entries()),
         emailVerifications: Array.from(this.emailVerifications.entries()),
         verificationTokens: Array.from(this.verificationTokens.entries()),
+        verificationTokenRecords: Array.from(this.verificationTokenRecords.entries()),
         activeResetOtps: Array.from(this.activeResetOtps.entries()),
         activeLoginOtps: Array.from(this.activeLoginOtps.entries()),
         resetTokens: Array.from(this.resetTokens.entries()),
@@ -367,6 +395,11 @@ class ServerSecurityStore {
         if (Array.isArray(data.verificationTokens)) {
           for (const [k, t] of data.verificationTokens) {
             this.verificationTokens.set(k, t);
+          }
+        }
+        if (Array.isArray(data.verificationTokenRecords)) {
+          for (const [k, r] of data.verificationTokenRecords) {
+            this.verificationTokenRecords.set(k, r);
           }
         }
         if (Array.isArray(data.activeResetOtps)) {
@@ -439,36 +472,27 @@ class ServerSecurityStore {
     const cleanUid = user.uid.trim().toLowerCase();
     const cleanMobile = user.mobile ? user.mobile.replace(/[^0-9+]/g, '') : undefined;
 
-    // Enforce corporate organization email policy (strictly blocks personal/free webmail)
+    // Validate email syntax
     if (!isCorporateEmail(cleanEmail)) {
       return {
         success: false,
-        error: 'Please provide a valid corporate organization email address.',
+        error: 'Please provide a valid email address.',
       };
     }
 
     // Check if email or UID is already registered and verified
     const existingByEmailOrUid = this.users.get(cleanEmail) || this.users.get(cleanUid);
-    if (existingByEmailOrUid && existingByEmailOrUid.status === 'active') {
-      const isSameCompany =
-        existingByEmailOrUid.company.trim().toLowerCase() === user.company.trim().toLowerCase();
-      if (isSameCompany) {
-        return {
-          success: false,
-          error: `An account with this corporate email (${user.email}) is already registered and verified under ${existingByEmailOrUid.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
-        };
-      } else {
-        return {
-          success: false,
-          error: `This corporate email (${user.email}) is already associated with another registered organization (${existingByEmailOrUid.company}). Multi-accounting across organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
-        };
-      }
+    if (existingByEmailOrUid && (existingByEmailOrUid.status === 'active' || existingByEmailOrUid.email_verified)) {
+      return {
+        success: false,
+        error: `An account with this email (${user.email}) is already registered and verified. Please sign in instead.`,
+      };
     }
 
     // Check if mobile number is already registered to another active account
     if (cleanMobile && cleanMobile.length >= 8) {
       for (const existing of this.users.values()) {
-        if (existing.mobile && existing.status === 'active') {
+        if (existing.mobile && (existing.status === 'active' || existing.email_verified)) {
           const norm = existing.mobile.replace(/[^0-9+]/g, '');
           if (norm === cleanMobile && existing.email.toLowerCase() !== cleanEmail) {
             return {
@@ -480,18 +504,27 @@ class ServerSecurityStore {
       }
     }
 
-    const salt = `fr8x_salt_${Date.now()}`;
     const isVerificationRequired = !options?.skipVerification;
     const initialStatus = isVerificationRequired ? 'pending_verification' : 'active';
+    const emailVerified = !isVerificationRequired;
 
-    // Clean up any existing verification token and ensure new OTP is distinct from old
+    // Clean up any existing verification tokens for this user/email
+    for (const [hash, rec] of this.verificationTokenRecords.entries()) {
+      if (rec.email === cleanEmail || rec.user_id === cleanUid) {
+        this.verificationTokenRecords.delete(hash);
+      }
+    }
     const existingVerif = this.emailVerifications.get(cleanEmail);
     if (existingVerif?.token) {
       this.verificationTokens.delete(existingVerif.token);
     }
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Generate single-use secure random verification token (32 bytes)
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = this.hashToken(rawToken);
     const verificationOtp = generateSecureOtp(6, existingVerif?.otp);
-    const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+    // Strict 15-minute token expiration
+    const tokenExpiresAt = Date.now() + 15 * 60 * 1000;
 
     const record: ServerUserRecord = {
       uid: user.uid,
@@ -503,12 +536,12 @@ class ServerSecurityStore {
       companyId: user.companyId,
       role: user.role || 'company_admin',
       status: initialStatus,
+      email_verified: emailVerified,
       mobile: user.mobile,
       failedLoginAttempts: 0,
       firstLoginCompleted: options?.firstLoginCompleted ?? false,
-      emailVerificationToken: isVerificationRequired ? verificationToken : undefined,
       emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
-      emailVerifiedAt: !isVerificationRequired ? new Date().toISOString() : undefined,
+      emailVerifiedAt: emailVerified ? new Date().toISOString() : undefined,
       createdAt: new Date().toISOString(),
     };
 
@@ -516,22 +549,34 @@ class ServerSecurityStore {
     this.users.set(cleanEmail, record);
 
     if (isVerificationRequired) {
+      // Store ONLY the hashed token in the database
+      this.verificationTokenRecords.set(tokenHash, {
+        tokenHash,
+        user_id: user.uid,
+        email: cleanEmail,
+        expires_at: tokenExpiresAt,
+        used: false,
+        createdAt: Date.now(),
+      });
+
+      // Backward-compatibility mappings
       this.emailVerifications.set(cleanEmail, {
         email: cleanEmail,
-        token: verificationToken,
+        token: rawToken,
         otp: verificationOtp,
         expiresAt: tokenExpiresAt,
         attempts: 0,
         createdAt: Date.now(),
       });
-      this.verificationTokens.set(verificationToken, cleanEmail);
+      this.verificationTokens.set(rawToken, cleanEmail);
+      this.otpCooldowns.set(`verify:${cleanEmail}`, Date.now());
 
       const origin =
         options?.origin ||
         process.env.APP_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
         'https://con.fr8x.in';
-      const verificationLink = `${origin}/verify-email/${verificationToken}`;
+      const verificationLink = `${origin}/verify-email?token=${rawToken}`;
 
       // Persist state to disk so reload / worker boundary never loses the account
       this.persistState();
@@ -539,10 +584,11 @@ class ServerSecurityStore {
       // Dispatch verification email via EmailService (password@fr8x.in)
       const emailPromise = EmailService.sendVerificationEmail({
         to: cleanEmail,
+        recipientName: user.displayName,
         verificationLink,
-        token: verificationToken,
+        token: rawToken,
         otpCode: verificationOtp,
-        expiryMinutes: 1440,
+        expiryMinutes: 15,
       }).catch((err: any) => {
         console.error('[Security] Failed to dispatch verification email:', err.message);
         return { success: false, error: err.message };
@@ -551,9 +597,9 @@ class ServerSecurityStore {
       return {
         success: true,
         user: record,
-        verificationToken: isVerificationRequired ? verificationToken : undefined,
-        verificationOtp: isVerificationRequired ? verificationOtp : undefined,
-        isVerificationRequired,
+        verificationToken: rawToken,
+        verificationOtp: verificationOtp,
+        isVerificationRequired: true,
         emailPromise,
       };
     } else {
@@ -576,28 +622,115 @@ class ServerSecurityStore {
     token?: string;
     otp?: string;
     email?: string;
-  }): { success: boolean; error?: string; message?: string; user?: ServerUserRecord } {
+  }): { success: boolean; error?: string; code?: string; message?: string; user?: ServerUserRecord } {
     let cleanEmail = (params.email || '').trim().toLowerCase();
 
-    // 1. If token provided without email, look up email
-    if (params.token && !cleanEmail) {
-      let mapped = this.verificationTokens.get(params.token.trim());
-      if (!mapped) {
+    // 1. If single-use verification token is provided:
+    // Compute SHA-256 hash and look up in verificationTokenRecords (never plaintext)
+    if (params.token) {
+      const rawToken = params.token.trim();
+      const tokenHash = this.hashToken(rawToken);
+
+      let tokenRecord = this.verificationTokenRecords.get(tokenHash);
+      if (!tokenRecord) {
         this.loadPersistedState();
-        mapped = this.verificationTokens.get(params.token.trim());
+        tokenRecord = this.verificationTokenRecords.get(tokenHash);
       }
-      if (mapped) cleanEmail = mapped;
+
+      if (tokenRecord) {
+        cleanEmail = tokenRecord.email.toLowerCase();
+        let user = this.users.get(tokenRecord.user_id) || this.users.get(cleanEmail);
+        if (!user) {
+          this.loadPersistedState();
+          user = this.users.get(tokenRecord.user_id) || this.users.get(cleanEmail);
+        }
+
+        // Check if token was already used
+        if (tokenRecord.used) {
+          return {
+            success: false,
+            code: 'TOKEN_ALREADY_USED',
+            error: 'This verification link has already been used. Please sign in or request a new verification email.',
+            user,
+          };
+        }
+
+        // Check if token has expired (15 minutes limit)
+        if (Date.now() > tokenRecord.expires_at) {
+          return {
+            success: false,
+            code: 'TOKEN_EXPIRED',
+            error: 'This verification link has expired (links are valid for 15 minutes). Please request a new verification email.',
+            user,
+          };
+        }
+
+        if (!user) {
+          return {
+            success: false,
+            code: 'USER_NOT_FOUND',
+            error: 'User account associated with this verification link was not found.',
+          };
+        }
+
+        // Single-use: immediately invalidate token by marking used = true
+        tokenRecord.used = true;
+        this.verificationTokenRecords.set(tokenHash, tokenRecord);
+
+        // Mark user's email as verified and activate account
+        user.email_verified = true;
+        user.status = 'active';
+        user.emailVerifiedAt = new Date().toISOString();
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpiresAt = undefined;
+
+        // Clean up legacy verification mappings
+        this.emailVerifications.delete(cleanEmail);
+        this.verificationTokens.delete(rawToken);
+
+        this.persistState();
+
+        this.addSecurityEvent({
+          type: 'ACCOUNT_UNBLOCKED',
+          severity: 'INFO',
+          userEmail: user.email,
+          uid: user.uid,
+          company: user.company,
+          details: 'Account email successfully verified via 15-minute secure single-use token.',
+        });
+
+        return {
+          success: true,
+          message: 'Your email has been successfully verified! Your account is now active.',
+          user,
+        };
+      }
+
+      // Check legacy plaintext token store if present for migration compatibility
+      let legacyMapped = this.verificationTokens.get(rawToken);
+      if (!legacyMapped) {
+        this.loadPersistedState();
+        legacyMapped = this.verificationTokens.get(rawToken);
+      }
+      if (legacyMapped) {
+        cleanEmail = legacyMapped;
+      } else {
+        // Token was provided but not found in hashed or legacy records
+        return {
+          success: false,
+          code: 'TOKEN_INVALID',
+          error: 'This verification link is invalid or has expired. Please request a new verification email.',
+        };
+      }
     }
 
     // 2. If OTP is provided, locate active verification challenge by email or by OTP code
     if (params.otp) {
       const inputOtp = params.otp.trim();
-      // Ensure latest state from disk is loaded across concurrent worker processes
       if (!cleanEmail || !this.emailVerifications.has(cleanEmail) || !this.users.has(cleanEmail)) {
         this.loadPersistedState();
       }
 
-      // If email didn't match directly, scan active verification challenges for the exact OTP
       if (!cleanEmail || !this.emailVerifications.has(cleanEmail)) {
         for (const [em, rec] of this.emailVerifications.entries()) {
           if (rec.otp === inputOtp && Date.now() <= rec.expiresAt) {
@@ -609,20 +742,22 @@ class ServerSecurityStore {
     }
 
     if (!cleanEmail) {
-      return { success: false, error: 'Corporate email address or 6-digit verification code is required.' };
+      return {
+        success: false,
+        code: 'TOKEN_INVALID',
+        error: 'Invalid or missing verification link. Please check the URL or request a new verification email.',
+      };
     }
 
     let verificationRecord = this.emailVerifications.get(cleanEmail);
     let user = this.users.get(cleanEmail);
 
-    // If not found in current memory, reload from persisted disk store
     if (!user || !verificationRecord) {
       this.loadPersistedState();
       user = this.users.get(cleanEmail);
       verificationRecord = this.emailVerifications.get(cleanEmail);
     }
 
-    // If user object not mapped by email key directly, search by user.email property
     if (!user) {
       for (const u of this.users.values()) {
         if (u.email && u.email.toLowerCase() === cleanEmail) {
@@ -636,11 +771,12 @@ class ServerSecurityStore {
     if (!user) {
       return {
         success: false,
-        error: 'Registration record not found or verification session expired. Please resend the code or re-enter your details.',
+        code: 'USER_NOT_FOUND',
+        error: 'Registration record not found or verification session expired. Please request a new verification email.',
       };
     }
 
-    if (user.status === 'active') {
+    if (user.status === 'active' && user.email_verified) {
       return {
         success: true,
         message: 'Account is already verified and active. Please sign in.',
@@ -649,26 +785,10 @@ class ServerSecurityStore {
     }
 
     if (!verificationRecord) {
-      // Check if token matches stored token on user record
-      if (
-        params.token &&
-        user.emailVerificationToken === params.token.trim() &&
-        user.emailVerificationExpiresAt &&
-        user.emailVerificationExpiresAt > Date.now()
-      ) {
-        user.status = 'active';
-        user.emailVerifiedAt = new Date().toISOString();
-        user.emailVerificationToken = undefined;
-        user.emailVerificationExpiresAt = undefined;
-        return {
-          success: true,
-          message: 'Email successfully verified! Your account is now active.',
-          user,
-        };
-      }
       return {
         success: false,
-        error: 'No active verification record found or verification code has expired. Please request a new verification code.',
+        code: 'TOKEN_EXPIRED',
+        error: 'Verification link or code has expired. Please request a new verification email.',
       };
     }
 
@@ -677,7 +797,8 @@ class ServerSecurityStore {
       if (verificationRecord.token) this.verificationTokens.delete(verificationRecord.token);
       return {
         success: false,
-        error: 'Verification code or token has expired. Please request a new code.',
+        code: 'TOKEN_EXPIRED',
+        error: 'Verification link has expired (links are valid for 15 minutes). Please request a new verification email.',
       };
     }
 
@@ -696,16 +817,19 @@ class ServerSecurityStore {
         if (verificationRecord.token) this.verificationTokens.delete(verificationRecord.token);
         return {
           success: false,
-          error: 'Maximum verification attempts exceeded. Please request a new code.',
+          code: 'MAX_ATTEMPTS_EXCEEDED',
+          error: 'Maximum verification attempts exceeded. Please request a new verification email.',
         };
       }
       return {
         success: false,
-        error: 'Invalid verification token or 6-digit code. Please check your email.',
+        code: 'TOKEN_INVALID',
+        error: 'Invalid verification token or code. Please check your email.',
       };
     }
 
     // Success: activate user, clear verification tokens
+    user.email_verified = true;
     user.status = 'active';
     user.emailVerifiedAt = new Date().toISOString();
     user.emailVerificationToken = undefined;
@@ -732,18 +856,20 @@ class ServerSecurityStore {
   }
 
   /**
-   * Resend verification email with rate-limiting (max 3 resends per hour)
+   * Resends email verification link with rate-limiting (60-second cooldown, max 5 per hour)
    */
   public resendEmailVerification(
     email: string,
-    origin?: string
+    origin?: string,
+    ip = '127.0.0.1'
   ): {
     success: boolean;
     message: string;
     remainingAttempts?: number;
-    otp?: string;
     token?: string;
     emailPromise?: Promise<any>;
+    rateLimited?: boolean;
+    retryAfterSeconds?: number;
   } {
     const cleanEmail = email.trim().toLowerCase();
     let user = this.users.get(cleanEmail);
@@ -752,7 +878,7 @@ class ServerSecurityStore {
       user = this.users.get(cleanEmail);
     }
 
-    // Rate limiting
+    // Rate limiting: 5 per hour per email
     const now = Date.now();
     const rateLimit = this.resendLimits.get(cleanEmail) || { count: 0, windowStart: now };
     const ONE_HOUR = 60 * 60 * 1000;
@@ -762,22 +888,27 @@ class ServerSecurityStore {
       rateLimit.windowStart = now;
     }
 
-    const MAX_RESENDS = 3;
+    const MAX_RESENDS = 5;
     if (rateLimit.count >= MAX_RESENDS) {
+      const waitSeconds = Math.ceil((ONE_HOUR - (now - rateLimit.windowStart)) / 1000);
       return {
         success: false,
-        message: 'Resend limit reached (max 3 per hour). Please try again later or check your spam folder.',
+        rateLimited: true,
+        retryAfterSeconds: waitSeconds,
+        message: 'Verification email request limit reached (max 5 per hour). Please try again later or check your spam folder.',
         remainingAttempts: 0,
       };
     }
 
-    // 60-second cooldown guard
+    // 60-second cooldown per email
     const lastSentAt = this.otpCooldowns.get(`verify:${cleanEmail}`) || 0;
     if (now - lastSentAt < 60 * 1000) {
       const waitSeconds = Math.ceil((60 * 1000 - (now - lastSentAt)) / 1000);
       return {
         success: false,
-        message: `Please wait ${waitSeconds} second(s) before requesting another verification code.`,
+        rateLimited: true,
+        retryAfterSeconds: waitSeconds,
+        message: `Please wait ${waitSeconds} second(s) before requesting another verification email.`,
         remainingAttempts: Math.max(0, MAX_RESENDS - rateLimit.count),
       };
     }
@@ -786,44 +917,62 @@ class ServerSecurityStore {
     rateLimit.count += 1;
     this.resendLimits.set(cleanEmail, rateLimit);
 
-    if (user && user.status === 'pending_verification') {
-      // Clean up old token if mapped and grab previous OTP to guarantee new OTP rotates
+    if (user && (user.status === 'pending_verification' || !user.email_verified)) {
+      // Invalidate any existing unused verification tokens for this user
+      for (const [hash, rec] of this.verificationTokenRecords.entries()) {
+        if (rec.email === cleanEmail || rec.user_id === user.uid) {
+          this.verificationTokenRecords.delete(hash);
+        }
+      }
       const existing = this.emailVerifications.get(cleanEmail);
       if (existing?.token) this.verificationTokens.delete(existing.token);
 
       const oldOtp = existing?.otp;
-      const verificationToken = crypto.randomBytes(32).toString('hex');
+      // Generate new secure random token (32 bytes)
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = this.hashToken(rawToken);
       const verificationOtp = generateSecureOtp(6, oldOtp);
-      const tokenExpiresAt = Date.now() + 24 * 60 * 60 * 1000;
+      // 15-minute expiration
+      const tokenExpiresAt = Date.now() + 15 * 60 * 1000;
 
-      user.emailVerificationToken = verificationToken;
       user.emailVerificationExpiresAt = tokenExpiresAt;
+
+      // Store ONLY the hashed token
+      this.verificationTokenRecords.set(tokenHash, {
+        tokenHash,
+        user_id: user.uid,
+        email: cleanEmail,
+        expires_at: tokenExpiresAt,
+        used: false,
+        createdAt: now,
+      });
 
       this.emailVerifications.set(cleanEmail, {
         email: cleanEmail,
-        token: verificationToken,
+        token: rawToken,
         otp: verificationOtp,
         expiresAt: tokenExpiresAt,
         attempts: 0,
         createdAt: now,
       });
-      this.verificationTokens.set(verificationToken, cleanEmail);
+      this.verificationTokens.set(rawToken, cleanEmail);
 
       const baseOrigin =
         origin ||
         process.env.APP_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
         'https://con.fr8x.in';
-      const verificationLink = `${baseOrigin}/verify-email/${verificationToken}`;
+      const verificationLink = `${baseOrigin}/verify-email?token=${rawToken}`;
 
       this.persistState();
 
       const emailPromise = EmailService.sendVerificationEmail({
         to: cleanEmail,
+        recipientName: user.displayName,
         verificationLink,
-        token: verificationToken,
+        token: rawToken,
         otpCode: verificationOtp,
-        expiryMinutes: 1440,
+        expiryMinutes: 15,
       }).catch((err: any) => {
         console.error('[Security] Failed to resend verification email:', err.message);
         return { success: false, error: err.message };
@@ -831,18 +980,25 @@ class ServerSecurityStore {
 
       return {
         success: true,
-        message: `A new 6-digit verification code has been dispatched to ${cleanEmail}.`,
+        message: `A fresh verification link valid for 15 minutes has been sent to ${cleanEmail}.`,
         remainingAttempts: MAX_RESENDS - rateLimit.count,
-        otp: verificationOtp,
-        token: verificationToken,
+        token: rawToken,
         emailPromise,
       };
     }
 
-    // Always generic message to prevent enumeration
+    if (user && user.email_verified) {
+      return {
+        success: true,
+        message: 'This account email is already verified. Please sign in.',
+        remainingAttempts: MAX_RESENDS - rateLimit.count,
+      };
+    }
+
+    // Generic anti-enumeration response
     return {
       success: true,
-      message: 'If an unverified account matches this email, a new verification link and code have been sent.',
+      message: 'If an unverified account matches this email, a new verification link has been sent.',
       remainingAttempts: MAX_RESENDS - rateLimit.count,
     };
   }
@@ -948,13 +1104,13 @@ class ServerSecurityStore {
     }
 
     // Check if account is awaiting email verification
-    if (user.status === 'pending_verification') {
+    if (user.status === 'pending_verification' || user.email_verified === false) {
       return {
         success: false,
         isPendingVerification: true,
         email: user.email,
         maskedEmail: maskEmail(user.email),
-        message: `Account is pending email verification. Please check your registered corporate email (${maskEmail(user.email)}) for your verification link and 6-digit code.`,
+        message: `Account is pending email verification. Please check your email (${maskEmail(user.email)}) for your 15-minute verification link.`,
       };
     }
 

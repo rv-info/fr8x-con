@@ -70,14 +70,15 @@ export function ZohoEmailGuidebookModal({ isOpen, onClose }: ZohoEmailGuidebookM
       const res = await fetch('/api/admin/email/health');
       const data = await res.json();
       if (res.ok && data.connected) {
+        const endpointDisplay = data.endpoint || data.zeptoMailEndpoint || 'https://api.zeptomail.in/v1.1/email';
         setTestResult({
           success: true,
-          message: `Connected successfully to ${data.host}:${data.port} (${data.tlsVersion}) with latency ${data.latencyMs || 12}ms.`,
+          message: `Connected successfully to ${data.provider === 'zeptomail' ? 'ZeptoMail REST API' : 'Email Service'} (${endpointDisplay}) with latency ${data.latencyMs || 12}ms.`,
         });
       } else {
         setTestResult({
           success: false,
-          message: data.error || 'Connection failed. Please check your App Password and Zoho SMTP credentials.',
+          message: data.error || 'Connection check failed.',
         });
       }
     } catch {

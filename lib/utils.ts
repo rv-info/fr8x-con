@@ -154,18 +154,10 @@ export const BLOCKED_EMAIL_DOMAINS = new Set([
 ]);
 
 export function isCorporateEmail(email: string): boolean {
-  if (!email || !email.includes('@')) return false;
-  const parts = email.trim().toLowerCase().split('@');
-  if (parts.length !== 2) return false;
-  const domain = parts[1];
-  if (!domain || !domain.includes('.')) return false;
-  if (BLOCKED_EMAIL_DOMAINS.has(domain)) return false;
-  for (const blocked of BLOCKED_EMAIL_DOMAINS) {
-    if (domain === blocked || domain.endsWith(`.${blocked}`)) {
-      return false;
-    }
-  }
-  return true;
+  if (!email || typeof email !== 'string') return false;
+  const clean = email.trim().toLowerCase();
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  return emailRegex.test(clean);
 }
 
 export const CURRENCY_LOCALES: Record<string, string> = {

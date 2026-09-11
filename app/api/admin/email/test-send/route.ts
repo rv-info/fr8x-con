@@ -4,6 +4,8 @@ import { sendSystemEmail } from '@/lib/mailer';
 import { EmailService } from '@/lib/email-service';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   try {
@@ -16,7 +18,8 @@ export async function POST(req: NextRequest) {
     const isDev = process.env.NODE_ENV === 'development';
 
     const body = await req.json().catch(() => ({}));
-    const { recipient, templateId, reason, actorRole, actorUid, preferredProvider, testType } = body;
+    const { recipient, templateId, reason, actorRole, actorUid, testType } = body;
+    const preferredProvider = body.preferredProvider || 'Zoho_ZeptoMail';
 
     const isAuthorized =
       (sessionCookie && serverSecurityStore.isGodfatherSessionActive(sessionCookie)) ||
@@ -40,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Official ZeptoMail integration test mode (Subject: FR8X ZEPTOMAIL TEST, From: password@fr8x.in)
-    if (testType === 'zeptomail' || templateId === 'TMPL_ZEPTOMAIL_TEST' || preferredProvider === 'Zoho_ZeptoMail') {
+    if (testType === 'zeptomail' || templateId === 'TMPL_ZEPTOMAIL_TEST' || preferredProvider === 'Zoho_ZeptoMail' || !body.preferredProvider) {
       const result = await EmailService.sendTestEmail({
         to: targetRecipient,
         correlationId,

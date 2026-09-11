@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Verification failed.' },
+        { success: false, code: result.code || 'VERIFICATION_FAILED', error: result.error || 'Verification failed.' },
         { status: 400 }
       );
     }
@@ -71,15 +71,17 @@ export async function POST(req: NextRequest) {
         companyId: user.companyId,
         role: user.role,
         status: user.status,
+        email_verified: true,
       },
     });
 
-    // Set authenticated cryptographically signed session cookie
+    // Set authenticated cryptographically signed session cookie with email_verified: true
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      email_verified: true,
       issuedAt: Date.now(),
     });
 
@@ -108,7 +110,7 @@ export async function GET(req: NextRequest) {
 
     if (!token) {
       return NextResponse.json(
-        { success: false, error: 'Verification token is required.' },
+        { success: false, code: 'TOKEN_MISSING', error: 'Verification token is required.' },
         { status: 400 }
       );
     }
@@ -120,7 +122,7 @@ export async function GET(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Verification failed.' },
+        { success: false, code: result.code || 'VERIFICATION_FAILED', error: result.error || 'Verification failed.' },
         { status: 400 }
       );
     }
@@ -137,6 +139,7 @@ export async function GET(req: NextRequest) {
         companyId: user.companyId,
         role: user.role,
         status: user.status,
+        email_verified: true,
       },
     });
 
@@ -146,6 +149,7 @@ export async function GET(req: NextRequest) {
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      email_verified: true,
       issuedAt: Date.now(),
     });
 

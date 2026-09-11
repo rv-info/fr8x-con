@@ -33,12 +33,12 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = email.trim().toLowerCase();
 
-    // Verify corporate email policy (strictly rejects personal/free webmail without revealing list)
+    // Verify email format
     if (!isCorporateEmail(cleanEmail)) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Please provide a valid corporate organization email address.',
+          error: 'Please provide a valid email address.',
         },
         { status: 400 }
       );
@@ -46,13 +46,16 @@ export async function POST(req: NextRequest) {
 
     const uid = body.uid || `u-${Date.now()}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
+    const host = req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    const requestOrigin = host ? `${proto}://${host}` : undefined;
     const origin =
+      requestOrigin ||
       process.env.APP_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      req.nextUrl.origin ||
       'https://con.fr8x.in';
 
-    // Enforce "One User, One Login" duplicate check and generate email verification challenge
+    // Register user with email_verified = false and generate 15-minute hashed verification challenge
     const result = serverSecurityStore.registerUser(
       {
         uid,
@@ -79,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     const user = result.user!;
 
-    // If verification is required, dispatch email via Central Email Service
+    // Verification is required: dispatch verification email
     if (result.isVerificationRequired) {
       let emailDispatched = false;
       let emailError: string | null = null;
@@ -89,7 +92,7 @@ export async function POST(req: NextRequest) {
           const mailRes = await result.emailPromise;
           emailDispatched = Boolean(mailRes && mailRes.success);
           if (!emailDispatched && mailRes) {
-            emailError = mailRes.error || 'Email service rejected delivery';
+            emailError = mailRes.error || 'Email delivery failure';
           }
         } catch (mailErr: any) {
           console.error('[RegisterAPI] Verification email delivery error:', mailErr.message);
@@ -103,14 +106,12 @@ export async function POST(req: NextRequest) {
         {
           success: true,
           isVerificationRequired: true,
+          email_verified: false,
           emailDispatched,
-          devOtp: isDev || !emailDispatched ? result.verificationOtp : undefined,
           emailError: isDev ? emailError : undefined,
           message: emailDispatched
-            ? 'Account registered. A verification email has been dispatched from password@fr8x.in with your verification code and link.'
-            : isDev
-              ? `Account registered. Note: Live email rejected (${emailError || 'API token invalid'}). Dev OTP: ${result.verificationOtp}`
-              : 'Account registered. A verification code has been generated. Please check your inbox / spam folder.',
+            ? `Account registered! A verification email with your 15-minute verification link has been sent to ${user.email}.`
+            : `Account registered! Please check your email (${user.email}) for your 15-minute verification link.`,
           user: {
             uid: user.uid,
             email: user.email,
@@ -121,6 +122,7 @@ export async function POST(req: NextRequest) {
             mobile: user.mobile,
             designation: designation || 'Freight Procurement Manager',
             status: user.status,
+            email_verified: false,
           },
         },
         { status: 201 }

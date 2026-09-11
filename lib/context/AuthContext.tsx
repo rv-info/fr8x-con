@@ -363,7 +363,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       contactAvailability: serverUser.contactAvailability || '09:00 - 18:00',
       plan: serverUser.plan || 'trial',
       hasGoldenTick: serverUser.hasGoldenTick || false,
-      isVerified: true,
+      isVerified: serverUser.isVerified ?? serverUser.email_verified ?? true,
+      email_verified: serverUser.email_verified ?? serverUser.isVerified ?? true,
       role: serverUser.role || 'user',
     };
 
@@ -461,12 +462,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       contactAvailability: profile.contactAvailability || '09:00 - 18:00',
       plan: profile.plan || 'trial',
       hasGoldenTick: profile.plan === 'premium',
-      isVerified: true,
+      isVerified: false,
+      email_verified: false,
       role: 'company_admin',
       ...profile,
     };
 
     // 3. Register with server API to ensure server-side auth sync
+    let isVerificationRequired = false;
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
@@ -477,15 +480,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }),
       });
 
+      const json = await res.json();
       if (!res.ok) {
-        const json = await res.json();
         return {
           success: false,
           error: json.error || 'Server rejected registration under the One User, One Login policy.',
         };
       }
+      isVerificationRequired = Boolean(json.isVerificationRequired);
     } catch (err) {
       console.warn('[Auth] Server register request skipped, using client registry:', err);
+    }
+
+    if (isVerificationRequired) {
+      // Do not auto-login unverified accounts
+      return { success: true, user: newUser };
     }
 
     // 4. Save profile only to local storage — never password

@@ -417,6 +417,7 @@ export interface ZeptoMailConfigStatus {
   tokenMasked?: string;
   notes: string;
   agent: string;
+  agentAlias: string;
   domain: string;
 }
 
@@ -447,6 +448,7 @@ export function getZeptoMailStatus(): ZeptoMailConfigStatus {
       ? `Operational: ZeptoMail REST API active (${endpoint}).`
       : 'Pending: ZEPTO_MAIL_API_KEY is not configured in environment (operating in local sandbox mode).',
     agent: process.env.ZEPTO_MAIL_AGENT || 'FR8X_PRODUCTION',
+    agentAlias: process.env.ZEPTO_MAIL_AGENT_ALIAS || '1581021668e479ce',
     domain: 'fr8x.in',
   };
 }
@@ -881,38 +883,8 @@ export async function sendTransactionalEmail(
           );
         }
 
-        // 1. Attempt Zoho / Generic SMTP Failover if credentials configured
-        const smtpPassword = (process.env.ZOHO_SMTP_PASSWORD || process.env.SMTP_PASSWORD || '').trim();
-        if (smtpPassword) {
-          try {
-            console.log(`[SMTP_FAILOVER] Attempting failover delivery via SMTP for ${cleanTo}...`);
-            const { sendViaSmtp } = await import('@/lib/mailer');
-            const smtpRes = await sendViaSmtp({
-              recipient: cleanTo,
-              recipientName,
-              subject: cleanSubject,
-              htmlBody: htmlContent,
-              textBody: textContent,
-              fromAddress: sender.address,
-              correlationId,
-            });
-            if (smtpRes && smtpRes.success) {
-              return {
-                success: true,
-                messageId: smtpRes.messageId,
-                correlationId,
-                type: resolvedType,
-                from: sender.address,
-                to: cleanTo,
-                subject: cleanSubject,
-                provider: 'Zoho_SMTP' as any,
-                details: { failoverFrom: 'Zoho_ZeptoMail', smtpRes },
-              };
-            }
-          } catch (smtpErr: any) {
-            console.warn(`[SMTP_FAILOVER_FAIL] SMTP failover failed: ${smtpErr.message}`);
-          }
-        }
+        // Production FR8X transactional email MUST use ZeptoMail REST API.
+        // Legacy SMTP must NOT be the automatic production fallback.
 
         // 2. Attempt Resend API Failover if RESEND_API_KEY is configured
         const resendApiKey = (process.env.RESEND_API_KEY || '').trim();
@@ -1474,22 +1446,24 @@ export const EmailService = {
     ) & { correlationId?: string; clientReference?: string }
   ): Promise<TransactionalEmailResult> {
     const targetEmail = (params.recipient || (params as any).to || '').trim();
+    const expiryMinutes = params.expiryMinutes || 15;
     const tmpl = renderEmailVerificationEmail({
       recipient: targetEmail,
       recipientName: params.recipientName,
       verificationLink: params.verificationLink,
       otpCode: params.otpCode,
-      expiryMinutes: params.expiryMinutes || 1440,
+      expiryMinutes,
     });
 
+    console.log('\n================================================================================');
+    console.log(`🔐 [FR8X VERIFICATION LINK ISSUED]`);
+    console.log(`   Recipient Email:   ${targetEmail}`);
+    console.log(`   Verification Link: ${params.verificationLink || 'N/A'}`);
     if (params.otpCode) {
-      console.log('\n================================================================================');
-      console.log(`🔐 [FR8X VERIFICATION CODE ISSUED]`);
-      console.log(`   Corporate Email:  ${targetEmail}`);
-      console.log(`   Verification OTP: [ ${params.otpCode} ]`);
-      console.log(`   Expires In:       ${params.expiryMinutes || 1440} minutes`);
-      console.log('================================================================================\n');
+      console.log(`   Verification OTP:  [ ${params.otpCode} ]`);
     }
+    console.log(`   Expires In:        ${expiryMinutes} minutes`);
+    console.log('================================================================================\n');
 
     return sendTemplateEmail({
       template: 'FR8X_EMAIL_VERIFICATION',
@@ -1500,7 +1474,7 @@ export const EmailService = {
         recipient_name: params.recipientName || targetEmail,
         verification_link: params.verificationLink || '',
         otp_code: params.otpCode || '',
-        expiry_minutes: params.expiryMinutes || 1440,
+        expiry_minutes: expiryMinutes,
       },
       clientReference: params.clientReference,
       correlationId: params.correlationId,

@@ -11,17 +11,41 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const { email } = body;
 
-    if (!email || typeof email !== 'string') {
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
       return NextResponse.json(
-        { success: false, error: 'Corporate email address is required.' },
+        { success: false, error: 'A valid email address is required.' },
         { status: 400 }
       );
     }
 
-    const origin = req.nextUrl.origin;
+    const host = req.headers.get('host');
+    const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
+    const requestOrigin = host ? `${proto}://${host}` : undefined;
+    const origin =
+      requestOrigin ||
+      process.env.APP_URL ||
+      process.env.NEXT_PUBLIC_APP_URL ||
+      req.nextUrl.origin ||
+      'https://con.fr8x.in';
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
 
-    const result = serverSecurityStore.resendEmailVerification(email, origin);
+    const result = serverSecurityStore.resendEmailVerification(email, origin, ip);
+
+    if (result.rateLimited) {
+      return NextResponse.json(
+        {
+          success: false,
+          rateLimited: true,
+          error: result.message,
+          retryAfterSeconds: result.retryAfterSeconds,
+          remainingAttempts: 0,
+        },
+        {
+          status: 429,
+          headers: result.retryAfterSeconds ? { 'Retry-After': String(result.retryAfterSeconds) } : undefined,
+        }
+      );
+    }
 
     let emailDispatched = false;
     let emailError: string | null = null;
@@ -44,13 +68,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: result.success,
       emailDispatched,
-      devOtp: (isDev || !emailDispatched) ? result.otp : undefined,
       emailError: isDev ? emailError : undefined,
-      message: emailDispatched
-        ? result.message
-        : isDev
-          ? `New verification code issued. Note: Live email rejected (${emailError || 'API token invalid'}). Dev OTP: ${result.otp}`
-          : result.message,
+      message: result.message,
       remainingAttempts: result.remainingAttempts,
     });
   } catch (err: any) {

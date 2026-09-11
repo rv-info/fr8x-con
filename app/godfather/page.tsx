@@ -465,7 +465,7 @@ export default function GodfatherDashboardPage() {
             </div>
             <div className="my-2">
               <div className="text-2xl font-black text-slate-900 tracking-tight">Free Forever</div>
-              <p className="text-[11px] text-slate-500 mt-0.5">smtp.zoho.in:465 · SSL Enforced</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">ZeptoMail REST API · FR8X_PRODUCTION</p>
             </div>
             <div className="gf-metric-foot text-sky-700 flex items-center justify-between pt-2 border-t border-slate-100">
               <span className="text-xs font-bold flex items-center gap-1">
