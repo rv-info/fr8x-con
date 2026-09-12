@@ -535,9 +535,16 @@ class ServerSecurityStore {
     // Check if email or UID is already registered and verified
     const existingByEmailOrUid = this.users.get(cleanEmail) || this.users.get(cleanUid);
     if (existingByEmailOrUid && (existingByEmailOrUid.status === 'active' || existingByEmailOrUid.email_verified)) {
+      const isSameOrg = existingByEmailOrUid.companyId && user.companyId && existingByEmailOrUid.companyId === user.companyId;
+      if (isSameOrg) {
+        return {
+          success: false,
+          error: `An account with this email (${user.email}) already exists in ${existingByEmailOrUid.company}. Creating duplicate accounts within the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
+        };
+      }
       return {
         success: false,
-        error: `An account with this email (${user.email}) is already registered and verified. Please sign in instead.`,
+        error: `An account with this email (${user.email}) is already registered under ${existingByEmailOrUid.company}. Creating multiple accounts across organizations is strictly prohibited under the One User, One Login policy. Please sign in instead.`,
       };
     }
 
@@ -1922,7 +1929,12 @@ class ServerSecurityStore {
     // Generate cryptographically secure 6-digit OTP, exclude previous code.
     // SECURITY: OTP stored as PBKDF2 hash — never plaintext. Validity: 15 seconds.
     const existingLoginOtp = this.activeLoginOtps.get(cleanEmail);
-    const otpCode = generateSecureOtp(6);
+    const otpCode = generateSecureOtp(
+      6,
+      existingLoginOtp
+        ? { salt: existingLoginOtp.salt, hash: existingLoginOtp.hash, iterations: 100_000, keylen: 32, digest: 'sha256' }
+        : undefined
+    );
     const otpSalt = crypto.randomBytes(16).toString('hex');
     const otpHash = crypto.pbkdf2Sync(otpCode, otpSalt, 100_000, 32, 'sha256').toString('hex');
     // SECURITY: 15-second OTP validity, server-enforced.

@@ -28,6 +28,7 @@ async function runTests() {
   // Activate user directly for testing
   const user = serverSecurityStore.getUser(testEmail)!;
   user.status = 'active';
+  user.email_verified = true;
   console.log('Account registered and activated. Status:', user.status);
 
   // -------------------------------------------------------------
@@ -116,6 +117,7 @@ async function runTests() {
   });
   const activeUser = serverSecurityStore.getUser(activeUserEmail)!;
   activeUser.status = 'active';
+  activeUser.email_verified = true;
 
   // First request: Should succeed
   const otp1 = serverSecurityStore.requestOTP(activeUserEmail);

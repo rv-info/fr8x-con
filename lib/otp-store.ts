@@ -29,6 +29,15 @@ const memCooldowns = new Map<string, number>();
 let kvClient: any = null;
 let kvInitAttempted = false;
 
+function safeDynamicRequire(modName: string): any {
+  try {
+    const dynamicRequire = new Function('m', 'try { return require(m); } catch (e) { return null; }');
+    return dynamicRequire(modName);
+  } catch {
+    return null;
+  }
+}
+
 async function getVercelKV(): Promise<any> {
   if (kvClient) return kvClient;
   if (kvInitAttempted) return null;
@@ -39,8 +48,7 @@ async function getVercelKV(): Promise<any> {
 
   try {
     // Dynamic import avoids compile-time errors when @vercel/kv is not installed
-    const modName = '@vercel/kv';
-    const kvModule = typeof require !== 'undefined' ? require(modName) : null;
+    const kvModule = safeDynamicRequire('@vercel/kv');
     if (!kvModule?.kv) return null;
     kvClient = kvModule.kv;
     console.log('[OTP Store] Using Vercel KV adapter.');
@@ -63,8 +71,7 @@ async function getRedis(): Promise<any> {
   if (!process.env.REDIS_URL) return null;
 
   try {
-    const modName = 'ioredis';
-    const Redis = typeof require !== 'undefined' ? require(modName) : null;
+    const Redis = safeDynamicRequire('ioredis');
     if (!Redis) return null;
     redisClient = new Redis(process.env.REDIS_URL, {
       lazyConnect: false,

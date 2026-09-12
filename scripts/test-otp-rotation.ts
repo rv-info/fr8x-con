@@ -79,6 +79,7 @@ async function runOtpRotationTests() {
   console.log(`  Initial OTP: ${otp1}`);
 
   // Resend 1
+  (serverSecurityStore as any).otpCooldowns.delete(`verify:${testEmail.toLowerCase()}`);
   const resend1 = serverSecurityStore.resendEmailVerification(testEmail);
   assert(resend1.success, 'First resendEmailVerification succeeded');
   const verifAfterResend1 = (serverSecurityStore as any).emailVerifications.get(testEmail.toLowerCase());
@@ -87,6 +88,7 @@ async function runOtpRotationTests() {
   assert(otp2 !== otp1, `Resend 1 OTP (${otp2}) is strictly DIFFERENT from initial OTP (${otp1})`);
 
   // Resend 2
+  (serverSecurityStore as any).otpCooldowns.delete(`verify:${testEmail.toLowerCase()}`);
   const resend2 = serverSecurityStore.resendEmailVerification(testEmail);
   assert(resend2.success, 'Second resendEmailVerification succeeded');
   const verifAfterResend2 = (serverSecurityStore as any).emailVerifications.get(testEmail.toLowerCase());
@@ -113,13 +115,14 @@ async function runOtpRotationTests() {
   const loginEmail = `login.rot.${Date.now()}@fr8x-audit.internal`;
   const req1 = serverSecurityStore.requestOTP(loginEmail);
   assert(req1.success, 'First login requestOTP succeeded');
-  const activeOtp1 = (serverSecurityStore as any).activeLoginOtps.get(loginEmail)?.otp;
-  console.log(`  Login OTP 1: ${activeOtp1}`);
+  const activeOtp1 = (serverSecurityStore as any).activeLoginOtps.get(loginEmail)?.hash;
+  console.log(`  Login OTP Hash 1: ${activeOtp1}`);
 
+  (serverSecurityStore as any).otpCooldowns.delete(`otp:${loginEmail}`);
   const req2 = serverSecurityStore.requestOTP(loginEmail);
   assert(req2.success, 'Second login requestOTP succeeded');
-  const activeOtp2 = (serverSecurityStore as any).activeLoginOtps.get(loginEmail)?.otp;
-  console.log(`  Login OTP 2: ${activeOtp2}`);
+  const activeOtp2 = (serverSecurityStore as any).activeLoginOtps.get(loginEmail)?.hash;
+  console.log(`  Login OTP Hash 2: ${activeOtp2}`);
   assert(activeOtp2 !== activeOtp1, `Second login OTP (${activeOtp2}) is strictly DIFFERENT from first OTP (${activeOtp1})`);
 
   // TEST 6: UntraceableSecureOtpEngine Rotation on Resend

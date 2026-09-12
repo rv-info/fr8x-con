@@ -13,6 +13,7 @@ import {
   markPersistedVerificationUsed,
   recordVerificationAudit,
   getVerificationAuditLogs,
+  DbmsUserRecord,
 } from '../lib/dbms/server-dbms';
 import { RateItem, FeedPost } from '../lib/types';
 
@@ -177,14 +178,14 @@ async function runDbmsPersistenceTests() {
   // Clean up test post
   // TEST 7: User Record Persistence in Server DBMS
   console.log('\n--- 7. Testing User Persistence in Server DBMS ---');
-  const testDbmsUser = {
+  const testDbmsUser: DbmsUserRecord = {
     uid: `u-dbms-${Date.now()}`,
     email: `dbms.tester.${Date.now()}@oceanfreight.corp`,
     displayName: 'Captain DB Tester',
     company: 'Oceanic Global Lines',
     companyId: 'CMP-OCEAN-01',
-    role: 'shipper' as const,
-    status: 'pending_verification' as const,
+    role: 'shipper',
+    status: 'pending_verification',
     email_verified: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -110,41 +110,44 @@ function runTests() {
     'Reject duplicate registration sharing same mobile phone number'
   );
 
-  // 10. 3 invalid login attempts trigger automatic Password Reset OTP dispatch
+  // 10. 3 invalid login attempts trigger account lockout
   const userToTest = 'kiran.mehta@indoocean.com';
+  serverSecurityStore.unblockAccount(userToTest);
   // Attempt 1
   const fail1 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass1', '127.0.0.1');
   assert(fail1.success === false && fail1.attemptsRemaining === 2, 'Attempt 1: 2 attempts remaining');
   // Attempt 2
   const fail2 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass2', '127.0.0.1');
   assert(fail2.success === false && fail2.attemptsRemaining === 1, 'Attempt 2: 1 attempt remaining');
-  // Attempt 3: triggers lock and OTP dispatch
+  // Attempt 3: triggers account block
   const fail3 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass3', '127.0.0.1');
   assert(
     fail3.success === false &&
       fail3.isBlocked === true &&
-      fail3.passwordResetRequired === true &&
-      fail3.email === userToTest,
-    'Attempt 3: Account locked and Password Reset OTP dispatched from server to registered email'
+      fail3.message.includes('blocked'),
+    'Attempt 3: Account strictly blocked after 3 failed attempts'
   );
 
-  // 11. Verify OTP code is recorded on server
-  const dispatchedOtp = serverSecurityStore.getActiveResetOtp(userToTest);
+  // 11. Blocked account cannot self-unblock
+  const blockedResetReq = serverSecurityStore.requestPasswordReset(userToTest);
   assert(
-    Boolean(dispatchedOtp && dispatchedOtp.length === 6),
-    'Server generated and recorded 6-digit password reset OTP for registered email',
-    `OTP: ${dispatchedOtp}`
+    blockedResetReq.success === false && Boolean(blockedResetReq.error?.includes('blocked')),
+    'Blocked user cannot self-service reset password'
   );
 
-  // 12. Invalid OTP verification fails
-  const badOtpRes = serverSecurityStore.verifyAndResetPassword(userToTest, '999999', 'NewKiranPass@2026');
-  assert(badOtpRes.success === false && badOtpRes.error?.includes('Invalid verification OTP'), 'Reject invalid OTP during password reset');
+  // 12. Only Godfather can unblock account
+  const unblockRes = serverSecurityStore.unblockAccount(userToTest, 'Godfather Operator', 'Identity verified via official channel');
+  assert(unblockRes.success === true, 'Godfather administrator unblocks account');
 
-  // 13. Valid OTP resets password and unblocks account
-  const goodReset = serverSecurityStore.verifyAndResetPassword(userToTest, dispatchedOtp!, 'NewKiranPass@2026');
-  assert(goodReset.success === true, 'Successfully reset password and unblock account with dispatched OTP');
+  // 13. Unblocked user can now request and perform password reset
+  serverSecurityStore.requestPasswordReset(userToTest);
+  const resetOtp = serverSecurityStore.getActiveResetOtp(userToTest);
+  assert(Boolean(resetOtp && resetOtp.length === 6), 'Password reset OTP issued after unblock');
 
-  // 14. Immediate login with newly reset password succeeds
+  const goodReset = serverSecurityStore.verifyAndResetPassword(userToTest, resetOtp!, 'NewKiranPass@2026');
+  assert(goodReset.success === true, 'Successfully reset password with verified OTP');
+
+  // 14. Login with newly reset password succeeds
   const loginWithNewPass = serverSecurityStore.recordLoginAttempt(userToTest, 'NewKiranPass@2026', '127.0.0.1');
   assert(loginWithNewPass.success === true, 'Log in successfully with newly updated password after reset');
 

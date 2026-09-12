@@ -5,21 +5,47 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
 
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCTFPoToXBfIk4BFTc13a3x5geBTZlWwjk",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "fr8x-con.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "fr8x-con",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "fr8x-con.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "238702195734",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:238702195734:web:3f41aafdea91007747f137",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-PCFCQCEVSF"
 };
 
 // Initialize Firebase client instance safely
-const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+let app: FirebaseApp;
+try {
+  app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
+} catch {
+  app = getApps()[0];
+}
 
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app);
+let authInstance: Auth;
+try {
+  authInstance = getAuth(app);
+} catch {
+  authInstance = {} as Auth;
+}
+
+let dbInstance: Firestore;
+try {
+  dbInstance = getFirestore(app);
+} catch {
+  dbInstance = {} as Firestore;
+}
+
+let storageInstance: FirebaseStorage;
+try {
+  storageInstance = getStorage(app);
+} catch {
+  storageInstance = {} as FirebaseStorage;
+}
+
+export const auth: Auth = authInstance;
+export const db: Firestore = dbInstance;
+export const storage: FirebaseStorage = storageInstance;
 
 // Safe Client Analytics Initializer
 let analytics: Analytics | null = null;
