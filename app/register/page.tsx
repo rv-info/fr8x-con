@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -21,6 +21,12 @@ import {
   Eye,
   EyeOff,
   Mail,
+  Scale,
+  X,
+  Calendar,
+  Shield,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { Country as CSC_Country, State as CSC_State, City as CSC_City } from 'country-state-city';
@@ -33,6 +39,282 @@ import {
   getAllGlobalTimezones,
   GlobalISDEntry,
 } from '@/lib/geo/global-geo';
+
+// --- Password Strength Scorer ---
+type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
+function calcPasswordStrength(pwd: string): { level: StrengthLevel; score: number; label: string; color: string; bg: string } {
+  if (!pwd) return { level: 'empty', score: 0, label: '', color: '#94a3b8', bg: '#e2e8f0' };
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  if (score <= 1) return { level: 'too_weak', score: 1, label: 'Too Weak', color: '#ef4444', bg: '#fee2e2' };
+  if (score === 2) return { level: 'weak', score: 2, label: 'Weak', color: '#f97316', bg: '#ffedd5' };
+  if (score === 3) return { level: 'fair', score: 3, label: 'Fair', color: '#eab308', bg: '#fef9c3' };
+  if (score === 4 || score === 5) return { level: 'strong', score: 4, label: 'Strong', color: '#22c55e', bg: '#dcfce7' };
+  return { level: 'very_strong', score: 5, label: 'Very Strong', color: '#16a34a', bg: '#bbf7d0' };
+}
+
+// --- Live Clock/Calendar Widget ---
+function LiveClockPanel() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const hh = String(now.getHours()).padStart(2,'0');
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  const h12 = now.getHours() % 12 || 12;
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const calDays: (number|null)[] = [];
+  for (let i = 0; i < firstDayOfMonth; i++) calDays.push(null);
+  for (let d = 1; d <= daysInMonth; d++) calDays.push(d);
+  while (calDays.length % 7 !== 0) calDays.push(null);
+
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: 'linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0c1a2e 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '40px 28px', gap: '0', position: 'relative', overflow: 'hidden',
+    }}>
+      {/* Background glow */}
+      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+      {/* Logo */}
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ fontSize: '32px', fontWeight: 900, color: '#f1f5f9', letterSpacing: '-0.04em', lineHeight: 1 }}>
+          fr<span style={{ color: '#0ea5e9' }}>8</span>x
+        </div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '4px' }}>Enterprise Logistics Platform</div>
+      </div>
+
+      {/* Digital Clock */}
+      <div style={{
+        background: 'rgba(14,165,233,0.08)',
+        border: '1px solid rgba(14,165,233,0.2)',
+        borderRadius: '16px',
+        padding: '20px 32px',
+        textAlign: 'center',
+        marginBottom: '20px',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: '#f1f5f9', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            {String(h12).padStart(2,'0')}:{mm}
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{ampm}</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569', fontFamily: 'monospace' }}>{ss}s</span>
+          </div>
+        </div>
+        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', letterSpacing: '0.05em' }}>
+          {days[now.getDay()]} · {months[now.getMonth()]} {now.getDate()}, {now.getFullYear()}
+        </div>
+      </div>
+
+      {/* Mini Calendar */}
+      <div style={{
+        background: 'rgba(15,23,42,0.7)',
+        border: '1px solid #1e293b',
+        borderRadius: '14px',
+        padding: '16px',
+        width: '100%',
+        maxWidth: '260px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
+          <Calendar size={14} color="#0ea5e9" />
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {months[now.getMonth()]} {now.getFullYear()}
+          </span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
+          {['S','M','T','W','T','F','S'].map((d,i) => (
+            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#475569', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
+          ))}
+          {calDays.map((d, i) => (
+            <div key={i} style={{
+              fontSize: '11px', fontWeight: d === now.getDate() ? 800 : 500,
+              color: d === now.getDate() ? '#fff' : d ? '#94a3b8' : 'transparent',
+              background: d === now.getDate() ? '#0ea5e9' : 'transparent',
+              borderRadius: '4px', padding: '3px 0',
+              transition: 'all 0.2s',
+            }}>{d || ''}</div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tagline */}
+      <div style={{ marginTop: '28px', textAlign: 'center', maxWidth: '220px' }}>
+        <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+          Trusted by freight professionals across 40+ countries for enterprise logistics procurement.
+        </p>
+      </div>
+
+      {/* Shield badge */}
+      <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Shield size={12} color="#22c55e" />
+        <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 700, letterSpacing: '0.08em' }}>256-BIT TLS ENCRYPTED</span>
+      </div>
+    </div>
+  );
+}
+
+// --- T&C Modal ---
+function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+  const [hasRead, setHasRead] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const [scrollExpanded, setScrollExpanded] = useState(false);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    if (isNearBottom) setHasRead(true);
+  };
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 9999,
+      background: 'rgba(0,0,0,0.75)',
+      backdropFilter: 'blur(6px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '16px',
+    }}>
+      <div style={{
+        width: '100%', maxWidth: '720px',
+        background: '#fff',
+        borderRadius: '20px',
+        boxShadow: '0 40px 80px rgba(0,0,0,0.4)',
+        display: 'flex', flexDirection: 'column',
+        maxHeight: '90vh',
+        overflow: 'hidden',
+      }}>
+        {/* Modal Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          padding: '20px 24px',
+          display: 'flex', alignItems: 'center', gap: '12px',
+          flexShrink: 0,
+        }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(14,165,233,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Scale size={20} color="#0ea5e9" />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: '#f1f5f9' }}>FR8X Master Terms of Service & Commercial Agreement</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>You must read and accept to proceed with registration</div>
+          </div>
+          <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: '#0ea5e9', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(14,165,233,0.3)' }}>
+            View Full Page ↗
+          </Link>
+        </div>
+
+        {/* Scrollable T&C Body */}
+        <div
+          onScroll={handleScroll}
+          style={{
+            flex: 1, overflowY: 'auto', padding: '24px',
+            fontSize: '13px', color: '#334155', lineHeight: 1.7,
+          }}
+        >
+          <div style={{ padding: '12px 16px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '8px', marginBottom: '16px', fontSize: '12px', color: '#92400e' }}>
+            ⚠ Please scroll to the bottom to enable the checkbox and accept button.
+          </div>
+          <TnCBodyText />
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          borderTop: '1px solid #e2e8f0',
+          padding: '16px 24px',
+          background: '#f8fafc',
+          flexShrink: 0,
+        }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: hasRead ? 'pointer' : 'not-allowed', marginBottom: '14px', opacity: hasRead ? 1 : 0.5 }}>
+            <input
+              type="checkbox"
+              checked={checked}
+              disabled={!hasRead}
+              onChange={(e) => setChecked(e.target.checked)}
+              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#0ea5e9', cursor: hasRead ? 'pointer' : 'not-allowed' }}
+            />
+            <span style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
+              I have read and understood the FR8X Master Terms of Service, Commercial Agreement, Trade Compliance Policy, and Privacy Policy, and I agree to be legally bound by them on behalf of the corporate entity I represent.
+            </span>
+          </label>
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={onDecline}
+              style={{
+                height: '42px', padding: '0 24px', borderRadius: '8px',
+                border: '1px solid #e2e8f0', background: '#fff',
+                color: '#ef4444', fontWeight: 700, fontSize: '14px',
+                cursor: 'pointer',
+              }}
+            >
+              Decline — Exit
+            </button>
+            <button
+              type="button"
+              disabled={!checked}
+              onClick={onAccept}
+              style={{
+                height: '42px', padding: '0 28px', borderRadius: '8px',
+                border: 'none',
+                background: checked ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : '#94a3b8',
+                color: '#fff', fontWeight: 700, fontSize: '14px',
+                cursor: checked ? 'pointer' : 'not-allowed',
+                boxShadow: checked ? '0 4px 12px rgba(14,165,233,0.35)' : 'none',
+                transition: 'all 0.2s',
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}
+            >
+              <ShieldCheck size={16} /> Accept & Proceed
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TnCBodyText() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {[
+        { title: '1. Definitions & Acceptance', body: 'These Terms constitute a binding agreement between FR8X Technology Private Limited and your corporate entity. By accepting, you confirm legal authority to bind your organization, that you are 18+, and that your entity is duly incorporated and in good standing.' },
+        { title: '2. Platform Services', body: 'FR8X provides B2B freight forwarding, reverse auction, rate intelligence, and trade document services. FR8X is a marketplace facilitator; all transport contracts are between the Client and the selected service provider.' },
+        { title: '3. One User, One Login Policy', body: 'Each individual may hold only one active account across all organizations. Multi-accounting for any purpose—including circumventing bid limits or auction access—is a material breach and may result in permanent suspension without refund.' },
+        { title: '4. Bid Fee Structure & Payment', body: 'Trial: Free/2 days; bid ₹300. Professional: ₹1,500/mo; bid ₹300. Premium: ₹3,000/mo; bid ₹180 (40% off). All bid fees are non-refundable once submitted. Subscriptions are billed monthly in advance.' },
+        { title: '5. International Trade Compliance & Sanctions', body: 'Users must comply with DGFT/FTP, Customs Act 1962, FEMA, PMLA, UNSC/OFAC/EU/UK sanctions, SCOMET export controls, Anti-Bribery Acts (IPC, FCPA, UK Bribery Act), IATA DGR, IMDG Code, and IMO SOLAS. Suspicious activity will be reported to authorities.' },
+        { title: '6. Anti-Fraud & KYC', body: 'All entities must provide accurate KYC (CIN, PAN, GSTIN, IEC). False registration is fraud under IPC Sections 420/467/468/471. Rate manipulation and bid rigging are prohibited under the Competition Act 2002.' },
+        { title: '7. Data Privacy & Security', body: 'Data is processed under India DPDPA 2023, IT Act 2000, GDPR (EU/UK). Registration data is encrypted AES-256-GCM. Sessions use signed JWTs. Communications secured via TLS 1.3. No data sale to third parties.' },
+        { title: '8. Intellectual Property', body: 'All platform IP, trademarks, and data are exclusively owned by FR8X Technology Private Limited under the Indian Copyright Act 1957 and Trade Marks Act 1999. Reverse engineering, scraping, or unauthorized redistribution is prohibited.' },
+        { title: '9. Limitation of Liability & Indemnification', body: "FR8X's aggregate liability shall not exceed 3 months' subscription fees. Users indemnify FR8X against claims arising from their breach, fraud, or violation of applicable law. FR8X is not liable for cargo loss, indirect damages, or force majeure events." },
+        { title: '10. Governing Law & Dispute Resolution', body: 'Indian domestic disputes: Indian law, arbitration under Arbitration & Conciliation Act 1996 (Mumbai seat). International disputes: ICC Rules, Singapore seat. Emergency injunctive relief available in courts of competent jurisdiction.' },
+        { title: '11. Account Termination', body: 'FR8X may terminate accounts immediately for breach, fraud, non-payment, or regulatory obligation. Data retention follows the Privacy Policy and applicable law. Deletion requests: legal@fr8x.in.' },
+        { title: '12. Amendments', body: 'FR8X may amend these Terms with 15 days notice via registered email. Continued use constitutes acceptance. Refusing amended terms requires cessation of use and account closure request.' },
+      ].map((section) => (
+        <div key={section.title}>
+          <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px', fontSize: '13.5px' }}>{section.title}</div>
+          <div style={{ color: '#475569', lineHeight: 1.7 }}>{section.body}</div>
+        </div>
+      ))}
+      <div style={{ marginTop: '8px', padding: '12px 16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '12px', color: '#0369a1' }}>
+        <strong>Contact:</strong> legal@fr8x.in · privacy@fr8x.in · support@fr8x.in · security@fr8x.in<br />
+        FR8X Technology Private Limited, Mumbai, Maharashtra, India. Effective September 2026 · Version 3.1
+      </div>
+    </div>
+  );
+}
 
 
 
@@ -136,6 +418,9 @@ export default function RegisterPage() {
   const { register, login, allUsers } = useAuth();
   const { toast } = useToast();
 
+  // T&C Gate State
+  const [termsStep, setTermsStep] = useState<'gate' | 'form'>('gate');
+
   // Form State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -144,25 +429,28 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isdCode, setIsdCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
-  const [designation, setDesignation] = useState('Freight Procurement Manager');
+  const [designation, setDesignation] = useState('');
   const [preferredContact, setPreferredContact] = useState<'tradeChat' | 'email' | 'mobile'>('tradeChat');
-  const [timezone, setTimezone] = useState('Asia/Kolkata');
-  const [country, setCountry] = useState('India');
-  const [countryCode, setCountryCode] = useState('IN');
-  const [state, setState] = useState('Punjab');
-  const [stateCode, setStateCode] = useState('PB');
+  const [timezone, setTimezone] = useState('');
+  const [country, setCountry] = useState('');
+  const [countryCode, setCountryCode] = useState('');
+  const [state, setState] = useState('');
+  const [stateCode, setStateCode] = useState('');
   const [countryList, setCountryList] = useState<
     { code: string; name: string; flag: string; phonecode: string }[]
   >([]);
-  const [city, setCity] = useState('Ludhiana');
+  const [city, setCity] = useState('');
   const [cityList, setCityList] = useState<
     { name: string; state?: string; postalCode?: string }[]
   >([]);
-  const [postalCode, setPostalCode] = useState('141001');
+  const [postalCode, setPostalCode] = useState('');
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [customCity, setCustomCity] = useState('');
   const [isLoadingCities, setIsLoadingCities] = useState(false);
   const [devOtpHint, setDevOtpHint] = useState<string | null>(null);
+
+  // Password strength
+  const passwordStrength = calcPasswordStrength(password);
 
   // Complete Global Geography Datasets (All 250 Countries, 418 Timezones, Global States & Cities)
   const globalIsdEntries: GlobalISDEntry[] = React.useMemo(() => getAllGlobalISDCodes(), []);
@@ -558,15 +846,39 @@ export default function RegisterPage() {
   };
 
   return (
+    <>
+      {/* T&C Modal Gate */}
+      {termsStep === 'gate' && (
+        <TnCModal
+          onAccept={() => setTermsStep('form')}
+          onDecline={() => router.push('/')}
+        />
+      )}
+
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--bg)',
-        padding: '30px 16px 60px',
+        background: '#f1f5f9',
         display: 'flex',
-        justifyContent: 'center',
+        flexDirection: 'row',
+        minWidth: 0,
       }}
     >
+      {/* LEFT PANEL — Clock & Calendar */}
+      <div style={{
+        width: '280px',
+        minWidth: '280px',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        flexShrink: 0,
+        display: 'none',
+      }} className="reg-left-panel">
+        <LiveClockPanel />
+      </div>
+
+      {/* RIGHT PANEL — Registration Form */}
+      <div style={{ flex: 1, minWidth: 0, padding: '30px 16px 60px', display: 'flex', justifyContent: 'center' }}>
       <div className="reg-container">
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -775,6 +1087,37 @@ export default function RegisterPage() {
                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
+                    {/* Password Strength Bar */}
+                    {password.length > 0 && (
+                      <div style={{ marginTop: '6px' }}>
+                        <div style={{ height: '5px', borderRadius: '3px', background: '#e2e8f0', overflow: 'hidden' }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${(passwordStrength.score / 5) * 100}%`,
+                            background: passwordStrength.score <= 1 ? '#ef4444'
+                              : passwordStrength.score === 2 ? '#f97316'
+                              : passwordStrength.score === 3 ? '#eab308'
+                              : passwordStrength.score === 4 ? '#22c55e'
+                              : '#16a34a',
+                            borderRadius: '3px',
+                            transition: 'width 0.3s ease, background 0.3s ease',
+                          }} />
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
+                          <span style={{ fontSize: '10px', fontWeight: 700, color: passwordStrength.color }}>
+                            {passwordStrength.label}
+                          </span>
+                          <span style={{ fontSize: '10px', color: '#94a3b8' }}>
+                            {password.length >= 8 ? '' : `${8 - password.length} more chars`}
+                          </span>
+                        </div>
+                        {passwordStrength.level === 'too_weak' || passwordStrength.level === 'weak' ? (
+                          <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>
+                            Add uppercase, numbers &amp; symbols to strengthen
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
                   </div>
                   <div className="reg-field">
                     <label className="reg-label">
@@ -1163,28 +1506,15 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Legal Acceptance */}
-            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 10, background: '#fafcfe', padding: '12px 14px' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                  required
-                  style={{
-                    marginTop: '2px',
-                    width: '15px',
-                    height: '15px',
-                    accentColor: 'var(--brand)',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                  }}
-                />
-                <span style={{ fontSize: '11.5px', lineHeight: '1.45', color: 'var(--fr8x-text)' }}>
-                  I confirm legal authority to represent <b>{companyName || 'this corporate entity'}</b> and agree to
-                  the FR8X Master Terms of Service, anti-fraud, trade sanctions compliance, and bid fee regulations.
+            {/* Legal Acceptance — terms already accepted via modal gate */}
+            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 10, background: '#f0fdf4', padding: '10px 14px', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={16} color="#16a34a" style={{ flexShrink: 0 }} />
+                <span style={{ fontSize: '11.5px', lineHeight: '1.45', color: '#166534' }}>
+                  <strong>FR8X Master Terms accepted</strong> — You accepted the Terms of Service at the start of this session. Your submission confirms legal authority to represent <b>{companyName || 'this corporate entity'}</b>.
+                  {' '}<Link href="/terms" target="_blank" style={{ color: '#0284c7', fontWeight: 600 }}>View Terms →</Link>
                 </span>
-              </label>
+              </div>
             </div>
 
             <button
@@ -1376,6 +1706,13 @@ export default function RegisterPage() {
           </Link>
         </div>
       </div>
+      </div>{/* end right panel */}
     </div>
+    <style>{`
+      @media (min-width: 900px) {
+        .reg-left-panel { display: flex !important; }
+      }
+    `}</style>
+    </>
   );
 }

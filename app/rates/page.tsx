@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '@/lib/context/DataContext';
 import { useCurrency } from '@/lib/context/CurrencyContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -84,7 +84,7 @@ const RATE_TYPE_OPTIONS = [
 
 export default function RatesPage() {
 
-  const { rates, myRates, addMyRate, deleteMyRate, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
+  const { rates, myRates, addMyRate, updateMyRate, deleteMyRate, clearAllMyRates, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -101,6 +101,7 @@ export default function RatesPage() {
   const [podSearch, setPodSearch] = useState('');
   const [searchMode, setSearchMode] = useState<'corridor' | 'global'>('corridor');
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
+  const [editorVisible, setEditorVisible] = useState(true);
 
   // Rate Detail Modal
   const [selectedRateDetail, setSelectedRateDetail] = useState<RateItem | null>(null);
@@ -123,22 +124,22 @@ export default function RatesPage() {
   const [bulkValidityExtension, setBulkValidityExtension] = useState<string>('');
   const [viewingRevisionRate, setViewingRevisionRate] = useState<RateItem | null>(null);
 
-  // i-Rate Editor Form State
-  const [carrier, setCarrier] = useState('Maersk');
-  const [por, setPor] = useState('Nhava Sheva (INNSA)');
-  const [pol, setPol] = useState('Nhava Sheva (INNSA)');
-  const [pod, setPod] = useState('Rotterdam (NLRTM)');
-  const [fpod, setFpod] = useState('Rotterdam (NLRTM)');
-  const [routing, setRouting] = useState('Direct Ocean EP-X');
-  const [transitTime, setTransitTime] = useState('29 days');
-  const [d20, setD20] = useState(1480);
-  const [d20Type, setD20Type] = useState('Dry Standard');
-  const [h40, setH40] = useState(2320);
-  const [h40Type, setH40Type] = useState('High Cube');
-  const [freeTime, setFreeTime] = useState('14 days combined');
-  const [validDate, setValidDate] = useState('2026-09-30');
+  // i-Rate Editor Form State — starts completely clean without dummy values
+  const [carrier, setCarrier] = useState('');
+  const [por, setPor] = useState('');
+  const [pol, setPol] = useState('');
+  const [pod, setPod] = useState('');
+  const [fpod, setFpod] = useState('');
+  const [routing, setRouting] = useState('');
+  const [transitTime, setTransitTime] = useState('');
+  const [d20, setD20] = useState<number | ''>('');
+  const [d20Type, setD20Type] = useState("20' Standard (20DV)");
+  const [h40, setH40] = useState<number | ''>('');
+  const [h40Type, setH40Type] = useState("40' High Cube (40HC)");
+  const [freeTime, setFreeTime] = useState('');
+  const [validDate, setValidDate] = useState('');
   const [rateType, setRateType] = useState('Direct Spot');
-  const [remarks, setRemarks] = useState('Subject to low sulphur fuel bunker surcharge at destination.');
+  const [remarks, setRemarks] = useState('');
 
   // Generate structured SEQ: {company_initials}-{dd}{mm}-{0001}
   const getRateSeq = (r: RateItem, idx: number) => {
@@ -248,8 +249,17 @@ Generated via FR8X Freight Exchange
     return daysLeft <= 30 && daysLeft >= 0;
   };
 
-  // Filtered Tables
-  const allAvailableRates = [...rates, ...myRates];
+  // Deduplicated All Available Rates (prevents duplicate rendering from rates + myRates)
+  const allAvailableRates = useMemo(() => {
+    const map = new Map<string, RateItem>();
+    rates.forEach((r) => {
+      if (r?.id) map.set(r.id, r);
+    });
+    myRates.forEach((r) => {
+      if (r?.id) map.set(r.id, r);
+    });
+    return Array.from(map.values());
+  }, [rates, myRates]);
 
   const filteredRates = allAvailableRates.filter((r) => {
     // 1. Global search query across all rate fields
@@ -322,58 +332,126 @@ Generated via FR8X Freight Exchange
   };
 
   const handleClearForm = () => {
-    setCarrier('Maersk');
+    setCarrier('');
     setPor('');
     setPol('');
     setPod('');
     setFpod('');
     setRouting('');
     setTransitTime('');
-    setD20(0);
-    setD20Type('');
-    setH40(0);
-    setH40Type('');
+    setD20('');
+    setD20Type("20' Standard (20DV)");
+    setH40('');
+    setH40Type("40' High Cube (40HC)");
     setFreeTime('');
     setValidDate('');
-    setRateType('');
+    setRateType('Direct Spot');
     setRemarks('');
     setEditingRateId(null);
-    toast('Form cleared.');
+    toast('Form reset to clean state.');
+  };
+
+  const handleLoadSampleRate = () => {
+    setCarrier('Maersk');
+    setPor('Nhava Sheva (INNSA)');
+    setPol('Nhava Sheva (INNSA)');
+    setPod('Rotterdam (NLRTM)');
+    setFpod('Rotterdam (NLRTM)');
+    setRouting('Direct Ocean EP-X');
+    setTransitTime('29 days');
+    setD20(1480);
+    setD20Type("20' Standard (20DV)");
+    setH40(2320);
+    setH40Type("40' High Cube (40HC)");
+    setFreeTime('14 days combined');
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 30);
+    setValidDate(futureDate.toISOString().split('T')[0]);
+    setRateType('Direct Spot');
+    setRemarks('Subject to low sulphur fuel bunker surcharge at destination.');
+    toast('Sample rate template loaded. Review and click SAVE or UPDATE.');
   };
 
   const handleDuplicateSelected = () => {
-    if (!pol.trim() || !pod.trim()) {
-      toast('Fill in POL and POD to duplicate.');
+    if (!carrier.trim() || !pol.trim() || !pod.trim() || !d20 || !h40 || !validDate) {
+      toast('Please fill in required fields (Carrier, POL, POD, 20DV, 40HC, Validity) before duplicating.');
       return;
     }
-    addMyRate({ carrier, por: por || pol, pol, pod, fpod: fpod || pod, d20: Number(d20), d20Type, h40: Number(h40), h40Type, ft: freeTime, tt: transitTime, valid: validDate, rateType, route: routing, remark: remarks });
-    toast('Rate duplicated and saved as new i-Rate.');
+    addMyRate({
+      carrier: carrier.trim(),
+      por: (por || pol).trim(),
+      pol: pol.trim(),
+      pod: pod.trim(),
+      fpod: (fpod || pod).trim(),
+      d20: Number(d20),
+      d20Type: d20Type || "20' Standard (20DV)",
+      h40: Number(h40),
+      h40Type: h40Type || "40' High Cube (40HC)",
+      ft: freeTime.trim() || '14 days combined',
+      tt: transitTime.trim() || '28 days',
+      valid: validDate,
+      rateType: rateType || 'Direct Spot',
+      route: routing.trim() || 'Direct Ocean Service',
+      remark: remarks.trim(),
+    });
+    setEditingRateId(null);
+    toast('Rate duplicated and saved as new distinct i-Rate.');
   };
 
   const handleSaveIRate = () => {
-    if (!pol.trim() || !pod.trim() || !d20 || !h40 || !validDate) {
-      toast('Please complete all required fields (POL, POD, 20DV, 40HC, Validity).');
+    if (!carrier.trim()) {
+      toast('Please specify or select an Ocean Carrier.');
+      return;
+    }
+    if (!pol.trim()) {
+      toast('Port of Loading (POL) is required.');
+      return;
+    }
+    if (!pod.trim()) {
+      toast('Port of Discharge (POD) is required.');
+      return;
+    }
+    if (!d20 || Number(d20) <= 0) {
+      toast('Please specify a valid 20DV container rate amount (USD).');
+      return;
+    }
+    if (!h40 || Number(h40) <= 0) {
+      toast('Please specify a valid 40HC container rate amount (USD).');
+      return;
+    }
+    if (!validDate.trim()) {
+      toast('Please select a validity date for this rate quotation.');
       return;
     }
 
-    addMyRate({
-      carrier,
-      por: por || pol,
-      pol,
-      pod,
-      fpod: fpod || pod,
+    const payload = {
+      carrier: carrier.trim(),
+      por: (por || pol).trim(),
+      pol: pol.trim(),
+      pod: pod.trim(),
+      fpod: (fpod || pod).trim(),
       d20: Number(d20),
-      d20Type,
+      d20Type: d20Type || "20' Standard (20DV)",
       h40: Number(h40),
-      h40Type,
-      ft: freeTime,
-      tt: transitTime,
+      h40Type: h40Type || "40' High Cube (40HC)",
+      ft: freeTime.trim() || '14 days combined',
+      tt: transitTime.trim() || '28 days',
       valid: validDate,
-      rateType,
-      route: routing,
-      remark: remarks,
-    });
-    toast('Custom i-Rate saved to workspace.');
+      rateType: rateType || 'Direct Spot',
+      route: routing.trim() || 'Direct Ocean Service',
+      remark: remarks.trim(),
+    };
+
+    if (editingRateId) {
+      updateMyRate(editingRateId, payload);
+      setEditingRateId(null);
+      handleClearForm();
+      toast(`Rate ${editingRateId} updated successfully.`);
+    } else {
+      addMyRate(payload);
+      handleClearForm();
+      toast('New custom i-Rate saved to workspace.');
+    }
   };
 
   const handleDownloadTemplate = () => {
@@ -1168,48 +1246,84 @@ Generated via FR8X Freight Exchange
         </div>
       </div>
 
-      {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates */}
-      <div className={activeTab === 'i' ? 'rateeditor' : 'rateeditor-full'}>
-        {/* Left Form: RATES EDITOR available ONLY in My i-Rates tab */}
-        {activeTab === 'i' && (
-          <div className={`card ${!mobileEditorOpen ? 'hidden-on-mobile' : ''}`} style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-            <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-              <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
-              <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '0px' }}>My i-Rate</span>
+      {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates and Self-Posted */}
+      <div className={(activeTab === 'i' || activeTab === 'self') && editorVisible ? 'rateeditor' : 'rateeditor-full'}>
+        {/* Left Form: RATES EDITOR available in My i-Rates and Self-Posted tabs */}
+        {(activeTab === 'i' || activeTab === 'self') && editorVisible && (
+          <div className={`card ${!mobileEditorOpen ? 'hidden-on-mobile' : ''}`} style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
+            <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
+                <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '4px' }}>
+                  {activeTab === 'self' ? 'Self-Posted' : 'My i-Rate'}
+                </span>
+              </div>
+              <button
+                type="button"
+                className="btn secondary sm"
+                style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '3px' }}
+                onClick={() => setEditorVisible(false)}
+                title="Collapse editor panel"
+              >
+                ◀ Hide
+              </button>
             </div>
 
-            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {/* Active Editing Indicator Banner */}
+              {editingRateId ? (
+                <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '4px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '11px', color: '#92400e', fontWeight: 600 }}>
+                    Editing Rate: <b>{editingRateId}</b>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setEditingRateId(null); handleClearForm(); }}
+                    style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', fontWeight: 700, fontSize: '11px', textDecoration: 'underline' }}
+                  >
+                    Cancel Edit
+                  </button>
+                </div>
+              ) : (
+                <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>
+                  Create a new self-posted rate, or click any row in the table to load and update.
+                </div>
+              )}
+
               {/* Row 1: CARRIER search with 3-letter typeahead */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px', alignItems: 'center' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>CARRIER</label>
-                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Type carrier (3+ letters)…" />
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '3px', textAlign: 'center' }}>CARRIER *</label>
+                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Type carrier (e.g. Maersk, MSC, Hapag)…" />
               </div>
+
               {/* Row 2: POR + POL — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POR</label>
-                  <PortSearch value={por} onChange={setPor} placeholder="POR (3+ letters)" />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POR</label>
+                  <PortSearch value={por} onChange={setPor} placeholder="POR (e.g. INNSA)" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POL</label>
-                  <PortSearch value={pol} onChange={setPol} placeholder="POL (3+ letters)" />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POL *</label>
+                  <PortSearch value={pol} onChange={setPol} placeholder="POL (e.g. INNSA)" />
                 </div>
               </div>
+
               {/* Row 3: POD + FPOD — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>POD</label>
-                  <PortSearch value={pod} onChange={setPod} placeholder="POD (3+ letters)" />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POD *</label>
+                  <PortSearch value={pod} onChange={setPod} placeholder="POD (e.g. NLRTM)" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '0px', textAlign: 'center' }}>FPOD</label>
-                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD (3+ letters)" />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>FPOD</label>
+                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD (e.g. NLRTM)" />
                 </div>
               </div>
+
               {/* Row 4: 20 TYPE (All Container Types Dropdown) + 20 [USD] */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 TYPE</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>20 TYPE</label>
                   <SearchableDropdown
                     options={CONTAINER_20_OPTIONS}
                     value={d20Type}
@@ -1219,14 +1333,22 @@ Generated via FR8X Freight Exchange
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>20 [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={d20 || ''} onChange={(e) => setD20(Number(e.target.value))} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>20DV ($) *</label>
+                  <input
+                    className="input"
+                    style={{ fontSize: '11.5px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 600 }}
+                    type="number"
+                    placeholder="e.g. 1480"
+                    value={d20}
+                    onChange={(e) => setD20(e.target.value === '' ? '' : Number(e.target.value))}
+                  />
                 </div>
               </div>
+
               {/* Row 5: 40 TYPE (All Container Types Dropdown) + 40HC [USD] */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40 TYPE</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>40 TYPE</label>
                   <SearchableDropdown
                     options={CONTAINER_40_OPTIONS}
                     value={h40Type}
@@ -1236,41 +1358,51 @@ Generated via FR8X Freight Exchange
                   />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>40HC [USD]</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="number" placeholder="0" value={h40 || ''} onChange={(e) => setH40(Number(e.target.value))} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>40HC ($) *</label>
+                  <input
+                    className="input"
+                    style={{ fontSize: '11.5px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 600 }}
+                    type="number"
+                    placeholder="e.g. 2320"
+                    value={h40}
+                    onChange={(e) => setH40(e.target.value === '' ? '' : Number(e.target.value))}
+                  />
                 </div>
               </div>
+
               {/* Row 6: FREE TIME + VALIDITY */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>FREE TIME</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 14 days" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>FREE TIME</label>
+                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="e.g. 14 days combined" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>VALIDITY *</label>
+                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
                 </div>
               </div>
+
               {/* Row 7: TRANSIT + ROUTING */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>TRANSIT</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>TRANSIT</label>
+                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>ROUTING</label>
-                  <input className="input" style={{ fontSize: '11px', height: '38px', padding: '0 6px', borderRadius: '0px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>ROUTING</label>
+                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
                 </div>
               </div>
+
               {/* Row 8: VALIDITY TYPE */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center' }}>VALIDITY TYPE</label>
+                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>RATE TYPE</label>
                   <SearchableDropdown
                     options={RATE_TYPE_OPTIONS}
                     value={rateType}
                     onChange={setRateType}
-                    searchPlaceholder="Search validity type…"
+                    searchPlaceholder="Search rate type…"
                     style={{ fontSize: '11px' }}
                   />
                 </div>
@@ -1279,47 +1411,87 @@ Generated via FR8X Freight Exchange
 
               {/* Row 9: REMARKS full width */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', alignItems: 'flex-start' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '0px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>
-                <textarea className="input" style={{ fontSize: '11px', padding: '5px 6px', resize: 'vertical', borderRadius: '0px' }} rows={2} placeholder="Surcharges, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
+                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '3px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>
+                <textarea className="input" style={{ fontSize: '11px', padding: '6px 8px', resize: 'vertical', borderRadius: '3px' }} rows={2} placeholder="Surcharges, inclusions, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
               </div>
 
-              {/* Action Buttons: SAVE | UPDATE | CLEAR | DUPLICATE */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '4px' }}>
-                <button className="btn primary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, background: 'var(--fr8x-outline)', borderColor: 'var(--fr8x-outline)', borderRadius: '0px' }} onClick={handleSaveIRate}>
-                  SAVE
+              {/* Action Buttons: SAVE | UPDATE | CLEAR | SAMPLE DATA | DUPLICATE */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
+                <button
+                  type="button"
+                  className="btn primary"
+                  style={{ fontSize: '11.5px', padding: '8px 0', fontWeight: 700, borderRadius: '4px' }}
+                  onClick={handleSaveIRate}
+                >
+                  {editingRateId ? 'SAVE AS NEW' : 'SAVE RATE'}
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={() => {
-                  if (!editingRateId) { alert('Select a rate row to update.'); return; }
-                  handleSaveIRate();
-                }}>
-                  UPDATE
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '8px 0',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    background: editingRateId ? '#fef3c7' : undefined,
+                    color: editingRateId ? '#92400e' : undefined,
+                    borderColor: editingRateId ? '#f59e0b' : undefined,
+                  }}
+                  onClick={() => {
+                    if (!editingRateId) {
+                      toast('Select a rate from the table below to load into the editor before clicking UPDATE.');
+                      return;
+                    }
+                    handleSaveIRate();
+                  }}
+                >
+                  {editingRateId ? `UPDATE (${editingRateId})` : 'UPDATE'}
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={handleClearForm}>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px' }}
+                  onClick={handleClearForm}
+                >
                   CLEAR
                 </button>
-                <button className="btn secondary" style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 700, borderRadius: '0px' }} onClick={handleDuplicateSelected}>
-                  DUPLICATE
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px', color: 'var(--brand)' }}
+                  onClick={handleLoadSampleRate}
+                  title="Load sample rate values into the editor for testing"
+                >
+                  SAMPLE DATA
+                </button>
+                <button
+                  type="button"
+                  className="btn secondary"
+                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px', gridColumn: 'span 2' }}
+                  onClick={handleDuplicateSelected}
+                >
+                  DUPLICATE AS NEW
                 </button>
               </div>
             </div>
           </div>
         )}
         {/* Main Table: Rates Matrix */}
-        <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
-            <div className="rates-desktop-tabs" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
+          <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0' }}>
+            <div className="rates-desktop-tabs" style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
               <button
                 className={`tab ${activeTab === 'all' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'all'}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'all' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'all' ? '#fff' : undefined, borderColor: activeTab === 'all' ? 'var(--fr8x-outline)' : undefined }}
+                style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'all' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'all' ? '#fff' : undefined }}
                 onClick={() => setActiveTab('all')}
               >
-                All Available Rates ({rates.length + myRates.length})
+                All Available Rates ({allAvailableRates.length})
               </button>
               <button
                 className={`tab ${activeTab === 'self' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'self'}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'self' ? '#fff' : undefined, borderColor: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined }}
+                style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'self' ? '#fff' : undefined }}
                 onClick={() => setActiveTab('self')}
               >
                 Self-Posted Rates ({allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length})
@@ -1327,7 +1499,7 @@ Generated via FR8X Freight Exchange
               <button
                 className={`tab ${activeTab === 'i' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'i'}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'i' ? '#fff' : undefined, borderColor: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined }}
+                style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'i' ? '#fff' : undefined }}
                 onClick={() => setActiveTab('i')}
               >
                 My i-Rates ({myRates.length})
@@ -1335,17 +1507,46 @@ Generated via FR8X Freight Exchange
               <button
                 className={`tab ${activeTab === 'expiring' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'expiring'}
-                style={{ fontSize: '11.5px', padding: '5px 10px', borderRadius: '0px', background: activeTab === 'expiring' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'expiring' ? '#fff' : undefined, borderColor: activeTab === 'expiring' ? 'var(--fr8x-outline)' : undefined }}
+                style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'expiring' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'expiring' ? '#fff' : undefined }}
                 onClick={() => setActiveTab('expiring')}
               >
-                <Clock size={11} style={{ verticalAlign: '-1px' }} /> Expiring / Expired Rates (
+                <Clock size={12} style={{ verticalAlign: '-1px', marginRight: '4px' }} /> Expiring / Expired Rates (
                 {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length})
               </button>
+
+              {(activeTab === 'self' || activeTab === 'i') && (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '6px' }}
+                  onClick={() => setEditorVisible(!editorVisible)}
+                >
+                  {editorVisible ? '◀ Hide Editor' : '▶ Show Rates Editor'}
+                </button>
+              )}
+
+              {(activeTab === 'self' || activeTab === 'i') && myRates.length > 0 && (
+                <button
+                  type="button"
+                  className="btn danger sm"
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: 'auto', background: '#fee2e2', color: '#b91c1c', borderColor: '#fca5a5' }}
+                  onClick={() => {
+                    if (window.confirm(`Are you sure you want to permanently delete all ${myRates.length} custom rates? This cannot be undone.`)) {
+                      clearAllMyRates();
+                      handleClearForm();
+                    }
+                  }}
+                  title="Wipe all self-posted / custom rates"
+                >
+                  <Trash2 size={11} style={{ marginRight: '4px', verticalAlign: '-1px' }} />
+                  Clear All My Rates ({myRates.length})
+                </button>
+              )}
 
               {comparedRateIds.length > 0 && (
                 <button
                   className="btn primary sm"
-                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '0px', marginLeft: '6px' }}
+                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: myRates.length > 0 ? '6px' : 'auto' }}
                   onClick={() => {
                     setSelectedRateIdsForBulk(comparedRateIds);
                     setShowBulkAdjustModal(true);
@@ -1663,233 +1864,295 @@ Generated via FR8X Freight Exchange
 
           {/* Full-width rates table fitting screen wide without text wrap */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="table rates-compact-table" style={{ fontSize: '10px', tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', minWidth: '1120px' }}>
+            <table className="table rates-compact-table" style={{ fontSize: '12px', tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', minWidth: '1780px' }}>
               <colgroup>
-                <col style={{ width: '38px' }} />
-                <col style={{ width: '90px' }} />
-                <col style={{ width: '95px' }} />
-                <col style={{ width: '42px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '68px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '68px' }} />
-                <col style={{ width: '65px' }} />
-                <col style={{ width: '55px' }} />
-                <col style={{ width: '68px' }} />
-                <col style={{ width: '55px' }} />
                 <col style={{ width: '45px' }} />
-                <col style={{ width: '75px' }} />
+                <col style={{ width: '135px' }} />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '55px' }} />
+                <col style={{ width: '125px' }} />
+                <col style={{ width: '125px' }} />
+                <col style={{ width: '125px' }} />
+                <col style={{ width: '125px' }} />
+                <col style={{ width: '105px' }} />
+                <col style={{ width: '95px' }} />
+                <col style={{ width: '105px' }} />
+                <col style={{ width: '95px' }} />
                 <col style={{ width: '85px' }} />
-                <col style={{ width: '70px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '85px' }} />
+                <col style={{ width: '65px' }} />
+                <col style={{ width: '135px' }} />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '190px' }} />
               </colgroup>
               <thead>
                 {/* Header row — clean, high-contrast, zero-curve, 1px outline */}
                 <tr style={{ background: '#f1f5f9', borderBottom: '1px solid var(--fr8x-outline)' }}>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>LINE</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>FPOD</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>20DV (USD)</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>20TYPE</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>40HC (USD)</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>40TYPE</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>F/T</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>DATE</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
-                  <th style={{ color: 'var(--fr8x-text)', fontSize: '10px', padding: '6px 3px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTION</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>CMP</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>SEQ</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>SERVICE PROVIDER</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 4px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>LINE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>POR</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>POL</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>POD</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>FPOD</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>20DV (USD)</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>20TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>40HC (USD)</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>40TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>F/T</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>DATE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>TYPE</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>TT</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>ROUTING</th>
+                  <th style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', fontWeight: 800, whiteSpace: 'nowrap' }}>REMARKS</th>
+                  <th className="rates-sticky-action-col" style={{ color: 'var(--fr8x-text)', fontSize: '11px', padding: '8px 6px', textAlign: 'center', fontWeight: 800, whiteSpace: 'nowrap' }}>ACTIONS</th>
                 </tr>
                 {/* Per-column search row */}
                 <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)' }}>
                   <th />
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', fontFamily: 'monospace', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEQ" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.carrier || ''} onChange={(e) => updateColSearch('carrier', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.por || ''} onChange={(e) => updateColSearch('por', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.pol || ''} onChange={(e) => updateColSearch('pol', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.pod || ''} onChange={(e) => updateColSearch('pod', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.fpod || ''} onChange={(e) => updateColSearch('fpod', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', fontFamily: 'monospace', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEQ…" value={colSearch.seq || ''} onChange={(e) => updateColSearch('seq', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="Provider…" value={colSearch.sp || ''} onChange={(e) => updateColSearch('sp', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="Carrier…" value={colSearch.carrier || ''} onChange={(e) => updateColSearch('carrier', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="POR…" value={colSearch.por || ''} onChange={(e) => updateColSearch('por', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="POL…" value={colSearch.pol || ''} onChange={(e) => updateColSearch('pol', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="POD…" value={colSearch.pod || ''} onChange={(e) => updateColSearch('pod', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="FPOD…" value={colSearch.fpod || ''} onChange={(e) => updateColSearch('fpod', e.target.value)} /></th>
                   <th /><th /><th /><th /><th /><th /><th /><th />
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.routing || ''} onChange={(e) => updateColSearch('routing', e.target.value)} /></th>
-                  <th><input className="input" style={{ fontSize: '9.5px', height: '22px', padding: '0 3px', width: '100%', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }} placeholder="SEARCH" value={colSearch.remarks || ''} onChange={(e) => updateColSearch('remarks', e.target.value)} /></th>
-                  <th />
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="Routing…" value={colSearch.routing || ''} onChange={(e) => updateColSearch('routing', e.target.value)} /></th>
+                  <th><input className="input" style={{ fontSize: '11px', height: '26px', padding: '0 4px', width: '100%', borderRadius: '3px', border: '1px solid var(--fr8x-outline)' }} placeholder="Remarks…" value={colSearch.remarks || ''} onChange={(e) => updateColSearch('remarks', e.target.value)} /></th>
+                  <th className="rates-sticky-action-filter-col">
+                    {Object.values(colSearch).some(Boolean) && (
+                      <button
+                        type="button"
+                        onClick={() => setColSearch({})}
+                        style={{
+                          fontSize: '10px',
+                          padding: '2px 6px',
+                          background: '#fee2e2',
+                          color: '#b91c1c',
+                          border: '1px solid #fca5a5',
+                          borderRadius: '3px',
+                          cursor: 'pointer',
+                          fontWeight: 600,
+                        }}
+                        title="Clear all column search filters"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRates.map((rate, idx) => {
-                  const isCompared = comparedRateIds.includes(rate.id);
-                  const isExpiring = isExpiringSoon(rate.valid);
-                  const isOwner = myRates.some((mr) => mr.id === rate.id);
+                {filteredRates.length === 0 ? (
+                  <tr>
+                    <td colSpan={19} style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b' }}>
+                      <Search size={32} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.5 }} />
+                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>No rates matching current filters</div>
+                      <div style={{ fontSize: '12px', marginTop: '4px' }}>Try adjusting your search criteria or reset filters.</div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredRates.map((rate, idx) => {
+                    const isCompared = comparedRateIds.includes(rate.id);
+                    const isExpiring = isExpiringSoon(rate.valid);
+                    const isOwner =
+                      rate.isOwner === true ||
+                      rate.isSelfPosted === true ||
+                      (user?.uid && rate.ownerUid === user.uid) ||
+                      (user?.company && rate.sp?.toLowerCase() === user.company?.toLowerCase()) ||
+                      myRates.some((mr) => mr.id === rate.id) ||
+                      activeTab === 'self' ||
+                      activeTab === 'i';
 
-                  return (
-                    <tr key={rate.id} style={{ background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#fff' : '#f7f9fd', cursor: 'default' }}
-                      onClick={() => {
-                        setCarrier(rate.carrier);
-                        setPor(rate.por || '');
-                        setPol(rate.pol);
-                        setPod(rate.pod);
-                        setFpod(rate.fpod || '');
-                        setD20(rate.d20);
-                        setD20Type(rate.d20Type || '');
-                        setH40(rate.h40);
-                        setH40Type(rate.h40Type || '');
-                        setFreeTime(rate.ft);
-                        setValidDate(rate.valid);
-                        setTransitTime(rate.tt);
-                        setRouting(rate.route);
-                        setRateType(rate.rateType || 'Direct Spot');
-                        setRemarks(rate.remark);
-                        setEditingRateId(rate.id);
-                      }}
-                    >
-                      <td style={{ textAlign: 'center', padding: '4px 3px', whiteSpace: 'nowrap' }}>
-                        <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
-                          <input
-                            type="checkbox"
-                            checked={isCompared}
-                            onChange={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }}
-                            title="Select to compare"
-                            style={{ cursor: 'pointer' }}
-                          />
-                          <button
-                            type="button"
-                            className="btn icon sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedRateDetail(rate);
-                            }}
-                            title="View Complete Structured Dossier & Table Matrix"
-                            style={{
-                              width: '20px',
-                              height: '20px',
-                              border: '1px solid #cbd5e1',
-                              background: '#fff',
-                              borderRadius: '4px',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: 0,
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <FileSpreadsheet size={11} color="var(--brand)" />
-                          </button>
-                        </div>
-                      </td>
-                      <td style={{ textAlign: 'center', color: 'var(--ink)', padding: '5px 4px', fontSize: '10.5px', fontWeight: 700, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
-                        {getRateSeq(rate, allAvailableRates.indexOf(rate))}
-                      </td>
-                      <td style={{ padding: '5px 4px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: isOwner ? 700 : 400 }}>{rate.sp}</span>
-                        {isOwner && <span style={{ fontSize: '9px', color: 'var(--brand)', display: 'block' }}>i-Rate</span>}
-                      </td>
-                      <td style={{ padding: '4px 3px', fontWeight: 600, fontSize: '11px' }} title={rate.carrier}>
-                        {(() => {
-                          const carrierMaster = masterCarriers.find((c) => c.name.toLowerCase() === rate.carrier.toLowerCase() || c.carrierCode.toLowerCase() === rate.carrier.toLowerCase() || c.scacCode.toLowerCase() === rate.carrier.toLowerCase());
-                          return carrierMaster?.logoUrl ? (
-                            <img src={carrierMaster.logoUrl} alt={`${rate.carrier} logo`} style={{ width: '25px', height: '25px', objectFit: 'contain', display: 'block' }} />
-                          ) : (
-                            <span aria-label={rate.carrier} style={{ display: 'inline-flex', width: '25px', height: '25px', alignItems: 'center', justifyContent: 'center', background: '#eef2ff', border: '1px solid #c7d2fe', color: '#3730a3', fontSize: '8px', fontWeight: 800 }}>
-                              {(carrierMaster?.carrierCode || rate.carrier).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                          <span>🗺️</span>
-                          <span>{rate.por || rate.pol}</span>
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                          <span>⚓</span>
-                          <span>{rate.pol}</span>
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                          <span>⚓</span>
-                          <span>{rate.pod}</span>
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                          <span>🗺️</span>
-                          <span>{rate.fpod || rate.pod}</span>
-                        </span>
-                      </td>
-                      <td style={{ padding: '5px 4px', textAlign: 'right', fontWeight: 700, color: 'var(--brand)', fontSize: '11.5px' }}>${rate.d20.toLocaleString()}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px', color: 'var(--mut)' }}>{rate.d20Type || 'Dry Std'}</td>
-                      <td style={{ padding: '5px 4px', textAlign: 'right', fontWeight: 700, color: 'var(--teal)', fontSize: '11.5px' }}>${rate.h40.toLocaleString()}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px', color: 'var(--mut)' }}>{rate.h40Type || 'HC'}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px' }}>{rate.ft}</td>
-                      <td style={{ padding: '5px 4px' }}>
-                        <span style={{ fontSize: '10px', color: isExpiring ? 'var(--amber)' : 'var(--ink-secondary)', fontWeight: isExpiring ? 700 : 400 }}>{rate.valid}</span>
-                      </td>
-                      <td style={{ padding: '5px 4px' }}>
-                        <span className={`badge ${isOwner ? 'blue' : 'grey'}`} style={{ fontSize: '9px', padding: '2px 5px' }}>{rate.rateType || 'Spot'}</span>
-                      </td>
-                      <td style={{ padding: '5px 4px', textAlign: 'right', fontSize: '10.5px' }}>{rate.tt}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10.5px', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.route}>{rate.route}</td>
-                      <td style={{ padding: '5px 4px', fontSize: '10px', color: 'var(--mut)', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.remark}>{rate.remark}</td>
-                      <td style={{ padding: '5px 4px' }}>
-                        <div style={{ display: 'flex', gap: '3px', justifyContent: 'center' }}>
-                          <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); setSelectedRateDetail(rate); }} title="View Rate Detail">
-                            <Eye size={11} />
-                          </button>
-                          <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleCopyQuote(rate); }} title="Copy Structured Quote Breakdown">
-                            <Copy size={11} />
-                          </button>
-                          <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleOpenEmailModal(rate); }} title="Email Rate Quote to Service Provider">
-                            <Mail size={11} />
-                          </button>
-                          <button
-                            className="btn secondary sm"
-                            style={{ padding: '2px 5px' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const url = `https://con.fr8x.in/r/${rate.id}`;
-                              navigator.clipboard?.writeText?.(url);
-                              toast(`Smart i-Rate link copied: ${url}`);
-                            }}
-                            title="Copy Smart i-Rate Link (con.fr8x.in/r/...)"
-                          >
-                            <Share2 size={11} />
-                          </button>
-                          <button className="btn secondary sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }} title="Compare">
-                            <ArrowRightLeft size={11} />
-                          </button>
-                          <button
-                            className="btn secondary sm"
-                            style={{ padding: '2px 5px' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setViewingRevisionRate(rate);
-                            }}
-                            title={`Revision History (${rate.versions?.length || 1} versions)`}
-                          >
-                            <History size={11} />
-                          </button>
-                          {isOwner && (
-                            <button className="btn danger sm" style={{ padding: '2px 5px' }} onClick={(e) => { e.stopPropagation(); deleteMyRate(rate.id); }} title="Delete">
-                              <Trash2 size={11} />
+                    return (
+                      <tr
+                        key={rate.id}
+                        className={isCompared ? 'compared-row' : ''}
+                        style={{ background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#fff' : '#f7f9fd', cursor: 'pointer' }}
+                        onClick={() => {
+                          setCarrier(rate.carrier);
+                          setPor(rate.por || '');
+                          setPol(rate.pol);
+                          setPod(rate.pod);
+                          setFpod(rate.fpod || '');
+                          setD20(rate.d20);
+                          setD20Type(rate.d20Type || "20' Standard (20DV)");
+                          setH40(rate.h40);
+                          setH40Type(rate.h40Type || "40' High Cube (40HC)");
+                          setFreeTime(rate.ft || '');
+                          setValidDate(rate.valid || '');
+                          setTransitTime(rate.tt || '');
+                          setRouting(rate.route || '');
+                          setRateType(rate.rateType || 'Direct Spot');
+                          setRemarks(rate.remark || '');
+                          setEditingRateId(rate.id);
+                          if (!editorVisible) setEditorVisible(true);
+                        }}
+                      >
+                        <td style={{ textAlign: 'center', padding: '6px 4px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+                            <input
+                              type="checkbox"
+                              checked={isCompared}
+                              onChange={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }}
+                              title="Select to compare"
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <button
+                              type="button"
+                              className="btn icon sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedRateDetail(rate);
+                              }}
+                              title="View Complete Structured Dossier & Table Matrix"
+                              style={{
+                                width: '20px',
+                                height: '20px',
+                                border: '1px solid #cbd5e1',
+                                background: '#fff',
+                                borderRadius: '4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                padding: 0,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <FileSpreadsheet size={11} color="var(--brand)" />
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'center', color: 'var(--ink)', padding: '6px 6px', fontSize: '11px', fontWeight: 700, fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
+                          {getRateSeq(rate, allAvailableRates.indexOf(rate))}
+                        </td>
+                        <td style={{ padding: '6px 6px' }}>
+                          <span style={{ fontSize: '11.5px', fontWeight: isOwner ? 700 : 500 }}>{rate.sp}</span>
+                          {isOwner && <span style={{ fontSize: '9px', color: 'var(--brand)', display: 'block', fontWeight: 700 }}>★ Custom / i-Rate</span>}
+                        </td>
+                        <td style={{ padding: '6px 4px', fontWeight: 600, fontSize: '11px', textAlign: 'center' }} title={rate.carrier}>
+                          {(() => {
+                            const carrierMaster = masterCarriers.find((c) => c.name.toLowerCase() === rate.carrier.toLowerCase() || c.carrierCode.toLowerCase() === rate.carrier.toLowerCase() || c.scacCode.toLowerCase() === rate.carrier.toLowerCase());
+                            return carrierMaster?.logoUrl ? (
+                              <img src={carrierMaster.logoUrl} alt={`${rate.carrier} logo`} style={{ width: '26px', height: '26px', objectFit: 'contain', display: 'inline-block' }} />
+                            ) : (
+                              <span aria-label={rate.carrier} style={{ display: 'inline-flex', width: '26px', height: '26px', alignItems: 'center', justifyContent: 'center', background: '#eef2ff', border: '1px solid #c7d2fe', color: '#3730a3', fontSize: '9px', fontWeight: 800 }}>
+                                {(carrierMaster?.carrierCode || rate.carrier).replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span>🗺️</span>
+                            <span>{rate.por || rate.pol}</span>
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span>⚓</span>
+                            <span>{rate.pol}</span>
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span>⚓</span>
+                            <span>{rate.pod}</span>
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <span>🗺️</span>
+                            <span>{rate.fpod || rate.pod}</span>
+                          </span>
+                        </td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', fontWeight: 700, color: 'var(--brand)', fontSize: '12.5px' }}>${rate.d20.toLocaleString()}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)' }}>{rate.d20Type || 'Dry Std'}</td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', fontWeight: 700, color: 'var(--teal)', fontSize: '12.5px' }}>${rate.h40.toLocaleString()}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)' }}>{rate.h40Type || 'HC'}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11px' }}>{rate.ft}</td>
+                        <td style={{ padding: '6px 6px' }}>
+                          <span style={{ fontSize: '11px', color: isExpiring ? 'var(--amber)' : 'var(--ink-secondary)', fontWeight: isExpiring ? 700 : 400 }}>{rate.valid}</span>
+                        </td>
+                        <td style={{ padding: '6px 6px' }}>
+                          <span className={`badge ${isOwner ? 'blue' : 'grey'}`} style={{ fontSize: '10px', padding: '2px 6px' }}>{rate.rateType || 'Spot'}</span>
+                        </td>
+                        <td style={{ padding: '6px 6px', textAlign: 'right', fontSize: '11.5px' }}>{rate.tt}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11.5px', maxWidth: '135px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.route}>{rate.route}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.remark}>{rate.remark}</td>
+                        <td className="rates-sticky-action-col" style={{ padding: '6px 6px', background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#ffffff' : '#f7f9fd' }}>
+                          <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
+                            <button className="btn secondary sm" style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); setSelectedRateDetail(rate); }} title="View Rate Detail">
+                              <Eye size={12} />
+                            </button>
+                            <button className="btn secondary sm" style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); handleCopyQuote(rate, idx); }} title="Copy Structured Quote Breakdown">
+                              <Copy size={12} />
+                            </button>
+                            <button className="btn secondary sm" style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); handleOpenEmailModal(rate); }} title="Email Rate Quote to Service Provider">
+                              <Mail size={12} />
+                            </button>
+                            <button
+                              className="btn secondary sm"
+                              style={{ padding: '3px 5px' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const url = `https://con.fr8x.in/r/${rate.id}`;
+                                navigator.clipboard?.writeText?.(url);
+                                toast(`Smart i-Rate link copied: ${url}`);
+                              }}
+                              title="Copy Smart i-Rate Link (con.fr8x.in/r/...)"
+                            >
+                              <Share2 size={12} />
+                            </button>
+                            <button className={`btn secondary sm ${isCompared ? 'active' : ''}`} style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); handleToggleCompare(rate.id); }} title="Compare">
+                              <ArrowRightLeft size={12} />
+                            </button>
+                            <button
+                              className="btn secondary sm"
+                              style={{ padding: '3px 5px' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingRevisionRate(rate);
+                              }}
+                              title={`Revision History (${rate.versions?.length || 1} versions)`}
+                            >
+                              <History size={12} />
+                            </button>
+                            {isOwner && (
+                              <button
+                                type="button"
+                                className="btn danger sm"
+                                style={{
+                                  padding: '3px 5px',
+                                  background: '#fee2e2',
+                                  color: '#b91c1c',
+                                  border: '1px solid #fca5a5',
+                                  borderRadius: '3px',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete rate ${rate.id} (${rate.carrier}: ${rate.pol} ➔ ${rate.pod})?`)) {
+                                    deleteMyRate(rate.id);
+                                    if (editingRateId === rate.id) {
+                                      handleClearForm();
+                                    }
+                                  }
+                                }}
+                                title="Delete this rate"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -1932,6 +2195,15 @@ Generated via FR8X Freight Exchange
                 const isCompared = comparedRateIds.includes(rate.id);
                 const isExpiring = isExpiringSoon(rate.valid);
                 const seqCode = getRateSeq(rate, allAvailableRates.indexOf(rate));
+
+                const isOwner =
+                  rate.isOwner === true ||
+                  rate.isSelfPosted === true ||
+                  (user?.uid && rate.ownerUid === user.uid) ||
+                  (user?.company && rate.sp?.toLowerCase() === user.company?.toLowerCase()) ||
+                  myRates.some((mr) => mr.id === rate.id) ||
+                  activeTab === 'self' ||
+                  activeTab === 'i';
 
                 return (
                   <div
@@ -2097,6 +2369,25 @@ Generated via FR8X Freight Exchange
                         <Copy size={12} />
                         <span>Copy</span>
                       </button>
+                      {isOwner && (
+                        <button
+                          type="button"
+                          className="mobile-rate-action-btn danger"
+                          style={{ color: '#b91c1c', borderColor: '#fca5a5', background: '#fee2e2' }}
+                          onClick={() => {
+                            if (window.confirm(`Delete rate ${rate.id}?`)) {
+                              deleteMyRate(rate.id);
+                              if (editingRateId === rate.id) {
+                                handleClearForm();
+                              }
+                            }
+                          }}
+                          title="Delete Rate"
+                        >
+                          <Trash2 size={12} />
+                          <span>Delete</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 );

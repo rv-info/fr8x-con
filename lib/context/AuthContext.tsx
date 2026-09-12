@@ -122,6 +122,8 @@ interface AuthContextType {
   logout: (reason?: string) => void;
   /** Returns only the remembered email (never a password). */
   loadRememberedEmail: () => string | null;
+  /** Backwards compatibility alias for loadRememberedEmail */
+  loadRemembered: () => string | null;
   bidPostingFee: number;
   bidDiscountPercentage: number;
 }
@@ -397,7 +399,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  const loadRememberedEmailFn = () => loadRememberedEmail();
+  const loadRememberedEmailFn = React.useCallback(() => loadRememberedEmail(), []);
 
   /**
    * Register a new freight organization and user account.
@@ -593,6 +595,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resetPasswordWithOtp,
         logout,
         loadRememberedEmail: loadRememberedEmailFn,
+        loadRemembered: loadRememberedEmailFn,
         bidPostingFee,
         bidDiscountPercentage,
       }}

@@ -1765,7 +1765,9 @@ interface DataContextType {
   rates: RateItem[];
   myRates: RateItem[];
   addMyRate: (rateData: Omit<RateItem, 'id' | 'isOwner' | 'sp'>) => string;
+  updateMyRate: (rateId: string, updates: Partial<RateItem>) => void;
   deleteMyRate: (rateId: string) => void;
+  clearAllMyRates: () => void;
   bulkImportRates: (importedRates: Partial<RateItem>[]) => { count: number; errors: string[] };
   bulkUpdateRates: (rateIds: string[], updates: Partial<RateItem>, adjustmentPercentage?: number) => Promise<void>;
   // Notifications
@@ -2862,7 +2864,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const newRate: RateItem = {
       ...rateData,
       id,
-      sp: user.company,
+      sp: user.company || 'My Enterprise Logistics',
       ownerUid: user.uid,
       isOwner: true,
       isSelfPosted: true,
@@ -2872,12 +2874,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       schemaVersion: 2,
     };
     setMyRates((prev) => {
-      const next = [newRate, ...prev];
+      const filtered = prev.filter((r) => r.id !== id);
+      const next = [newRate, ...filtered];
       try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
       return next;
     });
     setRates((prev) => {
-      const next = [newRate, ...prev];
+      const filtered = prev.filter((r) => r.id !== id);
+      const next = [newRate, ...filtered];
       try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
       return next;
     });
@@ -2901,6 +2905,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return id;
   };
 
+  const updateMyRate = (rateId: string, updates: Partial<RateItem>) => {
+    const now = new Date().toISOString();
+    setMyRates((prev) => {
+      const next = prev.map((r) => (r.id === rateId ? { ...r, ...updates, updatedAt: now } : r));
+      try { localStorage.setItem('fr8x_my_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    setRates((prev) => {
+      const next = prev.map((r) => (r.id === rateId ? { ...r, ...updates, updatedAt: now } : r));
+      try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    // Server DBMS update
+    fetch('/api/rates', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: rateId, ...updates, updatedAt: now }),
+    }).catch(() => {});
+
+    // Cloud Firestore sync
+    upsertRateInDB({ id: rateId, ...updates, updatedAt: now } as RateItem).catch(() => {});
+    toast(`i-Rate ${rateId} updated.`);
+  };
+
   const deleteMyRate = (rateId: string) => {
     setMyRates((prev) => {
       const next = prev.filter((r) => r.id !== rateId);
@@ -2921,6 +2950,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Cloud Firestore deletion
     deleteRateInDB(rateId).catch(() => {});
     toast(`Rate ${rateId} removed from inventory.`);
+  };
+
+  const clearAllMyRates = () => {
+    setMyRates([]);
+    setRates((prev) => {
+      const next = prev.filter((r) => !r.isOwner && !r.isSelfPosted && r.ownerUid !== user.uid && !r.id.startsWith('IRT-'));
+      try { localStorage.setItem('fr8x_rates', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    try { localStorage.removeItem('fr8x_my_rates'); } catch {}
+    toast('All custom i-Rates cleared.');
   };
 
   const bulkUpdateRates = async (
@@ -3108,7 +3148,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         rates,
         myRates,
         addMyRate,
+        updateMyRate,
         deleteMyRate,
+        clearAllMyRates,
         bulkImportRates,
         bulkUpdateRates,
         notifications,

@@ -6,11 +6,102 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles, Eye, EyeOff, Calendar, Shield } from 'lucide-react';
+
+// --- Password Strength Scorer (reused in reset modal) ---
+type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
+function calcPasswordStrength(pwd: string): { level: StrengthLevel; score: number; label: string; color: string } {
+  if (!pwd) return { level: 'empty', score: 0, label: '', color: '#94a3b8' };
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  if (score <= 1) return { level: 'too_weak', score: 1, label: 'Too Weak', color: '#ef4444' };
+  if (score === 2) return { level: 'weak', score: 2, label: 'Weak', color: '#f97316' };
+  if (score === 3) return { level: 'fair', score: 3, label: 'Fair', color: '#eab308' };
+  if (score === 4 || score === 5) return { level: 'strong', score: 4, label: 'Strong', color: '#22c55e' };
+  return { level: 'very_strong', score: 5, label: 'Very Strong', color: '#16a34a' };
+}
+
+// --- Shared Live Clock Panel ---
+function LiveClockPanel() {
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  const ss = String(now.getSeconds()).padStart(2,'0');
+  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+  const h12 = now.getHours() % 12 || 12;
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const calDays: (number|null)[] = [];
+  for (let i = 0; i < firstDayOfMonth; i++) calDays.push(null);
+  for (let d = 1; d <= daysInMonth; d++) calDays.push(d);
+  while (calDays.length % 7 !== 0) calDays.push(null);
+  return (
+    <div style={{
+      width: '100%', height: '100%',
+      background: 'linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0c1a2e 100%)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '40px 24px', position: 'relative', overflow: 'hidden',
+    }}>
+      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{ fontSize: '30px', fontWeight: 900, color: '#f1f5f9', letterSpacing: '-0.04em' }}>
+          fr<span style={{ color: '#0ea5e9' }}>8</span>x
+        </div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '3px' }}>Enterprise Workspace</div>
+      </div>
+      <div style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.2)', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
+          <span style={{ fontSize: '48px', fontWeight: 900, color: '#f1f5f9', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            {String(h12).padStart(2,'0')}:{mm}
+          </span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{ampm}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#475569', fontFamily: 'monospace' }}>{ss}s</span>
+          </div>
+        </div>
+        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+          {days[now.getDay()]} · {months[now.getMonth()]} {now.getDate()}, {now.getFullYear()}
+        </div>
+      </div>
+      <div style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid #1e293b', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '10px' }}>
+          <Calendar size={13} color="#0ea5e9" />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[now.getMonth()]} {now.getFullYear()}</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
+          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#475569', padding: '2px 0' }}>{d}</div>)}
+          {calDays.map((d, i) => (
+            <div key={i} style={{ fontSize: '10px', fontWeight: d === now.getDate() ? 800 : 500, color: d === now.getDate() ? '#fff' : d ? '#94a3b8' : 'transparent', background: d === now.getDate() ? '#0ea5e9' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginTop: '24px', textAlign: 'center' }}>
+        <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.6, margin: '0 0 16px', fontStyle: 'italic', maxWidth: '200px' }}>
+          Secure enterprise freight workspace. Sign in to access live freight markets.
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <Shield size={11} color="#22c55e" />
+          <span style={{ fontSize: '9px', color: '#22c55e', fontWeight: 700, letterSpacing: '0.08em' }}>256-BIT TLS ENCRYPTED</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loadRememberedEmail, userStatus, resetPasswordWithOtp } = useAuth();
+  const auth = useAuth();
+  const { login, loadRememberedEmail, userStatus, resetPasswordWithOtp } = auth;
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState(''); // uid or email
@@ -82,12 +173,19 @@ export default function LoginPage() {
 
   // Restore remembered email on mount (password is never stored)
   useEffect(() => {
-    const savedEmail = loadRememberedEmail();
-    if (savedEmail) {
-      setIdentifier(savedEmail);
-      setRemember(true);
+    try {
+      const getSaved = loadRememberedEmail || (auth as any)?.loadRemembered;
+      if (typeof getSaved === 'function') {
+        const savedEmail = getSaved();
+        if (savedEmail) {
+          setIdentifier(savedEmail);
+          setRemember(true);
+        }
+      }
+    } catch {
+      // Safe fallback if localStorage is blocked or unavailable
     }
-  }, [loadRememberedEmail]);
+  }, [loadRememberedEmail, auth]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -351,7 +449,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="login-viewport">
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row', background: '#0f172a' }}>
+      {/* LEFT PANEL — Live Clock/Calendar */}
+      <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none' }} className="login-left-panel">
+        <LiveClockPanel />
+      </div>
+
+      {/* RIGHT PANEL — Login Form */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
       <div className="login-card">
         {/* Top Brand Stripe */}
         <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />
@@ -789,6 +894,22 @@ export default function LoginPage() {
                       {showResetNewPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
+                  {/* Password strength bar */}
+                  {resetNewPassword.length > 0 && (
+                    <div style={{ marginTop: '5px' }}>
+                      <div style={{ height: '4px', borderRadius: '2px', background: '#e2e8f0', overflow: 'hidden' }}>
+                        <div style={{
+                          height: '100%',
+                          width: `${(calcPasswordStrength(resetNewPassword).score / 5) * 100}%`,
+                          background: calcPasswordStrength(resetNewPassword).color,
+                          borderRadius: '2px', transition: 'width 0.3s, background 0.3s',
+                        }} />
+                      </div>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: calcPasswordStrength(resetNewPassword).color }}>
+                        {calcPasswordStrength(resetNewPassword).label}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="field">
@@ -1077,6 +1198,12 @@ export default function LoginPage() {
           <Download size={13} />
         </div>
       </a>
+      </div>{/* end right panel */}
+      <style>{`
+        @media (min-width: 860px) {
+          .login-left-panel { display: flex !important; }
+        }
+      `}</style>
     </div>
   );
 }

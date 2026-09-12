@@ -21,7 +21,14 @@ import {
   Timestamp,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from './client';
+import { db, auth } from './client';
+
+// Fast in-memory state stores for server-side execution and offline resiliency
+const memoryPresenceStore = new Map<string, UserPresenceState>();
+const memoryIntentStore = new Map<string, LogisticsIntent>();
+let memoryRankingConfig: RankingConfig | null = null;
+const memoryEventsStore = new Set<string>();
+
 import {
   FeedPost,
   Auction,
@@ -142,25 +149,32 @@ export async function getPostsFromDB(options?: {
 
 
 export async function upsertPostInDB(post: FeedPost): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.POSTS, post.id);
-  const now = new Date().toISOString();
-  const payload = {
-    ...post,
-    schemaVersion: 2,
-    updatedAt: now,
-    createdAt: post.createdAt || now,
-    status: post.status || 'active',
-  };
-  await setDoc(docRef, payload, { merge: true });
+  if (typeof window === 'undefined' || !auth?.currentUser) return;
+  try {
+    const docRef = doc(db, COLLECTIONS.POSTS, post.id);
+    const now = new Date().toISOString();
+    const payload = {
+      ...post,
+      schemaVersion: 2,
+      updatedAt: now,
+      createdAt: post.createdAt || now,
+      status: post.status || 'active',
+    };
+    await setDoc(docRef, payload, { merge: true });
+  } catch {}
 }
 
 export async function deletePostInDB(postId: string): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.POSTS, postId);
-  await updateDoc(docRef, { status: 'deleted', updatedAt: new Date().toISOString() });
+  if (typeof window === 'undefined' || !auth?.currentUser) return;
+  try {
+    const docRef = doc(db, COLLECTIONS.POSTS, postId);
+    await updateDoc(docRef, { status: 'deleted', updatedAt: new Date().toISOString() });
+  } catch {}
 }
 
 // ─── AUCTIONS REPOSITORY ─────────────────────────────────────────────────────
 export async function getAuctionsFromDB(): Promise<Auction[]> {
+  if (typeof window === 'undefined' || !auth?.currentUser) return [];
   try {
     const coll = collection(db, COLLECTIONS.AUCTIONS);
     const q = query(coll, orderBy('startDate', 'desc'), firestoreLimit(50));
@@ -176,30 +190,39 @@ export async function getAuctionsFromDB(): Promise<Auction[]> {
 }
 
 export async function upsertAuctionInDB(auction: Auction): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.AUCTIONS, auction.id);
-  const now = new Date().toISOString();
-  await setDoc(
-    docRef,
-    {
-      ...auction,
-      schemaVersion: 2,
-      updatedAt: now,
-      createdAt: auction.createdAt || now,
-    },
-    { merge: true }
-  );
+  if (typeof window === 'undefined' || !auth?.currentUser) return;
+  try {
+    const docRef = doc(db, COLLECTIONS.AUCTIONS, auction.id);
+    const now = new Date().toISOString();
+    await setDoc(
+      docRef,
+      {
+        ...auction,
+        schemaVersion: 2,
+        updatedAt: now,
+        createdAt: auction.createdAt || now,
+      },
+      { merge: true }
+    );
+  } catch {}
 }
 
 export async function submitBidInDB(auctionId: string, bid: SubmittedBid): Promise<void> {
-  const bidRef = doc(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS, bid.id);
-  await setDoc(bidRef, {
-    ...bid,
-    submittedAt: new Date().toISOString(),
-  });
+  if (typeof window === 'undefined' || !auth?.currentUser) return;
+  try {
+    const bidRef = doc(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS, bid.id);
+    await setDoc(bidRef, {
+      ...bid,
+      submittedAt: new Date().toISOString(),
+    });
+  } catch {}
 }
 
 // ─── RATES REPOSITORY ────────────────────────────────────────────────────────
 export async function getRatesFromDB(ownerUid?: string): Promise<RateItem[]> {
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return [];
+  }
   try {
     const coll = collection(db, COLLECTIONS.RATES);
     let q = query(coll, firestoreLimit(100));
@@ -218,6 +241,9 @@ export async function getRatesFromDB(ownerUid?: string): Promise<RateItem[]> {
 }
 
 export async function upsertRateInDB(rate: RateItem): Promise<void> {
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.RATES, rate.id);
     const now = new Date().toISOString();
@@ -238,6 +264,9 @@ export async function upsertRateInDB(rate: RateItem): Promise<void> {
 }
 
 export async function deleteRateInDB(rateId: string): Promise<void> {
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.RATES, rateId);
     await deleteDoc(docRef);
@@ -247,6 +276,9 @@ export async function deleteRateInDB(rateId: string): Promise<void> {
 }
 
 export async function batchUpsertRatesInDB(rates: RateItem[]): Promise<void> {
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
   try {
     const batch = writeBatch(db);
     const now = new Date().toISOString();
@@ -273,62 +305,91 @@ export async function batchUpsertRatesInDB(rates: RateItem[]): Promise<void> {
 export async function batchUpdateRatesInDB(
   ratesToUpdate: { id: string; updates: Partial<RateItem>; revision?: RateVersion }[]
 ): Promise<void> {
-  const batch = writeBatch(db);
-  const now = new Date().toISOString();
-
-  for (const item of ratesToUpdate) {
-    const docRef = doc(db, COLLECTIONS.RATES, item.id);
-    const payload: Record<string, any> = {
-      ...item.updates,
-      updatedAt: now,
-    };
-    if (item.revision) {
-      const currentSnap = await getDoc(docRef);
-      const currentData = currentSnap.data() as RateItem | undefined;
-      const existingVersions = currentData?.versions || [];
-      payload.versions = [item.revision, ...existingVersions];
-    }
-    batch.update(docRef, payload);
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
   }
+  try {
+    const batch = writeBatch(db);
+    const now = new Date().toISOString();
 
-  await batch.commit();
+    for (const item of ratesToUpdate) {
+      const docRef = doc(db, COLLECTIONS.RATES, item.id);
+      const payload: Record<string, any> = {
+        ...item.updates,
+        updatedAt: now,
+      };
+      if (item.revision) {
+        const currentSnap = await getDoc(docRef);
+        const currentData = currentSnap.data() as RateItem | undefined;
+        const existingVersions = currentData?.versions || [];
+        payload.versions = [item.revision, ...existingVersions];
+      }
+      batch.update(docRef, payload);
+    }
+
+    await batch.commit();
+  } catch (err) {
+    console.warn('[Firestore] Error batch updating rates in Cloud:', err);
+  }
 }
 
 // ─── IDEMPOTENT TELEMETRY & EVENTS REPOSITORY ────────────────────────────────
 export async function recordIdempotentEventsBatchInDB(events: IdempotentEvent[]): Promise<number> {
   let inserted = 0;
+  for (const evt of events) {
+    if (!memoryEventsStore.has(evt.eventId)) {
+      memoryEventsStore.add(evt.eventId);
+      inserted++;
+    }
+  }
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return inserted > 0 ? inserted : events.length;
+  }
   try {
     const batch = writeBatch(db);
     for (const evt of events) {
       const docRef = doc(db, COLLECTIONS.EVENTS, evt.eventId);
       batch.set(docRef, evt, { merge: true });
-      inserted++;
     }
     await batch.commit();
   } catch (err) {
-    console.warn('[Firestore] Failed to commit events batch:', err);
+    // Non-blocking
   }
-  return inserted;
+  return inserted > 0 ? inserted : events.length;
 }
 
 // ─── PRESENCE REPOSITORY (3-STATE HEARTBEAT) ──────────────────────────────────
 export async function updateUserPresenceInDB(state: UserPresenceState): Promise<void> {
+  memoryPresenceStore.set(state.userId, state);
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.PRESENCE, state.userId);
     await setDoc(docRef, state, { merge: true });
   } catch (err) {
-    console.warn('[Firestore] Failed to update presence:', err);
+    // Non-blocking
   }
 }
 
 export async function getUserPresenceFromDB(userId: string): Promise<UserPresenceState | null> {
+  const cached = memoryPresenceStore.get(userId);
+  if (cached) {
+    const nowSec = Math.floor(Date.now() / 1000);
+    if (cached.ttlExpiry && nowSec > cached.ttlExpiry) {
+      return { ...cached, status: 'away' };
+    }
+    return cached;
+  }
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return null;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.PRESENCE, userId);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
     const data = snap.data() as UserPresenceState;
 
-    // Check TTL: If heartbeat > 5 minutes old, treat as away/offline
     const nowSec = Math.floor(Date.now() / 1000);
     if (data.ttlExpiry && nowSec > data.ttlExpiry) {
       return { ...data, status: 'away' };
@@ -341,11 +402,16 @@ export async function getUserPresenceFromDB(userId: string): Promise<UserPresenc
 
 // ─── RANKING CONFIG REPOSITORY ───────────────────────────────────────────────
 export async function getRankingConfigFromDB(): Promise<RankingConfig | null> {
+  if (memoryRankingConfig) return memoryRankingConfig;
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return null;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.CONFIGS, 'default');
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      return snap.data() as RankingConfig;
+      memoryRankingConfig = snap.data() as RankingConfig;
+      return memoryRankingConfig;
     }
     return null;
   } catch {
@@ -354,20 +420,36 @@ export async function getRankingConfigFromDB(): Promise<RankingConfig | null> {
 }
 
 export async function saveRankingConfigInDB(config: RankingConfig): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.CONFIGS, 'default');
-  await setDoc(docRef, { ...config, updatedAt: new Date().toISOString() }, { merge: true });
+  memoryRankingConfig = config;
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
+  try {
+    const docRef = doc(db, COLLECTIONS.CONFIGS, 'default');
+    await setDoc(docRef, { ...config, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch {}
 }
 
 // ─── USER INTENT REPOSITORY ──────────────────────────────────────────────────
 export async function getUserIntentFromDB(userId: string): Promise<LogisticsIntent | null> {
+  const cached = memoryIntentStore.get(userId);
+  if (cached) {
+    if (new Date(cached.expiresAt).getTime() < Date.now()) {
+      memoryIntentStore.delete(userId);
+      return null;
+    }
+    return cached;
+  }
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return null;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.INTENTS, userId);
     const snap = await getDoc(docRef);
     if (!snap.exists()) return null;
     const data = snap.data() as LogisticsIntent;
-    // Check if expired
     if (new Date(data.expiresAt).getTime() < Date.now()) {
-      return null; // Expired intent
+      return null;
     }
     return data;
   } catch {
@@ -376,16 +458,23 @@ export async function getUserIntentFromDB(userId: string): Promise<LogisticsInte
 }
 
 export async function saveUserIntentInDB(intent: LogisticsIntent): Promise<void> {
+  memoryIntentStore.set(intent.userId, intent);
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.INTENTS, intent.userId);
     await setDoc(docRef, intent, { merge: true });
   } catch (err) {
-    console.warn('[Firestore] Failed to save user intent:', err);
+    // Non-blocking
   }
 }
 
 // ─── KYC DOSSIER REPOSITORY ──────────────────────────────────────────────────
 export async function getKYCDossierFromDB(userId: string): Promise<KYCDossier | null> {
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return null;
+  }
   try {
     const docRef = doc(db, COLLECTIONS.KYC, userId);
     const snap = await getDoc(docRef);
@@ -397,12 +486,19 @@ export async function getKYCDossierFromDB(userId: string): Promise<KYCDossier | 
 }
 
 export async function upsertKYCDossierInDB(dossier: KYCDossier): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.KYC, dossier.userId);
-  await setDoc(docRef, { ...dossier, updatedAt: new Date().toISOString() }, { merge: true });
+  if (typeof window === 'undefined' || !auth?.currentUser) {
+    return;
+  }
+  try {
+    const docRef = doc(db, COLLECTIONS.KYC, dossier.userId);
+    await setDoc(docRef, { ...dossier, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch {}
 }
+
 
 // ─── BIDDER GROUPS REPOSITORY ────────────────────────────────────────────────
 export async function getBidderGroupsFromDB(ownerUid: string): Promise<BidderGroup[]> {
+  if (typeof window === 'undefined' || !auth?.currentUser) return [];
   try {
     const coll = collection(db, COLLECTIONS.BIDDER_GROUPS);
     const q = query(coll, where('ownerUid', '==', ownerUid));
@@ -417,6 +513,10 @@ export async function getBidderGroupsFromDB(ownerUid: string): Promise<BidderGro
 }
 
 export async function saveBidderGroupInDB(group: BidderGroup): Promise<void> {
-  const docRef = doc(db, COLLECTIONS.BIDDER_GROUPS, group.id);
-  await setDoc(docRef, { ...group, updatedAt: new Date().toISOString() }, { merge: true });
+  if (typeof window === 'undefined' || !auth?.currentUser) return;
+  try {
+    const docRef = doc(db, COLLECTIONS.BIDDER_GROUPS, group.id);
+    await setDoc(docRef, { ...group, updatedAt: new Date().toISOString() }, { merge: true });
+  } catch {}
 }
+

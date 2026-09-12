@@ -18,6 +18,22 @@ export default function RootPage() {
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Fallback watchdog: ensure navigation never hangs indefinitely
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined') {
+        if (!isLoading) {
+          if (isAuthenticated) {
+            window.location.href = '/feeds';
+          } else {
+            window.location.href = '/login';
+          }
+        }
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [isLoading, isAuthenticated]);
+
   return (
     <div
       style={{
@@ -43,6 +59,18 @@ export default function RootPage() {
         <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em' }}>
           Loading FR8X Workspace…
         </span>
+        <a
+          href="/login"
+          style={{
+            marginTop: '8px',
+            fontSize: '11px',
+            color: '#1985a1',
+            textDecoration: 'none',
+            fontWeight: 500,
+          }}
+        >
+          Taking too long? Click here to sign in
+        </a>
       </div>
     </div>
   );

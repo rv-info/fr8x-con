@@ -16,6 +16,23 @@ import {
   Loader2,
 } from 'lucide-react';
 
+// Password strength scorer
+function calcPasswordStrength(pwd: string): { score: number; label: string; color: string } {
+  if (!pwd) return { score: 0, label: '', color: '#94a3b8' };
+  let score = 0;
+  if (pwd.length >= 8) score++;
+  if (pwd.length >= 12) score++;
+  if (/[A-Z]/.test(pwd)) score++;
+  if (/[a-z]/.test(pwd)) score++;
+  if (/[0-9]/.test(pwd)) score++;
+  if (/[^A-Za-z0-9]/.test(pwd)) score++;
+  if (score <= 1) return { score: 1, label: 'Too Weak', color: '#ef4444' };
+  if (score === 2) return { score: 2, label: 'Weak', color: '#f97316' };
+  if (score === 3) return { score: 3, label: 'Fair', color: '#eab308' };
+  if (score === 4 || score === 5) return { score: 4, label: 'Strong', color: '#22c55e' };
+  return { score: 5, label: 'Very Strong', color: '#16a34a' };
+}
+
 function ResetPasswordInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -476,6 +493,22 @@ function ResetPasswordInner() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+              {/* Password strength bar */}
+              {newPassword.length > 0 && (
+                <div style={{ marginTop: '5px' }}>
+                  <div style={{ height: '4px', borderRadius: '2px', background: '#e2e8f0', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      width: `${(calcPasswordStrength(newPassword).score / 5) * 100}%`,
+                      background: calcPasswordStrength(newPassword).color,
+                      borderRadius: '2px', transition: 'width 0.3s, background 0.3s',
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: calcPasswordStrength(newPassword).color }}>
+                    {calcPasswordStrength(newPassword).label}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div style={{ marginBottom: '20px' }}>

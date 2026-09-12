@@ -9842,3 +9842,67 @@ textarea.input {
     padding: 12px;
   }
 }
+
+/* ==========================================================================
+   Rates Intelligence Matrix Table & Sticky Action Column
+   ========================================================================== */
+.rates-sticky-action-col {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.08);
+  min-width: 190px !important;
+  width: 190px !important;
+  text-align: center !important;
+}
+
+th.rates-sticky-action-col {
+  background: #f1f5f9 !important;
+}
+
+th.rates-sticky-action-filter-col {
+  position: sticky !important;
+  right: 0 !important;
+  z-index: 10 !important;
+  background: #f8fafc !important;
+  box-shadow: -4px 0 10px rgba(0, 0, 0, 0.08);
+  min-width: 190px !important;
+  width: 190px !important;
+  text-align: center !important;
+}
+
+td.rates-sticky-action-col {
+  background: #ffffff;
+}
+
+tr:nth-child(even) td.rates-sticky-action-col {
+  background: #f7f9fd;
+}
+
+tr.compared-row td.rates-sticky-action-col {
+  background: #eff6ff !important;
+}
+
+.rates-compact-table tr:hover td,
+.rates-compact-table tr:hover td.rates-sticky-action-col {
+  background: #f1f5f9 !important;
+}
+
+[data-theme='dark'] th.rates-sticky-action-col {
+  background: #1e293b !important;
+  color: #f8fafc !important;
+}
+[data-theme='dark'] th.rates-sticky-action-filter-col {
+  background: #0f172a !important;
+}
+[data-theme='dark'] td.rates-sticky-action-col {
+  background: #0f172a !important;
+}
+[data-theme='dark'] tr:nth-child(even) td.rates-sticky-action-col {
+  background: #1e293b !important;
+}
+[data-theme='dark'] .rates-compact-table tr:hover td,
+[data-theme='dark'] .rates-compact-table tr:hover td.rates-sticky-action-col {
+  background: #334155 !important;
+}
+

@@ -31,25 +31,56 @@ interface AppShellProps {
 }
 
 function ShellLayout({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
+  const rawPathname = usePathname();
+  const pathname = rawPathname || '/';
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
   // Start signed-in workspaces in compact mode; users can expand it whenever needed.
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+  const isPublicPage =
+    pathname === '/' ||
+    pathname === '/login' ||
+    pathname === '/register' ||
+    pathname === '/forgot-password' ||
+    pathname.startsWith('/verify-email') ||
+    pathname.startsWith('/reset-password') ||
+    pathname === '/download' ||
+    pathname === '/privacy' ||
+    pathname.startsWith('/r/') ||
+    pathname.startsWith('/ref/');
   const isGodfather = pathname.toLowerCase().startsWith('/godfather') || pathname.toLowerCase().startsWith('/godfatheron');
 
   // Protect app routes if not authenticated
   React.useEffect(() => {
-    if (!isLoading && !isAuthenticated && !isAuthPage && !isGodfather) {
+    if (!isLoading && !isAuthenticated && !isPublicPage && !isGodfather) {
       router.replace('/login');
     }
-  }, [isAuthenticated, isLoading, isAuthPage, isGodfather, router]);
+  }, [isAuthenticated, isLoading, isPublicPage, isGodfather, router]);
 
-  if (isGodfather || isAuthPage) {
-    return <main style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}>{children}</main>;
+  // Fallback watchdog: if stuck on loading/unauthenticated for > 3.5 seconds on a protected route, force redirect to /login
+  React.useEffect(() => {
+    if (isGodfather || isPublicPage) return;
+    if (isLoading || !isAuthenticated) {
+      const timer = setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, isAuthenticated, isPublicPage, isGodfather]);
+
+  if (isGodfather || isPublicPage) {
+    return (
+      <main
+        suppressHydrationWarning
+        style={{ minWidth: '100%', minHeight: '100vh', margin: 0, padding: 0 }}
+      >
+        {children}
+      </main>
+    );
   }
 
   if (isLoading || !isAuthenticated) {
@@ -78,6 +109,18 @@ function ShellLayout({ children }: { children: ReactNode }) {
           <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em' }}>
             Verifying session…
           </span>
+          <a
+            href="/login"
+            style={{
+              marginTop: '8px',
+              fontSize: '11px',
+              color: '#1985a1',
+              textDecoration: 'none',
+              fontWeight: 500,
+            }}
+          >
+            Taking too long? Click here to sign in
+          </a>
         </div>
       </div>
     );

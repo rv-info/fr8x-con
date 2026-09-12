@@ -15,6 +15,7 @@ import {
   Building2,
   Lock,
   Headphones,
+  KeyRound,
 } from 'lucide-react';
 
 interface VerifiedUserData {
@@ -39,6 +40,15 @@ function VerifyEmailContent() {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [verifiedUser, setVerifiedUser] = useState<VerifiedUserData | null>(null);
   const [isAlreadyVerified, setIsAlreadyVerified] = useState(false);
+
+  // Error page tab: 'otp' | 'resend'
+  const [errorTab, setErrorTab] = useState<'otp' | 'resend'>('otp');
+
+  // OTP verification state
+  const [otpEmail, setOtpEmail] = useState(emailParam);
+  const [otpCode, setOtpCode] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   // Resend Verification Email state
   const [resendEmail, setResendEmail] = useState(emailParam);
@@ -108,6 +118,46 @@ function VerifyEmailContent() {
     verify();
   }, [token, emailParam]);
 
+  const handleOtpVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpError(null);
+
+    const email = otpEmail.trim().toLowerCase();
+    const code = otpCode.trim();
+
+    if (!email || !email.includes('@')) {
+      setOtpError('Please enter your registered corporate email address.');
+      return;
+    }
+    if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
+      setOtpError('Please enter the 6-digit verification code from your email.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const res = await fetch('/api/auth/verify-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otp: code, email }),
+      });
+      const data = await res.json();
+      setIsVerifyingOtp(false);
+
+      if (res.ok && data.success) {
+        setStatus('success');
+        setIsAlreadyVerified(false);
+        setMessage(data.message || 'Your email has been successfully verified!');
+        if (data.user) setVerifiedUser(data.user);
+      } else {
+        setOtpError(data.error || 'Invalid or expired OTP code. Please request a new verification email.');
+      }
+    } catch {
+      setIsVerifyingOtp(false);
+      setOtpError('Network error. Please check your connection and try again.');
+    }
+  };
+
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
     setResendMessage(null);
@@ -130,8 +180,13 @@ function VerifyEmailContent() {
       setIsResending(false);
 
       if (res.ok && data.success) {
-        setResendMessage(data.message || `A new verification link valid for 15 minutes has been sent to ${targetEmail}.`);
+        setResendMessage(data.message || `A new verification link and OTP valid for 15 minutes has been sent to ${targetEmail}.`);
         setResendCooldown(60);
+        // Auto-switch to OTP tab so user can immediately enter their fresh code
+        setOtpEmail(targetEmail);
+        setOtpCode('');
+        setOtpError(null);
+        setTimeout(() => setErrorTab('otp'), 1500);
       } else {
         setResendError(data.error || 'Failed to resend verification link. Please try again or contact support.');
         if (data.retryAfterSeconds) {
@@ -148,6 +203,7 @@ function VerifyEmailContent() {
     // Navigate directly into feeds workspace with full session activation
     window.location.href = '/feeds';
   };
+
 
   return (
     <div
@@ -456,125 +512,291 @@ function VerifyEmailContent() {
               <AlertCircle size={34} />
             </div>
 
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 700, color: '#0f172a', margin: '0 0 8px', textAlign: 'center' }}>
               {errorCode === 'TOKEN_EXPIRED'
                 ? 'Verification Link Expired'
                 : errorCode === 'TOKEN_ALREADY_USED'
-                ? 'Link Already Completed'
+                ? 'Link Already Used'
+                : errorCode === 'TOKEN_MISSING'
+                ? 'Enter Your Verification Code'
                 : 'Verification Notice'}
             </h2>
 
-            <p style={{ fontSize: '14px', color: '#475569', lineHeight: 1.5, margin: '0 0 24px' }}>
-              {message}
+            <p style={{ fontSize: '13.5px', color: '#475569', lineHeight: 1.5, margin: '0 0 20px', textAlign: 'center' }}>
+              {errorCode === 'TOKEN_MISSING'
+                ? 'Use the 6-digit OTP from your email, or request a fresh link below.'
+                : message}
             </p>
 
-            {/* Resend Verification Form */}
+            {/* Tab switcher */}
             <div
               style={{
-                background: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'left',
-                marginBottom: '20px',
+                display: 'flex',
+                background: '#f1f5f9',
+                borderRadius: '10px',
+                padding: '4px',
+                marginBottom: '16px',
+                gap: '4px',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <Mail size={16} color="#0284c7" />
-                <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
-                  Request Fresh Verification Link
-                </span>
-              </div>
-              <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px 0', lineHeight: 1.45 }}>
-                Enter your registered corporate email address to receive a fresh verification link valid for 15 minutes.
-              </p>
-
-              <form onSubmit={handleResend}>
-                <div style={{ marginBottom: '12px' }}>
-                  <input
-                    type="email"
-                    value={resendEmail}
-                    onChange={(e) => setResendEmail(e.target.value)}
-                    placeholder="name@company.com"
-                    required
-                    style={{
-                      width: '100%',
-                      height: '42px',
-                      padding: '0 12px',
-                      borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
-                      fontSize: '14px',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                    }}
-                  />
-                </div>
-
-                {resendError && (
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: '#b91c1c',
-                      background: '#fee2e2',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    {resendError}
-                  </div>
-                )}
-
-                {resendMessage && (
-                  <div
-                    style={{
-                      fontSize: '12px',
-                      color: '#15803d',
-                      background: '#dcfce7',
-                      padding: '8px 12px',
-                      borderRadius: '6px',
-                      marginBottom: '12px',
-                    }}
-                  >
-                    {resendMessage}
-                  </div>
-                )}
-
+              {[
+                { id: 'otp' as const, label: 'Enter OTP Code', icon: <KeyRound size={14} /> },
+                { id: 'resend' as const, label: 'Resend Link', icon: <Mail size={14} /> },
+              ].map((tab) => (
                 <button
-                  type="submit"
-                  disabled={isResending || resendCooldown > 0}
+                  key={tab.id}
+                  onClick={() => setErrorTab(tab.id)}
                   style={{
-                    width: '100%',
-                    height: '42px',
-                    borderRadius: '8px',
-                    background: resendCooldown > 0 ? '#94a3b8' : '#0284c7',
-                    color: '#ffffff',
+                    flex: 1,
+                    height: '36px',
+                    borderRadius: '7px',
                     border: 'none',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                    background: errorTab === tab.id ? '#ffffff' : 'transparent',
+                    color: errorTab === tab.id ? '#0284c7' : '#64748b',
+                    fontWeight: errorTab === tab.id ? 700 : 500,
+                    fontSize: '13px',
+                    cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px',
+                    gap: '6px',
+                    boxShadow: errorTab === tab.id ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {isResending ? (
-                    <>
-                      <Loader2 className="animate-spin" size={16} /> Sending...
-                    </>
-                  ) : resendCooldown > 0 ? (
-                    <>
-                      <Clock size={16} /> Resend in {resendCooldown}s
-                    </>
-                  ) : (
-                    <>
-                      <RefreshCw size={16} /> Resend Verification Link
-                    </>
-                  )}
+                  {tab.icon} {tab.label}
                 </button>
-              </form>
+              ))}
             </div>
+
+            {/* OTP Tab */}
+            {errorTab === 'otp' && (
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  textAlign: 'left',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <KeyRound size={16} color="#0284c7" />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                    Verify with 6-Digit OTP
+                  </span>
+                </div>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px 0', lineHeight: 1.5 }}>
+                  Enter the 6-digit code from your verification email (valid for 15 minutes).
+                </p>
+
+                <form onSubmit={handleOtpVerify}>
+                  <div style={{ marginBottom: '10px' }}>
+                    <input
+                      type="email"
+                      value={otpEmail}
+                      onChange={(e) => setOtpEmail(e.target.value)}
+                      placeholder="Your registered email (e.g. name@company.com)"
+                      required
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        background: '#fff',
+                      }}
+                    />
+                  </div>
+                  <div style={{ marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="\d{6}"
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="6-digit code e.g. 476582"
+                      required
+                      style={{
+                        width: '100%',
+                        height: '48px',
+                        padding: '0 14px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '22px',
+                        fontWeight: 700,
+                        letterSpacing: '0.18em',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        background: '#fff',
+                        textAlign: 'center',
+                      }}
+                    />
+                  </div>
+
+                  {otpError && (
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#b91c1c',
+                        background: '#fee2e2',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      {otpError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isVerifyingOtp || otpCode.length !== 6}
+                    style={{
+                      width: '100%',
+                      height: '44px',
+                      borderRadius: '8px',
+                      background: otpCode.length === 6 ? '#0284c7' : '#94a3b8',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: otpCode.length === 6 ? 'pointer' : 'not-allowed',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {isVerifyingOtp ? (
+                      <><Loader2 className="animate-spin" size={16} /> Verifying...</>
+                    ) : (
+                      <><ShieldCheck size={16} /> Verify Account</>
+                    )}
+                  </button>
+                </form>
+
+                <p style={{ fontSize: '11.5px', color: '#94a3b8', margin: '12px 0 0', textAlign: 'center' }}>
+                  OTP expired?{' '}
+                  <button
+                    onClick={() => setErrorTab('resend')}
+                    style={{ background: 'none', border: 'none', color: '#0284c7', fontWeight: 600, cursor: 'pointer', fontSize: '11.5px', padding: 0 }}
+                  >
+                    Request a new one →
+                  </button>
+                </p>
+              </div>
+            )}
+
+            {/* Resend Tab */}
+            {errorTab === 'resend' && (
+              <div
+                style={{
+                  background: '#f8fafc',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  textAlign: 'left',
+                  marginBottom: '16px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                  <Mail size={16} color="#0284c7" />
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: '#0f172a' }}>
+                    Request Fresh Verification Email
+                  </span>
+                </div>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 14px 0', lineHeight: 1.45 }}>
+                  Enter your registered corporate email to receive a new verification link and OTP (valid 15 min).
+                </p>
+
+                <form onSubmit={handleResend}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <input
+                      type="email"
+                      value={resendEmail}
+                      onChange={(e) => setResendEmail(e.target.value)}
+                      placeholder="name@company.com"
+                      required
+                      style={{
+                        width: '100%',
+                        height: '42px',
+                        padding: '0 12px',
+                        borderRadius: '8px',
+                        border: '1px solid #cbd5e1',
+                        fontSize: '14px',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        background: '#fff',
+                      }}
+                    />
+                  </div>
+
+                  {resendError && (
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#b91c1c',
+                        background: '#fee2e2',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      {resendError}
+                    </div>
+                  )}
+
+                  {resendMessage && (
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#15803d',
+                        background: '#dcfce7',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        marginBottom: '12px',
+                      }}
+                    >
+                      {resendMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isResending || resendCooldown > 0}
+                    style={{
+                      width: '100%',
+                      height: '42px',
+                      borderRadius: '8px',
+                      background: resendCooldown > 0 ? '#94a3b8' : '#0284c7',
+                      color: '#ffffff',
+                      border: 'none',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      cursor: resendCooldown > 0 ? 'not-allowed' : 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                    }}
+                  >
+                    {isResending ? (
+                      <><Loader2 className="animate-spin" size={16} /> Sending...</>
+                    ) : resendCooldown > 0 ? (
+                      <><Clock size={16} /> Resend in {resendCooldown}s</>
+                    ) : (
+                      <><RefreshCw size={16} /> Resend Verification Email</>
+                    )}
+                  </button>
+                </form>
+              </div>
+            )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <Link

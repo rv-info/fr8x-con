@@ -18,14 +18,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Always prefer the actual request origin (localhost:3000 in dev, production domain in prod).
+    // APP_URL env var is only a last resort (it points to prod and would break dev email links).
     const host = req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
-    const requestOrigin = host ? `${proto}://${host}` : undefined;
+    const requestOrigin = host ? `${proto}://${host}` : null;
     const origin =
       requestOrigin ||
+      req.nextUrl.origin ||
       process.env.APP_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      req.nextUrl.origin ||
       'https://con.fr8x.in';
     const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
 

@@ -14,6 +14,61 @@ import {
   verifySignedSessionToken,
 } from '@/lib/crypto';
 import { isCorporateEmail } from '@/lib/utils';
+
+// ============================================================
+// AES-256-GCM Knox Encrypted Record Storage
+// ============================================================
+
+/**
+ * Returns the 32-byte hex KNOX_ENCRYPTION_KEY. If absent, auto-generates one
+ * and appends it to .env.local so it persists across server restarts.
+ */
+function getKnoxEncryptionKey(): Buffer {
+  let keyHex = process.env.KNOX_ENCRYPTION_KEY;
+  if (!keyHex || keyHex.length !== 64) {
+    // Auto-generate and persist to .env.local
+    keyHex = crypto.randomBytes(32).toString('hex');
+    process.env.KNOX_ENCRYPTION_KEY = keyHex;
+    try {
+      const envLocalPath = path.join(process.cwd(), '.env.local');
+      let envContent = '';
+      if (fs.existsSync(envLocalPath)) {
+        envContent = fs.readFileSync(envLocalPath, 'utf8');
+        // Remove any existing key
+        envContent = envContent.replace(/^KNOX_ENCRYPTION_KEY=.*/m, '').trim();
+      }
+      fs.writeFileSync(envLocalPath, `${envContent}\nKNOX_ENCRYPTION_KEY=${keyHex}\n`, 'utf8');
+      console.info('[Knox] Auto-generated AES-256-GCM encryption key and saved to .env.local');
+    } catch (e: any) {
+      console.warn('[Knox] Could not persist encryption key to .env.local:', e.message);
+    }
+  }
+  return Buffer.from(keyHex, 'hex');
+}
+
+/** Encrypts a JSON string using AES-256-GCM. Returns iv:authTag:ciphertext in hex. */
+function encryptKnoxData(json: string): string {
+  const key = getKnoxEncryptionKey();
+  const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(json, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+}
+
+/** Decrypts an AES-256-GCM encrypted string (format: iv:authTag:ciphertext in hex). */
+function decryptKnoxData(encrypted: string): string {
+  const key = getKnoxEncryptionKey();
+  const [ivHex, authTagHex, dataHex] = encrypted.split(':');
+  if (!ivHex || !authTagHex || !dataHex) throw new Error('Invalid Knox encrypted data format');
+  const iv = Buffer.from(ivHex, 'hex');
+  const authTag = Buffer.from(authTagHex, 'hex');
+  const data = Buffer.from(dataHex, 'hex');
+  const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+  decipher.setAuthTag(authTag);
+  return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+}
+
 import {
   savePersistedUser,
   getPersistedUsers,
@@ -329,6 +384,7 @@ class ServerSecurityStore {
         fs.mkdirSync(dataDir, { recursive: true });
       }
       const dataFile = path.join(dataDir, 'server-auth-data.json');
+      const encFile = path.join(dataDir, 'server-auth-data.enc');
 
       // Always merge existing disk data before writing so concurrent workers never overwrite user registrations
       if (fs.existsSync(dataFile)) {
@@ -377,7 +433,18 @@ class ServerSecurityStore {
         blockedAccounts: Array.from(this.blockedAccounts.entries()),
         activeGodfatherSessions: Array.from(this.activeGodfatherSessions.values()),
       };
-      fs.writeFileSync(dataFile, JSON.stringify(payload, null, 2), 'utf8');
+      const jsonStr = JSON.stringify(payload, null, 2);
+
+      // Write plaintext JSON (dev fallback / human-readable audit)
+      fs.writeFileSync(dataFile, jsonStr, 'utf8');
+
+      // Write AES-256-GCM encrypted record (primary secure store)
+      try {
+        const encrypted = encryptKnoxData(jsonStr);
+        fs.writeFileSync(encFile, encrypted, 'utf8');
+      } catch (encErr: any) {
+        console.warn('[Knox] Encryption write failed (plaintext fallback active):', encErr.message);
+      }
     } catch (err: any) {
       console.warn('[ServerSecurityStore] State persistence warning:', err.message);
     }
@@ -385,13 +452,33 @@ class ServerSecurityStore {
 
   /**
    * Loads persisted users and active verification challenges from disk.
+   * Tries encrypted .enc file first; falls back to plaintext .json.
    */
   public loadPersistedState() {
     try {
-      const dataFile = path.join(process.cwd(), '.knox', 'server-auth-data.json');
-      if (fs.existsSync(dataFile)) {
-        const raw = fs.readFileSync(dataFile, 'utf8');
-        const data = JSON.parse(raw);
+      const dataDir = path.join(process.cwd(), '.knox');
+      const encFile = path.join(dataDir, 'server-auth-data.enc');
+      const dataFile = path.join(dataDir, 'server-auth-data.json');
+
+      let jsonStr: string | null = null;
+
+      // 1. Try encrypted file first
+      if (fs.existsSync(encFile)) {
+        try {
+          const encrypted = fs.readFileSync(encFile, 'utf8');
+          jsonStr = decryptKnoxData(encrypted.trim());
+        } catch (decErr: any) {
+          console.warn('[Knox] Decryption failed, falling back to plaintext JSON:', decErr.message);
+        }
+      }
+
+      // 2. Fallback to plaintext JSON
+      if (!jsonStr && fs.existsSync(dataFile)) {
+        jsonStr = fs.readFileSync(dataFile, 'utf8');
+      }
+
+      if (jsonStr) {
+        const data = JSON.parse(jsonStr);
         if (Array.isArray(data.users)) {
           for (const [k, u] of data.users) {
             this.users.set(k, u);
