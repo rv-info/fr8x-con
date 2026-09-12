@@ -191,7 +191,7 @@ export default function TermsPage() {
               <li>Regulatory or legal obligation;</li>
               <li>Actions that compromise platform integrity or security.</li>
             </ul>
-            <p>Upon termination, the User&apos;s access will be revoked. Data retention and deletion will proceed in accordance with the Privacy Policy and applicable law. Users may request account deletion by written notice to <strong>legal@fr8x.in</strong>.</p>
+            <p>Upon termination, the User&apos;s access will be revoked. Data retention and deletion will proceed in accordance with the Privacy Policy and applicable law. Users may request account deletion by written notice to <strong>support@fr8x.in</strong>.</p>
           </TermsSection>
 
           <TermsSection icon={<FileText size={18} />} title="12. Amendments to Terms">
@@ -199,18 +199,12 @@ export default function TermsPage() {
           </TermsSection>
 
           <TermsSection icon={<Building2 size={18} />} title="13. Contact & Grievance Redressal">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {[
-                { label: 'Legal & Compliance', email: 'legal@fr8x.in' },
-                { label: 'Privacy Officer', email: 'privacy@fr8x.in' },
-                { label: 'Platform Support', email: 'support@fr8x.in' },
-                { label: 'Security Incidents', email: 'security@fr8x.in' },
-              ].map((c) => (
-                <div key={c.label} style={{ background: '#0f172a', borderRadius: '8px', padding: '12px', border: '1px solid #1e293b' }}>
-                  <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>{c.label}</div>
-                  <a href={`mailto:${c.email}`} style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '13px', textDecoration: 'none' }}>{c.email}</a>
-                </div>
-              ))}
+            <div style={{ background: '#0f172a', borderRadius: '8px', padding: '16px 20px', border: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Platform, Legal, Privacy &amp; Security Support</div>
+                <div style={{ color: '#94a3b8', fontSize: '12.5px' }}>For all legal, privacy, security, and general platform inquiries:</div>
+              </div>
+              <a href="mailto:support@fr8x.in" style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>support@fr8x.in</a>
             </div>
             <p style={{ marginTop: '16px' }}>
               <strong>Registered Office:</strong> FR8X Technology Private Limited, Mumbai, Maharashtra, India.<br />

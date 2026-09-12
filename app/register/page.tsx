@@ -169,10 +169,19 @@ function LiveClockPanel() {
 }
 
 // --- T&C Modal ---
-function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
-  const [hasRead, setHasRead] = useState(false);
-  const [checked, setChecked] = useState(false);
-  const [scrollExpanded, setScrollExpanded] = useState(false);
+function TnCModal({
+  onAccept,
+  onDecline,
+  onClose,
+  initialChecked = false,
+}: {
+  onAccept: () => void;
+  onDecline: () => void;
+  onClose?: () => void;
+  initialChecked?: boolean;
+}) {
+  const [hasRead, setHasRead] = useState(initialChecked);
+  const [checked, setChecked] = useState(initialChecked);
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const el = e.currentTarget;
@@ -209,11 +218,31 @@ function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: ()
           </div>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '16px', fontWeight: 800, color: '#f1f5f9' }}>FR8X Master Terms of Service & Commercial Agreement</div>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>You must read and accept to proceed with registration</div>
+            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Review platform terms, commercial rules & trade compliance</div>
           </div>
           <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: '#0ea5e9', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(14,165,233,0.3)' }}>
-            View Full Page ↗
+            Full Page ↗
           </Link>
+          <button
+            type="button"
+            onClick={onClose || onDecline}
+            title="Close"
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '1px solid rgba(255,255,255,0.15)',
+              borderRadius: '8px',
+              width: '32px',
+              height: '32px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              flexShrink: 0,
+            }}
+          >
+            <X size={16} />
+          </button>
         </div>
 
         {/* Scrollable T&C Body */}
@@ -224,9 +253,11 @@ function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: ()
             fontSize: '13px', color: '#334155', lineHeight: 1.7,
           }}
         >
-          <div style={{ padding: '12px 16px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '8px', marginBottom: '16px', fontSize: '12px', color: '#92400e' }}>
-            ⚠ Please scroll to the bottom to enable the checkbox and accept button.
-          </div>
+          {!hasRead && !checked && (
+            <div style={{ padding: '10px 14px', background: '#fef9c3', border: '1px solid #fde047', borderRadius: '8px', marginBottom: '16px', fontSize: '12px', color: '#92400e' }}>
+              ℹ Please review the terms below and tick the checkbox to accept.
+            </div>
+          )}
           <TnCBodyText />
         </div>
 
@@ -237,13 +268,15 @@ function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: ()
           background: '#f8fafc',
           flexShrink: 0,
         }}>
-          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: hasRead ? 'pointer' : 'not-allowed', marginBottom: '14px', opacity: hasRead ? 1 : 0.5 }}>
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '14px' }}>
             <input
               type="checkbox"
               checked={checked}
-              disabled={!hasRead}
-              onChange={(e) => setChecked(e.target.checked)}
-              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#0ea5e9', cursor: hasRead ? 'pointer' : 'not-allowed' }}
+              onChange={(e) => {
+                setChecked(e.target.checked);
+                setHasRead(true);
+              }}
+              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#0ea5e9', cursor: 'pointer' }}
             />
             <span style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
               I have read and understood the FR8X Master Terms of Service, Commercial Agreement, Trade Compliance Policy, and Privacy Policy, and I agree to be legally bound by them on behalf of the corporate entity I represent.
@@ -254,30 +287,30 @@ function TnCModal({ onAccept, onDecline }: { onAccept: () => void; onDecline: ()
               type="button"
               onClick={onDecline}
               style={{
-                height: '42px', padding: '0 24px', borderRadius: '8px',
+                height: '40px', padding: '0 20px', borderRadius: '8px',
                 border: '1px solid #e2e8f0', background: '#fff',
-                color: '#ef4444', fontWeight: 700, fontSize: '14px',
+                color: '#ef4444', fontWeight: 700, fontSize: '13.5px',
                 cursor: 'pointer',
               }}
             >
-              Decline — Exit
+              Decline
             </button>
             <button
               type="button"
               disabled={!checked}
               onClick={onAccept}
               style={{
-                height: '42px', padding: '0 28px', borderRadius: '8px',
+                height: '40px', padding: '0 26px', borderRadius: '8px',
                 border: 'none',
                 background: checked ? 'linear-gradient(135deg, #0ea5e9, #0284c7)' : '#94a3b8',
-                color: '#fff', fontWeight: 700, fontSize: '14px',
+                color: '#fff', fontWeight: 700, fontSize: '13.5px',
                 cursor: checked ? 'pointer' : 'not-allowed',
                 boxShadow: checked ? '0 4px 12px rgba(14,165,233,0.35)' : 'none',
                 transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', gap: '8px',
               }}
             >
-              <ShieldCheck size={16} /> Accept & Proceed
+              <ShieldCheck size={16} /> Accept Terms
             </button>
           </div>
         </div>
@@ -300,7 +333,7 @@ function TnCBodyText() {
         { title: '8. Intellectual Property', body: 'All platform IP, trademarks, and data are exclusively owned by FR8X Technology Private Limited under the Indian Copyright Act 1957 and Trade Marks Act 1999. Reverse engineering, scraping, or unauthorized redistribution is prohibited.' },
         { title: '9. Limitation of Liability & Indemnification', body: "FR8X's aggregate liability shall not exceed 3 months' subscription fees. Users indemnify FR8X against claims arising from their breach, fraud, or violation of applicable law. FR8X is not liable for cargo loss, indirect damages, or force majeure events." },
         { title: '10. Governing Law & Dispute Resolution', body: 'Indian domestic disputes: Indian law, arbitration under Arbitration & Conciliation Act 1996 (Mumbai seat). International disputes: ICC Rules, Singapore seat. Emergency injunctive relief available in courts of competent jurisdiction.' },
-        { title: '11. Account Termination', body: 'FR8X may terminate accounts immediately for breach, fraud, non-payment, or regulatory obligation. Data retention follows the Privacy Policy and applicable law. Deletion requests: legal@fr8x.in.' },
+        { title: '11. Account Termination', body: 'FR8X may terminate accounts immediately for breach, fraud, non-payment, or regulatory obligation. Data retention follows the Privacy Policy and applicable law. Deletion requests: support@fr8x.in.' },
         { title: '12. Amendments', body: 'FR8X may amend these Terms with 15 days notice via registered email. Continued use constitutes acceptance. Refusing amended terms requires cessation of use and account closure request.' },
       ].map((section) => (
         <div key={section.title}>
@@ -309,7 +342,7 @@ function TnCBodyText() {
         </div>
       ))}
       <div style={{ marginTop: '8px', padding: '12px 16px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd', fontSize: '12px', color: '#0369a1' }}>
-        <strong>Contact:</strong> legal@fr8x.in · privacy@fr8x.in · support@fr8x.in · security@fr8x.in<br />
+        <strong>Contact:</strong> support@fr8x.in<br />
         FR8X Technology Private Limited, Mumbai, Maharashtra, India. Effective September 2026 · Version 3.1
       </div>
     </div>
@@ -418,8 +451,8 @@ export default function RegisterPage() {
   const { register, login, allUsers } = useAuth();
   const { toast } = useToast();
 
-  // T&C Gate State
-  const [termsStep, setTermsStep] = useState<'gate' | 'form'>('gate');
+  // T&C Modal State
+  const [showTnCModal, setShowTnCModal] = useState(false);
 
   // Form State
   const [firstName, setFirstName] = useState('');
@@ -847,11 +880,19 @@ export default function RegisterPage() {
 
   return (
     <>
-      {/* T&C Modal Gate */}
-      {termsStep === 'gate' && (
+      {/* T&C Modal Popup */}
+      {showTnCModal && (
         <TnCModal
-          onAccept={() => setTermsStep('form')}
-          onDecline={() => router.push('/')}
+          initialChecked={termsAccepted}
+          onAccept={() => {
+            setTermsAccepted(true);
+            setShowTnCModal(false);
+          }}
+          onDecline={() => {
+            setTermsAccepted(false);
+            setShowTnCModal(false);
+          }}
+          onClose={() => setShowTnCModal(false)}
         />
       )}
 
@@ -1506,15 +1547,67 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Legal Acceptance — terms already accepted via modal gate */}
-            <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 10, background: '#f0fdf4', padding: '10px 14px', border: '1px solid #bbf7d0', borderRadius: '6px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <ShieldCheck size={16} color="#16a34a" style={{ flexShrink: 0 }} />
-                <span style={{ fontSize: '11.5px', lineHeight: '1.45', color: '#166534' }}>
-                  <strong>FR8X Master Terms accepted</strong> — You accepted the Terms of Service at the start of this session. Your submission confirms legal authority to represent <b>{companyName || 'this corporate entity'}</b>.
-                  {' '}<Link href="/terms" target="_blank" style={{ color: '#0284c7', fontWeight: 600 }}>View Terms →</Link>
+            {/* Legal Acceptance Checkbox & Popup Link */}
+            <div
+              className="reg-section"
+              style={{
+                position: 'relative',
+                overflow: 'visible',
+                zIndex: 10,
+                background: termsAccepted ? '#f0fdf4' : '#f8fafc',
+                padding: '12px 14px',
+                border: termsAccepted ? '1px solid #86efac' : '1px solid #cbd5e1',
+                borderRadius: '6px',
+                transition: 'all 0.2s',
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  style={{
+                    width: '18px',
+                    height: '18px',
+                    marginTop: '2px',
+                    flexShrink: 0,
+                    accentColor: '#0ea5e9',
+                    cursor: 'pointer',
+                  }}
+                />
+                <span style={{ fontSize: '12px', lineHeight: 1.5, color: '#1e293b' }}>
+                  I confirm legal authority to represent <b>{companyName || 'this corporate entity'}</b> and agree to the{' '}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowTnCModal(true);
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#0284c7',
+                      fontWeight: 700,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      display: 'inline',
+                    }}
+                  >
+                    FR8X Master Terms of Service &amp; Commercial Agreement [View Terms →]
+                  </button>
+                  .
                 </span>
-              </div>
+              </label>
+              {termsAccepted && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', marginLeft: '28px' }}>
+                  <ShieldCheck size={13} color="#16a34a" />
+                  <span style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }}>
+                    Master Terms accepted for {companyName || 'this corporate entity'}
+                  </span>
+                </div>
+              )}
             </div>
 
             <button

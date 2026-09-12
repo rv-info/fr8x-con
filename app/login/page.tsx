@@ -85,15 +85,6 @@ function LiveClockPanel() {
           ))}
         </div>
       </div>
-      <div style={{ marginTop: '24px', textAlign: 'center' }}>
-        <p style={{ fontSize: '11px', color: '#475569', lineHeight: 1.6, margin: '0 0 16px', fontStyle: 'italic', maxWidth: '200px' }}>
-          Secure enterprise freight workspace. Sign in to access live freight markets.
-        </p>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          <Shield size={11} color="#22c55e" />
-          <span style={{ fontSize: '9px', color: '#22c55e', fontWeight: 700, letterSpacing: '0.08em' }}>256-BIT TLS ENCRYPTED</span>
-        </div>
-      </div>
     </div>
   );
 }
