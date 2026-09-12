@@ -140,6 +140,22 @@ export interface SupportReplyTemplateParams {
   correlationId?: string;
 }
 
+export interface BroadcastEmailTemplateParams {
+  recipient: string;
+  recipientName?: string;
+  category: 'PROMO' | 'NEWSLETTER' | 'UPDATE' | 'MAINTENANCE';
+  subject: string;
+  title: string;
+  badgeText?: string;
+  preheader?: string;
+  bodyContent: string;
+  highlightNotice?: string;
+  actionLabel?: string;
+  actionUrl?: string;
+  operatorName?: string;
+  contactEmail?: string;
+}
+
 export interface SystemIssueTemplateParams {
   recipient: string;
   recipientName?: string;
@@ -1362,5 +1378,148 @@ Regards,
 
 FR8X Team
 https://fr8x.in`;
+  return { subject, html, text };
+}
+
+export function renderBroadcastEmail(params: BroadcastEmailTemplateParams): {
+  subject: string;
+  html: string;
+  text: string;
+} {
+  const recipientName = params.recipientName || 'FR8X Valued Member';
+  const category = params.category || 'UPDATE';
+  const subject = params.subject || `[FR8X ${category}] ${params.title}`;
+  const title = params.title || 'Platform Announcement';
+  const actionUrl = params.actionUrl || 'https://con.fr8x.in';
+  const actionLabel = params.actionLabel || 'Access Workspace';
+  const contactEmail = params.contactEmail || 'support@fr8x.in';
+
+  // Category Badge Colors & Defaults
+  const categoryConfigs: Record<
+    string,
+    { label: string; bg: string; text: string; border: string; highlightBg: string; highlightBorder: string; highlightText: string }
+  > = {
+    PROMO: {
+      label: params.badgeText || 'SPECIAL PROMOTION',
+      bg: '#ecfdf5',
+      text: '#047857',
+      border: '#a7f3d0',
+      highlightBg: '#f0fdf4',
+      highlightBorder: '#bbf7d0',
+      highlightText: '#166534',
+    },
+    NEWSLETTER: {
+      label: params.badgeText || 'MONTHLY FREIGHT NEWSLETTER',
+      bg: '#f0f9ff',
+      text: '#0369a1',
+      border: '#bae6fd',
+      highlightBg: '#f0f9ff',
+      highlightBorder: '#e0f2fe',
+      highlightText: '#0369a1',
+    },
+    UPDATE: {
+      label: params.badgeText || 'PLATFORM & SYSTEM UPDATE',
+      bg: '#eef2ff',
+      text: '#4338ca',
+      border: '#c7d2fe',
+      highlightBg: '#eef2ff',
+      highlightBorder: '#e0e7ff',
+      highlightText: '#3730a3',
+    },
+    MAINTENANCE: {
+      label: params.badgeText || 'SCHEDULED SYSTEM MAINTENANCE',
+      bg: '#fffbeb',
+      text: '#b45309',
+      border: '#fde68a',
+      highlightBg: '#fffbeb',
+      highlightBorder: '#fef3c7',
+      highlightText: '#92400e',
+    },
+  };
+
+  const badgeConfig = categoryConfigs[category] || categoryConfigs.UPDATE;
+
+  // Convert plain text newlines to paragraphs if not already HTML
+  let formattedBody = params.bodyContent || '';
+  if (!formattedBody.includes('<p>') && !formattedBody.includes('<div>')) {
+    formattedBody = formattedBody
+      .split('\n\n')
+      .map((block) => `<p style="margin: 0 0 14px 0; line-height: 1.7; color: #334155; font-size: 14.5px;">${block.replace(/\n/g, '<br>')}</p>`)
+      .join('');
+  }
+
+  const highlightHtml = params.highlightNotice
+    ? `
+    <div style="background-color: ${badgeConfig.highlightBg}; border: 1px solid ${badgeConfig.highlightBorder}; border-left: 4px solid ${badgeConfig.text}; border-radius: 6px; padding: 14px 18px; margin: 20px 0; color: ${badgeConfig.highlightText}; font-size: 13.5px; line-height: 1.6;">
+      <strong style="color: ${badgeConfig.text};">NOTICE:</strong> ${params.highlightNotice}
+    </div>`
+    : '';
+
+  const ctaButtonHtml = params.actionLabel && params.actionUrl
+    ? `
+    <table border="0" cellpadding="0" cellspacing="0" style="margin: 28px 0 24px 0;">
+      <tr>
+        <td align="center" style="border-radius: 8px; background: linear-gradient(135deg, #0ea5e9, #0284c7);">
+          <a href="${actionUrl}" target="_blank" style="display: inline-block; padding: 13px 32px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; color: #ffffff; text-decoration: none; border-radius: 8px; letter-spacing: 0.02em;">
+            ${actionLabel} &rarr;
+          </a>
+        </td>
+      </tr>
+    </table>`
+    : '';
+
+  const html = wrapEmailHtml(`
+    <!-- Category Badge -->
+    <div style="display: inline-block; background-color: ${badgeConfig.bg}; border: 1px solid ${badgeConfig.border}; border-radius: 4px; padding: 4px 10px; font-size: 10.5px; font-weight: 800; color: ${badgeConfig.text}; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px;">
+      ${badgeConfig.label}
+    </div>
+
+    <!-- Announcement Headline -->
+    <h1 style="font-size: 22px; font-weight: 800; color: #0f172a; margin: 0 0 16px 0; letter-spacing: -0.02em; line-height: 1.35;">
+      ${title}
+    </h1>
+
+    <p style="font-size: 14.5px; color: #475569; margin: 0 0 20px 0;">
+      Dear <strong>${recipientName}</strong>,
+    </p>
+
+    <!-- Highlight Box (if any) -->
+    ${highlightHtml}
+
+    <!-- Main Message Body -->
+    <div style="font-size: 14.5px; color: #334155; line-height: 1.7;">
+      ${formattedBody}
+    </div>
+
+    <!-- CTA Button -->
+    ${ctaButtonHtml}
+
+    <!-- In Touch / Help Card -->
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 18px; margin-top: 28px; font-size: 12.5px; color: #475569; line-height: 1.6;">
+      <strong style="color: #0f172a;">Stay in Touch with FR8X Operations</strong><br>
+      Have questions regarding this announcement or need direct assistance? Reply directly to this email or reach our team at <a href="mailto:${contactEmail}" style="color: #0284c7; font-weight: 700; text-decoration: none;">${contactEmail}</a>.
+    </div>
+
+    <!-- Sign-off -->
+    <div style="margin-top: 28px; font-size: 13.5px; color: #334155; line-height: 1.6;">
+      Sincerely,<br>
+      <strong style="color: #0f172a; font-size: 14.5px;">FR8X Global Freight Operations</strong><br>
+      <span style="color: #64748b; font-size: 12px;">FR8X Technology Private Limited</span>
+    </div>
+  `, params.preheader || title);
+
+  const text = `${title}
+Category: ${badgeConfig.label}
+
+Dear ${recipientName},
+
+${params.highlightNotice ? `NOTICE: ${params.highlightNotice}\n\n` : ''}${params.bodyContent.replace(/<[^>]+>/g, '')}
+
+${params.actionLabel ? `${params.actionLabel}: ${actionUrl}\n\n` : ''}Have questions or need assistance? Contact us at ${contactEmail}.
+
+Regards,
+FR8X Global Freight Operations
+https://con.fr8x.in`;
+
   return { subject, html, text };
 }

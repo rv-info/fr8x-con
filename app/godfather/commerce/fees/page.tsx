@@ -105,7 +105,7 @@ const INITIAL_FEES: CommercialFeeRule[] = [
 ];
 
 export default function FeesDiscountsPage() {
-  const { config, updateConfig } = usePlatformConfig();
+  const { config, updateConfig, setAllFreeMode } = usePlatformConfig();
   const { toast } = useToast();
 
   const [feeRules, setFeeRules] = useState<CommercialFeeRule[]>(INITIAL_FEES);
@@ -246,6 +246,43 @@ export default function FeesDiscountsPage() {
           <span className="gf-badge bg-emerald-500 text-slate-950 font-bold text-xs uppercase px-2.5 py-1">
             HOT-SYNC ACTIVE
           </span>
+        </div>
+
+        {/* MASTER SOVEREIGN SWITCH: 100% ALL-FREE PLATFORM MODE */}
+        <div className="mt-4 p-4 rounded-xl bg-emerald-950/80 border-2 border-emerald-500/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded bg-emerald-400 text-slate-950 uppercase tracking-wide">
+                MASTER SOVEREIGN OVERRIDE
+              </span>
+              <h3 className="text-sm font-black text-white flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-emerald-400" /> Master All-Free Platform Mode (Open Complimentary Access)
+              </h3>
+            </div>
+            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed">
+              When enabled, <strong>all registration pricing cards are replaced with 100% Complimentary Premium access</strong>, and all bidding fees, job posting fees, and paywalls are completely waived across the entire platform.
+            </p>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <span className={`text-xs font-bold px-2.5 py-1 rounded-md font-mono ${config.allFreeMode ? 'bg-emerald-500 text-slate-950' : 'bg-slate-700 text-slate-300'}`}>
+              {config.allFreeMode ? 'ALL-FREE ACTIVE (₹0)' : 'PAID BILLING ACTIVE'}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !config.allFreeMode;
+                setAllFreeMode(next);
+                toast(next ? 'ALL-FREE PLATFORM MODE ACTIVATED: Registration pricing cards and platform fees waived!' : 'Commercial billing restored.');
+              }}
+              className={`py-2 px-4 rounded-lg text-xs font-bold transition-all shadow-sm ${
+                config.allFreeMode
+                  ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400'
+                  : 'bg-amber-500 text-slate-950 hover:bg-amber-400'
+              }`}
+            >
+              {config.allFreeMode ? 'Deactivate All-Free Mode' : 'Activate 100% All-Free Mode'}
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">

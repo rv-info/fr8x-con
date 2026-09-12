@@ -48,6 +48,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
     pathname.startsWith('/reset-password') ||
     pathname === '/download' ||
     pathname === '/privacy' ||
+    pathname === '/terms' ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/ref/');
   const isGodfather = pathname.toLowerCase().startsWith('/godfather') || pathname.toLowerCase().startsWith('/godfatheron');

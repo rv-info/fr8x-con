@@ -29,6 +29,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+import { usePlatformConfig, isAllFreeActive } from '@/lib/platform-config';
 import { Country as CSC_Country, State as CSC_State, City as CSC_City } from 'country-state-city';
 import {
   getAllGlobalISDCodes,
@@ -82,16 +83,13 @@ function LiveClockPanel() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      background: 'linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #0c1a2e 100%)',
+      background: '#ffffff',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 28px', gap: '0', position: 'relative', overflow: 'hidden',
     }}>
-      {/* Background glow */}
-      <div style={{ position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(14,165,233,0.10) 0%, transparent 70%)', pointerEvents: 'none' }} />
-
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ fontSize: '32px', fontWeight: 900, color: '#f1f5f9', letterSpacing: '-0.04em', lineHeight: 1 }}>
+        <div style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.04em', lineHeight: 1 }}>
           fr<span style={{ color: '#0ea5e9' }}>8</span>x
         </div>
         <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '4px' }}>Enterprise Logistics Platform</div>
@@ -99,21 +97,20 @@ function LiveClockPanel() {
 
       {/* Digital Clock */}
       <div style={{
-        background: 'rgba(14,165,233,0.08)',
-        border: '1px solid rgba(14,165,233,0.2)',
+        background: '#f8fafc',
+        border: '1px solid #e2e8f0',
         borderRadius: '16px',
         padding: '20px 32px',
         textAlign: 'center',
         marginBottom: '20px',
-        backdropFilter: 'blur(8px)',
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '52px', fontWeight: 900, color: '#f1f5f9', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {String(h12).padStart(2,'0')}:{mm}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
             <span style={{ fontSize: '13px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{ampm}</span>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#475569', fontFamily: 'monospace' }}>{ss}s</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', fontFamily: 'monospace' }}>{ss}s</span>
           </div>
         </div>
         <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', letterSpacing: '0.05em' }}>
@@ -123,27 +120,28 @@ function LiveClockPanel() {
 
       {/* Mini Calendar */}
       <div style={{
-        background: 'rgba(15,23,42,0.7)',
-        border: '1px solid #1e293b',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
         borderRadius: '14px',
         padding: '16px',
         width: '100%',
         maxWidth: '260px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
           <Calendar size={14} color="#0ea5e9" />
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {months[now.getMonth()]} {now.getFullYear()}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
           {['S','M','T','W','T','F','S'].map((d,i) => (
-            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#475569', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
+            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
           ))}
           {calDays.map((d, i) => (
             <div key={i} style={{
               fontSize: '11px', fontWeight: d === now.getDate() ? 800 : 500,
-              color: d === now.getDate() ? '#fff' : d ? '#94a3b8' : 'transparent',
+              color: d === now.getDate() ? '#fff' : d ? '#334155' : 'transparent',
               background: d === now.getDate() ? '#0ea5e9' : 'transparent',
               borderRadius: '4px', padding: '3px 0',
               transition: 'all 0.2s',
@@ -154,15 +152,9 @@ function LiveClockPanel() {
 
       {/* Tagline */}
       <div style={{ marginTop: '28px', textAlign: 'center', maxWidth: '220px' }}>
-        <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+        <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
           Trusted by freight professionals across 40+ countries for enterprise logistics procurement.
         </p>
-      </div>
-
-      {/* Shield badge */}
-      <div style={{ marginTop: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-        <Shield size={12} color="#22c55e" />
-        <span style={{ fontSize: '10px', color: '#22c55e', fontWeight: 700, letterSpacing: '0.08em' }}>256-BIT TLS ENCRYPTED</span>
       </div>
     </div>
   );
@@ -208,19 +200,20 @@ function TnCModal({
       }}>
         {/* Modal Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background: '#ffffff',
+          borderBottom: '1px solid #e2e8f0',
           padding: '20px 24px',
           display: 'flex', alignItems: 'center', gap: '12px',
           flexShrink: 0,
         }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(14,165,233,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <Scale size={20} color="#0ea5e9" />
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f0f9ff', border: '1px solid #bae6fd', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <Scale size={20} color="#0284c7" />
           </div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '16px', fontWeight: 800, color: '#f1f5f9' }}>FR8X Master Terms of Service & Commercial Agreement</div>
+            <div style={{ fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>FR8X Master Terms of Service & Commercial Agreement</div>
             <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>Review platform terms, commercial rules & trade compliance</div>
           </div>
-          <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: '#0ea5e9', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid rgba(14,165,233,0.3)' }}>
+          <Link href="/terms" target="_blank" style={{ fontSize: '11px', color: '#0284c7', fontWeight: 600, textDecoration: 'none', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '6px', border: '1px solid #bae6fd', background: '#f0f9ff' }}>
             Full Page ↗
           </Link>
           <button
@@ -228,15 +221,15 @@ function TnCModal({
             onClick={onClose || onDecline}
             title="Close"
             style={{
-              background: 'rgba(255,255,255,0.08)',
-              border: '1px solid rgba(255,255,255,0.15)',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
               borderRadius: '8px',
               width: '32px',
               height: '32px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#94a3b8',
+              color: '#475569',
               cursor: 'pointer',
               flexShrink: 0,
             }}
@@ -251,6 +244,7 @@ function TnCModal({
           style={{
             flex: 1, overflowY: 'auto', padding: '24px',
             fontSize: '13px', color: '#334155', lineHeight: 1.7,
+            background: '#ffffff',
           }}
         >
           {!hasRead && !checked && (
@@ -265,7 +259,7 @@ function TnCModal({
         <div style={{
           borderTop: '1px solid #e2e8f0',
           padding: '16px 24px',
-          background: '#f8fafc',
+          background: '#ffffff',
           flexShrink: 0,
         }}>
           <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', marginBottom: '14px' }}>
@@ -572,6 +566,11 @@ export default function RegisterPage() {
   const [iecCode, setIecCode] = useState('');
   const [mtoNumber, setMtoNumber] = useState('');
 
+  // Platform Commerce Config & All-Free Sovereign Mode
+  const { config } = usePlatformConfig();
+  const isFreePlatformMode = isAllFreeActive(config);
+  const [showCommercialBreakdown, setShowCommercialBreakdown] = useState(false);
+
   // Plan Selection
   const [selectedPlan, setSelectedPlan] = useState<PlanTier>('premium');
 
@@ -820,6 +819,7 @@ export default function RegisterPage() {
           mobile: fullMobile,
           designation,
           role: 'company_admin',
+          plan: isFreePlatformMode ? 'premium' : selectedPlan,
         }),
       });
       clearTimeout(timeoutId);
@@ -899,7 +899,7 @@ export default function RegisterPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f1f5f9',
+        background: '#ffffff',
         display: 'flex',
         flexDirection: 'row',
         minWidth: 0,
@@ -914,12 +914,13 @@ export default function RegisterPage() {
         height: '100vh',
         flexShrink: 0,
         display: 'none',
+        borderRight: '1px solid #e2e8f0',
       }} className="reg-left-panel">
         <LiveClockPanel />
       </div>
 
       {/* RIGHT PANEL — Registration Form */}
-      <div style={{ flex: 1, minWidth: 0, padding: '30px 16px 60px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flex: 1, minWidth: 0, padding: '30px 16px 60px', display: 'flex', justifyContent: 'center', background: '#ffffff' }}>
       <div className="reg-container">
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
@@ -972,7 +973,9 @@ export default function RegisterPage() {
             Enterprise Freight Entity Registration
           </h1>
           <p style={{ fontSize: '11pt', color: 'var(--mut)', margin: '4px 0 0', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
-            Corporate KYC validation, professional email verification, and plan provisioning.
+            {isFreePlatformMode
+              ? 'Corporate KYC validation, corporate email verification, and 100% complimentary Premium Enterprise access.'
+              : 'Corporate KYC validation, corporate email verification, and plan provisioning.'}
           </p>
         </div>
 
@@ -1442,108 +1445,291 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Card 3: Plan Selection Card */}
+            {/* Card 3: Membership & Access Tier */}
             <div className="reg-section" style={{ position: 'relative', overflow: 'visible', zIndex: 20 }}>
               <div className="reg-section-head">
                 <span className="reg-section-title">
-                  <CreditCard size={15} color="var(--brand)" /> 3. Membership & Plan Tier
+                  <CreditCard size={15} color="var(--brand)" /> 3. Membership & Access Tier
                 </span>
-                <span className="reg-section-sub">Enterprise Discount Rules</span>
+                <span className="reg-section-sub" style={{ color: isFreePlatformMode ? '#059669' : 'var(--mut)', fontWeight: isFreePlatformMode ? 700 : 500 }}>
+                  {isFreePlatformMode ? '100% Free Platform Access Active' : 'Enterprise Membership Options'}
+                </span>
               </div>
               <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
-                <div className="reg-plan-grid">
-                  {/* Trial */}
+                {isFreePlatformMode ? (
+                  /* 100% Free Sovereign Access Card */
                   <div
-                    onClick={() => setSelectedPlan('trial')}
-                    className="reg-plan-card"
                     style={{
-                      border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                      background: selectedPlan === 'trial' ? '#f0f6ff' : '#ffffff',
+                      padding: '18px 20px',
+                      borderRadius: '8px',
+                      background: '#f0fdf4',
+                      border: '1.5px solid #86efac',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
                     }}
                   >
-                    <div>
-                      <div className="reg-plan-header">
-                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Plan</b>
-                      </div>
-                      <div className="reg-plan-price">
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
-                          Free
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span
+                          style={{
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          100% Free Platform Access Active
                         </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
-                          Valid for 2 days · 1 trial per company / year
-                        </small>
+                        <span
+                          style={{
+                            background: '#fef3c7',
+                            color: '#92400e',
+                            border: '1px solid #fde68a',
+                            fontSize: '10.5px',
+                            fontWeight: 800,
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Sovereign Admin Waiver
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+                        <span style={{ fontSize: '11pt', color: '#64748b', textDecoration: 'line-through' }}>₹3,000/mo</span>
+                        <span style={{ fontSize: '18px', fontWeight: 900, color: '#15803d' }}>₹0 / Free Access</span>
                       </div>
                     </div>
-                    <ul className="reg-plan-features">
-                      <li>Standard reverse auctions</li>
-                      <li>Standard bid posting (₹300/bid)</li>
-                    </ul>
-                  </div>
 
-                  {/* Professional */}
-                  <div
-                    onClick={() => setSelectedPlan('professional')}
-                    className="reg-plan-card"
-                    style={{
-                      border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                      background: selectedPlan === 'professional' ? '#f0f6ff' : '#ffffff',
-                    }}
-                  >
-                    <div>
-                      <div className="reg-plan-header">
-                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional</b>
-                      </div>
-                      <div className="reg-plan-price">
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
-                          ₹1,500 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/mo ($27 USD)</small>
-                        </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
-                          Inclusive of GST / Tax
-                        </small>
-                      </div>
-                    </div>
-                    <ul className="reg-plan-features">
-                      <li>Full platform & market rates access</li>
-                      <li>Standard bid posting (₹300/bid)</li>
-                    </ul>
-                  </div>
+                    <h3 style={{ fontSize: '13pt', fontWeight: 800, color: '#0f172a', margin: '0 0 6px', fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                      Complimentary Premium Enterprise Tier Included
+                    </h3>
+                    <p style={{ fontSize: '11pt', color: '#334155', margin: '0 0 14px', lineHeight: 1.5, fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif" }}>
+                      The Godfather Sovereign Administration has enabled 100% free open access across FR8X. All newly registered freight forwarders, shippers, and logistics entities receive complete, unrestricted Premium Enterprise access with zero subscription fees, zero tender bidding fees, and no credit card required.
+                    </p>
 
-                  {/* Premium */}
-                  <div
-                    onClick={() => setSelectedPlan('premium')}
-                    className="reg-plan-card"
-                    style={{
-                      border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--fr8x-outline)',
-                      background: selectedPlan === 'premium' ? '#fffdf7' : '#ffffff',
-                    }}
-                  >
-                    <div>
-                      <div className="reg-plan-header">
-                        <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium</b>
-                        <span className="badge amber" style={{ fontSize: '10pt', padding: '1px 6px', fontWeight: 700 }}>
-                          Recommended
-                        </span>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px', marginBottom: '14px' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                        <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Unrestricted Reverse RFQs</div>
+                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Publish container tenders & bid across all air and sea lanes for ₹0.</div>
+                        </div>
                       </div>
-                      <div className="reg-plan-price">
-                        <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
-                          ₹3,000 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/mo ($50 USD)</small>
-                        </span>
-                        <small style={{ color: 'var(--mut)', fontSize: '11pt', marginTop: '2px', display: 'block' }}>
-                          Golden Verified Tick + 40% Discount
-                        </small>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                        <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Real-Time Spot Tariffs</div>
+                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Instant search across verified carrier tariffs and historical market rates.</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                        <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Golden Verified Entity Status</div>
+                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Complimentary verified partner badge issued upon KYC approval.</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#ffffff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bbf7d0' }}>
+                        <CheckCircle2 size={16} color="#16a34a" style={{ flexShrink: 0, marginTop: '2px' }} />
+                        <div>
+                          <div style={{ fontSize: '11pt', fontWeight: 700, color: '#0f172a' }}>Zero Credit Card Required</div>
+                          <div style={{ fontSize: '10pt', color: '#64748b', marginTop: '1px' }}>Immediate platform access upon email verification with no billing forms.</div>
+                        </div>
                       </div>
                     </div>
-                    <ul className="reg-plan-features">
-                      <li>
-                        <b>Golden Verified Badge (✓)</b>
-                      </li>
-                      <li>
-                        <b>40% Discount: ₹180/bid (vs ₹300)</b>
-                      </li>
-                      <li>Priority placement on reverse RFQs</li>
-                    </ul>
+
+                    {/* Collapsible toggle for standard commercial pricing */}
+                    <div style={{ borderTop: '1px solid #bbf7d0', paddingTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <span style={{ fontSize: '11pt', color: '#166534', fontWeight: 600 }}>
+                        Automatic Entitlement: <strong>Premium Enterprise Tier (₹0 / 100% Free)</strong>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCommercialBreakdown(!showCommercialBreakdown)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#0284c7',
+                          fontSize: '11pt',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: '2px 4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        {showCommercialBreakdown ? 'Hide standard commercial schedule' : 'View standard commercial schedule (currently 100% waived)'}
+                      </button>
+                    </div>
+
+                    {showCommercialBreakdown && (
+                      <div className="reg-plan-grid" style={{ marginTop: '14px', paddingTop: '14px', borderTop: '1px dashed #cbd5e1' }}>
+                        {/* Standard Trial */}
+                        <div className="reg-plan-card" style={{ border: '1px solid #e2e8f0', background: '#ffffff', opacity: 0.85 }}>
+                          <div>
+                            <div className="reg-plan-header">
+                              <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Tier</b>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>WAIVED</span>
+                            </div>
+                            <div className="reg-plan-price">
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b' }}>₹0</span>
+                              <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard 30-Day Evaluation</small>
+                            </div>
+                          </div>
+                          <ul className="reg-plan-features">
+                            <li>Standard reverse auctions</li>
+                            <li>Standard bid posting (₹300/bid)</li>
+                          </ul>
+                        </div>
+
+                        {/* Standard Professional */}
+                        <div className="reg-plan-card" style={{ border: '1px solid #e2e8f0', background: '#ffffff', opacity: 0.85 }}>
+                          <div>
+                            <div className="reg-plan-header">
+                              <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>100% WAIVED</span>
+                            </div>
+                            <div className="reg-plan-price">
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹1,500/mo</span>
+                              <span style={{ fontSize: '15px', fontWeight: 800, color: '#15803d', marginLeft: '6px' }}>₹0</span>
+                              <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard rate during paid commercial cycle</small>
+                            </div>
+                          </div>
+                          <ul className="reg-plan-features">
+                            <li>Full platform & market rates access</li>
+                            <li>Standard bid posting (₹300/bid)</li>
+                          </ul>
+                        </div>
+
+                        {/* Standard Premium */}
+                        <div className="reg-plan-card" style={{ border: '1.5px solid #16a34a', background: '#f0fdf4' }}>
+                          <div>
+                            <div className="reg-plan-header">
+                              <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium Enterprise Tier</b>
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>ACTIVE (₹0)</span>
+                            </div>
+                            <div className="reg-plan-price">
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹3,000/mo</span>
+                              <span style={{ fontSize: '16px', fontWeight: 900, color: '#15803d', marginLeft: '6px' }}>₹0 / Free</span>
+                              <small style={{ color: '#166534', fontSize: '10pt', marginTop: '2px', display: 'block', fontWeight: 600 }}>Golden Verified Tick + Zero Bid Fees Included</small>
+                            </div>
+                          </div>
+                          <ul className="reg-plan-features">
+                            <li><b>Golden Verified Partner Badge (✓)</b></li>
+                            <li><b>100% Bid Fee Waiver (₹0 vs ₹300)</b></li>
+                            <li>Priority placement on reverse RFQs</li>
+                          </ul>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  /* Standard Paid Mode Plan Selection Cards */
+                  <div className="reg-plan-grid">
+                    {/* Trial */}
+                    <div
+                      onClick={() => setSelectedPlan('trial')}
+                      className="reg-plan-card"
+                      style={{
+                        border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                        background: selectedPlan === 'trial' ? '#f0f6ff' : '#ffffff',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div>
+                        <div className="reg-plan-header">
+                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Tier</b>
+                        </div>
+                        <div className="reg-plan-price">
+                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
+                            Free
+                          </span>
+                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                            30-Day Guided Access · Single trial per company
+                          </small>
+                        </div>
+                      </div>
+                      <ul className="reg-plan-features">
+                        <li>Standard reverse auctions</li>
+                        <li>Standard bid posting (₹300/bid)</li>
+                      </ul>
+                    </div>
+
+                    {/* Professional */}
+                    <div
+                      onClick={() => setSelectedPlan('professional')}
+                      className="reg-plan-card"
+                      style={{
+                        border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                        background: selectedPlan === 'professional' ? '#f0f6ff' : '#ffffff',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div>
+                        <div className="reg-plan-header">
+                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
+                        </div>
+                        <div className="reg-plan-price">
+                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
+                            ₹1,500 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month ($27 USD)</small>
+                          </span>
+                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                            Inclusive of all applicable taxes
+                          </small>
+                        </div>
+                      </div>
+                      <ul className="reg-plan-features">
+                        <li>Full platform & spot tariff access</li>
+                        <li>Standard bid posting (₹300/bid)</li>
+                      </ul>
+                    </div>
+
+                    {/* Premium */}
+                    <div
+                      onClick={() => setSelectedPlan('premium')}
+                      className="reg-plan-card"
+                      style={{
+                        border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--fr8x-outline)',
+                        background: selectedPlan === 'premium' ? '#fffdf7' : '#ffffff',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <div>
+                        <div className="reg-plan-header">
+                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium Enterprise Tier</b>
+                          <span className="badge amber" style={{ fontSize: '9pt', padding: '1px 6px', fontWeight: 700 }}>
+                            Recommended
+                          </span>
+                        </div>
+                        <div className="reg-plan-price">
+                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
+                            ₹3,000 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month ($50 USD)</small>
+                          </span>
+                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                            Golden Verified Badge + 40% Bid Discount
+                          </small>
+                        </div>
+                      </div>
+                      <ul className="reg-plan-features">
+                        <li>
+                          <b>Golden Verified Partner Badge (✓)</b>
+                        </li>
+                        <li>
+                          <b>40% Bid Fee Discount: ₹180/bid (vs ₹300)</b>
+                        </li>
+                        <li>Priority placement on reverse RFQs</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

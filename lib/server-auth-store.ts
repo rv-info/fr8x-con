@@ -586,6 +586,31 @@ class ServerSecurityStore {
     return user;
   }
 
+  public getAllRegisteredUsers(): ServerUserRecord[] {
+    this.loadPersistedState();
+    const seen = new Set<string>();
+    const list: ServerUserRecord[] = [];
+    for (const u of this.users.values()) {
+      if (u.email && !seen.has(u.email.toLowerCase())) {
+        seen.add(u.email.toLowerCase());
+        list.push(u);
+      }
+    }
+    try {
+      const dbmsUsers = getPersistedUsers();
+      for (const du of dbmsUsers) {
+        const u = du as unknown as ServerUserRecord;
+        if (u.email && !seen.has(u.email.toLowerCase())) {
+          seen.add(u.email.toLowerCase());
+          list.push(u);
+        }
+      }
+    } catch {
+      // ignore DBMS sync error
+    }
+    return list;
+  }
+
   public registerUser(
     user: {
       uid: string;

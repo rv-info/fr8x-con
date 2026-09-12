@@ -6,27 +6,27 @@ import { ShieldCheck, ArrowLeft, Scale, Globe, FileText, AlertTriangle, Building
 
 export default function TermsPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#0f172a', padding: '0 0 80px' }}>
+    <div style={{ minHeight: '100vh', background: '#ffffff', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        borderBottom: '1px solid #334155',
-        padding: '20px 0',
+        background: '#ffffff',
+        borderBottom: '1px solid #e2e8f0',
+        padding: '18px 0',
         position: 'sticky',
         top: 0,
         zIndex: 50,
         backdropFilter: 'blur(12px)',
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link href="/register" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#94a3b8', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+          <Link href="/register" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
             <ArrowLeft size={16} /> Back to Registration
           </Link>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '22px', fontWeight: 900, color: '#f1f5f9', letterSpacing: '-0.03em' }}>
+            <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
               fr<span style={{ color: '#0ea5e9' }}>8</span>x
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#22c55e', fontSize: '12px', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontSize: '12px', fontWeight: 700 }}>
             <ShieldCheck size={14} /> Legally Binding
           </div>
         </div>
@@ -36,8 +36,8 @@ export default function TermsPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px' }}>
         {/* Title Block */}
         <div style={{
-          background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-          border: '1px solid #334155',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
           borderRadius: '16px',
           padding: '36px 40px',
           marginBottom: '32px',
@@ -46,7 +46,7 @@ export default function TermsPage() {
         }}>
           <div style={{
             position: 'absolute', top: 0, right: 0, width: '200px', height: '200px',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.08) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)',
             pointerEvents: 'none',
           }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
@@ -54,8 +54,8 @@ export default function TermsPage() {
               <Scale size={24} color="#fff" />
             </div>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0ea5e9', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FR8X Enterprise Platform</div>
-              <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 900, color: '#f1f5f9', letterSpacing: '-0.02em' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FR8X Enterprise Platform</div>
+              <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
                 Master Terms of Service & Commercial Agreement
               </h1>
             </div>
@@ -66,9 +66,9 @@ export default function TermsPage() {
               { label: 'Jurisdiction', value: 'India (Primary) / ICC (Intl)' },
               { label: 'Version', value: 'v3.1 — Enterprise' },
             ].map((item) => (
-              <div key={item.label} style={{ background: '#0f172a', borderRadius: '8px', padding: '10px 14px', border: '1px solid #1e293b' }}>
+              <div key={item.label} style={{ background: '#ffffff', borderRadius: '8px', padding: '10px 14px', border: '1px solid #e2e8f0' }}>
                 <div style={{ fontSize: '10px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>{item.label}</div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#e2e8f0' }}>{item.value}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>{item.value}</div>
               </div>
             ))}
           </div>
@@ -199,15 +199,15 @@ export default function TermsPage() {
           </TermsSection>
 
           <TermsSection icon={<Building2 size={18} />} title="13. Contact & Grievance Redressal">
-            <div style={{ background: '#0f172a', borderRadius: '8px', padding: '16px 20px', border: '1px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px 20px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
               <div>
                 <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Platform, Legal, Privacy &amp; Security Support</div>
-                <div style={{ color: '#94a3b8', fontSize: '12.5px' }}>For all legal, privacy, security, and general platform inquiries:</div>
+                <div style={{ color: '#334155', fontSize: '12.5px' }}>For all legal, privacy, security, and general platform inquiries:</div>
               </div>
-              <a href="mailto:support@fr8x.in" style={{ color: '#0ea5e9', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>support@fr8x.in</a>
+              <a href="mailto:support@fr8x.in" style={{ color: '#0284c7', fontWeight: 700, fontSize: '14px', textDecoration: 'none' }}>support@fr8x.in</a>
             </div>
-            <p style={{ marginTop: '16px' }}>
-              <strong>Registered Office:</strong> FR8X Technology Private Limited, Mumbai, Maharashtra, India.<br />
+            <p style={{ marginTop: '16px', color: '#334155' }}>
+              <strong style={{ color: '#0f172a' }}>Registered Office:</strong> FR8X Technology Private Limited, Mumbai, Maharashtra, India.<br />
               Grievance redressal officer available during business hours (IST 9:30–18:30, Mon–Fri).
             </p>
           </TermsSection>
@@ -216,13 +216,13 @@ export default function TermsPage() {
         {/* CTA */}
         <div style={{
           marginTop: '40px',
-          background: 'linear-gradient(135deg, #1e293b, #0f172a)',
-          border: '1px solid #334155',
+          background: '#f8fafc',
+          border: '1px solid #e2e8f0',
           borderRadius: '16px',
           padding: '28px 32px',
           textAlign: 'center',
         }}>
-          <p style={{ color: '#94a3b8', fontSize: '14px', margin: '0 0 20px' }}>
+          <p style={{ color: '#475569', fontSize: '14px', margin: '0 0 20px' }}>
             By registering on FR8X, you confirm you have read and agree to the above Terms.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -248,24 +248,25 @@ export default function TermsPage() {
 function TermsSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div style={{
-      background: '#1e293b',
-      border: '1px solid #334155',
+      background: '#ffffff',
+      border: '1px solid #e2e8f0',
       borderRadius: '12px',
       overflow: 'hidden',
+      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '14px 20px',
-        background: 'rgba(14,165,233,0.06)',
-        borderBottom: '1px solid #334155',
+        background: '#f8fafc',
+        borderBottom: '1px solid #e2e8f0',
       }}>
-        <span style={{ color: '#0ea5e9' }}>{icon}</span>
-        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#e2e8f0' }}>{title}</h2>
+        <span style={{ color: '#0284c7' }}>{icon}</span>
+        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{title}</h2>
       </div>
       <div style={{
         padding: '20px',
         fontSize: '13.5px',
-        color: '#94a3b8',
+        color: '#334155',
         lineHeight: 1.7,
       }}>
         {children}
@@ -275,8 +276,8 @@ function TermsSection({ icon, title, children }: { icon: React.ReactNode; title:
         div p:last-child { margin-bottom: 0; }
         div ul, div ol { margin: 8px 0 12px 20px; padding: 0; }
         div li { margin-bottom: 6px; }
-        div strong { color: #e2e8f0; }
-        div a { color: #0ea5e9; }
+        div strong { color: #0f172a; }
+        div a { color: #0284c7; }
       `}</style>
     </div>
   );

@@ -57,6 +57,8 @@ import {
   PricingPlanUpdateTemplateParams,
   BillingIssueTemplateParams,
   SystemIssueTemplateParams,
+  BroadcastEmailTemplateParams,
+  renderBroadcastEmail,
 } from '@/lib/email-templates';
 
 export const EMAIL_SENDERS = {
@@ -1991,6 +1993,26 @@ export const EmailService = {
   },
   sendSystemIssue(params: any): Promise<TransactionalEmailResult> {
     return this.sendTechnicalEmail(params);
+  },
+
+  /**
+   * Broadcast announcements (Promo, Newsletter, Platform Updates, Maintenance)
+   */
+  async sendBroadcastEmail(params: BroadcastEmailTemplateParams): Promise<TransactionalEmailResult> {
+    const tmpl = renderBroadcastEmail(params);
+    const senderType =
+      params.category === 'MAINTENANCE' || params.category === 'UPDATE'
+        ? 'TECH'
+        : 'SUPPORT';
+    return sendTransactionalEmail({
+      type: params.category === 'MAINTENANCE' ? 'SYSTEM_MAINTENANCE' : 'TECH_NOTIFICATION',
+      senderType,
+      to: params.recipient,
+      recipientName: params.recipientName,
+      subject: tmpl.subject,
+      html: tmpl.html,
+      text: tmpl.text,
+    });
   },
 
   getStatus: getEmailSendersStatus,

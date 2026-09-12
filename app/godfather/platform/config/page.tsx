@@ -8,10 +8,11 @@ import { useToast } from '@/lib/context/ToastContext';
 
 export default function SystemConfigPage() {
   const { environment } = useGodfatherAuth();
-  const { config, updateConfig } = usePlatformConfig();
+  const { config, updateConfig, setAllFreeMode } = usePlatformConfig();
   const { toast } = useToast();
 
   const [flags, setFlags] = useState([
+    { id: 'flag-all-free', name: 'Master All-Free Platform Mode (Zero Pricing Cards)', code: 'COMMERCE_ALL_FREE_PLATFORM_MODE', enabled: config.allFreeMode, category: 'Commerce & Governance', desc: 'When enabled, registration pricing cards are replaced with 100% Complimentary Premium access and all platform fees are waived' },
     { id: 'flag-card', name: 'Mandatory Payment Cards on Login/Billing', code: 'COMMERCE_REQUIRE_PAYMENT_CARDS', enabled: config.requirePaymentCards, category: 'Commerce & Auth', desc: 'When disabled, login payment cards and billing paywalls are removed' },
     { id: 'flag-job', name: 'Logistics Job Vacancy Posting Fee (₹500)', code: 'COMMERCE_JOB_POSTING_FEE', enabled: config.jobPostingFeeEnabled, category: 'Commerce & Jobs', desc: 'When disabled, freight companies post jobs 100% free with zero fees' },
     { id: 'flag-bid', name: 'Reverse Auction Spot Bidding Fee (₹300)', code: 'COMMERCE_BIDDING_FEE', enabled: config.biddingFeeEnabled, category: 'Commerce & Tender', desc: 'When disabled, forwarders submit bids for 100% free across all lanes' },
@@ -24,7 +25,11 @@ export default function SystemConfigPage() {
   ]);
 
   const toggleFlag = (id: string) => {
-    if (id === 'flag-card') {
+    if (id === 'flag-all-free') {
+      const next = !config.allFreeMode;
+      setAllFreeMode(next);
+      toast(next ? 'ALL-FREE Platform Mode ACTIVATED: Registration pricing cards and paywalls waived!' : 'Commercial billing restored.');
+    } else if (id === 'flag-card') {
       const next = !config.requirePaymentCards;
       updateConfig({ requirePaymentCards: next });
       toast(next ? 'Payment cards required.' : 'Login & platform payment cards REMOVED.');

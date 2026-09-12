@@ -46,6 +46,7 @@ export interface PromotionalAuditLog {
 }
 
 export interface PlatformCommerceConfig {
+  allFreeMode: boolean; // Master Sovereign Switch: When true, all registration pricing cards, paywalls, and transaction fees are 100% waived
   requirePaymentCards: boolean; // When false, login & platform payment cards are removed/bypassed
   biddingFeeEnabled: boolean; // When false, tender bid fee is ₹0 (Free Bidding)
   biddingFeeAmount: number;
@@ -111,12 +112,13 @@ export const DEFAULT_PROMOTIONAL_FEATURES: PromotionalFeatureConfig[] = [
 ];
 
 export const DEFAULT_PLATFORM_CONFIG: PlatformCommerceConfig = {
+  allFreeMode: true,
   requirePaymentCards: false,
   biddingFeeEnabled: false,
   biddingFeeAmount: 300,
   jobPostingFeeEnabled: false,
   jobPostingFeeAmount: 500,
-  feedAdsFeeEnabled: true,
+  feedAdsFeeEnabled: false,
   feedAdsFeeAmount: 1200,
   kycFeeEnabled: false,
   kycFeeAmount: 2500,
@@ -163,6 +165,7 @@ export function getStoredPlatformConfig(): PlatformCommerceConfig {
     return {
       ...DEFAULT_PLATFORM_CONFIG,
       ...parsed,
+      allFreeMode: parsed.allFreeMode ?? DEFAULT_PLATFORM_CONFIG.allFreeMode,
       promotionalFeatures: parsed.promotionalFeatures || DEFAULT_PROMOTIONAL_FEATURES,
       promotionalAuditLogs: parsed.promotionalAuditLogs || DEFAULT_PLATFORM_CONFIG.promotionalAuditLogs,
     };
@@ -179,6 +182,18 @@ export function saveStoredPlatformConfig(cfg: PlatformCommerceConfig) {
   } catch (e) {
     console.error('Failed to save platform config:', e);
   }
+}
+
+/**
+ * Check if the Godfather has selected "All Free" platform mode.
+ * When true, registration cards, paywalls, and transaction fees are 100% waived.
+ */
+export function isAllFreeActive(config: PlatformCommerceConfig): boolean {
+  if (config.allFreeMode === true) return true;
+  if (config.requirePaymentCards === false && config.biddingFeeEnabled === false) return true;
+  const loginFeature = config.promotionalFeatures?.find((f) => f.key === 'LOGIN');
+  if (loginFeature && loginFeature.globalStatus === 'free' && config.requirePaymentCards === false) return true;
+  return false;
 }
 
 /**
@@ -351,12 +366,58 @@ export function usePlatformConfig() {
     saveStoredPlatformConfig(nextConfig);
   };
 
+  const setAllFreeMode = (
+    enabled: boolean,
+    operatorInfo?: { id: string; name: string }
+  ) => {
+    const nextFeatures = config.promotionalFeatures.map((f) => {
+      if (f.key === 'LOGIN' || f.key === 'REVERSE_AUCTION') {
+        return {
+          ...f,
+          globalStatus: enabled ? ('free' as const) : ('chargeable' as const),
+          pricingMode: enabled ? ('free' as const) : ('fixed' as const),
+        };
+      }
+      return f;
+    });
+
+    const auditEntry: PromotionalAuditLog = {
+      id: `AUD-PROM-${Date.now()}`,
+      operatorId: operatorInfo?.id || 'tech@fr8x.in',
+      operatorName: operatorInfo?.name || 'Godfather Operator',
+      featureKey: 'LOGIN',
+      featureLabel: 'Platform Commerce All-Free Sovereign Mode',
+      previousState: config.allFreeMode ? 'ALL-FREE ACTIVE' : 'COMMERCIAL CHARGEABLE',
+      newState: enabled ? 'ALL-FREE 100% WAIVED ACTIVE' : 'STANDARD COMMERCIAL BILLING',
+      pricingInfo: enabled ? 'All registration pricing cards, paywalls, and transaction fees waived (₹0)' : 'Standard Plan Pricing Enforced',
+      scope: 'GLOBAL',
+      effectiveDate: new Date().toISOString(),
+      timestamp: new Date().toISOString(),
+    };
+
+    const nextConfig: PlatformCommerceConfig = {
+      ...config,
+      allFreeMode: enabled,
+      requirePaymentCards: !enabled,
+      biddingFeeEnabled: !enabled,
+      jobPostingFeeEnabled: !enabled,
+      feedAdsFeeEnabled: !enabled,
+      kycFeeEnabled: !enabled,
+      promotionalFeatures: nextFeatures,
+      promotionalAuditLogs: [auditEntry, ...(config.promotionalAuditLogs || [])],
+    };
+
+    setConfig(nextConfig);
+    saveStoredPlatformConfig(nextConfig);
+  };
+
   return {
     config,
     updateConfig,
     updatePromotionalFeature,
     addUserOverride,
     removeUserOverride,
+    setAllFreeMode,
     isFeatureFree: (featureKey: PromotionalFeatureKey, userId?: string) =>
       isFeatureFreeForUser(config, featureKey, userId),
   };

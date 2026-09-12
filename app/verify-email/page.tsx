@@ -209,7 +209,7 @@ function VerifyEmailContent() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f8fafc',
+        background: '#ffffff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -827,7 +827,7 @@ function VerifyEmailContent() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '8px',
-                  background: '#0f172a',
+                  background: '#0ea5e9',
                   color: '#ffffff',
                   fontSize: '13px',
                   fontWeight: 600,

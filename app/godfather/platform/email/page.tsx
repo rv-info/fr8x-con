@@ -34,12 +34,13 @@ import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { EmailLog, MailboxStatus } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
 import { ZohoEmailGuidebookModal } from '@/components/godfather/ZohoEmailGuidebookModal';
+import { GodfatherEmailBroadcastTab } from '@/components/godfather/GodfatherEmailBroadcastTab';
 
 export default function EmailServicePage() {
   const { emailLogs, mailboxes, templates, sendTestEmail, checkEmailHealth } = useGodfatherData();
   const { operator, requestStepUpVerification } = useGodfatherAuth();
 
-  const [activeTab, setActiveTab] = useState<'mailboxes' | 'guidebook' | 'logs' | 'templates'>('mailboxes');
+  const [activeTab, setActiveTab] = useState<'broadcast' | 'mailboxes' | 'guidebook' | 'logs' | 'templates'>('broadcast');
   const [logSearch, setLogSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [isGuidebookModalOpen, setIsGuidebookModalOpen] = useState(false);
@@ -304,6 +305,18 @@ export default function EmailServicePage() {
           <div className="flex items-center gap-1 p-1 bg-slate-100 border border-slate-200 rounded-lg">
             <button
               type="button"
+              onClick={() => setActiveTab('broadcast')}
+              className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors flex items-center gap-1.5 ${
+                activeTab === 'broadcast'
+                  ? 'bg-sky-600 text-white shadow-xs'
+                  : 'text-sky-800 hover:text-sky-950 font-bold bg-sky-50/70'
+              }`}
+            >
+              <Send className="lucide w-3 h-3" />
+              <span>Broadcast Desk (Promo, News, Maint.)</span>
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab('mailboxes')}
               className={`px-3 py-1.5 rounded-md text-xs font-bold transition-colors ${
                 activeTab === 'mailboxes'
@@ -380,6 +393,9 @@ export default function EmailServicePage() {
           </div>
         </div>
       )}
+
+      {/* TAB 0: BROADCAST & ANNOUNCEMENTS */}
+      {activeTab === 'broadcast' && <GodfatherEmailBroadcastTab />}
 
       {/* TAB 1: MAILBOX CARDS */}
       {activeTab === 'mailboxes' && (

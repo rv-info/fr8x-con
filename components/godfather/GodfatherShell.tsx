@@ -99,6 +99,7 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
   else if (pathname.startsWith('/godfather/commerce/invoices')) activeTitle = 'Accounting, GST & Monthly Revenue Records';
   else if (pathname.startsWith('/godfather/commerce/fees')) activeTitle = 'Commercial Fees & Benefit Schedules';
   else if (pathname.startsWith('/godfather/platform/terms')) activeTitle = 'Terms & Safety Agreements Governance';
+  else if (pathname.startsWith('/godfather/platform/broadcast')) activeTitle = 'Email Broadcast, Promo & Maintenance Desk';
   else if (pathname.startsWith('/godfather/platform/templates')) activeTitle = 'System Notifications & Message Templates';
   else if (pathname.startsWith('/godfather/platform/email')) activeTitle = 'Zoho Email Service & Delivery Logs';
   else if (pathname.startsWith('/godfather/platform/audit')) activeTitle = 'Immutable Platform Audit Ledger';

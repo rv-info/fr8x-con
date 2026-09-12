@@ -180,7 +180,7 @@ function ResetPasswordInner() {
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--fr8x-background, #0f172a)',
+        background: '#ffffff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

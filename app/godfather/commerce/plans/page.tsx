@@ -23,10 +23,12 @@ import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { PlanVersion } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
+import { usePlatformConfig } from '@/lib/platform-config';
 
 export default function PlansConfigurationPage() {
   const { plans, createPlanVersion } = useGodfatherData();
   const { requestStepUpVerification } = useGodfatherAuth();
+  const { config, setAllFreeMode } = usePlatformConfig();
 
   const [selectedPlan, setSelectedPlan] = useState<PlanVersion>(plans[0] || {} as PlanVersion);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -189,6 +191,42 @@ export default function PlansConfigurationPage() {
         >
           <Plus className="lucide w-4 h-4" />
           <span>Create New Plan Tier</span>
+        </button>
+      </div>
+
+      {/* Sovereign All-Free Platform Banner */}
+      <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+        config.allFreeMode
+          ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
+          : 'bg-amber-50 border-amber-300 text-amber-950'
+      }`}>
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
+              config.allFreeMode ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'
+            }`}>
+              {config.allFreeMode ? 'ALL-FREE SOVEREIGN MODE ACTIVE' : 'COMMERCIAL CHARGES ACTIVE'}
+            </span>
+            <span className="text-xs font-bold text-slate-800">
+              {config.allFreeMode ? 'Registration Pricing Cards: WAIVED (100% Free Mode)' : 'Registration Pricing Cards: DISPLAYED (Paid Plans Active)'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-600 max-w-2xl">
+            {config.allFreeMode
+              ? 'All newly registered entities receive complimentary Premium Enterprise tier at ₹0. The public registration page displays a 100% Free Access notice instead of pricing cards.'
+              : 'Public registration page displays paid plan selection cards (Trial, Professional ₹1,500, Premium ₹3,000).'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setAllFreeMode(!config.allFreeMode)}
+          className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all shadow-xs flex-shrink-0 ${
+            config.allFreeMode
+              ? 'bg-emerald-700 text-white hover:bg-emerald-800'
+              : 'bg-amber-700 text-white hover:bg-amber-800'
+          }`}
+        >
+          {config.allFreeMode ? 'Deactivate All-Free Mode' : 'Activate 100% All-Free Mode'}
         </button>
       </div>
 

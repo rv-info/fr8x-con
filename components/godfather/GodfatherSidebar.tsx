@@ -9,7 +9,7 @@ import {
   CreditCard, Receipt, Percent, Scale, Bell, Mail, FileText,
   Key, Sliders, ChevronDown, ChevronRight, ShieldCheck,
   AlertOctagon, LayoutDashboard, Search, Lock, UserX,
-  KeyRound, Smartphone, ShieldAlert, History, Sparkles, TrendingUp,
+  KeyRound, Smartphone, ShieldAlert, History, Sparkles, TrendingUp, Send,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -71,6 +71,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Platform & Governance',
     items: [
       { label: 'Terms & Safety Agreements', href: '/godfather/platform/terms', icon: Scale },
+      { label: 'Broadcast & Newsletters', href: '/godfather/platform/broadcast', icon: Send },
       { label: 'Notification Templates', href: '/godfather/platform/templates', icon: Bell },
       { label: 'Zoho Email & Setup Guide', href: '/godfather/platform/email', icon: Mail },
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },
