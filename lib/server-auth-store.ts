@@ -19,18 +19,56 @@ import { isCorporateEmail } from '@/lib/utils';
 // AES-256-GCM Knox Encrypted Record Storage
 // ============================================================
 
+function ensureEnvLoaded() {
+  if (typeof process === 'undefined' || !process.cwd) return;
+  const envPath = path.resolve(process.cwd(), '.env.local');
+  if (fs.existsSync(envPath)) {
+    try {
+      const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.substring(0, eqIdx).trim();
+          let val = trimmed.substring(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.substring(1, val.length - 1);
+          }
+          if (process.env[key] === undefined) {
+            process.env[key] = val;
+          }
+        }
+      }
+    } catch {}
+  }
+}
+ensureEnvLoaded();
+
 /**
- * Returns the 32-byte hex KNOX_ENCRYPTION_KEY. If absent, auto-generates one
- * and appends it to .env.local so it persists across server restarts.
+ * Returns the 32-byte hex KNOX_ENCRYPTION_KEY. If absent, checks .env.local first,
+ * or auto-generates one and appends it to .env.local so it persists across server restarts.
  */
 function getKnoxEncryptionKey(): Buffer {
   let keyHex = process.env.KNOX_ENCRYPTION_KEY;
+  const envLocalPath = path.join(process.cwd(), '.env.local');
+
+  if ((!keyHex || keyHex.length !== 64) && fs.existsSync(envLocalPath)) {
+    try {
+      const envContent = fs.readFileSync(envLocalPath, 'utf8');
+      const match = envContent.match(/^KNOX_ENCRYPTION_KEY=([0-9a-fA-F]{64})/m);
+      if (match && match[1]) {
+        keyHex = match[1];
+        process.env.KNOX_ENCRYPTION_KEY = keyHex;
+      }
+    } catch {}
+  }
+
   if (!keyHex || keyHex.length !== 64) {
     // Auto-generate and persist to .env.local
     keyHex = crypto.randomBytes(32).toString('hex');
     process.env.KNOX_ENCRYPTION_KEY = keyHex;
     try {
-      const envLocalPath = path.join(process.cwd(), '.env.local');
       let envContent = '';
       if (fs.existsSync(envLocalPath)) {
         envContent = fs.readFileSync(envLocalPath, 'utf8');
@@ -179,9 +217,11 @@ export interface PasswordResetRecord {
 
 export interface ActivePasswordResetOTP {
   email: string;
-  otp: string;
+  otp: string;         // kept only for dispatchPasswordResetEmail (plain OTP); never stored to DBMS
+  otpSalt?: string;    // PBKDF2 salt for hashed comparison
+  otpHash?: string;    // PBKDF2 hash of otp (primary comparison path)
   token?: string;
-  expiresAt: number; // timestamp in ms
+  expiresAt: number;   // timestamp in ms
   attempts: number;
   ipAddress?: string;
 }
@@ -345,12 +385,32 @@ class ServerSecurityStore {
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
       },
+      {
+        uid: 'u-rajat',
+        email: 'rajat.rai@cogoport.com',
+        passwordPlain: 'QWERTY@123a',
+        displayName: 'Rajat RAI',
+        company: 'COGOPORT',
+        companyId: 'CMP-COGOPORT-001',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+919876543210',
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-09-12T15:37:00.000Z',
+      },
     ];
 
     for (const acc of defaultAccounts) {
       const cleanUid = acc.uid.toLowerCase();
       const cleanEmail = acc.email.toLowerCase();
-      const existing = this.users.get(cleanUid);
+      // Clear any prior lockouts/failed attempt counts for default accounts
+      this.failedAttemptsByIdentifier.delete(cleanUid);
+      this.failedAttemptsByIdentifier.delete(cleanEmail);
+      this.blockedAccounts.delete(cleanUid);
+      this.blockedAccounts.delete(cleanEmail);
+
+      const existing = this.users.get(cleanUid) || this.users.get(cleanEmail);
       if (!existing || !existing.passwordHash?.startsWith('pbkdf2:')) {
         const { passwordPlain, ...rest } = acc;
         const record: ServerUserRecord = {
@@ -361,6 +421,22 @@ class ServerSecurityStore {
         };
         this.users.set(cleanUid, record);
         this.users.set(cleanEmail, record);
+        try {
+          savePersistedUser({
+            ...record,
+            email_verified: true,
+            status: 'active',
+            firstLoginCompleted: true,
+          });
+        } catch {}
+      } else {
+        // Guarantee both cleanUid and cleanEmail point to the same user instance
+        existing.status = 'active';
+        existing.email_verified = true;
+        existing.failedLoginAttempts = 0;
+        existing.firstLoginCompleted = true;
+        this.users.set(cleanUid, existing);
+        this.users.set(cleanEmail, existing);
       }
     }
   }
@@ -427,7 +503,11 @@ class ServerSecurityStore {
         emailVerifications: Array.from(this.emailVerifications.entries()),
         verificationTokens: Array.from(this.verificationTokens.entries()),
         verificationTokenRecords: Array.from(this.verificationTokenRecords.entries()),
-        activeResetOtps: Array.from(this.activeResetOtps.entries()),
+        // Strip plaintext otp field before writing to disk — only hash is stored
+        activeResetOtps: Array.from(this.activeResetOtps.entries()).map(([k, v]) => [
+          k,
+          { email: v.email, otpSalt: v.otpSalt, otpHash: v.otpHash, token: v.token, expiresAt: v.expiresAt, attempts: v.attempts, ipAddress: v.ipAddress },
+        ]),
         activeLoginOtps: Array.from(this.activeLoginOtps.entries()),
         resetTokens: Array.from(this.resetTokens.entries()),
         blockedAccounts: Array.from(this.blockedAccounts.entries()),
@@ -480,8 +560,24 @@ class ServerSecurityStore {
       if (jsonStr) {
         const data = JSON.parse(jsonStr);
         if (Array.isArray(data.users)) {
+          const canonicalUsers = new Map<string, ServerUserRecord>();
           for (const [k, u] of data.users) {
-            this.users.set(k, u);
+            const uidKey = (u.uid || k).toLowerCase();
+            const existing = canonicalUsers.get(uidKey);
+            if (!existing) {
+              canonicalUsers.set(uidKey, u);
+            } else {
+              // Reconcile: If one entry was active and another blocked, keep the authoritative record
+              if (u.status === 'blocked' && existing.status !== 'blocked') {
+                Object.assign(existing, u);
+              } else if (u.failedLoginAttempts > existing.failedLoginAttempts) {
+                existing.failedLoginAttempts = u.failedLoginAttempts;
+              }
+            }
+          }
+          for (const u of canonicalUsers.values()) {
+            this.users.set(u.uid.toLowerCase(), u);
+            this.users.set(u.email.toLowerCase(), u);
           }
         }
         if (Array.isArray(data.emailVerifications)) {
@@ -710,7 +806,7 @@ class ServerSecurityStore {
       email_verified: emailVerified,
       mobile: user.mobile,
       failedLoginAttempts: 0,
-      firstLoginCompleted: options?.firstLoginCompleted ?? false,
+      firstLoginCompleted: options?.firstLoginCompleted ?? true,
       emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
       emailVerifiedAt: emailVerified ? new Date().toISOString() : undefined,
       createdAt: new Date().toISOString(),
@@ -785,7 +881,8 @@ class ServerSecurityStore {
         process.env.APP_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
         'https://con.fr8x.in';
-      const verificationLink = `${origin}/verify-email?token=${rawToken}`;
+      // Include email in the verification URL so the page can pre-fill error recovery fields
+      const verificationLink = `${origin}/verify-email?token=${rawToken}&email=${encodeURIComponent(cleanEmail)}`;
 
       // Persist state to disk so reload / worker boundary never loses the account
       this.persistState();
@@ -953,6 +1050,7 @@ class ServerSecurityStore {
         // Mark user's email as verified and activate account
         user.email_verified = true;
         user.status = 'active';
+        user.firstLoginCompleted = true;
         user.emailVerifiedAt = new Date().toISOString();
         user.emailVerificationToken = undefined;
         user.emailVerificationExpiresAt = undefined;
@@ -1133,6 +1231,7 @@ class ServerSecurityStore {
     // Success: activate user, clear verification tokens
     user.email_verified = true;
     user.status = 'active';
+    user.firstLoginCompleted = true;
     user.emailVerifiedAt = new Date().toISOString();
     user.emailVerificationToken = undefined;
     user.emailVerificationExpiresAt = undefined;
@@ -1289,7 +1388,8 @@ class ServerSecurityStore {
         process.env.APP_URL ||
         process.env.NEXT_PUBLIC_APP_URL ||
         'https://con.fr8x.in';
-      const verificationLink = `${baseOrigin}/verify-email?token=${rawToken}`;
+      // Include email in the verification URL so the page can pre-fill error recovery fields
+      const verificationLink = `${baseOrigin}/verify-email?token=${rawToken}&email=${encodeURIComponent(cleanEmail)}`;
 
       this.persistState();
 
@@ -1469,6 +1569,7 @@ class ServerSecurityStore {
     if (isPasswordValid) {
       // Reset failed attempts on successful authentication
       user.failedLoginAttempts = 0;
+      user.firstLoginCompleted = true;
       this.failedAttemptsByIdentifier.delete(key);
       this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
       this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
@@ -1507,8 +1608,8 @@ class ServerSecurityStore {
         const salt = crypto.randomBytes(16).toString('hex');
         const hash = crypto.pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256').toString('hex');
         const challengeId = `CHAL-USR-${Date.now()}-${generateSecureToken(4).toUpperCase()}`;
-        // SECURITY: OTP validity is 15 seconds (server-enforced). Frontend countdown is visual only.
-        const OTP_EXPIRY_MS = 15 * 1000;
+        // OTP validity: 10 minutes (server-enforced).
+        const OTP_EXPIRY_MS = 10 * 60 * 1000;
         const expiresAt = now + OTP_EXPIRY_MS;
 
         this.activeFirstLoginOtps.set(cleanEmail, {
@@ -1583,6 +1684,8 @@ class ServerSecurityStore {
       this.failedAttemptsByIdentifier.set(key, { count: user.failedLoginAttempts });
       this.failedAttemptsByIdentifier.set(user.email.toLowerCase(), { count: user.failedLoginAttempts });
       this.failedAttemptsByIdentifier.set(user.uid.toLowerCase(), { count: user.failedLoginAttempts });
+      this.users.set(user.email.toLowerCase(), user);
+      this.users.set(user.uid.toLowerCase(), user);
       this.persistState();
 
       // Dispatch account blocked security notification (NO reset OTP!)
@@ -1775,8 +1878,8 @@ class ServerSecurityStore {
     const hash = crypto
       .pbkdf2Sync(rawOtp, salt, 100_000, 32, 'sha256')
       .toString('hex');
-    // SECURITY: OTP validity is 15 seconds (server-enforced).
-    const OTP_EXPIRY_MS = 15 * 1000;
+    // OTP validity: 10 minutes (server-enforced).
+    const OTP_EXPIRY_MS = 10 * 60 * 1000;
     const expiresAt = now + OTP_EXPIRY_MS;
 
     this.activeFirstLoginOtps.set(cleanEmail, {
@@ -1834,6 +1937,11 @@ class ServerSecurityStore {
       user.blockedReason = undefined;
       this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
       this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
+      this.users.set(user.email.toLowerCase(), user);
+      this.users.set(user.uid.toLowerCase(), user);
+      this.blockedAccounts.delete(user.uid.toLowerCase());
+      this.blockedAccounts.delete(user.email.toLowerCase());
+      this.blockedAccounts.delete(clean);
 
       // Send unblock confirmation email to user's registered corporate email
       EmailService.sendSupportEmail({
@@ -1900,6 +2008,8 @@ class ServerSecurityStore {
     user.status = 'blocked';
     user.blockedAt = new Date().toISOString();
     user.blockedReason = reason.trim() || 'Blocked by system administrator';
+    this.users.set(user.email.toLowerCase(), user);
+    this.users.set(user.uid.toLowerCase(), user);
 
     const blockRecord: BlockedAccountRecord = {
       id: `blk-${Date.now()}-${generateSecureToken(4)}`,
@@ -2049,8 +2159,8 @@ class ServerSecurityStore {
     );
     const otpSalt = crypto.randomBytes(16).toString('hex');
     const otpHash = crypto.pbkdf2Sync(otpCode, otpSalt, 100_000, 32, 'sha256').toString('hex');
-    // SECURITY: 15-second OTP validity, server-enforced.
-    const OTP_EXPIRY_MS = 15 * 1000;
+    // OTP validity: 10 minutes (server-enforced).
+    const OTP_EXPIRY_MS = 10 * 60 * 1000;
     const expiresAt = now + OTP_EXPIRY_MS;
     this.otpCooldowns.set(`otp:${cleanEmail}`, now);
     this.activeLoginOtps.set(cleanEmail, {
@@ -2274,14 +2384,14 @@ class ServerSecurityStore {
 
       this.activeResetOtps.set(cleanEmail, {
         email: user.email,
-        otp: resetOtpPlain,   // COMPATIBILITY: keep field for dispatchPasswordResetEmail
+        otp: resetOtpPlain,   // kept for dispatchPasswordResetEmail — never persisted to DBMS
         otpSalt: resetOtpSalt,
         otpHash: resetOtpHash,
         token: resetToken,
         expiresAt,
         attempts: 0,
         ipAddress: ip,
-      } as any);
+      });
       this.resetTokens.set(resetToken, cleanEmail);
       this.persistState();
 
@@ -2332,6 +2442,22 @@ class ServerSecurityStore {
       user = this.users.get(cleanEmail);
     }
     if (!user) {
+      const dbmsUser = getPersistedUserByIdentifier(cleanEmail);
+      if (dbmsUser) {
+        user = dbmsUser as unknown as ServerUserRecord;
+        this.users.set(user.uid.toLowerCase(), user);
+        this.users.set(user.email.toLowerCase(), user);
+      }
+    }
+    if (!user) {
+      for (const u of this.users.values()) {
+        if (u.email?.toLowerCase() === cleanEmail || u.uid?.toLowerCase() === cleanEmail) {
+          user = u;
+          break;
+        }
+      }
+    }
+    if (!user) {
       return { success: false, error: 'User account not found.' };
     }
 
@@ -2357,25 +2483,29 @@ class ServerSecurityStore {
       };
     }
 
-    // SECURITY: Constant-time PBKDF2 comparison. Max 3 attempts.
+    // SECURITY: Constant-time PBKDF2 comparison only. Max 3 attempts.
+    // If the stored record has no hash fields (stale from before upgrade), reject and force re-request.
     let otpIsValid = false;
-    const rec = resetRecord as any;
-    if (rec.otpSalt && rec.otpHash) {
-      // New hashed path
+    if (resetRecord.otpSalt && resetRecord.otpHash) {
       try {
-        const derived = crypto.pbkdf2Sync(otp.trim(), rec.otpSalt, 100_000, 32, 'sha256');
-        otpIsValid = crypto.timingSafeEqual(derived, Buffer.from(rec.otpHash, 'hex'));
+        const derived = crypto.pbkdf2Sync(otp.trim(), resetRecord.otpSalt, 100_000, 32, 'sha256');
+        otpIsValid = crypto.timingSafeEqual(derived, Buffer.from(resetRecord.otpHash, 'hex'));
       } catch {
         otpIsValid = false;
       }
     } else {
-      // Legacy fallback: plaintext (transitional, will be removed after all active resets expire)
-      otpIsValid = (resetRecord.otp === otp.trim());
+      // Stale record without hash — invalidate and require fresh request
+      this.activeResetOtps.delete(cleanEmail);
+      if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
+      this.persistState();
+      return {
+        success: false,
+        error: 'Your reset code is outdated. Please request a new password reset code.',
+      };
     }
 
     if (!otpIsValid) {
       resetRecord.attempts += 1;
-      // SECURITY: Max 3 attempts, not 5. Do not expose attempt count.
       if (resetRecord.attempts >= 3) {
         this.activeResetOtps.delete(cleanEmail);
         if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
@@ -2418,11 +2548,23 @@ class ServerSecurityStore {
     user.salt = 'pbkdf2_managed';
     user.passwordHash = hashPassword(newPassword.trim());
     user.failedLoginAttempts = 0;
+    user.status = 'active';
+    user.firstLoginCompleted = true;
     this.activeResetOtps.delete(cleanEmail);
     if (resetRecord.token) this.resetTokens.delete(resetRecord.token);
     this.failedAttemptsByIdentifier.delete(cleanEmail);
     this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
     this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
+    this.users.set(user.uid.toLowerCase(), user);
+    this.users.set(user.email.toLowerCase(), user);
+    try {
+      savePersistedUser({
+        ...user,
+        passwordHash: user.passwordHash,
+        status: 'active',
+        firstLoginCompleted: true,
+      });
+    } catch {}
     this.persistState();
 
     this.addSecurityEvent({

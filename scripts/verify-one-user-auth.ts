@@ -111,8 +111,18 @@ function runTests() {
   );
 
   // 10. 3 invalid login attempts trigger account lockout
-  const userToTest = 'kiran.mehta@indoocean.com';
-  serverSecurityStore.unblockAccount(userToTest);
+  const userToTest = `kiran.lockout.${Date.now()}@indoocean.com`;
+  serverSecurityStore.registerUser(
+    {
+      uid: `u-lockout-${Date.now()}`,
+      email: userToTest,
+      password: 'InitialPass@2026',
+      displayName: 'Kiran Mehta',
+      company: 'Indo Ocean Lines',
+      companyId: 'CMP-00999',
+    },
+    { skipVerification: true, firstLoginCompleted: true }
+  );
   // Attempt 1
   const fail1 = serverSecurityStore.recordLoginAttempt(userToTest, 'WrongPass1', '127.0.0.1');
   assert(fail1.success === false && fail1.attemptsRemaining === 2, 'Attempt 1: 2 attempts remaining');

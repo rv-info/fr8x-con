@@ -117,25 +117,7 @@ export default function LoginPage() {
   const [isResetSubmitting, setIsResetSubmitting] = useState(false);
   const [resetResendCooldown, setResetResendCooldown] = useState(0);
 
-  // First-login OTP verification state
-  const [firstLoginModalOpen, setFirstLoginModalOpen] = useState(false);
-  const [firstLoginChallengeToken, setFirstLoginChallengeToken] = useState('');
-  const [firstLoginOtp, setFirstLoginOtp] = useState('');
-  const [firstLoginError, setFirstLoginError] = useState('');
-  const [firstLoginTimer, setFirstLoginTimer] = useState(15);
-  const [firstLoginSubmitting, setFirstLoginSubmitting] = useState(false);
-  const [firstLoginResending, setFirstLoginResending] = useState(false);
-  const [firstLoginResendCooldown, setFirstLoginResendCooldown] = useState(60);
 
-  // Countdown timer for first-login OTP (15 seconds strict) and 60-second resend cooldown
-  useEffect(() => {
-    if (!firstLoginModalOpen) return;
-    const interval = setInterval(() => {
-      setFirstLoginTimer((prev) => (prev > 0 ? prev - 1 : 0));
-      setFirstLoginResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [firstLoginModalOpen]);
 
   // Countdown timer for password reset OTP 60-second resend cooldown
   useEffect(() => {
@@ -208,16 +190,7 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (res.ok && json.success) {
-        if (json.firstLoginRequired) {
-          // Intercept first-time login: show OTP challenge
-          setFirstLoginChallengeToken(json.challengeToken);
-          setFirstLoginTimer(json.expiresIn || 300);
-          setFirstLoginOtp('');
-          setFirstLoginError('');
-          setFirstLoginModalOpen(true);
-          toast(json.message || 'First-login verification code sent to your registered email.');
-          return;
-        }
+
 
         // Server authenticated — hand off verified profile to client session
         const loggedIn = login(id, remember, json);
@@ -264,82 +237,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleFirstLoginVerify = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!firstLoginOtp.trim() || firstLoginOtp.trim().length !== 6) {
-      setFirstLoginError('Please enter a valid 6-digit verification code.');
-      return;
-    }
-    if (firstLoginTimer <= 0) {
-      setFirstLoginError('Code expired.');
-      return;
-    }
 
-    setFirstLoginSubmitting(true);
-    setFirstLoginError('');
-
-    try {
-      const res = await fetch('/api/auth/verify-first-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          challengeToken: firstLoginChallengeToken,
-          otp: firstLoginOtp.trim(),
-        }),
-      });
-
-      const json = await res.json();
-      setFirstLoginSubmitting(false);
-
-      if (res.ok && json.success) {
-        setFirstLoginModalOpen(false);
-        const loggedIn = login(identifier.trim(), remember, json);
-        if (loggedIn) {
-          toast(`First-login verified! Logged in as ${json.displayName || identifier.trim()}.`);
-          router.push('/feeds');
-        } else {
-          setFirstLoginError('Session initialization failed. Please try again.');
-        }
-      } else {
-        setFirstLoginError(json.error || 'Verification failed. Please check the code and try again.');
-      }
-    } catch {
-      setFirstLoginSubmitting(false);
-      setFirstLoginError('Unable to connect to verification server. Please try again.');
-    }
-  };
-
-  const handleFirstLoginResend = async () => {
-    if (firstLoginResending) return;
-    setFirstLoginResending(true);
-    setFirstLoginError('');
-
-    try {
-      const res = await fetch('/api/auth/resend-first-login-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          challengeToken: firstLoginChallengeToken,
-        }),
-      });
-
-      const json = await res.json();
-      setFirstLoginResending(false);
-
-      if (res.ok && json.success) {
-        setFirstLoginChallengeToken(json.challengeToken);
-        setFirstLoginTimer(json.expiresIn || 300);
-        setFirstLoginResendCooldown(60);
-        setFirstLoginOtp('');
-        toast('New verification code sent.');
-      } else {
-        setFirstLoginError(json.error || 'Failed to resend verification code. Please try again.');
-      }
-    } catch {
-      setFirstLoginResending(false);
-      setFirstLoginError('Unable to contact server to resend code.');
-    }
-  };
 
   const openForgotModal = () => {
     if (!resetEmail && identifier.trim() && identifier.includes('@')) {
@@ -990,131 +888,7 @@ export default function LoginPage() {
         </div>
       )}
 
-      {/* First-Login Security Verification Modal */}
-      {firstLoginModalOpen && (
-        <div className="gf-modal-overlay gf-modal-backdrop">
-          <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
-            <div className="gf-modal-header">
-              <div className="gf-modal-title flex items-center gap-2">
-                <ShieldCheck className="lucide w-4 h-4 text-emerald-600" />
-                <span>First-Login Security Verification</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFirstLoginModalOpen(false)}
-                className="gf-modal-close-btn"
-              >
-                <X className="lucide w-4 h-4" />
-              </button>
-            </div>
 
-            <form onSubmit={handleFirstLoginVerify} style={{ padding: '18px 20px' }} className="space-y-4">
-              <p style={{ fontSize: '12px', color: 'var(--mut)', margin: 0, lineHeight: 1.5 }}>
-                Enter the verification code dispatched to your registered email to complete your first-time authentication.
-              </p>
-
-              {/* Countdown Timer Display */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderRadius: '6px',
-                  background: firstLoginTimer > 0 ? '#f0fdf4' : '#fff1f2',
-                  border: `1px solid ${firstLoginTimer > 0 ? '#bbf7d0' : '#fecdd3'}`,
-                  color: firstLoginTimer > 0 ? '#166534' : '#9f1239',
-                  fontWeight: 700,
-                  fontSize: '13px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Clock size={16} />
-                  <span>
-                    TIME LEFT: {String(Math.floor(firstLoginTimer / 60)).padStart(2, '0')}:
-                    {String(firstLoginTimer % 60).padStart(2, '0')}
-                  </span>
-                </div>
-                {firstLoginTimer === 0 && (
-                  <span style={{ fontSize: '11.5px', fontWeight: 600, color: '#e11d48' }}>Code expired.</span>
-                )}
-              </div>
-
-              {firstLoginError && (
-                <div
-                  style={{
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    background: '#fff0f1',
-                    border: '1px solid #f0c8ce',
-                    color: 'var(--red)',
-                    fontSize: '11.5px',
-                    fontWeight: 600,
-                  }}
-                >
-                  {firstLoginError}
-                </div>
-              )}
-
-              <div className="field">
-                <label style={{ fontSize: '11.5px', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                  Enter Verification Code <span className="req">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  maxLength={6}
-                  placeholder="------"
-                  value={firstLoginOtp}
-                  onChange={(e) => setFirstLoginOtp(e.target.value.replace(/\D/g, ''))}
-                  className="input"
-                  style={{
-                    width: '100%',
-                    height: '42px',
-                    fontSize: '18px',
-                    fontWeight: 800,
-                    letterSpacing: '6px',
-                    textAlign: 'center',
-                  }}
-                  autoFocus
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '6px' }}>
-                <button
-                  type="button"
-                  onClick={handleFirstLoginResend}
-                  disabled={firstLoginResending || firstLoginResendCooldown > 0}
-                  className="btn secondary sm"
-                  style={{ fontSize: '11.5px' }}
-                >
-                  {firstLoginResending
-                    ? 'Resending…'
-                    : firstLoginResendCooldown > 0
-                    ? `Resend in ${firstLoginResendCooldown}s`
-                    : 'Resend Code'}
-                </button>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setFirstLoginModalOpen(false)}
-                    className="btn secondary sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={firstLoginSubmitting || firstLoginOtp.trim().length !== 6 || firstLoginTimer <= 0}
-                    className="btn primary sm"
-                  >
-                    {firstLoginSubmitting ? 'Verifying…' : 'Verify & Continue'}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* Floating APK Download Pill on Bottom Right */}
       <a

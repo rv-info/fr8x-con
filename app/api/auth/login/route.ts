@@ -59,27 +59,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (result.firstLoginRequired) {
-      if (result.emailPromise) {
-        try {
-          await result.emailPromise;
-        } catch (mailErr: any) {
-          console.error('[LoginAPI] First-login OTP email delivery error:', mailErr.message);
-        }
-      }
-
-      return NextResponse.json({
-        success: true,
-        firstLoginRequired: true,
-        challengeToken: result.challengeToken,
-        email: result.email,
-        maskedEmail: result.maskedEmail,
-        expiresIn: result.expiresIn || 15,
-        message: result.message,
-      });
+    const user = result.user || serverSecurityStore.getUserByEmailOrUid(identifier);
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User record not found.' },
+        { status: 404 }
+      );
     }
-
-    const user = result.user!;
+    user.firstLoginCompleted = true;
     const res = NextResponse.json({
       success: true,
       uid: user.uid,

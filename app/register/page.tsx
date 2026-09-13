@@ -622,6 +622,7 @@ export default function RegisterPage() {
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [countryCode]);
 
   useEffect(() => {

@@ -22,6 +22,34 @@
  * 4. Communicates directly with official Zoho ZeptoMail transactional REST API (JSON payload, TLS 1.2+).
  */
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+
+function ensureEnvLoaded() {
+  if (typeof process === 'undefined' || !process.cwd) return;
+  const envPath = path.resolve(process.cwd(), '.env.local');
+  if (fs.existsSync(envPath)) {
+    try {
+      const lines = fs.readFileSync(envPath, 'utf8').split('\n');
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx !== -1) {
+          const key = trimmed.substring(0, eqIdx).trim();
+          let val = trimmed.substring(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.substring(1, val.length - 1);
+          }
+          if (process.env[key] === undefined) {
+            process.env[key] = val;
+          }
+        }
+      }
+    } catch {}
+  }
+}
+ensureEnvLoaded();
 import {
   renderEmailVerificationEmail,
   renderPasswordResetEmail,
@@ -1438,8 +1466,144 @@ export async function sendTemplateEmail(
  * Backwards-compatible sendEmail dispatcher
  */
 export async function sendEmail(params: SendEmailParams): Promise<SendEmailResponse> {
-  let mappedType: TransactionalEmailType = 'EMAIL_TEST';
+  const correlationId =
+    params.correlationId ||
+    `GF-EML-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
   const rawEvent = String(params.event || '').toUpperCase();
+  const resolvedFromType: EmailSenderType =
+    params.fromType ||
+    (rawEvent.includes('SUPPORT')
+      ? 'SUPPORT'
+      : rawEvent.includes('TECH') || rawEvent.includes('MAINT') || rawEvent.includes('INCIDENT')
+        ? 'TECH'
+        : 'PASSWORD');
+
+  const cleanTo = (params.to || '').trim().toLowerCase();
+  const cleanSubject = (params.subject || '').replace(/[\r\n\t]/g, ' ').trim();
+  const cleanMessage = (params.message || '').trim();
+
+  // Validate recipient
+  if (!isValidEmailAddress(cleanTo)) {
+    return {
+      success: false,
+      correlationId,
+      event: params.event,
+      fromType: resolvedFromType,
+      sender: EMAIL_SENDERS[resolvedFromType] || 'unknown',
+      to: cleanTo,
+      provider: 'MOCK_SANDBOX',
+      isPasswordConfigured: false,
+      error: 'Invalid recipient email address format.',
+    };
+  }
+
+  // Validate mandatory subject
+  if (!cleanSubject) {
+    return {
+      success: false,
+      correlationId,
+      event: params.event,
+      fromType: resolvedFromType,
+      sender: EMAIL_SENDERS[resolvedFromType] || 'unknown',
+      to: cleanTo,
+      provider: 'MOCK_SANDBOX',
+      isPasswordConfigured: false,
+      error: 'Email subject cannot be empty.',
+    };
+  }
+
+  // Validate mandatory message
+  if (!cleanMessage) {
+    return {
+      success: false,
+      correlationId,
+      event: params.event,
+      fromType: resolvedFromType,
+      sender: EMAIL_SENDERS[resolvedFromType] || 'unknown',
+      to: cleanTo,
+      provider: 'MOCK_SANDBOX',
+      isPasswordConfigured: false,
+      error: 'Email body message cannot be empty.',
+    };
+  }
+
+  const customPassUrl = process.env.ZOHO_FLOW_PASSWORD_WEBHOOK_URL;
+  const flowUrl =
+    resolvedFromType === 'PASSWORD' && customPassUrl && customPassUrl.trim() && customPassUrl !== 'undefined'
+      ? customPassUrl.trim()
+      : (process.env.ZOHO_FLOW_WEBHOOK_URL || '').trim();
+
+  // If a Zoho Flow webhook is configured, dispatch through it (for legacy webhook tests / webhook routing)
+  if (flowUrl && flowUrl !== 'undefined') {
+    const senderAddress = EMAIL_SENDERS[resolvedFromType] || EMAIL_SENDERS.SUPPORT;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(flowUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'FR8X-Core-Engine/1.0',
+          'X-Correlation-ID': correlationId,
+        },
+        body: JSON.stringify({
+          event: params.event,
+          sender_type: resolvedFromType,
+          from_email: senderAddress,
+          to_email: cleanTo,
+          subject: cleanSubject,
+          message: cleanMessage,
+          correlation_id: correlationId,
+          timestamp: new Date().toISOString(),
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        return {
+          success: true,
+          messageId: `flow-${Date.now()}`,
+          correlationId,
+          event: params.event,
+          fromType: resolvedFromType,
+          sender: senderAddress,
+          to: cleanTo,
+          provider: 'ZOHO_FLOW',
+          isPasswordConfigured: true,
+        };
+      }
+      return {
+        success: false,
+        correlationId,
+        event: params.event,
+        fromType: resolvedFromType,
+        sender: senderAddress,
+        to: cleanTo,
+        provider: 'ZOHO_FLOW',
+        isPasswordConfigured: true,
+        error: `Zoho Flow returned HTTP status ${response.status}`,
+      };
+    } catch (err: any) {
+      const isTimeout = err.name === 'AbortError' || String(err.message || '').toLowerCase().includes('timeout');
+      return {
+        success: false,
+        correlationId,
+        event: params.event,
+        fromType: resolvedFromType,
+        sender: senderAddress,
+        to: cleanTo,
+        provider: 'ZOHO_FLOW',
+        isPasswordConfigured: true,
+        error: isTimeout
+          ? 'Zoho Flow webhook request timed out (8s limit exceeded)'
+          : `Zoho Flow dispatch network error: ${err.message}`,
+      };
+    }
+  }
+
+  let mappedType: TransactionalEmailType = 'EMAIL_TEST';
 
   if (rawEvent.includes('VERIF')) mappedType = 'EMAIL_VERIFICATION';
   else if (rawEvent.includes('OTP')) mappedType = 'AUTH_OTP';
@@ -1473,7 +1637,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailRespo
     provider:
       result.provider === 'ZOHO_ZEPTOMAIL' || result.provider === 'Zoho_ZeptoMail'
         ? 'Zoho_ZeptoMail'
-        : 'Sandbox_Mock',
+        : 'MOCK_SANDBOX',
     isPasswordConfigured: Boolean(process.env.ZEPTO_MAIL_API_KEY || process.env.ZOHO_ZEPTOMAIL_TOKEN),
     error: result.error,
   };
