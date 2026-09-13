@@ -9,8 +9,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing operator UID' }, { status: 400 });
     }
 
-    // High security OTP verification (mock for enterprise console: 884210 / 123456)
-    if (otp !== '884210' && otp !== '123456' && otp !== '777777') {
+    // SECURITY: Step-up OTP is read from GODFATHER_STEP_UP_OTP env var — never hard-coded in source.
+    // Set this in .env.local (dev) or Vercel / deployment secrets (prod).
+    const allowedOtp = process.env.GODFATHER_STEP_UP_OTP?.trim();
+    if (!allowedOtp || otp !== allowedOtp) {
       return NextResponse.json(
         {
           error: 'Step-up verification failed: Invalid MFA / Hardware token code',

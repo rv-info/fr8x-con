@@ -1681,9 +1681,10 @@ export const EmailService = {
     console.log('\n================================================================================');
     console.log(`🔐 [FR8X VERIFICATION LINK ISSUED]`);
     console.log(`   Recipient Email:   ${targetEmail}`);
-    console.log(`   Verification Link: ${params.verificationLink || 'N/A'}`);
+    console.log(`   Verification Link: ${params.verificationLink ? '[LINK DISPATCHED]' : 'N/A'}`);
     if (params.otpCode) {
-      console.log(`   Verification OTP:  [ ${params.otpCode} ]`);
+      // SECURITY: Never log OTP codes — mask entirely to prevent log-based leakage
+      console.log(`   Verification OTP:  [ ****** ]`);
     }
     console.log(`   Expires In:        ${expiryMinutes} minutes`);
     console.log('================================================================================\n');
