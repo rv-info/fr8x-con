@@ -31,9 +31,11 @@ import {
   SlidersHorizontal,
   CheckSquare,
   AlertTriangle,
+  CreditCard,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
+import { usePlatformConfig } from '@/lib/platform-config';
 import { ZohoEmailGuidebookModal } from '@/components/godfather/ZohoEmailGuidebookModal';
 import { RankingConfig, KYCDossier, KYCStatus } from '@/lib/types';
 import { getRankingConfigFromDB, saveRankingConfigInDB, upsertKYCDossierInDB } from '@/lib/firebase/firestore';
@@ -41,6 +43,7 @@ import { getRankingConfigFromDB, saveRankingConfigInDB, upsertKYCDossierInDB } f
 export default function GodfatherDashboardPage() {
   const { companies, users, auctions, auditLogs } = useGodfatherData();
   const { environment } = useGodfatherAuth();
+  const { config: platformConfig } = usePlatformConfig();
 
   const [securityStats, setSecurityStats] = useState({
     blockedAccountsCount: 0,
@@ -344,6 +347,17 @@ export default function GodfatherDashboardPage() {
             <History size={14} className="action-icon purple" />
             <span className="action-label">Audit Ledger</span>
             <span className="action-badge purple">{auditLogs.length}</span>
+          </Link>
+
+          <Link
+            href="/godfather/commerce/payments"
+            className="gf-launchpad-action-btn"
+          >
+            <CreditCard size={14} className="action-icon emerald" />
+            <span className="action-label">Razorpay &amp; Automation</span>
+            <span className={`action-badge ${platformConfig.razorpayEnabled !== false ? 'green' : 'red'}`}>
+              {platformConfig.razorpayEnabled !== false ? 'ACTIVE' : 'OFFLINE'}
+            </span>
           </Link>
         </div>
       </div>

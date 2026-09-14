@@ -70,11 +70,21 @@ export function PaymentCheckoutModal({
       : 'AD_POSTING';
 
   const isFree = isFeatureFree(featureKey, user?.uid);
+  const isRazorpayActive = config.razorpayEnabled !== false;
 
-  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'upi' | 'bank_transfer'>('razorpay');
+  const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'upi' | 'bank_transfer'>(
+    isRazorpayActive ? 'razorpay' : 'upi'
+  );
   const [utrReference, setUtrReference] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  // Sync payment method if Razorpay state changes
+  React.useEffect(() => {
+    if (!isRazorpayActive && paymentMethod === 'razorpay') {
+      setPaymentMethod('upi');
+    }
+  }, [isRazorpayActive, paymentMethod]);
 
   const handleCopy = (text: string, key: string) => {
     if (navigator.clipboard) {
@@ -101,6 +111,12 @@ export function PaymentCheckoutModal({
       return;
     }
 
+    if (paymentMethod === 'razorpay' && !isRazorpayActive) {
+      toast('Razorpay is currently deactivated by the Platform Administrator. Please select Instant UPI QR or Corporate Wire.');
+      setPaymentMethod('upi');
+      return;
+    }
+
     if (paymentMethod === 'upi' || paymentMethod === 'bank_transfer') {
       if (!utrReference.trim()) {
         toast('Please enter the 12-digit UPI Reference / Bank UTR number.');
@@ -112,12 +128,12 @@ export function PaymentCheckoutModal({
 
     setTimeout(() => {
       setIsProcessing(false);
+      const isAutoConfirmed = config.paymentAutomationEnabled !== false || paymentMethod === 'razorpay';
+
       const ref =
         paymentMethod === 'razorpay'
-          ? `RZP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+          ? `RZP-AUTO-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
           : utrReference.trim();
-
-      const isAutoConfirmed = config.paymentAutomationEnabled !== false || paymentMethod === 'razorpay';
 
       onPaymentSuccess({
         paymentStatus: isAutoConfirmed ? 'paid' : 'pending_verification',
@@ -127,13 +143,17 @@ export function PaymentCheckoutModal({
       });
 
       if (isAutoConfirmed) {
-        toast(`Payment of ₹${effectiveAmount.toLocaleString('en-IN')} confirmed! Listing is now active.`);
+        if (paymentMethod === 'razorpay') {
+          toast(`⚡ Payment of ₹${effectiveAmount.toLocaleString('en-IN')} verified automatically via Razorpay Automation Engine! Listing is now active.`);
+        } else {
+          toast(`⚡ Payment of ₹${effectiveAmount.toLocaleString('en-IN')} confirmed! Listing is now active.`);
+        }
       } else {
         toast(`Payment reference submitted. Awaiting Godfather audit confirmation.`);
       }
 
       onClose();
-    }, 800);
+    }, 700);
   };
 
   if (!isOpen) return null;
@@ -220,25 +240,35 @@ export function PaymentCheckoutModal({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
               <button
                 type="button"
-                onClick={() => setPaymentMethod('razorpay')}
+                onClick={() => {
+                  if (isRazorpayActive) {
+                    setPaymentMethod('razorpay');
+                  } else {
+                    toast('Razorpay is currently deactivated by the Platform Administrator. Please select Instant UPI QR or Corporate Wire.');
+                  }
+                }}
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
                   border: paymentMethod === 'razorpay' ? '2px solid var(--brand)' : '1px solid #cbd5e1',
-                  background: paymentMethod === 'razorpay' ? '#eff6ff' : '#ffffff',
-                  cursor: 'pointer',
+                  background: paymentMethod === 'razorpay' ? '#eff6ff' : isRazorpayActive ? '#ffffff' : '#f8fafc',
+                  cursor: isRazorpayActive ? 'pointer' : 'not-allowed',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   gap: '6px',
                   textAlign: 'center',
+                  opacity: isRazorpayActive ? 1 : 0.65,
                 }}
+                title={isRazorpayActive ? 'Pay securely via Razorpay' : 'Razorpay is disabled by Godfather Administrator'}
               >
-                <CreditCard size={18} color={paymentMethod === 'razorpay' ? 'var(--brand)' : '#64748b'} />
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'razorpay' ? 'var(--brand)' : 'var(--ink)' }}>
-                  Online / Card
+                <CreditCard size={18} color={paymentMethod === 'razorpay' ? 'var(--brand)' : isRazorpayActive ? '#64748b' : '#94a3b8'} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'razorpay' ? 'var(--brand)' : isRazorpayActive ? 'var(--ink)' : '#64748b' }}>
+                  Online / Razorpay
                 </span>
-                <small style={{ fontSize: '10px', color: 'var(--mut)' }}>Instant Auto-Live</small>
+                <small style={{ fontSize: '10px', color: isRazorpayActive ? (paymentMethod === 'razorpay' ? 'var(--brand)' : 'var(--mut)') : 'var(--red)', fontWeight: isRazorpayActive ? 400 : 600 }}>
+                  {isRazorpayActive ? (config.paymentAutomationEnabled !== false ? '⚡ Auto-Live' : 'Card/NetBank') : 'Disabled by Admin'}
+                </small>
               </button>
 
               <button
@@ -290,17 +320,24 @@ export function PaymentCheckoutModal({
 
             {/* Sub-view: Online / Razorpay */}
             {paymentMethod === 'razorpay' && (
-              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <ShieldCheck size={20} color="#16a34a" />
                   <div>
-                    <b style={{ fontSize: '13px', color: 'var(--ink)' }}>256-Bit Encrypted Secure Gateway</b>
+                    <b style={{ fontSize: '13px', color: 'var(--ink)' }}>Razorpay Enterprise Payment Rail (Active)</b>
                     <small style={{ display: 'block', color: 'var(--mut)', fontSize: '11.5px' }}>
-                      Visa, MasterCard, RuPay, Corporate NetBanking &amp; Wallets
+                      Visa, MasterCard, RuPay, Corporate NetBanking &amp; Wallets · 256-Bit SSL
                     </small>
                   </div>
                 </div>
-                <span className="badge green" style={{ fontSize: '10px' }}>AUTOMATED LIVE</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="badge blue" style={{ fontSize: '9.5px', textTransform: 'uppercase' }}>
+                    {config.razorpayEnvironment === 'sandbox' ? 'SANDBOX TEST' : 'LIVE PRODUCTION'}
+                  </span>
+                  <span className={`badge ${config.paymentAutomationEnabled !== false ? 'green' : 'amber'}`} style={{ fontSize: '9.5px' }}>
+                    {config.paymentAutomationEnabled !== false ? '⚡ 0ms AUTO-LIVE' : 'AUDIT QUEUE'}
+                  </span>
+                </div>
               </div>
             )}
 

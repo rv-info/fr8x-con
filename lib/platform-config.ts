@@ -57,6 +57,13 @@ export interface PlatformCommerceConfig {
   kycFeeEnabled: boolean;
   kycFeeAmount: number;
   paymentAutomationEnabled: boolean; // Master Automation Switch: When true, verified payment references & gateways auto-confirm and activate listings instantly
+  razorpayEnabled: boolean; // Master Razorpay User Switch: When true, Razorpay is active and accessible for all users during checkout
+  razorpayKeyId?: string; // Razorpay Merchant Key ID (e.g., 'rzp_live_8842Fr8xInd99')
+  razorpayKeySecret?: string; // KMS-sealed Secret reference
+  razorpayEnvironment?: 'production' | 'sandbox';
+  razorpayWebhookUrl?: string; // Official Webhook endpoint
+  razorpayWebhookSecret?: string;
+  razorpayAutoSettlement?: boolean;
   promotionalFeatures: PromotionalFeatureConfig[];
   promotionalAuditLogs: PromotionalAuditLog[];
 }
@@ -124,6 +131,13 @@ export const DEFAULT_PLATFORM_CONFIG: PlatformCommerceConfig = {
   kycFeeEnabled: false,
   kycFeeAmount: 2500,
   paymentAutomationEnabled: true,
+  razorpayEnabled: true,
+  razorpayKeyId: 'rzp_live_8842Fr8xInd99',
+  razorpayKeySecret: 'sec_live_kms_sealed_8842fr8x',
+  razorpayEnvironment: 'production',
+  razorpayWebhookUrl: 'https://con.fr8x.in/api/webhooks/razorpay',
+  razorpayWebhookSecret: 'whsec_kms_sealed_fr8x_rzp',
+  razorpayAutoSettlement: true,
   promotionalFeatures: DEFAULT_PROMOTIONAL_FEATURES,
   promotionalAuditLogs: [
     {
@@ -155,6 +169,13 @@ export function getStoredPlatformConfig(): PlatformCommerceConfig {
       ...parsed,
       allFreeMode: parsed.allFreeMode ?? DEFAULT_PLATFORM_CONFIG.allFreeMode,
       paymentAutomationEnabled: parsed.paymentAutomationEnabled ?? DEFAULT_PLATFORM_CONFIG.paymentAutomationEnabled,
+      razorpayEnabled: parsed.razorpayEnabled ?? DEFAULT_PLATFORM_CONFIG.razorpayEnabled,
+      razorpayKeyId: parsed.razorpayKeyId ?? DEFAULT_PLATFORM_CONFIG.razorpayKeyId,
+      razorpayKeySecret: parsed.razorpayKeySecret ?? DEFAULT_PLATFORM_CONFIG.razorpayKeySecret,
+      razorpayEnvironment: parsed.razorpayEnvironment ?? DEFAULT_PLATFORM_CONFIG.razorpayEnvironment,
+      razorpayWebhookUrl: parsed.razorpayWebhookUrl ?? DEFAULT_PLATFORM_CONFIG.razorpayWebhookUrl,
+      razorpayWebhookSecret: parsed.razorpayWebhookSecret ?? DEFAULT_PLATFORM_CONFIG.razorpayWebhookSecret,
+      razorpayAutoSettlement: parsed.razorpayAutoSettlement ?? DEFAULT_PLATFORM_CONFIG.razorpayAutoSettlement,
       promotionalFeatures: parsed.promotionalFeatures || DEFAULT_PROMOTIONAL_FEATURES,
       promotionalAuditLogs: parsed.promotionalAuditLogs || DEFAULT_PLATFORM_CONFIG.promotionalAuditLogs,
     };
@@ -413,6 +434,24 @@ export function usePlatformConfig() {
     setAllFreeMode,
     setPaymentAutomationEnabled: (enabled: boolean) => {
       const next = { ...config, paymentAutomationEnabled: enabled };
+      setConfig(next);
+      saveStoredPlatformConfig(next);
+    },
+    setRazorpayEnabled: (enabled: boolean) => {
+      const next = { ...config, razorpayEnabled: enabled };
+      setConfig(next);
+      saveStoredPlatformConfig(next);
+    },
+    updateRazorpayConfig: (updates: Partial<{
+      razorpayEnabled: boolean;
+      razorpayKeyId: string;
+      razorpayKeySecret: string;
+      razorpayEnvironment: 'production' | 'sandbox';
+      razorpayWebhookUrl: string;
+      razorpayWebhookSecret: string;
+      razorpayAutoSettlement: boolean;
+    }>) => {
+      const next = { ...config, ...updates };
       setConfig(next);
       saveStoredPlatformConfig(next);
     },

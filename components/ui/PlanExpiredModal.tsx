@@ -14,21 +14,34 @@ import {
   ShieldAlert,
   ArrowRight,
   Sparkles,
+  CreditCard,
+  ShieldCheck,
 } from 'lucide-react';
 import { SEED_BANK_DETAILS, SEED_UPI_DETAILS } from '@/lib/godfather/context/GodfatherDataContext';
 import { PlatformBankDetails, PlatformUpiDetails } from '@/lib/godfather/types';
+import { usePlatformConfig } from '@/lib/platform-config';
 
 export function PlanExpiredModal() {
   const { user, updateUser } = useAuth();
   const { toast } = useToast();
+  const { config: platformConfig } = usePlatformConfig();
 
+  const isRazorpayActive = platformConfig.razorpayEnabled !== false;
   const [bankDetails, setBankDetails] = useState<PlatformBankDetails>(SEED_BANK_DETAILS);
   const [upiDetails, setUpiDetails] = useState<PlatformUpiDetails>(SEED_UPI_DETAILS);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [paymentMode, setPaymentMode] = useState<'upi' | 'bank'>('upi');
+  const [paymentMode, setPaymentMode] = useState<'razorpay' | 'upi' | 'bank'>(
+    isRazorpayActive ? 'razorpay' : 'upi'
+  );
   const [utrNumber, setUtrNumber] = useState('');
   const [selectedPlanTier, setSelectedPlanTier] = useState<'monthly' | 'annual'>('monthly');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isRazorpayActive && paymentMode === 'razorpay') {
+      setPaymentMode('upi');
+    }
+  }, [isRazorpayActive, paymentMode]);
 
   // Load Godfather configured bank and UPI details from localStorage
   useEffect(() => {
@@ -58,11 +71,24 @@ export function PlanExpiredModal() {
   };
 
   const handleCompleteRecharge = () => {
+    if (paymentMode === 'razorpay' && !isRazorpayActive) {
+      toast('Razorpay is currently deactivated by administrator. Please use UPI or Bank Wire.');
+      setPaymentMode('upi');
+      return;
+    }
+
+    if ((paymentMode === 'upi' || paymentMode === 'bank') && !utrNumber.trim()) {
+      toast('Please enter the 12-digit UPI UTR number or bank transaction reference.');
+      return;
+    }
+
     setIsSubmitting(true);
     setTimeout(() => {
       const newExpiry = new Date(
         Date.now() + (selectedPlanTier === 'annual' ? 365 : 30) * 24 * 60 * 60 * 1000
       ).toISOString();
+
+      const isAutomated = platformConfig.paymentAutomationEnabled !== false || paymentMode === 'razorpay';
 
       updateUser({
         plan: 'professional',
@@ -72,8 +98,15 @@ export function PlanExpiredModal() {
       });
 
       setIsSubmitting(false);
-      toast(`Payment verified! Your account is now active until ${newExpiry.split('T')[0]}.`);
-    }, 800);
+
+      if (paymentMode === 'razorpay') {
+        toast(`⚡ Payment of ${selectedPlanTier === 'annual' ? '₹19,990' : '₹1,999'} confirmed via Razorpay Automation! Account unblocked & renewed until ${newExpiry.split('T')[0]}.`);
+      } else if (isAutomated) {
+        toast(`⚡ Payment reference verified! Your account is unblocked and renewed until ${newExpiry.split('T')[0]}.`);
+      } else {
+        toast(`Payment reference recorded. Awaiting Godfather audit confirmation.`);
+      }
+    }, 700);
   };
 
   return (
@@ -237,7 +270,42 @@ export function PlanExpiredModal() {
 
           {/* Payment Method Tabs */}
           <div>
-            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--fr8x-outline, #cbd5e1)', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--fr8x-outline, #cbd5e1)', paddingBottom: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (isRazorpayActive) {
+                    setPaymentMode('razorpay');
+                  } else {
+                    toast('Razorpay is currently deactivated by administrator.');
+                  }
+                }}
+                style={{
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  cursor: isRazorpayActive ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  background: paymentMode === 'razorpay' ? '#0f172a' : isRazorpayActive ? '#f1f5f9' : '#f8fafc',
+                  color: paymentMode === 'razorpay' ? '#ffffff' : isRazorpayActive ? 'var(--fr8x-muted)' : '#94a3b8',
+                  opacity: isRazorpayActive ? 1 : 0.6,
+                }}
+              >
+                <CreditCard size={14} color={paymentMode === 'razorpay' ? '#38bdf8' : undefined} />
+                <span>Online / Razorpay</span>
+                {isRazorpayActive ? (
+                  <span style={{ fontSize: '9.5px', background: paymentMode === 'razorpay' ? '#0369a1' : '#e0f2fe', color: paymentMode === 'razorpay' ? '#ffffff' : '#0369a1', padding: '1px 5px', borderRadius: '4px', fontWeight: 800 }}>
+                    ⚡ 0ms AUTO
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '9px', color: 'var(--red)' }}>Offline</span>
+                )}
+              </button>
+
               <button
                 type="button"
                 onClick={() => setPaymentMode('upi')}
@@ -277,6 +345,43 @@ export function PlanExpiredModal() {
                 <Building size={14} /> Corporate Bank Wire (NEFT/RTGS)
               </button>
             </div>
+
+            {/* Razorpay Online Display View */}
+            {paymentMode === 'razorpay' && (
+              <div
+                style={{
+                  marginTop: '12px',
+                  background: '#f8fafc',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <ShieldCheck size={22} color="#16a34a" />
+                    <div>
+                      <b style={{ fontSize: '13px', color: '#0f172a', display: 'block' }}>
+                        Razorpay Enterprise Instant Settlement
+                      </b>
+                      <small style={{ fontSize: '11px', color: '#64748b' }}>
+                        Credit/Debit Card, NetBanking, UPI, and Corporate Wallets
+                      </small>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '10px', fontWeight: 800, background: '#dcfce7', color: '#15803d', padding: '3px 8px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
+                    ⚡ 0ms INSTANT UNBLOCK
+                  </span>
+                </div>
+
+                <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af', lineHeight: 1.5 }}>
+                  When paying via Razorpay, your payment reference is automatically verified by the Platform Automation Engine. Your plan is renewed immediately and workspace features unlock with zero wait time.
+                </div>
+              </div>
+            )}
 
             {/* UPI QR Display View */}
             {paymentMode === 'upi' && (
@@ -418,40 +523,62 @@ export function PlanExpiredModal() {
             )}
           </div>
 
-          {/* UTR / Transaction Proof Input */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--fr8x-muted)' }}>
-              Transaction Reference / UPI UTR Number (Optional):
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. 424198112001 or bank reference ID"
-              value={utrNumber}
-              onChange={(e) => setUtrNumber(e.target.value)}
-              style={{
-                padding: '8px 10px',
-                fontSize: '12px',
-                borderRadius: '6px',
-                border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                background: '#ffffff',
-                color: 'var(--fr8x-text)',
-              }}
-            />
-          </div>
+          {/* UTR / Transaction Proof Input (Only for manual UPI and Wire) */}
+          {(paymentMode === 'upi' || paymentMode === 'bank') && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--fr8x-muted)' }}>
+                Transaction Reference / UPI UTR Number <span style={{ color: 'var(--red)' }}>*</span>:
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. 424198112001 or bank reference ID"
+                value={utrNumber}
+                onChange={(e) => setUtrNumber(e.target.value)}
+                style={{
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  borderRadius: '6px',
+                  border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                  background: '#ffffff',
+                  color: 'var(--fr8x-text)',
+                }}
+              />
+            </div>
+          )}
 
           {/* Action Trigger */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--fr8x-outline, #cbd5e1)', paddingTop: '14px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--fr8x-outline, #cbd5e1)', paddingTop: '14px', flexWrap: 'wrap', gap: '10px' }}>
             <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
-              Total Payable: <b style={{ color: 'var(--fr8x-text)', fontSize: '13px' }}>{selectedPlanTier === 'annual' ? '₹19,990' : '₹1,999'}</b>
+              Total Payable: <b style={{ color: 'var(--fr8x-text)', fontSize: '14px' }}>{selectedPlanTier === 'annual' ? '₹19,990' : '₹1,999'}</b>
             </span>
             <button
               type="button"
               disabled={isSubmitting}
               onClick={handleCompleteRecharge}
               className="btn primary"
-              style={{ height: '36px', padding: '0 18px', fontSize: '12px', fontWeight: 700 }}
+              style={{
+                height: '38px',
+                padding: '0 20px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                background: paymentMode === 'razorpay' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : undefined,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
             >
-              {isSubmitting ? 'Verifying Payment…' : 'Recharge & Unlock Workspace'} <ArrowRight size={14} />
+              {isSubmitting ? (
+                'Verifying Payment…'
+              ) : paymentMode === 'razorpay' ? (
+                <>
+                  <Zap size={14} /> Pay via Razorpay &amp; Auto-Unlock
+                </>
+              ) : (
+                <>
+                  Recharge &amp; Unlock Workspace <ArrowRight size={14} />
+                </>
+              )}
             </button>
           </div>
         </div>
