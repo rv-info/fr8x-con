@@ -16,6 +16,12 @@ import {
 import { normalizeAssociationName } from '@/lib/utils/associations';
 import { upsertKYCDossierInDB } from '@/lib/firebase/firestore';
 import {
+  getStatutoryProfile,
+  evaluateCompliance,
+  STATUTORY_PROFILES,
+  StatutoryJurisdictionProfile,
+} from '@/lib/utils/statutory-kyc';
+import {
   UserCheck,
   Save,
   MapPin,
@@ -101,6 +107,11 @@ export default function ProfilePage() {
   const [timezone, setTimezone] = useState(user.timezone || 'Asia/Kolkata');
 
   // Business IDs & Statutory Filings
+  const [kycCountry, setKycCountry] = useState<string>((user as any).kycCountry || user.country || 'India');
+  const [taxId, setTaxId] = useState<string>((user as any).taxId || user.gstn || '');
+  const [corporateReg, setCorporateReg] = useState<string>((user as any).corporateRegNumber || user.pan || '');
+  const [tradeCustoms, setTradeCustoms] = useState<string>((user as any).tradeCustomsCode || user.iec || '');
+  const [logisticsLicense, setLogisticsLicense] = useState<string>((user as any).logisticsLicenseNumber || user.mto || '');
   const [gstn, setGstn] = useState(user.gstn || '');
   const [pan, setPan] = useState(user.pan || '');
   const [iec, setIec] = useState(user.iec || '');
@@ -197,6 +208,11 @@ export default function ProfilePage() {
     setCountry(user.country || '');
     setFormattedAddress(user.formattedAddress || '');
     setTimezone(user.timezone || 'Asia/Kolkata');
+    setKycCountry((user as any).kycCountry || user.country || 'India');
+    setTaxId((user as any).taxId || user.gstn || '');
+    setCorporateReg((user as any).corporateRegNumber || user.pan || '');
+    setTradeCustoms((user as any).tradeCustomsCode || user.iec || '');
+    setLogisticsLicense((user as any).logisticsLicenseNumber || user.mto || '');
     setGstn(user.gstn || '');
     setPan(user.pan || '');
     setIec(user.iec || '');
@@ -303,7 +319,17 @@ export default function ProfilePage() {
     if (companyLogoUrl) score += 10;
     if (formattedAddress && city) score += 10;
     if (summary) score += 10;
-    if (gstn && pan && iec) score += 10;
+    const complianceEval = evaluateCompliance(kycCountry || country, {
+      taxId,
+      corporateReg,
+      tradeCustomsCode: tradeCustoms,
+      logisticsLicense,
+      gstn,
+      pan,
+      iec,
+      mto,
+    });
+    if (complianceEval.isCompliant) score += 10;
     if (experiences.length > 0) score += 10;
     if (certifications.length > 0) score += 10;
     return Math.min(100, score);
@@ -328,10 +354,15 @@ export default function ProfilePage() {
       formattedAddress,
       coordinates: { lat, lng },
       timezone,
-      gstn,
-      pan,
-      iec,
-      mto,
+      kycCountry,
+      taxId,
+      corporateRegNumber: corporateReg,
+      tradeCustomsCode: tradeCustoms,
+      logisticsLicenseNumber: logisticsLicense,
+      gstn: kycCountry === 'India' || !taxId ? gstn : taxId,
+      pan: kycCountry === 'India' || !corporateReg ? pan : corporateReg,
+      iec: kycCountry === 'India' || !tradeCustoms ? iec : tradeCustoms,
+      mto: kycCountry === 'India' || !logisticsLicense ? mto : logisticsLicense,
     });
     setIsEditMode(false);
     toast('Enterprise profile updated successfully.');
@@ -1678,325 +1709,532 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Corporate KYC & Regulatory Filings Section */}
-      <div className="card" style={{ padding: '20px 24px', borderRadius: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
-          <div>
-            <b style={{ fontSize: '16px', color: 'var(--ink)' }}>4. Corporate KYC & Statutory Trade Filings</b>
-            <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
-              Statutory government identifiers validated with GSTN, Icegate, and DG Shipping registries.
-            </span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            {gstn && pan && iec ? (
-              <span className="badge green"><ShieldCheck size={11} /> 100% REGULATORY COMPLIANT</span>
-            ) : (
-              <span className="badge amber"><ShieldCheck size={11} /> PENDING STATUTORY FILINGS</span>
-            )}
-            <button className="btn primary sm" onClick={() => setShowKycModal(true)}>
-              <Edit2 size={12} /> Edit / Update KYC
-            </button>
-          </div>
-        </div>
+      {/* Corporate KYC & Regulatory Filings Section — Address & Multi-Jurisdiction Aware */}
+      {(() => {
+        const activeProfile = getStatutoryProfile(kycCountry || country || 'India');
+        const complianceEval = evaluateCompliance(kycCountry || country, {
+          taxId,
+          corporateReg,
+          tradeCustomsCode: tradeCustoms,
+          logisticsLicense,
+          gstn,
+          pan,
+          iec,
+          mto,
+        });
 
-        <div className="grid g2" style={{ gap: '12px' }}>
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>GSTN Identification</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {gstn ? (
-                <>{gstn} <span className="badge green" style={{ fontSize: '9px' }}>ACTIVE</span></>
-              ) : (
-                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
-              )}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>Income Tax PAN</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {pan ? (
-                <>{pan} <span className="badge green" style={{ fontSize: '9px' }}>VERIFIED</span></>
-              ) : (
-                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not provided</span>
-              )}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>Import Export Code (IEC)</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {iec ? (
-                <>{iec} <span className="badge green" style={{ fontSize: '9px' }}>DGFT VALID</span></>
-              ) : (
-                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
-              )}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>MTO License Number</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {mto ? (
-                <>{mto} <span className="badge green" style={{ fontSize: '9px' }}>RECOGNISED</span></>
-              ) : (
-                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
-              )}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>IATA Cargo Numeric Code</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {iataCode || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not assigned</span>}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>FIATA Registration</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {fiataReg || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>FMC OTI License</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>
-              {fmcNumber || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>}
-            </b>
-          </div>
-
-          <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-            <span>Authorized Economic Operator</span>
-            <b style={{ color: aeoTier ? 'var(--brand)' : 'var(--mut)', fontWeight: aeoTier ? 700 : 400 }}>
-              {aeoTier || 'Standard Non-AEO'}
-            </b>
-          </div>
-        </div>
-      </div>
-
-      {/* KYC Edit Modal */}
-      {showKycModal && (
-        <Modal
-          isOpen={showKycModal}
-          onClose={() => setShowKycModal(false)}
-          title="Edit Corporate KYC & Statutory Trade Filings"
-          maxWidth="680px"
-        >
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!termsAccepted) {
-                toast('You must accept the Terms & Non-Repudiation Policy to verify KYC.');
-                return;
-              }
-              const canonicalAssoc = normalizeAssociationName(associationName);
-              const now = new Date().toISOString();
-
-              const dossier: KYCDossier = {
-                userId: user.uid,
-                companyId: user.company,
-                legalEntityName: user.company,
-                gstin: gstn.trim(),
-                pan: pan.trim(),
-                iec: iec.trim(),
-                registeredAddress: {
-                  addressLine1: formattedAddress || 'Logistics Hub',
-                  city: city || 'Mumbai',
-                  state: stateName || 'Maharashtra',
-                  postalCode: '400093',
-                  country: country || 'India',
-                },
-                memberships: [
-                  {
-                    id: `assoc_${canonicalAssoc}_${Date.now()}`,
-                    association: canonicalAssoc,
-                    canonicalName: canonicalAssoc,
-                    membershipNumber: associationId.trim().toUpperCase(),
-                    validTill: '2027-12-31',
-                    verified: true,
-                  },
-                ],
-                status: 'verified',
-                missingItemsChecklist: [],
-                statusHistory: [
-                  {
-                    status: 'verified',
-                    timestamp: now,
-                    reviewerUid: 'system',
-                    reviewerName: 'FR8X Automated Verifier',
-                    notes: 'Self-declaration certified with non-repudiation audit trail.',
-                  },
-                ],
-                termsAccepted: true,
-                termsAcceptedAt: now,
-                termsVersion: 'v2.4-2026',
-                submittedAt: now,
-                verifiedAt: now,
-                updatedAt: now,
-              };
-
-              try {
-                await upsertKYCDossierInDB(dossier);
-              } catch {}
-
-              updateUser({
-                gstn,
-                pan,
-                iec,
-                mto,
-              });
-              setShowKycModal(false);
-              toast('Corporate KYC & Association credentials verified and saved to ledger.');
-            }}
-            style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
-          >
-            <div className="grid g2">
-              <div className="field">
-                <label>GSTN Identification (15 Digits) <span className="req">*</span></label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={gstn}
-                  onChange={(e) => setGstn(e.target.value.toUpperCase())}
-                  placeholder="27AAAAA0000A1Z5"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label>Income Tax PAN (10 Characters) <span className="req">*</span></label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={pan}
-                  onChange={(e) => setPan(e.target.value.toUpperCase())}
-                  placeholder="AAAAA0000A"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>Import Export Code (IEC) <span className="req">*</span></label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={iec}
-                  onChange={(e) => setIec(e.target.value.toUpperCase())}
-                  placeholder="0388129941"
-                  required
-                />
-              </div>
-              <div className="field">
-                <label>MTO License Registration (DG Shipping)</label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={mto}
-                  onChange={(e) => setMto(e.target.value.toUpperCase())}
-                  placeholder="MTO/DGS/2024/9912"
-                />
-              </div>
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>Freight Forwarder Association Network</label>
-                <input
-                  className="input"
-                  style={{ textTransform: 'uppercase' }}
-                  value={associationName}
-                  onChange={(e) => setAssociationName(e.target.value.toUpperCase())}
-                  placeholder="E.G. WCA, FIATA, IATA, AMTOI..."
-                />
-                <small style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
-                  Canonical Association: <b style={{ color: 'var(--brand)' }}>{normalizeAssociationName(associationName)}</b>
-                </small>
-              </div>
-              <div className="field">
-                <label>Association Membership ID</label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={associationId}
-                  onChange={(e) => setAssociationId(e.target.value.toUpperCase())}
-                  placeholder="E.G. WCA-98124"
-                />
-              </div>
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>IATA Cargo Code</label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={iataCode}
-                  onChange={(e) => setIataCode(e.target.value.toUpperCase())}
-                  placeholder="14-3-8821"
-                />
-              </div>
-              <div className="field">
-                <label>FIATA Registration Number</label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={fiataReg}
-                  onChange={(e) => setFiataReg(e.target.value.toUpperCase())}
-                  placeholder="FIATA-IND-2024-918"
-                />
-              </div>
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>US Federal Maritime Commission (FMC)</label>
-                <input
-                  className="input"
-                  style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
-                  value={fmcNumber}
-                  onChange={(e) => setFmcNumber(e.target.value.toUpperCase())}
-                  placeholder="FMC-OTI-024881"
-                />
-              </div>
-              <div className="field">
-                <label>Authorized Economic Operator (AEO)</label>
-                <select className="input" value={aeoTier} onChange={(e) => setAeoTier(e.target.value)}>
-                  <option value="AEO-T1 Certified (CBIC)">AEO-T1 Certified (CBIC)</option>
-                  <option value="AEO-T2 Certified (CBIC)">AEO-T2 Certified (CBIC)</option>
-                  <option value="AEO-T3 Tier-3 Secure">AEO-T3 Tier-3 Secure</option>
-                  <option value="AEO-LO Logistics Operator">AEO-LO Logistics Operator</option>
-                  <option value="Not Applicable">Not Applicable</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Non-Repudiation Terms Consent Checkbox */}
-            <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
-              <label className="check" style={{ fontSize: '11px', display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', margin: 0 }}>
-                <input
-                  type="checkbox"
-                  checked={termsAccepted}
-                  onChange={(e) => setTermsAccepted(e.target.checked)}
-                  required
-                />
-                <span>
-                  I legally certify that all GSTN, PAN, and trade association registrations are authentic and belong to <b>{user.company}</b>. I accept the <b>FR8X Enterprise Non-Repudiation Code</b> and Terms of Service (v2.4-2026).
+        return (
+          <div className="card" style={{ padding: '20px 24px', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <b style={{ fontSize: '16px', color: 'var(--ink)' }}>4. Corporate KYC & Statutory Trade Filings</b>
+                  <span className="badge blue" style={{ fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span>{activeProfile.flag}</span>
+                    <span>{activeProfile.countryName} Jurisdiction</span>
+                  </span>
+                  {city && (
+                    <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+                      · {city}, {country || activeProfile.countryName}
+                    </span>
+                  )}
+                </div>
+                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
+                  Statutory government identifiers validated with {activeProfile.regulatoryAuthorities}.
                 </span>
-              </label>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {complianceEval.isCompliant ? (
+                  <span className="badge green"><ShieldCheck size={11} /> {complianceEval.statusLabel}</span>
+                ) : (
+                  <span className="badge amber"><ShieldCheck size={11} /> {complianceEval.statusLabel}</span>
+                )}
+                <button className="btn primary sm" onClick={() => setShowKycModal(true)}>
+                  <Edit2 size={12} /> Edit / Update KYC
+                </button>
+              </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowKycModal(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn primary">
-                <Check size={13} /> Save Statutory KYC
-              </button>
+            <div className="grid g2" style={{ gap: '12px' }}>
+              {/* 1. Primary Tax ID */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>{activeProfile.primaryTaxId.label}</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {(taxId || (activeProfile.countryCode === 'IN' ? gstn : '')) ? (
+                    <>{taxId || gstn} <span className="badge green" style={{ fontSize: '9px' }}>ACTIVE</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 2. Corporate Reg */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>{activeProfile.corporateReg.label}</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {(corporateReg || (activeProfile.countryCode === 'IN' ? pan : '')) ? (
+                    <>{corporateReg || pan} <span className="badge green" style={{ fontSize: '9px' }}>VERIFIED</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not provided</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 3. Trade / Customs Code */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>{activeProfile.tradeCustomsCode.label}</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {(tradeCustoms || (activeProfile.countryCode === 'IN' ? iec : '')) ? (
+                    <>{tradeCustoms || iec} <span className="badge green" style={{ fontSize: '9px' }}>CUSTOMS VALID</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 4. Logistics / Operating License */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>{activeProfile.logisticsLicense.label}</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {(logisticsLicense || (activeProfile.countryCode === 'IN' ? mto : '')) ? (
+                    <>{logisticsLicense || mto} <span className="badge green" style={{ fontSize: '9px' }}>RECOGNISED</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 5. IATA Cargo Numeric Code */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>IATA Cargo Numeric Code</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {iataCode ? (
+                    <>{iataCode} <span className="badge blue" style={{ fontSize: '9px' }}>IATA ACCREDITED</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not assigned</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 6. FIATA Registration */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>FIATA Registration</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {fiataReg ? (
+                    <>{fiataReg} <span className="badge blue" style={{ fontSize: '9px' }}>FIATA MEMBER</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 7. FMC OTI License */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>FMC OTI License</span>
+                <b style={{ fontFamily: 'var(--font-mono)' }}>
+                  {fmcNumber ? (
+                    <>{fmcNumber} <span className="badge blue" style={{ fontSize: '9px' }}>FMC BONDED</span></>
+                  ) : (
+                    <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+                  )}
+                </b>
+              </div>
+
+              {/* 8. Authorized Economic Operator */}
+              <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <span>Authorized Economic Operator</span>
+                <b style={{ color: aeoTier && aeoTier !== 'Not Applicable' ? 'var(--brand)' : 'var(--mut)', fontWeight: aeoTier && aeoTier !== 'Not Applicable' ? 700 : 400 }}>
+                  {aeoTier || 'Standard Non-AEO'}
+                </b>
+              </div>
             </div>
-          </form>
-        </Modal>
-      )}
+          </div>
+        );
+      })()}
+
+      {/* KYC Edit Modal — Address & Multi-Jurisdiction Adaptive */}
+      {showKycModal && (() => {
+        const activeProfile = getStatutoryProfile(kycCountry || country || 'India');
+        return (
+          <Modal
+            isOpen={showKycModal}
+            onClose={() => setShowKycModal(false)}
+            title="Edit Corporate KYC & Statutory Trade Filings"
+            maxWidth="720px"
+          >
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!termsAccepted) {
+                  toast('You must accept the Terms & Non-Repudiation Policy to verify KYC.');
+                  return;
+                }
+                const canonicalAssoc = normalizeAssociationName(associationName);
+                const now = new Date().toISOString();
+
+                const isIndia = activeProfile.countryCode === 'IN';
+                const finalGstn = isIndia ? (taxId || gstn).trim() : (gstn || '');
+                const finalPan = isIndia ? (corporateReg || pan).trim() : (pan || '');
+                const finalIec = isIndia ? (tradeCustoms || iec).trim() : (iec || '');
+                const finalMto = isIndia ? (logisticsLicense || mto).trim() : (mto || '');
+
+                const dossier: KYCDossier = {
+                  userId: user.uid,
+                  companyId: user.company,
+                  legalEntityName: user.company,
+                  kycCountry,
+                  taxId: taxId.trim(),
+                  taxIdLabel: activeProfile.primaryTaxId.label,
+                  corporateRegNumber: corporateReg.trim(),
+                  corporateRegLabel: activeProfile.corporateReg.label,
+                  tradeCustomsCode: tradeCustoms.trim(),
+                  tradeCustomsLabel: activeProfile.tradeCustomsCode.label,
+                  logisticsLicenseNumber: logisticsLicense.trim(),
+                  logisticsLicenseLabel: activeProfile.logisticsLicense.label,
+                  statutoryCountry: kycCountry,
+                  gstin: finalGstn,
+                  pan: finalPan,
+                  iec: finalIec,
+                  mto: finalMto,
+                  registeredAddress: {
+                    addressLine1: formattedAddress || 'Logistics Hub',
+                    city: city || 'Mumbai',
+                    state: stateName || 'State',
+                    postalCode: user.postalCode || '400093',
+                    country: kycCountry || country || 'India',
+                  },
+                  memberships: [
+                    {
+                      id: `assoc_${canonicalAssoc}_${Date.now()}`,
+                      association: canonicalAssoc,
+                      canonicalName: canonicalAssoc,
+                      membershipNumber: associationId.trim().toUpperCase(),
+                      validTill: '2027-12-31',
+                      verified: true,
+                    },
+                  ],
+                  status: 'verified',
+                  missingItemsChecklist: [],
+                  statusHistory: [
+                    {
+                      status: 'verified',
+                      timestamp: now,
+                      reviewerUid: 'system',
+                      reviewerName: 'FR8X Multi-Jurisdiction Automated Verifier',
+                      notes: `Self-declaration certified under ${activeProfile.nonRepudiationStatute} with non-repudiation audit trail.`,
+                    },
+                  ],
+                  termsAccepted: true,
+                  termsAcceptedAt: now,
+                  termsVersion: 'v2.4-2026',
+                  submittedAt: now,
+                  verifiedAt: now,
+                  updatedAt: now,
+                };
+
+                try {
+                  await upsertKYCDossierInDB(dossier);
+                } catch {}
+
+                updateUser({
+                  kycCountry,
+                  taxId: taxId.trim(),
+                  taxIdLabel: activeProfile.primaryTaxId.label,
+                  corporateRegNumber: corporateReg.trim(),
+                  corporateRegLabel: activeProfile.corporateReg.label,
+                  tradeCustomsCode: tradeCustoms.trim(),
+                  tradeCustomsLabel: activeProfile.tradeCustomsCode.label,
+                  logisticsLicenseNumber: logisticsLicense.trim(),
+                  logisticsLicenseLabel: activeProfile.logisticsLicense.label,
+                  gstn: finalGstn,
+                  pan: finalPan,
+                  iec: finalIec,
+                  mto: finalMto,
+                  iataCode,
+                  fiataReg,
+                  fmcNumber,
+                  aeoTier,
+                  associationName,
+                  associationId,
+                });
+                setShowKycModal(false);
+                toast(`Corporate KYC & Statutory filings for ${activeProfile.countryName} saved to ledger.`);
+              }}
+              style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+            >
+              {/* Top Anchor: Company Registered Address & Statutory Jurisdiction */}
+              <div style={{ background: '#f8fafc', padding: '12px 16px', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div>
+                    <span style={{ fontSize: '11px', color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 600 }}>
+                      Registered Company & Statutory Address
+                    </span>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--ink)' }}>
+                      {user.company || 'Enterprise Entity'}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '1px' }}>
+                      {formattedAddress || (city ? `${city}, ${stateName || ''} ${country || ''}` : 'Address based on corporate profile')}
+                    </div>
+                  </div>
+
+                  {/* Country Jurisdiction Selector */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--ink)' }}>
+                      Statutory Tax & Regulatory Domicile:
+                    </label>
+                    <select
+                      className="input sm"
+                      style={{ fontSize: '12px', fontWeight: 600, minWidth: '220px' }}
+                      value={kycCountry}
+                      onChange={(e) => {
+                        const newCountry = e.target.value;
+                        setKycCountry(newCountry);
+                        const newProfile = getStatutoryProfile(newCountry);
+                        if (newProfile.countryCode === 'IN' && !taxId && gstn) {
+                          setTaxId(gstn);
+                        }
+                      }}
+                    >
+                      <option value="India">🇮🇳 India (GSTN / PAN / DGFT IEC / MTO)</option>
+                      <option value="United States">🇺🇸 United States (Federal EIN / State Corp / CBP / FMC)</option>
+                      <option value="United Arab Emirates">🇦🇪 United Arab Emirates (UAE TRN / Commercial License / Customs)</option>
+                      <option value="United Kingdom">🇬🇧 United Kingdom (HMRC VAT / Companies House CRN / UK EORI)</option>
+                      <option value="Singapore">🇸🇬 Singapore (ACRA UEN / TradeNet / SLA)</option>
+                      <option value="European Union">🇪🇺 European Union (EU VAT / Handelsregister-KvK / EU EORI)</option>
+                      <option value="China">🇨🇳 China (Unified Social Credit Code / Customs CR / MOT)</option>
+                      <option value="Hong Kong SAR">🇭🇰 Hong Kong SAR (Business Reg BRN / CR No. / HAFFA)</option>
+                      <option value="Australia">🇦🇺 Australia (Australian Business Number ABN / ACN / CCID)</option>
+                      <option value="Canada">🇨🇦 Canada (CRA Business Number / Corp Reg / CBSA)</option>
+                      <option value="Global International Entity">🌐 Other / Global International Entity (National Tax ID / CRN)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '11px', color: 'var(--brand)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Building2 size={12} />
+                  <span>Identifiers validated with <b>{activeProfile.regulatoryAuthorities}</b></span>
+                </div>
+              </div>
+
+              {/* Dynamic Row 1: Primary Tax ID & Corporate Registration */}
+              <div className="grid g2">
+                <div className="field">
+                  <label>
+                    {activeProfile.primaryTaxId.label}{' '}
+                    {activeProfile.primaryTaxId.required && <span className="req">*</span>}
+                  </label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: activeProfile.primaryTaxId.uppercase ? 'uppercase' : 'none' }}
+                    value={taxId}
+                    onChange={(e) => {
+                      const val = activeProfile.primaryTaxId.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                      setTaxId(val);
+                      if (activeProfile.countryCode === 'IN') {
+                        setGstn(val);
+                        if (val.length >= 12 && /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]/.test(val)) {
+                          const extractedPan = val.substring(2, 12);
+                          setCorporateReg(extractedPan);
+                          setPan(extractedPan);
+                        }
+                      }
+                    }}
+                    placeholder={activeProfile.primaryTaxId.placeholder}
+                    required={activeProfile.primaryTaxId.required}
+                  />
+                  {activeProfile.primaryTaxId.formatHelp && (
+                    <small style={{ fontSize: '10px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                      {activeProfile.primaryTaxId.formatHelp}
+                    </small>
+                  )}
+                </div>
+
+                <div className="field">
+                  <label>
+                    {activeProfile.corporateReg.label}{' '}
+                    {activeProfile.corporateReg.required && <span className="req">*</span>}
+                  </label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: activeProfile.corporateReg.uppercase ? 'uppercase' : 'none' }}
+                    value={corporateReg}
+                    onChange={(e) => {
+                      const val = activeProfile.corporateReg.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                      setCorporateReg(val);
+                      if (activeProfile.countryCode === 'IN') {
+                        setPan(val);
+                      }
+                    }}
+                    placeholder={activeProfile.corporateReg.placeholder}
+                    required={activeProfile.corporateReg.required}
+                  />
+                  {activeProfile.corporateReg.formatHelp && (
+                    <small style={{ fontSize: '10px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                      {activeProfile.corporateReg.formatHelp}
+                    </small>
+                  )}
+                </div>
+              </div>
+
+              {/* Dynamic Row 2: Customs / Trade Identifier & Logistics License */}
+              <div className="grid g2">
+                <div className="field">
+                  <label>
+                    {activeProfile.tradeCustomsCode.label}{' '}
+                    {activeProfile.tradeCustomsCode.required && <span className="req">*</span>}
+                  </label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: activeProfile.tradeCustomsCode.uppercase ? 'uppercase' : 'none' }}
+                    value={tradeCustoms}
+                    onChange={(e) => {
+                      const val = activeProfile.tradeCustomsCode.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                      setTradeCustoms(val);
+                      if (activeProfile.countryCode === 'IN') {
+                        setIec(val);
+                      }
+                    }}
+                    placeholder={activeProfile.tradeCustomsCode.placeholder}
+                    required={activeProfile.tradeCustomsCode.required}
+                  />
+                  {activeProfile.tradeCustomsCode.formatHelp && (
+                    <small style={{ fontSize: '10px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                      {activeProfile.tradeCustomsCode.formatHelp}
+                    </small>
+                  )}
+                </div>
+
+                <div className="field">
+                  <label>
+                    {activeProfile.logisticsLicense.label}{' '}
+                    {activeProfile.logisticsLicense.required && <span className="req">*</span>}
+                  </label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: activeProfile.logisticsLicense.uppercase ? 'uppercase' : 'none' }}
+                    value={logisticsLicense}
+                    onChange={(e) => {
+                      const val = activeProfile.logisticsLicense.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                      setLogisticsLicense(val);
+                      if (activeProfile.countryCode === 'IN') {
+                        setMto(val);
+                      }
+                    }}
+                    placeholder={activeProfile.logisticsLicense.placeholder}
+                    required={activeProfile.logisticsLicense.required}
+                  />
+                  {activeProfile.logisticsLicense.formatHelp && (
+                    <small style={{ fontSize: '10px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                      {activeProfile.logisticsLicense.formatHelp}
+                    </small>
+                  )}
+                </div>
+              </div>
+
+              {/* Row 3: Freight Forwarder Association Network */}
+              <div className="grid g2">
+                <div className="field">
+                  <label>Freight Forwarder Association Network</label>
+                  <input
+                    className="input"
+                    style={{ textTransform: 'uppercase' }}
+                    value={associationName}
+                    onChange={(e) => setAssociationName(e.target.value.toUpperCase())}
+                    placeholder="E.G. WCA, FIATA, IATA, JCTRANS, AMTOI..."
+                  />
+                  <small style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'block' }}>
+                    Canonical Association: <b style={{ color: 'var(--brand)' }}>{normalizeAssociationName(associationName)}</b>
+                  </small>
+                </div>
+                <div className="field">
+                  <label>Association Membership ID</label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
+                    value={associationId}
+                    onChange={(e) => setAssociationId(e.target.value.toUpperCase())}
+                    placeholder="E.G. WCA-98124 / JCTRANS-4412"
+                  />
+                </div>
+              </div>
+
+              {/* Row 4: Universal Global Accreditations (IATA & FIATA) */}
+              <div className="grid g2">
+                <div className="field">
+                  <label>IATA Cargo Agent Code</label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
+                    value={iataCode}
+                    onChange={(e) => setIataCode(e.target.value.toUpperCase())}
+                    placeholder="14-3-8821"
+                  />
+                </div>
+                <div className="field">
+                  <label>FIATA Registration Number</label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
+                    value={fiataReg}
+                    onChange={(e) => setFiataReg(e.target.value.toUpperCase())}
+                    placeholder="FIATA-INT-2026-918"
+                  />
+                </div>
+              </div>
+
+              {/* Row 5: Universal Maritime & Security (FMC & AEO) */}
+              <div className="grid g2">
+                <div className="field">
+                  <label>US Federal Maritime Commission (FMC / OTI)</label>
+                  <input
+                    className="input"
+                    style={{ fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}
+                    value={fmcNumber}
+                    onChange={(e) => setFmcNumber(e.target.value.toUpperCase())}
+                    placeholder="FMC-OTI-024881"
+                  />
+                </div>
+                <div className="field">
+                  <label>Authorized Economic Operator (AEO / Security Tier)</label>
+                  <select className="input" value={aeoTier} onChange={(e) => setAeoTier(e.target.value)}>
+                    <option value="AEO-T1 Certified">AEO-T1 Certified (Customs)</option>
+                    <option value="AEO-T2 Certified">AEO-T2 Certified (Customs)</option>
+                    <option value="AEO-T3 Tier-3 Secure">AEO-T3 Tier-3 High Security</option>
+                    <option value="AEO-LO Logistics Operator">AEO-LO Logistics Operator</option>
+                    <option value="C-TPAT Validated (USA)">C-TPAT Validated (USA)</option>
+                    <option value="STP-Plus Secure (Singapore)">STP-Plus Secure (Singapore)</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Dynamic Non-Repudiation Terms Consent Checkbox */}
+              <div style={{ background: '#f8fafc', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                <label className="check" style={{ fontSize: '11px', display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', margin: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    required
+                  />
+                  <span>
+                    I legally certify that all <b>{activeProfile.primaryTaxId.shortLabel}</b>, <b>{activeProfile.corporateReg.shortLabel}</b>, and trade registrations are authentic and belong to <b>{user.company || 'our legal entity'}</b> in <b>{activeProfile.countryName}</b>. I accept the <b>FR8X Enterprise Non-Repudiation Code</b> under <i>{activeProfile.nonRepudiationStatute}</i> and Terms of Service (v2.4-2026).
+                  </span>
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+                <button type="button" className="btn secondary" onClick={() => setShowKycModal(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn primary">
+                  <Check size={13} /> Save Statutory KYC ({activeProfile.countryCode})
+                </button>
+              </div>
+            </form>
+          </Modal>
+        );
+      })()}
 
       {/* MODAL: EDIT IDENTITY, PHOTO, LOGO, USER NAME, EMAIL & COMPANY LINK (User Requirements 9 & 10) */}
       {showEditIdentityModal && (

@@ -40,6 +40,7 @@ import {
   getAllGlobalTimezones,
   GlobalISDEntry,
 } from '@/lib/geo/global-geo';
+import { getStatutoryProfile } from '@/lib/utils/statutory-kyc';
 
 // --- Password Strength Scorer ---
 type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
@@ -557,7 +558,7 @@ export default function RegisterPage() {
 
 
 
-  // Business Card
+  // Business Card & Multi-Jurisdiction Statutory Profile
   const [companyName, setCompanyName] = useState('');
   const [companyId] = useState(`CMP-${Math.floor(10000 + Math.random() * 90000)}`);
   const [registeredAddress, setRegisteredAddress] = useState('');
@@ -565,6 +566,10 @@ export default function RegisterPage() {
   const [pan, setPan] = useState('');
   const [iecCode, setIecCode] = useState('');
   const [mtoNumber, setMtoNumber] = useState('');
+
+  const statutoryProfile = React.useMemo(() => {
+    return getStatutoryProfile(country || countryCode || 'India');
+  }, [country, countryCode]);
 
   // Platform Commerce Config & All-Free Sovereign Mode
   const { config } = usePlatformConfig();
@@ -1347,7 +1352,9 @@ export default function RegisterPage() {
                 <span className="reg-section-title">
                   <Building size={15} color="var(--brand)" /> 2. Legal Entity & Compliance Card
                 </span>
-                <span className="reg-section-sub">Government & Trade Registry</span>
+                <span className="reg-section-sub">
+                  {statutoryProfile.flag} {statutoryProfile.countryName} Jurisdiction · {statutoryProfile.regulatoryAuthorities}
+                </span>
               </div>
               <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
                 {/* Row 1: Legal Company Name and System Company ID */}
@@ -1389,24 +1396,30 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Row 3: 4 Equal-Width Columns for GSTN, PAN, IEC, MTO */}
+                {/* Row 3: 4 Multi-Jurisdiction Country-Adaptive Columns */}
                 <div className="reg-grid-4" style={{ marginTop: '12px' }}>
                   <div className="reg-field">
                     <label className="reg-label">
-                      <span className="reg-label-text">GSTN (India)</span>
+                      <span className="reg-label-text">{statutoryProfile.primaryTaxId.shortLabel}</span>
                     </label>
                     <input
                       className="reg-input"
-                      placeholder="27AAACA1234A1Z5"
-                      maxLength={15}
+                      placeholder={statutoryProfile.primaryTaxId.placeholder}
                       value={gstn}
-                      onChange={(e) => handleGstnChange(e.target.value)}
+                      onChange={(e) => {
+                        if (statutoryProfile.countryCode === 'IN') {
+                          handleGstnChange(e.target.value);
+                        } else {
+                          const val = statutoryProfile.primaryTaxId.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                          setGstn(val);
+                        }
+                      }}
                     />
                   </div>
                   <div className="reg-field">
                     <label className="reg-label">
-                      <span className="reg-label-text">PAN Number</span>
-                      {gstn && pan && (
+                      <span className="reg-label-text">{statutoryProfile.corporateReg.shortLabel}</span>
+                      {statutoryProfile.countryCode === 'IN' && gstn && pan && (
                         <span className="reg-label-extra" style={{ color: '#16a34a' }}>
                           (Auto)
                         </span>
@@ -1414,32 +1427,40 @@ export default function RegisterPage() {
                     </label>
                     <input
                       className="reg-input"
-                      placeholder="AAACA1234A"
-                      maxLength={10}
+                      placeholder={statutoryProfile.corporateReg.placeholder}
                       value={pan}
-                      onChange={(e) => setPan(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10))}
+                      onChange={(e) => {
+                        const val = statutoryProfile.corporateReg.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                        setPan(val);
+                      }}
                     />
                   </div>
                   <div className="reg-field">
                     <label className="reg-label">
-                      <span className="reg-label-text">IEC Code</span>
+                      <span className="reg-label-text">{statutoryProfile.tradeCustomsCode.shortLabel}</span>
                     </label>
                     <input
                       className="reg-input"
-                      placeholder="0300123456"
+                      placeholder={statutoryProfile.tradeCustomsCode.placeholder}
                       value={iecCode}
-                      onChange={(e) => setIecCode(e.target.value)}
+                      onChange={(e) => {
+                        const val = statutoryProfile.tradeCustomsCode.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                        setIecCode(val);
+                      }}
                     />
                   </div>
                   <div className="reg-field">
                     <label className="reg-label">
-                      <span className="reg-label-text">MTO License No.</span>
+                      <span className="reg-label-text">{statutoryProfile.logisticsLicense.shortLabel}</span>
                     </label>
                     <input
                       className="reg-input"
-                      placeholder="MTO/DGS/2026/..."
+                      placeholder={statutoryProfile.logisticsLicense.placeholder}
                       value={mtoNumber}
-                      onChange={(e) => setMtoNumber(e.target.value)}
+                      onChange={(e) => {
+                        const val = statutoryProfile.logisticsLicense.uppercase ? e.target.value.toUpperCase() : e.target.value;
+                        setMtoNumber(val);
+                      }}
                     />
                   </div>
                 </div>

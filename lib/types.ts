@@ -96,11 +96,28 @@ export interface UserProfile {
   skills?: string[];
   languages?: string[];
   trialUsedYear?: number;
-  // Professional business information
+  // Professional business information & Multi-Jurisdiction Statutory Filings
   gstn?: string;
   pan?: string;
   iec?: string;
   mto?: string;
+  kycCountry?: string;
+  taxId?: string;
+  taxIdLabel?: string;
+  corporateRegNumber?: string;
+  corporateRegLabel?: string;
+  tradeCustomsCode?: string;
+  tradeCustomsLabel?: string;
+  logisticsLicenseNumber?: string;
+  logisticsLicenseLabel?: string;
+  statutoryCountry?: string;
+  iataCode?: string;
+  fiataReg?: string;
+  fmcNumber?: string;
+  aeoTier?: string;
+  associationName?: string;
+  associationId?: string;
+  kycStatus?: 'verified' | 'pending' | 'rejected' | 'unsubmitted';
   website?: string;
   termsAcceptance?: TermsAcceptance;
   // Professional credentials lists
@@ -1008,10 +1025,20 @@ export interface KYCDossier {
   userId: string;
   companyId: string;
   legalEntityName: string;
-  tradeName?: string;
-  gstin: string;
-  pan: string;
+  gstin?: string;
+  pan?: string;
   iec?: string;
+  mto?: string;
+  taxId?: string;
+  taxIdLabel?: string;
+  corporateRegNumber?: string;
+  corporateRegLabel?: string;
+  tradeCustomsCode?: string;
+  tradeCustomsLabel?: string;
+  logisticsLicenseNumber?: string;
+  logisticsLicenseLabel?: string;
+  statutoryCountry?: string;
+  kycCountry?: string;
   registeredAddress: {
     addressLine1: string;
     addressLine2?: string;

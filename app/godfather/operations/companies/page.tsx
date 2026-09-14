@@ -26,6 +26,7 @@ import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { CompanyVerificationItem } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
+import { getStatutoryProfile } from '@/lib/utils/statutory-kyc';
 
 export default function CompaniesKYCPage() {
   const { companies, verifyCompany, rejectCompany, requestCompanyInfo, auditLogs } = useGodfatherData();
@@ -443,31 +444,41 @@ export default function CompaniesKYCPage() {
                 </div>
               </div>
 
-              {/* Section 2: Tax & Registration */}
-              <div className="gf-card p-3 space-y-2">
-                <div className="font-bold text-slate-800 text-xs flex items-center gap-1.5 border-b border-slate-100 pb-1.5">
-                  <FileCheck className="lucide w-3.5 h-3.5 text-emerald-600" />
-                  <span>Tax & Government Registration Cross-Check</span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-400 uppercase font-bold text-[8.5px] block">GSTIN / VAT</span>
-                    <strong className="font-mono text-sky-800">{selectedCompany.gstn || 'N/A'}</strong>
+              {/* Section 2: Multi-Jurisdiction Tax & Statutory Registration */}
+              {(() => {
+                const compProfile = getStatutoryProfile(selectedCompany.country || 'India');
+                return (
+                  <div className="gf-card p-3 space-y-2">
+                    <div className="font-bold text-slate-800 text-xs flex items-center justify-between border-b border-slate-100 pb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <FileCheck className="lucide w-3.5 h-3.5 text-emerald-600" />
+                        <span>Statutory Trade Filings ({compProfile.flag} {compProfile.countryName} Jurisdiction)</span>
+                      </div>
+                      <span className="text-[9px] text-slate-500 font-mono">
+                        Validated with {compProfile.regulatoryAuthorities}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px]">
+                      <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                        <span className="text-slate-400 uppercase font-bold text-[8.5px] block">{compProfile.primaryTaxId.shortLabel}</span>
+                        <strong className="font-mono text-sky-800">{(selectedCompany as any).taxId || selectedCompany.gstn || 'N/A'}</strong>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                        <span className="text-slate-400 uppercase font-bold text-[8.5px] block">{compProfile.corporateReg.shortLabel}</span>
+                        <strong className="font-mono text-slate-800">{(selectedCompany as any).corporateRegNumber || selectedCompany.pan || 'N/A'}</strong>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                        <span className="text-slate-400 uppercase font-bold text-[8.5px] block">{compProfile.tradeCustomsCode.shortLabel}</span>
+                        <strong className="font-mono text-slate-800">{(selectedCompany as any).tradeCustomsCode || selectedCompany.iec || 'N/A'}</strong>
+                      </div>
+                      <div className="p-2 rounded bg-slate-50 border border-slate-200">
+                        <span className="text-slate-400 uppercase font-bold text-[8.5px] block">{compProfile.logisticsLicense.shortLabel}</span>
+                        <strong className="font-mono text-slate-800">{(selectedCompany as any).logisticsLicenseNumber || selectedCompany.mto || 'N/A'}</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-400 uppercase font-bold text-[8.5px] block">PAN / TAX ID</span>
-                    <strong className="font-mono text-slate-800">{selectedCompany.pan || 'N/A'}</strong>
-                  </div>
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-400 uppercase font-bold text-[8.5px] block">DGFT IEC CODE</span>
-                    <strong className="font-mono text-slate-800">{selectedCompany.iec || 'N/A'}</strong>
-                  </div>
-                  <div className="p-2 rounded bg-slate-50 border border-slate-200">
-                    <span className="text-slate-400 uppercase font-bold text-[8.5px] block">MTO / FMC REG</span>
-                    <strong className="font-mono text-slate-800">{selectedCompany.mto || 'N/A'}</strong>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Section 3: Primary Contact */}
               <div className="gf-card p-3 space-y-2">
