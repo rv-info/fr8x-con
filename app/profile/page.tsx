@@ -71,15 +71,12 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'experience_edu' | 'kyc' | 'scorecard' | 'privacy'>('overview');
 
   // Basic Profile State
-  const [firstName, setFirstName] = useState(user.firstName);
-  const [lastName, setLastName] = useState(user.lastName);
-  const [designation, setDesignation] = useState(user.designation);
-  const [mobile, setMobile] = useState(user.mobile);
-  const [company, setCompany] = useState(user.company);
-  const [summary, setSummary] = useState(
-    user.summary ||
-      'Senior Freight Procurement & Maritime Logistics Executive with 10+ years driving multi-million dollar container shipping contracts, ocean freight reverse auctions, and multimodal logistics across Asia-Europe and Transpacific corridors.'
-  );
+  const [firstName, setFirstName] = useState(user.firstName || '');
+  const [lastName, setLastName] = useState(user.lastName || '');
+  const [designation, setDesignation] = useState(user.designation || '');
+  const [mobile, setMobile] = useState(user.mobile || '');
+  const [company, setCompany] = useState(user.company || '');
+  const [summary, setSummary] = useState(user.summary || '');
 
   // Profile Image & Company Logo State
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
@@ -95,39 +92,42 @@ export default function ProfilePage() {
   }, [user.companyLogoUrl]);
 
   // Address & Google Maps State
-  const [city, setCity] = useState(user.city || 'Mumbai');
-  const [stateName, setStateName] = useState(user.state || 'Maharashtra');
-  const [country, setCountry] = useState(user.country || 'India');
-  const [formattedAddress, setFormattedAddress] = useState(
-    user.formattedAddress || 'Logistics Park, Andheri East, Mumbai, Maharashtra 400093'
-  );
+  const [city, setCity] = useState(user.city || '');
+  const [stateName, setStateName] = useState(user.state || '');
+  const [country, setCountry] = useState(user.country || '');
+  const [formattedAddress, setFormattedAddress] = useState(user.formattedAddress || '');
   const [lat, setLat] = useState(user.coordinates?.lat || 19.1136);
   const [lng, setLng] = useState(user.coordinates?.lng || 72.8697);
   const [timezone, setTimezone] = useState(user.timezone || 'Asia/Kolkata');
 
   // Business IDs & Statutory Filings
-  const [gstn, setGstn] = useState(user.gstn || '27AAAAA0000A1Z5');
-  const [pan, setPan] = useState(user.pan || 'AAAAA0000A');
-  const [iec, setIec] = useState(user.iec || '0388129941');
-  const [mto, setMto] = useState(user.mto || 'MTO/DGS/2024/9912');
-  const [iataCode, setIataCode] = useState('14-3-8821');
-  const [fiataReg, setFiataReg] = useState('FIATA-IND-2024-918');
-  const [fmcNumber, setFmcNumber] = useState('FMC-OTI-024881');
-  const [aeoTier, setAeoTier] = useState('AEO-T2 Certified (CBIC)');
-  const [associationName, setAssociationName] = useState('WCA');
-  const [associationId, setAssociationId] = useState('WCA-98124');
+  const [gstn, setGstn] = useState(user.gstn || '');
+  const [pan, setPan] = useState(user.pan || '');
+  const [iec, setIec] = useState(user.iec || '');
+  const [mto, setMto] = useState(user.mto || '');
+  const [iataCode, setIataCode] = useState((user as any).iataCode || '');
+  const [fiataReg, setFiataReg] = useState((user as any).fiataReg || '');
+  const [fmcNumber, setFmcNumber] = useState((user as any).fmcNumber || '');
+  const [aeoTier, setAeoTier] = useState((user as any).aeoTier || '');
+  const [associationName, setAssociationName] = useState((user as any).associationName || '');
+  const [associationId, setAssociationId] = useState((user as any).associationId || '');
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [showKycModal, setShowKycModal] = useState(false);
 
-  // Edit Identity & Company Link State (User Requirements 9 & 10)
+  // Edit Identity & Company Link State
   const [showEditIdentityModal, setShowEditIdentityModal] = useState(false);
-  const [editFirstName, setEditFirstName] = useState(user.firstName);
-  const [editLastName, setEditLastName] = useState(user.lastName);
-  const [editEmail, setEditEmail] = useState(user.email);
-  const [editMobile, setEditMobile] = useState(user.mobile);
-  const [editDesignation, setEditDesignation] = useState(user.designation);
+  const [editFirstName, setEditFirstName] = useState(user.firstName || '');
+  const [editLastName, setEditLastName] = useState(user.lastName || '');
+  const [editEmail, setEditEmail] = useState(user.email || '');
+  const [editMobile, setEditMobile] = useState(user.mobile || '');
+  const [editDesignation, setEditDesignation] = useState(user.designation || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
+  const [editCity, setEditCity] = useState(user.city || '');
+  const [editState, setEditState] = useState(user.state || '');
+  const [editCountry, setEditCountry] = useState(user.country || '');
+  const [editFormattedAddress, setEditFormattedAddress] = useState(user.formattedAddress || '');
+  const [editTimezone, setEditTimezone] = useState(user.timezone || 'Asia/Kolkata');
   const [isChangingCompany, setIsChangingCompany] = useState(false);
   const [transferTargetCompany, setTransferTargetCompany] = useState('');
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
@@ -140,95 +140,98 @@ export default function ProfilePage() {
   const [certPrivacy, setCertPrivacy] = useState<'public' | 'network' | 'private'>('public');
   const [kycPrivacy, setKycPrivacy] = useState<'public' | 'network' | 'private'>('network');
 
-  // Professional Record Cards (Experience, Education, Certifications)
-  const [experiences, setExperiences] = useState<ProfileExperience[]>([
-    {
-      id: 'exp-1',
-      company: 'Atlas Logistics International Pvt. Ltd.',
-      designation: 'Director of Freight Procurement & Liner Operations',
-      employmentType: 'Full-time',
-      location: 'Mumbai, India',
-      startDate: 'Jan 2021',
-      isCurrent: true,
-      description:
-        'Overseeing container procurement across Asia-Europe and US West Coast lanes. Managing over 14,000+ TEUs annually, carrier liner contracts (MSC, Maersk, CMA CGM), and leading digital reverse auction bidding strategies.',
-      skills: 'Ocean Procurement, Reverse Auctions, UN/LOCODE, Port Drayage, Contract Negotiation',
-      visibility: 'public',
-    },
-    {
-      id: 'exp-2',
-      company: 'TransGlobal Freight Solutions NV',
-      designation: 'Senior Ocean Freight Manager',
-      employmentType: 'Full-time',
-      location: 'Rotterdam, Netherlands',
-      startDate: 'Aug 2017',
-      endDate: 'Dec 2020',
-      isCurrent: false,
-      description:
-        'Managed European import/export transshipment logistics, customs clearance documentation, and inland barge connections throughout the Rhine corridor.',
-      skills: 'European Inland Transport, Rhine Barge Logistics, DTHC Optimization',
-      visibility: 'public',
-    },
-  ]);
+  // Professional Record Cards (Experience, Education, Certifications) - Real user state only, no mock/dummy records
+  const [experiences, setExperiences] = useState<ProfileExperience[]>([]);
+  const [educations, setEducations] = useState<ProfileEducation[]>([]);
+  const [certifications, setCertifications] = useState<ProfileCertification[]>([]);
 
-  const [educations, setEducations] = useState<ProfileEducation[]>([
-    {
-      id: 'edu-1',
-      institution: 'Symbiosis Institute of International Business',
-      qualification: 'MBA',
-      fieldOfStudy: 'International Maritime Trade & Supply Chain Management',
-      startYear: '2015',
-      endYear: '2017',
-      grade: 'Distinction / 3.9 GPA',
-      description: 'Specialization in Maritime Law, Chartering Protocols, and Global Port Economics.',
-      visibility: 'public',
-    },
-    {
-      id: 'edu-2',
-      institution: 'Indian Maritime University',
-      qualification: 'Bachelor of Science (B.Sc.)',
-      fieldOfStudy: 'Nautical Science & Maritime Logistics',
-      startYear: '2011',
-      endYear: '2015',
-      grade: 'First Class with Honors',
-      description: 'Foundational nautical navigation, container stowage planning, and dangerous goods protocols.',
-      visibility: 'public',
-    },
-  ]);
+  // Persistent storage key helper for records
+  const userStorageKey = user.uid || user.email || 'guest';
 
-  const [certifications, setCertifications] = useState<ProfileCertification[]>([
-    {
-      id: 'cert-1',
-      title: 'IATA Dangerous Goods Regulation (DGR Cat 6)',
-      issuingAuthority: 'International Air Transport Association (IATA)',
-      certificateNumber: 'DGR-2024-8849',
-      issueDate: 'Mar 2024',
-      expiryDate: 'Mar 2027',
-      verificationStatus: 'verified',
-      credentialUrl: 'https://iata.org/verify/dgr-2024-8849',
-      visibility: 'public',
-    },
-    {
-      id: 'cert-2',
-      title: 'FIATA Higher Diploma in Supply Chain Management',
-      issuingAuthority: 'International Federation of Freight Forwarders (FIATA)',
-      certificateNumber: 'FIATA-HD-2023-119',
-      issueDate: 'Jun 2023',
-      verificationStatus: 'verified',
-      credentialUrl: 'https://fiata.org/credentials/2023-119',
-      visibility: 'public',
-    },
-    {
-      id: 'cert-3',
-      title: 'Customs Brokerage Class A Qualified Licensee',
-      issuingAuthority: 'Central Board of Indirect Taxes & Customs (CBIC)',
-      certificateNumber: 'CBIC-REG-6441',
-      issueDate: 'Jan 2022',
-      verificationStatus: 'verified',
-      credentialUrl: 'https://icegate.gov.in/verify/CBIC-REG-6441',
-      visibility: 'public',
-    },
-  ]);
+  // Load real user experiences, educations, and certifications from localStorage or user profile
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const storedExp = localStorage.getItem(`fr8x_user_exp_${userStorageKey}`);
+      if (storedExp) {
+        setExperiences(JSON.parse(storedExp));
+      } else if (user.experiences && Array.isArray(user.experiences)) {
+        setExperiences(user.experiences);
+      } else {
+        setExperiences([]);
+      }
+
+      const storedEdu = localStorage.getItem(`fr8x_user_edu_${userStorageKey}`);
+      if (storedEdu) {
+        setEducations(JSON.parse(storedEdu));
+      } else if (user.educations && Array.isArray(user.educations)) {
+        setEducations(user.educations);
+      } else {
+        setEducations([]);
+      }
+
+      const storedCert = localStorage.getItem(`fr8x_user_cert_${userStorageKey}`);
+      if (storedCert) {
+        setCertifications(JSON.parse(storedCert));
+      } else if (user.certifications && Array.isArray(user.certifications)) {
+        setCertifications(user.certifications);
+      } else {
+        setCertifications([]);
+      }
+    } catch (e) {
+      console.error('[Profile] Failed to load stored records:', e);
+    }
+  }, [userStorageKey, user.experiences, user.educations, user.certifications]);
+
+  // Synchronize component form states whenever the user object in AuthContext changes or reloads
+  useEffect(() => {
+    if (!user) return;
+    setFirstName(user.firstName || '');
+    setLastName(user.lastName || '');
+    setDesignation(user.designation || '');
+    setMobile(user.mobile || '');
+    setCompany(user.company || '');
+    setSummary(user.summary || '');
+    setCity(user.city || '');
+    setStateName(user.state || '');
+    setCountry(user.country || '');
+    setFormattedAddress(user.formattedAddress || '');
+    setTimezone(user.timezone || 'Asia/Kolkata');
+    setGstn(user.gstn || '');
+    setPan(user.pan || '');
+    setIec(user.iec || '');
+    setMto(user.mto || '');
+    setIataCode((user as any).iataCode || '');
+    setFiataReg((user as any).fiataReg || '');
+    setFmcNumber((user as any).fmcNumber || '');
+    setAeoTier((user as any).aeoTier || '');
+    setAssociationName((user as any).associationName || '');
+    setAssociationId((user as any).associationId || '');
+  }, [user]);
+
+  const persistExperiences = (newExp: ProfileExperience[]) => {
+    setExperiences(newExp);
+    try {
+      localStorage.setItem(`fr8x_user_exp_${userStorageKey}`, JSON.stringify(newExp));
+    } catch {}
+    updateUser({ experiences: newExp });
+  };
+
+  const persistEducations = (newEdu: ProfileEducation[]) => {
+    setEducations(newEdu);
+    try {
+      localStorage.setItem(`fr8x_user_edu_${userStorageKey}`, JSON.stringify(newEdu));
+    } catch {}
+    updateUser({ educations: newEdu });
+  };
+
+  const persistCertifications = (newCert: ProfileCertification[]) => {
+    setCertifications(newCert);
+    try {
+      localStorage.setItem(`fr8x_user_cert_${userStorageKey}`, JSON.stringify(newCert));
+    } catch {}
+    updateUser({ certifications: newCert });
+  };
 
   // Modal State for Adding/Editing Records
   const [activeRecordModal, setActiveRecordModal] = useState<'exp' | 'edu' | 'cert' | null>(null);
@@ -364,28 +367,27 @@ export default function ProfilePage() {
   const handleSaveExp = (e: React.FormEvent) => {
     e.preventDefault();
     if (!expTitle || !expCompany) return;
+    let updated: ProfileExperience[];
     if (editingRecordId) {
-      setExperiences((prev) =>
-        prev.map((item) =>
-          item.id === editingRecordId
-            ? {
-                ...item,
-                designation: expTitle,
-                company: expCompany,
-                location: expLocation,
-                employmentType: expEmpType,
-                startDate: expStart,
-                endDate: expEnd,
-                isCurrent: expCurrent,
-                description: expDesc,
-                skills: expSkills,
-              }
-            : item
-        )
+      updated = experiences.map((item) =>
+        item.id === editingRecordId
+          ? {
+              ...item,
+              designation: expTitle,
+              company: expCompany,
+              location: expLocation,
+              employmentType: expEmpType,
+              startDate: expStart,
+              endDate: expEnd,
+              isCurrent: expCurrent,
+              description: expDesc,
+              skills: expSkills,
+            }
+          : item
       );
     } else {
-      setExperiences((prev) => [
-        ...prev,
+      updated = [
+        ...experiences,
         {
           id: `exp-${Date.now()}`,
           designation: expTitle,
@@ -399,8 +401,9 @@ export default function ProfilePage() {
           skills: expSkills,
           visibility: 'public',
         },
-      ]);
+      ];
     }
+    persistExperiences(updated);
     setActiveRecordModal(null);
     toast('Work experience details saved.');
   };
@@ -418,11 +421,11 @@ export default function ProfilePage() {
     } else {
       setEditingRecordId(null);
       setEduInst('');
-      setEduQual('Master / Bachelor Degree');
-      setEduField('International Trade & Maritime Logistics');
-      setEduStart('2018');
-      setEduEnd('2022');
-      setEduGrade('Distinction / First Class');
+      setEduQual('');
+      setEduField('');
+      setEduStart('');
+      setEduEnd('');
+      setEduGrade('');
       setEduDesc('');
     }
     setActiveRecordModal('edu');
@@ -431,26 +434,25 @@ export default function ProfilePage() {
   const handleSaveEdu = (e: React.FormEvent) => {
     e.preventDefault();
     if (!eduInst || !eduQual) return;
+    let updated: ProfileEducation[];
     if (editingRecordId) {
-      setEducations((prev) =>
-        prev.map((item) =>
-          item.id === editingRecordId
-            ? {
-                ...item,
-                institution: eduInst,
-                qualification: eduQual,
-                fieldOfStudy: eduField,
-                startYear: eduStart,
-                endYear: eduEnd,
-                grade: eduGrade,
-                description: eduDesc,
-              }
-            : item
-        )
+      updated = educations.map((item) =>
+        item.id === editingRecordId
+          ? {
+              ...item,
+              institution: eduInst,
+              qualification: eduQual,
+              fieldOfStudy: eduField,
+              startYear: eduStart,
+              endYear: eduEnd,
+              grade: eduGrade,
+              description: eduDesc,
+            }
+          : item
       );
     } else {
-      setEducations((prev) => [
-        ...prev,
+      updated = [
+        ...educations,
         {
           id: `edu-${Date.now()}`,
           institution: eduInst,
@@ -462,8 +464,9 @@ export default function ProfilePage() {
           description: eduDesc,
           visibility: 'public',
         },
-      ]);
+      ];
     }
+    persistEducations(updated);
     setActiveRecordModal(null);
     toast('Education details saved.');
   };
@@ -479,11 +482,11 @@ export default function ProfilePage() {
       setCertUrl(cert.credentialUrl || '');
     } else {
       setEditingRecordId(null);
-      setCertTitle('IATA / FIATA / Customs Broker Certification');
-      setCertOrg('IATA / FIATA / CBIC');
-      setCertNumber('CERT-2024-001');
-      setCertIssue('Jan 2024');
-      setCertExpiry('Jan 2027');
+      setCertTitle('');
+      setCertOrg('');
+      setCertNumber('');
+      setCertIssue('');
+      setCertExpiry('');
       setCertUrl('');
     }
     setActiveRecordModal('cert');
@@ -492,25 +495,24 @@ export default function ProfilePage() {
   const handleSaveCert = (e: React.FormEvent) => {
     e.preventDefault();
     if (!certTitle || !certOrg) return;
+    let updated: ProfileCertification[];
     if (editingRecordId) {
-      setCertifications((prev) =>
-        prev.map((item) =>
-          item.id === editingRecordId
-            ? {
-                ...item,
-                title: certTitle,
-                issuingAuthority: certOrg,
-                certificateNumber: certNumber,
-                issueDate: certIssue,
-                expiryDate: certExpiry,
-                credentialUrl: certUrl,
-              }
-            : item
-        )
+      updated = certifications.map((item) =>
+        item.id === editingRecordId
+          ? {
+              ...item,
+              title: certTitle,
+              issuingAuthority: certOrg,
+              certificateNumber: certNumber,
+              issueDate: certIssue,
+              expiryDate: certExpiry,
+              credentialUrl: certUrl,
+            }
+          : item
       );
     } else {
-      setCertifications((prev) => [
-        ...prev,
+      updated = [
+        ...certifications,
         {
           id: `cert-${Date.now()}`,
           title: certTitle,
@@ -522,8 +524,9 @@ export default function ProfilePage() {
           verificationStatus: 'verified',
           visibility: 'public',
         },
-      ]);
+      ];
     }
+    persistCertifications(updated);
     setActiveRecordModal(null);
     toast('Certification credentials saved.');
   };
@@ -1070,20 +1073,25 @@ export default function ProfilePage() {
           <button
             className="btn primary"
             onClick={() => {
-              setEditFirstName(user.firstName);
-              setEditLastName(user.lastName);
-              setEditEmail(user.email);
-              setEditMobile(user.mobile);
-              setEditDesignation(user.designation);
+              setEditFirstName(user.firstName || firstName || '');
+              setEditLastName(user.lastName || lastName || '');
+              setEditEmail(user.email || '');
+              setEditMobile(user.mobile || mobile || '');
+              setEditDesignation(user.designation || designation || '');
               setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
               setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
+              setEditCity(user.city || city || '');
+              setEditState(user.state || stateName || '');
+              setEditCountry(user.country || country || '');
+              setEditFormattedAddress(user.formattedAddress || formattedAddress || '');
+              setEditTimezone(user.timezone || timezone || 'Asia/Kolkata');
               setIsChangingCompany(false);
               setTransferTargetCompany('');
               setTransferTargetEmail('');
               setShowEditIdentityModal(true);
             }}
           >
-            <Edit2 size={14} /> Edit Identity
+            <Edit2 size={14} /> Edit Identity & Location
           </button>
         </div>
       </div>
@@ -1366,12 +1374,16 @@ export default function ProfilePage() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <MapPin size={12} color="var(--fr8x-outline)" /> {city}, {country}
+                  <MapPin size={12} color="var(--fr8x-outline)" /> {city || country ? `${city}${city && country ? ', ' : ''}${country}` : 'Location not configured'}
                 </span>
-                <LocalTimeBadge timezone={timezone} />
-                <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
-                  IATA: <b>{iataCode}</b> · MTO: <b>{mto}</b>
-                </span>
+                <LocalTimeBadge timezone={timezone || 'Asia/Kolkata'} />
+                {(iataCode || mto) && (
+                  <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                    {iataCode ? <>IATA: <b>{iataCode}</b></> : null}
+                    {iataCode && mto ? ' · ' : null}
+                    {mto ? <>MTO: <b>{mto}</b></> : null}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1487,7 +1499,7 @@ export default function ProfilePage() {
                         className="btn secondary sm"
                         style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                         onClick={() => {
-                          setExperiences((prev) => prev.filter((i) => i.id !== exp.id));
+                          persistExperiences(experiences.filter((i) => i.id !== exp.id));
                           toast('Experience entry removed.');
                         }}
                       >
@@ -1563,7 +1575,7 @@ export default function ProfilePage() {
                       className="btn secondary sm"
                       style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                       onClick={() => {
-                        setEducations((prev) => prev.filter((i) => i.id !== edu.id));
+                        persistEducations(educations.filter((i) => i.id !== edu.id));
                         toast('Education record removed.');
                       }}
                     >
@@ -1652,7 +1664,7 @@ export default function ProfilePage() {
                       className="btn secondary sm"
                       style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                       onClick={() => {
-                        setCertifications((prev) => prev.filter((i) => i.id !== cert.id));
+                        persistCertifications(certifications.filter((i) => i.id !== cert.id));
                         toast('Certification credential removed.');
                       }}
                     >
@@ -1676,7 +1688,11 @@ export default function ProfilePage() {
             </span>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span className="badge green"><ShieldCheck size={11} /> 100% REGULATORY COMPLIANT</span>
+            {gstn && pan && iec ? (
+              <span className="badge green"><ShieldCheck size={11} /> 100% REGULATORY COMPLIANT</span>
+            ) : (
+              <span className="badge amber"><ShieldCheck size={11} /> PENDING STATUTORY FILINGS</span>
+            )}
             <button className="btn primary sm" onClick={() => setShowKycModal(true)}>
               <Edit2 size={12} /> Edit / Update KYC
             </button>
@@ -1686,42 +1702,74 @@ export default function ProfilePage() {
         <div className="grid g2" style={{ gap: '12px' }}>
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>GSTN Identification</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{gstn} <span className="badge green" style={{ fontSize: '9px' }}>ACTIVE</span></b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {gstn ? (
+                <>{gstn} <span className="badge green" style={{ fontSize: '9px' }}>ACTIVE</span></>
+              ) : (
+                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+              )}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>Income Tax PAN</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{pan} <span className="badge green" style={{ fontSize: '9px' }}>VERIFIED</span></b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {pan ? (
+                <>{pan} <span className="badge green" style={{ fontSize: '9px' }}>VERIFIED</span></>
+              ) : (
+                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not provided</span>
+              )}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>Import Export Code (IEC)</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{iec} <span className="badge green" style={{ fontSize: '9px' }}>DGFT VALID</span></b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {iec ? (
+                <>{iec} <span className="badge green" style={{ fontSize: '9px' }}>DGFT VALID</span></>
+              ) : (
+                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+              )}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>MTO License Number</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{mto} <span className="badge green" style={{ fontSize: '9px' }}>RECOGNISED</span></b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {mto ? (
+                <>{mto} <span className="badge green" style={{ fontSize: '9px' }}>RECOGNISED</span></>
+              ) : (
+                <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>
+              )}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>IATA Cargo Numeric Code</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{iataCode}</b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {iataCode || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not assigned</span>}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>FIATA Registration</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{fiataReg}</b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {fiataReg || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>FMC OTI License</span>
-            <b style={{ fontFamily: 'var(--font-mono)' }}>{fmcNumber}</b>
+            <b style={{ fontFamily: 'var(--font-mono)' }}>
+              {fmcNumber || <span style={{ color: 'var(--mut)', fontWeight: 400 }}>Not registered</span>}
+            </b>
           </div>
 
           <div className="kv" style={{ padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
             <span>Authorized Economic Operator</span>
-            <b style={{ color: 'var(--brand)' }}>{aeoTier}</b>
+            <b style={{ color: aeoTier ? 'var(--brand)' : 'var(--mut)', fontWeight: aeoTier ? 700 : 400 }}>
+              {aeoTier || 'Standard Non-AEO'}
+            </b>
           </div>
         </div>
       </div>
@@ -1991,6 +2039,11 @@ export default function ProfilePage() {
               setLastName(editLastName);
               setMobile(editMobile);
               setDesignation(editDesignation);
+              setCity(editCity);
+              setStateName(editState);
+              setCountry(editCountry);
+              setFormattedAddress(editFormattedAddress);
+              setTimezone(editTimezone);
               setAvatarUrl(editAvatarUrl || null);
               setCompanyLogoUrl(editCompanyLogoUrl || null);
 
@@ -2002,6 +2055,11 @@ export default function ProfilePage() {
                 mobile: editMobile,
                 designation: editDesignation,
                 company: finalCompany,
+                city: editCity,
+                state: editState,
+                country: editCountry,
+                formattedAddress: editFormattedAddress,
+                timezone: editTimezone,
                 avatarUrl: editAvatarUrl || '',
                 companyLogoUrl: editCompanyLogoUrl || '',
                 companyTransferStatus: newCompanyTransferStatus as any,
@@ -2012,7 +2070,7 @@ export default function ProfilePage() {
               });
 
               setShowEditIdentityModal(false);
-              toast('Enterprise identity credentials updated successfully.');
+              toast('Enterprise identity and location updated successfully.');
             }}
             style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
@@ -2128,16 +2186,85 @@ export default function ProfilePage() {
 
               <div className="field">
                 <label>Job Designation / Role</label>
-                <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="Senior Vice President - Ocean Procurement" />
+                <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="Senior Freight Procurement Manager" />
               </div>
             </div>
 
-            {/* 3. Company Link & Affiliation Governance (User Request 10) */}
+            {/* 3. Enterprise Geographic Location & Operating Hub */}
+            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                3. Enterprise Operating Hub & Geographic Location
+              </span>
+
+              <div className="grid g2">
+                <div className="field">
+                  <label>Country / Territory</label>
+                  <input
+                    className="input"
+                    value={editCountry}
+                    onChange={(e) => setEditCountry(e.target.value)}
+                    placeholder="e.g. India, United Arab Emirates, Singapore, Germany"
+                  />
+                </div>
+                <div className="field">
+                  <label>State / Province / Region</label>
+                  <input
+                    className="input"
+                    value={editState}
+                    onChange={(e) => setEditState(e.target.value)}
+                    placeholder="e.g. Maharashtra, Dubai, Hamburg, California"
+                  />
+                </div>
+              </div>
+
+              <div className="grid g2">
+                <div className="field">
+                  <label>City / Maritime Hub</label>
+                  <input
+                    className="input"
+                    value={editCity}
+                    onChange={(e) => setEditCity(e.target.value)}
+                    placeholder="e.g. Mumbai, Dubai, Singapore, Rotterdam"
+                  />
+                </div>
+                <div className="field">
+                  <label>Operational Timezone</label>
+                  <select
+                    className="input"
+                    value={editTimezone}
+                    onChange={(e) => setEditTimezone(e.target.value)}
+                  >
+                    <option value="Asia/Kolkata">Asia/Kolkata (IST · UTC+05:30)</option>
+                    <option value="Asia/Dubai">Asia/Dubai (GST · UTC+04:00)</option>
+                    <option value="Asia/Singapore">Asia/Singapore (SGT · UTC+08:00)</option>
+                    <option value="Asia/Shanghai">Asia/Shanghai (CST · UTC+08:00)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (JST · UTC+09:00)</option>
+                    <option value="Europe/Rotterdam">Europe/Rotterdam (CET · UTC+01:00)</option>
+                    <option value="Europe/London">Europe/London (GMT/BST · UTC+00:00)</option>
+                    <option value="Europe/Hamburg">Europe/Hamburg (CET · UTC+01:00)</option>
+                    <option value="America/New_York">America/New_York (EST · UTC-05:00)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PST · UTC-08:00)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Registered Street Address / Logistics Terminal</label>
+                <input
+                  className="input"
+                  value={editFormattedAddress}
+                  onChange={(e) => setEditFormattedAddress(e.target.value)}
+                  placeholder="e.g. CFS / ICD Logistics Park, Port Gate 3, Andheri East, Mumbai 400093"
+                />
+              </div>
+            </div>
+
+            {/* 4. Company Link & Affiliation Governance */}
             <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
-                    3. Enterprise Company Link & Login Affiliation
+                    4. Enterprise Company Link & Login Affiliation
                   </span>
                   <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '2px' }}>
                     Current Associated Organization: <b style={{ color: 'var(--ink)' }}>{user.company}</b>
@@ -2222,7 +2349,7 @@ export default function ProfilePage() {
                 Cancel
               </button>
               <button type="submit" className="btn primary">
-                <Check size={13} /> Save Identity & Credentials
+                <Check size={13} /> Save Identity, Location & Credentials
               </button>
             </div>
           </form>

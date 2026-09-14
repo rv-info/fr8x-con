@@ -135,465 +135,7 @@ const SEED_NOTIFICATIONS: AppNotification[] = [
   },
 ];
 
-const SEED_POSTS: FeedPost[] = [
-  {
-    id: 'post-1',
-    authorUid: 'u-priya',
-    author: 'Priya Nair',
-    authorRole: 'Trade Specialist · Mumbai',
-    authorCompany: 'Nair Cargo Solutions',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'rate_info',
-    time: '1h ago',
-    text: '*Blank sailings* have tightened capacity on Asia-Europe lanes through mid-September.\n> Booking 10-14 days ahead is strongly advised to secure space on direct services.\n\nKey carriers implementing GRI:\n- Maersk / MSC\n- CMA CGM\n- Hapag-Lloyd',
-    likes: 24,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [
-      {
-        id: 'c1',
-        authorUid: 'u-kiran',
-        author: 'Kiran Mehta',
-        authorRole: 'Trade Lane Manager',
-        authorCompany: 'Indo Ocean Lines',
-        authorTimezone: 'Asia/Kolkata',
-        hasGoldenTick: false,
-        text: 'Seeing the exact same trend on our North Continent contracts — thanks for flagging early.',
-        time: '45m ago',
-        likes: 3,
-        dis: 0,
-        replies: [
-          {
-            id: 'r1',
-            authorUid: 'u-priya',
-            author: 'Priya Nair',
-            authorRole: 'Trade Specialist',
-            authorCompany: 'Nair Cargo Solutions',
-            authorTimezone: 'Asia/Kolkata',
-            hasGoldenTick: false,
-            text: 'Happy to share our verified forwarder carrier allocation notes directly if helpful.',
-            time: '20m ago',
-            likes: 1,
-            dis: 0,
-            replies: [
-              {
-                id: 'nr1',
-                parentReplyId: 'r1',
-                authorUid: 'u-kiran',
-                author: 'Kiran Mehta',
-                authorRole: 'Trade Lane Manager',
-                authorCompany: 'Indo Ocean Lines',
-                authorTimezone: 'Asia/Kolkata',
-                hasGoldenTick: false,
-                text: 'Connecting via Trade Chat to review the Antwerp allocations.',
-                time: '10m ago',
-                likes: 1,
-                dis: 0,
-              },
-            ],
-          },
-        ],
-      },
-      {
-        id: 'c2',
-        authorUid: 'u-sarah',
-        author: 'Sarah Lewis',
-        authorRole: 'Ocean Freight Lead',
-        authorCompany: 'Rotterdam Freight NV',
-        authorTimezone: 'Europe/Amsterdam',
-        hasGoldenTick: false,
-        text: 'Rotterdam ECT delta terminal dwell times have improved slightly this week.',
-        time: '10m ago',
-        likes: 2,
-        dis: 0,
-        replies: [],
-      },
-    ],
-  },
-  {
-    id: 'post-2',
-    authorUid: 'u-arjun',
-    author: 'Arjun Rao',
-    authorRole: 'Freight Manager · Mumbai',
-    authorCompany: 'Atlas Logistics Pvt. Ltd.',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-    time: '3h ago',
-    text: 'Reverse auction published for *Mumbai → Rotterdam (FCL Export)*.\n12x 40HC containers cargo-ready by 05 Sep. Verified forwarders can review requirements in the Auction Dashboard.',
-    postType: 'auction_ref',
-    likes: 18,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: true,
-    isAuctionAnnouncement: true,
-    auctionRefId: 'RA-2026-0842',
-    comments: [],
-  },
-  {
-    id: 'post-3',
-    authorUid: 'u-kiran',
-    author: 'Kiran Mehta',
-    authorRole: 'Trade Lane Manager · Mumbai',
-    authorCompany: 'Indo Ocean Lines',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'announcement',
-    time: '5h ago',
-    text: '📣 **Company Announcement**: Indo Ocean Lines has expanded its FCL services to the US West Coast via the Asia-Pacific Express (APX) service.\n\nNew direct services from Nhava Sheva and Mundra to LA and Long Beach, with transit times of 18–21 days.',
-    likes: 31,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-4',
-    authorUid: 'u-sarah',
-    author: 'Sarah Lewis',
-    authorRole: 'Ocean Freight Lead · Rotterdam',
-    authorCompany: 'Rotterdam Freight NV',
-    authorTimezone: 'Europe/Amsterdam',
-    hasGoldenTick: false,
-    postType: 'logistics_discussion',
-    time: '6h ago',
-    text: 'Interesting discussion to have: with GRI surcharges on Asia-Europe lanes hitting USD 400-600 per TEU, what is the breakeven where airfreight becomes commercially viable for high-value cargo?\n\nI\'d argue for electronics and pharma the answer is closer than most shippers realise.',
-    likes: 14,
-    dis: 2,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-5',
-    authorUid: 'u-vikram',
-    author: 'Vikram Patel',
-    authorRole: 'Head of Procurement · Mumbai',
-    authorCompany: 'Apex Maritime Services',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-    postType: 'rate_info',
-    time: '7h ago',
-    text: 'Spot rate intelligence: Nhava Sheva to Jebel Ali has stabilized between **$640 - $710/20DV** this week.\n\nFeeder operators are offering 21 days detention free time for volume commitments exceeding 20 TEUs.',
-    likes: 19,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-6',
-    authorUid: 'u-elena',
-    author: 'Elena Rostova',
-    authorRole: 'Terminal Operations Lead',
-    authorCompany: 'CMA CGM Antwerp',
-    authorTimezone: 'Europe/Brussels',
-    hasGoldenTick: false,
-    postType: 'business_update',
-    time: '8h ago',
-    text: 'Antwerp Gateway Terminal gate automation upgrade complete! Average truck turnaround times dropped from 48 mins to **19 mins** today. Quayside crane moves per hour up 14%.',
-    likes: 27,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-7',
-    authorUid: 'u-rajesh',
-    author: 'Rajesh Sharma',
-    authorRole: 'Customs Brokerage Lead',
-    authorCompany: 'Gateway CHA & Logistics',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'announcement',
-    time: '9h ago',
-    text: 'Important Customs Advisory: JNPT & Mundra ICEGATE portal scheduled maintenance this Saturday 22:00 to Sunday 04:00 IST. Please file all shipping bills and let-export orders in advance.',
-    likes: 35,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-8',
-    authorUid: 'u-michael',
-    author: 'Michael Zhang',
-    authorRole: 'Asia Procurement Director',
-    authorCompany: 'Pacific Star Shipping',
-    authorTimezone: 'Asia/Shanghai',
-    hasGoldenTick: true,
-    postType: 'rate_info',
-    time: '11h ago',
-    text: 'Ningbo and Shanghai export container availability report:\n- 20DV: Readily available across all depots\n- 40HC: Tight supply at Ningbo-Beilun terminal\n- 40RH (Reefer): High demand for agricultural exports.',
-    likes: 22,
-    dis: 1,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-9',
-    authorUid: 'u-ananya',
-    author: 'Ananya Sen',
-    authorRole: 'Cold Chain Specialist',
-    authorCompany: 'CoolChain Marine',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'logistics_discussion',
-    time: '12h ago',
-    text: 'Temperature logging integrity for pharma exports: Real-time IoT telematics sensors are reducing temperature excursion claims by over 80%. Are shipping lines passing on insurance savings to shippers?',
-    likes: 16,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-10',
-    authorUid: 'u-carlos',
-    author: 'Carlos Mendoza',
-    authorRole: 'Liner Operations VP',
-    authorCompany: 'Mediterranean Shipping Partners',
-    authorTimezone: 'Europe/Madrid',
-    hasGoldenTick: true,
-    postType: 'rate_info',
-    time: '14h ago',
-    text: 'New westbound direct string announced: Chennai → Colombo → Valencia → Barcelona starting October 1st. 16 days transit time with dedicated reefer plugs on every vessel.',
-    likes: 41,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-11',
-    authorUid: 'u-tariq',
-    author: 'Tariq Al-Mansoor',
-    authorRole: 'Logistics Director',
-    authorCompany: 'Gulf Star Cargo Jebel Ali',
-    authorTimezone: 'Asia/Dubai',
-    hasGoldenTick: false,
-    postType: 'business_update',
-    time: '16h ago',
-    text: 'Jebel Ali bonded transshipment hub expanding dry bulk and container storage by 45,000 sqm. Intermodal customs clearance turnaround under 4 hours for GCC overland dispatch.',
-    likes: 29,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-12',
-    authorUid: 'u-neha',
-    author: 'Neha Verma',
-    authorRole: 'Export Operations Specialist',
-    authorCompany: 'Blue Ocean Logistics',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'general',
-    time: '18h ago',
-    text: 'Mundra to Felixstowe blank sailings notification: Vessel omission on Loop 2 next week. Forwarders with booking confirmations should verify roll-over guarantees with carrier reps immediately.',
-    likes: 23,
-    dis: 1,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-13',
-    authorUid: 'u-david',
-    author: 'David Chen',
-    authorRole: 'Global Compliance Lead',
-    authorCompany: 'Evergreen Marine Corp',
-    authorTimezone: 'Asia/Taipei',
-    hasGoldenTick: true,
-    postType: 'announcement',
-    time: '20h ago',
-    text: 'IMO 2026 Carbon Intensity Indicator (CII) compliance update: 94% of our active fleet has attained A/B rating status through slow steaming and hydrodynamic retrofits.',
-    likes: 38,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-14',
-    authorUid: 'u-sunil',
-    author: 'Capt. Sunil Deshmukh',
-    authorRole: 'Harbour Master & Port Captain',
-    authorCompany: 'Mundra Port Marine Ops',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-    postType: 'business_update',
-    time: '1d ago',
-    text: 'Mundra Port Berth 4 maintenance dredging successfully completed ahead of schedule. Draft restored to 17.5m, allowing unhindered 24,000 TEU ultra-large container vessel berthing.',
-    likes: 47,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-15',
-    authorUid: 'u-fatima',
-    author: 'Fatima Zahra',
-    authorRole: 'Mediterranean Trade Lead',
-    authorCompany: 'North Africa Feeder Line',
-    authorTimezone: 'Africa/Casablanca',
-    hasGoldenTick: false,
-    postType: 'rate_info',
-    time: '1d ago',
-    text: 'Tangier Med to Nhava Sheva transshipment rates updated for Q4: Space allocation open for standard dry containers at competitive spot rates. Contact for allocation breakdown.',
-    likes: 18,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-16',
-    authorUid: 'u-alex',
-    author: 'Alex Van Der Meer',
-    authorRole: 'Container Fleet Coordinator',
-    authorCompany: 'Hapag-Lloyd AG',
-    authorTimezone: 'Europe/Berlin',
-    hasGoldenTick: true,
-    postType: 'business_update',
-    time: '1d ago',
-    text: 'Equipment repositioning bulletin: 3,200 empty 40ft High Cube containers discharging at Nhava Sheva and Pipavav this weekend to alleviate inland depot shortages across Northern India.',
-    likes: 52,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-17',
-    authorUid: 'u-kavita',
-    author: 'Kavita Reddy',
-    authorRole: 'Supply Chain Operations',
-    authorCompany: 'PharmaEx Global',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'logistics_discussion',
-    time: '2d ago',
-    text: 'Sea-Air hybrid logistics through Dubai DWC is saving 9 days vs pure ocean and 42% cost vs direct air for our European pharma consignments. Strong alternative during peak season ocean congestion.',
-    likes: 31,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-18',
-    authorUid: 'u-hans',
-    author: 'Hans Gruber',
-    authorRole: 'Rail Intermodal Coordinator',
-    authorCompany: 'DB Cargo Logistics',
-    authorTimezone: 'Europe/Vienna',
-    hasGoldenTick: false,
-    postType: 'rate_info',
-    time: '2d ago',
-    text: 'Rotterdam - Duisburg - Vienna block train rail services operational with 99.1% punctuality. Intermodal barge options running daily on the Rhine corridor.',
-    likes: 26,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-19',
-    authorUid: 'u-meera',
-    author: 'Meera Joshi',
-    authorRole: 'Commercial Freight Manager',
-    authorCompany: 'Ocean Bridge Logistics',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    postType: 'general',
-    time: '2d ago',
-    text: 'Friendly advice for exporters: Double check VGM (Verified Gross Mass) discrepancy tolerances before gate-in at terminal. Discrepancies above 500kg trigger immediate shut-out notices.',
-    likes: 39,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-20',
-    authorUid: 'u-amit',
-    author: 'Amit Singhania',
-    authorRole: 'ICD Operations Officer',
-    authorCompany: 'Dadri Multimodal Logistics Hub',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-    postType: 'business_update',
-    time: '3d ago',
-    text: 'Dedicated Freight Corridor (DFC) rail transit from ICD Dadri to JNPT has reached consistent 42-hour transit times. Turnaround time for export rake loading down to 6 hours.',
-    likes: 64,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-21',
-    authorUid: 'u-robert',
-    author: 'Robert Taylor',
-    authorRole: 'Chartering Broker',
-    authorCompany: 'Taylor & Sons Marine',
-    authorTimezone: 'Europe/London',
-    hasGoldenTick: false,
-    postType: 'rate_info',
-    time: '3d ago',
-    text: 'Project cargo breakbulk fixture: 450 metric tons power transformers safely loaded at Mumbai for Rotterdam delivery on heavy-lift geared multipurpose vessel.',
-    likes: 21,
-    dis: 0,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-  {
-    id: 'post-22',
-    authorUid: 'u-zoe',
-    author: 'Zoe Christensen',
-    authorRole: 'Sustainability Director',
-    authorCompany: 'Nordic Marine Decarb',
-    authorTimezone: 'Europe/Copenhagen',
-    hasGoldenTick: true,
-    postType: 'announcement',
-    time: '3d ago',
-    text: 'Green methanol bunkering now available at Port of Singapore. Shippers opting for low-carbon voyages receive certified Scope 3 book-and-claim reduction certificates.',
-    likes: 45,
-    dis: 1,
-    liked: false,
-    disliked: false,
-    isSaved: false,
-    comments: [],
-  },
-];
+const SEED_POSTS: FeedPost[] = [];
 
 const SEED_JOBS: JobPost[] = [
   {
@@ -1721,6 +1263,9 @@ interface DataContextType {
   editPost: (postId: string | number, newText: string) => void;
   deletePost: (postId: string | number) => void;
   reactPost: (postId: string | number, reaction: 'like' | 'dis') => void;
+  togglePostSupport: (postId: string | number) => void;
+  togglePostCritique: (postId: string | number) => void;
+  togglePostAmplify: (postId: string | number) => void;
   savePost: (postId: string | number) => void;
   reportTarget: (
     targetId: string,
@@ -1832,7 +1377,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const savedCases = localStorage.getItem('fr8x_nexus_cases');
       if (savedCases) setCases(JSON.parse(savedCases));
       const savedPosts = localStorage.getItem('fr8x_feed_posts');
-      if (savedPosts) setPosts(JSON.parse(savedPosts));
+      if (savedPosts) {
+        try {
+          const parsed = JSON.parse(savedPosts);
+          if (Array.isArray(parsed)) {
+            const realPosts = parsed.filter((p: any) => {
+              const id = String(p.id || '');
+              const author = String(p.author || '');
+              const isDummyId = /^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id);
+              const isDummyAuthor = [
+                'Priya Nair', 'Sarah Lewis', 'Elena Rostova', 'Kiran Mehta', 'Arjun Rao',
+                'Vikram Patel', 'Rajesh Sharma', 'Michael Zhang', 'Carlos Mendez', 'Carlos Mendoza',
+                'Ananya Deshmukh', 'Ananya Sen', 'Ahmed Al-Mansoor', 'Hannah Schmidt', 'Kenji Tanaka',
+                'Sophie Dubois', 'Fatima Zahra', 'Viktor Lindqvist', 'Amara Okafor', 'Li Wei Chen',
+                'Lucas Silva', 'Dmitri Pavlov', 'Yasmin Khan', 'Zoe Christensen', 'David Chen',
+                'Capt. Sunil Deshmukh', 'Alex Van Der Meer', 'Kavita Reddy', 'Hans Gruber',
+                'Meera Joshi', 'Amit Singhania', 'Robert Taylor'
+              ].includes(author);
+              return !isDummyId && !isDummyAuthor;
+            });
+            setPosts(realPosts);
+            localStorage.setItem('fr8x_feed_posts', JSON.stringify(realPosts));
+          }
+        } catch {}
+      } else {
+        setPosts([]);
+      }
       const savedJobs = localStorage.getItem('fr8x_jobs');
       if (savedJobs) setJobs(JSON.parse(savedJobs));
       const savedAuctions = localStorage.getItem('fr8x_auctions');
@@ -2055,6 +1625,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       dis: 0,
       liked: false,
       disliked: false,
+      supportCount: 0,
+      critiqueCount: 0,
+      amplifyCount: 0,
+      isSupported: false,
+      isCritiqued: false,
+      isAmplified: false,
       isSaved: false,
       comments: [],
       createdAt: now,
@@ -2104,17 +1680,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const updatedPost: FeedPost = {
-      ...target,
-      text: newText.trim(),
-      updatedAt: new Date().toISOString(),
-    };
+    setPosts((prev) => {
+      const next = prev.map((p) => (String(p.id) === String(postId) ? { ...p, text: newText.trim(), updatedAt: new Date().toISOString() } : p));
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
 
-    setPosts((prev) =>
-      prev.map((p) => (String(p.id) === String(postId) ? updatedPost : p))
-    );
-    upsertPostInDB(updatedPost).catch(() => {});
-    toast('Post updated successfully.');
+    const updated = { ...target, text: newText.trim(), updatedAt: new Date().toISOString() };
+    queueAction('edit_post', updated, user.uid);
+    upsertPostInDB(updated).catch(() => {});
+    toast('Post updated.');
   };
 
   const deletePost = (postId: string | number) => {
@@ -2165,6 +1740,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
       return next;
     });
+  };
+
+  const togglePostSupport = (postId: string | number) => {
+    setPosts((prev) => {
+      const next = prev.map((p) => {
+        if (String(p.id) !== String(postId)) return p;
+        const isSupported = !p.isSupported;
+        const currentCount = typeof p.supportCount === 'number' ? p.supportCount : 0;
+        const supportCount = isSupported ? currentCount + 1 : Math.max(0, currentCount - 1);
+        const updated = { ...p, isSupported, supportCount };
+        upsertPostInDB(updated).catch(() => {});
+        return updated;
+      });
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const togglePostCritique = (postId: string | number) => {
+    setPosts((prev) => {
+      const next = prev.map((p) => {
+        if (String(p.id) !== String(postId)) return p;
+        const isCritiqued = !p.isCritiqued;
+        const currentCount = typeof p.critiqueCount === 'number' ? p.critiqueCount : 0;
+        const critiqueCount = isCritiqued ? currentCount + 1 : Math.max(0, currentCount - 1);
+        const updated = { ...p, isCritiqued, critiqueCount };
+        upsertPostInDB(updated).catch(() => {});
+        return updated;
+      });
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const togglePostAmplify = (postId: string | number) => {
+    setPosts((prev) => {
+      const next = prev.map((p) => {
+        if (String(p.id) !== String(postId)) return p;
+        const isAmplified = !p.isAmplified;
+        const currentCount = typeof p.amplifyCount === 'number' ? p.amplifyCount : 0;
+        const amplifyCount = isAmplified ? currentCount + 1 : Math.max(0, currentCount - 1);
+        const updated = { ...p, isAmplified, amplifyCount };
+        upsertPostInDB(updated).catch(() => {});
+        return updated;
+      });
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast('Post amplified to your enterprise freight network.');
   };
 
   const savePost = (postId: string | number) => {
@@ -3114,6 +2738,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         editPost,
         deletePost,
         reactPost,
+        togglePostSupport,
+        togglePostCritique,
+        togglePostAmplify,
         savePost,
         reportTarget,
         reports,

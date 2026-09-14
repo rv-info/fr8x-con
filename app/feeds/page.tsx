@@ -87,68 +87,7 @@ interface WorkspaceContact {
   email: string;
 }
 
-const WORKSPACE_CONTACTS: WorkspaceContact[] = [
-  {
-    id: 'c-1',
-    uid: 'u-sarah',
-    name: 'Sarah Jenkins',
-    role: 'Ocean Freight Lead',
-    company: 'Maersk Line',
-    isOnline: true,
-    hasGoldenTick: true,
-    email: 'sarah.j@maersk.com',
-  },
-  {
-    id: 'c-2',
-    uid: 'u-kiran',
-    name: 'Capt. Kiran Rao',
-    role: 'VP Line Operations',
-    company: 'Hapag-Lloyd AG',
-    isOnline: true,
-    hasGoldenTick: true,
-    email: 'kiran.rao@hapag-lloyd.com',
-  },
-  {
-    id: 'c-3',
-    uid: 'u-priya',
-    name: 'Priya Nair',
-    role: 'Maritime Trade Specialist',
-    company: 'Nair Cargo Solutions',
-    isOnline: false,
-    hasGoldenTick: true,
-    email: 'priya@naircargo.com',
-  },
-  {
-    id: 'c-4',
-    uid: 'u-david',
-    name: 'David Chen',
-    role: 'Head of Global Liner Services',
-    company: 'COSCO Shipping',
-    isOnline: true,
-    hasGoldenTick: false,
-    email: 'd.chen@cosco.com',
-  },
-  {
-    id: 'c-5',
-    uid: 'u-rajiv',
-    name: 'Rajiv Mehta',
-    role: 'CFS Drayage & Terminal Lead',
-    company: 'Nhava Sheva Terminal',
-    isOnline: true,
-    hasGoldenTick: true,
-    email: 'rajiv.m@nhavasheva.in',
-  },
-  {
-    id: 'c-6',
-    uid: 'u-elena',
-    name: 'Elena Rostova',
-    role: 'Senior Freight Broker',
-    company: 'Hamburg Süd Logistics',
-    isOnline: false,
-    hasGoldenTick: false,
-    email: 'elena.r@hamburgsud.com',
-  },
-];
+const WORKSPACE_CONTACTS: WorkspaceContact[] = [];
 
 // ── In-Feed Sponsored Ads Models & Datasets ─────────────────────────────────
 interface InFeedCompanyAd {
@@ -389,6 +328,9 @@ export default function FeedsPage() {
     addPost,
     editPost,
     deletePost,
+    togglePostSupport,
+    togglePostCritique,
+    togglePostAmplify,
     savePost,
     reportTarget,
     addComment,
@@ -398,7 +340,7 @@ export default function FeedsPage() {
     addJob,
   } = useData();
 
-  const { user } = useAuth();
+  const { user, allUsers } = useAuth();
   const { toast } = useToast();
   const { openChatWith } = useChat();
 
@@ -424,80 +366,50 @@ export default function FeedsPage() {
   const [activeReplyBoxKey, setActiveReplyBoxKey] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState('');
 
-  // Post Reactions: Support, Critique, Discuss, Amplify, Send, Red Flag
-  const [postReactions, setPostReactions] = useState<Record<string, {
-    support: number;
-    critique: number;
-    amplify: number;
-    isSupported: boolean;
-    isCritiqued: boolean;
-    isAmplified: boolean;
-  }>>({
-    'post-1': { support: 18, critique: 2, amplify: 7, isSupported: false, isCritiqued: false, isAmplified: false },
-    'post-2': { support: 24, critique: 1, amplify: 12, isSupported: false, isCritiqued: false, isAmplified: false },
-    'post-3': { support: 9, critique: 3, amplify: 4, isSupported: false, isCritiqued: false, isAmplified: false },
-    'post-4': { support: 31, critique: 0, amplify: 15, isSupported: false, isCritiqued: false, isAmplified: false },
-  });
+  // Dynamic Workspace Contacts from real registered users
+  const workspaceContacts: WorkspaceContact[] = React.useMemo(() => {
+    return (allUsers || [])
+      .filter((u) => u.uid && u.uid !== user.uid)
+      .map((u) => ({
+        id: `c-${u.uid}`,
+        uid: u.uid,
+        name: u.displayName || `${u.firstName} ${u.lastName}`.trim() || u.email,
+        role: u.designation || 'Freight Professional',
+        company: u.company || 'Enterprise Member',
+        isOnline: false,
+        hasGoldenTick: Boolean(u.hasGoldenTick),
+        email: u.email,
+      }));
+  }, [allUsers, user.uid]);
 
-  const getReactions = (postId: string | number) => {
-    const key = String(postId);
-    return postReactions[key] || {
-      support: 8,
-      critique: 1,
-      amplify: 3,
-      isSupported: false,
-      isCritiqued: false,
-      isAmplified: false,
+  // Post Reactions: Real dynamic Support, Critique, Amplify logic
+  const getReactions = (postOrId: FeedPost | string | number) => {
+    let post: FeedPost | undefined;
+    if (typeof postOrId === 'object' && postOrId !== null) {
+      post = postOrId as FeedPost;
+    } else {
+      post = posts.find((p) => String(p.id) === String(postOrId));
+    }
+    return {
+      support: post && typeof post.supportCount === 'number' ? post.supportCount : 0,
+      critique: post && typeof post.critiqueCount === 'number' ? post.critiqueCount : 0,
+      amplify: post && typeof post.amplifyCount === 'number' ? post.amplifyCount : 0,
+      isSupported: Boolean(post?.isSupported),
+      isCritiqued: Boolean(post?.isCritiqued),
+      isAmplified: Boolean(post?.isAmplified),
     };
   };
 
   const handleToggleSupport = (postId: string | number) => {
-    const key = String(postId);
-    setPostReactions((prev) => {
-      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
-      const isSupported = !current.isSupported;
-      return {
-        ...prev,
-        [key]: {
-          ...current,
-          isSupported,
-          support: isSupported ? current.support + 1 : Math.max(0, current.support - 1),
-        },
-      };
-    });
+    togglePostSupport(postId);
   };
 
   const handleToggleCritique = (postId: string | number) => {
-    const key = String(postId);
-    setPostReactions((prev) => {
-      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
-      const isCritiqued = !current.isCritiqued;
-      return {
-        ...prev,
-        [key]: {
-          ...current,
-          isCritiqued,
-          critique: isCritiqued ? current.critique + 1 : Math.max(0, current.critique - 1),
-        },
-      };
-    });
+    togglePostCritique(postId);
   };
 
   const handleAmplify = (postId: string | number) => {
-    const key = String(postId);
-    setPostReactions((prev) => {
-      const current = prev[key] || { support: 8, critique: 1, amplify: 3, isSupported: false, isCritiqued: false, isAmplified: false };
-      const isAmplified = !current.isAmplified;
-      return {
-        ...prev,
-        [key]: {
-          ...current,
-          isAmplified,
-          amplify: isAmplified ? current.amplify + 1 : Math.max(0, current.amplify - 1),
-        },
-      };
-    });
-    toast('Post amplified to your enterprise freight network.');
+    togglePostAmplify(postId);
   };
 
   const handleSendPost = (post: FeedPost) => {
@@ -622,8 +534,8 @@ export default function FeedsPage() {
   // Book Advertisement Space State
   const [showBookAdModal, setShowBookAdModal] = useState(false);
   const [activeAdSlot, setActiveAdSlot] = useState<number>(1);
-  const [adBusinessName, setAdBusinessName] = useState(user.company || 'Atlas Logistics Pvt. Ltd.');
-  const [adContactEmail, setAdContactEmail] = useState(user.email || 'arjun@atlaslogistics.com');
+  const [adBusinessName, setAdBusinessName] = useState(user.company || '');
+  const [adContactEmail, setAdContactEmail] = useState(user.email || '');
   const [adHeadline, setAdHeadline] = useState('');
   const [adDescription, setAdDescription] = useState('');
   const [adDestUrl, setAdDestUrl] = useState('https://');
@@ -661,9 +573,9 @@ export default function FeedsPage() {
       contactEmail: adContactEmail.trim(),
       headline: adHeadline.trim(),
       description: adDescription.trim(),
-      destUrl: adDestUrl.trim() || 'https://fr8x.in',
+      destUrl: adDestUrl.trim(),
       creativeUrl: adCreativePreview || undefined,
-      duration: adCampaignDuration === '2days' ? '2 days' : '10 days',
+      duration: adCampaignDuration,
       cost: adCost,
     };
 
@@ -683,27 +595,27 @@ export default function FeedsPage() {
 
   // Filtered Contacts for the Send Modal (Requirement 4)
   const filteredSendContacts = React.useMemo(() => {
-    if (!sendContactSearch.trim()) return WORKSPACE_CONTACTS;
+    if (!sendContactSearch.trim()) return workspaceContacts;
     const q = sendContactSearch.toLowerCase();
-    return WORKSPACE_CONTACTS.filter(
+    return workspaceContacts.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.company.toLowerCase().includes(q) ||
         c.role.toLowerCase().includes(q)
     );
-  }, [sendContactSearch]);
+  }, [sendContactSearch, workspaceContacts]);
 
   // Filtered Contacts for the Left Rail (Requirement 5)
   const displayedRailContacts = React.useMemo(() => {
-    if (!contactRailSearch.trim()) return WORKSPACE_CONTACTS;
+    if (!contactRailSearch.trim()) return workspaceContacts;
     const q = contactRailSearch.toLowerCase();
-    return WORKSPACE_CONTACTS.filter(
+    return workspaceContacts.filter(
       (c) =>
         c.name.toLowerCase().includes(q) ||
         c.company.toLowerCase().includes(q) ||
         c.role.toLowerCase().includes(q)
     );
-  }, [contactRailSearch]);
+  }, [contactRailSearch, workspaceContacts]);
 
   // 1. Two-Stage Candidate Retrieval & Personalized Hybrid Ranking
   const rankedFeedPosts = React.useMemo(() => {
@@ -841,7 +753,7 @@ export default function FeedsPage() {
               <label>Business name <span className="req">*</span></label>
               <input
                 className="input"
-                placeholder="Atlas Logistics Pvt. Ltd."
+                placeholder="e.g. Your Enterprise Logistics Co."
                 value={adBusinessName}
                 onChange={(e) => setAdBusinessName(e.target.value)}
                 required
@@ -853,7 +765,7 @@ export default function FeedsPage() {
               <input
                 className="input"
                 type="email"
-                placeholder="arjun@atlaslogistics.com"
+                placeholder="e.g. contact@yourcompany.com"
                 value={adContactEmail}
                 onChange={(e) => setAdContactEmail(e.target.value)}
                 required
@@ -1300,12 +1212,12 @@ export default function FeedsPage() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}>
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
-              <span>{user.mobile || '+91 98111 22334'}</span>
+              <span>{user.mobile || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
               <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : 'JNPT Nhava Sheva Terminal')}
+                {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
               </span>
             </div>
 
@@ -1369,7 +1281,7 @@ export default function FeedsPage() {
               <UserCheck size={13} color="var(--brand)" /> Added Contacts
             </b>
             <span className="badge" style={{ fontSize: '9.5px', fontWeight: 700 }}>
-              {WORKSPACE_CONTACTS.length} Added
+              {workspaceContacts.length} Added
             </span>
           </div>
           <div style={{ padding: '8px' }}>
@@ -1396,7 +1308,12 @@ export default function FeedsPage() {
 
             {/* Scrollable list of verified trade contacts */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '260px', overflowY: 'auto' }}>
-              {displayedRailContacts.map((contact) => (
+              {displayedRailContacts.length === 0 ? (
+                <div style={{ padding: '16px 8px', textAlign: 'center', fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                  No contacts added yet
+                </div>
+              ) : (
+                displayedRailContacts.map((contact) => (
                 <div
                   key={contact.id}
                   style={{
@@ -1487,7 +1404,8 @@ export default function FeedsPage() {
                     <MessageCircle size={11} />
                   </button>
                 </div>
-              ))}
+              ))
+              )}
             </div>
 
             {/* View All & Manage Contacts trigger */}
@@ -1913,7 +1831,7 @@ export default function FeedsPage() {
 
                 {/* Post Action Buttons: Support, Critique, Discuss, Amplify, Send, Red Flag, Save */}
                 {(() => {
-                  const reactions = getReactions(post.id);
+                  const reactions = getReactions(post);
                   return (
                     <div className="post-actions-bar" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--fr8x-outline)', flexWrap: 'wrap' }}>
                       {/* 1. Support */}
@@ -2873,89 +2791,96 @@ export default function FeedsPage() {
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
-              {WORKSPACE_CONTACTS.map((contact) => (
-                <div
-                  key={contact.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '8px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                    background: '#ffffff',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ position: 'relative' }}>
-                      <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
-                        {(contact as any).avatarUrl ? (
-                          <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
-                            {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
-                          </div>
+              {workspaceContacts.length === 0 ? (
+                <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--fr8x-muted)' }}>
+                  No contacts found in your enterprise freight network. Connect with colleagues or trade partners to view them here.
+                </div>
+              ) : (
+                workspaceContacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                      background: '#ffffff',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ position: 'relative' }}>
+                        <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
+                          {(contact as any).avatarUrl ? (
+                            <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                              {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
+                            </div>
+                          )}
+                        </div>
+                        {contact.isOnline && (
+                          <span
+                            style={{
+                              position: 'absolute',
+                              bottom: 0,
+                              right: 0,
+                              width: '8px',
+                              height: '8px',
+                              borderRadius: '50%',
+                              background: '#16a34a',
+                              border: '1.5px solid #ffffff',
+                            }}
+                            title="Online"
+                          />
                         )}
                       </div>
-                      {contact.isOnline && (
-                        <span
-                          style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            right: 0,
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            background: '#16a34a',
-                            border: '1.5px solid #ffffff',
+
+                      <div>
+                        <b
+                          onClick={() => {
+                            setShowManageContactsModal(false);
+                            setSelectedProfileName(contact.name);
                           }}
-                          title="Online"
-                        />
-                      )}
+                          style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          {contact.name}
+                          {contact.hasGoldenTick && <GoldenTick size={12} />}
+                        </b>
+                        <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
+                          {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
+                        </small>
+                      </div>
                     </div>
-                    <div>
-                      <b
+
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        className="btn secondary sm"
                         onClick={() => {
                           setShowManageContactsModal(false);
                           setSelectedProfileName(contact.name);
                         }}
-                        style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        style={{ fontSize: '10.5px' }}
                       >
-                        {contact.name}
-                        {contact.hasGoldenTick && <GoldenTick size={12} />}
-                      </b>
-                      <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
-                        {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
-                      </small>
+                        Profile
+                      </button>
+                      <button
+                        type="button"
+                        className="btn primary sm"
+                        onClick={() => {
+                          setShowManageContactsModal(false);
+                          openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
+                        }}
+                        style={{ fontSize: '10.5px' }}
+                      >
+                        <MessageCircle size={11} /> Chat
+                      </button>
                     </div>
                   </div>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      className="btn secondary sm"
-                      onClick={() => {
-                        setShowManageContactsModal(false);
-                        setSelectedProfileName(contact.name);
-                      }}
-                      style={{ fontSize: '10.5px' }}
-                    >
-                      Profile
-                    </button>
-                    <button
-                      type="button"
-                      className="btn primary sm"
-                      onClick={() => {
-                        setShowManageContactsModal(false);
-                        openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
-                      }}
-                      style={{ fontSize: '10.5px' }}
-                    >
-                      <MessageCircle size={11} /> Chat
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>

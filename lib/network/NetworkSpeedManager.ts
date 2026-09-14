@@ -12,7 +12,7 @@ export interface NetworkConnectionInfo {
 
 export interface QueuedOfflineAction {
   id: string;
-  actionType: 'like_post' | 'save_post' | 'add_comment' | 'create_post' | 'read_receipt' | 'rate_bookmark';
+  actionType: 'like_post' | 'save_post' | 'add_comment' | 'create_post' | 'edit_post' | 'read_receipt' | 'rate_bookmark';
   payload: any;
   actorUid: string;
   createdAt: string;

@@ -307,7 +307,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const updated = { ...currentUser, ...updatedFields };
     setCurrentUser(updated);
     setAllUsers((list) => {
-      const next = list.map((u) => (u.uid === updated.uid ? updated : u));
+      const exists = list.some((u) => u.uid === updated.uid);
+      const next = exists ? list.map((u) => (u.uid === updated.uid ? updated : u)) : [updated, ...list];
       try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
@@ -345,44 +346,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(LAST_ACTIVITY_KEY);
     } catch {}
 
-    // Build user profile from server-returned data
+    // Find any existing locally stored profile for this user to preserve customizations
+    const existingLocal = allUsers.find(
+      (u) =>
+        u.uid === serverVerifiedUser.uid ||
+        (u.email && u.email.toLowerCase() === (serverVerifiedUser.email || identifier).toLowerCase())
+    );
+
+    // Build user profile from server-returned data and merge with existing local customizations
     const serverUser = serverVerifiedUser;
     const found: UserProfile = {
       uid: serverUser.uid!,
       email: serverUser.email || identifier,
-      firstName: serverUser.firstName || serverUser.displayName?.split(' ')[0] || 'User',
-      lastName: serverUser.lastName || serverUser.displayName?.split(' ').slice(1).join(' ') || '',
-      displayName: serverUser.displayName || identifier,
-      designation: serverUser.designation || 'Freight Procurement Manager',
-      company: serverUser.company || 'Enterprise Logistics Co.',
-      companyId: serverUser.companyId || 'CMP-00000',
-      city: serverUser.city || '',
-      state: serverUser.state || '',
-      country: serverUser.country || '',
-      mobile: serverUser.mobile || '',
-      timezone: serverUser.timezone || 'Asia/Kolkata',
-      preferredContactMethod: serverUser.preferredContactMethod || 'tradeChat',
-      contactAvailability: serverUser.contactAvailability || '09:00 - 18:00',
-      plan: serverUser.plan || 'trial',
-      hasGoldenTick: serverUser.hasGoldenTick || false,
-      isVerified: serverUser.isVerified ?? serverUser.email_verified ?? true,
-      email_verified: serverUser.email_verified ?? serverUser.isVerified ?? true,
-      role: serverUser.role || 'user',
+      firstName: serverUser.firstName || existingLocal?.firstName || serverUser.displayName?.split(' ')[0] || 'User',
+      lastName: serverUser.lastName || existingLocal?.lastName || serverUser.displayName?.split(' ').slice(1).join(' ') || '',
+      displayName: serverUser.displayName || existingLocal?.displayName || identifier,
+      designation: serverUser.designation || existingLocal?.designation || '',
+      company: serverUser.company || existingLocal?.company || '',
+      companyId: serverUser.companyId || existingLocal?.companyId || 'CMP-00000',
+      city: serverUser.city || existingLocal?.city || '',
+      state: serverUser.state || existingLocal?.state || '',
+      country: serverUser.country || existingLocal?.country || '',
+      formattedAddress: (serverUser as any).formattedAddress || existingLocal?.formattedAddress || '',
+      mobile: serverUser.mobile || existingLocal?.mobile || '',
+      timezone: serverUser.timezone || existingLocal?.timezone || 'Asia/Kolkata',
+      preferredContactMethod: serverUser.preferredContactMethod || existingLocal?.preferredContactMethod || 'tradeChat',
+      contactAvailability: serverUser.contactAvailability || existingLocal?.contactAvailability || '09:00 - 18:00',
+      plan: serverUser.plan || existingLocal?.plan || 'trial',
+      hasGoldenTick: serverUser.hasGoldenTick ?? existingLocal?.hasGoldenTick ?? false,
+      isVerified: serverUser.isVerified ?? serverUser.email_verified ?? existingLocal?.isVerified ?? true,
+      email_verified: serverUser.email_verified ?? serverUser.isVerified ?? existingLocal?.email_verified ?? true,
+      role: serverUser.role || existingLocal?.role || 'user',
+      avatarUrl: (serverUser as any).avatarUrl || existingLocal?.avatarUrl || '',
+      companyLogoUrl: (serverUser as any).companyLogoUrl || existingLocal?.companyLogoUrl || '',
+      summary: (serverUser as any).summary || existingLocal?.summary || '',
+      gstn: (serverUser as any).gstn || existingLocal?.gstn || '',
+      pan: (serverUser as any).pan || existingLocal?.pan || '',
+      iec: (serverUser as any).iec || existingLocal?.iec || '',
+      mto: (serverUser as any).mto || existingLocal?.mto || '',
     };
 
     // Upsert profile into local list (no passwords stored)
-    setAllUsers((prev) => [
-      found,
-      ...prev.filter((u) => u.uid !== found.uid && u.email.toLowerCase() !== found.email.toLowerCase()),
-    ]);
+    setAllUsers((prev) => {
+      const next = [
+        found,
+        ...prev.filter((u) => u.uid !== found.uid && u.email.toLowerCase() !== found.email.toLowerCase()),
+      ];
+      try {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
 
     setCurrentUser(found);
     setUserStatus('available');
 
     const now = Date.now().toString();
     try {
-      // Persist only the user profile and session timestamps — never a password
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([found]));
       localStorage.setItem(ACTIVE_SESSION_KEY, found.uid);
       localStorage.setItem(STATUS_KEY, 'available');
       localStorage.setItem(SESSION_START_KEY, now);

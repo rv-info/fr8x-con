@@ -76,6 +76,13 @@ export async function POST(req: NextRequest) {
       companyId: user.companyId,
       role: user.role,
       status: user.status,
+      mobile: user.mobile || '',
+      designation: (user as any).designation || '',
+      city: (user as any).city || '',
+      state: (user as any).state || '',
+      country: (user as any).country || '',
+      formattedAddress: (user as any).formattedAddress || '',
+      timezone: (user as any).timezone || '',
     });
 
     // Cryptographically signed httpOnly session cookie
