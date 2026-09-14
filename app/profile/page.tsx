@@ -6,6 +6,7 @@ import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { GoldenTick } from '@/components/ui/GoldenTick';
+import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 import {
   ProfileExperience,
   ProfileEducation,
@@ -87,6 +88,9 @@ export default function ProfilePage() {
 
   // Active Tab: overview | experience_edu | kyc | scorecard | privacy
   const [activeTab, setActiveTab] = useState<'overview' | 'experience_edu' | 'kyc' | 'scorecard' | 'privacy'>('overview');
+
+  // Preview Passport Modal
+  const [showPassportPreview, setShowPassportPreview] = useState(false);
 
   // Basic Profile State
   const [firstName, setFirstName] = useState(user.firstName || '');
@@ -1263,9 +1267,23 @@ export default function ProfilePage() {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <h1 style={{ margin: 0 }}>Enterprise Member Identity &amp; Freight Passport</h1>
-            <span className="badge green" style={{ fontSize: '10.5px' }}>
-              <ShieldCheck size={12} /> Level 3 Verified
-            </span>
+            {user.kycStatus === 'verified' ? (
+              <span className="badge green" style={{ fontSize: '10.5px' }}>
+                <ShieldCheck size={12} /> KYC Verified
+              </span>
+            ) : user.kycStatus === 'pending' ? (
+              <span className="badge blue" style={{ fontSize: '10.5px' }}>
+                <ShieldCheck size={12} /> KYC Review Pending
+              </span>
+            ) : user.kycStatus === 'rejected' ? (
+              <span className="badge red" style={{ fontSize: '10.5px' }}>
+                <ShieldCheck size={12} /> KYC Action Required
+              </span>
+            ) : (
+              <span className="badge gray" style={{ fontSize: '10.5px' }}>
+                <ShieldCheck size={12} /> Standard Member
+              </span>
+            )}
             <span className="badge blue" style={{ fontSize: '10.5px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Building2 size={12} /> Ref: {companyRefNo}
             </span>
@@ -1275,6 +1293,13 @@ export default function ProfilePage() {
           </p>
         </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button
+            className="btn secondary cursor-pointer"
+            onClick={() => setShowPassportPreview(true)}
+            title="Preview how other freight network members view your verified passport"
+          >
+            <Eye size={14} /> Preview Passport
+          </button>
           <button
             className="btn secondary"
             onClick={() => {
@@ -1314,6 +1339,12 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
+
+      {/* Verified Enterprise Logistics Passport Preview Modal */}
+      <ProfilePreviewModal
+        isOpen={showPassportPreview}
+        onClose={() => setShowPassportPreview(false)}
+      />
 
       {/* Corporate Transfer Status Banner if Pending Godfather Review */}
       {user.companyTransferStatus === 'pending_godfather_approval' && (

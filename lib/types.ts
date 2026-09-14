@@ -95,6 +95,9 @@ export interface UserProfile {
   specializations?: string[];
   skills?: string[];
   languages?: string[];
+  keyTradeLanes?: string[];
+  teuVolumeYear?: string;
+  trustScore?: number;
   trialUsedYear?: number;
   // Professional business information & Multi-Jurisdiction Statutory Filings
   gstn?: string;
