@@ -59,11 +59,13 @@ export default function NexusPage() {
     reportTarget,
     reviews,
     addReview,
+    updateReviewRemark,
     reactReviewRemark,
     cases,
     addCase,
     agreeCase,
     disputeCase,
+    masterCarriers,
   } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -128,6 +130,69 @@ export default function NexusPage() {
   const [caseSeverity, setCaseSeverity] = useState<'moderate' | 'high' | 'critical'>('high');
   const [caseDescription, setCaseDescription] = useState('');
   const [caseEvidence, setCaseEvidence] = useState('');
+  const [companySearchOpen, setCompanySearchOpen] = useState(false);
+
+  // Peer Remarks Editing State
+  const [editingRemark, setEditingRemark] = useState<{
+    companyId: string;
+    remarkId: string;
+    rating: number;
+    text: string;
+  } | null>(null);
+
+  // Aggregated known companies from Disputed Blacklist Cases, Company Reviews, and Master Carriers
+  const knownCompanies = React.useMemo(() => {
+    const map = new Map<string, { name: string; location: string; source: string }>();
+
+    // 1. Existing Disputed Blacklist Cases
+    cases.forEach((c) => {
+      if (c.companyName?.trim()) {
+        const key = c.companyName.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            name: c.companyName.trim(),
+            location: c.location || 'Global Logistics Hub',
+            source: 'Disputed Record',
+          });
+        }
+      }
+    });
+
+    // 2. Company Reviews Directory
+    reviews.forEach((r) => {
+      if (r.companyName?.trim()) {
+        const key = r.companyName.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            name: r.companyName.trim(),
+            location: r.location || 'Global Trade Center',
+            source: 'Directory Profile',
+          });
+        }
+      }
+    });
+
+    // 3. Master Carriers
+    (masterCarriers || []).forEach((mc) => {
+      if (mc.name?.trim()) {
+        const key = mc.name.trim().toLowerCase();
+        if (!map.has(key)) {
+          map.set(key, {
+            name: mc.name.trim(),
+            location: mc.country ? `${mc.country} (Carrier Line)` : 'Global Maritime Hub',
+            source: 'Verified Carrier',
+          });
+        }
+      }
+    });
+
+    return Array.from(map.values());
+  }, [cases, reviews, masterCarriers]);
+
+  const filteredKnownCompanies = knownCompanies.filter((c) =>
+    c.name.toLowerCase().includes(caseCompany.trim().toLowerCase()) ||
+    c.location.toLowerCase().includes(caseCompany.trim().toLowerCase())
+  );
 
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
 
@@ -1234,22 +1299,143 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
         >
           <form onSubmit={handleCreateCase} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div className="grid g2">
-              <div className="field">
+              <div className="field" style={{ position: 'relative' }}>
                 <label>Reported Company Name <span className="req">*</span></label>
-                <input
-                  className="input"
-                  placeholder="e.g. Apex Global Logistics"
-                  value={caseCompany}
-                  onChange={(e) => setCaseCompany(e.target.value)}
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    placeholder="Search or enter company name..."
+                    value={caseCompany}
+                    onChange={(e) => {
+                      setCaseCompany(e.target.value);
+                      setCompanySearchOpen(true);
+                    }}
+                    onFocus={() => setCompanySearchOpen(true)}
+                    required
+                  />
+                  {caseCompany && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setCaseCompany('');
+                        setCaseLocation('');
+                      }}
+                      style={{
+                        position: 'absolute',
+                        right: '8px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--mut)',
+                      }}
+                    >
+                      <XCircle size={13} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Searchable Combobox Dropdown */}
+                {companySearchOpen && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      zIndex: 100,
+                      background: '#ffffff',
+                      border: '1.5px solid var(--brand)',
+                      borderRadius: '6px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      maxHeight: '220px',
+                      overflowY: 'auto',
+                      marginTop: '4px',
+                    }}
+                  >
+                    <div style={{ padding: '6px 10px', background: '#f8fafc', borderBottom: '1px solid var(--line)', fontSize: '10.5px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
+                      Disputed &amp; Verified Company Records
+                    </div>
+                    {filteredKnownCompanies.length === 0 ? (
+                      <div
+                        style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => setCompanySearchOpen(false)}
+                      >
+                        <Plus size={12} /> Add <b>&quot;{caseCompany}&quot;</b> as New Entity
+                      </div>
+                    ) : (
+                      <>
+                        {filteredKnownCompanies.map((comp) => (
+                          <div
+                            key={comp.name}
+                            onClick={() => {
+                              setCaseCompany(comp.name);
+                              setCaseLocation(comp.location);
+                              setCompanySearchOpen(false);
+                            }}
+                            style={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              borderBottom: '1px solid #f1f5f9',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              fontSize: '12.5px',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = '#eff6ff')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                          >
+                            <div>
+                              <b style={{ color: 'var(--ink)', display: 'block' }}>{comp.name}</b>
+                              <small style={{ color: 'var(--mut)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <MapPin size={10} /> {comp.location}
+                              </small>
+                            </div>
+                            <span
+                              className={`badge ${comp.source === 'Disputed Record' ? 'red' : 'blue'}`}
+                              style={{ fontSize: '9px', padding: '1px 5px' }}
+                            >
+                              {comp.source}
+                            </span>
+                          </div>
+                        ))}
+                        {caseCompany.trim() && !filteredKnownCompanies.some((c) => c.name.toLowerCase() === caseCompany.trim().toLowerCase()) && (
+                          <div
+                            onClick={() => setCompanySearchOpen(false)}
+                            style={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              background: '#faf5ff',
+                              color: 'var(--brand)',
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                            }}
+                          >
+                            <Plus size={12} /> Add <b>&quot;{caseCompany}&quot;</b> as New Entity
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
+
               <div className="field">
-                <label>Company Location</label>
-                <input
-                  className="input"
-                  value={caseLocation}
-                  onChange={(e) => setCaseLocation(e.target.value)}
-                />
+                <label>Company Location <small style={{ color: 'var(--brand)', fontWeight: 'normal' }}>(Auto-filled)</small></label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    className="input"
+                    placeholder="e.g. Singapore / Mumbai, India"
+                    value={caseLocation}
+                    onChange={(e) => setCaseLocation(e.target.value)}
+                    required
+                  />
+                  <MapPin size={13} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mut)', pointerEvents: 'none' }} />
+                </div>
               </div>
             </div>
             <div className="grid g2">
@@ -1614,86 +1800,186 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                         </div>
                       )}
 
-                      {review.recentReviews.map((r) => (
-                        <div
-                          key={r.id}
-                          style={{
-                            padding: '10px 12px',
-                            borderLeft: '3px solid var(--brand)',
-                            background: '#f8fafc',
-                            borderRadius: '4px',
-                            fontSize: '12px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                          }}
-                        >
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <b>{r.author}</b>
-                              {r.verified && (
-                                <span className="badge green" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
-                                  VERIFIED
+                      {review.recentReviews.map((r) => {
+                        const isRemarkAuthor = Boolean(
+                          (r.authorUid && user?.uid && r.authorUid === user.uid) ||
+                          (r.author && user?.displayName && r.author.trim().toLowerCase() === user.displayName.trim().toLowerCase()) ||
+                          (r.author && (user as any)?.name && r.author.trim().toLowerCase() === (user as any).name.trim().toLowerCase())
+                        );
+                        const isEditingThisRemark = editingRemark?.companyId === review.id && editingRemark?.remarkId === r.id;
+
+                        if (isEditingThisRemark) {
+                          return (
+                            <div
+                              key={r.id}
+                              style={{
+                                padding: '12px 14px',
+                                border: '1.5px solid var(--brand)',
+                                background: '#f0f9ff',
+                                borderRadius: '6px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '8px',
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--brand)' }}>
+                                  Edit Your Verified Remark
                                 </span>
-                              )}
-                              <span style={{ color: '#e8a020', fontWeight: 700 }}>
-                                {'★'.repeat(r.rating || 5)}
-                              </span>
-                            </div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.date}</small>
-                          </div>
-
-                          <p style={{ margin: '2px 0 4px', color: 'var(--ink)', lineHeight: 1.45 }}>
-                            &quot;{r.text}&quot;
-                          </p>
-
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                            {r.tags && r.tags.length > 0 ? (
-                              <div style={{ display: 'flex', gap: '4px' }}>
-                                {r.tags.map((tag) => (
-                                  <span key={tag} className="badge blue" style={{ fontSize: '9px', padding: '1px 5px' }}>
-                                    {tag}
-                                  </span>
-                                ))}
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                      key={star}
+                                      type="button"
+                                      onClick={() => setEditingRemark((prev) => (prev ? { ...prev, rating: star } : null))}
+                                      style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '15px',
+                                        color: star <= (editingRemark?.rating || 5) ? '#e8a020' : '#cbd5e1',
+                                        padding: '0 1px',
+                                      }}
+                                    >
+                                      ★
+                                    </button>
+                                  ))}
+                                </div>
                               </div>
-                            ) : (
-                              <div />
-                            )}
+                              <textarea
+                                className="input"
+                                rows={3}
+                                value={editingRemark.text}
+                                onChange={(e) => setEditingRemark((prev) => (prev ? { ...prev, text: e.target.value } : null))}
+                                style={{ fontSize: '12px', background: '#ffffff', lineHeight: 1.5 }}
+                                placeholder="Update your authentic trade experience..."
+                              />
+                              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  className="btn secondary sm"
+                                  onClick={() => setEditingRemark(null)}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn primary sm"
+                                  onClick={() => {
+                                    if (!editingRemark.text.trim()) {
+                                      toast('Remark text cannot be empty.');
+                                      return;
+                                    }
+                                    updateReviewRemark(review.id, r.id, editingRemark.rating, editingRemark.text.trim());
+                                    setEditingRemark(null);
+                                  }}
+                                >
+                                  <Check size={11} /> Save Changes
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
 
-                            {/* Like / Helpful Reaction Buttons (Requirement 10) */}
-                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                              <button
-                                type="button"
-                                className="btn secondary sm"
-                                style={{
-                                  fontSize: '10.5px',
-                                  padding: '2px 6px',
-                                  background: r.liked ? '#eff6ff' : '#ffffff',
-                                  color: r.liked ? 'var(--brand)' : 'var(--ink-secondary)',
-                                }}
-                                onClick={() => reactReviewRemark(review.id, r.id, 'like')}
-                                title="Mark as helpful remark"
-                              >
-                                <ThumbsUp size={11} /> Helpful ({r.likes || 0})
-                              </button>
-                              <button
-                                type="button"
-                                className="btn secondary sm"
-                                style={{
-                                  fontSize: '10.5px',
-                                  padding: '2px 6px',
-                                  background: r.disliked ? '#fef2f2' : '#ffffff',
-                                  color: r.disliked ? 'var(--red)' : 'var(--mut)',
-                                }}
-                                onClick={() => reactReviewRemark(review.id, r.id, 'dis')}
-                                title="Mark as unhelpful"
-                              >
-                                <ThumbsDown size={11} /> ({r.dis || 0})
-                              </button>
+                        return (
+                          <div
+                            key={r.id}
+                            style={{
+                              padding: '10px 12px',
+                              borderLeft: '3px solid var(--brand)',
+                              background: '#f8fafc',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '4px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <b>{r.author}</b>
+                                {r.verified && (
+                                  <span className="badge green" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                                    VERIFIED
+                                  </span>
+                                )}
+                                <span style={{ color: '#e8a020', fontWeight: 700 }}>
+                                  {'★'.repeat(r.rating || 5)}
+                                </span>
+                                {r.isEdited && (
+                                  <small style={{ color: 'var(--mut)', fontSize: '9.5px', fontStyle: 'italic' }}>
+                                    (Edited)
+                                  </small>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.date}</small>
+                                {isRemarkAuthor && (
+                                  <button
+                                    type="button"
+                                    className="btn secondary sm"
+                                    style={{ fontSize: '10.5px', padding: '1px 6px', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                    onClick={() => setEditingRemark({ companyId: review.id, remarkId: r.id, rating: r.rating || 5, text: r.text })}
+                                    title="Edit your remark"
+                                  >
+                                    <Edit3 size={10} /> Edit
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            <p style={{ margin: '2px 0 4px', color: 'var(--ink)', lineHeight: 1.45 }}>
+                              &quot;{r.text}&quot;
+                            </p>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                              {r.tags && r.tags.length > 0 ? (
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {r.tags.map((tag) => (
+                                    <span key={tag} className="badge blue" style={{ fontSize: '9px', padding: '1px 5px' }}>
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div />
+                              )}
+
+                              {/* Like / Helpful Reaction Buttons (Requirement 10) */}
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  type="button"
+                                  className="btn secondary sm"
+                                  style={{
+                                    fontSize: '10.5px',
+                                    padding: '2px 6px',
+                                    background: r.liked ? '#eff6ff' : '#ffffff',
+                                    color: r.liked ? 'var(--brand)' : 'var(--ink-secondary)',
+                                  }}
+                                  onClick={() => reactReviewRemark(review.id, r.id, 'like')}
+                                  title="Mark as helpful remark"
+                                >
+                                  <ThumbsUp size={11} /> Helpful ({r.likes || 0})
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn secondary sm"
+                                  style={{
+                                    fontSize: '10.5px',
+                                    padding: '2px 6px',
+                                    background: r.disliked ? '#fef2f2' : '#ffffff',
+                                    color: r.disliked ? 'var(--red)' : 'var(--mut)',
+                                  }}
+                                  onClick={() => reactReviewRemark(review.id, r.id, 'dis')}
+                                  title="Mark as unhelpful"
+                                >
+                                  <ThumbsDown size={11} /> ({r.dis || 0})
+                                </button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 );

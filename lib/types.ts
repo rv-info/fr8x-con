@@ -230,13 +230,22 @@ export interface JobPost {
   skills?: string[];
   closingDate?: string;
   postedBy: string;
+  posterName?: string;
   posterUid?: string;
   posterEmail: string;
   showEmailPublicly?: boolean;
   posterTimezone?: string;
   postedDate: string;
-  status: 'active' | 'closed';
+  status: 'active' | 'closed' | 'pending';
   isOwner?: boolean;
+  paymentStatus?: 'paid' | 'pending_verification' | 'pending_payment' | 'waived_promotional' | 'unpaid';
+  paidAmount?: number;
+  paymentMethod?: string;
+  paymentReference?: string;
+  paymentVerifiedAt?: string;
+  paymentVerifiedBy?: string;
+  createdAt?: string;
+  applicantsCount?: number;
 }
 
 export interface PostReport {
@@ -304,6 +313,8 @@ export interface CompanyReview {
     liked?: boolean;
     disliked?: boolean;
     tags?: string[];
+    isEdited?: boolean;
+    editedAt?: string;
   }[];
 }
 
@@ -446,6 +457,12 @@ export interface Auction {
   resultDetail?: string;
   postingFeeINR?: number;
   postingFeeUSD?: number;
+  paymentStatus?: 'paid' | 'pending_verification' | 'pending_payment' | 'waived_promotional' | 'unpaid';
+  paidAmount?: number;
+  paymentMethod?: string;
+  paymentReference?: string;
+  paymentVerifiedAt?: string;
+  paymentVerifiedBy?: string;
   timeline?: AuctionTimelineEvent[];
   shipment: {
     por: string;

@@ -56,6 +56,7 @@ export interface PlatformCommerceConfig {
   feedAdsFeeAmount: number;
   kycFeeEnabled: boolean;
   kycFeeAmount: number;
+  paymentAutomationEnabled: boolean; // Master Automation Switch: When true, verified payment references & gateways auto-confirm and activate listings instantly
   promotionalFeatures: PromotionalFeatureConfig[];
   promotionalAuditLogs: PromotionalAuditLog[];
 }
@@ -103,25 +104,26 @@ export const DEFAULT_PROMOTIONAL_FEATURES: PromotionalFeatureConfig[] = [
     key: 'REVERSE_AUCTION',
     label: 'Reverse Auction Spot Bidding',
     description: 'Submit legally binding container freight bids in real-time digital reverse auctions.',
-    globalStatus: 'free',
-    pricingMode: 'free',
-    priceAmount: 0,
+    globalStatus: 'chargeable',
+    pricingMode: 'fixed',
+    priceAmount: 300,
     currency: 'INR',
     userOverrides: [],
   },
 ];
 
 export const DEFAULT_PLATFORM_CONFIG: PlatformCommerceConfig = {
-  allFreeMode: true,
+  allFreeMode: false,
   requirePaymentCards: false,
-  biddingFeeEnabled: false,
+  biddingFeeEnabled: true,
   biddingFeeAmount: 300,
-  jobPostingFeeEnabled: false,
-  jobPostingFeeAmount: 500,
-  feedAdsFeeEnabled: false,
-  feedAdsFeeAmount: 1200,
+  jobPostingFeeEnabled: true,
+  jobPostingFeeAmount: 300,
+  feedAdsFeeEnabled: true,
+  feedAdsFeeAmount: 1000,
   kycFeeEnabled: false,
   kycFeeAmount: 2500,
+  paymentAutomationEnabled: true,
   promotionalFeatures: DEFAULT_PROMOTIONAL_FEATURES,
   promotionalAuditLogs: [
     {
@@ -131,25 +133,11 @@ export const DEFAULT_PLATFORM_CONFIG: PlatformCommerceConfig = {
       featureKey: 'REVERSE_AUCTION',
       featureLabel: 'Reverse Auction Spot Bidding',
       previousState: 'CHARGEABLE (₹300/bid)',
-      newState: 'FREE (100% Platform Waiver)',
-      pricingInfo: '₹0 (Free Mode)',
+      newState: 'CHARGEABLE (Pay to Post/Bid Enforced)',
+      pricingInfo: '₹300 Standard Listing Tariff',
       scope: 'GLOBAL',
       effectiveDate: '2026-09-01T00:00:00.000Z',
       timestamp: '2026-09-01T10:00:00.000Z',
-    },
-    {
-      id: 'AUD-PROM-002',
-      operatorId: 'tech@fr8x.in',
-      operatorName: 'Godfather Sovereign Tech',
-      featureKey: 'JOB_POSTING',
-      featureLabel: 'Trade Careers Job Posting',
-      previousState: 'GLOBAL CHARGEABLE (₹300)',
-      newState: 'USER OVERRIDE: FREE',
-      pricingInfo: '₹0 Override for Arjun Rao (Atlas Logistics)',
-      scope: 'USER_OVERRIDE',
-      targetUser: 'Arjun Rao (u-arjun)',
-      effectiveDate: '2026-09-01T00:00:00.000Z',
-      timestamp: '2026-09-01T10:15:00.000Z',
     },
   ],
 };
@@ -166,6 +154,7 @@ export function getStoredPlatformConfig(): PlatformCommerceConfig {
       ...DEFAULT_PLATFORM_CONFIG,
       ...parsed,
       allFreeMode: parsed.allFreeMode ?? DEFAULT_PLATFORM_CONFIG.allFreeMode,
+      paymentAutomationEnabled: parsed.paymentAutomationEnabled ?? DEFAULT_PLATFORM_CONFIG.paymentAutomationEnabled,
       promotionalFeatures: parsed.promotionalFeatures || DEFAULT_PROMOTIONAL_FEATURES,
       promotionalAuditLogs: parsed.promotionalAuditLogs || DEFAULT_PLATFORM_CONFIG.promotionalAuditLogs,
     };
@@ -189,11 +178,7 @@ export function saveStoredPlatformConfig(cfg: PlatformCommerceConfig) {
  * When true, registration cards, paywalls, and transaction fees are 100% waived.
  */
 export function isAllFreeActive(config: PlatformCommerceConfig): boolean {
-  if (config.allFreeMode === true) return true;
-  if (config.requirePaymentCards === false && config.biddingFeeEnabled === false) return true;
-  const loginFeature = config.promotionalFeatures?.find((f) => f.key === 'LOGIN');
-  if (loginFeature && loginFeature.globalStatus === 'free' && config.requirePaymentCards === false) return true;
-  return false;
+  return config.allFreeMode === true;
 }
 
 /**
@@ -207,6 +192,14 @@ export function isFeatureFreeForUser(
   featureKey: PromotionalFeatureKey,
   userId?: string
 ): boolean {
+  // Master All-Free bypass
+  if (config.allFreeMode === true) return true;
+
+  // Direct fee enable flags
+  if (featureKey === 'JOB_POSTING' && config.jobPostingFeeEnabled === false) return true;
+  if (featureKey === 'REVERSE_AUCTION' && config.biddingFeeEnabled === false) return true;
+  if (featureKey === 'AD_POSTING' && config.feedAdsFeeEnabled === false) return true;
+
   const feature = config.promotionalFeatures?.find((f) => f.key === featureKey);
   if (!feature) return false;
 
@@ -219,7 +212,7 @@ export function isFeatureFreeForUser(
   }
 
   // 2. Global Platform Rule
-  return feature.globalStatus === 'free';
+  return feature.globalStatus === 'free' || feature.pricingMode === 'free';
 }
 
 export function usePlatformConfig() {
@@ -418,6 +411,11 @@ export function usePlatformConfig() {
     addUserOverride,
     removeUserOverride,
     setAllFreeMode,
+    setPaymentAutomationEnabled: (enabled: boolean) => {
+      const next = { ...config, paymentAutomationEnabled: enabled };
+      setConfig(next);
+      saveStoredPlatformConfig(next);
+    },
     isFeatureFree: (featureKey: PromotionalFeatureKey, userId?: string) =>
       isFeatureFreeForUser(config, featureKey, userId),
   };

@@ -211,8 +211,9 @@ interface DataContextType {
   reactReply: (postId: string | number, commentId: string, replyId: string, reaction: 'like' | 'dis') => void;
   // Jobs
   jobs: JobPost[];
-  addJob: (jobData: Omit<JobPost, 'id' | 'postedDate' | 'postedBy' | 'isOwner' | 'status'>) => void;
+  addJob: (jobData: Omit<JobPost, 'id' | 'postedDate' | 'postedBy' | 'isOwner' | 'status'> & Partial<JobPost>) => void;
   deleteJob: (jobId: string) => void;
+  verifyJobPayment: (jobId: string, verifiedBy?: string) => void;
   // Nexus
   topics: NexusTopic[];
   addTopic: (title: string, category: string, text: string) => void;
@@ -224,6 +225,7 @@ interface DataContextType {
   reactTopicReply: (topicId: string, replyId: string, reaction: 'like' | 'dis') => void;
   reviews: CompanyReview[];
   addReview: (companyName: string, location: string, rating: number, text: string) => void;
+  updateReviewRemark: (companyId: string, remarkId: string, rating: number, text: string) => void;
   reactReviewRemark: (companyId: string, reviewId: string, action: 'like' | 'dis') => void;
   cases: BlacklistCase[];
   addCase: (caseData: Omit<BlacklistCase, 'id' | 'reportedDate' | 'status' | 'reporter' | 'reporterUid'>) => void;
@@ -233,6 +235,7 @@ interface DataContextType {
   auctions: Auction[];
   addAuction: (auctionData: Partial<Auction>) => string;
   updateAuctionStatus: (auctionId: string, status: Auction['status']) => void;
+  verifyAuctionPayment: (auctionId: string, verifiedBy?: string) => void;
   submitBid: (auctionId: string, charges: any[], grandTotalUSD: number, evidenceMetadata?: any) => boolean;
   mySubmittedBids: SubmittedBid[];
   // Rates
@@ -1012,7 +1015,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // Job Actions
-  const addJob = (jobData: Omit<JobPost, 'id' | 'postedDate' | 'postedBy' | 'isOwner' | 'status'>) => {
+  const addJob = (jobData: Omit<JobPost, 'id' | 'postedDate' | 'postedBy' | 'isOwner' | 'status'> & Partial<JobPost>) => {
+    const isPaidOrWaived = jobData.paymentStatus === 'paid' || jobData.paymentStatus === 'waived_promotional';
+    const initialStatus = jobData.status || (isPaidOrWaived ? 'active' : 'pending');
     const newJob: JobPost = {
       ...jobData,
       id: `j-${Date.now()}`,
@@ -1021,14 +1026,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
       posterEmail: jobData.posterEmail || user.email,
       posterTimezone: user.timezone,
       postedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      status: 'active',
+      status: initialStatus,
+      paymentStatus: jobData.paymentStatus || 'unpaid',
+      paidAmount: jobData.paidAmount,
+      paymentMethod: jobData.paymentMethod,
+      paymentReference: jobData.paymentReference,
+      paymentVerifiedAt: jobData.paymentVerifiedAt,
+      paymentVerifiedBy: jobData.paymentVerifiedBy,
+      createdAt: jobData.createdAt || new Date().toISOString(),
+      applicantsCount: jobData.applicantsCount || 0,
     };
     setJobs((prev) => {
       const next = [newJob, ...prev];
       try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
       return next;
     });
-    toast(`Job opportunity '${newJob.title}' posted successfully.`);
+    if (isPaidOrWaived) {
+      toast(`Job opportunity '${newJob.title}' posted successfully.`);
+    } else {
+      toast(`Job opportunity '${newJob.title}' submitted. Pending payment verification.`);
+    }
+  };
+
+  const verifyJobPayment = (jobId: string, verifiedBy: string = 'Godfather Platform Tech') => {
+    setJobs((prev) => {
+      const next = prev.map((j) => {
+        if (j.id === jobId) {
+          return {
+            ...j,
+            status: 'active' as const,
+            paymentStatus: 'paid' as const,
+            paymentVerifiedAt: new Date().toISOString(),
+            paymentVerifiedBy: verifiedBy,
+          };
+        }
+        return j;
+      });
+      try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast(`Job listing ${jobId} payment verified & activated live.`);
   };
 
   const deleteJob = (jobId: string) => {
@@ -1218,6 +1255,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
     toast(`Verified review for ${companyName} submitted.`);
   };
 
+  const updateReviewRemark = (companyId: string, remarkId: string, rating: number, text: string) => {
+    if (!text.trim()) return;
+    setReviews((prev) => {
+      const next = prev.map((comp) => {
+        if (comp.id !== companyId && comp.companyName.toLowerCase() !== companyId.toLowerCase()) return comp;
+        const updatedRecent = comp.recentReviews.map((r) => {
+          if (r.id !== remarkId) return r;
+          return {
+            ...r,
+            rating: Math.max(1, Math.min(5, rating)),
+            text: text.trim(),
+            isEdited: true,
+            editedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+          };
+        });
+
+        // Recalculate average rating & star distribution
+        const validRatings = updatedRecent.map((r) => r.rating || 5);
+        const avg = validRatings.length > 0
+          ? Number((validRatings.reduce((a, b) => a + b, 0) / validRatings.length).toFixed(1))
+          : comp.ratingAverage;
+
+        const dist: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+        validRatings.forEach((rt) => {
+          const starIndex = Math.max(1, Math.min(5, Math.round(rt)));
+          dist[5 - starIndex] = (dist[5 - starIndex] || 0) + 1;
+        });
+
+        return {
+          ...comp,
+          ratingAverage: avg,
+          starDistribution: dist,
+          recentReviews: updatedRecent,
+        };
+      });
+      try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast('Your verified peer remark has been updated.');
+  };
+
   const reactReviewRemark = (companyId: string, reviewId: string, action: 'like' | 'dis') => {
     setReviews((prev) => {
       const next = prev.map((comp) => {
@@ -1314,6 +1392,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const id = `RA-2026-${String(Math.floor(1000 + Math.random() * 9000))}`;
     const rfqId = `RFQ-${String(Math.floor(10000 + Math.random() * 90000))}`;
 
+    const isPaidOrWaived = auctionData.paymentStatus === 'paid' || auctionData.paymentStatus === 'waived_promotional';
+
     const newAuction: Auction = {
       id,
       title: auctionData.title || `Shipment ${id}`,
@@ -1327,13 +1407,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
       durationMinutes: auctionData.durationMinutes || 120,
       endDateTime: auctionData.endDateTime || 'Auto calculated',
       timezone: auctionData.timezone || user.timezone,
-      status: 'Live',
+      status: auctionData.status || (isPaidOrWaived ? 'Live' : 'Draft'),
       rank: 'Pending',
       timeLeft: `${auctionData.durationMinutes || 120}m`,
-      isPublished: true,
+      isPublished: isPaidOrWaived,
       publishedAt: new Date().toISOString(),
       competitionCeiling: auctionData.competitionCeiling || 2800,
       bidsSubmittedCount: 0,
+      paymentStatus: auctionData.paymentStatus || (isPaidOrWaived ? 'paid' : 'unpaid'),
+      paidAmount: auctionData.paidAmount,
+      paymentMethod: auctionData.paymentMethod,
+      paymentReference: auctionData.paymentReference,
+      paymentVerifiedAt: auctionData.paymentVerifiedAt,
+      paymentVerifiedBy: auctionData.paymentVerifiedBy,
       shipment: auctionData.shipment || {
         por: 'Nhava Sheva (INNSA), India',
         pol: 'Nhava Sheva (INNSA), India',
@@ -1451,6 +1537,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
     toast(`Auction ${auctionId} status changed to ${status}.`);
+  };
+
+  const verifyAuctionPayment = (auctionId: string, verifiedBy: string = 'Godfather Platform Tech') => {
+    setAuctions((prev) => {
+      const next = prev.map((a) => {
+        if (a.id === auctionId) {
+          return {
+            ...a,
+            status: 'Live' as const,
+            isPublished: true,
+            paymentStatus: 'paid' as const,
+            paymentVerifiedAt: new Date().toISOString(),
+            paymentVerifiedBy: verifiedBy,
+          };
+        }
+        return a;
+      });
+      try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    toast(`Reverse Auction ${auctionId} payment verified & activated live.`);
   };
 
   const submitBid = (
@@ -1832,6 +1939,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         jobs,
         addJob,
         deleteJob,
+        verifyJobPayment,
         topics,
         addTopic,
         updateTopic,
@@ -1842,6 +1950,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         reactTopicReply,
         reviews,
         addReview,
+        updateReviewRemark,
         reactReviewRemark,
         cases,
         addCase,
@@ -1850,6 +1959,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         auctions,
         addAuction,
         updateAuctionStatus,
+        verifyAuctionPayment,
         submitBid,
         mySubmittedBids,
         rates,

@@ -53,6 +53,8 @@ import {
   Info,
   HelpCircle,
 } from 'lucide-react';
+import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
+import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
 const POST_TYPE_LABELS: Record<PostType, { label: string; color: string; bg: string }> = {
   general: { label: 'General', color: '#53647a', bg: '#f1f5f9' },
@@ -74,6 +76,8 @@ interface BookedAd {
   creativeUrl?: string;
   duration: string;
   cost: number;
+  paymentStatus?: 'paid' | 'pending_verification' | 'waived_promotional' | 'unpaid';
+  paymentReference?: string;
 }
 
 interface WorkspaceContact {
@@ -543,6 +547,12 @@ export default function FeedsPage() {
   const [adCreativePreview, setAdCreativePreview] = useState<string | null>(null);
   const [adCampaignDuration, setAdCampaignDuration] = useState<'2days' | '10days'>('2days');
 
+  // Feed Payment Modals State
+  const [showFeedJobCheckout, setShowFeedJobCheckout] = useState(false);
+  const [pendingFeedJobData, setPendingFeedJobData] = useState<any>(null);
+  const [showFeedAdCheckout, setShowFeedAdCheckout] = useState(false);
+  const [pendingFeedAdData, setPendingFeedAdData] = useState<BookedAd | null>(null);
+
   // Booked Ads Storage (Slot 1 and Slot 2)
   const [bookedSlot1, setBookedSlot1] = useState<BookedAd | null>(null);
   const [bookedSlot2, setBookedSlot2] = useState<BookedAd | null>(null);
@@ -567,6 +577,10 @@ export default function FeedsPage() {
       toast('Please enter business name, contact email, and ad headline.');
       return;
     }
+
+    const config = getStoredPlatformConfig();
+    const isFree = isFeatureFreeForUser(config, 'AD_POSTING', user.uid);
+
     const newAd: BookedAd = {
       id: `ad-${Date.now()}`,
       businessName: adBusinessName.trim(),
@@ -576,21 +590,27 @@ export default function FeedsPage() {
       destUrl: adDestUrl.trim(),
       creativeUrl: adCreativePreview || undefined,
       duration: adCampaignDuration,
-      cost: adCost,
+      cost: isFree ? 0 : adCost,
+      paymentStatus: isFree ? 'waived_promotional' : 'paid',
     };
 
-    if (activeAdSlot === 1) {
-      setBookedSlot1(newAd);
-    } else {
-      setBookedSlot2(newAd);
+    if (isFree) {
+      if (activeAdSlot === 1) {
+        setBookedSlot1(newAd);
+      } else {
+        setBookedSlot2(newAd);
+      }
+      setShowBookAdModal(false);
+      toast(`🎉 Promotional free waiver applied! Ad campaign booked successfully.`);
+      setAdHeadline('');
+      setAdDescription('');
+      setAdCreativeName(null);
+      setAdCreativePreview(null);
+      return;
     }
 
-    setShowBookAdModal(false);
-    toast(`Ad campaign for ${adBusinessName} booked successfully! Payable ₹${adCost.toLocaleString('en-IN')}`);
-    setAdHeadline('');
-    setAdDescription('');
-    setAdCreativeName(null);
-    setAdCreativePreview(null);
+    setPendingFeedAdData(newAd);
+    setShowFeedAdCheckout(true);
   };
 
   // Filtered Contacts for the Send Modal (Requirement 4)
@@ -687,7 +707,8 @@ export default function FeedsPage() {
       toast('Please enter job title and core requirements.');
       return;
     }
-    addJob({
+
+    const payload = {
       title: newJobTitle.trim(),
       company: newJobCompany.trim() || user.company,
       location: newJobLocation.trim(),
@@ -701,13 +722,29 @@ export default function FeedsPage() {
       showEmailPublicly,
       posterUid: user.uid,
       posterTimezone: user.timezone,
-    });
-    setShowJobCreateModal(false);
-    toast(`Job opportunity posted successfully! Paid ₹${currentJobCost.toLocaleString('en-IN')} for ${jobDurationDays} days.`);
-    setNewJobTitle('');
-    setNewJobReq('');
-    setNewJobResp('');
-    setNewJobQual('');
+    };
+
+    const config = getStoredPlatformConfig();
+    const isFree = isFeatureFreeForUser(config, 'JOB_POSTING', user.uid);
+
+    if (isFree) {
+      addJob({
+        ...payload,
+        paymentStatus: 'waived_promotional',
+        paidAmount: 0,
+        status: 'active',
+      });
+      setShowJobCreateModal(false);
+      toast(`🎉 Promotional free waiver applied! Job opportunity posted successfully.`);
+      setNewJobTitle('');
+      setNewJobReq('');
+      setNewJobResp('');
+      setNewJobQual('');
+      return;
+    }
+
+    setPendingFeedJobData(payload);
+    setShowFeedJobCheckout(true);
   };
 
   const handleReportSubmit = (e: React.FormEvent) => {
@@ -1147,11 +1184,69 @@ export default function FeedsPage() {
                 Cancel
               </button>
               <button type="submit" className="btn primary">
-                Post
+                Pay ₹{currentJobCost.toLocaleString('en-IN')} &amp; Post Job
               </button>
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* Feed Job Payment Checkout Modal */}
+      {showFeedJobCheckout && pendingFeedJobData && (
+        <PaymentCheckoutModal
+          isOpen={showFeedJobCheckout}
+          onClose={() => setShowFeedJobCheckout(false)}
+          itemType="job"
+          itemTitle={pendingFeedJobData.title}
+          amount={currentJobCost}
+          onPaymentSuccess={(details) => {
+            const isLive = details.paymentStatus === 'paid' || details.paymentStatus === 'waived_promotional';
+            addJob({
+              ...pendingFeedJobData,
+              paymentStatus: details.paymentStatus,
+              paidAmount: details.paidAmount,
+              paymentMethod: details.paymentMethod,
+              paymentReference: details.paymentReference,
+              status: isLive ? 'active' : 'pending',
+            });
+            setShowFeedJobCheckout(false);
+            setShowJobCreateModal(false);
+            setNewJobTitle('');
+            setNewJobReq('');
+            setNewJobResp('');
+            setNewJobQual('');
+          }}
+        />
+      )}
+
+      {/* Feed Ad Space Payment Checkout Modal */}
+      {showFeedAdCheckout && pendingFeedAdData && (
+        <PaymentCheckoutModal
+          isOpen={showFeedAdCheckout}
+          onClose={() => setShowFeedAdCheckout(false)}
+          itemType="ad"
+          itemTitle={pendingFeedAdData.headline}
+          amount={pendingFeedAdData.cost}
+          onPaymentSuccess={(details) => {
+            const bookedWithPayment: BookedAd = {
+              ...pendingFeedAdData,
+              paymentStatus: details.paymentStatus,
+              paymentReference: details.paymentReference,
+            };
+            if (activeAdSlot === 1) {
+              setBookedSlot1(bookedWithPayment);
+            } else {
+              setBookedSlot2(bookedWithPayment);
+            }
+            setShowFeedAdCheckout(false);
+            setShowBookAdModal(false);
+            setAdHeadline('');
+            setAdDescription('');
+            setAdCreativeName(null);
+            setAdCreativePreview(null);
+            toast(`Ad campaign booked successfully! Status: ${details.paymentStatus === 'paid' ? 'Confirmed & Active' : 'Pending Godfather Verification'}`);
+          }}
+        />
       )}
 
       {/* LEFT COLUMN: Identity & Quick Shortcuts */}

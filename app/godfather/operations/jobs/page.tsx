@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Briefcase,
   Search,
@@ -23,6 +23,7 @@ import {
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
+import { useData } from '@/lib/context/DataContext';
 
 interface JobListing {
   id: string;
@@ -142,9 +143,35 @@ const INITIAL_JOBS: JobListing[] = [
 ];
 
 export default function JobsModerationPage() {
+  const { jobs: dataJobs, verifyJobPayment } = useData();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'pending' | 'suspended'>('all');
   const [jobs, setJobs] = useState<JobListing[]>(INITIAL_JOBS);
+
+  // Sync live user jobs from DataContext
+  useEffect(() => {
+    const liveMapped: JobListing[] = dataJobs.map((j) => ({
+      id: j.id,
+      title: j.title,
+      company: j.company,
+      location: j.location,
+      packageDetails: j.packageDetails || 'Standard Package',
+      status: j.status === 'active' ? 'active' : j.status === 'pending' ? 'pending' : 'suspended',
+      postedBy: j.postedBy || j.posterName || 'Platform User',
+      posterEmail: j.posterEmail || 'user@fr8x.in',
+      posterKyc: true,
+      postedDate: j.postedDate || new Date().toISOString().slice(0, 10),
+      employmentType: (j.employmentType as any) || 'Full-time',
+      experience: j.experience || '3–5 yrs',
+      department: 'Logistics Procurement',
+      description: j.requirements || 'Trade opportunity',
+      requirements: [j.requirements || 'Relevant experience'],
+      skills: j.skills || [],
+      contactEmail: j.posterEmail || 'jobs@fr8x.in',
+    }));
+    const liveIds = new Set(liveMapped.map((l) => l.id));
+    setJobs([...liveMapped, ...INITIAL_JOBS.filter((ij) => !liveIds.has(ij.id))]);
+  }, [dataJobs]);
 
   // Inspection modal state
   const [selectedJob, setSelectedJob] = useState<JobListing | null>(null);
@@ -201,6 +228,7 @@ export default function JobsModerationPage() {
       targetId: job.id,
       isDestructive: false,
       onConfirm: () => {
+        verifyJobPayment(job.id, 'Godfather Operations');
         setJobs((prev) => prev.map((j) => (j.id === job.id ? { ...j, status: 'active' } : j)));
         if (selectedJob?.id === job.id) setSelectedJob({ ...selectedJob, status: 'active' });
         setModalConfig(null);

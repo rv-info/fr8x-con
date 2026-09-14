@@ -28,11 +28,17 @@ import {
   Check,
   Save,
   Image as ImageIcon,
+  Clock,
+  ToggleLeft,
+  ToggleRight,
+  ShieldCheck,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { PaymentGatewayConfig } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
+import { useData } from '@/lib/context/DataContext';
+import { getStoredPlatformConfig, saveStoredPlatformConfig, PlatformCommerceConfig } from '@/lib/platform-config';
 
 export default function PaymentConfigurationPage() {
   const {
@@ -45,6 +51,40 @@ export default function PaymentConfigurationPage() {
     updateUpiDetails,
   } = useGodfatherData();
   const { requestStepUpVerification } = useGodfatherAuth();
+  const { jobs, auctions, verifyJobPayment, verifyAuctionPayment } = useData();
+
+  const [platformConfig, setPlatformConfig] = useState<PlatformCommerceConfig>(getStoredPlatformConfig());
+
+  useEffect(() => {
+    const handleSync = () => setPlatformConfig(getStoredPlatformConfig());
+    window.addEventListener('fr8x_platform_config_updated', handleSync);
+    return () => window.removeEventListener('fr8x_platform_config_updated', handleSync);
+  }, []);
+
+  const handleToggleAutomation = (enabled: boolean) => {
+    const next = { ...platformConfig, paymentAutomationEnabled: enabled };
+    setPlatformConfig(next);
+    saveStoredPlatformConfig(next);
+  };
+
+  const handleToggleFee = (key: 'allFree' | 'jobs' | 'auctions' | 'ads', free: boolean) => {
+    const next = { ...platformConfig };
+    if (key === 'allFree') {
+      next.allFreeMode = free;
+    } else if (key === 'jobs') {
+      next.jobPostingFeeEnabled = !free;
+    } else if (key === 'auctions') {
+      next.biddingFeeEnabled = !free;
+    } else if (key === 'ads') {
+      next.feedAdsFeeEnabled = !free;
+    }
+    setPlatformConfig(next);
+    saveStoredPlatformConfig(next);
+  };
+
+  const pendingJobs = jobs.filter((j) => j.paymentStatus === 'pending_verification');
+  const pendingAuctions = auctions.filter((a) => a.paymentStatus === 'pending_verification');
+  const pendingCount = pendingJobs.length + pendingAuctions.length;
 
   const [selectedGateway, setSelectedGateway] = useState<PaymentGatewayConfig | null>(paymentGateways[0] || null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -233,6 +273,195 @@ export default function PaymentConfigurationPage() {
           <strong className="text-emerald-950 block mb-0.5 font-bold">Zero-Trust Merchant Key Protection</strong>
           Private merchant secrets and webhook signatures are never rendered in plain client HTML. They reside strictly in Google Cloud KMS / Secret Manager. Changing endpoints or toggling live modes requires Step-Up MFA authentication and immutable audit logging.
         </div>
+      </div>
+
+      {/* Sovereign Payment Automation & Promotional Feature Waivers */}
+      <div className="gf-card p-5 space-y-4 border-slate-200 bg-gradient-to-br from-white to-slate-50">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Zap className="lucide w-5 h-5 text-indigo-600" />
+            <div>
+              <h2 className="font-bold text-slate-900 text-sm">Payment Automation &amp; Promotional Fee Governance</h2>
+              <p className="text-xs text-slate-500">
+                Control auto-clearing pipelines for online payments and grant promotional 100% free waivers for platform activities.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`gf-badge ${platformConfig.paymentAutomationEnabled ? 'gf-badge-green' : 'gf-badge-amber'} text-xs font-bold`}>
+              {platformConfig.paymentAutomationEnabled ? '⚡ Payment Automation: ACTIVE' : '✋ Manual Godfather Verification: ACTIVE'}
+            </span>
+            <button
+              onClick={() => handleToggleAutomation(!platformConfig.paymentAutomationEnabled)}
+              className="btn secondary sm text-xs font-semibold"
+            >
+              {platformConfig.paymentAutomationEnabled ? 'Switch to Manual Approval' : 'Enable Payment Automation'}
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
+          {/* All-Free Mode */}
+          <div className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <b className="text-xs text-slate-900 flex items-center gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-blue-600" /> Global All-Free
+              </b>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${platformConfig.allFreeMode ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                {platformConfig.allFreeMode ? 'FREE WAIVER' : 'ENFORCED'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 m-0">Waiver for all jobs, reverse auctions, and feed ads.</p>
+            <button
+              type="button"
+              onClick={() => handleToggleFee('allFree', !platformConfig.allFreeMode)}
+              className={`btn sm text-xs font-bold ${platformConfig.allFreeMode ? 'secondary' : 'primary'}`}
+            >
+              {platformConfig.allFreeMode ? 'Deactivate All-Free' : 'Activate All-Free'}
+            </button>
+          </div>
+
+          {/* Job Posting Fee */}
+          <div className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <b className="text-xs text-slate-900 flex items-center gap-1.5">
+                <Briefcase className="w-3.5 h-3.5 text-sky-600" /> Job Postings
+              </b>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${!platformConfig.jobPostingFeeEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                {!platformConfig.jobPostingFeeEnabled ? 'PROMO FREE' : '₹300 TARIFF'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 m-0">Members pay ₹300 (min 2 days) to list trade careers.</p>
+            <button
+              type="button"
+              onClick={() => handleToggleFee('jobs', !platformConfig.jobPostingFeeEnabled)}
+              className={`btn sm text-xs font-bold ${!platformConfig.jobPostingFeeEnabled ? 'secondary' : 'primary'}`}
+            >
+              {!platformConfig.jobPostingFeeEnabled ? 'Enforce ₹300 Tariff' : 'Make Jobs Free (Promo)'}
+            </button>
+          </div>
+
+          {/* Reverse Auctions Fee */}
+          <div className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <b className="text-xs text-slate-900 flex items-center gap-1.5">
+                <Gavel className="w-3.5 h-3.5 text-amber-600" /> Reverse Auctions
+              </b>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${!platformConfig.biddingFeeEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                {!platformConfig.biddingFeeEnabled ? 'PROMO FREE' : '₹300 TARIFF'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 m-0">Binding container spot auctions &amp; slot bidding tariff.</p>
+            <button
+              type="button"
+              onClick={() => handleToggleFee('auctions', !platformConfig.biddingFeeEnabled)}
+              className={`btn sm text-xs font-bold ${!platformConfig.biddingFeeEnabled ? 'secondary' : 'primary'}`}
+            >
+              {!platformConfig.biddingFeeEnabled ? 'Enforce ₹300 Tariff' : 'Make Auctions Free (Promo)'}
+            </button>
+          </div>
+
+          {/* Feed Banner Ads */}
+          <div className="p-3 rounded-lg border border-slate-200 bg-white flex flex-col justify-between gap-2">
+            <div className="flex items-center justify-between">
+              <b className="text-xs text-slate-900 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" /> Feed Banner Ads
+              </b>
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${!platformConfig.feedAdsFeeEnabled ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                {!platformConfig.feedAdsFeeEnabled ? 'PROMO FREE' : '₹1,000 TARIFF'}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 m-0">Commercial high-visibility feed slot placements.</p>
+            <button
+              type="button"
+              onClick={() => handleToggleFee('ads', !platformConfig.feedAdsFeeEnabled)}
+              className={`btn sm text-xs font-bold ${!platformConfig.feedAdsFeeEnabled ? 'secondary' : 'primary'}`}
+            >
+              {!platformConfig.feedAdsFeeEnabled ? 'Enforce ₹1k Tariff' : 'Make Ads Free (Promo)'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Sovereign Payment Confirmation & Activation Queue */}
+      <div className="gf-card p-5 space-y-4 border-slate-200">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Clock className="lucide w-5 h-5 text-amber-600" />
+            <div>
+              <h2 className="font-bold text-slate-900 text-sm">Sovereign Payment Confirmation &amp; Activation Queue</h2>
+              <p className="text-xs text-slate-500">
+                Manual review queue for offline bank wires, UPI UTR numbers, and items waiting for Godfather verification.
+              </p>
+            </div>
+          </div>
+          <span className={`gf-badge ${pendingCount > 0 ? 'gf-badge-amber' : 'gf-badge-green'} text-xs font-bold`}>
+            {pendingCount} Pending Verifications
+          </span>
+        </div>
+
+        {pendingCount === 0 ? (
+          <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <div>
+              <b>All payments verified and cleared.</b> No pending user jobs, auctions, or campaigns require manual activation.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {pendingJobs.map((job) => (
+              <div key={job.id} className="p-4 rounded-lg border border-amber-200 bg-amber-50/40 flex items-center justify-between flex-wrap gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="gf-badge gf-badge-blue text-[10px] uppercase font-bold">Job Listing</span>
+                    <b className="text-sm text-slate-900">{job.title}</b>
+                    <span className="text-xs text-slate-500">· {job.company} ({job.location})</span>
+                  </div>
+                  <div className="text-xs text-slate-600 flex items-center gap-3 flex-wrap">
+                    <span><strong>Poster:</strong> {job.postedBy} ({job.posterEmail})</span>
+                    <span><strong>Tariff:</strong> ₹{(job.paidAmount || 300).toLocaleString('en-IN')}</span>
+                    <span><strong>Method:</strong> {job.paymentMethod || 'UPI / Wire'}</span>
+                    <span><strong>UTR / Ref:</strong> <code className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-indigo-700 font-bold">{job.paymentReference || 'Pending UTR Entry'}</code></span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => verifyJobPayment(job.id, 'Godfather Sovereign Tech')}
+                    className="btn primary sm text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    ✓ Verify Payment &amp; Activate Live
+                  </button>
+                </div>
+              </div>
+            ))}
+
+            {pendingAuctions.map((auc) => (
+              <div key={auc.id} className="p-4 rounded-lg border border-amber-200 bg-amber-50/40 flex items-center justify-between flex-wrap gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="gf-badge gf-badge-gold text-[10px] uppercase font-bold">Reverse Auction</span>
+                    <b className="text-sm text-slate-900">{auc.title}</b>
+                    <span className="text-xs text-slate-500">· {auc.shipment.pol} → {auc.shipment.pod}</span>
+                  </div>
+                  <div className="text-xs text-slate-600 flex items-center gap-3 flex-wrap">
+                    <span><strong>Creator:</strong> {auc.creatorName} ({auc.creatorCompany})</span>
+                    <span><strong>Tariff:</strong> ₹{(auc.paidAmount || 500).toLocaleString('en-IN')}</span>
+                    <span><strong>Method:</strong> {auc.paymentMethod || 'UPI / Wire'}</span>
+                    <span><strong>UTR / Ref:</strong> <code className="font-mono bg-white px-1 py-0.5 rounded border border-slate-200 text-indigo-700 font-bold">{auc.paymentReference || 'Pending UTR Entry'}</code></span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => verifyAuctionPayment(auc.id, 'Godfather Sovereign Tech')}
+                    className="btn primary sm text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    ✓ Verify Payment &amp; Activate Live
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Payment Modules & Purpose Matrix */}

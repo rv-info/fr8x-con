@@ -89,7 +89,7 @@ export default function RatesPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'all' | 'self' | 'i' | 'expiring'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'i' | 'expiring'>('all');
   // Per-column search state
   const [colSearch, setColSearch] = useState<Record<string, string>>({});
   const updateColSearch = (col: string, val: string) =>
@@ -308,10 +308,7 @@ Generated via FR8X Freight Exchange
     if (colSearch.remarks && !r.remark?.toLowerCase().includes(colSearch.remarks.toLowerCase())) return false;
 
     if (activeTab === 'i') {
-      return myRates.some((mr) => mr.id === r.id);
-    }
-    if (activeTab === 'self') {
-      return r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id);
+      return myRates.some((mr) => mr.id === r.id) || r.isOwner || r.ownerUid === user.uid || r.isSelfPosted;
     }
     if (activeTab === 'expiring') {
       return isExpiringSoon(r.valid) || expiredRateIds.includes(r.id);
@@ -1225,16 +1222,16 @@ Generated via FR8X Freight Exchange
         </div>
       </div>
 
-      {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates and Self-Posted */}
-      <div className={(activeTab === 'i' || activeTab === 'self') && editorVisible ? 'rateeditor' : 'rateeditor-full'}>
-        {/* Left Form: RATES EDITOR available in My i-Rates and Self-Posted tabs */}
-        {(activeTab === 'i' || activeTab === 'self') && editorVisible && (
+      {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates */}
+      <div className={activeTab === 'i' && editorVisible ? 'rateeditor' : 'rateeditor-full'}>
+        {/* Left Form: RATES EDITOR available in My i-Rates tab */}
+        {activeTab === 'i' && editorVisible && (
           <div className={`card ${!mobileEditorOpen ? 'hidden-on-mobile' : ''}`} style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
             <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
                 <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '4px' }}>
-                  {activeTab === 'self' ? 'Self-Posted' : 'My i-Rate'}
+                  My i-Rate
                 </span>
               </div>
               <button
@@ -1459,14 +1456,6 @@ Generated via FR8X Freight Exchange
                 All Available Rates ({allAvailableRates.length})
               </button>
               <button
-                className={`tab ${activeTab === 'self' ? 'active' : ''}`}
-                aria-pressed={activeTab === 'self'}
-                style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'self' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'self' ? '#fff' : undefined }}
-                onClick={() => setActiveTab('self')}
-              >
-                Self-Posted Rates ({allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length})
-              </button>
-              <button
                 className={`tab ${activeTab === 'i' ? 'active' : ''}`}
                 aria-pressed={activeTab === 'i'}
                 style={{ fontSize: '12px', padding: '6px 12px', borderRadius: '4px', background: activeTab === 'i' ? 'var(--fr8x-outline)' : undefined, color: activeTab === 'i' ? '#fff' : undefined }}
@@ -1484,7 +1473,7 @@ Generated via FR8X Freight Exchange
                 {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length})
               </button>
 
-              {(activeTab === 'self' || activeTab === 'i') && (
+              {activeTab === 'i' && (
                 <button
                   type="button"
                   className="btn secondary sm"
@@ -1495,7 +1484,7 @@ Generated via FR8X Freight Exchange
                 </button>
               )}
 
-              {(activeTab === 'self' || activeTab === 'i') && myRates.length > 0 && (
+              {activeTab === 'i' && myRates.length > 0 && (
                 <button
                   type="button"
                   className="btn danger sm"
@@ -1536,14 +1525,6 @@ Generated via FR8X Freight Exchange
               >
                 <span>All Rates</span>
                 <span className="rates-mobile-tab-badge">{rates.length + myRates.length}</span>
-              </button>
-              <button
-                type="button"
-                className={`rates-mobile-tab-btn ${activeTab === 'self' ? 'active' : ''}`}
-                onClick={() => setActiveTab('self')}
-              >
-                <span>Self-Posted</span>
-                <span className="rates-mobile-tab-badge">{allAvailableRates.filter((r) => r.isOwner || r.ownerUid === user.uid || r.isSelfPosted || myRates.some((mr) => mr.id === r.id)).length}</span>
               </button>
               <button
                 type="button"
@@ -1979,7 +1960,6 @@ Generated via FR8X Freight Exchange
                       (user?.uid && rate.ownerUid === user.uid) ||
                       (user?.company && rate.sp?.toLowerCase() === user.company?.toLowerCase()) ||
                       myRates.some((mr) => mr.id === rate.id) ||
-                      activeTab === 'self' ||
                       activeTab === 'i';
 
                     return (
@@ -2247,7 +2227,6 @@ Generated via FR8X Freight Exchange
                   (user?.uid && rate.ownerUid === user.uid) ||
                   (user?.company && rate.sp?.toLowerCase() === user.company?.toLowerCase()) ||
                   myRates.some((mr) => mr.id === rate.id) ||
-                  activeTab === 'self' ||
                   activeTab === 'i';
 
                 return (

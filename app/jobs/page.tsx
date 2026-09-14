@@ -25,7 +25,13 @@ import {
   Tag,
   Trash2,
   ExternalLink,
+  Sparkles,
+  CheckCircle2,
+  AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
+import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
+import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
 export default function JobsPage() {
   const { jobs, addJob, deleteJob } = useData();
@@ -39,6 +45,8 @@ export default function JobsPage() {
 
   const [selectedJob, setSelectedJob] = useState<JobPost | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showPaymentCheckout, setShowPaymentCheckout] = useState(false);
+  const [pendingJobData, setPendingJobData] = useState<any>(null);
 
   // Job create form state
   const [newTitle, setNewTitle] = useState('');
@@ -66,6 +74,16 @@ export default function JobsPage() {
   const locations = [...new Set(jobs.map((j) => j.location.split('·')[0].trim()))].slice(0, 6);
 
   const filteredJobs = jobs.filter((j) => {
+    // Commercial regulation:
+    // Only jobs with confirmed payment or promotional waiver are publicly visible.
+    // Unverified / pending payment jobs are strictly restricted to the poster himself.
+    const isPaidOrWaived = j.paymentStatus === 'paid' || j.paymentStatus === 'waived_promotional' || j.paymentStatus === undefined;
+    const isCreator = j.posterUid === user.uid;
+
+    if (!isPaidOrWaived && !isCreator) {
+      return false;
+    }
+
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       !q ||
@@ -82,36 +100,59 @@ export default function JobsPage() {
     return matchesSearch && matchesTab && matchesType && matchesLocation;
   });
 
-  const handleCreateJob = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !newReq.trim()) {
-      toast('Job title and requirements are required.');
-      return;
-    }
-    addJob({
-      title: newTitle,
-      company: newCompany,
-      location: newLocation,
-      employmentType: newType,
-      experience: newExp,
-      packageDetails: newPkg,
-      requirements: newReq,
-      responsibilities: newResp,
-      qualifications: newQual,
-      skills: newSkills.split(',').map((s) => s.trim()).filter(Boolean),
-      closingDate: newClosing,
-      posterEmail: user.email,
-      showEmailPublicly: false,
-      posterTimezone: user.timezone,
-    });
-    setShowCreateModal(false);
-    toast(`Job opportunity posted successfully! Paid ₹${currentJobCost.toLocaleString('en-IN')} for ${jobDurationDays} days.`);
+  const resetJobForm = () => {
     setNewTitle('');
     setNewReq('');
     setNewResp('');
     setNewQual('');
     setNewSkills('');
     setNewClosing('');
+    setPendingJobData(null);
+  };
+
+  const handleCreateJob = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newReq.trim()) {
+      toast('Job title and requirements are required.');
+      return;
+    }
+
+    const payload = {
+      title: newTitle.trim(),
+      company: newCompany.trim() || user.company,
+      location: newLocation.trim(),
+      employmentType: newType as any,
+      experience: newExp.trim(),
+      packageDetails: newPkg.trim(),
+      requirements: newReq.trim(),
+      responsibilities: newResp.trim(),
+      qualifications: newQual.trim(),
+      skills: newSkills.split(',').map((s) => s.trim()).filter(Boolean),
+      closingDate: newClosing,
+      posterEmail: user.email,
+      showEmailPublicly: false,
+      posterTimezone: user.timezone,
+    };
+
+    const config = getStoredPlatformConfig();
+    const isFree = isFeatureFreeForUser(config, 'JOB_POSTING', user.uid);
+
+    if (isFree) {
+      addJob({
+        ...payload,
+        paymentStatus: 'waived_promotional',
+        paidAmount: 0,
+        status: 'active',
+      });
+      setShowCreateModal(false);
+      resetJobForm();
+      toast('🎉 Promotional free waiver applied! Job posted successfully.');
+      return;
+    }
+
+    // Require commercial checkout
+    setPendingJobData(payload);
+    setShowPaymentCheckout(true);
   };
 
   const myJobs = jobs.filter((j) => j.posterUid === user.uid);
@@ -429,6 +470,26 @@ export default function JobsPage() {
                     {job.posterUid === user.uid && (
                       <span className="badge blue" style={{ fontSize: '8.5px' }}>My Post</span>
                     )}
+                    {job.posterUid === user.uid && job.paymentStatus === 'pending_verification' && (
+                      <span className="badge amber" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <Clock size={9} /> Pending Godfather Verification {job.paymentReference ? `· UTR ${job.paymentReference}` : ''}
+                      </span>
+                    )}
+                    {job.posterUid === user.uid && job.paymentStatus === 'paid' && (
+                      <span className="badge green" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <CheckCircle2 size={9} /> Paid & Verified (₹{job.paidAmount || 300})
+                      </span>
+                    )}
+                    {job.posterUid === user.uid && job.paymentStatus === 'waived_promotional' && (
+                      <span className="badge purple" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <Sparkles size={9} /> Promotional Free
+                      </span>
+                    )}
+                    {job.posterUid === user.uid && job.paymentStatus === 'unpaid' && (
+                      <span className="badge red" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                        <AlertTriangle size={9} /> Unpaid · Inactive
+                      </span>
+                    )}
                   </div>
                 </div>
                 {job.posterUid === user.uid && (
@@ -480,6 +541,31 @@ export default function JobsPage() {
             </div>
           ))}
         </div>
+      )}
+
+      {/* Commercial Payment Checkout Modal */}
+      {showPaymentCheckout && pendingJobData && (
+        <PaymentCheckoutModal
+          isOpen={showPaymentCheckout}
+          onClose={() => setShowPaymentCheckout(false)}
+          itemType="job"
+          itemTitle={pendingJobData.title}
+          amount={currentJobCost}
+          onPaymentSuccess={(details) => {
+            const isLive = details.paymentStatus === 'paid' || details.paymentStatus === 'waived_promotional';
+            addJob({
+              ...pendingJobData,
+              paymentStatus: details.paymentStatus,
+              paidAmount: details.paidAmount,
+              paymentMethod: details.paymentMethod,
+              paymentReference: details.paymentReference,
+              status: isLive ? 'active' : 'pending',
+            });
+            setShowPaymentCheckout(false);
+            setShowCreateModal(false);
+            resetJobForm();
+          }}
+        />
       )}
     </div>
   );

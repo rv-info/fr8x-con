@@ -31,6 +31,8 @@ import {
   FileCheck,
   Search,
 } from 'lucide-react';
+import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
+import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
 interface VerifiedBidderCandidate {
   id: string;
@@ -218,6 +220,7 @@ export default function CreateReverseAuctionPage() {
 
   // Payment Modal — triggered before publish
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'standard' | 'pro' | 'enterprise'>('pro');
   const PLANS = [
     { id: 'standard', label: 'Standard', price: 499, duration: '5 days', features: ['Up to 5 bidders', 'Email notifications', 'PDF report'] },
@@ -352,7 +355,12 @@ export default function CreateReverseAuctionPage() {
   };
 
   // Validate & Publish
-  const handlePublish = () => {
+  const handlePublish = (paymentDetails?: {
+    paymentStatus?: 'paid' | 'pending_verification' | 'waived_promotional' | 'unpaid';
+    paidAmount?: number;
+    paymentMethod?: string;
+    paymentReference?: string;
+  }) => {
     if (!title.trim()) {
       toast('Please enter Auction Title.');
       return;
@@ -370,6 +378,10 @@ export default function CreateReverseAuctionPage() {
       assignedBidders.has(b.id)
     );
 
+    const planPrice = PLANS.find((p) => p.id === selectedPlan)?.price || 999;
+    const finalPaymentStatus = paymentDetails?.paymentStatus || 'paid';
+    const isLive = finalPaymentStatus === 'paid' || finalPaymentStatus === 'waived_promotional';
+
     const newAuctionId = addAuction({
       title: title.trim(),
       rfqId,
@@ -379,6 +391,14 @@ export default function CreateReverseAuctionPage() {
       durationMinutes: Number(durationMinutes),
       endDateTime,
       timezone,
+      status: isLive ? 'Live' : 'Draft',
+      isPublished: isLive,
+      paymentStatus: finalPaymentStatus,
+      paidAmount: paymentDetails?.paidAmount !== undefined ? paymentDetails.paidAmount : planPrice,
+      paymentMethod: paymentDetails?.paymentMethod || 'Online Gateway / UPI',
+      paymentReference: paymentDetails?.paymentReference,
+      paymentVerifiedAt: isLive ? new Date().toISOString() : undefined,
+      paymentVerifiedBy: isLive ? 'Platform Clearance' : undefined,
       shipment: {
         por: por || pol,
         pol,
@@ -492,8 +512,19 @@ export default function CreateReverseAuctionPage() {
               className="btn primary"
               style={{ minWidth: '220px', fontWeight: 700, fontSize: '13.5px' }}
               onClick={() => {
+                const config = getStoredPlatformConfig();
+                const isFree = isFeatureFreeForUser(config, 'REVERSE_AUCTION', user.uid);
+                if (isFree) {
+                  setShowPaymentModal(false);
+                  handlePublish({
+                    paymentStatus: 'waived_promotional',
+                    paidAmount: 0,
+                    paymentMethod: 'Godfather Promotional Waiver',
+                  });
+                  return;
+                }
                 setShowPaymentModal(false);
-                handlePublish();
+                setShowCheckoutModal(true);
               }}
             >
               💳 Pay ₹{PLANS.find(p => p.id === selectedPlan)?.price.toLocaleString()} &amp; Publish
@@ -501,6 +532,21 @@ export default function CreateReverseAuctionPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Reverse Auction Commercial Payment Modal */}
+      {showCheckoutModal && (
+        <PaymentCheckoutModal
+          isOpen={showCheckoutModal}
+          onClose={() => setShowCheckoutModal(false)}
+          itemType="auction"
+          itemTitle={title.trim() || 'Reverse Auction Listing'}
+          amount={PLANS.find(p => p.id === selectedPlan)?.price || 999}
+          onPaymentSuccess={(details) => {
+            setShowCheckoutModal(false);
+            handlePublish(details);
+          }}
+        />
+      )}
 
       {/* Header */}
       <div className="head">
