@@ -27,6 +27,11 @@ import {
   Shield,
   ChevronDown,
   ChevronUp,
+  AlertTriangle,
+  MapPin,
+  Building2,
+  Check,
+  Search,
 } from 'lucide-react';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { usePlatformConfig, isAllFreeActive } from '@/lib/platform-config';
@@ -560,12 +565,18 @@ export default function RegisterPage() {
 
   // Business Card & Multi-Jurisdiction Statutory Profile
   const [companyName, setCompanyName] = useState('');
-  const [companyId] = useState(`CMP-${Math.floor(10000 + Math.random() * 90000)}`);
+  const [companyId, setCompanyId] = useState(`CMP-${Math.floor(10000 + Math.random() * 90000)}`);
   const [registeredAddress, setRegisteredAddress] = useState('');
   const [gstn, setGstn] = useState('');
   const [pan, setPan] = useState('');
   const [iecCode, setIecCode] = useState('');
   const [mtoNumber, setMtoNumber] = useState('');
+
+  // Master Company Autocomplete & Non-Blocking Duplicate Prevention State
+  const [companySearchResults, setCompanySearchResults] = useState<any[]>([]);
+  const [selectedExistingCompany, setSelectedExistingCompany] = useState<any | null>(null);
+  const [duplicateAdvisory, setDuplicateAdvisory] = useState<any | null>(null);
+  const [isCompanyDropdownOpen, setIsCompanyDropdownOpen] = useState(false);
 
   const statutoryProfile = React.useMemo(() => {
     return getStatutoryProfile(country || countryCode || 'India');
@@ -639,6 +650,64 @@ export default function RegisterPage() {
   }, [resendCooldown]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Live Company Typeahead Search & Non-Blocking Duplicate Advisory
+  useEffect(() => {
+    if (!companyName.trim()) {
+      setCompanySearchResults([]);
+      setDuplicateAdvisory(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetch(
+        `/api/companies/search?q=${encodeURIComponent(companyName.trim())}&address=${encodeURIComponent(
+          registeredAddress || ''
+        )}&city=${encodeURIComponent(city || '')}&country=${encodeURIComponent(country || '')}`
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setCompanySearchResults(data.companies || []);
+            if (data.duplicateAdvisory && data.duplicateAdvisory.isPotentialDuplicate) {
+              setDuplicateAdvisory(data.duplicateAdvisory);
+            } else {
+              setDuplicateAdvisory(null);
+            }
+          }
+        })
+        .catch(() => {});
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [companyName, registeredAddress, city, country]);
+
+  const handleSelectExistingCompany = (comp: any) => {
+    setCompanyName(comp.legalName);
+    setCompanyId(comp.id);
+    setSelectedExistingCompany(comp);
+    setIsCompanyDropdownOpen(false);
+
+    if (comp.registeredAddress && !registeredAddress) {
+      setRegisteredAddress(comp.registeredAddress);
+    }
+    if (comp.country && (!country || country !== comp.country)) {
+      handleCountryChange(comp.country);
+    }
+    if (comp.city && (!city || city !== comp.city)) {
+      setCity(comp.city);
+    }
+    if (comp.postalCode && !postalCode) {
+      setPostalCode(comp.postalCode);
+    }
+    if (comp.gstn && !gstn) {
+      setGstn(comp.gstn);
+    }
+    if (comp.pan && !pan) {
+      setPan(comp.pan);
+    }
+    toast(`✓ Linked to registered entity: ${comp.legalName} (${comp.city}, ${comp.country})`);
+  };
 
   const handleGstnChange = (val: string) => {
     const upper = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
@@ -1357,25 +1426,238 @@ export default function RegisterPage() {
                 </span>
               </div>
               <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
-                {/* Row 1: Legal Company Name and System Company ID */}
+                {/* Row 1: Legal Company Name and System Company ID with Location-Indicated Search & Non-Blocking Duplicate Advisory */}
                 <div className="reg-grid-2">
-                  <div className="reg-field">
-                    <label className="reg-label">
-                      <span className="reg-label-text">
-                        Legal Company Name <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
-                      </span>
-                    </label>
-                    <input
-                      className="reg-input"
-                      placeholder="e.g. Atlas Logistics Pvt. Ltd."
-                      value={companyName}
-                      onChange={(e) => setCompanyName(e.target.value)}
-                      required
-                    />
+                  <div className="reg-field" style={{ position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <label className="reg-label" style={{ margin: 0 }}>
+                        <span className="reg-label-text">
+                          Legal Company Name <span className="req" style={{ color: 'var(--red, #dc2626)' }}>*</span>
+                        </span>
+                      </label>
+                      {selectedExistingCompany && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedExistingCompany(null);
+                            setCompanyId(`CMP-${Math.floor(10000 + Math.random() * 90000)}`);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#0284c7',
+                            fontSize: '10.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          Change / Unlink
+                        </button>
+                      )}
+                    </div>
+
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        className="reg-input"
+                        placeholder="Search existing company or type new entity…"
+                        value={companyName}
+                        onChange={(e) => {
+                          setCompanyName(e.target.value);
+                          setIsCompanyDropdownOpen(true);
+                          if (selectedExistingCompany && e.target.value !== selectedExistingCompany.legalName) {
+                            setSelectedExistingCompany(null);
+                          }
+                        }}
+                        onFocus={() => setIsCompanyDropdownOpen(true)}
+                        required
+                        style={{ paddingRight: '32px' }}
+                      />
+                      <Search
+                        size={14}
+                        color="#94a3b8"
+                        style={{
+                          position: 'absolute',
+                          right: '10px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          pointerEvents: 'none',
+                        }}
+                      />
+                    </div>
+
+                    {/* Autocomplete Dropdown with Location Indication */}
+                    {isCompanyDropdownOpen && (companySearchResults.length > 0 || (companyName.trim().length >= 2 && !selectedExistingCompany)) && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: 'calc(100% + 4px)',
+                          left: 0,
+                          right: 0,
+                          zIndex: 99999,
+                          background: '#ffffff',
+                          border: '1.5px solid #0284c7',
+                          borderRadius: '6px',
+                          boxShadow: '0 12px 28px rgba(0,0,0,0.18)',
+                          maxHeight: '260px',
+                          overflowY: 'auto',
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '6px 10px',
+                            background: '#f8fafc',
+                            borderBottom: '1px solid #e2e8f0',
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            color: '#64748b',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.04em',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <span>Registered Entities in DBMS (Select with Location)</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsCompanyDropdownOpen(false)}
+                            style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                          >
+                            <X size={12} />
+                          </button>
+                        </div>
+
+                        {companySearchResults.map((comp) => (
+                          <div
+                            key={comp.id}
+                            onClick={() => handleSelectExistingCompany(comp)}
+                            style={{
+                              padding: '8px 12px',
+                              borderBottom: '1px solid #f1f5f9',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '2px',
+                              transition: 'background 0.15s ease',
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                              <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
+                                {comp.legalName}
+                              </span>
+                              {comp.verified && (
+                                <span className="badge green" style={{ fontSize: '9px', padding: '1px 6px' }}>
+                                  VERIFIED
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <MapPin size={11} style={{ flexShrink: 0 }} />
+                              <span>{comp.locationLabel}</span>
+                              {comp.registeredAddress && (
+                                <span style={{ color: '#64748b' }}>· {comp.registeredAddress}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+
+                        {companyName.trim() && (
+                          <div
+                            onClick={() => {
+                              setSelectedExistingCompany(null);
+                              setIsCompanyDropdownOpen(false);
+                            }}
+                            style={{
+                              padding: '8px 12px',
+                              background: '#f8fafc',
+                              borderTop: '1px solid #e2e8f0',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#0284c7',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            + Register as New Distinct Entity / Branch: &ldquo;{companyName.trim()}&rdquo;
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Selected Entity Confirmation Badge */}
+                    {selectedExistingCompany && (
+                      <div
+                        style={{
+                          marginTop: '6px',
+                          padding: '6px 10px',
+                          background: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          color: '#166534',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                        }}
+                      >
+                        <CheckCircle2 size={13} color="#16a34a" />
+                        <span>
+                          Linked to Registered Entity: <b>{selectedExistingCompany.legalName}</b> (📍 {selectedExistingCompany.locationLabel})
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Non-Blocking Duplicate Prevention Advisory Banner */}
+                    {duplicateAdvisory && duplicateAdvisory.isPotentialDuplicate && !selectedExistingCompany && (
+                      <div
+                        style={{
+                          marginTop: '6px',
+                          padding: '8px 12px',
+                          background: '#fffbeb',
+                          border: '1px solid #fde68a',
+                          borderRadius: '6px',
+                          fontSize: '11px',
+                          color: '#92400e',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, marginBottom: '2px' }}>
+                          <AlertTriangle size={13} color="#d97706" />
+                          <span>Duplicate Prevention Notice (Advisory Only — Non-Blocking)</span>
+                        </div>
+                        <div>{duplicateAdvisory.advisoryMessage}</div>
+                        {duplicateAdvisory.matchedCompanies && duplicateAdvisory.matchedCompanies[0] && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectExistingCompany(duplicateAdvisory.matchedCompanies[0])}
+                              style={{
+                                background: '#d97706',
+                                color: '#ffffff',
+                                border: 'none',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontSize: '10.5px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              Link with {duplicateAdvisory.matchedCompanies[0].legalName}
+                            </button>
+                            <span style={{ fontSize: '10px', color: '#b45309' }}>
+                              You can proceed with registration if this is a distinct branch or separate corporate entity.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
+
                   <div className="reg-field">
                     <label className="reg-label">
-                      <span className="reg-label-text">System Company ID (Generated)</span>
+                      <span className="reg-label-text">System Company ID (Generated / Linked)</span>
                     </label>
                     <input className="reg-input" value={companyId} readOnly />
                   </div>

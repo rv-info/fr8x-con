@@ -74,6 +74,8 @@ import {
   EyeOff,
   Loader2,
   Navigation,
+  AlertTriangle,
+  Search,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -154,6 +156,37 @@ export default function ProfilePage() {
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
   const [transferMethod, setTransferMethod] = useState<'self' | 'godfather'>('self');
   const [transferReason, setTransferReason] = useState('Change of Employer / Corporate Reorganization');
+
+  // Company Transfer Autocomplete & Duplicate Prevention State
+  const [profileCompanySearchResults, setProfileCompanySearchResults] = useState<any[]>([]);
+  const [isProfileCompanyDropdownOpen, setIsProfileCompanyDropdownOpen] = useState(false);
+  const [profileCompanyAdvisory, setProfileCompanyAdvisory] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (!transferTargetCompany.trim()) {
+      setProfileCompanySearchResults([]);
+      setProfileCompanyAdvisory(null);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetch(`/api/companies/search?q=${encodeURIComponent(transferTargetCompany.trim())}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setProfileCompanySearchResults(data.companies || []);
+            if (data.duplicateAdvisory?.isPotentialDuplicate) {
+              setProfileCompanyAdvisory(data.duplicateAdvisory);
+            } else {
+              setProfileCompanyAdvisory(null);
+            }
+          }
+        })
+        .catch(() => {});
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [transferTargetCompany]);
 
   // Location Detection & Address Suggestion State
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -2800,15 +2833,126 @@ export default function ProfilePage() {
                   </div>
 
                   <div className="grid g2">
-                    <div className="field">
+                    <div className="field" style={{ position: 'relative' }}>
                       <label>New Company / Employer Name <span className="req">*</span></label>
-                      <input
-                        className="input"
-                        placeholder="e.g. Hapag-Lloyd AG or Maersk Logistics"
-                        value={transferTargetCompany}
-                        onChange={(e) => setTransferTargetCompany(e.target.value)}
-                        required={isChangingCompany}
-                      />
+                      <div style={{ position: 'relative' }}>
+                        <input
+                          className="input"
+                          placeholder="Search existing company or enter new name…"
+                          value={transferTargetCompany}
+                          onChange={(e) => {
+                            setTransferTargetCompany(e.target.value);
+                            setIsProfileCompanyDropdownOpen(true);
+                          }}
+                          onFocus={() => setIsProfileCompanyDropdownOpen(true)}
+                          required={isChangingCompany}
+                          style={{ paddingRight: '28px' }}
+                        />
+                        <Search
+                          size={13}
+                          color="#94a3b8"
+                          style={{
+                            position: 'absolute',
+                            right: '9px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            pointerEvents: 'none',
+                          }}
+                        />
+                      </div>
+
+                      {/* Dropdown with Location Indication */}
+                      {isProfileCompanyDropdownOpen && profileCompanySearchResults.length > 0 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 2px)',
+                            left: 0,
+                            right: 0,
+                            zIndex: 99999,
+                            background: '#ffffff',
+                            border: '1.5px solid #0284c7',
+                            borderRadius: '6px',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                          }}
+                        >
+                          <div
+                            style={{
+                              padding: '5px 8px',
+                              background: '#f8fafc',
+                              borderBottom: '1px solid #e2e8f0',
+                              fontSize: '9.5px',
+                              fontWeight: 800,
+                              color: '#64748b',
+                              textTransform: 'uppercase',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                            }}
+                          >
+                            <span>Registered Companies in DBMS (with Location)</span>
+                            <button
+                              type="button"
+                              onClick={() => setIsProfileCompanyDropdownOpen(false)}
+                              style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 0 }}
+                            >
+                              <X size={11} />
+                            </button>
+                          </div>
+
+                          {profileCompanySearchResults.map((comp) => (
+                            <div
+                              key={comp.id}
+                              onClick={() => {
+                                setTransferTargetCompany(comp.legalName);
+                                setIsProfileCompanyDropdownOpen(false);
+                                toast(`Selected: ${comp.legalName} (${comp.locationLabel})`);
+                              }}
+                              style={{
+                                padding: '6px 10px',
+                                borderBottom: '1px solid #f1f5f9',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '2px',
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.background = '#f0f9ff')}
+                              onMouseLeave={(e) => (e.currentTarget.style.background = '#ffffff')}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a' }}>{comp.legalName}</span>
+                                {comp.verified && <span className="badge green" style={{ fontSize: '8.5px', padding: '0 4px' }}>VERIFIED</span>}
+                              </div>
+                              <span style={{ fontSize: '10px', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                <MapPin size={10} /> {comp.locationLabel} {comp.registeredAddress ? `· ${comp.registeredAddress}` : ''}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Duplicate Advisory Notice */}
+                      {profileCompanyAdvisory && profileCompanyAdvisory.isPotentialDuplicate && (
+                        <div
+                          style={{
+                            marginTop: '4px',
+                            padding: '6px 8px',
+                            background: '#fffbeb',
+                            border: '1px solid #fde68a',
+                            borderRadius: '4px',
+                            fontSize: '10.5px',
+                            color: '#92400e',
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 700, marginBottom: '2px' }}>
+                            <AlertTriangle size={11} color="#d97706" />
+                            <span>Registered Entity Match Notice (Advisory Only)</span>
+                          </div>
+                          <div>{profileCompanyAdvisory.advisoryMessage}</div>
+                        </div>
+                      )}
                     </div>
                     <div className="field">
                       <label>New Corporate Email ID <span className="req">*</span></label>

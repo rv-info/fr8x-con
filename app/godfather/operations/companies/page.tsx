@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Building,
   Search,
@@ -21,6 +21,15 @@ import {
   HelpCircle,
   FileCheck,
   ShieldAlert,
+  Database,
+  GitMerge,
+  Plus,
+  MapPin,
+  RefreshCw,
+  Layers,
+  Check,
+  ArrowRight,
+  Edit3,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
@@ -43,6 +52,159 @@ export default function CompaniesKYCPage() {
 
   const [infoNote, setInfoNote] = useState('');
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
+
+  // Active view tab: KYC queue vs DBMS Master Register
+  const [activeTab, setActiveTab] = useState<'kyc' | 'master_dbms'>('kyc');
+
+  // Master Company Register (DBMS & Anti-Duplication) state
+  const [dbmsCompanies, setDbmsCompanies] = useState<any[]>([]);
+  const [isLoadingDbms, setIsLoadingDbms] = useState(false);
+  const [dbmsSearch, setDbmsSearch] = useState('');
+  const [dbmsFilter, setDbmsFilter] = useState<'ALL' | 'DUPLICATES' | 'MERGED' | 'CANONICAL'>('ALL');
+  const [dbmsCountryFilter, setDbmsCountryFilter] = useState('ALL');
+
+  // Merge modal state
+  const [mergeModal, setMergeModal] = useState<{
+    isOpen: boolean;
+    sourceCompany: any | null;
+    targetCompanyId: string;
+    mergeNotes: string;
+  }>({
+    isOpen: false,
+    sourceCompany: null,
+    targetCompanyId: '',
+    mergeNotes: '',
+  });
+
+  // Edit / Add Master Company modal state
+  const [editModal, setEditModal] = useState<{
+    isOpen: boolean;
+    company: any | null;
+    isNew: boolean;
+  }>({
+    isOpen: false,
+    company: null,
+    isNew: false,
+  });
+
+  const [isSavingDbms, setIsSavingDbms] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const fetchDbmsCompanies = async () => {
+    setIsLoadingDbms(true);
+    try {
+      const res = await fetch('/api/godfather/companies');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.companies)) {
+        setDbmsCompanies(data.companies);
+      }
+    } catch (err) {
+      console.error('Failed to fetch DBMS companies:', err);
+    } finally {
+      setIsLoadingDbms(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'master_dbms') {
+      fetchDbmsCompanies();
+    }
+  }, [activeTab]);
+
+  const showToast = (type: 'success' | 'error', text: string) => {
+    setToastMessage({ type, text });
+    setTimeout(() => {
+      setToastMessage((prev) => (prev?.text === text ? null : prev));
+    }, 4500);
+  };
+
+  const handleExecuteMerge = async () => {
+    if (!mergeModal.sourceCompany || !mergeModal.targetCompanyId) return;
+    setIsSavingDbms(true);
+    try {
+      const res = await fetch('/api/godfather/companies', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          canonicalId: mergeModal.targetCompanyId,
+          duplicateId: mergeModal.sourceCompany.id,
+          mergeNotes: mergeModal.mergeNotes,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', data.message || 'Duplicate company merged successfully.');
+        setMergeModal({ isOpen: false, sourceCompany: null, targetCompanyId: '', mergeNotes: '' });
+        fetchDbmsCompanies();
+      } else {
+        showToast('error', data.error || 'Failed to merge duplicate company.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Network error during company merge.');
+    } finally {
+      setIsSavingDbms(false);
+    }
+  };
+
+  const handleSaveMasterCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editModal.company?.legalName || !editModal.company?.city || !editModal.company?.country) return;
+    setIsSavingDbms(true);
+    try {
+      const res = await fetch('/api/godfather/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editModal.company),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          'success',
+          editModal.isNew
+            ? `Master entity "${editModal.company.legalName}" registered in DBMS.`
+            : `Entity "${editModal.company.legalName}" updated in DBMS.`
+        );
+        setEditModal({ isOpen: false, company: null, isNew: false });
+        fetchDbmsCompanies();
+      } else {
+        showToast('error', data.error || 'Failed to save master company.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Network error saving company to DBMS.');
+    } finally {
+      setIsSavingDbms(false);
+    }
+  };
+
+  const handleAcknowledgeDistinctBranch = async (comp: any) => {
+    setIsSavingDbms(true);
+    try {
+      const updated = {
+        ...comp,
+        duplicateWarning: false,
+        adminNotes: [
+          ...(comp.adminNotes || []),
+          `Audited and verified as distinct operational branch entity on ${new Date().toLocaleDateString()}`,
+        ],
+      };
+      const res = await fetch('/api/godfather/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('success', `Entity "${comp.legalName}" marked as distinct branch.`);
+        fetchDbmsCompanies();
+      } else {
+        showToast('error', data.error || 'Failed to update branch status.');
+      }
+    } catch (err: any) {
+      showToast('error', err.message || 'Error updating entity.');
+    } finally {
+      setIsSavingDbms(false);
+    }
+  };
 
   // Confirmation modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -69,6 +231,33 @@ export default function CompaniesKYCPage() {
     const matchesRisk = riskFilter === 'ALL' || (c.riskLevel || 'LOW').toUpperCase() === riskFilter;
 
     return matchesSearch && matchesStatus && matchesCountry && matchesRisk;
+  });
+
+  const filteredDbmsCompanies = dbmsCompanies.filter((c) => {
+    const q = dbmsSearch.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      c.legalName?.toLowerCase().includes(q) ||
+      c.tradeName?.toLowerCase().includes(q) ||
+      c.id?.toLowerCase().includes(q) ||
+      c.registeredAddress?.toLowerCase().includes(q) ||
+      c.city?.toLowerCase().includes(q) ||
+      c.country?.toLowerCase().includes(q) ||
+      c.gstn?.toLowerCase().includes(q) ||
+      c.taxId?.toLowerCase().includes(q) ||
+      c.pan?.toLowerCase().includes(q);
+
+    const matchesFilter =
+      dbmsFilter === 'ALL' ||
+      (dbmsFilter === 'DUPLICATES' && c.duplicateWarning && !c.duplicateFlag) ||
+      (dbmsFilter === 'MERGED' && c.duplicateFlag) ||
+      (dbmsFilter === 'CANONICAL' && !c.duplicateWarning && !c.duplicateFlag);
+
+    const matchesCountry =
+      dbmsCountryFilter === 'ALL' ||
+      c.country?.toUpperCase() === dbmsCountryFilter.toUpperCase();
+
+    return matchesSearch && matchesFilter && matchesCountry;
   });
 
   const statusCounts = {
@@ -151,7 +340,62 @@ export default function CompaniesKYCPage() {
         </div>
       </div>
 
-      {/* Top Status Summary Chips */}
+      {/* Main Governance View Mode Switcher */}
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('kyc')}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeTab === 'kyc'
+              ? 'bg-sky-600 text-white shadow-sm'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <ShieldCheck className="lucide w-4 h-4" />
+          <span>KYC Verification Queue</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] ${
+              activeTab === 'kyc' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+            }`}
+          >
+            {statusCounts.PENDING}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab('master_dbms');
+            if (dbmsCompanies.length === 0) {
+              fetchDbmsCompanies();
+            }
+          }}
+          className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
+            activeTab === 'master_dbms'
+              ? 'bg-slate-900 text-white shadow-sm ring-2 ring-sky-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+          }`}
+        >
+          <Database className="lucide w-4 h-4 text-emerald-400" />
+          <span>DBMS Master Company Register & Duplicate Governance</span>
+          <span className="gf-badge gf-badge-amber text-[9px] font-bold">
+            GODFATHER EXCLUSIVE
+          </span>
+          {dbmsCompanies.length > 0 && (
+            <span
+              className={`px-1.5 py-0.5 rounded-full font-mono text-[10px] ${
+                activeTab === 'master_dbms' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'
+              }`}
+            >
+              {dbmsCompanies.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'kyc' && (
+        <div className="space-y-4">
+          {/* Top Status Summary Chips */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
         {[
           { key: 'ALL', label: 'All Companies', count: statusCounts.ALL, badge: 'gf-badge-gray' },
@@ -577,6 +821,337 @@ export default function CompaniesKYCPage() {
           </div>
         </div>
       )}
+        </div>
+      )}
+
+      {/* DBMS Master Company Register & Duplicate Governance (Godfather Exclusive) */}
+      {activeTab === 'master_dbms' && (
+        <div className="space-y-4">
+          {/* Summary Metric Strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="gf-card p-3 flex items-center justify-between border-l-4 border-l-sky-600">
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DBMS Master Entities</div>
+                <div className="text-xl font-mono font-bold text-slate-900 mt-0.5">{dbmsCompanies.length}</div>
+                <div className="text-[9px] text-slate-500">Persisted in DBMS companies.json</div>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+                <Database className="lucide w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="gf-card p-3 flex items-center justify-between border-l-4 border-l-amber-500">
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Duplicate Warnings</div>
+                <div className="text-xl font-mono font-bold text-amber-600 mt-0.5">
+                  {dbmsCompanies.filter((c) => c.duplicateWarning && !c.duplicateFlag).length}
+                </div>
+                <div className="text-[9px] text-amber-700 font-medium">Same name or identical address</div>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
+                <AlertTriangle className="lucide w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="gf-card p-3 flex items-center justify-between border-l-4 border-l-purple-500">
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Merged Duplicates</div>
+                <div className="text-xl font-mono font-bold text-purple-700 mt-0.5">
+                  {dbmsCompanies.filter((c) => c.duplicateFlag).length}
+                </div>
+                <div className="text-[9px] text-slate-500">Consolidated into canonical parents</div>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center">
+                <GitMerge className="lucide w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="gf-card p-3 flex items-center justify-between border-l-4 border-l-emerald-600">
+              <div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Canonical Master Records</div>
+                <div className="text-xl font-mono font-bold text-emerald-700 mt-0.5">
+                  {dbmsCompanies.filter((c) => !c.duplicateWarning && !c.duplicateFlag).length}
+                </div>
+                <div className="text-[9px] text-emerald-700 font-medium">Distinct verified entities</div>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <CheckCircle2 className="lucide w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Filter & Action Toolbar */}
+          <div className="gf-filter-bar flex-wrap gap-2">
+            <div className="gf-search-input-wrap min-w-[280px]">
+              <Search className="lucide w-3 h-3 text-slate-400" />
+              <input
+                type="text"
+                value={dbmsSearch}
+                onChange={(e) => setDbmsSearch(e.target.value)}
+                placeholder="Search by company name, address, city, country, tax ID, or CMP ID..."
+                className="gf-search-input font-medium"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={dbmsFilter}
+                onChange={(e) => setDbmsFilter(e.target.value as any)}
+                className="gf-select"
+              >
+                <option value="ALL">All Master Records ({dbmsCompanies.length})</option>
+                <option value="DUPLICATES">Flagged Duplicates Only</option>
+                <option value="CANONICAL">Canonical Entities Only</option>
+                <option value="MERGED">Merged Records Only</option>
+              </select>
+
+              <select
+                value={dbmsCountryFilter}
+                onChange={(e) => setDbmsCountryFilter(e.target.value)}
+                className="gf-select"
+              >
+                <option value="ALL">All Countries</option>
+                <option value="India">India</option>
+                <option value="Netherlands">Netherlands</option>
+                <option value="Singapore">Singapore</option>
+                <option value="Germany">Germany</option>
+                <option value="United States">United States</option>
+                <option value="UAE">UAE</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={fetchDbmsCompanies}
+                disabled={isLoadingDbms}
+                className="gf-btn gf-btn-secondary flex items-center gap-1.5 cursor-pointer"
+                title="Refresh DBMS Registry"
+              >
+                <RefreshCw className={`lucide w-3 h-3 ${isLoadingDbms ? 'animate-spin' : ''}`} />
+                <span>Refresh</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setEditModal({
+                    isOpen: true,
+                    company: {
+                      legalName: '',
+                      tradeName: '',
+                      country: 'India',
+                      city: '',
+                      state: '',
+                      postalCode: '',
+                      registeredAddress: '',
+                      gstn: '',
+                      pan: '',
+                      iec: '',
+                      taxId: '',
+                      corporateRegNumber: '',
+                      logisticsLicenseNumber: '',
+                      status: 'verified',
+                      verified: true,
+                      memberCount: 1,
+                    },
+                    isNew: true,
+                  })
+                }
+                className="gf-btn gf-btn-primary flex items-center gap-1.5 font-bold cursor-pointer"
+              >
+                <Plus className="lucide w-3.5 h-3.5" />
+                <span>Register Master Entity in DBMS</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Master Company Registry Enterprise Table */}
+          <div className="gf-card">
+            <div className="gf-excel-sheet border-0">
+              <table className="gf-table">
+                <thead>
+                  <tr>
+                    <th className="col-index">#</th>
+                    <th className="text-left" style={{ minWidth: '220px' }}>COMPANY & TRADE NAME</th>
+                    <th className="text-center" style={{ width: '100px' }}>COMPANY ID</th>
+                    <th className="text-left" style={{ minWidth: '260px' }}>LOCATION & REGISTERED ADDRESS</th>
+                    <th className="text-center" style={{ width: '150px' }}>TAX / STATUTORY ID</th>
+                    <th className="text-center" style={{ width: '180px' }}>DUPLICATE ADVISORY</th>
+                    <th className="text-center" style={{ width: '100px' }}>MEMBERS</th>
+                    <th className="text-right" style={{ width: '220px' }}>GODFATHER ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredDbmsCompanies.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="text-center py-12 text-slate-400">
+                        <Database className="lucide w-8 h-8 mx-auto mb-2 text-slate-300" />
+                        <div className="font-bold text-slate-700 text-xs">No Master Entities Found</div>
+                        <div className="text-[9px]">
+                          {isLoadingDbms
+                            ? 'Loading DBMS Master Registry from .knox/dbms/companies.json...'
+                            : 'Zero company records matching the applied search or filter query.'}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredDbmsCompanies.map((comp, idx) => {
+                      const isDup = comp.duplicateWarning && !comp.duplicateFlag;
+                      const isMerged = comp.duplicateFlag;
+                      return (
+                        <tr
+                          key={comp.id}
+                          className={`transition-colors ${
+                            isDup
+                              ? 'bg-amber-50/40 hover:bg-amber-50/80'
+                              : isMerged
+                              ? 'bg-slate-50/50 hover:bg-slate-100/50 opacity-70'
+                              : 'hover:bg-sky-50/30'
+                          }`}
+                        >
+                          <td className="col-index">{idx + 1}</td>
+
+                          {/* Company & Trade Name */}
+                          <td className="text-left">
+                            <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                              <Building className="lucide w-3.5 h-3.5 text-sky-600 flex-shrink-0" />
+                              <span className="truncate max-w-[220px]">{comp.legalName}</span>
+                            </div>
+                            {comp.tradeName && comp.tradeName !== comp.legalName && (
+                              <div className="text-[9.5px] text-slate-500 font-medium">
+                                Trade: {comp.tradeName}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Company ID */}
+                          <td className="text-center">
+                            <span className="font-mono text-[9.5px] font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
+                              {comp.id}
+                            </span>
+                          </td>
+
+                          {/* Location & Address */}
+                          <td className="text-left">
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-sky-900 mb-0.5">
+                              <MapPin className="lucide w-3 h-3 text-sky-600 flex-shrink-0" />
+                              <span>{comp.city}, {comp.country}</span>
+                            </div>
+                            <div className="text-[9.5px] text-slate-600 line-clamp-1" title={comp.registeredAddress}>
+                              {comp.registeredAddress || 'No street address specified'}
+                            </div>
+                          </td>
+
+                          {/* Tax / Statutory ID */}
+                          <td className="text-center font-mono text-[9.5px]">
+                            {comp.gstn ? (
+                              <div className="text-sky-800 font-bold">GST: {comp.gstn}</div>
+                            ) : comp.taxId ? (
+                              <div className="text-slate-800 font-bold">Tax: {comp.taxId}</div>
+                            ) : (
+                              <span className="text-slate-400">Not Specified</span>
+                            )}
+                            {comp.pan && <div className="text-slate-500 text-[8.5px]">PAN: {comp.pan}</div>}
+                          </td>
+
+                          {/* Duplicate Advisory */}
+                          <td className="text-center">
+                            {isDup ? (
+                              <div className="space-y-1">
+                                <span className="gf-badge gf-badge-amber text-[9px] font-bold flex items-center justify-center gap-1">
+                                  <AlertTriangle className="lucide w-3 h-3 text-amber-700" />
+                                  <span>DUPLICATE ADVISORY</span>
+                                </span>
+                                <div
+                                  className="text-[8.5px] text-amber-800 font-medium line-clamp-2 text-left"
+                                  title={comp.duplicateReason}
+                                >
+                                  {comp.duplicateReason || 'Potential identical name or address match detected.'}
+                                </div>
+                              </div>
+                            ) : isMerged ? (
+                              <div className="space-y-0.5">
+                                <span className="gf-badge gf-badge-gray text-[9px] font-bold flex items-center justify-center gap-1">
+                                  <GitMerge className="lucide w-3 h-3" />
+                                  <span>MERGED ALIAS</span>
+                                </span>
+                                <div className="text-[8.5px] font-mono text-slate-500">
+                                  Parent: {comp.duplicateOfId}
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="gf-badge gf-badge-green text-[9px] font-bold flex items-center justify-center gap-1">
+                                <CheckCircle2 className="lucide w-3 h-3 text-emerald-600" />
+                                <span>CANONICAL MASTER</span>
+                              </span>
+                            )}
+                          </td>
+
+                          {/* Members */}
+                          <td className="text-center font-mono text-[10px]">
+                            <span className="font-bold text-slate-800">{comp.memberCount || 1}</span>{' '}
+                            <span className="text-slate-500 text-[8.5px]">users</span>
+                          </td>
+
+                          {/* Actions */}
+                          <td className="text-right">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {isDup && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const targetMatch = comp.duplicateMatches?.[0]?.id || '';
+                                      setMergeModal({
+                                        isOpen: true,
+                                        sourceCompany: comp,
+                                        targetCompanyId: targetMatch,
+                                        mergeNotes: `Duplicate consolidation requested: ${comp.duplicateReason || 'Matches existing registered entity.'}`,
+                                      });
+                                    }}
+                                    className="gf-btn gf-btn-danger h-[24px] text-[10px] py-0 px-2 font-bold flex items-center gap-1 cursor-pointer"
+                                    title="Merge duplicate into canonical parent"
+                                  >
+                                    <GitMerge className="lucide w-3 h-3" />
+                                    <span>Merge</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAcknowledgeDistinctBranch(comp)}
+                                    className="gf-btn gf-btn-secondary h-[24px] text-[10px] py-0 px-2 flex items-center gap-1 cursor-pointer"
+                                    title="Acknowledge this record as an independent branch operating at same location"
+                                  >
+                                    <Check className="lucide w-3 h-3 text-emerald-600" />
+                                    <span>Distinct Branch</span>
+                                  </button>
+                                </>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => setEditModal({ isOpen: true, company: { ...comp }, isNew: false })}
+                                className="gf-btn gf-btn-secondary h-[24px] text-[10px] py-0 px-2 flex items-center gap-1 cursor-pointer"
+                                title="Edit master details in DBMS"
+                              >
+                                <Edit3 className="lucide w-3 h-3" />
+                                <span>Edit</span>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+              <div className="gf-excel-status-bar">
+                <span>● DBMS MASTER COMPANY REPOSITORY (.knox/dbms/companies.json)</span>
+                <span>Showing {filteredDbmsCompanies.length} of {dbmsCompanies.length} Master Entities</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Safe In-Modal KYC Document Preview Viewer */}
       {previewDocument && (
@@ -743,6 +1318,356 @@ export default function CompaniesKYCPage() {
           onConfirm={modalConfig.onConfirm}
           onClose={() => setModalConfig(null)}
         />
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          className={`fixed bottom-5 right-5 z-50 px-4 py-3 rounded-lg shadow-xl border text-xs font-bold flex items-center gap-2 transition-all ${
+            toastMessage.type === 'success'
+              ? 'bg-slate-900 text-emerald-400 border-emerald-500/50 shadow-emerald-950/30'
+              : 'bg-slate-900 text-rose-400 border-rose-500/50 shadow-rose-950/30'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="lucide w-4 h-4 text-emerald-400 flex-shrink-0" />
+          ) : (
+            <AlertCircle className="lucide w-4 h-4 text-rose-400 flex-shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
+      {/* Merge Duplicate Entity Modal */}
+      {mergeModal.isOpen && mergeModal.sourceCompany && (
+        <div className="gf-modal-overlay">
+          <div className="gf-modal-card max-w-xl">
+            <div className="gf-modal-header bg-amber-50 border-b border-amber-200">
+              <div className="gf-modal-title text-amber-950 flex items-center gap-2">
+                <GitMerge className="lucide w-4 h-4 text-amber-600" />
+                <span>Merge Duplicate Company into Canonical Master</span>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setMergeModal({ isOpen: false, sourceCompany: null, targetCompanyId: '', mergeNotes: '' })
+                }
+                className="gf-modal-close-btn cursor-pointer"
+              >
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4 text-xs">
+              <div className="p-3 bg-amber-50/70 border border-amber-200 rounded-lg text-amber-900 text-[11px] leading-relaxed">
+                <div className="font-bold flex items-center gap-1.5 mb-1">
+                  <AlertTriangle className="lucide w-3.5 h-3.5 text-amber-700" />
+                  <span>Consolidation & Duplicate Resolution Policy</span>
+                </div>
+                Merging consolidates member accounts and booking privileges into the canonical master company. The source duplicate entity will be marked as an archived alias pointing to the canonical master in DBMS.
+              </div>
+
+              {/* Source Entity */}
+              <div className="p-3 rounded border border-rose-200 bg-rose-50/50">
+                <div className="text-[10px] font-bold text-rose-700 uppercase tracking-wide mb-1">
+                  Source Duplicate Entity (To Be Merged)
+                </div>
+                <div className="font-bold text-slate-900 text-sm">{mergeModal.sourceCompany.legalName}</div>
+                <div className="text-slate-600 text-[10px] flex items-center gap-1.5 mt-0.5 flex-wrap">
+                  <span className="font-mono font-bold text-slate-700 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                    {mergeModal.sourceCompany.id}
+                  </span>
+                  <span>📍 {mergeModal.sourceCompany.city}, {mergeModal.sourceCompany.country}</span>
+                  <span>· {mergeModal.sourceCompany.registeredAddress}</span>
+                </div>
+              </div>
+
+              {/* Target Canonical Entity */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1 text-[11px]">
+                  Target Canonical Master Company <span className="text-rose-600">*</span>
+                </label>
+                <select
+                  value={mergeModal.targetCompanyId}
+                  onChange={(e) => setMergeModal((prev) => ({ ...prev, targetCompanyId: e.target.value }))}
+                  className="gf-select w-full font-medium"
+                >
+                  <option value="">-- Select Canonical Parent Entity --</option>
+                  {dbmsCompanies
+                    .filter((c) => c.id !== mergeModal.sourceCompany?.id && !c.duplicateFlag)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.legalName} ({c.id}) — 📍 {c.city}, {c.country} ({c.registeredAddress})
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Merge Notes */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1 text-[11px]">
+                  Godfather Audit Reason / Consolidation Notes <span className="text-rose-600">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={mergeModal.mergeNotes}
+                  onChange={(e) => setMergeModal((prev) => ({ ...prev, mergeNotes: e.target.value }))}
+                  placeholder="e.g. Duplicate registration sharing identical street address and registered office at Mumbai Logistics Park."
+                  className="gf-textarea w-full"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMergeModal({ isOpen: false, sourceCompany: null, targetCompanyId: '', mergeNotes: '' })
+                  }
+                  className="gf-btn gf-btn-secondary cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={!mergeModal.targetCompanyId || !mergeModal.mergeNotes.trim() || isSavingDbms}
+                  onClick={handleExecuteMerge}
+                  className="gf-btn gf-btn-danger flex items-center gap-1.5 cursor-pointer font-bold"
+                >
+                  <GitMerge className="lucide w-3.5 h-3.5" />
+                  <span>{isSavingDbms ? 'Executing Merge...' : 'Execute Canonical Merge'}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Register / Edit Master Company Modal */}
+      {editModal.isOpen && editModal.company && (
+        <div className="gf-modal-overlay">
+          <div className="gf-modal-card max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="gf-modal-header bg-slate-900 text-white">
+              <div className="gf-modal-title flex items-center gap-2 text-white">
+                <Database className="lucide w-4 h-4 text-emerald-400" />
+                <span>
+                  {editModal.isNew
+                    ? 'Register Master Corporate Entity in DBMS'
+                    : `Edit Master Entity: ${editModal.company.legalName}`}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditModal({ isOpen: false, company: null, isNew: false })}
+                className="gf-modal-close-btn text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveMasterCompany} className="p-4 space-y-4 text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="gf-form-group">
+                  <label className="gf-form-label">
+                    Legal Registered Company Name <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editModal.company.legalName || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, legalName: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. Apex Global Forwarders Private Limited"
+                    className="gf-input font-bold"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">Trade / Operating Name</label>
+                  <input
+                    type="text"
+                    value={editModal.company.tradeName || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, tradeName: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. Apex Forwarders"
+                    className="gf-input"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">
+                    Country <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editModal.company.country || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, country: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. India, Netherlands, Singapore..."
+                    className="gf-input"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">
+                    City <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editModal.company.city || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, city: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. Mumbai, Rotterdam, Singapore..."
+                    className="gf-input"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">State / Province</label>
+                  <input
+                    type="text"
+                    value={editModal.company.state || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, state: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. Maharashtra, Zuid-Holland..."
+                    className="gf-input"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">Postal / ZIP Code</label>
+                  <input
+                    type="text"
+                    value={editModal.company.postalCode || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, postalCode: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. 400093"
+                    className="gf-input font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="gf-form-group">
+                <label className="gf-form-label">
+                  Registered Street Address / Logistics Terminal <span className="text-rose-600">*</span>
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={editModal.company.registeredAddress || ''}
+                  onChange={(e) =>
+                    setEditModal((prev) => ({
+                      ...prev,
+                      company: { ...prev.company, registeredAddress: e.target.value },
+                    }))
+                  }
+                  placeholder="e.g. Unit 402, B-Wing, Logistics Park, Andheri East"
+                  className="gf-textarea w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="gf-form-group">
+                  <label className="gf-form-label">GSTN / Tax ID</label>
+                  <input
+                    type="text"
+                    value={editModal.company.gstn || editModal.company.taxId || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, gstn: e.target.value, taxId: e.target.value },
+                      }))
+                    }
+                    placeholder="e.g. 27AABCA1234F1Z5"
+                    className="gf-input font-mono"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">PAN / Corporate Reg Number</label>
+                  <input
+                    type="text"
+                    value={editModal.company.pan || editModal.company.corporateRegNumber || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: {
+                          ...prev.company,
+                          pan: e.target.value,
+                          corporateRegNumber: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="e.g. AABCA1234F"
+                    className="gf-input font-mono"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">Status</label>
+                  <select
+                    value={editModal.company.status || 'verified'}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, status: e.target.value as any },
+                      }))
+                    }
+                    className="gf-select w-full"
+                  >
+                    <option value="verified">Verified Canonical</option>
+                    <option value="pending">Pending Review</option>
+                    <option value="additional_info_required">Additional Info Required</option>
+                    <option value="suspended">Suspended / Merged</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditModal({ isOpen: false, company: null, isNew: false })}
+                  className="gf-btn gf-btn-secondary cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingDbms}
+                  className="gf-btn gf-btn-primary flex items-center gap-1.5 font-bold cursor-pointer"
+                >
+                  <Check className="lucide w-3.5 h-3.5" />
+                  <span>{isSavingDbms ? 'Saving to DBMS...' : 'Save to DBMS Registry'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
