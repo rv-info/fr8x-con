@@ -2,14 +2,26 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useNetwork } from '@/lib/context/NetworkContext';
-import { Wifi, WifiOff, Zap, RefreshCw, CheckCircle2, ChevronDown, Database } from 'lucide-react';
+import { presenceService } from '@/lib/presence/presenceService';
+import { ChevronDown, Check, WifiOff } from 'lucide-react';
 
 export function NetworkStatusPill() {
-  const { isOnline, tier, connection, pendingCount, flushOutbox } = useNetwork();
+  const { isOnline } = useNetwork();
+  const [presence, setPresence] = useState<'active' | 'away'>('active');
   const [isOpen, setIsOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [justSynced, setJustSynced] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
+
+  // Subscribe to real-time presence service
+  useEffect(() => {
+    const unsubscribe = presenceService.subscribe((status) => {
+      if (status === 'away') {
+        setPresence('away');
+      } else {
+        setPresence('active');
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   // Close popover on outside click
   useEffect(() => {
@@ -24,80 +36,79 @@ export function NetworkStatusPill() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const handleSyncNow = async () => {
-    setIsSyncing(true);
-    try {
-      await flushOutbox();
-      setJustSynced(true);
-      setTimeout(() => setJustSynced(false), 3000);
-    } finally {
-      setIsSyncing(false);
-    }
+  const handleSelectStatus = (newStatus: 'active' | 'away') => {
+    setPresence(newStatus);
+    presenceService.setStatus(newStatus);
+    setIsOpen(false);
   };
 
-  // Badge appearance by tier
-  let badgeLabel = 'Live Sync';
-  let badgeColor = '#059669'; // Green
-  let badgeBg = '#ecfdf5';
-  let badgeBorder = '#a7f3d0';
-  let BadgeIcon = Wifi;
-
+  // When device is completely disconnected from internet
   if (!isOnline) {
-    badgeLabel = pendingCount > 0 ? `Offline (${pendingCount})` : 'Offline Mode';
-    badgeColor = '#ea580c'; // Orange
-    badgeBg = '#fff7ed';
-    badgeBorder = '#fed7aa';
-    BadgeIcon = WifiOff;
-  } else if (tier === 'saver') {
-    badgeLabel = 'HyperSpeed · 3G Saver';
-    badgeColor = '#0284c7'; // Blue
-    badgeBg = '#f0f9ff';
-    badgeBorder = '#bae6fd';
-    BadgeIcon = Zap;
-  } else if (tier === 'adaptive') {
-    badgeLabel = 'HyperSpeed · 3G/4G';
-    badgeColor = '#0284c7';
-    badgeBg = '#f0f9ff';
-    badgeBorder = '#bae6fd';
-    BadgeIcon = Zap;
+    return (
+      <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div
+          title="Network connection offline. Local edits will sync once reconnected."
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 9px',
+            borderRadius: '999px',
+            background: '#fef2f2',
+            border: '1px solid #fecaca',
+            color: '#b91c1c',
+            fontSize: '11.5px',
+            fontWeight: 600,
+            lineHeight: 1,
+            userSelect: 'none',
+          }}
+        >
+          <WifiOff size={11} style={{ color: '#dc2626' }} />
+          <span>Offline</span>
+        </div>
+      </div>
+    );
   }
+
+  const isLive = presence === 'active';
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }} ref={popoverRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        title="HyperSpeed Network Status & Offline Resilience"
+        title={isLive ? 'Availability: Live (Online) · Click to switch' : 'Availability: Away · Click to switch'}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '5px',
-          padding: '4px 9px',
+          gap: '6px',
+          padding: '4px 10px',
           borderRadius: '999px',
-          background: badgeBg,
-          border: `1px solid ${badgeBorder}`,
-          color: badgeColor,
-          fontSize: '11px',
+          background: isLive ? '#ecfdf5' : '#fffbeb',
+          border: `1px solid ${isLive ? '#a7f3d0' : '#fde68a'}`,
+          color: isLive ? '#065f46' : '#92400e',
+          fontSize: '11.5px',
           fontWeight: 600,
           cursor: 'pointer',
           transition: 'all 0.15s ease',
           lineHeight: 1,
         }}
       >
-        <BadgeIcon size={12} style={{ flexShrink: 0 }} />
-        <span>{badgeLabel}</span>
-        {pendingCount > 0 && isOnline && (
-          <span
-            style={{
-              display: 'inline-block',
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              background: '#ea580c',
-            }}
-          />
-        )}
-        <ChevronDown size={10} style={{ opacity: 0.6 }} />
+        <span
+          style={{
+            display: 'inline-block',
+            width: '7px',
+            height: '7px',
+            borderRadius: '50%',
+            background: isLive ? '#10b981' : '#f59e0b',
+            boxShadow: isLive ? '0 0 0 2px rgba(16, 185, 129, 0.25)' : '0 0 0 2px rgba(245, 158, 11, 0.2)',
+            flexShrink: 0,
+          }}
+        />
+        <span>{isLive ? 'Live' : 'Away'}</span>
+        <ChevronDown size={11} style={{ opacity: 0.65, marginLeft: '1px' }} />
       </button>
 
       {isOpen && (
@@ -106,96 +117,125 @@ export function NetworkStatusPill() {
             position: 'absolute',
             top: 'calc(100% + 6px)',
             right: 0,
-            width: '280px',
+            width: '220px',
             background: '#ffffff',
             borderRadius: '8px',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.05)',
             border: '1px solid #e2e8f0',
             zIndex: 1000,
-            padding: '14px',
+            padding: '6px',
             fontSize: '12px',
-            color: '#1e293b',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #f1f5f9', paddingBottom: '10px', marginBottom: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Zap size={14} style={{ color: '#0284c7' }} />
-              <span style={{ fontWeight: 700, fontSize: '12.5px', color: '#0f172a' }}>
-                HyperSpeed Engine
-              </span>
-            </div>
+          <div
+            style={{
+              padding: '6px 8px 6px',
+              borderBottom: '1px solid #f1f5f9',
+              marginBottom: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
             <span
               style={{
                 fontSize: '10px',
-                padding: '2px 6px',
-                borderRadius: '4px',
-                background: isOnline ? '#ecfdf5' : '#fff7ed',
-                color: isOnline ? '#059669' : '#ea580c',
-                fontWeight: 700,
                 textTransform: 'uppercase',
+                fontWeight: 700,
+                color: '#64748b',
+                letterSpacing: '0.04em',
               }}
             >
-              {isOnline ? 'Online' : 'Offline'}
+              Availability Status
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748b' }}>Effective Speed:</span>
-              <span style={{ fontWeight: 600 }}>{connection.effectiveType.toUpperCase()} ({connection.rtt}ms RTT)</span>
+          {/* Live Option */}
+          <button
+            type="button"
+            onClick={() => handleSelectStatus('active')}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: isLive ? '#ecfdf5' : 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s ease',
+            }}
+            onMouseEnter={(e) => {
+              if (!isLive) (e.currentTarget.style.background = '#f8fafc');
+            }}
+            onMouseLeave={(e) => {
+              if (!isLive) (e.currentTarget.style.background = 'transparent');
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.25)',
+                  flexShrink: 0,
+                }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '12px', color: '#0f172a' }}>Live</div>
+                <div style={{ fontSize: '10.5px', color: '#64748b' }}>Online & available for trade</div>
+              </div>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748b' }}>Throughput:</span>
-              <span style={{ fontWeight: 600 }}>{connection.downlink ? `${connection.downlink} Mbps` : 'Adaptive'}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748b' }}>Caching Strategy:</span>
-              <span style={{ fontWeight: 600, color: '#0284c7' }}>Stale-While-Revalidate</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: '#64748b' }}>Offline Outbox:</span>
-              <span style={{ fontWeight: 600, color: pendingCount > 0 ? '#ea580c' : '#059669' }}>
-                {pendingCount} action{pendingCount === 1 ? '' : 's'} queued
-              </span>
-            </div>
-          </div>
+            {isLive && <Check size={14} style={{ color: '#059669', flexShrink: 0 }} />}
+          </button>
 
-          <div style={{ background: '#f8fafc', borderRadius: '6px', padding: '8px 10px', fontSize: '11px', color: '#475569', marginBottom: '10px', lineHeight: 1.4 }}>
-            ⚡ <strong>Flaky 3G/Port Tolerance:</strong> Feed cards, rate cards, and auctions render in <strong>0ms</strong> from local cache. Likes and draft updates sync automatically when connection re-establishes.
-          </div>
-
-          {pendingCount > 0 && isOnline && (
-            <button
-              type="button"
-              onClick={handleSyncNow}
-              disabled={isSyncing}
-              style={{
-                width: '100%',
-                padding: '7px 12px',
-                borderRadius: '6px',
-                background: '#0284c7',
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 600,
-                fontSize: '11.5px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-              }}
-            >
-              <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
-              <span>{isSyncing ? 'Flushing Outbox…' : `Sync ${pendingCount} Action(s) Now`}</span>
-            </button>
-          )}
-
-          {justSynced && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#059669', fontSize: '11px', marginTop: '6px', justifyContent: 'center' }}>
-              <CheckCircle2 size={12} />
-              <span>All queued offline actions synchronized!</span>
+          {/* Away Option */}
+          <button
+            type="button"
+            onClick={() => handleSelectStatus('away')}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 10px',
+              borderRadius: '6px',
+              border: 'none',
+              background: !isLive ? '#fffbeb' : 'transparent',
+              cursor: 'pointer',
+              textAlign: 'left',
+              transition: 'background 0.15s ease',
+              marginTop: '2px',
+            }}
+            onMouseEnter={(e) => {
+              if (isLive) (e.currentTarget.style.background = '#f8fafc');
+            }}
+            onMouseLeave={(e) => {
+              if (isLive) (e.currentTarget.style.background = 'transparent');
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#f59e0b',
+                  boxShadow: '0 0 0 2px rgba(245, 158, 11, 0.2)',
+                  flexShrink: 0,
+                }}
+              />
+              <div>
+                <div style={{ fontWeight: 600, fontSize: '12px', color: '#0f172a' }}>Away</div>
+                <div style={{ fontSize: '10.5px', color: '#64748b' }}>Stepped away · Offline to contacts</div>
+              </div>
             </div>
-          )}
+            {!isLive && <Check size={14} style={{ color: '#d97706', flexShrink: 0 }} />}
+          </button>
         </div>
       )}
     </div>

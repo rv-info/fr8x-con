@@ -330,7 +330,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </button>
 
         <div className="topright">
-          {/* HyperSpeed Network & Offline Status */}
+          {/* User Availability Status (Live / Away) */}
           <NetworkStatusPill />
 
           {/* Location Badge */}
