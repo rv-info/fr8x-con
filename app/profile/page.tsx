@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
@@ -21,6 +21,14 @@ import {
   STATUTORY_PROFILES,
   StatutoryJurisdictionProfile,
 } from '@/lib/utils/statutory-kyc';
+import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+import {
+  getAllGlobalCountries,
+  getStatesForCountry,
+  getCitiesForState,
+  getCitiesForCountry,
+  getAllGlobalTimezones,
+} from '@/lib/geo/global-geo';
 import {
   UserCheck,
   Save,
@@ -64,6 +72,8 @@ import {
   Copy,
   ArrowRight,
   EyeOff,
+  Loader2,
+  Navigation,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -144,6 +154,151 @@ export default function ProfilePage() {
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
   const [transferMethod, setTransferMethod] = useState<'self' | 'godfather'>('self');
   const [transferReason, setTransferReason] = useState('Change of Employer / Corporate Reorganization');
+
+  // Location Detection & Address Suggestion State
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState<string[]>([]);
+
+  // Memoized Geographic Data for SearchableDropdowns
+  const globalCountries = useMemo(() => getAllGlobalCountries(), []);
+
+  const countryOptions = useMemo<DropdownOption[]>(() => {
+    return globalCountries.map((c) => ({
+      value: c.name,
+      label: c.name,
+      subLabel: c.isoCode,
+      flag: c.flag || '🌐',
+    }));
+  }, [globalCountries]);
+
+  const editCountryIso = useMemo(() => {
+    if (!editCountry) return 'IN';
+    const found = globalCountries.find(
+      (c) =>
+        c.name.toLowerCase() === editCountry.trim().toLowerCase() ||
+        c.isoCode.toLowerCase() === editCountry.trim().toLowerCase()
+    );
+    return found ? found.isoCode : 'IN';
+  }, [editCountry, globalCountries]);
+
+  const stateOptions = useMemo<DropdownOption[]>(() => {
+    const states = getStatesForCountry(editCountryIso);
+    return states.map((s) => ({
+      value: s.name,
+      label: s.name,
+      subLabel: s.isoCode,
+    }));
+  }, [editCountryIso]);
+
+  const editStateIso = useMemo(() => {
+    if (!editState) return '';
+    const states = getStatesForCountry(editCountryIso);
+    const found = states.find(
+      (s) =>
+        s.name.toLowerCase() === editState.trim().toLowerCase() ||
+        s.isoCode.toLowerCase() === editState.trim().toLowerCase()
+    );
+    return found ? found.isoCode : '';
+  }, [editCountryIso, editState]);
+
+  const cityOptions = useMemo<DropdownOption[]>(() => {
+    let cities: Array<{ name: string }> = [];
+    if (editStateIso) {
+      cities = getCitiesForState(editCountryIso, editStateIso);
+    }
+    if (!cities || cities.length === 0) {
+      cities = getCitiesForCountry(editCountryIso);
+    }
+    return (cities || []).map((ci) => ({
+      value: ci.name,
+      label: ci.name,
+    }));
+  }, [editCountryIso, editStateIso]);
+
+  const timezoneOptions = useMemo<DropdownOption[]>(() => {
+    const timezones = getAllGlobalTimezones();
+    return timezones.map((tz) => ({
+      value: tz.value,
+      label: `${tz.value} (${tz.offset})`,
+      subLabel: tz.offset,
+    }));
+  }, []);
+
+  const effectiveAddressSuggestions = useMemo(() => {
+    const list: string[] = [...addressSuggestions];
+    if (editCity || editCountry) {
+      const cityHub = `${editCity || 'Central'} Container Terminal / CFS Area, ${editState || editCountry}`;
+      const icdHub = `Inland Container Depot (ICD) Logistics Park, ${editCity || editState || editCountry}`;
+      if (!list.includes(cityHub)) list.push(cityHub);
+      if (!list.includes(icdHub)) list.push(icdHub);
+    }
+    return list.slice(0, 4);
+  }, [addressSuggestions, editCity, editState, editCountry]);
+
+  // Location Auto-Detect Handler via device GPS + free reverse geocoding API
+  const handleAutoDetectLocation = async () => {
+    setIsDetectingLocation(true);
+
+    const applyDetectedData = (data: any) => {
+      if (data.country) setEditCountry(data.country);
+      if (data.state) setEditState(data.state);
+      if (data.city) setEditCity(data.city);
+      if (data.timezone) setEditTimezone(data.timezone);
+      if (data.suggestedStreetAddress) {
+        setEditFormattedAddress(data.suggestedStreetAddress);
+      } else if (data.formattedAddress) {
+        setEditFormattedAddress(data.formattedAddress);
+      }
+      if (Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+        setAddressSuggestions(data.suggestions);
+      }
+      toast(`✓ Detected: ${data.city || data.state || data.country} (${data.source === 'gps' ? 'High-Precision GPS' : 'Network Geolocation'})`);
+    };
+
+    const fetchGeoFromApi = async (coordsLat?: number, coordsLng?: number) => {
+      try {
+        const query = coordsLat !== undefined && coordsLng !== undefined ? `?lat=${coordsLat}&lng=${coordsLng}` : '';
+        const res = await fetch(`/api/geo/detect${query}`);
+        if (!res.ok) throw new Error('Location detection failed');
+        const data = await res.json();
+        if (data.success) {
+          applyDetectedData(data);
+        } else {
+          throw new Error(data.error || 'Could not resolve location');
+        }
+      } catch (err) {
+        console.warn('Geo detection error, attempting IP fallback:', err);
+        if (coordsLat !== undefined) {
+          try {
+            const fallbackRes = await fetch('/api/geo/detect');
+            const fallbackData = await fallbackRes.json();
+            if (fallbackData.success) {
+              applyDetectedData(fallbackData);
+              return;
+            }
+          } catch {}
+        }
+        toast('Location detection unavailable. Please select your hub from the searchable dropdowns.');
+      } finally {
+        setIsDetectingLocation(false);
+      }
+    };
+
+    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          fetchGeoFromApi(position.coords.latitude, position.coords.longitude);
+        },
+        (err) => {
+          console.warn('Geolocation permission denied or timeout, fallback to IP:', err?.message);
+          fetchGeoFromApi();
+        },
+        { timeout: 8000, enableHighAccuracy: true, maximumAge: 60000 }
+      );
+    } else {
+      fetchGeoFromApi();
+    }
+  };
 
   // Privacy controls per section
   const [expPrivacy, setExpPrivacy] = useState<'public' | 'network' | 'private'>('public');
@@ -2430,70 +2585,190 @@ export default function ProfilePage() {
 
             {/* 3. Enterprise Geographic Location & Operating Hub */}
             <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                3. Enterprise Operating Hub & Geographic Location
-              </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  3. Enterprise Operating Hub & Geographic Location
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAutoDetectLocation}
+                  disabled={isDetectingLocation}
+                  className="btn secondary sm"
+                  style={{
+                    fontSize: '11px',
+                    padding: '4px 10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: '#ffffff',
+                    border: '1px solid #0284c7',
+                    color: '#0284c7',
+                    fontWeight: 700,
+                    borderRadius: '4px',
+                    cursor: isDetectingLocation ? 'wait' : 'pointer',
+                  }}
+                  title="Detect GPS coordinates & reverse geocode terminal address"
+                >
+                  {isDetectingLocation ? (
+                    <>
+                      <Loader2 size={13} className="spin" />
+                      <span>Detecting Device Location…</span>
+                    </>
+                  ) : (
+                    <>
+                      <Navigation size={13} color="#0284c7" />
+                      <span>Auto-Detect Device Location</span>
+                    </>
+                  )}
+                </button>
+              </div>
 
               <div className="grid g2">
                 <div className="field">
-                  <label>Country / Territory</label>
-                  <input
-                    className="input"
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>Country / Territory <span className="req">*</span></span>
+                    {editCountryIso && (
+                      <span style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 600 }}>ISO: {editCountryIso}</span>
+                    )}
+                  </label>
+                  <SearchableDropdown
+                    options={countryOptions}
                     value={editCountry}
-                    onChange={(e) => setEditCountry(e.target.value)}
-                    placeholder="e.g. India, United Arab Emirates, Singapore, Germany"
+                    onChange={(val) => {
+                      setEditCountry(val);
+                      setEditState('');
+                      setEditCity('');
+                    }}
+                    placeholder="Search or select country…"
+                    searchPlaceholder="Type country name or code…"
+                    allowCustom={true}
+                    triggerHeight="36px"
+                    maxHeight={220}
                   />
                 </div>
                 <div className="field">
-                  <label>State / Province / Region</label>
-                  <input
-                    className="input"
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>State / Province / Region</span>
+                    {stateOptions.length > 0 && (
+                      <span style={{ fontSize: '10px', color: 'var(--mut)' }}>{stateOptions.length} regions</span>
+                    )}
+                  </label>
+                  <SearchableDropdown
+                    options={stateOptions}
                     value={editState}
-                    onChange={(e) => setEditState(e.target.value)}
-                    placeholder="e.g. Maharashtra, Dubai, Hamburg, California"
+                    onChange={(val) => {
+                      setEditState(val);
+                      setEditCity('');
+                    }}
+                    placeholder="Search or select state/province…"
+                    searchPlaceholder="Type state or province name…"
+                    allowCustom={true}
+                    triggerHeight="36px"
+                    maxHeight={220}
                   />
                 </div>
               </div>
 
               <div className="grid g2">
                 <div className="field">
-                  <label>City / Maritime Hub</label>
-                  <input
-                    className="input"
+                  <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span>City / Maritime Hub</span>
+                    {cityOptions.length > 0 && (
+                      <span style={{ fontSize: '10px', color: 'var(--mut)' }}>{cityOptions.length} cities</span>
+                    )}
+                  </label>
+                  <SearchableDropdown
+                    options={cityOptions}
                     value={editCity}
-                    onChange={(e) => setEditCity(e.target.value)}
-                    placeholder="e.g. Mumbai, Dubai, Singapore, Rotterdam"
+                    onChange={(val) => setEditCity(val)}
+                    placeholder="Search or select city/maritime hub…"
+                    searchPlaceholder="Type city or port name…"
+                    allowCustom={true}
+                    triggerHeight="36px"
+                    maxHeight={220}
                   />
                 </div>
                 <div className="field">
                   <label>Operational Timezone</label>
-                  <select
-                    className="input"
+                  <SearchableDropdown
+                    options={timezoneOptions}
                     value={editTimezone}
-                    onChange={(e) => setEditTimezone(e.target.value)}
-                  >
-                    <option value="Asia/Kolkata">Asia/Kolkata (IST · UTC+05:30)</option>
-                    <option value="Asia/Dubai">Asia/Dubai (GST · UTC+04:00)</option>
-                    <option value="Asia/Singapore">Asia/Singapore (SGT · UTC+08:00)</option>
-                    <option value="Asia/Shanghai">Asia/Shanghai (CST · UTC+08:00)</option>
-                    <option value="Asia/Tokyo">Asia/Tokyo (JST · UTC+09:00)</option>
-                    <option value="Europe/Rotterdam">Europe/Rotterdam (CET · UTC+01:00)</option>
-                    <option value="Europe/London">Europe/London (GMT/BST · UTC+00:00)</option>
-                    <option value="Europe/Hamburg">Europe/Hamburg (CET · UTC+01:00)</option>
-                    <option value="America/New_York">America/New_York (EST · UTC-05:00)</option>
-                    <option value="America/Los_Angeles">America/Los_Angeles (PST · UTC-08:00)</option>
-                  </select>
+                    onChange={(val) => setEditTimezone(val)}
+                    placeholder="Search operational timezone…"
+                    searchPlaceholder="Type timezone or offset (e.g. UTC, Asia, America)…"
+                    allowCustom={true}
+                    triggerHeight="36px"
+                    maxHeight={220}
+                  />
                 </div>
               </div>
 
               <div className="field">
-                <label>Registered Street Address / Logistics Terminal</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label style={{ margin: 0 }}>Registered Street Address / Logistics Terminal</label>
+                  <button
+                    type="button"
+                    onClick={handleAutoDetectLocation}
+                    disabled={isDetectingLocation}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#0284c7',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <MapPin size={11} /> Auto-suggest from device location
+                  </button>
+                </div>
                 <input
                   className="input"
                   value={editFormattedAddress}
                   onChange={(e) => setEditFormattedAddress(e.target.value)}
                   placeholder="e.g. CFS / ICD Logistics Park, Port Gate 3, Andheri East, Mumbai 400093"
+                  style={{ height: '36px', fontSize: '13px' }}
                 />
+
+                {/* Suggestions Pills / Chips */}
+                {effectiveAddressSuggestions.length > 0 && (
+                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div style={{ fontSize: '10.5px', color: 'var(--mut)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <Sparkles size={11} color="#0284c7" />
+                      Suggested Logistics Hub Addresses (Click to apply):
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {effectiveAddressSuggestions.map((sug, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setEditFormattedAddress(sug);
+                            toast('Address applied to registration field.');
+                          }}
+                          style={{
+                            textAlign: 'left',
+                            fontSize: '11px',
+                            padding: '4px 8px',
+                            background: editFormattedAddress === sug ? '#e0f2fe' : '#ffffff',
+                            border: editFormattedAddress === sug ? '1px solid #0284c7' : '1px solid #cbd5e1',
+                            borderRadius: '4px',
+                            color: editFormattedAddress === sug ? '#0284c7' : '#334155',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease',
+                          }}
+                          title={`Click to fill: ${sug}`}
+                        >
+                          📍 {sug}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
