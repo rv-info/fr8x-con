@@ -56,6 +56,11 @@ export default function AuctionsPage() {
   // Derived filtered lists
   const liveAuctions = auctions.filter((a) => a.status === 'Live');
   const postedAuctions = auctions.filter((a) => a.creatorUid === user.uid);
+  const participatedAuctions = auctions.filter(
+    (a) =>
+      mySubmittedBids.some((b) => b.auctionId === a.id) ||
+      a.bids?.some((b) => b.bidderUid === user.uid || b.bidderCompany === user.company)
+  );
   const draftAuctions = auctions.filter((a) => a.status === 'Draft');
   const closedAuctions = auctions.filter((a) => a.status === 'Closed');
   const awardedAuctions = auctions.filter((a) => a.status === 'Awarded');
@@ -66,14 +71,26 @@ export default function AuctionsPage() {
     if (!searchTerm.trim()) return true;
     const q = searchTerm.toLowerCase();
     return (
-      a.title.toLowerCase().includes(q) ||
-      a.id.toLowerCase().includes(q) ||
-      a.shipment.pol.toLowerCase().includes(q) ||
-      a.shipment.pod.toLowerCase().includes(q) ||
-      a.creatorCompany.toLowerCase().includes(q) ||
-      a.shipment.commodity.toLowerCase().includes(q)
+      (a.title || '').toLowerCase().includes(q) ||
+      (a.id || '').toLowerCase().includes(q) ||
+      (a.shipment?.pol || '').toLowerCase().includes(q) ||
+      (a.shipment?.pod || '').toLowerCase().includes(q) ||
+      (a.creatorCompany || '').toLowerCase().includes(q) ||
+      (a.shipment?.commodity || '').toLowerCase().includes(q)
     );
   };
+
+  const filteredSubmittedBids = mySubmittedBids.filter((b) => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.toLowerCase();
+    const target = auctions.find((a) => a.id === b.auctionId);
+    return (
+      (b.auctionId || '').toLowerCase().includes(q) ||
+      (target?.shipment?.pol || '').toLowerCase().includes(q) ||
+      (target?.shipment?.pod || '').toLowerCase().includes(q) ||
+      (target?.title || '').toLowerCase().includes(q)
+    );
+  });
 
   const currentTabAuctions = () => {
     switch (activeTab) {
@@ -81,6 +98,8 @@ export default function AuctionsPage() {
         return liveAuctions.filter(matchesSearch);
       case 'posted':
         return postedAuctions.filter(matchesSearch);
+      case 'participated':
+        return participatedAuctions.filter(matchesSearch);
       case 'drafts':
         return draftAuctions.filter(matchesSearch);
       case 'results':
@@ -348,18 +367,38 @@ export default function AuctionsPage() {
             type="button"
             className={`auctions-tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
             onClick={() => setActiveTab('overview')}
+            title="All Overview"
           >
             <span>All Overview</span>
-            <span className="auctions-tab-badge">{auctions.length}</span>
+            <span className={`auctions-tab-badge ${auctions.length === 0 ? 'empty' : ''}`}>
+              {auctions.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'live' ? 'active' : ''}`}
             onClick={() => setActiveTab('live')}
+            title="Live Bidding"
           >
             <Clock size={12} />
             <span>Live Bidding</span>
-            <span className="auctions-tab-badge" style={{ background: activeTab === 'live' ? 'rgba(255,255,255,0.3)' : '#dcfce7', color: activeTab === 'live' ? '#fff' : '#15803d' }}>
+            <span
+              className={`auctions-tab-badge ${liveAuctions.length === 0 ? 'empty' : ''}`}
+              style={{
+                background:
+                  activeTab === 'live'
+                    ? 'rgba(255,255,255,0.3)'
+                    : liveAuctions.length > 0
+                    ? '#dcfce7'
+                    : undefined,
+                color:
+                  activeTab === 'live'
+                    ? '#fff'
+                    : liveAuctions.length > 0
+                    ? '#15803d'
+                    : undefined,
+              }}
+            >
               {liveAuctions.length}
             </span>
           </button>
@@ -367,55 +406,73 @@ export default function AuctionsPage() {
             type="button"
             className={`auctions-tab-btn ${activeTab === 'posted' ? 'active' : ''}`}
             onClick={() => setActiveTab('posted')}
+            title="Bid Posted (My Auctions)"
           >
             <Gavel size={12} />
             <span>Bid Posted</span>
-            <span className="auctions-tab-badge">{postedAuctions.length}</span>
+            <span className={`auctions-tab-badge ${postedAuctions.length === 0 ? 'empty' : ''}`}>
+              {postedAuctions.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'participated' ? 'active' : ''}`}
             onClick={() => setActiveTab('participated')}
+            title="Participated Auctions"
           >
             <History size={12} />
             <span>Participated</span>
-            <span className="auctions-tab-badge">{mySubmittedBids.length}</span>
+            <span className={`auctions-tab-badge ${mySubmittedBids.length === 0 ? 'empty' : ''}`}>
+              {mySubmittedBids.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'drafts' ? 'active' : ''}`}
             onClick={() => setActiveTab('drafts')}
+            title="Draft Auctions"
           >
             <FileText size={12} />
             <span>Drafts</span>
-            <span className="auctions-tab-badge">{draftAuctions.length}</span>
+            <span className={`auctions-tab-badge ${draftAuctions.length === 0 ? 'empty' : ''}`}>
+              {draftAuctions.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'results' ? 'active' : ''}`}
             onClick={() => setActiveTab('results')}
+            title="Awarded Auctions"
           >
             <Award size={12} />
             <span>Awarded</span>
-            <span className="auctions-tab-badge">{awardedAuctions.length}</span>
+            <span className={`auctions-tab-badge ${awardedAuctions.length === 0 ? 'empty' : ''}`}>
+              {awardedAuctions.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'closed' ? 'active' : ''}`}
             onClick={() => setActiveTab('closed')}
+            title="Closed Auctions"
           >
             <Archive size={12} />
             <span>Closed</span>
-            <span className="auctions-tab-badge">{closedAuctions.length}</span>
+            <span className={`auctions-tab-badge ${closedAuctions.length === 0 ? 'empty' : ''}`}>
+              {closedAuctions.length}
+            </span>
           </button>
           <button
             type="button"
             className={`auctions-tab-btn ${activeTab === 'expired' ? 'active' : ''}`}
             onClick={() => setActiveTab('expired')}
+            title="Expired Auctions"
           >
             <XCircle size={12} />
             <span>Expired</span>
-            <span className="auctions-tab-badge">{expiredAuctions.length}</span>
+            <span className={`auctions-tab-badge ${expiredAuctions.length === 0 ? 'empty' : ''}`}>
+              {expiredAuctions.length}
+            </span>
           </button>
         </div>
 
@@ -459,6 +516,7 @@ export default function AuctionsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <History size={16} color="var(--brand)" />
               <b>My Submitted Bids & Standings</b>
+              <span className="badge blue">{filteredSubmittedBids.length} Items</span>
             </div>
             <small style={{ color: 'var(--mut)' }}>Real-time reverse auction ranking tracking</small>
           </div>
@@ -478,21 +536,23 @@ export default function AuctionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {mySubmittedBids.length === 0 ? (
+                {filteredSubmittedBids.length === 0 ? (
                   <tr>
                     <td colSpan={8} style={{ textAlign: 'center', padding: '30px', color: 'var(--mut)' }}>
-                      No bids submitted yet. Explore the <b>Live Bidding</b> tab to quote verified auctions (Participation is 100% Free).
+                      {searchTerm
+                        ? `No submitted bids match "${searchTerm}".`
+                        : 'No bids submitted yet. Explore the Live Bidding tab to quote verified auctions (Participation is 100% Free).'}
                     </td>
                   </tr>
                 ) : (
-                  mySubmittedBids.map((b) => {
+                  filteredSubmittedBids.map((b) => {
                     const targetAuction = auctions.find((a) => a.id === b.auctionId);
                     return (
                       <tr key={b.id}>
                         <td>
                           <b>{b.auctionId}</b>
                           <small style={{ display: 'block', color: 'var(--mut)' }}>
-                            {targetAuction?.shipment.pol} → {targetAuction?.shipment.pod}
+                            {targetAuction?.shipment?.pol || 'Origin'} → {targetAuction?.shipment?.pod || 'Destination'}
                           </small>
                         </td>
                         <td>{b.charges[0]?.equipment || '40HC'}</td>
@@ -533,14 +593,16 @@ export default function AuctionsPage() {
 
           {/* Participated Mobile Cards View (< 1024px) */}
           <div className="auctions-mobile-cards">
-            {mySubmittedBids.length === 0 ? (
+            {filteredSubmittedBids.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '24px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
                 <p style={{ color: 'var(--mut)', fontSize: '12px' }}>
-                  No bids submitted yet. Explore the <b>Live Bidding</b> tab to submit verified quotes (100% Free).
+                  {searchTerm
+                    ? `No submitted bids match "${searchTerm}".`
+                    : 'No bids submitted yet. Explore the Live Bidding tab to submit verified quotes (100% Free).'}
                 </p>
               </div>
             ) : (
-              mySubmittedBids.map((b) => {
+              filteredSubmittedBids.map((b) => {
                 const targetAuction = auctions.find((a) => a.id === b.auctionId);
                 return (
                   <div key={`mob-bid-${b.id}`} className="auction-mobile-card">
@@ -551,7 +613,7 @@ export default function AuctionsPage() {
                       </span>
                     </div>
                     <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
-                      {targetAuction?.shipment.pol?.split('(')[0]} ➔ {targetAuction?.shipment.pod?.split('(')[0]}
+                      {targetAuction?.shipment?.pol?.split('(')[0] || 'POL'} ➔ {targetAuction?.shipment?.pod?.split('(')[0] || 'POD'}
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '8px 0', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                       <div>
@@ -629,10 +691,24 @@ export default function AuctionsPage() {
                       <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
                         No auctions found in this view
                       </div>
-                      <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '16px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
-                        {activeTab === 'posted'
-                          ? 'You have not created any reverse auctions yet. Post your cargo RFQ to receive competitive liner bids.'
-                          : 'There are currently no active reverse auctions matching this view.'}
+                      <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '16px', maxWidth: '460px', marginLeft: 'auto', marginRight: 'auto' }}>
+                        {searchTerm ? (
+                          `No reverse auctions match "${searchTerm}". Try searching by a different port, ID, or carrier.`
+                        ) : activeTab === 'posted' ? (
+                          'You have not created any reverse auctions yet. Post your cargo RFQ to receive competitive liner bids.'
+                        ) : activeTab === 'live' ? (
+                          'There are currently no active live bidding rooms. When reverse auctions are published, live bidding countdowns and quotes appear here.'
+                        ) : activeTab === 'drafts' ? (
+                          'No draft auctions saved. Incomplete reverse auctions will be stored here.'
+                        ) : activeTab === 'results' ? (
+                          'No awarded auctions yet. Once an auction closes and the winning carrier/forwarder is selected, the awarded settlement record appears here.'
+                        ) : activeTab === 'closed' ? (
+                          'No closed reverse auctions found. Concluded auction rooms are archived here.'
+                        ) : activeTab === 'expired' ? (
+                          'No expired auctions found. Auctions that pass their closing deadline without award will appear here.'
+                        ) : (
+                          'There are currently no reverse auctions matching this view. Create an auction to get started!'
+                        )}
                       </div>
                       <Link href="/auctions/create" className="btn primary sm" style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '5px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                         <Plus size={13} /> Create Reverse Auction
