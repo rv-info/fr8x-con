@@ -351,27 +351,6 @@ Generated via FR8X Freight Exchange
     toast('Form reset to clean state.');
   };
 
-  const handleLoadSampleRate = () => {
-    setCarrier('Maersk');
-    setPor('Nhava Sheva (INNSA)');
-    setPol('Nhava Sheva (INNSA)');
-    setPod('Rotterdam (NLRTM)');
-    setFpod('Rotterdam (NLRTM)');
-    setRouting('Direct Ocean EP-X');
-    setTransitTime('29 days');
-    setD20(1480);
-    setD20Type("20' Standard (20DV)");
-    setH40(2320);
-    setH40Type("40' High Cube (40HC)");
-    setFreeTime('14 days combined');
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + 30);
-    setValidDate(futureDate.toISOString().split('T')[0]);
-    setRateType('Direct Spot');
-    setRemarks('Subject to low sulphur fuel bunker surcharge at destination.');
-    toast('Sample rate template loaded. Review and click SAVE or UPDATE.');
-  };
-
   const handleDuplicateSelected = () => {
     if (!carrier.trim() || !pol.trim() || !pod.trim() || !d20 || !h40 || !validDate) {
       toast('Please fill in required fields (Carrier, POL, POD, 20DV, 40HC, Validity) before duplicating.');
@@ -1415,7 +1394,7 @@ Generated via FR8X Freight Exchange
                 <textarea className="input" style={{ fontSize: '11px', padding: '6px 8px', resize: 'vertical', borderRadius: '3px' }} rows={2} placeholder="Surcharges, inclusions, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
               </div>
 
-              {/* Action Buttons: SAVE | UPDATE | CLEAR | SAMPLE DATA | DUPLICATE */}
+              {/* Action Buttons: SAVE | UPDATE | CLEAR | DUPLICATE AS NEW */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
                 <button
                   type="button"
@@ -1458,16 +1437,7 @@ Generated via FR8X Freight Exchange
                 <button
                   type="button"
                   className="btn secondary"
-                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px', color: 'var(--brand)' }}
-                  onClick={handleLoadSampleRate}
-                  title="Load sample rate values into the editor for testing"
-                >
-                  SAMPLE DATA
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px', gridColumn: 'span 2' }}
+                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px' }}
                   onClick={handleDuplicateSelected}
                 >
                   DUPLICATE AS NEW
@@ -1948,10 +1918,55 @@ Generated via FR8X Freight Exchange
               <tbody>
                 {filteredRates.length === 0 ? (
                   <tr>
-                    <td colSpan={19} style={{ textAlign: 'center', padding: '40px 16px', color: '#64748b' }}>
-                      <Search size={32} style={{ margin: '0 auto 8px', display: 'block', opacity: 0.5 }} />
-                      <div style={{ fontWeight: 600, fontSize: '14px', color: '#1e293b' }}>No rates matching current filters</div>
-                      <div style={{ fontSize: '12px', marginTop: '4px' }}>Try adjusting your search criteria or reset filters.</div>
+                    <td colSpan={19} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
+                        <FileSpreadsheet size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
+                        {allAvailableRates.length === 0 ? 'No freight rates available' : 'No rates matching current filters'}
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '16px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                        {allAvailableRates.length === 0
+                          ? 'Publish your ocean spot or contract freight rates using the editor above or import in bulk via CSV/Excel.'
+                          : 'Try adjusting your search criteria or resetting column filters.'}
+                      </div>
+                      {allAvailableRates.length === 0 ? (
+                        <div style={{ display: 'inline-flex', gap: '8px', justifyContent: 'center' }}>
+                          <button
+                            type="button"
+                            className="btn primary sm"
+                            style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '5px' }}
+                            onClick={() => {
+                              setEditorVisible(true);
+                              window.scrollTo({ top: 320, behavior: 'smooth' });
+                            }}
+                          >
+                            <Plus size={13} /> Add New Rate
+                          </button>
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '5px' }}
+                            onClick={() => setShowBulkModal(true)}
+                          >
+                            <Upload size={13} /> Bulk Import CSV
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          style={{ fontSize: '12px', padding: '5px 12px', borderRadius: '5px' }}
+                          onClick={() => {
+                            setSearchQuery('');
+                            setPolSearch('');
+                            setPodSearch('');
+                            setColSearch({});
+                          }}
+                        >
+                          Reset Filters
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ) : (
@@ -2182,12 +2197,42 @@ Generated via FR8X Freight Exchange
           )}
 
           {filteredRates.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '36px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-              <Search size={28} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b' }}>No Matching Rates Found</div>
-              <p style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-                Try changing search keywords, selecting another carrier, or clearing filters.
+            <div style={{ textAlign: 'center', padding: '40px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
+              <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
+                <FileSpreadsheet size={22} />
+              </div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
+                {allAvailableRates.length === 0 ? 'No freight rates available' : 'No Matching Rates Found'}
+              </div>
+              <p style={{ fontSize: '11.5px', color: '#64748b', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
+                {allAvailableRates.length === 0
+                  ? 'Add your container rates using the editor or import freight tariffs.'
+                  : 'Try changing search keywords, selecting another carrier, or clearing filters.'}
               </p>
+              {allAvailableRates.length === 0 ? (
+                <button
+                  type="button"
+                  className="btn primary sm"
+                  style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px' }}
+                  onClick={() => setMobileEditorOpen(true)}
+                >
+                  <Plus size={13} /> Open Rates Editor
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11.5px', padding: '5px 12px', borderRadius: '5px' }}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPolSearch('');
+                    setPodSearch('');
+                    setColSearch({});
+                  }}
+                >
+                  Reset Filters
+                </button>
+              )}
             </div>
           ) : (
             <div className="rates-card-grid">

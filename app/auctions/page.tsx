@@ -335,8 +335,8 @@ export default function AuctionsPage() {
         </div>
         <div className="metric">
           <small>Average Savings</small>
-          <b>14.8%</b>
-          <span>vs Spot Freight Index</span>
+          <b>{auctions.length > 0 ? '14.8%' : '0.0%'}</b>
+          <span>{auctions.length > 0 ? 'vs Spot Freight Index' : 'No reverse auctions yet'}</span>
         </div>
       </div>
 
@@ -622,8 +622,21 @@ export default function AuctionsPage() {
               <tbody>
                 {currentTabAuctions().length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '36px', color: 'var(--mut)' }}>
-                      No auctions found in this view.
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
+                        <Gavel size={24} />
+                      </div>
+                      <div style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', marginBottom: '4px' }}>
+                        No auctions found in this view
+                      </div>
+                      <div style={{ fontSize: '12.5px', color: '#64748b', marginBottom: '16px', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                        {activeTab === 'posted'
+                          ? 'You have not created any reverse auctions yet. Post your cargo RFQ to receive competitive liner bids.'
+                          : 'There are currently no active reverse auctions matching this view.'}
+                      </div>
+                      <Link href="/auctions/create" className="btn primary sm" style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '5px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <Plus size={13} /> Create Reverse Auction
+                      </Link>
                     </td>
                   </tr>
                 ) : (
@@ -717,11 +730,19 @@ export default function AuctionsPage() {
           {/* Mobile Auction Cards (< 1024px) */}
           <div className="auctions-mobile-cards">
             {currentTabAuctions().length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '28px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                <Gavel size={24} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
-                <p style={{ color: 'var(--mut)', fontSize: '12px' }}>
-                  No auctions matching the selected filter or search keyword.
+              <div style={{ textAlign: 'center', padding: '36px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
+                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
+                  <Gavel size={22} />
+                </div>
+                <div style={{ fontWeight: 700, fontSize: '14px', color: '#1e293b', marginBottom: '4px' }}>
+                  No auctions found in this view
+                </div>
+                <p style={{ color: '#64748b', fontSize: '12px', margin: '0 0 14px', maxWidth: '360px', marginLeft: 'auto', marginRight: 'auto' }}>
+                  Publish your RFQ cargo specifications and invite liners to compete.
                 </p>
+                <Link href="/auctions/create" className="btn primary sm" style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <Plus size={13} /> Create Reverse Auction
+                </Link>
               </div>
             ) : (
               currentTabAuctions().map((auction) => {

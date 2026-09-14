@@ -14,6 +14,7 @@ interface ModalProps {
   onToggleFullScreen?: () => void;
   headerActions?: ReactNode;
   style?: React.CSSProperties;
+  zIndex?: number;
 }
 
 export function Modal({
@@ -27,6 +28,7 @@ export function Modal({
   onToggleFullScreen,
   headerActions,
   style,
+  zIndex,
 }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,7 +46,10 @@ export function Modal({
     <div
       className="modalbg"
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={isFullScreen ? { padding: 0 } : undefined}
+      style={{
+        ...(isFullScreen ? { padding: 0 } : {}),
+        ...(zIndex ? { zIndex } : {}),
+      }}
     >
       <div
         className={`modal ${isFullScreen ? 'is-fullscreen' : ''}`}

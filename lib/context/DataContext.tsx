@@ -53,1208 +53,137 @@ import { eventBus } from '@/lib/intelligence/events';
 import { presenceService } from '@/lib/presence/presenceService';
 import { useNetwork } from './NetworkContext';
 
-// Initial Mock Datasets
-const SEED_NOTIFICATIONS: AppNotification[] = [
-  {
-    id: 'notif-1',
-    title: 'New Bid Received · RA-2026-0842',
-    desc: 'Rotterdam Freight NV submitted an offer of USD $2,320 for Mumbai → Rotterdam (Auto Parts FCL).',
-    time: '10m ago',
-    createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    read: false,
-    type: 'bid_received',
-    category: 'bids',
-    targetUrl: '/auctions',
-    relatedId: 'RA-2026-0842',
-    actionLabel: 'View Auction',
-  },
-  {
-    id: 'notif-2',
-    title: 'Auction RA-2026-0842 Closing in 2 Hours',
-    desc: 'Mumbai → Rotterdam auction closes at 17:00 IST. 3 bids received so far.',
-    time: '45m ago',
-    createdAt: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-    read: false,
-    type: 'auction_closed',
-    category: 'auctions',
-    targetUrl: '/auctions',
-    relatedId: 'RA-2026-0842',
-    actionLabel: 'View Auction',
-  },
-  {
-    id: 'notif-3',
-    title: 'Auction Result: GB-2026-0311 Awarded',
-    desc: 'You won the Nhava Sheva → Antwerp (Industrial Machinery) auction with a bid of USD $2,990.',
-    time: '1d ago',
-    createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    read: false,
-    type: 'auction_result',
-    category: 'auctions',
-    targetUrl: '/auctions',
-    relatedId: 'GB-2026-0311',
-    actionLabel: 'View Result',
-  },
-  {
-    id: 'notif-4',
-    title: 'New Message from Sarah Lewis',
-    desc: 'Sarah Lewis (Rotterdam Freight NV): "Confirming rates for the Antwerp corridor…"',
-    time: '2h ago',
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    type: 'chat_message',
-    category: 'chat',
-    targetUrl: '/feeds',
-    relatedId: 'u-sarah',
-    actionLabel: 'Reply',
-  },
-  {
-    id: 'notif-5',
-    title: 'Rate RT-884210 Expiring Soon',
-    desc: 'Hapag-Lloyd rate for Nhava Sheva → Rotterdam expires on 30 Sep 2026. Review or renew.',
-    time: '3d ago',
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    type: 'system',
-    category: 'system',
-    targetUrl: '/rates',
-    relatedId: 'RT-884210',
-    actionLabel: 'View Rates',
-  },
-  {
-    id: 'notif-6',
-    title: 'New Job Posted: Trade Lane Manager',
-    desc: 'Northstar Freight Group posted a Trade Lane Manager position in Dubai, UAE.',
-    time: '2d ago',
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    type: 'job_posted',
-    category: 'jobs',
-    targetUrl: '/jobs',
-    relatedId: 'j2',
-    actionLabel: 'View Job',
-  },
-];
-
+// Clean Datasets — Production strict mode: only real, verified, user-created data is presented
+const SEED_NOTIFICATIONS: AppNotification[] = [];
 const SEED_POSTS: FeedPost[] = [];
+const SEED_JOBS: JobPost[] = [];
+const SEED_TOPICS: NexusTopic[] = [];
+const SEED_REVIEWS: CompanyReview[] = [];
+const SEED_BLACKLIST: BlacklistCase[] = [];
+const SEED_AUCTIONS: Auction[] = [];
+const SEED_RATES: RateItem[] = [];
 
-const SEED_JOBS: JobPost[] = [
-  {
-    id: 'j1',
-    title: 'Senior Freight Pricing Analyst',
-    company: 'Atlas Logistics Pvt. Ltd.',
-    location: 'Mumbai, India · On-site',
-    experience: '3–5 yrs experience',
-    packageDetails: '₹8–12 LPA + Performance Bonus',
-    employmentType: 'Full-time',
-    requirements: 'FCL/LCL spot rate benchmarking, carrier negotiations, UN/LOCODE lane procurement, ERP systems, and strong analytical communication.',
-    responsibilities: 'Manage rate tenders, benchmark ocean freight indexes, liaise with shipping lines for preferential volume space.',
-    qualifications: "Bachelor's degree in Supply Chain/Logistics or equivalent industry experience.",
-    skills: ['FCL Pricing', 'Carrier Negotiations', 'Rate Benchmarking', 'UN/LOCODE'],
-    closingDate: '15 Sep 2026',
-    postedBy: 'Arjun Rao',
-    posterUid: 'u-arjun',
-    posterEmail: 'arjun@atlaslogistics.com',
-    showEmailPublicly: true,
-    posterTimezone: 'Asia/Kolkata',
-    postedDate: '26 Aug 2026',
-    status: 'active',
-  },
-  {
-    id: 'j2',
-    title: 'Trade Lane Manager (Middle East & Europe)',
-    company: 'Northstar Freight Group',
-    location: 'Dubai, UAE · Hybrid',
-    experience: '6–9 yrs experience',
-    packageDetails: 'AED 22,000 – 30,000 / month',
-    employmentType: 'Full-time',
-    requirements: 'Direct carrier space allocation, P&L management, key account servicing, and multimodal supply chain execution across Jebel Ali and European hubs.',
-    responsibilities: 'Lead pricing strategy for Middle East outbound corridors, oversee carrier service contracts, manage freight operations team.',
-    qualifications: 'Minimum 6 years in trade lane management with tier-1 forwarders.',
-    skills: ['Trade Lane Management', 'P&L', 'Carrier Contracts', 'Multimodal Logistics'],
-    closingDate: '20 Sep 2026',
-    postedBy: 'Sarah Lewis',
-    posterUid: 'u-sarah',
-    posterEmail: 'sarah.lewis@rotterdamfreight.nl',
-    showEmailPublicly: false,
-    posterTimezone: 'Europe/Amsterdam',
-    postedDate: '25 Aug 2026',
-    status: 'active',
-  },
-  {
-    id: 'j3',
-    title: 'Customer Success & Procurement Lead',
-    company: 'CargoLink Global',
-    location: 'Singapore · On-site',
-    experience: '4–6 yrs experience',
-    packageDetails: 'SGD 6,000 – 8,500 / month',
-    employmentType: 'Full-time',
-    requirements: 'Customer RFP responses, rate build-ups, demurrage/detention dispute resolution, and cross-functional carrier management.',
-    responsibilities: 'Build procurement schedules, verify freight charges against contracts, maintain shipper SLA compliance.',
-    qualifications: 'Degree in Logistics, Business Administration, or Maritime Studies.',
-    skills: ['Rate Build-up', 'Demurrage Management', 'Customer Success', 'Carrier Management'],
-    closingDate: '10 Sep 2026',
-    postedBy: 'Ravi Thomas',
-    posterUid: 'u-ravi',
-    posterEmail: 'ravi@cargolink.sg',
-    showEmailPublicly: true,
-    posterTimezone: 'Asia/Singapore',
-    postedDate: '24 Aug 2026',
-    status: 'active',
-  },
-  {
-    id: 'j4',
-    title: 'Ocean Freight Operations Executive',
-    company: 'Indo Ocean Lines',
-    location: 'Mumbai, India · On-site',
-    experience: '2–4 yrs experience',
-    packageDetails: '₹5–8 LPA',
-    employmentType: 'Full-time',
-    requirements: 'Bill of lading management, shipping instruction processing, container tracking, and carrier coordination for FCL/LCL shipments.',
-    responsibilities: 'Process export documentation, coordinate with shipping lines and CHAs, manage shipment milestones.',
-    qualifications: "Bachelor's in Commerce/Logistics. Knowledge of INCOTERMS and customs regulations.",
-    skills: ['B/L Management', 'Container Tracking', 'Export Documentation', 'INCOTERMS'],
-    closingDate: '30 Sep 2026',
-    postedBy: 'Kiran Mehta',
-    posterUid: 'u-kiran',
-    posterEmail: 'kiran@indoocean.com',
-    showEmailPublicly: true,
-    posterTimezone: 'Asia/Kolkata',
-    postedDate: '22 Aug 2026',
-    status: 'active',
-  },
-];
+// Identifiers of previous dummy seed data to strip from local client caches
+const DUMMY_AUCTION_IDS = new Set([
+  'RA-2026-0842', 'GB-2026-0311', 'RA-2026-0901', 'RA-2026-0788', 'RA-2026-0940', 'RA-2026-0955', 'RA-2026-0843'
+]);
 
-const SEED_TOPICS: NexusTopic[] = [
-  {
-    id: 'top-1',
-    title: 'Port congestion: practical routing alternatives via Colombo and Salalah',
-    author: 'Priya Nair',
-    authorUid: 'u-priya',
-    authorCompany: 'Nair Cargo Solutions',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    category: 'Routing Strategy',
-    text: 'Blank sailings have tightened direct capacity on Asia-Europe lines. Transshipment via Colombo or Salalah has yielded 3-4 days lead time advantage over standard hubs.',
-    likes: 28,
-    dis: 1,
-    commentsCount: 3,
-    createdAt: '25 Aug 2026',
-    replies: [
-      {
-        id: 'tr-1',
-        author: 'Kiran Mehta',
-        authorUid: 'u-kiran',
-        text: 'Colombo transshipment saved us four days on our last automotive shipment.',
-        time: '1d ago',
-      },
-      {
-        id: 'tr-2',
-        author: 'Ravi Thomas',
-        authorUid: 'u-ravi',
-        text: 'Confirm free time agreements separately for transshipment ports to avoid detention spikes.',
-        time: '18h ago',
-      },
-    ],
-  },
-  {
-    id: 'top-2',
-    title: 'What is reasonable detention-free time for Antwerp and Rotterdam imports?',
-    author: 'Kiran Mehta',
-    authorUid: 'u-kiran',
-    authorCompany: 'Indo Ocean Lines',
-    authorTimezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-    category: 'Commercial Terms',
-    text: 'For standard FCL shipments into Rotterdam and Antwerp, what detention and demurrage combined free days are members consistently securing in 2026 carrier contracts?',
-    likes: 25,
-    dis: 0,
-    commentsCount: 2,
-    createdAt: '24 Aug 2026',
-    replies: [
-      {
-        id: 'tr-3',
-        author: 'Sarah Lewis',
-        authorUid: 'u-sarah',
-        text: 'Standard is 10 calendar days; with Tier-1 volume we negotiate 14 to 21 combined days.',
-        time: '2d ago',
-        hasGoldenTick: false,
-      },
-    ],
-  },
-];
+const DUMMY_AUCTION_TITLES = new Set([
+  'Automotive Parts FCL - Mumbai to Rotterdam Direct',
+  'Industrial Heavy Machinery - Nhava Sheva to Antwerp',
+  'Chemical Specialty Resins - Chennai to Hamburg',
+  'Consumer Electronics FCL - Mundra to Jebel Ali',
+  'Solar PV Modules & Inverters - Pipavav to Singapore',
+  'Organic Cotton Garments - Shanghai to Nhava Sheva',
+  'Mumbai → Rotterdam | FCL Export Auto Parts',
+  'Shanghai → Jebel Ali | Solar Modules Equipment',
+  'Nhava Sheva → Antwerp | Open General Bidding'
+]);
 
-const SEED_REVIEWS: CompanyReview[] = [
-  {
-    id: 'cr-1',
-    companyName: 'Atlas Logistics Pvt. Ltd.',
-    location: 'Mumbai, India',
-    ratingAverage: 4.8,
-    totalReviews: 24,
-    starDistribution: [18, 4, 2, 0, 0],
-    recentReviews: [
-      {
-        id: 'rv-1',
-        author: 'Sarah Lewis',
-        authorUid: 'u-sarah',
-        rating: 5,
-        text: 'Consistently clear shipping documentation and prompt payment settlement on completed reverse auctions.',
-        date: '20 Aug 2026',
-        verified: true,
-        likes: 18,
-        dis: 0,
-        tags: ['Prompt Settlement', 'Clean BL Documentation'],
-      },
-      {
-        id: 'rv-2',
-        author: 'Kiran Mehta',
-        authorUid: 'u-kiran',
-        rating: 4.5,
-        text: 'Excellent inland haulage tracking and prompt customs clearance coordination at JNPT.',
-        date: '15 Aug 2026',
-        verified: true,
-        likes: 12,
-        dis: 1,
-        tags: ['On-Time Dwell', 'Customs Clearance'],
-      },
-    ],
-  },
-  {
-    id: 'cr-2',
-    companyName: 'Rotterdam Freight NV',
-    location: 'Rotterdam, Netherlands',
-    ratingAverage: 4.6,
-    totalReviews: 19,
-    starDistribution: [14, 3, 2, 0, 0],
-    recentReviews: [
-      {
-        id: 'rv-3',
-        author: 'Arjun Rao',
-        authorUid: 'u-arjun',
-        rating: 5,
-        text: 'Outstanding destination handling and demurrage management at ECT Delta terminal.',
-        date: '18 Aug 2026',
-        verified: true,
-        likes: 15,
-        dis: 0,
-        tags: ['Demurrage Waiver', 'Port Drayage'],
-      },
-    ],
-  },
-  {
-    id: 'cr-3',
-    companyName: 'Indo Ocean Lines',
-    location: 'Mumbai, India',
-    ratingAverage: 4.7,
-    totalReviews: 16,
-    starDistribution: [12, 3, 1, 0, 0],
-    recentReviews: [
-      {
-        id: 'rv-4',
-        author: 'Priya Sharma',
-        authorUid: 'u-priya',
-        rating: 5,
-        text: 'Reliable slot allocations on Asia-Europe routes even during blank sailings.',
-        date: '10 Aug 2026',
-        verified: true,
-        likes: 9,
-        dis: 0,
-        tags: ['Space Guarantee', 'Fair Surcharges'],
-      },
-    ],
-  },
-];
+const DUMMY_RATE_IDS = new Set([
+  'RT-884210', 'RT-992144', 'RT-773190', 'RT-662810', 'RT-551940', 'RT-448201', 'RT-339105', 'RT-227490',
+  'RT-000001', 'RT-000002', 'RT-000003', 'RT-000004', 'RT-000005', 'RT-000006', 'RT-000007', 'RT-000008',
+  'IRT-901234', 'RT-773322'
+]);
 
-const SEED_BLACKLIST: BlacklistCase[] = [
-  {
-    id: 'bl-1',
-    companyName: 'Pacific Rim Trans Inc.',
-    location: 'Hong Kong',
-    reason: 'Repeated non-payment of inland container haulage invoices',
-    severity: 'critical',
-    reportedDate: '12 Aug 2026',
-    status: 'under_investigation',
-    reporter: 'Apex Multimodal Co.',
-    reporterUid: 'u-apex',
-    description: 'Outstanding invoices for 8x 40HC container movements across Ningbo-Nhava Sheva corridor unpaid past 90 days.',
-    evidenceRef: 'BL-INV-2026-9912 / Bill of Lading BL#8821034',
-    agreedCount: 28,
-    disputeCount: 2,
-    userAgreed: false,
-    userDisputed: false,
-    disputes: [
-      {
-        id: 'dsp-1',
-        author: 'David Chen',
-        authorCompany: 'Pacific Rim Trans Legal',
-        date: '15 Aug 2026',
-        text: 'Dispute filed: Partial payment of $18,400 remitted via HSBC HK on 14 Aug. Pending demurrage adjustment calculation.',
-        evidenceDoc: 'SWIFT-MT103-HK99281.pdf',
-        status: 'under_review',
-      },
-    ],
-  },
-  {
-    id: 'bl-2',
-    companyName: 'Horizon Express Line LLC',
-    location: 'Dubai, UAE',
-    reason: 'Issuance of unauthorized House Bills of Lading without carrier asset backup',
-    severity: 'high',
-    reportedDate: '04 Aug 2026',
-    status: 'active',
-    reporter: 'Global Sealink Forwarders',
-    reporterUid: 'u-globalsea',
-    description: 'Issued fictitious forwarder cargo receipts without confirming ocean carrier booking confirmation.',
-    evidenceRef: 'FCR-AE-04192 / Port Authority Audit Log',
-    agreedCount: 35,
-    disputeCount: 0,
-    userAgreed: true,
-    userDisputed: false,
-    disputes: [],
-  },
-  {
-    id: 'bl-3',
-    companyName: 'Apex Maritime Trans NV',
-    location: 'Antwerp, Belgium',
-    reason: 'Unpaid Ocean Demurrage Default ($34,200 USD on 18 containers)',
-    severity: 'critical',
-    reportedDate: '01 Aug 2026',
-    status: 'active',
-    reporter: 'Rotterdam Freight NV',
-    reporterUid: 'u-sarah',
-    description: 'Overdue demurrage exposure for over 180 days on ECT Delta transshipments without settlement or counter-proof.',
-    evidenceRef: 'INV-2026-9081 / OBL-8812 / Notice-902',
-    agreedCount: 42,
-    disputeCount: 1,
-    userAgreed: false,
-    userDisputed: false,
-    disputes: [
-      {
-        id: 'dsp-2',
-        author: 'Marc Dubois',
-        authorCompany: 'Apex Maritime Trans NV',
-        date: '08 Aug 2026',
-        text: 'Terminal crane breakdown caused 12-day dwell delay beyond consignee control. Formal waiver request pending with ECT.',
-        evidenceDoc: 'ECT-INCIDENT-REPORT-4402.pdf',
-        status: 'under_review',
-      },
-    ],
-  },
-];
+const DUMMY_RATE_PROVIDERS = new Set([
+  'Hapag-Lloyd Ocean', 'Maersk Line Direct', 'CMA CGM India Direct', 'Mediterranean Shipping Company',
+  'Mediterranean Shipping', 'Ocean Network Express', 'COSCO Shipping Lines', 'Evergreen Marine Corp',
+  'Yang Ming Marine', 'Atlas Logistics Self-Posted', 'OceanLine Logistics Global', 'Seaway Freight International',
+  'Hapag Global Express'
+]);
 
-const SEED_AUCTIONS: Auction[] = [
-  {
-    id: 'RA-2026-0842',
-    title: 'Mumbai → Rotterdam (Auto Parts FCL)',
-    rfqId: 'RFQ-88410',
-    creatorUid: 'u-arjun',
-    creatorName: 'Arjun Rao',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
-    auctionType: 'Specific bidder',
-    startDate: '2026-08-28',
-    startTime: '14:00',
-    durationMinutes: 180,
-    endDateTime: '2026-08-28 17:00 IST',
-    timezone: 'Asia/Kolkata',
-    status: 'Live',
-    rank: '#1',
-    timeLeft: '1h 45m',
-    isPublished: true,
-    publishedAt: '2026-08-28T14:00:00Z',
-    competitionCeiling: 2450,
-    bidsSubmittedCount: 3,
-    shipment: {
-      por: 'Nhava Sheva (INNSA), India',
-      pol: 'Nhava Sheva (INNSA), India',
-      pod: 'Rotterdam (NLRTM), Netherlands',
-      finalDestination: 'Rotterdam (NLRTM), Netherlands',
-      cargoReadyDate: '2026-09-05',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'FOB - Free on Board',
-      blType: 'Seaway Bill',
-      rateCurrency: 'USD',
-      commodity: 'Automotive Components',
-      hsCode: '8708.29',
-      weightKg: 24000,
-      cbm: 68,
-      isHazardous: false,
-      specialRequirements: '14 days combined demurrage/detention required at destination.',
-    },
-    containers: [
-      {
-        id: 'c-row-1',
-        equipmentType: '40HC',
-        containerType: 'Standard',
-        quantity: 2,
-        pickupLocation: 'Nhava Sheva CFS',
-        emptyReturnLocation: 'ECT Delta Rotterdam',
-        isSpecial: false,
-        commodity: 'Automotive Components',
-        hsCode: '8708.29',
-        grossWeight: 24000,
-        weightUnit: 'KG',
-        dimensions: '40ft x 8ft x 9.5ft',
-      },
-    ],
-    originCharges: {
-      transportation: false,
-      clearance: true,
-      carrierLocal: true,
-      pickupAddress: 'Sector 3 CFS, JNPT, Navi Mumbai',
-    },
-    destinationCharges: {
-      transportation: false,
-      clearance: false,
-      carrierLocal: true,
-      destuffingAddress: 'ECT Delta Terminal, Port of Rotterdam',
-    },
-    selectedBidders: [
-      {
-        id: 'sarah',
-        name: 'Sarah Lewis',
-        company: 'Rotterdam Freight NV',
-        role: 'Ocean Freight Lead',
-        location: 'Rotterdam, Netherlands',
-        timezone: 'Europe/Amsterdam',
-        hasGoldenTick: false,
-      },
-      {
-        id: 'kiran',
-        name: 'Kiran Mehta',
-        company: 'Indo Ocean Lines',
-        role: 'Trade Lane Manager',
-        location: 'Mumbai, India',
-        timezone: 'Asia/Kolkata',
-        hasGoldenTick: false,
-      },
-    ],
-    blockedBidders: [],
-    rules: {
-      autoExtension: true,
-      rankingVisible: true,
-      hideCompetitorNames: true,
-      bidderAnonymity: true,
-      bidLimit: 10,
-    },
-    bids: [
-      {
-        id: 'bid-1',
-        auctionId: 'RA-2026-0842',
-        bidderUid: 'u-sarah',
-        bidderName: 'Sarah Lewis',
-        bidderCompany: 'Rotterdam Freight NV',
-        bidderHasGoldenTick: false,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 2,
-            oceanFreight: 2150,
-            freightSurcharges: 100,
-            originTransport: 0,
-            originClearance: 40,
-            originLocal: 30,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 2320,
-          },
-        ],
-        grandTotalUSD: 2320,
-        rank: 1,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '14:25 IST',
-        status: 'winning',
-      },
-    ],
-    historicalSnapshot: {
-      publishedAt: '2026-08-28T14:00:00Z',
-      creatorSnapshot: {
-        name: 'Arjun Rao',
-        company: 'Atlas Logistics Pvt. Ltd.',
-        email: 'arjun@atlaslogistics.com',
-        location: 'Mumbai, India',
-      },
-    },
-  },
-  {
-    id: 'GB-2026-0311',
-    title: 'Nhava Sheva → Antwerp (Industrial Machinery)',
-    rfqId: 'RFQ-99211',
-    creatorUid: 'u-sarah',
-    creatorName: 'Sarah Lewis',
-    creatorCompany: 'Rotterdam Freight NV',
-    auctionType: 'General bidding',
-    startDate: '2026-08-27',
-    startTime: '09:00',
-    durationMinutes: 240,
-    endDateTime: '2026-08-27 13:00 CET',
-    timezone: 'Europe/Amsterdam',
-    status: 'Awarded',
-    rank: '#1 (Won)',
-    timeLeft: 'Closed',
-    isPublished: true,
-    publishedAt: '2026-08-27T09:00:00Z',
-    competitionCeiling: 3100,
-    bidsSubmittedCount: 5,
-    shipment: {
-      por: 'Nhava Sheva (INNSA), India',
-      pol: 'Nhava Sheva (INNSA), India',
-      pod: 'Antwerp (BEANR), Belgium',
-      finalDestination: 'Antwerp (BEANR), Belgium',
-      cargoReadyDate: '2026-09-02',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'CIF - Cost, Insurance and Freight',
-      rateCurrency: 'USD',
-      commodity: 'Industrial Machinery',
-      hsCode: '8479.89',
-      weightKg: 28000,
-      cbm: 75,
-    },
-    containers: [
-      {
-        id: 'c-row-2',
-        equipmentType: '40HC',
-        containerType: 'Standard',
-        quantity: 1,
-        pickupLocation: 'Nhava Sheva CFS',
-        emptyReturnLocation: 'Antwerp Gateway',
-        isSpecial: false,
-        commodity: 'Machinery',
-        hsCode: '8479.89',
-        grossWeight: 28000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: {
-      transportation: false,
-      clearance: true,
-      carrierLocal: true,
-    },
-    destinationCharges: {
-      transportation: false,
-      clearance: true,
-      carrierLocal: true,
-    },
-    selectedBidders: [],
-    blockedBidders: [],
-    rules: {
-      autoExtension: false,
-      rankingVisible: true,
-      hideCompetitorNames: true,
-      bidderAnonymity: true,
-      bidLimit: 5,
-    },
-    bids: [
-      {
-        id: 'bid-2',
-        auctionId: 'GB-2026-0311',
-        bidderUid: 'u-arjun',
-        bidderName: 'Arjun Rao',
-        bidderCompany: 'Atlas Logistics Pvt. Ltd.',
-        bidderHasGoldenTick: true,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 1,
-            oceanFreight: 2750,
-            freightSurcharges: 150,
-            originTransport: 0,
-            originClearance: 50,
-            originLocal: 40,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 2990,
-          },
-        ],
-        grandTotalUSD: 2990,
-        rank: 1,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '27 Aug 11:30 IST',
-        status: 'winning',
-      },
-      {
-        id: 'bid-3',
-        auctionId: 'GB-2026-0311',
-        bidderUid: 'u-kiran',
-        bidderName: 'Kiran Mehta',
-        bidderCompany: 'Indo Ocean Lines',
-        bidderHasGoldenTick: false,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 1,
-            oceanFreight: 2820,
-            freightSurcharges: 140,
-            originTransport: 0,
-            originClearance: 45,
-            originLocal: 35,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 3040,
-          },
-        ],
-        grandTotalUSD: 3040,
-        rank: 2,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '27 Aug 11:45 IST',
-        status: 'outbid',
-      },
-      {
-        id: 'bid-4',
-        auctionId: 'GB-2026-0311',
-        bidderUid: 'u-hapag',
-        bidderName: 'Trade Line Desk',
-        bidderCompany: 'Atlantic Ocean Forwarders',
-        bidderHasGoldenTick: false,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 1,
-            oceanFreight: 2860,
-            freightSurcharges: 140,
-            originTransport: 0,
-            originClearance: 45,
-            originLocal: 35,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 3080,
-          },
-        ],
-        grandTotalUSD: 3080,
-        rank: 3,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '27 Aug 12:10 IST',
-        status: 'outbid',
-      },
-    ],
-    winningBidId: 'bid-2',
-    result: 'won' as const,
-    resultDetail: 'Awarded to Atlas Logistics Pvt. Ltd. at USD $2,990 (L1 Lowest Qualified Bid).',
-    closedAt: '2026-08-27T13:00:00Z',
-    postingFeeINR: 300,
-    postingFeeUSD: 7,
-    awardedDetails: {
-      awardedAt: '2026-08-27 13:05 CET',
-      docketId: 'DOCKET-AWARD-GB-2026-0311-SEALED',
-      winningCompany: 'Atlas Logistics Pvt. Ltd.',
-      winningContact: 'Arjun Rao (Director of Procurement)',
-      winningRateUSD: 2990,
-      carrier: 'CMA CGM (Direct Service)',
-      transitTime: '26 Days (Nhava Sheva to Antwerp Gateway)',
-      freeTimeOrigin: '14 Days Combined Detention & Demurrage',
-      freeTimeDest: '21 Days Combined Demurrage & Detention',
-      equipmentBreakdown: '1x 40HC @ $2,990 USD All-In (Ocean: $2,750 + Surcharges: $150 + Locals: $90)',
-      shipperCompany: 'Rotterdam Freight NV',
-      shipperContact: 'Sarah Lewis (Ocean Procurement Lead)',
-      settlementTerms: 'Net 45 Days against Clean OBL & Verified VGM',
-    },
-    timeline: [
-      { event: 'Created', timestamp: '2026-08-27T08:30:00Z' },
-      { event: 'Published', timestamp: '2026-08-27T09:00:00Z', detail: 'Opened for general bidding' },
-      { event: 'Bid Received', timestamp: '2026-08-27T09:45:00Z', detail: '5 bids submitted' },
-      { event: 'Closed', timestamp: '2026-08-27T13:00:00Z' },
-      { event: 'Result Generated', timestamp: '2026-08-27T13:05:00Z', detail: 'Awarded to Atlas Logistics Pvt. Ltd.' },
-    ],
-  },
-  {
-    id: 'RA-2026-0901',
-    title: 'Chennai → Hamburg (Chemical Drums)',
-    rfqId: 'RFQ-77320',
-    creatorUid: 'u-arjun',
-    creatorName: 'Arjun Rao',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
-    auctionType: 'General bidding',
-    startDate: '2026-09-05',
-    startTime: '10:00',
-    durationMinutes: 120,
-    endDateTime: '2026-09-05 12:00 IST',
-    timezone: 'Asia/Kolkata',
-    status: 'Draft',
-    isPublished: false,
-    draftedAt: '2026-08-28T09:00:00Z',
-    postingFeeINR: 300,
-    postingFeeUSD: 7,
-    competitionCeiling: 3200,
-    bidsSubmittedCount: 0,
-    shipment: {
-      por: 'Chennai (INMAA), India',
-      pol: 'Chennai (INMAA), India',
-      pod: 'Hamburg (DEHAM), Germany',
-      finalDestination: 'Hamburg (DEHAM), Germany',
-      cargoReadyDate: '2026-09-08',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'CFR - Cost and Freight',
-      rateCurrency: 'USD',
-      commodity: 'Chemical Drums (UN1263)',
-      hsCode: '3814.00',
-      weightKg: 18000,
-      cbm: 45,
-      isHazardous: true,
-      unNumber: 'UN1263',
-      imoClass: 'Class 3',
-    },
-    containers: [
-      {
-        id: 'c-draft-1',
-        equipmentType: '20DV',
-        containerType: 'Standard',
-        quantity: 3,
-        pickupLocation: 'Chennai CFS',
-        emptyReturnLocation: 'Hamburg CTA',
-        isSpecial: true,
-        commodity: 'Chemical Drums',
-        hsCode: '3814.00',
-        grossWeight: 18000,
-        weightUnit: 'KG',
-        specialInstructions: 'Hazmat compliant packaging required. IMO class 3.',
-      },
-    ],
-    originCharges: { transportation: true, clearance: true, carrierLocal: true, pickupAddress: 'Chemical Logistics Park, Chennai' },
-    destinationCharges: { transportation: false, clearance: false, carrierLocal: true },
-    selectedBidders: [],
-    blockedBidders: [],
-    rules: { autoExtension: false, rankingVisible: true, hideCompetitorNames: true, bidderAnonymity: false, bidLimit: 5 },
-    bids: [],
-  },
-  {
-    id: 'RA-2026-0788',
-    title: 'Mundra → Jebel Ali (Consumer Electronics)',
-    rfqId: 'RFQ-61290',
-    creatorUid: 'u-arjun',
-    creatorName: 'Arjun Rao',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
-    auctionType: 'Specific bidder',
-    startDate: '2026-08-20',
-    startTime: '11:00',
-    durationMinutes: 90,
-    endDateTime: '2026-08-20 12:30 IST',
-    timezone: 'Asia/Kolkata',
-    status: 'Expired',
-    isPublished: true,
-    publishedAt: '2026-08-20T11:00:00Z',
-    closedAt: '2026-08-20T12:30:00Z',
-    result: 'expired' as const,
-    resultDetail: 'No qualifying bids received within the bidding window.',
-    postingFeeINR: 300,
-    postingFeeUSD: 7,
-    competitionCeiling: 1200,
-    bidsSubmittedCount: 0,
-    shipment: {
-      por: 'Mundra (INMUN), India',
-      pol: 'Mundra (INMUN), India',
-      pod: 'Jebel Ali (AEJEA), UAE',
-      finalDestination: 'Jebel Ali (AEJEA), UAE',
-      cargoReadyDate: '2026-08-25',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'FOB - Free on Board',
-      rateCurrency: 'USD',
-      commodity: 'Consumer Electronics',
-      hsCode: '8471.30',
-      weightKg: 12000,
-      cbm: 35,
-      isHazardous: false,
-    },
-    containers: [
-      {
-        id: 'c-exp-1',
-        equipmentType: '40HC',
-        containerType: 'Standard',
-        quantity: 1,
-        pickupLocation: 'Mundra CFS',
-        emptyReturnLocation: 'Jebel Ali',
-        isSpecial: false,
-        commodity: 'Consumer Electronics',
-        hsCode: '8471.30',
-        grossWeight: 12000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: { transportation: false, clearance: true, carrierLocal: true },
-    destinationCharges: { transportation: false, clearance: false, carrierLocal: false },
-    selectedBidders: [
-      { id: 'kiran', name: 'Kiran Mehta', company: 'Indo Ocean Lines', role: 'Trade Lane Manager', location: 'Mumbai, India', timezone: 'Asia/Kolkata' },
-    ],
-    blockedBidders: [],
-    rules: { autoExtension: false, rankingVisible: false, hideCompetitorNames: true, bidderAnonymity: true, bidLimit: 3 },
-    bids: [],
-    timeline: [
-      { event: 'Created', timestamp: '2026-08-19T14:00:00Z' },
-      { event: 'Published', timestamp: '2026-08-20T11:00:00Z' },
-      { event: 'Expired', timestamp: '2026-08-20T12:30:00Z', detail: 'No qualifying bids received' },
-    ],
-  },
-  {
-    id: 'RA-2026-0940',
-    title: 'Pipavav → Singapore (Solar PV Modules)',
-    rfqId: 'RFQ-55201',
-    creatorUid: 'u-arjun',
-    creatorName: 'Arjun Rao',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
-    auctionType: 'General bidding',
-    startDate: '2026-08-30',
-    startTime: '10:30',
-    durationMinutes: 180,
-    endDateTime: '2026-08-30 13:30 IST',
-    timezone: 'Asia/Kolkata',
-    status: 'Live',
-    rank: '#1',
-    timeLeft: '2h 15m',
-    isPublished: true,
-    publishedAt: '2026-08-30T10:30:00Z',
-    competitionCeiling: 820,
-    bidsSubmittedCount: 2,
-    shipment: {
-      por: 'Pipavav (INPAV), India',
-      pol: 'Pipavav (INPAV), India',
-      pod: 'Singapore (SGSIN), Singapore',
-      finalDestination: 'Singapore (SGSIN), Singapore',
-      cargoReadyDate: '2026-09-08',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'CIF - Cost, Insurance and Freight',
-      rateCurrency: 'USD',
-      commodity: 'Solar PV Modules & Inverters',
-      hsCode: '8541.40',
-      weightKg: 42000,
-      cbm: 120,
-      isHazardous: false,
-    },
-    containers: [
-      {
-        id: 'c-sol-1',
-        equipmentType: '40HC',
-        containerType: 'Standard',
-        quantity: 3,
-        pickupLocation: 'APM Terminals Pipavav',
-        emptyReturnLocation: 'PSA Tanjong Pagar Singapore',
-        isSpecial: false,
-        commodity: 'Solar PV Modules',
-        hsCode: '8541.40',
-        grossWeight: 42000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: { transportation: false, clearance: true, carrierLocal: true },
-    destinationCharges: { transportation: false, clearance: true, carrierLocal: true },
-    selectedBidders: [],
-    blockedBidders: [],
-    rules: { autoExtension: true, rankingVisible: true, hideCompetitorNames: true, bidderAnonymity: true, bidLimit: 5 },
-    bids: [
-      {
-        id: 'bid-sol-1',
-        auctionId: 'RA-2026-0940',
-        bidderUid: 'u-ravi',
-        bidderName: 'Ravi Thomas',
-        bidderCompany: 'CargoLink Global',
-        bidderHasGoldenTick: true,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 3,
-            oceanFreight: 680,
-            freightSurcharges: 40,
-            originTransport: 0,
-            originClearance: 30,
-            originLocal: 20,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 770,
-          },
-        ],
-        grandTotalUSD: 770,
-        rank: 1,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '11:15 IST',
-        status: 'winning',
-      },
-    ],
-  },
-  {
-    id: 'RA-2026-0955',
-    title: 'Shanghai → Nhava Sheva (Organic Cotton Textiles)',
-    rfqId: 'RFQ-44819',
-    creatorUid: 'u-sarah',
-    creatorName: 'Sarah Lewis',
-    creatorCompany: 'Rotterdam Freight NV',
-    auctionType: 'Specific bidder',
-    startDate: '2026-08-25',
-    startTime: '08:00',
-    durationMinutes: 120,
-    endDateTime: '2026-08-25 10:00 CET',
-    timezone: 'Europe/Amsterdam',
-    status: 'Awarded',
-    rank: '#1 (Won)',
-    timeLeft: 'Closed',
-    isPublished: true,
-    publishedAt: '2026-08-25T08:00:00Z',
-    closedAt: '2026-08-25T10:00:00Z',
-    competitionCeiling: 1650,
-    bidsSubmittedCount: 4,
-    shipment: {
-      por: 'Shanghai (CNSHA), China',
-      pol: 'Shanghai (CNSHA), China',
-      pod: 'Nhava Sheva (INNSA), India',
-      finalDestination: 'Nhava Sheva (INNSA), India',
-      cargoReadyDate: '2026-08-30',
-      shipmentType: 'FCL',
-      movementType: 'Port to Port',
-      incoterm: 'FOB - Free on Board',
-      rateCurrency: 'USD',
-      commodity: 'Organic Cotton Garments',
-      hsCode: '5208.11',
-      weightKg: 36000,
-      cbm: 95,
-      isHazardous: false,
-    },
-    containers: [
-      {
-        id: 'c-cot-1',
-        equipmentType: '40HC',
-        containerType: 'Standard',
-        quantity: 2,
-        pickupLocation: 'Yangshan Deepwater Port',
-        emptyReturnLocation: 'JNPT CFS Depot',
-        isSpecial: false,
-        commodity: 'Organic Cotton Garments',
-        hsCode: '5208.11',
-        grossWeight: 36000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: { transportation: false, clearance: true, carrierLocal: true },
-    destinationCharges: { transportation: false, clearance: true, carrierLocal: true },
-    selectedBidders: [
-      { id: 'u-arjun', name: 'Arjun Rao', company: 'Atlas Logistics Pvt. Ltd.', role: 'Freight Manager', location: 'Mumbai, India', timezone: 'Asia/Kolkata', hasGoldenTick: true },
-      { id: 'u-kiran', name: 'Kiran Mehta', company: 'Indo Ocean Lines', role: 'Trade Lane Manager', location: 'Mumbai, India', timezone: 'Asia/Kolkata', hasGoldenTick: false },
-    ],
-    blockedBidders: [],
-    rules: { autoExtension: false, rankingVisible: true, hideCompetitorNames: true, bidderAnonymity: true, bidLimit: 4 },
-    bids: [
-      {
-        id: 'bid-cot-1',
-        auctionId: 'RA-2026-0955',
-        bidderUid: 'u-arjun',
-        bidderName: 'Arjun Rao',
-        bidderCompany: 'Atlas Logistics Pvt. Ltd.',
-        bidderHasGoldenTick: true,
-        charges: [
-          {
-            equipment: '40HC',
-            quantity: 2,
-            oceanFreight: 1420,
-            freightSurcharges: 60,
-            originTransport: 0,
-            originClearance: 40,
-            originLocal: 30,
-            destTransport: 0,
-            destClearance: 0,
-            destLocal: 0,
-            totalUnit: 1550,
-          },
-        ],
-        grandTotalUSD: 1550,
-        rank: 1,
-        feePaid: 0,
-        currency: 'USD',
-        submittedAt: '25 Aug 09:20 CET',
-        status: 'winning',
-      },
-    ],
-    winningBidId: 'bid-cot-1',
-    result: 'won' as const,
-    resultDetail: 'Awarded to Atlas Logistics Pvt. Ltd. at USD $1,550/40HC all-in.',
-    postingFeeINR: 300,
-    postingFeeUSD: 7,
-    awardedDetails: {
-      awardedAt: '2026-08-25 10:05 CET',
-      docketId: 'DOCKET-AWARD-RA-2026-0955-VERIFIED',
-      winningCompany: 'Atlas Logistics Pvt. Ltd.',
-      winningContact: 'Arjun Rao (Director of Procurement)',
-      winningRateUSD: 1550,
-      carrier: 'COSCO Shipping (Direct Far East Loop)',
-      transitTime: '16 Days (Shanghai Yangshan to Nhava Sheva)',
-      freeTimeOrigin: '14 Days Free Detention',
-      freeTimeDest: '14 Days Combined Demurrage & Detention',
-      equipmentBreakdown: '2x 40HC @ $1,550 USD All-In',
-      shipperCompany: 'Rotterdam Freight NV',
-      shipperContact: 'Sarah Lewis',
-      settlementTerms: 'Net 30 Days against Clean BL',
-    },
-    timeline: [
-      { event: 'Created', timestamp: '2026-08-25T07:30:00Z' },
-      { event: 'Published', timestamp: '2026-08-25T08:00:00Z' },
-      { event: 'Closed', timestamp: '2026-08-25T10:00:00Z' },
-      { event: 'Result Generated', timestamp: '2026-08-25T10:05:00Z', detail: 'Awarded to Atlas Logistics Pvt. Ltd.' },
-    ],
-  },
-];
+const DUMMY_TOPIC_IDS = new Set(['top-1', 'top-2', 'nt-1', 'nt-2']);
+const DUMMY_TOPIC_TITLES = new Set([
+  'Port congestion: practical routing alternatives via Colombo and Salalah',
+  'What is reasonable detention-free time for Antwerp and Rotterdam imports?'
+]);
 
-const SEED_RATES: RateItem[] = [
-  {
-    id: 'RT-884210',
-    sp: 'Hapag-Lloyd Ocean',
-    carrier: 'Hapag-Lloyd',
-    por: 'Nhava Sheva (INNSA), India',
-    pol: 'Nhava Sheva (INNSA), India',
-    pod: 'Rotterdam (NLRTM), Netherlands',
-    fpod: 'Rotterdam (NLRTM), Netherlands',
-    d20: 1850,
-    d20Type: 'Dry Standard',
-    h40: 2320,
-    h40Type: 'High Cube',
-    ft: '14 days combined',
-    tt: '28 days',
-    valid: '2026-09-30',
-    rateType: 'Spot Contract',
-    route: 'Direct EP-X Service',
-    remark: 'Subject to low sulphur fuel bunker surcharge at destination.',
-  },
-  {
-    id: 'RT-992144',
-    sp: 'Maersk Line Direct',
-    carrier: 'Maersk',
-    por: 'Mundra (INMUN), India',
-    pol: 'Mundra (INMUN), India',
-    pod: 'Jebel Ali (AEJEA), UAE',
-    fpod: 'Jebel Ali (AEJEA), UAE',
-    d20: 680,
-    d20Type: 'Dry Standard',
-    h40: 950,
-    h40Type: 'High Cube',
-    ft: '21 days',
-    tt: '5 days',
-    valid: '2026-09-15',
-    rateType: 'Direct Feeder',
-    route: 'Arabian Express',
-    remark: 'Direct weekly shuttle service with guaranteed equipment release.',
-  },
-  {
-    id: 'RT-773190',
-    sp: 'CMA CGM India Direct',
-    carrier: 'CMA CGM',
-    por: 'Chennai (INMAA), India',
-    pol: 'Chennai (INMAA), India',
-    pod: 'Antwerp (BEANR), Belgium',
-    fpod: 'Antwerp (BEANR), Belgium',
-    d20: 1920,
-    d20Type: 'Dry Standard',
-    h40: 2480,
-    h40Type: 'High Cube',
-    ft: '14 days combined',
-    tt: '31 days',
-    valid: '2026-09-28',
-    rateType: 'Direct Spot',
-    route: 'FAL-1 Express Loop',
-    remark: 'Guaranteed space allocation and direct North Continent discharge.',
-  },
-  {
-    id: 'RT-662810',
-    sp: 'Mediterranean Shipping Co',
-    carrier: 'MSC',
-    por: 'Pipavav (INPAV), India',
-    pol: 'Pipavav (INPAV), India',
-    pod: 'Singapore (SGSIN), Singapore',
-    fpod: 'Singapore (SGSIN), Singapore',
-    d20: 480,
-    d20Type: 'Dry Standard',
-    h40: 720,
-    h40Type: 'High Cube',
-    ft: '14 days',
-    tt: '8 days',
-    valid: '2026-10-15',
-    rateType: 'Contract Tariff',
-    route: 'Malacca Straits Shuttle',
-    remark: 'Tier-1 transshipment connection at PSA Tanjong Pagar.',
-  },
-  {
-    id: 'RT-551940',
-    sp: 'Ocean Network Express',
-    carrier: 'ONE',
-    por: 'Nhava Sheva (INNSA), India',
-    pol: 'Nhava Sheva (INNSA), India',
-    pod: 'Los Angeles (USLAX), USA',
-    fpod: 'Los Angeles (USLAX), USA',
-    d20: 2850,
-    d20Type: 'Dry Standard',
-    h40: 3650,
-    h40Type: 'High Cube',
-    ft: '10 days combined',
-    tt: '36 days',
-    valid: '2026-09-20',
-    rateType: 'Spot Contract',
-    route: 'Transpacific South (PS3)',
-    remark: 'Subject to US West Coast clean truck and pier pass fees.',
-  },
-  {
-    id: 'RT-448201',
-    sp: 'COSCO Shipping Lines',
-    carrier: 'COSCO',
-    por: 'Shanghai (CNSHA), China',
-    pol: 'Shanghai (CNSHA), China',
-    pod: 'Nhava Sheva (INNSA), India',
-    fpod: 'Nhava Sheva (INNSA), India',
-    d20: 1150,
-    d20Type: 'Dry Standard',
-    h40: 1580,
-    h40Type: 'High Cube',
-    ft: '14 days',
-    tt: '16 days',
-    valid: '2026-09-25',
-    rateType: 'Direct Spot',
-    route: 'Far East India Express (CIX)',
-    remark: 'Daily equipment pickup at Yangshan Deepwater Terminal.',
-  },
-  {
-    id: 'RT-339105',
-    sp: 'Evergreen Marine Corp',
-    carrier: 'Evergreen',
-    por: 'Mundra (INMUN), India',
-    pol: 'Mundra (INMUN), India',
-    pod: 'Felixstowe (GBFXT), UK',
-    fpod: 'Felixstowe (GBFXT), UK',
-    d20: 1780,
-    d20Type: 'Dry Standard',
-    h40: 2290,
-    h40Type: 'High Cube',
-    ft: '14 days combined',
-    tt: '30 days',
-    valid: '2026-09-30',
-    rateType: 'Spot Contract',
-    route: 'UK Falcon Loop',
-    remark: 'Inclusive of UK standard security fee and bunker adjustment factor.',
-  },
-  {
-    id: 'RT-227490',
-    sp: 'Yang Ming Marine',
-    carrier: 'Yang Ming',
-    por: 'Hazira (INHAZ), India',
-    pol: 'Hazira (INHAZ), India',
-    pod: 'Port Klang (MYPKG), Malaysia',
-    fpod: 'Port Klang (MYPKG), Malaysia',
-    d20: 520,
-    d20Type: 'Dry Standard',
-    h40: 780,
-    h40Type: 'High Cube',
-    ft: '21 days combined',
-    tt: '9 days',
-    valid: '2026-10-10',
-    rateType: 'Direct Feeder',
-    route: 'ASEAN Feeder Express',
-    remark: 'Free time includes combined demurrage and detention at Port Klang.',
-  },
-];
+const DUMMY_REVIEW_IDS = new Set(['cr-1', 'cr-2', 'cr-3', 'cr-4']);
+const DUMMY_REVIEW_COMPANIES = new Set([
+  'Apex Logistics', 'Starlight Shippers', 'Pacific Gateway Logistics',
+  'Rotterdam Freight NV', 'Indo Ocean Lines', 'Blue Anchor Line', 'Trans-World Shipping'
+]);
+
+const DUMMY_CASE_IDS = new Set(['bl-1', 'bl-2', 'bl-3', 'case-1', 'case-2', 'case-3', 'BL-2026-004']);
+const DUMMY_BLACKLIST_COMPANIES = new Set([
+  'OceanStar Maritime Forwarding Ltd.', 'Orbit Freight Services Ltd.',
+  'SwiftLine Carriers International', 'Apex Cargo Movers'
+]);
+
+const DUMMY_JOB_IDS = new Set(['j1', 'j2', 'j3', 'j4', 'job-1', 'job-2', 'job-3', 'job-4']);
+const DUMMY_JOB_TITLES = new Set([
+  'Senior Freight Pricing Analyst',
+  'Trade Lane Manager (Middle East & Europe)',
+  'Trade Lane Manager',
+  'Customer Success & Procurement Lead',
+  'Ocean Freight Operations Executive'
+]);
+
+const DUMMY_NOTIFICATION_IDS = new Set(['notif-1', 'notif-2', 'notif-3', 'notif-4', 'notif-5', 'notif-6']);
+
+const DUMMY_PERSONAS = new Set([
+  'Priya Nair', 'Sarah Lewis', 'Elena Rostova', 'Kiran Mehta', 'Arjun Rao',
+  'Vikram Patel', 'Rajesh Sharma', 'Michael Zhang', 'Carlos Mendez', 'Carlos Mendoza',
+  'Ananya Deshmukh', 'Ananya Sen', 'Ahmed Al-Mansoor', 'Hannah Schmidt', 'Kenji Tanaka',
+  'Sophie Dubois', 'Fatima Zahra', 'Viktor Lindqvist', 'Amara Okafor', 'Li Wei Chen',
+  'Lucas Silva', 'Dmitri Pavlov', 'Yasmin Khan', 'Zoe Christensen', 'David Chen',
+  'Capt. Sunil Deshmukh', 'Alex Van Der Meer', 'Kavita Reddy', 'Hans Gruber',
+  'Meera Joshi', 'Amit Singhania', 'Robert Taylor'
+]);
+
+export function isDummyAuction(a: any): boolean {
+  if (!a) return false;
+  const id = String(a.id || '');
+  const title = String(a.title || '');
+  const creator = String(a.creatorName || '');
+  return DUMMY_AUCTION_IDS.has(id) || DUMMY_AUCTION_TITLES.has(title) || DUMMY_PERSONAS.has(creator);
+}
+
+export function isDummyRate(r: any): boolean {
+  if (!r) return false;
+  const id = String(r.id || '');
+  const sp = String(r.sp || '');
+  if (r.isSelfPosted && r.ownerUid && !DUMMY_RATE_IDS.has(id)) return false;
+  return DUMMY_RATE_IDS.has(id) || (DUMMY_RATE_PROVIDERS.has(sp) && !r.isSelfPosted);
+}
+
+export function isDummyNexusTopic(t: any): boolean {
+  if (!t) return false;
+  const id = String(t.id || '');
+  const title = String(t.title || '');
+  const author = String(t.author || '');
+  return DUMMY_TOPIC_IDS.has(id) || DUMMY_TOPIC_TITLES.has(title) || DUMMY_PERSONAS.has(author);
+}
+
+export function isDummyCompanyReview(r: any): boolean {
+  if (!r) return false;
+  const id = String(r.id || '');
+  const company = String(r.companyName || '');
+  return DUMMY_REVIEW_IDS.has(id) || DUMMY_REVIEW_COMPANIES.has(company);
+}
+
+export function isDummyBlacklistCase(c: any): boolean {
+  if (!c) return false;
+  const id = String(c.id || '');
+  const company = String(c.companyName || '');
+  return DUMMY_CASE_IDS.has(id) || DUMMY_BLACKLIST_COMPANIES.has(company);
+}
+
+export function isDummyJob(j: any): boolean {
+  if (!j) return false;
+  const id = String(j.id || '');
+  const title = String(j.title || '');
+  const poster = String(j.postedBy || '');
+  return DUMMY_JOB_IDS.has(id) || DUMMY_JOB_TITLES.has(title) || DUMMY_PERSONAS.has(poster);
+}
+
+export function isDummyNotification(n: any): boolean {
+  if (!n) return false;
+  const id = String(n.id || '');
+  const relId = String(n.relatedId || '');
+  return DUMMY_NOTIFICATION_IDS.has(id) || DUMMY_AUCTION_IDS.has(relId) || DUMMY_RATE_IDS.has(relId);
+}
 
 interface DataContextType {
   // Feeds
@@ -1272,7 +201,7 @@ interface DataContextType {
     targetType: PostReport['targetType'],
     category: PostReport['category'],
     description: string
-  ) => void;
+  ) => PostReport;
   reports: PostReport[];
   // Threaded Comments
   addComment: (postId: string | number, text: string) => void;
@@ -1335,16 +264,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { isLowBandwidth, recommendedBatchSize, queueAction } = useNetwork();
 
-  const [posts, setPosts] = useState<FeedPost[]>(SEED_POSTS);
-  const [jobs, setJobs] = useState<JobPost[]>(SEED_JOBS);
-  const [topics, setTopics] = useState<NexusTopic[]>(SEED_TOPICS);
-  const [reviews, setReviews] = useState<CompanyReview[]>(SEED_REVIEWS);
-  const [cases, setCases] = useState<BlacklistCase[]>(SEED_BLACKLIST);
-  const [auctions, setAuctions] = useState<Auction[]>(SEED_AUCTIONS);
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [jobs, setJobs] = useState<JobPost[]>([]);
+  const [topics, setTopics] = useState<NexusTopic[]>([]);
+  const [reviews, setReviews] = useState<CompanyReview[]>([]);
+  const [cases, setCases] = useState<BlacklistCase[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [reports, setReports] = useState<PostReport[]>([]);
-  const [rates, setRates] = useState<RateItem[]>(SEED_RATES);
+  const [rates, setRates] = useState<RateItem[]>([]);
   const [myRates, setMyRates] = useState<RateItem[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>(SEED_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Master Data States with Live Synchronizer
   const [masterLocations, setMasterLocations] = useState<LocationMasterItem[]>(MASTER_LOCATIONS);
@@ -1371,11 +300,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // 1. Instant paint from non-sensitive local cache (0ms paint for offline / slow connections)
     try {
       const savedTopics = localStorage.getItem('fr8x_nexus_topics');
-      if (savedTopics) setTopics(JSON.parse(savedTopics));
+      if (savedTopics) {
+        try {
+          const parsed = JSON.parse(savedTopics);
+          if (Array.isArray(parsed)) {
+            const cleanTopics = parsed.filter((t: any) => !isDummyNexusTopic(t));
+            setTopics(cleanTopics);
+            localStorage.setItem('fr8x_nexus_topics', JSON.stringify(cleanTopics));
+          }
+        } catch {}
+      } else {
+        setTopics([]);
+      }
+
       const savedReviews = localStorage.getItem('fr8x_nexus_reviews');
-      if (savedReviews) setReviews(JSON.parse(savedReviews));
+      if (savedReviews) {
+        try {
+          const parsed = JSON.parse(savedReviews);
+          if (Array.isArray(parsed)) {
+            const cleanReviews = parsed.filter((r: any) => !isDummyCompanyReview(r));
+            setReviews(cleanReviews);
+            localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(cleanReviews));
+          }
+        } catch {}
+      } else {
+        setReviews([]);
+      }
+
       const savedCases = localStorage.getItem('fr8x_nexus_cases');
-      if (savedCases) setCases(JSON.parse(savedCases));
+      if (savedCases) {
+        try {
+          const parsed = JSON.parse(savedCases);
+          if (Array.isArray(parsed)) {
+            const cleanCases = parsed.filter((c: any) => !isDummyBlacklistCase(c));
+            setCases(cleanCases);
+            localStorage.setItem('fr8x_nexus_cases', JSON.stringify(cleanCases));
+          }
+        } catch {}
+      } else {
+        setCases([]);
+      }
+
       const savedPosts = localStorage.getItem('fr8x_feed_posts');
       if (savedPosts) {
         try {
@@ -1385,15 +350,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               const id = String(p.id || '');
               const author = String(p.author || '');
               const isDummyId = /^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id);
-              const isDummyAuthor = [
-                'Priya Nair', 'Sarah Lewis', 'Elena Rostova', 'Kiran Mehta', 'Arjun Rao',
-                'Vikram Patel', 'Rajesh Sharma', 'Michael Zhang', 'Carlos Mendez', 'Carlos Mendoza',
-                'Ananya Deshmukh', 'Ananya Sen', 'Ahmed Al-Mansoor', 'Hannah Schmidt', 'Kenji Tanaka',
-                'Sophie Dubois', 'Fatima Zahra', 'Viktor Lindqvist', 'Amara Okafor', 'Li Wei Chen',
-                'Lucas Silva', 'Dmitri Pavlov', 'Yasmin Khan', 'Zoe Christensen', 'David Chen',
-                'Capt. Sunil Deshmukh', 'Alex Van Der Meer', 'Kavita Reddy', 'Hans Gruber',
-                'Meera Joshi', 'Amit Singhania', 'Robert Taylor'
-              ].includes(author);
+              const isDummyAuthor = DUMMY_PERSONAS.has(author);
               return !isDummyId && !isDummyAuthor;
             });
             setPosts(realPosts);
@@ -1403,19 +360,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
       } else {
         setPosts([]);
       }
+
       const savedJobs = localStorage.getItem('fr8x_jobs');
-      if (savedJobs) setJobs(JSON.parse(savedJobs));
+      if (savedJobs) {
+        try {
+          const parsed = JSON.parse(savedJobs);
+          if (Array.isArray(parsed)) {
+            const cleanJobs = parsed.filter((j: any) => !isDummyJob(j));
+            setJobs(cleanJobs);
+            localStorage.setItem('fr8x_jobs', JSON.stringify(cleanJobs));
+          }
+        } catch {}
+      } else {
+        setJobs([]);
+      }
+
       const savedAuctions = localStorage.getItem('fr8x_auctions');
-      if (savedAuctions) setAuctions(JSON.parse(savedAuctions));
+      if (savedAuctions) {
+        try {
+          const parsed = JSON.parse(savedAuctions);
+          if (Array.isArray(parsed)) {
+            const cleanAuctions = parsed.filter((a: any) => !isDummyAuction(a));
+            setAuctions(cleanAuctions);
+            localStorage.setItem('fr8x_auctions', JSON.stringify(cleanAuctions));
+          }
+        } catch {}
+      } else {
+        setAuctions([]);
+      }
 
       const savedRates = localStorage.getItem('fr8x_rates');
       if (savedRates) {
         try {
           const parsed = JSON.parse(savedRates);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setRates(parsed);
+          if (Array.isArray(parsed)) {
+            const cleanRates = parsed.filter((r: any) => !isDummyRate(r));
+            setRates(cleanRates);
+            localStorage.setItem('fr8x_rates', JSON.stringify(cleanRates));
           }
         } catch {}
+      } else {
+        setRates([]);
       }
 
       const savedMyRates = localStorage.getItem('fr8x_my_rates');
@@ -1423,14 +408,35 @@ export function DataProvider({ children }: { children: ReactNode }) {
         try {
           const parsed = JSON.parse(savedMyRates);
           if (Array.isArray(parsed)) {
-            setMyRates(parsed);
+            const cleanMyRates = parsed.filter((r: any) => !isDummyRate(r));
+            setMyRates(cleanMyRates);
+            localStorage.setItem('fr8x_my_rates', JSON.stringify(cleanMyRates));
           }
         } catch {}
-      } else if (savedRates) {
+      } else {
+        setMyRates([]);
+      }
+
+      const savedNotifs = localStorage.getItem('fr8x_notifications');
+      if (savedNotifs) {
         try {
-          const parsed = JSON.parse(savedRates);
+          const parsed = JSON.parse(savedNotifs);
           if (Array.isArray(parsed)) {
-            setMyRates(parsed.filter((r: any) => r.isOwner || r.ownerUid === user?.uid || r.isSelfPosted));
+            const cleanNotifs = parsed.filter((n: any) => !isDummyNotification(n));
+            setNotifications(cleanNotifs);
+            localStorage.setItem('fr8x_notifications', JSON.stringify(cleanNotifs));
+          }
+        } catch {}
+      } else {
+        setNotifications([]);
+      }
+
+      const savedReports = localStorage.getItem('fr8x_reports');
+      if (savedReports) {
+        try {
+          const parsed = JSON.parse(savedReports);
+          if (Array.isArray(parsed)) {
+            setReports(parsed);
           }
         } catch {}
       }
@@ -1451,11 +457,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         if (!isMounted) return;
 
-        if (postsRes && postsRes.posts.length > 0) {
+        if (postsRes && Array.isArray(postsRes.posts) && postsRes.posts.length > 0) {
+          const validCloudPosts = postsRes.posts.filter((p) => {
+            const id = String(p.id || '');
+            const author = String(p.author || '');
+            return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
+          });
           setPosts((prev) => {
             const map = new Map<string, FeedPost>();
-            postsRes.posts.forEach((p) => map.set(String(p.id), p));
-            prev.forEach((p) => {
+            validCloudPosts.forEach((p) => map.set(String(p.id), p));
+            prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author))).forEach((p) => {
               if (!map.has(String(p.id))) {
                 map.set(String(p.id), p);
               }
@@ -1478,11 +489,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
           if (!isMounted) return;
 
-          if (auctionsRes.status === 'fulfilled' && auctionsRes.value.length > 0) {
+          if (auctionsRes.status === 'fulfilled' && Array.isArray(auctionsRes.value) && auctionsRes.value.length > 0) {
+            const cleanCloudAuctions = auctionsRes.value.filter((a) => !isDummyAuction(a));
             setAuctions((prev) => {
               const map = new Map<string, Auction>();
-              auctionsRes.value.forEach((a) => map.set(a.id, a));
-              prev.forEach((a) => {
+              cleanCloudAuctions.forEach((a) => map.set(a.id, a));
+              prev.filter((a) => !isDummyAuction(a)).forEach((a) => {
                 if (!map.has(a.id)) {
                   map.set(a.id, a);
                 }
@@ -1495,11 +507,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
           }
 
-          if (ratesRes.status === 'fulfilled' && ratesRes.value.length > 0) {
+          if (ratesRes.status === 'fulfilled' && Array.isArray(ratesRes.value) && ratesRes.value.length > 0) {
+            const cleanCloudRates = ratesRes.value.filter((r) => !isDummyRate(r));
             setRates((prev) => {
               const map = new Map<string, RateItem>();
-              ratesRes.value.forEach((r) => map.set(r.id, r));
-              prev.forEach((r) => {
+              cleanCloudRates.forEach((r) => map.set(r.id, r));
+              prev.filter((r) => !isDummyRate(r)).forEach((r) => {
                 if (!map.has(r.id)) {
                   map.set(r.id, r);
                 }
@@ -1512,10 +525,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
               return merged;
             });
             setMyRates((prev) => {
-              const myFromCloud = ratesRes.value.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
+              const myFromCloud = cleanCloudRates.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
               const map = new Map<string, RateItem>();
               myFromCloud.forEach((r) => map.set(r.id, r));
-              prev.forEach((r) => {
+              prev.filter((r) => !isDummyRate(r)).forEach((r) => {
                 if (!map.has(r.id)) {
                   map.set(r.id, r);
                 }
@@ -1528,24 +541,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
           }
 
-
           // 3. Revalidate from authoritative server-side DBMS (.knox/dbms)
           fetch('/api/rates')
             .then((res) => res.json())
             .then((data) => {
-              if (data?.success && Array.isArray(data.rates) && data.rates.length > 0) {
+              if (data?.success && Array.isArray(data.rates)) {
+                const apiRates = data.rates.filter((r: RateItem) => !isDummyRate(r));
                 setRates((prev) => {
                   const merged = new Map<string, RateItem>();
-                  prev.forEach((r) => merged.set(r.id, r));
-                  data.rates.forEach((r: RateItem) => merged.set(r.id, r));
+                  prev.filter((r) => !isDummyRate(r)).forEach((r) => merged.set(r.id, r));
+                  apiRates.forEach((r: RateItem) => merged.set(r.id, r));
                   const result = Array.from(merged.values());
                   try { localStorage.setItem('fr8x_rates', JSON.stringify(result)); } catch {}
                   return result;
                 });
                 setMyRates((prev) => {
-                  const myFromApi = data.rates.filter((r: RateItem) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
+                  const myFromApi = apiRates.filter((r: RateItem) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
                   const merged = new Map<string, RateItem>();
-                  prev.forEach((r) => merged.set(r.id, r));
+                  prev.filter((r) => !isDummyRate(r)).forEach((r) => merged.set(r.id, r));
                   myFromApi.forEach((r: RateItem) => merged.set(r.id, r));
                   const result = Array.from(merged.values());
                   try { localStorage.setItem('fr8x_my_rates', JSON.stringify(result)); } catch {}
@@ -1559,10 +572,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
             .then((res) => res.json())
             .then((data) => {
               if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
+                const apiPosts = data.posts.filter((p: FeedPost) => {
+                  const id = String(p.id || '');
+                  const author = String(p.author || '');
+                  return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
+                });
                 setPosts((prev) => {
                   const map = new Map<string, FeedPost>();
-                  data.posts.forEach((p: FeedPost) => map.set(String(p.id), p));
-                  prev.forEach((p) => {
+                  apiPosts.forEach((p: FeedPost) => map.set(String(p.id), p));
+                  prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author))).forEach((p) => {
                     if (!map.has(String(p.id))) {
                       map.set(String(p.id), p);
                     }
@@ -1598,11 +616,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Notification Actions
   const markNotificationRead = (notifId: string) => {
-    setNotifications((prev) => prev.map((n) => n.id === notifId ? { ...n, read: true } : n));
+    setNotifications((prev) => {
+      const next = prev.map((n) => (n.id === notifId ? { ...n, read: true } : n));
+      try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   const markAllNotificationsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setNotifications((prev) => {
+      const next = prev.map((n) => ({ ...n, read: true }));
+      try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('All notifications marked as read.');
   };
 
@@ -1814,7 +840,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     targetType: PostReport['targetType'],
     category: PostReport['category'],
     description: string
-  ) => {
+  ): PostReport => {
     const newReport: PostReport = {
       id: `rep-${Date.now()}`,
       targetId,
@@ -1826,8 +852,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       createdAt: new Date().toISOString(),
       status: 'pending',
     };
-    setReports((prev) => [newReport, ...prev]);
-    toast('Report submitted to moderation queue. Thank you for keeping FR8X verified.');
+    setReports((prev) => {
+      const next = [newReport, ...prev];
+      try {
+        localStorage.setItem('fr8x_reports', JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    return newReport;
   };
 
   // Threaded Comment Actions (Post -> Comment -> Reply -> Reply-to-Reply)
@@ -1991,12 +1023,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
       postedDate: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'active',
     };
-    setJobs((prev) => [newJob, ...prev]);
+    setJobs((prev) => {
+      const next = [newJob, ...prev];
+      try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast(`Job opportunity '${newJob.title}' posted successfully.`);
   };
 
   const deleteJob = (jobId: string) => {
-    setJobs((prev) => prev.filter((j) => j.id !== jobId));
+    setJobs((prev) => {
+      const next = prev.filter((j) => j.id !== jobId);
+      try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Job listing removed.');
   };
 
@@ -2019,14 +1059,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       createdAt: 'Just now',
       replies: [],
     };
-    setTopics((prev) => [newTopic, ...prev]);
+    setTopics((prev) => {
+      const next = [newTopic, ...prev];
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Discussion topic published to Nexus Community.');
   };
 
   const updateTopic = (topicId: string, title: string, category: string, text: string) => {
     if (!title.trim() || !text.trim()) return;
-    setTopics((prev) =>
-      prev.map((t) => {
+    setTopics((prev) => {
+      const next = prev.map((t) => {
         if (t.id !== topicId) return t;
         return {
           ...t,
@@ -2036,13 +1080,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
           isEdited: true,
           updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Topic successfully updated.');
   };
 
   const deleteTopic = (topicId: string) => {
-    setTopics((prev) => prev.filter((t) => t.id !== topicId));
+    setTopics((prev) => {
+      const next = prev.filter((t) => t.id !== topicId);
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Discussion topic deleted.');
   };
 
@@ -2056,49 +1106,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
       time: 'Just now',
       hasGoldenTick: user.hasGoldenTick,
     };
-    setTopics((prev) =>
-      prev.map((t) => {
+    setTopics((prev) => {
+      const next = prev.map((t) => {
         if (t.id !== topicId) return t;
         return {
           ...t,
           commentsCount: t.commentsCount + 1,
           replies: [...t.replies, newReply],
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Discussion response submitted.');
   };
 
   const deleteTopicReply = (topicId: string, replyId: string) => {
-    setTopics((prev) =>
-      prev.map((t) => {
+    setTopics((prev) => {
+      const next = prev.map((t) => {
         if (t.id !== topicId) return t;
         return {
           ...t,
           commentsCount: Math.max(0, t.commentsCount - 1),
           replies: t.replies.filter((r) => r.id !== replyId),
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Reply removed.');
   };
 
   const reactTopic = (topicId: string, reaction: 'like' | 'dis') => {
-    setTopics((prev) =>
-      prev.map((t) => {
+    setTopics((prev) => {
+      const next = prev.map((t) => {
         if (t.id !== topicId) return t;
         const liked = reaction === 'like' ? !t.liked : false;
         const disliked = reaction === 'dis' ? !t.disliked : false;
         const likes = (t.likes || 0) + (liked ? 1 : t.liked ? -1 : 0);
         const dis = (t.dis || 0) + (disliked ? 1 : t.disliked ? -1 : 0);
         return { ...t, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   const reactTopicReply = (topicId: string, replyId: string, reaction: 'like' | 'dis') => {
-    setTopics((prev) =>
-      prev.map((t) => {
+    setTopics((prev) => {
+      const next = prev.map((t) => {
         if (t.id !== topicId) return t;
         return {
           ...t,
@@ -2111,8 +1167,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
             return { ...r, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
           }),
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   const addReview = (companyName: string, location: string, rating: number, text: string) => {
@@ -2129,8 +1187,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     setReviews((prev) => {
       const existing = prev.find((r) => r.companyName.toLowerCase() === companyName.toLowerCase());
+      let next: CompanyReview[];
       if (existing) {
-        return prev.map((r) =>
+        next = prev.map((r) =>
           r.id === existing.id
             ? {
                 ...r,
@@ -2139,26 +1198,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
               }
             : r
         );
+      } else {
+        next = [
+          {
+            id: `cr-${Date.now()}`,
+            companyName: companyName.trim(),
+            location: location.trim() || 'Global',
+            ratingAverage: rating,
+            totalReviews: 1,
+            starDistribution: [1, 0, 0, 0, 0],
+            recentReviews: [newReviewItem],
+          },
+          ...prev,
+        ];
       }
-      return [
-        {
-          id: `cr-${Date.now()}`,
-          companyName: companyName.trim(),
-          location: location.trim() || 'Global',
-          ratingAverage: rating,
-          totalReviews: 1,
-          starDistribution: [1, 0, 0, 0, 0],
-          recentReviews: [newReviewItem],
-        },
-        ...prev,
-      ];
+      try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
+      return next;
     });
     toast(`Verified review for ${companyName} submitted.`);
   };
 
   const reactReviewRemark = (companyId: string, reviewId: string, action: 'like' | 'dis') => {
-    setReviews((prev) =>
-      prev.map((comp) => {
+    setReviews((prev) => {
+      const next = prev.map((comp) => {
         if (comp.id !== companyId) return comp;
         return {
           ...comp,
@@ -2171,8 +1233,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
             return { ...r, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
           }),
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
+      return next;
+    });
   };
 
   const addCase = (
@@ -2191,13 +1255,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       userDisputed: false,
       disputes: [],
     };
-    setCases((prev) => [newCase, ...prev]);
+    setCases((prev) => {
+      const next = [newCase, ...prev];
+      try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast(`Compliance report for ${newCase.companyName} submitted for verification.`);
   };
 
   const agreeCase = (caseId: string) => {
-    setCases((prev) =>
-      prev.map((c) => {
+    setCases((prev) => {
+      const next = prev.map((c) => {
         if (c.id !== caseId) return c;
         const willAgree = !c.userAgreed;
         return {
@@ -2205,8 +1273,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
           userAgreed: willAgree,
           agreedCount: Math.max(0, (c.agreedCount || 0) + (willAgree ? 1 : -1)),
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Recorded your agreement with this blacklist default record.');
   };
 
@@ -2223,8 +1293,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       status: 'under_review',
     };
 
-    setCases((prev) =>
-      prev.map((c) => {
+    setCases((prev) => {
+      const next = prev.map((c) => {
         if (c.id !== caseId) return c;
         return {
           ...c,
@@ -2232,8 +1302,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
           disputeCount: (c.disputeCount || 0) + 1,
           disputes: [newDispute, ...(c.disputes || [])],
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast('Counter-dispute statement and evidence docket submitted for arbitration.');
   };
 
@@ -2322,7 +1394,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       bids: [],
     };
 
-    setAuctions((prev) => [newAuction, ...prev]);
+    setAuctions((prev) => {
+      const next = [newAuction, ...prev];
+      try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
+      return next;
+    });
     upsertAuctionInDB(newAuction).catch(() => {});
     eventBus.recordEvent({
       eventType: 'auction_create',
@@ -2369,9 +1445,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateAuctionStatus = (auctionId: string, status: Auction['status']) => {
-    setAuctions((prev) =>
-      prev.map((a) => (a.id === auctionId ? { ...a, status } : a))
-    );
+    setAuctions((prev) => {
+      const next = prev.map((a) => (a.id === auctionId ? { ...a, status } : a));
+      try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
+      return next;
+    });
     toast(`Auction ${auctionId} status changed to ${status}.`);
   };
 
@@ -2434,8 +1512,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     setMySubmittedBids((prev) => [newBid, ...prev]);
 
-    setAuctions((prev) =>
-      prev.map((a) => {
+    setAuctions((prev) => {
+      const next = prev.map((a) => {
         if (a.id !== auctionId) return a;
         return {
           ...a,
@@ -2443,8 +1521,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
           bidsSubmittedCount: a.bidsSubmittedCount + 1,
           bids: [...(a.bids || []), newBid],
         };
-      })
-    );
+      });
+      try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
+      return next;
+    });
 
     submitBidInDB(auctionId, newBid).catch(() => {});
 

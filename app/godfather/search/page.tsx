@@ -8,7 +8,7 @@ import { RecordDetailDrawer } from '@/components/godfather/RecordDetailDrawer';
 
 export default function GodfatherSearchPage() {
   const { searchAllRecords } = useGodfatherData();
-  const [query, setQuery] = useState('Atlas');
+  const [query, setQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [results, setResults] = useState<GlobalSearchResult[]>([]);
   const [selectedRecord, setSelectedRecord] = useState<GlobalSearchResult | null>(null);
@@ -76,8 +76,8 @@ export default function GodfatherSearchPage() {
 
         {/* Quick query tags */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '11px', flexWrap: 'wrap' }}>
-          <span style={{ fontWeight: 800, color: '#475569' }}>Quick Test Searches:</span>
-          {['Atlas Logistics', '27AABCA1234F1Z5', 'RA-2026-0842', 'RT-884210', 'sarah.lewis', 'OceanStar'].map((tag) => (
+          <span style={{ fontWeight: 800, color: '#475569' }}>Quick Searches:</span>
+          {['Maersk', '27AABCA1234F1Z5', 'Nhava Sheva', 'Rotterdam', 'FCL'].map((tag) => (
             <button
               key={tag}
               type="button"

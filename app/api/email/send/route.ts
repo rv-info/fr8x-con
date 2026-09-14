@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const { type, to, subject, message, event } = body;
+    const { type, to, subject, message, event, htmlMessage } = body;
 
     // Validate recipient
     if (!to || typeof to !== 'string' || !isValidEmailAddress(to)) {
@@ -94,6 +94,7 @@ export async function POST(req: NextRequest) {
       to: to.trim().toLowerCase(),
       subject: subject.trim(),
       message: message.trim(),
+      htmlMessage: typeof htmlMessage === 'string' && htmlMessage.trim().length > 0 ? htmlMessage.trim() : undefined,
       event: resolvedEvent,
       correlationId,
     });

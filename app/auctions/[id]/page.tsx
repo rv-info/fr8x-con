@@ -68,14 +68,14 @@ interface ChargeRow {
 export default function BidRoomPage() {
   const params = useParams();
   const router = useRouter();
-  const auctionId = String(params.id || 'RA-2026-0842');
+  const auctionId = String(params.id || '');
 
   const { auctions, submitBid } = useData();
   const { format, availableCurrencies, getRateFromUSD, convertToUSD, lastUpdatedTime } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const auction = auctions.find((a) => a.id === auctionId) || auctions[0];
+  const auction = auctions.find((a) => a.id === auctionId);
 
   // Requirements 4 & 5: Conditional Container Number & Competition Ceiling visibility
   const asksContainerNo = Boolean(
@@ -89,9 +89,9 @@ export default function BidRoomPage() {
     (auction as any)?.showCompetitionCeiling ?? (auction?.rules as any)?.showCompetitionCeiling ?? true
   );
 
-  const configuredBidLimit = Number(auction.rules?.bidLimit);
+  const configuredBidLimit = Number(auction?.rules?.bidLimit);
   const bidLimit = ([1, 3, 5] as number[]).includes(configuredBidLimit) ? configuredBidLimit : 5;
-  const bidCount = (auction.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
+  const bidCount = (auction?.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
   const bidsRemaining = Math.max(0, bidLimit - bidCount);
 
   // Active Tab: console | specs | terms | ledger | docs
@@ -208,7 +208,7 @@ export default function BidRoomPage() {
   const grandTotalINR = convertUSDTo(grandTotalUSD, 'INR');
 
   // Reverse Auction L1 / L2 / L3 Logic (Requirement 5: L1 is strictly lowest bid)
-  const ceiling = auction.competitionCeiling || 2450;
+  const ceiling = auction?.competitionCeiling || 2450;
   let calculatedRank = '#1';
   let l1Display = 0;
   let l2Display = 0;
@@ -284,7 +284,7 @@ export default function BidRoomPage() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'FR8X Client Engine',
     };
 
-    if (!submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket)) {
+    if (!auction || !submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket)) {
       setIsSubmittingBid(false);
       setShowConfirmModal(false);
       return;
@@ -305,6 +305,23 @@ export default function BidRoomPage() {
   };
 
   const currSymbol = availableCurrencies[biddingCurrency]?.symbol || '$';
+
+  if (!auction) {
+    return (
+      <div style={{ maxWidth: '720px', margin: '60px auto', padding: '0 16px' }}>
+        <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px solid var(--line)' }}>
+          <AlertTriangle size={44} style={{ color: '#eab308', margin: '0 auto 14px' }} />
+          <h2 style={{ margin: '0 0 8px', fontSize: '18px', color: 'var(--ink)' }}>Reverse Auction Not Found</h2>
+          <p style={{ margin: '0 0 20px', fontSize: '13px', color: 'var(--mut)' }}>
+            The requested auction ID does not exist or has been removed from active records.
+          </p>
+          <Link href="/auctions" className="btn primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <ArrowLeft size={14} /> Return to Reverse Auctions Hub
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', paddingBottom: '70px' }}>
@@ -1427,7 +1444,7 @@ export default function BidRoomPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <FileText size={20} color="var(--brand)" />
                   <div>
-                    <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>RFQ_Specification_Sheet_RA-2026-0842.pdf</b>
+                    <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>RFQ_Specification_Sheet_{auction?.id || 'RFQ'}.pdf</b>
                     <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>
                       Official Tender Dossier · 2.4 MB · Cryptographically Signed
                     </span>

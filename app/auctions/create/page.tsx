@@ -82,24 +82,6 @@ const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [
     timezone: 'Asia/Singapore',
     hasGoldenTick: true,
   },
-  {
-    id: 'u-sarah',
-    name: 'Sarah Lewis',
-    role: 'Ocean Freight Lead',
-    company: 'Rotterdam Freight NV',
-    location: 'Rotterdam, Netherlands',
-    timezone: 'Europe/Amsterdam',
-    hasGoldenTick: false,
-  },
-  {
-    id: 'u-kiran',
-    name: 'Kiran Mehta',
-    role: 'Trade Lane Manager',
-    company: 'Indo Ocean Lines',
-    location: 'Mumbai, India',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: false,
-  },
 ];
 
 export default function CreateReverseAuctionPage() {
@@ -565,7 +547,7 @@ export default function CreateReverseAuctionPage() {
                 <label>Auction ID</label>
                 <input
                   className="input"
-                  value="AUTO · RA-2026-0846"
+                  value="Auto-generated on publish"
                   readOnly
                   title="System generated immutable ID"
                 />

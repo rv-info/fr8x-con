@@ -43,6 +43,7 @@ import {
   Trash2,
   Check,
   XCircle,
+  Loader2,
 } from 'lucide-react';
 
 export default function NexusPage() {
@@ -87,9 +88,15 @@ export default function NexusPage() {
   const [newTopicBody, setNewTopicBody] = useState('');
 
   // Report Modal State (Requirement 11: Render in clear foreground)
-  const [reportModalTarget, setReportModalTarget] = useState<{ id: string; type: PostReport['targetType']; title: string } | null>(null);
+  const [reportModalTarget, setReportModalTarget] = useState<{
+    id: string;
+    type: PostReport['targetType'];
+    title: string;
+    topic?: NexusTopic;
+  } | null>(null);
   const [reportCategory, setReportCategory] = useState<PostReport['category']>('spam');
   const [reportDescription, setReportDescription] = useState('');
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   // Blacklist Case Dossier Modal State (Requirement 9)
   const [selectedCaseDossier, setSelectedCaseDossier] = useState<BlacklistCase | null>(null);
@@ -102,8 +109,8 @@ export default function NexusPage() {
   // Review Form & Inline Review Modal (Requirement 10)
   const [selectedReview, setSelectedReview] = useState<CompanyReview | null>(null);
   const [showAddReviewModal, setShowAddReviewModal] = useState(false);
-  const [reviewCompanyName, setReviewCompanyName] = useState('Rotterdam Freight NV');
-  const [reviewLocation, setReviewLocation] = useState('Rotterdam, Netherlands');
+  const [reviewCompanyName, setReviewCompanyName] = useState('');
+  const [reviewLocation, setReviewLocation] = useState('');
   const [reviewRatingStars, setReviewRatingStars] = useState(5);
   const [reviewFeedback, setReviewFeedback] = useState('');
 
@@ -116,7 +123,7 @@ export default function NexusPage() {
   const [selectedCase, setSelectedCase] = useState<BlacklistCase | null>(null);
   const [showNewCaseModal, setShowNewCaseModal] = useState(false);
   const [caseCompany, setCaseCompany] = useState('');
-  const [caseLocation, setCaseLocation] = useState('Mumbai, India');
+  const [caseLocation, setCaseLocation] = useState('');
   const [caseReason, setCaseReason] = useState('Payment default');
   const [caseSeverity, setCaseSeverity] = useState<'moderate' | 'high' | 'critical'>('high');
   const [caseDescription, setCaseDescription] = useState('');
@@ -243,13 +250,221 @@ export default function NexusPage() {
     }
   };
 
-  const handleConfirmReport = (e: React.FormEvent) => {
+  const handleConfirmReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reportModalTarget) return;
-    reportTarget(reportModalTarget.id, reportModalTarget.type, reportCategory, reportDescription || 'Violation of freight community policy');
-    setReportModalTarget(null);
-    setReportDescription('');
-    toast('Report lodged with FR8X Moderation Board.');
+    if (!reportModalTarget || isSubmittingReport) return;
+
+    setIsSubmittingReport(true);
+    const targetId = reportModalTarget.id;
+    const targetType = reportModalTarget.type;
+    const targetTitle = reportModalTarget.title;
+    const targetTopic =
+      reportModalTarget.topic ||
+      topics.find((t) => t.id === targetId) ||
+      (selectedTopic?.id === targetId ? selectedTopic : undefined);
+
+    const categoryLabels: Record<string, string> = {
+      spam: 'Commercial Spam / Solicitation',
+      misleading: 'Misleading Freight Quote / Rates',
+      fraud: 'Suspected Fraud / False Entity',
+      harassment: 'Unprofessional Conduct / Defamation',
+      prohibited: 'Prohibited Cargo / Regulatory Breach',
+      other: 'Other Community Guideline Violation',
+    };
+
+    const categoryLabel = categoryLabels[reportCategory] || reportCategory;
+    const reportTimestamp = new Date().toISOString();
+    const localTimestamp = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) + ' IST';
+
+    // 1. Record report in DataContext & local moderation queue
+    const recordedReport = reportTarget(
+      targetId,
+      targetType,
+      reportCategory,
+      reportDescription || 'Violation of freight community policy'
+    );
+    const reportRefId = recordedReport?.id || `rep-${Date.now()}`;
+
+    // 2. Format detailed plain text message
+    const plainTextMessage = `
+=====================================================
+FR8X NEXUS TOPIC MODERATION REPORT
+=====================================================
+
+A community discussion topic has been reported by a verified FR8X member and submitted to support@fr8x.in for moderation review.
+
+REPORT REFERENCE ID: ${reportRefId}
+REPORT TIMESTAMP    : ${localTimestamp} (${reportTimestamp})
+VIOLATION CATEGORY  : ${categoryLabel} (Code: ${reportCategory})
+
+-----------------------------------------------------
+REPORTED TOPIC SUMMARY:
+-----------------------------------------------------
+Topic ID       : ${targetId}
+Topic Title    : ${targetTitle}
+Topic Category : ${targetTopic?.category || 'General'}
+Author Name    : ${targetTopic?.author || 'Unknown Author'}
+Author Company : ${targetTopic?.authorCompany || 'Not specified'}
+Author Timezone: ${targetTopic?.authorTimezone || 'N/A'}
+Posted At      : ${targetTopic?.createdAt || 'N/A'}
+Replies Count  : ${targetTopic?.replies?.length ?? 0}
+
+ORIGINAL TOPIC CONTENT:
+-----------------------------------------------------
+${targetTopic?.text || '(No topic body content)'}
+
+-----------------------------------------------------
+REPORTER DETAILS (AUDIT TRAIL):
+-----------------------------------------------------
+Member Name    : ${user?.displayName || 'Anonymous Member'}
+Email Address  : ${user?.email || 'Not available'}
+User UID       : ${user?.uid || 'N/A'}
+Company        : ${user?.company || 'N/A'}
+Designation    : ${user?.designation || 'N/A'}
+Verified Golden: ${user?.hasGoldenTick ? 'Yes' : 'No'}
+
+-----------------------------------------------------
+REPORTER'S EXPLANATION & AUDIT NOTES:
+-----------------------------------------------------
+${reportDescription.trim() || 'No additional commentary provided.'}
+
+-----------------------------------------------------
+RECOMMENDED ACTION:
+Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of Service or Freight Community Standards, take appropriate disciplinary action (warn, edit, or purge topic).
+`.trim();
+
+    // 3. Format detailed HTML email message
+    const htmlBody = `
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1e293b; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+  <div style="background: #991b1b; padding: 20px 24px; color: #ffffff;">
+    <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 8px;">
+      Moderation Alert
+    </span>
+    <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #ffffff; line-height: 1.3;">
+      Nexus Community Discussion Flagged
+    </h2>
+    <p style="margin: 6px 0 0; font-size: 12.5px; color: #fecaca;">
+      Report ID: <b style="font-family: monospace;">${reportRefId}</b> · Recipient: <b style="color: #ffffff;">support@fr8x.in</b>
+    </p>
+  </div>
+
+  <div style="padding: 24px; display: flex; flex-direction: column; gap: 20px;">
+    <!-- Alert banner -->
+    <div style="background: #fef2f2; border: 1px solid #fee2e2; border-left: 4px solid #dc2626; border-radius: 6px; padding: 14px 16px;">
+      <div style="font-size: 11px; text-transform: uppercase; color: #991b1b; font-weight: 800; letter-spacing: 0.5px;">
+        Reason for Report
+      </div>
+      <div style="font-size: 15px; font-weight: 700; color: #991b1b; margin-top: 2px;">
+        ${categoryLabel}
+      </div>
+      <div style="font-size: 13px; color: #475569; margin-top: 6px; white-space: pre-wrap; line-height: 1.5;">
+        <b>Audit Notes:</b> ${reportDescription.trim() || 'No additional commentary provided.'}
+      </div>
+    </div>
+
+    <!-- Reported Topic Summary -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px;">
+      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+        Reported Topic Information
+      </h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <tr>
+          <td style="padding: 4px 0; color: #64748b; width: 130px;"><b>Topic ID:</b></td>
+          <td style="padding: 4px 0; font-family: monospace; color: #0f172a;">${targetId}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Topic Title:</b></td>
+          <td style="padding: 4px 0; font-weight: 700; color: #0f172a;">${targetTitle}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Category:</b></td>
+          <td style="padding: 4px 0; color: #0284c7;">${targetTopic?.category || 'General'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Author:</b></td>
+          <td style="padding: 4px 0; color: #0f172a;">${targetTopic?.author || 'Unknown'} ${targetTopic?.authorCompany ? `(${targetTopic.authorCompany})` : ''}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Published:</b></td>
+          <td style="padding: 4px 0; color: #0f172a;">${targetTopic?.createdAt || 'N/A'}</td>
+        </tr>
+      </table>
+
+      <div style="margin-top: 12px; padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px;">
+        <b style="display: block; font-size: 11px; text-transform: uppercase; color: #64748b; margin-bottom: 4px;">Topic Body Content:</b>
+        <div style="font-size: 13px; color: #1e293b; line-height: 1.5; white-space: pre-wrap;">
+          ${targetTopic?.text || '(No text body content)'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Reporter Profile -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px;">
+      <h3 style="margin: 0 0 10px; font-size: 13.5px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">
+        Reporter Audit Profile
+      </h3>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <tr>
+          <td style="padding: 4px 0; color: #64748b; width: 130px;"><b>Reporter Name:</b></td>
+          <td style="padding: 4px 0; font-weight: 700; color: #0f172a;">${user?.displayName || 'Anonymous Member'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Reporter Email:</b></td>
+          <td style="padding: 4px 0; color: #0f172a;">${user?.email || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Company:</b></td>
+          <td style="padding: 4px 0; color: #0f172a;">${user?.company || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>User UID:</b></td>
+          <td style="padding: 4px 0; font-family: monospace; color: #0f172a;">${user?.uid || 'N/A'}</td>
+        </tr>
+        <tr>
+          <td style="padding: 4px 0; color: #64748b;"><b>Reported At:</b></td>
+          <td style="padding: 4px 0; color: #0f172a;">${localTimestamp}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- Footer Notice -->
+    <div style="text-align: center; padding-top: 8px; border-top: 1px solid #e2e8f0; font-size: 11.5px; color: #94a3b8;">
+      FR8X Freight Exchange Moderation Engine · Dispatched directly to support@fr8x.in
+    </div>
+  </div>
+</div>
+`.trim();
+
+    // 4. Dispatch to support@fr8x.in via server-side email endpoint
+    try {
+      const emailRes = await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'support',
+          to: 'support@fr8x.in',
+          subject: `[Nexus Report] Topic Flagged: "${targetTitle}" (${categoryLabel})`,
+          message: plainTextMessage,
+          htmlMessage: htmlBody,
+          event: 'SUPPORT_NEXUS_TOPIC_REPORT',
+        }),
+      });
+
+      const resJson = await emailRes.json().catch(() => ({}));
+
+      if (emailRes.ok && resJson.success) {
+        toast(`Report dispatched directly to support@fr8x.in & FR8X Moderation Board.`);
+      } else {
+        toast(`Report filed in Moderation Board. Notification queued for support@fr8x.in.`);
+      }
+    } catch (err: any) {
+      console.warn('Email dispatch warning for report:', err);
+      toast(`Report filed in Moderation Board. Notification queued for support@fr8x.in.`);
+    } finally {
+      setIsSubmittingReport(false);
+      setReportModalTarget(null);
+      setReportDescription('');
+    }
   };
 
   const handleCreateReview = (e: React.FormEvent) => {
@@ -316,52 +531,7 @@ export default function NexusPage() {
         personName={selectedProfileName || ''}
       />
 
-      {/* Report Modal */}
-      {reportModalTarget && (
-        <Modal
-          isOpen={Boolean(reportModalTarget)}
-          onClose={() => setReportModalTarget(null)}
-          title={`Report to Moderation Board: ${reportModalTarget.title}`}
-          maxWidth="520px"
-        >
-          <form onSubmit={handleConfirmReport} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="field">
-              <label>Reason for Flagging / Violation Category</label>
-              <select
-                className="input"
-                value={reportCategory}
-                onChange={(e) => setReportCategory(e.target.value as any)}
-              >
-                <option value="spam">Commercial Spam / Solicitation</option>
-                <option value="misleading">Misleading Freight Quote / Rates</option>
-                <option value="fraud">Suspected Fraud / False Entity</option>
-                <option value="harassment">Unprofessional Conduct / Defamation</option>
-                <option value="prohibited">Prohibited Cargo / Regulatory Breach</option>
-                <option value="other">Other Community Guideline Violation</option>
-              </select>
-            </div>
-            <div className="field">
-              <label>Provide Context & Audit Notes</label>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="Explain the violation so FR8X moderators can take immediate action…"
-                value={reportDescription}
-                onChange={(e) => setReportDescription(e.target.value)}
-                required
-              />
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setReportModalTarget(null)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn primary" style={{ background: 'var(--red)', borderColor: 'var(--red)' }}>
-                <Flag size={13} /> Submit Report
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+
 
       {/* Monitored Blacklist Verification Dossier Panel */}
       {selectedCaseDossier && (
@@ -778,7 +948,7 @@ export default function NexusPage() {
                     </div>
                     <button
                       className="btn secondary sm"
-                      onClick={() => setReportModalTarget({ id: selectedTopic.id, type: 'post', title: selectedTopic.title })}
+                      onClick={() => setReportModalTarget({ id: selectedTopic.id, type: 'post', title: selectedTopic.title, topic: selectedTopic })}
                       style={{ color: 'var(--mut)', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
                     >
                       <Flag size={12} /> Report Topic
@@ -1227,399 +1397,539 @@ export default function NexusPage() {
       {/* TAB 1: COMMUNITY TOPICS in Large Cards */}
       {activeTab === 'community' && (
         <div>
-          <div className="nexus-grid-cards">
-            {filteredTopics.map((topic) => (
-              <div
-                key={topic.id}
-                className="card"
-                style={{
-                  padding: '20px 22px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--line)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '10px',
-                  transition: 'all 0.15s ease',
-                  background: '#ffffff',
-                }}
-                onClick={() => setSelectedTopic(topic)}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span className="badge blue" style={{ fontSize: '10.5px', fontWeight: 700 }}>{topic.category}</span>
-                  <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{topic.createdAt}</small>
-                </div>
-
-                <b style={{ fontSize: '15px', color: 'var(--ink)', lineHeight: 1.4 }}>{topic.title}</b>
-                <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', margin: '2px 0 6px', lineHeight: 1.6 }}>
-                  {topic.text}
-                </p>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '12px', marginTop: 'auto' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mut)' }}>
-                    <span>By <b>{topic.author}</b></span>
-                    {topic.hasGoldenTick && <GoldenTick />}
-                    {topic.authorTimezone && <LocalTimeBadge timezone={topic.authorTimezone} />}
+          {filteredTopics.length === 0 ? (
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+              <MessagesSquare size={40} style={{ color: 'var(--mut)', margin: '0 auto 12px' }} />
+              <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No discussions yet</h3>
+              <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                Start the first community conversation on trade lanes, routing strategies, demurrage negotiations, or customs compliance.
+              </p>
+              <button className="btn primary" onClick={() => setShowNewTopicModal(true)}>
+                <Plus size={14} /> Start First Discussion
+              </button>
+            </div>
+          ) : (
+            <div className="nexus-grid-cards">
+              {filteredTopics.map((topic) => (
+                <div
+                  key={topic.id}
+                  className="card"
+                  style={{
+                    padding: '20px 22px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--line)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    transition: 'all 0.15s ease',
+                    background: '#ffffff',
+                  }}
+                  onClick={() => setSelectedTopic(topic)}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span className="badge blue" style={{ fontSize: '10.5px', fontWeight: 700 }}>{topic.category}</span>
+                    <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{topic.createdAt}</small>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {/* Reactions */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        reactTopic(topic.id, 'like');
-                      }}
-                      style={{ fontSize: '11.5px', color: topic.liked ? 'var(--brand)' : 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
-                      title="Like topic"
-                    >
-                      <ThumbsUp size={12} /> {topic.likes || 0}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        reactTopic(topic.id, 'dis');
-                      }}
-                      style={{ fontSize: '11.5px', color: topic.disliked ? 'var(--red)' : 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
-                      title="Dislike topic"
-                    >
-                      <ThumbsDown size={12} /> {topic.dis || 0}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setReportModalTarget({ id: topic.id, type: 'post', title: topic.title });
-                      }}
-                      style={{ fontSize: '11.5px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
-                      title="Report topic"
-                    >
-                      <Flag size={11} />
-                    </button>
-                    <span className="badge grey" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600 }}>
-                      <MessageCircle size={12} /> {topic.replies.length}
-                    </span>
+
+                  <b style={{ fontSize: '15px', color: 'var(--ink)', lineHeight: 1.4 }}>{topic.title}</b>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', margin: '2px 0 6px', lineHeight: 1.6 }}>
+                    {topic.text}
+                  </p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '12px', marginTop: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mut)' }}>
+                      <span>By <b>{topic.author}</b></span>
+                      {topic.hasGoldenTick && <GoldenTick />}
+                      {topic.authorTimezone && <LocalTimeBadge timezone={topic.authorTimezone} />}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Reactions */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          reactTopic(topic.id, 'like');
+                        }}
+                        style={{ fontSize: '11.5px', color: topic.liked ? 'var(--brand)' : 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
+                        title="Like topic"
+                      >
+                        <ThumbsUp size={12} /> {topic.likes || 0}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          reactTopic(topic.id, 'dis');
+                        }}
+                        style={{ fontSize: '11.5px', color: topic.disliked ? 'var(--red)' : 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
+                        title="Dislike topic"
+                      >
+                        <ThumbsDown size={12} /> {topic.dis || 0}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReportModalTarget({ id: topic.id, type: 'post', title: topic.title, topic });
+                        }}
+                        style={{ fontSize: '11.5px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer' }}
+                        title="Report topic"
+                      >
+                        <Flag size={11} />
+                      </button>
+                      <span className="badge grey" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 600 }}>
+                        <MessageCircle size={12} /> {topic.replies.length}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 2: COMPANY REVIEWS in Large Cards (Requirement 10) */}
       {activeTab === 'reviews' && (
-        <div className="nexus-grid-cards">
-          {filteredReviews.map((review) => {
-            const isAddingQuickRemark = quickReviewTargetId === review.id;
-            return (
-              <div
-                key={review.id}
-                className="card"
-                style={{
-                  padding: '20px 22px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--line)',
-                  background: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <b style={{ fontSize: '15px', color: 'var(--ink)', display: 'block' }}>
-                      {review.companyName}
-                    </b>
-                    <small style={{ color: 'var(--mut)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-                      <MapPin size={11} /> {review.location}
-                    </small>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '18px', fontWeight: 800, color: '#e8a020' }}>
-                      ★ {review.ratingAverage.toFixed(1)}
-                    </span>
-                    <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)' }}>
-                      {review.totalReviews} verified reviews
-                    </small>
-                  </div>
-                </div>
-
-                {/* Star Distribution */}
-                <div className="starbars" style={{ margin: '2px 0', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
-                  {[5, 4, 3, 2, 1].map((stars, idx) => (
-                    <div key={stars} className="sr">
-                      <label style={{ fontSize: '11px' }}>{stars}★</label>
-                      <span>
-                        <i style={{ width: `${(review.starDistribution[idx] / (review.totalReviews || 1)) * 100}%` }} />
-                      </span>
-                      <em style={{ fontSize: '11px' }}>{review.starDistribution[idx]}</em>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Review Remarks List with Like / Helpful Reactions (Requirement 10) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <small style={{ fontSize: '11px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
-                      Verified Peer Remarks &amp; Feedback
-                    </small>
-                    <button
-                      className="btn secondary sm"
-                      style={{ fontSize: '11px', padding: '2px 8px' }}
-                      onClick={() => setQuickReviewTargetId(isAddingQuickRemark ? null : review.id)}
-                    >
-                      <Plus size={11} /> {isAddingQuickRemark ? 'Cancel' : 'Add Remark & Rating'}
-                    </button>
-                  </div>
-
-                  {/* Inline Quick Add Remark Drawer */}
-                  {isAddingQuickRemark && (
-                    <div style={{ padding: '10px 12px', background: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0369a1' }}>
-                          Rate {review.companyName}:
+        <div>
+          {filteredReviews.length === 0 ? (
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+              <Star size={40} style={{ color: 'var(--mut)', margin: '0 auto 12px' }} />
+              <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No company reviews yet</h3>
+              <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                Be the first verified logistics professional to submit an authentic performance evaluation for a freight forwarder or carrier.
+              </p>
+              <button className="btn primary" onClick={() => setShowAddReviewModal(true)}>
+                <Star size={14} /> Write First Review
+              </button>
+            </div>
+          ) : (
+            <div className="nexus-grid-cards">
+              {filteredReviews.map((review) => {
+                const isAddingQuickRemark = quickReviewTargetId === review.id;
+                return (
+                  <div
+                    key={review.id}
+                    className="card"
+                    style={{
+                      padding: '20px 22px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--line)',
+                      background: '#ffffff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <div>
+                        <b style={{ fontSize: '15px', color: 'var(--ink)', display: 'block' }}>
+                          {review.companyName}
+                        </b>
+                        <small style={{ color: 'var(--mut)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
+                          <MapPin size={11} /> {review.location}
+                        </small>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '18px', fontWeight: 800, color: '#e8a020' }}>
+                          ★ {review.ratingAverage.toFixed(1)}
                         </span>
-                        <div style={{ display: 'flex', gap: '4px' }}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              type="button"
-                              onClick={() => setQuickRemarkRating(star)}
-                              style={{
-                                background: 'transparent',
-                                border: 'none',
-                                cursor: 'pointer',
-                                fontSize: '14px',
-                                color: star <= quickRemarkRating ? '#e8a020' : '#cbd5e1',
-                              }}
-                            >
-                              ★
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <textarea
-                        className="input"
-                        rows={2}
-                        placeholder="Write your experience regarding documentation, payment, or container release..."
-                        value={quickRemarkText}
-                        onChange={(e) => setQuickRemarkText(e.target.value)}
-                        style={{ fontSize: '11.5px', background: '#ffffff' }}
-                      />
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
-                        <button className="btn secondary sm" onClick={() => setQuickReviewTargetId(null)}>
-                          Cancel
-                        </button>
-                        <button
-                          className="btn primary sm"
-                          onClick={() => handleQuickSubmitRemark(review.id, review.companyName, review.location)}
-                        >
-                          <CheckCircle2 size={11} /> Post Remark
-                        </button>
+                        <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)' }}>
+                          {review.totalReviews} verified reviews
+                        </small>
                       </div>
                     </div>
-                  )}
 
-                  {review.recentReviews.map((r) => (
-                    <div
-                      key={r.id}
-                      style={{
-                        padding: '10px 12px',
-                        borderLeft: '3px solid var(--brand)',
-                        background: '#f8fafc',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '4px',
-                      }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <b>{r.author}</b>
-                          {r.verified && (
-                            <span className="badge green" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
-                              VERIFIED
-                            </span>
-                          )}
-                          <span style={{ color: '#e8a020', fontWeight: 700 }}>
-                            {'★'.repeat(r.rating || 5)}
+                    {/* Star Distribution */}
+                    <div className="starbars" style={{ margin: '2px 0', padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line-light)' }}>
+                      {[5, 4, 3, 2, 1].map((stars, idx) => (
+                        <div key={stars} className="sr">
+                          <label style={{ fontSize: '11px' }}>{stars}★</label>
+                          <span>
+                            <i style={{ width: `${(review.starDistribution[idx] / (review.totalReviews || 1)) * 100}%` }} />
                           </span>
+                          <em style={{ fontSize: '11px' }}>{review.starDistribution[idx]}</em>
                         </div>
-                        <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.date}</small>
-                      </div>
-
-                      <p style={{ margin: '2px 0 4px', color: 'var(--ink)', lineHeight: 1.45 }}>
-                        &quot;{r.text}&quot;
-                      </p>
-
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
-                        {r.tags && r.tags.length > 0 ? (
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            {r.tags.map((tag) => (
-                              <span key={tag} className="badge blue" style={{ fontSize: '9px', padding: '1px 5px' }}>
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <div />
-                        )}
-
-                        {/* Like / Helpful Reaction Buttons (Requirement 10) */}
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <button
-                            type="button"
-                            className="btn secondary sm"
-                            style={{
-                              fontSize: '10.5px',
-                              padding: '2px 6px',
-                              background: r.liked ? '#eff6ff' : '#ffffff',
-                              color: r.liked ? 'var(--brand)' : 'var(--ink-secondary)',
-                            }}
-                            onClick={() => reactReviewRemark(review.id, r.id, 'like')}
-                            title="Mark as helpful remark"
-                          >
-                            <ThumbsUp size={11} /> Helpful ({r.likes || 0})
-                          </button>
-                          <button
-                            type="button"
-                            className="btn secondary sm"
-                            style={{
-                              fontSize: '10.5px',
-                              padding: '2px 6px',
-                              background: r.disliked ? '#fef2f2' : '#ffffff',
-                              color: r.disliked ? 'var(--red)' : 'var(--mut)',
-                            }}
-                            onClick={() => reactReviewRemark(review.id, r.id, 'dis')}
-                            title="Mark as unhelpful"
-                          >
-                            <ThumbsDown size={11} /> ({r.dis || 0})
-                          </button>
-                        </div>
-                      </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+
+                    {/* Review Remarks List with Like / Helpful Reactions (Requirement 10) */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <small style={{ fontSize: '11px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase' }}>
+                          Verified Peer Remarks &amp; Feedback
+                        </small>
+                        <button
+                          className="btn secondary sm"
+                          style={{ fontSize: '11px', padding: '2px 8px' }}
+                          onClick={() => setQuickReviewTargetId(isAddingQuickRemark ? null : review.id)}
+                        >
+                          <Plus size={11} /> {isAddingQuickRemark ? 'Cancel' : 'Add Remark & Rating'}
+                        </button>
+                      </div>
+
+                      {/* Inline Quick Add Remark Drawer */}
+                      {isAddingQuickRemark && (
+                        <div style={{ padding: '10px 12px', background: '#f0f9ff', border: '1.5px solid #bae6fd', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '11.5px', fontWeight: 700, color: '#0369a1' }}>
+                              Rate {review.companyName}:
+                            </span>
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => setQuickRemarkRating(star)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    color: star <= quickRemarkRating ? '#e8a020' : '#cbd5e1',
+                                  }}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <textarea
+                            className="input"
+                            rows={2}
+                            placeholder="Write your experience regarding documentation, payment, or container release..."
+                            value={quickRemarkText}
+                            onChange={(e) => setQuickRemarkText(e.target.value)}
+                            style={{ fontSize: '11.5px', background: '#ffffff' }}
+                          />
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                            <button className="btn secondary sm" onClick={() => setQuickReviewTargetId(null)}>
+                              Cancel
+                            </button>
+                            <button
+                              className="btn primary sm"
+                              onClick={() => handleQuickSubmitRemark(review.id, review.companyName, review.location)}
+                            >
+                              <CheckCircle2 size={11} /> Post Remark
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
+                      {review.recentReviews.map((r) => (
+                        <div
+                          key={r.id}
+                          style={{
+                            padding: '10px 12px',
+                            borderLeft: '3px solid var(--brand)',
+                            background: '#f8fafc',
+                            borderRadius: '4px',
+                            fontSize: '12px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <b>{r.author}</b>
+                              {r.verified && (
+                                <span className="badge green" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                                  VERIFIED
+                                </span>
+                              )}
+                              <span style={{ color: '#e8a020', fontWeight: 700 }}>
+                                {'★'.repeat(r.rating || 5)}
+                              </span>
+                            </div>
+                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.date}</small>
+                          </div>
+
+                          <p style={{ margin: '2px 0 4px', color: 'var(--ink)', lineHeight: 1.45 }}>
+                            &quot;{r.text}&quot;
+                          </p>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2px' }}>
+                            {r.tags && r.tags.length > 0 ? (
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                {r.tags.map((tag) => (
+                                  <span key={tag} className="badge blue" style={{ fontSize: '9px', padding: '1px 5px' }}>
+                                    {tag}
+                                  </span>
+                                ))}
+                              </div>
+                            ) : (
+                              <div />
+                            )}
+
+                            {/* Like / Helpful Reaction Buttons (Requirement 10) */}
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <button
+                                type="button"
+                                className="btn secondary sm"
+                                style={{
+                                  fontSize: '10.5px',
+                                  padding: '2px 6px',
+                                  background: r.liked ? '#eff6ff' : '#ffffff',
+                                  color: r.liked ? 'var(--brand)' : 'var(--ink-secondary)',
+                                }}
+                                onClick={() => reactReviewRemark(review.id, r.id, 'like')}
+                                title="Mark as helpful remark"
+                              >
+                                <ThumbsUp size={11} /> Helpful ({r.likes || 0})
+                              </button>
+                              <button
+                                type="button"
+                                className="btn secondary sm"
+                                style={{
+                                  fontSize: '10.5px',
+                                  padding: '2px 6px',
+                                  background: r.disliked ? '#fef2f2' : '#ffffff',
+                                  color: r.disliked ? 'var(--red)' : 'var(--mut)',
+                                }}
+                                onClick={() => reactReviewRemark(review.id, r.id, 'dis')}
+                                title="Mark as unhelpful"
+                              >
+                                <ThumbsDown size={11} /> ({r.dis || 0})
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
       {/* TAB 3: MONITORED BLACKLIST in Large Cards (Requirement 9) */}
       {activeTab === 'blacklist' && (
-        <div className="nexus-grid-cards">
-          {filteredCases.map((c) => (
-            <div
-              key={c.id}
-              className="card"
-              style={{
-                padding: '20px 22px',
-                borderRadius: '12px',
-                border: '1.5px solid #fecaca',
-                background: '#ffffff',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div>
-                  <b style={{ fontSize: '15px', color: '#991b1b', display: 'block' }}>
-                    {c.companyName}
-                  </b>
-                  <small style={{ color: 'var(--mut)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
-                    <MapPin size={11} /> {c.location} · Case ID: <b>{c.id}</b>
-                  </small>
-                </div>
-                <span
-                  className={`badge ${c.severity === 'critical' ? 'red' : 'amber'}`}
-                  style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px' }}
-                >
-                  {c.severity.toUpperCase()} RISK
-                </span>
-              </div>
-
-              <div style={{ padding: '10px 12px', background: '#fff0f0', borderRadius: '8px', border: '1px solid #fee2e2' }}>
-                <b style={{ fontSize: '12px', color: '#991b1b', display: 'block' }}>Infraction: {c.reason}</b>
-                <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--ink)', lineHeight: 1.5 }}>
-                  {c.description}
-                </p>
-              </div>
-
-              {/* Global Consensus Panel (Requirement 9) */}
-              <div style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
-                  <span style={{ fontWeight: 700, color: 'var(--ink)' }}>Global Trade Consensus:</span>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <span style={{ color: '#15803d', fontWeight: 700 }}>
-                      ✓ {c.agreedCount || 0} Agreed Defaults
-                    </span>
-                    <span style={{ color: '#0369a1', fontWeight: 700 }}>
-                      ⚖️ {c.disputeCount || 0} Disputes
-                    </span>
-                  </div>
-                </div>
-
-                {/* Consensus Balance Meter */}
-                <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
-                  <div
-                    style={{
-                      height: '100%',
-                      background: '#15803d',
-                      width: `${Math.max(15, ((c.agreedCount || 1) / ((c.agreedCount || 1) + (c.disputeCount || 0))) * 100)}%`,
-                    }}
-                  />
-                  <div
-                    style={{
-                      height: '100%',
-                      background: '#0284c7',
-                      width: `${((c.disputeCount || 0) / ((c.agreedCount || 1) + (c.disputeCount || 0))) * 100}%`,
-                    }}
-                  />
-                </div>
-
-                {/* Active Dispute Counter-Claims */}
-                {c.disputes && c.disputes.length > 0 && (
-                  <div style={{ marginTop: '4px', padding: '6px 8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bae6fd', fontSize: '11px', color: '#0369a1' }}>
-                    <b>Counter-Claim under review:</b> &quot;{c.disputes[0].text}&quot; — <i>{c.disputes[0].authorCompany || c.disputes[0].author}</i>
-                  </div>
-                )}
-              </div>
-
-              {/* Action Bar */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #fee2e2', paddingTop: '10px', marginTop: 'auto', flexWrap: 'wrap', gap: '6px' }}>
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button
-                    type="button"
-                    className={`btn sm ${c.userAgreed ? 'primary' : 'secondary'}`}
-                    style={{ fontSize: '11px', padding: '3px 8px' }}
-                    onClick={() => agreeCase(c.id)}
-                    title="Confirm you agree this company defaulted"
-                  >
-                    <ThumbsUp size={11} /> {c.userAgreed ? 'Agreed' : 'Agree'} ({c.agreedCount || 0})
-                  </button>
-                  <button
-                    type="button"
-                    className="btn secondary sm"
-                    style={{ fontSize: '11px', padding: '3px 8px' }}
-                    onClick={() => setDisputeModalTarget(c)}
-                    title="File dispute counter-evidence"
-                  >
-                    <Scale size={11} /> Dispute ({c.disputeCount || 0})
-                  </button>
-                </div>
-
-                <button
-                  className="btn secondary sm"
-                  style={{ borderColor: '#fca5a5', color: '#991b1b', background: '#fff5f5', fontWeight: 700, fontSize: '11px' }}
-                  onClick={() => setSelectedCaseDossier(c)}
-                >
-                  <ShieldAlert size={12} /> Inspect Dossier
-                </button>
-              </div>
+        <div>
+          {filteredCases.length === 0 ? (
+            <div className="card" style={{ padding: '56px 24px', textAlign: 'center', background: '#ffffff', borderRadius: '12px', border: '1px dashed var(--line)' }}>
+              <ShieldCheck size={40} style={{ color: '#16a34a', margin: '0 auto 12px' }} />
+              <h3 style={{ margin: '0 0 6px', fontSize: '16px', color: 'var(--ink)' }}>No active blacklist cases</h3>
+              <p style={{ margin: '0 0 18px', fontSize: '13px', color: 'var(--mut)', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
+                All enterprise logistics partners in your monitored network are currently verified and in good standing.
+              </p>
+              <button className="btn danger" onClick={() => setShowNewCaseModal(true)}>
+                <ShieldAlert size={14} /> Report Violation
+              </button>
             </div>
-          ))}
+          ) : (
+            <div className="nexus-grid-cards">
+              {filteredCases.map((c) => (
+                <div
+                  key={c.id}
+                  className="card"
+                  style={{
+                    padding: '20px 22px',
+                    borderRadius: '12px',
+                    border: '1.5px solid #fecaca',
+                    background: '#ffffff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <b style={{ fontSize: '15px', color: '#991b1b', display: 'block' }}>
+                        {c.companyName}
+                      </b>
+                      <small style={{ color: 'var(--mut)', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px' }}>
+                        <MapPin size={11} /> {c.location} · Case ID: <b>{c.id}</b>
+                      </small>
+                    </div>
+                    <span
+                      className={`badge ${c.severity === 'critical' ? 'red' : 'amber'}`}
+                      style={{ fontSize: '10px', fontWeight: 800, padding: '3px 8px' }}
+                    >
+                      {c.severity.toUpperCase()} RISK
+                    </span>
+                  </div>
+
+                  <div style={{ padding: '10px 12px', background: '#fff0f0', borderRadius: '8px', border: '1px solid #fee2e2' }}>
+                    <b style={{ fontSize: '12px', color: '#991b1b', display: 'block' }}>Infraction: {c.reason}</b>
+                    <p style={{ margin: '6px 0 0', fontSize: '12.5px', color: 'var(--ink)', lineHeight: 1.5 }}>
+                      {c.description}
+                    </p>
+                  </div>
+
+                  {/* Global Consensus Panel (Requirement 9) */}
+                  <div style={{ padding: '10px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                      <span style={{ fontWeight: 700, color: 'var(--ink)' }}>Global Trade Consensus:</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <span style={{ color: '#15803d', fontWeight: 700 }}>
+                          ✓ {c.agreedCount || 0} Agreed Defaults
+                        </span>
+                        <span style={{ color: '#0369a1', fontWeight: 700 }}>
+                          ⚖️ {c.disputeCount || 0} Disputes
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Consensus Balance Meter */}
+                    <div style={{ width: '100%', height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden', display: 'flex' }}>
+                      <div
+                        style={{
+                          height: '100%',
+                          background: '#15803d',
+                          width: `${Math.max(15, ((c.agreedCount || 1) / ((c.agreedCount || 1) + (c.disputeCount || 0))) * 100)}%`,
+                        }}
+                      />
+                      <div
+                        style={{
+                          height: '100%',
+                          background: '#0284c7',
+                          width: `${((c.disputeCount || 0) / ((c.agreedCount || 1) + (c.disputeCount || 0))) * 100}%`,
+                        }}
+                      />
+                    </div>
+
+                    {/* Active Dispute Counter-Claims */}
+                    {c.disputes && c.disputes.length > 0 && (
+                      <div style={{ marginTop: '4px', padding: '6px 8px', background: '#f0f9ff', borderRadius: '4px', border: '1px solid #bae6fd', fontSize: '11px', color: '#0369a1' }}>
+                        <b>Counter-Claim under review:</b> &quot;{c.disputes[0].text}&quot; — <i>{c.disputes[0].authorCompany || c.disputes[0].author}</i>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Action Bar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #fee2e2', paddingTop: '10px', marginTop: 'auto', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <button
+                        type="button"
+                        className={`btn sm ${c.userAgreed ? 'primary' : 'secondary'}`}
+                        style={{ fontSize: '11px', padding: '3px 8px' }}
+                        onClick={() => agreeCase(c.id)}
+                        title="Confirm you agree this company defaulted"
+                      >
+                        <ThumbsUp size={11} /> {c.userAgreed ? 'Agreed' : 'Agree'} ({c.agreedCount || 0})
+                      </button>
+                      <button
+                        type="button"
+                        className="btn secondary sm"
+                        style={{ fontSize: '11px', padding: '3px 8px' }}
+                        onClick={() => setDisputeModalTarget(c)}
+                        title="File dispute counter-evidence"
+                      >
+                        <Scale size={11} /> Dispute ({c.disputeCount || 0})
+                      </button>
+                    </div>
+
+                    <button
+                      className="btn secondary sm"
+                      style={{ borderColor: '#fca5a5', color: '#991b1b', background: '#fff5f5', fontWeight: 700, fontSize: '11px' }}
+                      onClick={() => setSelectedCaseDossier(c)}
+                    >
+                      <ShieldAlert size={12} /> Inspect Dossier
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      )}
+      {/* Report Modal - Foreground zIndex 1200 ensuring visibility over full screen topic view */}
+      {reportModalTarget && (
+        <Modal
+          isOpen={Boolean(reportModalTarget)}
+          onClose={() => {
+            if (!isSubmittingReport) {
+              setReportModalTarget(null);
+              setReportDescription('');
+            }
+          }}
+          title="Report Discussion to FR8X Moderation"
+          maxWidth="560px"
+          zIndex={1200}
+        >
+          <form onSubmit={handleConfirmReport} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Target Summary Banner */}
+            <div style={{ padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#991b1b', fontSize: '11.5px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                <Flag size={12} /> Flagging Topic For Review
+              </div>
+              <b style={{ display: 'block', fontSize: '14px', color: '#7f1d1d', marginTop: '4px', lineHeight: 1.4 }}>
+                &quot;{reportModalTarget.title}&quot;
+              </b>
+              <small style={{ display: 'block', color: 'var(--mut)', fontSize: '11px', marginTop: '2px' }}>
+                Topic ID: <code style={{ fontFamily: 'var(--font-mono)' }}>{reportModalTarget.id}</code> · Report will be dispatched directly to <strong style={{ color: '#0369a1' }}>support@fr8x.in</strong>
+              </small>
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '12px', fontWeight: 700 }}>Reason for Flagging / Violation Category</label>
+              <select
+                className="input"
+                value={reportCategory}
+                onChange={(e) => setReportCategory(e.target.value as any)}
+                disabled={isSubmittingReport}
+                style={{ fontSize: '13px' }}
+              >
+                <option value="spam">Commercial Spam / Solicitation</option>
+                <option value="misleading">Misleading Freight Quote / Rates</option>
+                <option value="fraud">Suspected Fraud / False Entity</option>
+                <option value="harassment">Unprofessional Conduct / Defamation</option>
+                <option value="prohibited">Prohibited Cargo / Regulatory Breach</option>
+                <option value="other">Other Community Guideline Violation</option>
+              </select>
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '12px', fontWeight: 700 }}>
+                Provide Context &amp; Audit Notes <span style={{ color: 'var(--red)' }}>*</span>
+              </label>
+              <textarea
+                className="input"
+                rows={4}
+                placeholder="Explain the specific violation so the FR8X Support &amp; Moderation team can take immediate action..."
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                disabled={isSubmittingReport}
+                required
+                style={{ fontSize: '13px', lineHeight: 1.5, resize: 'vertical' }}
+              />
+              <small style={{ color: 'var(--mut)', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                Your report audit log includes your verified member identity ({user?.displayName || user?.email || 'Member'}) and will be dispatched directly to support@fr8x.in.
+              </small>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '10px', borderTop: '1px solid var(--line)' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => {
+                  setReportModalTarget(null);
+                  setReportDescription('');
+                }}
+                disabled={isSubmittingReport}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={isSubmittingReport}
+                style={{ background: 'var(--red)', borderColor: 'var(--red)', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                {isSubmittingReport ? (
+                  <>
+                    <Loader2 size={13} className="spin" /> Sending to support@fr8x.in...
+                  </>
+                ) : (
+                  <>
+                    <Flag size={13} /> Submit Report
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

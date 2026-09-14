@@ -4,131 +4,9 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { ChatContact, ChatMessage, ActiveChatWindow } from '@/lib/types';
 import { useAuth } from './AuthContext';
 
-const INITIAL_CONTACTS: ChatContact[] = [
-  {
-    id: 'sarah',
-    name: 'Sarah Lewis',
-    role: 'Ocean Freight Lead',
-    company: 'Rotterdam Freight NV',
-    location: 'Rotterdam, Netherlands',
-    timezone: 'Europe/Amsterdam',
-    online: true,
-    unreadCount: 2,
-    hasGoldenTick: false,
-    contextRecord: {
-      type: 'auction',
-      id: 'RA-2026-0842',
-      title: 'Mumbai → Rotterdam Auto Parts',
-    },
-  },
-  {
-    id: 'kiran',
-    name: 'Kiran Mehta',
-    role: 'Trade Lane Manager',
-    company: 'Indo Ocean Lines',
-    location: 'Mumbai, India',
-    timezone: 'Asia/Kolkata',
-    online: true,
-    unreadCount: 0,
-    hasGoldenTick: false,
-  },
-  {
-    id: 'ravi',
-    name: 'Ravi Thomas',
-    role: 'Procurement Director',
-    company: 'CargoLink Global',
-    location: 'Singapore',
-    timezone: 'Asia/Singapore',
-    online: false,
-    unreadCount: 0,
-    hasGoldenTick: true,
-  },
-  {
-    id: 'priya',
-    name: 'Priya Nair',
-    role: 'Trade Specialist',
-    company: 'Nair Cargo Solutions',
-    location: 'Mumbai, India',
-    timezone: 'Asia/Kolkata',
-    online: true,
-    unreadCount: 1,
-    hasGoldenTick: false,
-  },
-];
+const INITIAL_CONTACTS: ChatContact[] = [];
 
-const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {
-  sarah: [
-    {
-      id: 'm1',
-      senderUid: 'u-sarah',
-      senderName: 'Sarah Lewis',
-      me: false,
-      text: 'Hi Arjun, can you share the updated 40HC rate for the Rotterdam auto parts shipment?',
-      time: '09:12',
-      status: 'read',
-    },
-    {
-      id: 'm2',
-      senderUid: 'u-arjun',
-      senderName: 'Arjun Rao',
-      me: true,
-      text: 'Sure Sarah — all-in rate is USD 2,320 with 14 days combined demurrage/detention at ECT.',
-      time: '09:15',
-      status: 'read',
-    },
-    {
-      id: 'm3',
-      senderUid: 'u-sarah',
-      senderName: 'Sarah Lewis',
-      me: false,
-      text: 'Noted. Reviewing container stuffing schedule now.',
-      time: '09:18',
-      status: 'read',
-    },
-  ],
-  kiran: [
-    {
-      id: 'mk1',
-      senderUid: 'u-kiran',
-      senderName: 'Kiran Mehta',
-      me: false,
-      text: 'Please confirm cargo-ready date for the Antwerp consignment.',
-      time: 'Yesterday',
-      status: 'read',
-    },
-    {
-      id: 'mk2',
-      senderUid: 'u-arjun',
-      senderName: 'Arjun Rao',
-      me: true,
-      text: 'Cargo will be ready by 02 Sep at Nhava Sheva CFS.',
-      time: 'Yesterday',
-      status: 'read',
-    },
-  ],
-  ravi: [
-    {
-      id: 'mr1',
-      senderUid: 'u-ravi',
-      senderName: 'Ravi Thomas',
-      me: false,
-      text: 'Can you confirm direct feeder space for Singapore transshipments next week?',
-      time: '24 Aug',
-      status: 'read',
-    },
-  ],
-  priya: [
-    {
-      id: 'mp1',
-      senderUid: 'u-priya',
-      senderName: 'Priya Nair',
-      me: false,
-      text: 'Sharing forwarder carrier allocation notes for Salalah routing.',
-      time: '1h ago',
-      status: 'delivered',
-    },
-  ],
-};
+const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {};
 
 interface ChatContextType {
   isLauncherOpen: boolean;
@@ -152,8 +30,40 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [isLauncherOpen, setIsLauncherOpen] = useState(false);
   const [activeWindows, setActiveWindows] = useState<ActiveChatWindow[]>([]);
-  const [contacts, setContacts] = useState<ChatContact[]>(INITIAL_CONTACTS);
-  const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
+  const [contacts, setContacts] = useState<ChatContact[]>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fr8x_chat_contacts');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
+            return parsed.filter((c: any) => !dummyIds.has(c.id));
+          }
+        }
+      } catch {}
+    }
+    return [];
+  });
+  const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fr8x_chat_messages');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed === 'object') {
+            const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
+            const clean: Record<string, ChatMessage[]> = {};
+            Object.keys(parsed).forEach((k) => {
+              if (!dummyIds.has(k)) clean[k] = parsed[k];
+            });
+            return clean;
+          }
+        }
+      } catch {}
+    }
+    return {};
+  });
 
   const totalUnreadCount = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
 
