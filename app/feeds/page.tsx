@@ -50,9 +50,26 @@ import {
   Mail,
   PhoneCall,
   UserCheck,
+  UserPlus,
+  UserMinus,
+  Users,
+  Bell,
+  X,
   Info,
   HelpCircle,
 } from 'lucide-react';
+import {
+  getConnectedUserIds,
+  getAllConnectionRequests,
+  getConnectionRequests,
+  getConnectionStatus,
+  sendConnectionRequest,
+  acceptConnectionRequest,
+  declineConnectionRequest,
+  cancelConnectionRequest,
+  removeConnection,
+  CONNECTIONS_CHANGED_EVENT,
+} from '@/lib/connections';
 import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
@@ -370,10 +387,27 @@ export default function FeedsPage() {
   const [activeReplyBoxKey, setActiveReplyBoxKey] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState('');
 
-  // Dynamic Workspace Contacts from real registered users
+  // Real-time connections revision sync
+  const [connRevision, setConnRevision] = useState(0);
+
+  React.useEffect(() => {
+    const handler = () => setConnRevision((v) => v + 1);
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, handler);
+    return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handler);
+  }, []);
+
+  // Connection requests for active user
+  const connRequests = React.useMemo(() => {
+    if (!user?.uid) return { incoming: [], outgoing: [] };
+    return getConnectionRequests(user.uid);
+  }, [user?.uid, connRevision]);
+
+  // Dynamic Workspace Contacts: ONLY users who are confirmed mutual connections!
   const workspaceContacts: WorkspaceContact[] = React.useMemo(() => {
+    if (!user?.uid) return [];
+    const connectedUids = new Set(getConnectedUserIds(user.uid));
     return (allUsers || [])
-      .filter((u) => u.uid && u.uid !== user.uid)
+      .filter((u) => u.uid && u.uid !== user.uid && connectedUids.has(u.uid))
       .map((u) => ({
         id: `c-${u.uid}`,
         uid: u.uid,
@@ -384,7 +418,7 @@ export default function FeedsPage() {
         hasGoldenTick: Boolean(u.hasGoldenTick),
         email: u.email,
       }));
-  }, [allUsers, user.uid]);
+  }, [allUsers, user?.uid, connRevision]);
 
   // Post Reactions: Real dynamic Support, Critique, Amplify logic
   const getReactions = (postOrId: FeedPost | string | number) => {
@@ -512,6 +546,9 @@ export default function FeedsPage() {
   // Left Sidebar Contacts List state (Requirement 5)
   const [contactRailSearch, setContactRailSearch] = useState('');
   const [showManageContactsModal, setShowManageContactsModal] = useState(false);
+  const [manageContactsTab, setManageContactsTab] = useState<'contacts' | 'requests' | 'discover'>('contacts');
+  const [discoverMemberSearch, setDiscoverMemberSearch] = useState('');
+  const [selectedProfileUid, setSelectedProfileUid] = useState<string | null>(null);
 
   // New Job Form State + Payment calculation (₹300 for 2 days + ₹180/day thereafter)
   const [newJobTitle, setNewJobTitle] = useState('');
@@ -759,9 +796,13 @@ export default function FeedsPage() {
     <div className="feeds-three-col-layout">
       {/* Profile Preview Modal */}
       <ProfilePreviewModal
-        isOpen={Boolean(selectedProfileName)}
-        onClose={() => setSelectedProfileName(null)}
+        isOpen={Boolean(selectedProfileName || selectedProfileUid)}
+        onClose={() => {
+          setSelectedProfileName(null);
+          setSelectedProfileUid(null);
+        }}
         personName={selectedProfileName || ''}
+        targetUid={selectedProfileUid || undefined}
       />
 
       {/* Full Widescreen Community Post & Intel Detail Modal */}
@@ -1380,6 +1421,37 @@ export default function FeedsPage() {
             </span>
           </div>
           <div style={{ padding: '8px' }}>
+            {/* Incoming Connection Requests Notice Pill */}
+            {connRequests.incoming.length > 0 && (
+              <button
+                type="button"
+                onClick={() => {
+                  setManageContactsTab('requests');
+                  setShowManageContactsModal(true);
+                }}
+                style={{
+                  width: '100%',
+                  marginBottom: '8px',
+                  padding: '6px 8px',
+                  background: '#fffbeb',
+                  border: '1px solid #fde68a',
+                  borderRadius: '5px',
+                  color: '#92400e',
+                  fontSize: '10.5px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <Bell size={12} color="#d97706" /> {connRequests.incoming.length} Request{connRequests.incoming.length > 1 ? 's' : ''} Received
+                </span>
+                <span style={{ fontSize: '9.5px', textDecoration: 'underline', color: '#b45309' }}>Review</span>
+              </button>
+            )}
+
             {/* Filter contacts input */}
             <div style={{ position: 'relative', marginBottom: '8px' }}>
               <Search size={11} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--fr8x-muted)' }} />
@@ -1503,15 +1575,37 @@ export default function FeedsPage() {
               )}
             </div>
 
-            {/* View All & Manage Contacts trigger */}
-            <div style={{ marginTop: '8px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '6px' }}>
+            {/* View All & Discover Contacts triggers */}
+            <div style={{ marginTop: '8px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '6px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
               <button
                 type="button"
-                onClick={() => setShowManageContactsModal(true)}
+                onClick={() => {
+                  setManageContactsTab('contacts');
+                  setShowManageContactsModal(true);
+                }}
                 className="btn secondary sm"
                 style={{ width: '100%', justifyContent: 'center', fontSize: '10.5px' }}
               >
                 View All &amp; Manage Contacts
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setManageContactsTab('discover');
+                  setShowManageContactsModal(true);
+                }}
+                className="btn secondary sm"
+                style={{
+                  width: '100%',
+                  justifyContent: 'center',
+                  fontSize: '10.5px',
+                  color: 'var(--brand)',
+                  borderColor: 'var(--brand)',
+                  background: 'rgba(0, 163, 196, 0.05)',
+                  fontWeight: 600,
+                }}
+              >
+                <UserPlus size={11} /> Find &amp; Connect Members
               </button>
             </div>
           </div>
@@ -2877,108 +2971,534 @@ export default function FeedsPage() {
         <Modal
           isOpen={showManageContactsModal}
           onClose={() => setShowManageContactsModal(false)}
-          title="Enterprise Network Contacts"
-          maxWidth="560px"
+          title="Enterprise Network Contacts & Directory"
+          maxWidth="640px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <p style={{ fontSize: '12px', color: 'var(--fr8x-muted)', margin: 0 }}>
-              Manage your verified enterprise freight partners and direct contacts across shipping lines, forwarders, and logistics operators.
-            </p>
+            {/* Tab Navigation */}
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--fr8x-outline, #e2e8f0)', gap: '4px', overflowX: 'auto' }}>
+              <button
+                type="button"
+                onClick={() => setManageContactsTab('contacts')}
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '12px',
+                  fontWeight: manageContactsTab === 'contacts' ? 700 : 500,
+                  color: manageContactsTab === 'contacts' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  border: 'none',
+                  borderBottom: manageContactsTab === 'contacts' ? '2px solid var(--brand)' : '2px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <UserCheck size={13} /> My Contacts ({workspaceContacts.length})
+              </button>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
-              {workspaceContacts.length === 0 ? (
-                <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--fr8x-muted)' }}>
-                  No contacts found in your enterprise freight network. Connect with colleagues or trade partners to view them here.
-                </div>
-              ) : (
-                workspaceContacts.map((contact) => (
-                  <div
-                    key={contact.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                      background: '#ffffff',
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ position: 'relative' }}>
-                        <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
-                          {(contact as any).avatarUrl ? (
-                            <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                          ) : (
-                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
-                              {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
-                            </div>
-                          )}
-                        </div>
-                        {contact.isOnline && (
-                          <span
-                            style={{
-                              position: 'absolute',
-                              bottom: 0,
-                              right: 0,
-                              width: '8px',
-                              height: '8px',
-                              borderRadius: '50%',
-                              background: '#16a34a',
-                              border: '1.5px solid #ffffff',
-                            }}
-                            title="Online"
-                          />
-                        )}
-                      </div>
+              <button
+                type="button"
+                onClick={() => setManageContactsTab('requests')}
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '12px',
+                  fontWeight: manageContactsTab === 'requests' ? 700 : 500,
+                  color: manageContactsTab === 'requests' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  border: 'none',
+                  borderBottom: manageContactsTab === 'requests' ? '2px solid var(--brand)' : '2px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Bell size={13} /> Connection Requests
+                {connRequests.incoming.length > 0 && (
+                  <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', borderRadius: '10px', padding: '1px 5px', fontWeight: 800 }}>
+                    {connRequests.incoming.length}
+                  </span>
+                )}
+              </button>
 
-                      <div>
-                        <b
-                          onClick={() => {
-                            setShowManageContactsModal(false);
-                            setSelectedProfileName(contact.name);
-                          }}
-                          style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                        >
-                          {contact.name}
-                          {contact.hasGoldenTick && <GoldenTick size={12} />}
-                        </b>
-                        <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
-                          {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
-                        </small>
-                      </div>
-                    </div>
+              <button
+                type="button"
+                onClick={() => setManageContactsTab('discover')}
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '12px',
+                  fontWeight: manageContactsTab === 'discover' ? 700 : 500,
+                  color: manageContactsTab === 'discover' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  border: 'none',
+                  borderBottom: manageContactsTab === 'discover' ? '2px solid var(--brand)' : '2px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Search size={13} /> Discover Members
+              </button>
+            </div>
 
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button
-                        type="button"
-                        className="btn secondary sm"
-                        onClick={() => {
-                          setShowManageContactsModal(false);
-                          setSelectedProfileName(contact.name);
-                        }}
-                        style={{ fontSize: '10.5px' }}
-                      >
-                        Profile
-                      </button>
+            {/* TAB 1: MY CONTACTS */}
+            {manageContactsTab === 'contacts' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <p style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', margin: 0 }}>
+                  These verified partners have connected with you. Full contact credentials and instant trade chat are unlocked.
+                </p>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
+                  {workspaceContacts.length === 0 ? (
+                    <div style={{ padding: '32px 16px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
+                      <Users size={28} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
+                      <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No contacts connected yet</b>
+                      <p style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', margin: '0 0 12px' }}>
+                        Connect with freight forwarders, carriers, and shippers across the network to build your trusted contact book.
+                      </p>
                       <button
                         type="button"
                         className="btn primary sm"
-                        onClick={() => {
-                          setShowManageContactsModal(false);
-                          openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
-                        }}
-                        style={{ fontSize: '10.5px' }}
+                        onClick={() => setManageContactsTab('discover')}
                       >
-                        <MessageCircle size={11} /> Chat
+                        <Search size={12} /> Find &amp; Discover Members
                       </button>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
+                  ) : (
+                    workspaceContacts.map((contact) => (
+                      <div
+                        key={contact.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '8px 10px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                          background: '#ffffff',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ position: 'relative' }}>
+                            <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
+                              {(contact as any).avatarUrl ? (
+                                <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                                  {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
+                                </div>
+                              )}
+                            </div>
+                            {contact.isOnline && (
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  bottom: 0,
+                                  right: 0,
+                                  width: '8px',
+                                  height: '8px',
+                                  borderRadius: '50%',
+                                  background: '#16a34a',
+                                  border: '1.5px solid #ffffff',
+                                }}
+                                title="Online"
+                              />
+                            )}
+                          </div>
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                          <div>
+                            <b
+                              onClick={() => {
+                                setShowManageContactsModal(false);
+                                setSelectedProfileName(contact.name);
+                                setSelectedProfileUid(contact.uid);
+                              }}
+                              style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              {contact.name}
+                              {contact.hasGoldenTick && <GoldenTick size={12} />}
+                            </b>
+                            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
+                              {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
+                            </small>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            onClick={() => {
+                              setShowManageContactsModal(false);
+                              setSelectedProfileName(contact.name);
+                              setSelectedProfileUid(contact.uid);
+                            }}
+                            style={{ fontSize: '10.5px' }}
+                          >
+                            Passport
+                          </button>
+                          <button
+                            type="button"
+                            className="btn primary sm"
+                            onClick={() => {
+                              setShowManageContactsModal(false);
+                              openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
+                            }}
+                            style={{ fontSize: '10.5px' }}
+                          >
+                            <MessageCircle size={11} /> Chat
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (confirm(`Remove ${contact.name} from your contacts?`)) {
+                                removeConnection(user.uid, contact.uid);
+                                toast(`Removed ${contact.name} from contacts.`);
+                              }
+                            }}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#dc2626',
+                              cursor: 'pointer',
+                              padding: '4px',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                            title="Disconnect contact"
+                          >
+                            <UserMinus size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: CONNECTION REQUESTS */}
+            {manageContactsTab === 'requests' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '380px', overflowY: 'auto' }}>
+                {/* Incoming Requests */}
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                    Received Invitations ({connRequests.incoming.length})
+                  </div>
+                  {connRequests.incoming.length === 0 ? (
+                    <div style={{ padding: '14px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px' }}>
+                      No incoming connection requests.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {connRequests.incoming.map((req) => (
+                        <div
+                          key={req.id}
+                          style={{
+                            padding: '10px',
+                            background: '#ffffff',
+                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="avatar" style={{ width: '32px', height: '32px', padding: 0, overflow: 'hidden' }}>
+                                {req.senderAvatarUrl ? (
+                                  <img src={req.senderAvatarUrl} alt={req.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#fff', fontSize: '12px', fontWeight: 700 }}>
+                                    {req.senderName.slice(0, 2).toUpperCase()}
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                <b
+                                  onClick={() => {
+                                    setShowManageContactsModal(false);
+                                    setSelectedProfileUid(req.fromUid);
+                                    setSelectedProfileName(req.senderName);
+                                  }}
+                                  style={{ fontSize: '12px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
+                                >
+                                  {req.senderName}
+                                </b>
+                                <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+                                  {req.senderRole || 'Freight Member'} · {req.senderCompany || 'Enterprise Partner'}
+                                </small>
+                              </div>
+                            </div>
+                            <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)' }}>
+                              {new Date(req.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {req.note && (
+                            <div style={{ padding: '6px 8px', background: '#f8fafc', borderLeft: '3px solid var(--brand)', fontSize: '11px', color: '#334155', fontStyle: 'italic', borderRadius: '0 4px 4px 0' }}>
+                              &ldquo;{req.note}&rdquo;
+                            </div>
+                          )}
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                            <button
+                              type="button"
+                              className="btn secondary sm"
+                              onClick={() => {
+                                declineConnectionRequest(req.id);
+                                toast('Connection request declined.');
+                              }}
+                              style={{ fontSize: '10.5px', padding: '3px 10px' }}
+                            >
+                              <X size={11} /> Decline
+                            </button>
+                            <button
+                              type="button"
+                              className="btn primary sm"
+                              onClick={() => {
+                                acceptConnectionRequest(req.id, user);
+                                toast(`Connected with ${req.senderName}!`);
+                              }}
+                              style={{ fontSize: '10.5px', padding: '3px 12px' }}
+                            >
+                              <Check size={11} /> Accept Connection
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Outgoing Requests */}
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
+                    Sent Invitations Pending ({connRequests.outgoing.length})
+                  </div>
+                  {connRequests.outgoing.length === 0 ? (
+                    <div style={{ padding: '14px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px' }}>
+                      No outgoing pending invitations.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {connRequests.outgoing.map((req) => (
+                        <div
+                          key={req.id}
+                          style={{
+                            padding: '8px 10px',
+                            background: '#ffffff',
+                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                            borderRadius: '6px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          <div>
+                            <b style={{ fontSize: '12px', color: 'var(--fr8x-text)' }}>
+                              {req.recipientName || 'Trade Partner'}
+                            </b>
+                            <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+                              {req.recipientCompany || 'Enterprise Member'} · <Clock size={10} style={{ verticalAlign: '-1px' }} /> Waiting for response
+                            </small>
+                          </div>
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            onClick={() => {
+                              cancelConnectionRequest(req.id);
+                              toast('Invitation withdrawn.');
+                            }}
+                            style={{ fontSize: '10.5px', color: '#dc2626' }}
+                          >
+                            Withdraw
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: DISCOVER MEMBERS */}
+            {manageContactsTab === 'discover' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Search Bar */}
+                <div style={{ position: 'relative' }}>
+                  <Search size={13} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--fr8x-muted)' }} />
+                  <input
+                    type="text"
+                    placeholder="Search by name, company, role, city, or country…"
+                    value={discoverMemberSearch}
+                    onChange={(e) => setDiscoverMemberSearch(e.target.value)}
+                    style={{
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '7px 8px 7px 30px',
+                      fontSize: '12px',
+                      borderRadius: '6px',
+                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
+                      background: '#ffffff',
+                    }}
+                  />
+                </div>
+
+                {/* Directory List */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
+                  {(() => {
+                    const q = discoverMemberSearch.trim().toLowerCase();
+                    const candidates = (allUsers || []).filter((u) => {
+                      if (!u.uid || u.uid === user.uid) return false;
+                      if (!q) return true;
+                      const name = (u.displayName || `${u.firstName} ${u.lastName}` || '').toLowerCase();
+                      const comp = (u.company || '').toLowerCase();
+                      const desig = (u.designation || '').toLowerCase();
+                      const city = (u.city || '').toLowerCase();
+                      const country = (u.country || '').toLowerCase();
+                      const email = (u.email || '').toLowerCase();
+                      return (
+                        name.includes(q) ||
+                        comp.includes(q) ||
+                        desig.includes(q) ||
+                        city.includes(q) ||
+                        country.includes(q) ||
+                        email.includes(q)
+                      );
+                    });
+
+                    if (candidates.length === 0) {
+                      return (
+                        <div style={{ padding: '24px 12px', textAlign: 'center', fontSize: '12px', color: 'var(--fr8x-muted)' }}>
+                          No members matching &ldquo;{discoverMemberSearch}&rdquo;
+                        </div>
+                      );
+                    }
+
+                    return candidates.map((m) => {
+                      const mName = m.displayName || `${m.firstName} ${m.lastName}`.trim() || m.email;
+                      const st = getConnectionStatus(user.uid, m.uid);
+
+                      return (
+                        <div
+                          key={m.uid}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            padding: '8px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                            background: '#ffffff',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
+                              {m.avatarUrl ? (
+                                <img src={m.avatarUrl} alt={mName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
+                                  {mName.slice(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                            </div>
+
+                            <div>
+                              <b
+                                onClick={() => {
+                                  setShowManageContactsModal(false);
+                                  setSelectedProfileUid(m.uid);
+                                  setSelectedProfileName(mName);
+                                }}
+                                style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              >
+                                {mName}
+                                {m.hasGoldenTick && <GoldenTick size={12} />}
+                              </b>
+                              <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
+                                {m.designation || 'Freight Professional'} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{m.company || 'Enterprise'}</span>
+                                {m.city ? ` · ${m.city}, ${m.country}` : ''}
+                              </small>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <button
+                              type="button"
+                              className="btn secondary sm"
+                              onClick={() => {
+                                setShowManageContactsModal(false);
+                                setSelectedProfileUid(m.uid);
+                                setSelectedProfileName(mName);
+                              }}
+                              style={{ fontSize: '10.5px' }}
+                            >
+                              Passport
+                            </button>
+
+                            {st === 'connected' ? (
+                              <button
+                                type="button"
+                                className="btn primary sm"
+                                onClick={() => {
+                                  setShowManageContactsModal(false);
+                                  openChatWith(m.uid, { type: 'company', id: m.uid, title: `Chat with ${mName}` });
+                                }}
+                                style={{ fontSize: '10.5px' }}
+                              >
+                                <MessageCircle size={11} /> Chat
+                              </button>
+                            ) : st === 'pending_sent' ? (
+                              <span className="badge blue" style={{ fontSize: '10px' }}>
+                                <Clock size={10} /> Request Sent
+                              </span>
+                            ) : st === 'pending_received' ? (
+                              <button
+                                type="button"
+                                className="btn primary sm"
+                                onClick={() => {
+                                  const reqs = getAllConnectionRequests();
+                                  const req = reqs.find((r: any) => r.fromUid === m.uid && r.toUid === user.uid && r.status === 'pending');
+                                  if (req) {
+                                    acceptConnectionRequest(req.id, user);
+                                    toast(`Connected with ${mName}!`);
+                                  }
+                                }}
+                                style={{ fontSize: '10.5px' }}
+                              >
+                                Accept
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="btn primary sm"
+                                onClick={() => {
+                                  setShowManageContactsModal(false);
+                                  setSelectedProfileUid(m.uid);
+                                  setSelectedProfileName(mName);
+                                }}
+                                style={{ fontSize: '10.5px' }}
+                              >
+                                <UserPlus size={11} /> Connect
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px', borderTop: '1px solid var(--fr8x-outline, #e2e8f0)', paddingTop: '8px' }}>
               <button
                 type="button"
                 className="btn secondary"

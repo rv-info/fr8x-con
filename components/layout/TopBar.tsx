@@ -14,6 +14,7 @@ import {
 import Link from 'next/link';
 import { NetworkStatusPill } from './NetworkStatusPill';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 
 import {
   MapPin,
@@ -55,6 +56,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
+  const [previewPassportUid, setPreviewPassportUid] = useState<string | null>(null);
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -266,13 +268,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     <div>
                       <div className="gs-section-label">Network & Organizations ({matchedUsers.length})</div>
                       {matchedUsers.map((u) => (
-                        <Link key={u.uid} href="/profile" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
+                        <div
+                          key={u.uid}
+                          className="gs-result-item"
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => {
+                            setShowGlobalSearch(false);
+                            setPreviewPassportUid(u.uid);
+                          }}
+                        >
                           <span className="gs-icon" style={{ color: '#059669' }}><Users size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{u.displayName} · {u.company}</div>
                             <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{u.designation} · {u.city}, {u.country}</small>
                           </div>
-                        </Link>
+                          <span className="badge blue" style={{ fontSize: '9.5px' }}>View Passport</span>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -680,6 +691,15 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           </div>
         </div>
       </header>
+
+      {/* Global Profile Passport Preview */}
+      {previewPassportUid && (
+        <ProfilePreviewModal
+          isOpen={Boolean(previewPassportUid)}
+          onClose={() => setPreviewPassportUid(null)}
+          targetUid={previewPassportUid}
+        />
+      )}
     </>
   );
 }

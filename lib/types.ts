@@ -24,6 +24,48 @@ export interface TermsAcceptance {
   userAgent?: string;
 }
 
+export type PrivacyLevel = 'public' | 'contacts_only' | 'private';
+
+export interface UserPrivacySettings {
+  emailVisibility: PrivacyLevel;
+  phoneVisibility: PrivacyLevel;
+  statutoryVisibility: PrivacyLevel;
+  companyVisibility: PrivacyLevel;
+  tradeLanesVisibility: PrivacyLevel;
+  bioVisibility: PrivacyLevel;
+  allowConnectionRequests: boolean;
+}
+
+export const DEFAULT_PRIVACY_SETTINGS: UserPrivacySettings = {
+  emailVisibility: 'contacts_only',
+  phoneVisibility: 'contacts_only',
+  statutoryVisibility: 'contacts_only',
+  companyVisibility: 'public',
+  tradeLanesVisibility: 'public',
+  bioVisibility: 'public',
+  allowConnectionRequests: true,
+};
+
+export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined';
+
+export interface ConnectionRequest {
+  id: string;
+  fromUid: string;
+  toUid: string;
+  senderName: string;
+  senderRole?: string;
+  senderCompany?: string;
+  senderAvatarUrl?: string;
+  senderEmail?: string;
+  recipientName?: string;
+  recipientCompany?: string;
+  recipientAvatarUrl?: string;
+  note?: string;
+  status: ConnectionRequestStatus;
+  createdAt: string;
+  updatedAt?: string;
+}
+
 export interface ProfileExperience {
   id: string;
   company: string;
@@ -139,6 +181,9 @@ export interface UserProfile {
   pendingEmail?: string;
   transferRequestId?: string;
   transferSubmittedAt?: string;
+  // Privacy & Contact Visibility Configuration
+  privacySettings?: UserPrivacySettings;
+  contacts?: string[]; // Array of connected user UIDs
 }
 
 export interface NestedReply {

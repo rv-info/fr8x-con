@@ -13,7 +13,17 @@ import {
   ProfileCertification,
   PlanTier,
   KYCDossier,
+  UserPrivacySettings,
+  DEFAULT_PRIVACY_SETTINGS,
+  PrivacyLevel,
 } from '@/lib/types';
+import {
+  getUserPrivacySettings,
+  saveUserPrivacySettings,
+  maskEmail,
+  maskPhone,
+  maskStatutory,
+} from '@/lib/connections';
 import { normalizeAssociationName } from '@/lib/utils/associations';
 import { upsertKYCDossierInDB } from '@/lib/firebase/firestore';
 import {
@@ -77,6 +87,7 @@ import {
   Navigation,
   AlertTriangle,
   Search,
+  Users,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -140,6 +151,36 @@ export default function ProfilePage() {
   const [associationId, setAssociationId] = useState((user as any).associationId || '');
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [showKycModal, setShowKycModal] = useState(false);
+
+  // Privacy & Contact Visibility Governance State
+  const [privacySettings, setPrivacySettings] = useState<UserPrivacySettings>(() => {
+    return getUserPrivacySettings(user.uid, user.privacySettings);
+  });
+  const [privacyPreviewMode, setPrivacyPreviewMode] = useState<'public' | 'contact'>('public');
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+
+  useEffect(() => {
+    setPrivacySettings(getUserPrivacySettings(user.uid, user.privacySettings));
+  }, [user.uid, user.privacySettings]);
+
+  const handleUpdatePrivacy = <K extends keyof UserPrivacySettings>(key: K, value: UserPrivacySettings[K]) => {
+    setPrivacySettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handleSavePrivacySettings = () => {
+    setIsSavingPrivacy(true);
+    saveUserPrivacySettings(user.uid, privacySettings);
+    updateUser({
+      privacySettings,
+    });
+    setTimeout(() => {
+      setIsSavingPrivacy(false);
+      toast('✓ Privacy & Contact Visibility Governance settings saved.');
+    }, 250);
+  };
 
   // Edit Identity & Company Link State
   const [showEditIdentityModal, setShowEditIdentityModal] = useState(false);
@@ -1301,6 +1342,16 @@ export default function ProfilePage() {
             <Eye size={14} /> Preview Passport
           </button>
           <button
+            className="btn secondary cursor-pointer"
+            onClick={() => {
+              const el = document.getElementById('privacy-governance');
+              el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
+            title="Configure profile privacy, masked credentials, and connection visibility"
+          >
+            <Lock size={14} /> Privacy & Visibility
+          </button>
+          <button
             className="btn secondary"
             onClick={() => {
               setShowResetModal(true);
@@ -2070,6 +2121,526 @@ export default function ProfilePage() {
           </div>
         );
       })()}
+
+      {/* SECTION 5: Privacy & Contact Visibility Governance */}
+      <div
+        id="privacy-governance"
+        className="card"
+        style={{
+          padding: '22px 24px',
+          borderRadius: '12px',
+          border: '1px solid var(--fr8x-outline)',
+          background: 'var(--card)',
+          boxShadow: 'var(--sh)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '18px',
+            borderBottom: '1px solid var(--line-light)',
+            paddingBottom: '14px',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                width: '36px',
+                height: '36px',
+                borderRadius: '8px',
+                background: 'rgba(0, 163, 196, 0.1)',
+                border: '1px solid rgba(0, 163, 196, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Lock size={18} color="var(--fr8x-primary, #00a3c4)" />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <b style={{ fontSize: '16px', color: 'var(--fr8x-text)' }}>5. Privacy & Contact Visibility Governance</b>
+                <span className="badge green" style={{ fontSize: '10px' }}>
+                  <ShieldCheck size={11} /> ZERO-TRUST PRIVACY
+                </span>
+                <span className="badge blue" style={{ fontSize: '10px' }}>
+                  <Users size={11} /> CONSENT-DRIVEN
+                </span>
+              </div>
+              <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '2px' }}>
+                Determine exactly what the general public can see on your passport before you accept their connection request.
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              className="btn primary"
+              onClick={handleSavePrivacySettings}
+              disabled={isSavingPrivacy}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              {isSavingPrivacy ? (
+                <>
+                  <Loader2 size={13} className="spin" /> Saving Privacy...
+                </>
+              ) : (
+                <>
+                  <Save size={13} /> Save Privacy Settings
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* 2-Column Grid: Left Controls, Right Live Simulator */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '20px' }}>
+          {/* Controls Column */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Setting 1: Direct Work Email */}
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    <Mail size={14} color="#0284c7" /> Direct Corporate Email
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
+                    Controls whether non-connected platform members can view your full email address.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
+                {[
+                  { value: 'contacts_only' as const, label: 'Contacts Only', desc: 'Masked until connected (Recommended)' },
+                  { value: 'public' as const, label: 'Public', desc: 'Visible to all members' },
+                  { value: 'private' as const, label: 'Private', desc: 'Always hidden' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleUpdatePrivacy('emailVisibility', opt.value)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: privacySettings.emailVisibility === opt.value ? '2px solid #00a3c4' : '1px solid var(--fr8x-outline)',
+                      background: privacySettings.emailVisibility === opt.value ? 'rgba(0, 163, 196, 0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: privacySettings.emailVisibility === opt.value ? '#007a93' : 'var(--fr8x-text)' }}>
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '2px', lineHeight: 1.2 }}>
+                      {opt.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Setting 2: Mobile / WhatsApp Phone */}
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    <Phone size={14} color="#16a34a" /> Direct Mobile & WhatsApp
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
+                    Safeguards your direct line from spam until mutual trade consent is established.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
+                {[
+                  { value: 'contacts_only' as const, label: 'Contacts Only', desc: 'Masked until accepted (Recommended)' },
+                  { value: 'public' as const, label: 'Public', desc: 'Visible to all members' },
+                  { value: 'private' as const, label: 'Private', desc: 'Always hidden' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleUpdatePrivacy('phoneVisibility', opt.value)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: privacySettings.phoneVisibility === opt.value ? '2px solid #00a3c4' : '1px solid var(--fr8x-outline)',
+                      background: privacySettings.phoneVisibility === opt.value ? 'rgba(0, 163, 196, 0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: privacySettings.phoneVisibility === opt.value ? '#007a93' : 'var(--fr8x-text)' }}>
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '2px', lineHeight: 1.2 }}>
+                      {opt.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Setting 3: Statutory Tax & Regulatory IDs */}
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    <ShieldCheck size={14} color="#7c3aed" /> Statutory Tax & License Filings (GSTIN, PAN, IEC, MTO)
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
+                    Protects corporate tax registration certificates and trade registry credentials.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
+                {[
+                  { value: 'contacts_only' as const, label: 'Contacts Only', desc: 'Connect to view (Recommended)' },
+                  { value: 'public' as const, label: 'Public', desc: 'Open verification' },
+                  { value: 'private' as const, label: 'Private', desc: 'Only on active contracts' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleUpdatePrivacy('statutoryVisibility', opt.value)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: privacySettings.statutoryVisibility === opt.value ? '2px solid #00a3c4' : '1px solid var(--fr8x-outline)',
+                      background: privacySettings.statutoryVisibility === opt.value ? 'rgba(0, 163, 196, 0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: privacySettings.statutoryVisibility === opt.value ? '#007a93' : 'var(--fr8x-text)' }}>
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '2px', lineHeight: 1.2 }}>
+                      {opt.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Setting 4: Trade Lanes & Corridors */}
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    <Compass size={14} color="#d97706" /> Preferred Trade Lanes & Port Corridors
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
+                    Manage visibility of your operating sectors (e.g. Nhava Sheva to Jebel Ali, Rotterdam).
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
+                {[
+                  { value: 'public' as const, label: 'Public', desc: 'Attract relevant trade inquiries' },
+                  { value: 'contacts_only' as const, label: 'Contacts Only', desc: 'Visible to approved partners' },
+                  { value: 'private' as const, label: 'Private', desc: 'Hidden completely' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => handleUpdatePrivacy('tradeLanesVisibility', opt.value)}
+                    style={{
+                      padding: '8px 10px',
+                      borderRadius: '6px',
+                      border: privacySettings.tradeLanesVisibility === opt.value ? '2px solid #00a3c4' : '1px solid var(--fr8x-outline)',
+                      background: privacySettings.tradeLanesVisibility === opt.value ? 'rgba(0, 163, 196, 0.08)' : '#ffffff',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: privacySettings.tradeLanesVisibility === opt.value ? '#007a93' : 'var(--fr8x-text)' }}>
+                      {opt.label}
+                    </div>
+                    <div style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '2px', lineHeight: 1.2 }}>
+                      {opt.desc}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Setting 5: Connection Requests Inbound */}
+            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    <UserCheck size={14} color="#0284c7" /> Inbound Contact Connection Requests
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
+                    Allow verified enterprise freight forwarders and shippers to send you connection invitations.
+                  </div>
+                </div>
+                <label style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={privacySettings.allowConnectionRequests}
+                    onChange={(e) => handleUpdatePrivacy('allowConnectionRequests', e.target.checked)}
+                    style={{ width: '18px', height: '18px', accentColor: '#00a3c4', cursor: 'pointer' }}
+                  />
+                  <span style={{ marginLeft: '8px', fontSize: '12px', fontWeight: 700, color: privacySettings.allowConnectionRequests ? '#00a3c4' : 'var(--fr8x-muted)' }}>
+                    {privacySettings.allowConnectionRequests ? 'Allowed' : 'Disabled'}
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Live Privacy Simulator */}
+          <div
+            style={{
+              padding: '16px 18px',
+              borderRadius: '8px',
+              background: '#ffffff',
+              border: '1.5px solid var(--fr8x-outline)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <div>
+                <b style={{ fontSize: '13.5px', color: 'var(--fr8x-text)' }}>Live Privacy Simulation Preview</b>
+                <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                  Toggle to see how other users experience your profile before vs after connecting.
+                </div>
+              </div>
+
+              {/* Toggle: Public vs Contact */}
+              <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                <button
+                  type="button"
+                  onClick={() => setPrivacyPreviewMode('public')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: privacyPreviewMode === 'public' ? '#00a3c4' : 'transparent',
+                    color: privacyPreviewMode === 'public' ? '#ffffff' : 'var(--fr8x-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Globe2 size={12} /> Public Visitor
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrivacyPreviewMode('contact')}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    background: privacyPreviewMode === 'contact' ? '#00a3c4' : 'transparent',
+                    color: privacyPreviewMode === 'contact' ? '#ffffff' : 'var(--fr8x-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <Users size={12} /> Accepted Contact
+                </button>
+              </div>
+            </div>
+
+            {/* Privacy Simulator Notice Banner */}
+            <div
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                background: privacyPreviewMode === 'public' ? 'rgba(0, 163, 196, 0.08)' : 'rgba(22, 163, 74, 0.08)',
+                border: `1px solid ${privacyPreviewMode === 'public' ? 'rgba(0, 163, 196, 0.25)' : 'rgba(22, 163, 74, 0.25)'}`,
+                fontSize: '11px',
+                color: privacyPreviewMode === 'public' ? '#007a93' : '#15803d',
+                lineHeight: 1.4,
+              }}
+            >
+              {privacyPreviewMode === 'public' ? (
+                <>
+                  <b>Viewing as General Public (Unconnected):</b> Non-contacts only see your public identity and masked credentials. Sensitive statutory and direct phone/email data is masked until you approve their connection request.
+                </>
+              ) : (
+                <>
+                  <b>Viewing as Accepted Contact:</b> Connected members enjoy direct communication access, verified phone and email, and unmasked corporate statutory registrations.
+                </>
+              )}
+            </div>
+
+            {/* Passport Preview Simulation Card */}
+            <div
+              style={{
+                border: '1px solid var(--fr8x-outline)',
+                borderRadius: '8px',
+                padding: '14px',
+                background: '#fafbfc',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              {/* Header inside preview */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '50%',
+                    background: '#00a3c4',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    fontSize: '14px',
+                  }}
+                >
+                  {user.firstName?.[0] || 'U'}{user.lastName?.[0] || ''}
+                </div>
+                <div>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
+                    {user.displayName || `${firstName} ${lastName}`}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                    {designation || user.designation} at <b>{company || user.company}</b>
+                  </div>
+                </div>
+              </div>
+
+              {/* Data Rows */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                {/* Email Item */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Mail size={12} /> Work Email:
+                  </span>
+                  <div>
+                    {privacyPreviewMode === 'contact' ? (
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{user.email || 'user@company.com'}</span>
+                    ) : privacySettings.emailVisibility === 'public' ? (
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{user.email || 'user@company.com'}</span>
+                    ) : privacySettings.emailVisibility === 'contacts_only' ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
+                        {maskEmail(user.email || 'user@company.com')}{' '}
+                        <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                          <Lock size={8} /> Connect to view
+                        </span>
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Phone Item */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--fr8x-muted)', display: 'center', alignItems: 'center', gap: '4px' }}>
+                    <Phone size={12} /> Mobile / WhatsApp:
+                  </span>
+                  <div>
+                    {privacyPreviewMode === 'contact' ? (
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile || '+91 98200 12345'}</span>
+                    ) : privacySettings.phoneVisibility === 'public' ? (
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile || '+91 98200 12345'}</span>
+                    ) : privacySettings.phoneVisibility === 'contacts_only' ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
+                        {maskPhone(mobile || user.mobile || '+91 98200 12345')}{' '}
+                        <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                          <Lock size={8} /> Connect to view
+                        </span>
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Statutory Filing Item */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck size={12} /> Statutory Tax / Reg:
+                  </span>
+                  <div>
+                    {privacyPreviewMode === 'contact' ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--fr8x-text)' }}>
+                        {taxId || gstn || '27AABCR1234F1Z5'}
+                      </span>
+                    ) : privacySettings.statutoryVisibility === 'public' ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--fr8x-text)' }}>
+                        {taxId || gstn || '27AABCR1234F1Z5'}
+                      </span>
+                    ) : privacySettings.statutoryVisibility === 'contacts_only' ? (
+                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
+                        {maskStatutory(taxId || gstn || '27AABCR1234F1Z5')}{' '}
+                        <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                          <Lock size={8} /> Connect to view
+                        </span>
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Trade Lanes Item */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Compass size={12} /> Operating Corridors:
+                  </span>
+                  <div>
+                    {privacyPreviewMode === 'contact' || privacySettings.tradeLanesVisibility === 'public' ? (
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>Nhava Sheva ⇄ Jebel Ali, Rotterdam</span>
+                    ) : privacySettings.tradeLanesVisibility === 'contacts_only' ? (
+                      <span style={{ color: 'var(--fr8x-muted)', fontSize: '11px' }}>
+                        •••••••••••• (Connect to unlock)
+                      </span>
+                    ) : (
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Simulation in Preview */}
+              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--line-light)', display: 'flex', justifyContent: 'flex-end' }}>
+                {privacyPreviewMode === 'public' ? (
+                  <button type="button" className="btn primary sm" style={{ pointerEvents: 'none', opacity: 0.9 }}>
+                    <UserCheck size={12} /> Connect / Add Contact
+                  </button>
+                ) : (
+                  <button type="button" className="btn secondary sm" style={{ pointerEvents: 'none', opacity: 0.9 }}>
+                    <Mail size={12} /> Direct Trade Message
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* KYC Edit Modal — Address & Multi-Jurisdiction Adaptive */}
       {showKycModal && (() => {
