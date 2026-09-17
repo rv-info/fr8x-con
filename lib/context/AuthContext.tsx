@@ -171,6 +171,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setAllUsers(usersList);
 
+      // Sync registered members from server API
+      if (typeof window !== 'undefined') {
+        fetch('/api/members')
+          .then((r) => r.json())
+          .then((data) => {
+            if (data && data.members && Array.isArray(data.members)) {
+              setAllUsers((prev) => {
+                const map = new Map<string, UserProfile>();
+                for (const u of data.members) {
+                  if (u.uid) map.set(u.uid, u);
+                }
+                for (const u of prev) {
+                  if (u.uid && !map.has(u.uid)) map.set(u.uid, u);
+                }
+                const merged = Array.from(map.values());
+                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged)); } catch {}
+                return merged;
+              });
+            }
+          })
+          .catch(() => {});
+      }
+
       // SECURITY: No password loading from localStorage.
       // Passwords are validated exclusively server-side via /api/auth/login.
       // Clear any legacy password store that may exist from previous versions.

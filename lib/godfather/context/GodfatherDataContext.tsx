@@ -2833,6 +2833,40 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
+  // Sync registered live members from DBMS store
+  useEffect(() => {
+    let isMounted = true;
+    async function syncLiveMembers() {
+      try {
+        const res = await fetch('/api/members');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (Array.isArray(data.members) && data.members.length > 0) {
+            setUsers((prev) => {
+              const map = new Map<string, UserProfile>();
+              prev.forEach((u) => map.set(u.uid || u.email, u));
+              data.members.forEach((m: UserProfile) => {
+                const key = m.uid || m.email;
+                if (!map.has(key)) {
+                  map.set(key, m);
+                } else {
+                  map.set(key, { ...map.get(key)!, ...m });
+                }
+              });
+              return Array.from(map.values());
+            });
+          }
+        }
+      } catch (err) {
+        console.error('[GodfatherData] Failed to sync live members:', err);
+      }
+    }
+    syncLiveMembers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const executeAction = async (params: {
     targetType: AdminAction['targetType'];
     targetId: string;

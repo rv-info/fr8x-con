@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Search,
@@ -28,6 +28,7 @@ import { BlockScope } from '@/lib/godfather/types';
 export default function UsersGovernancePage() {
   const {
     users,
+    blocks,
     toggleUserVerification,
     toggleUserGoldTick,
     updateUserProfileAudited,
@@ -39,6 +40,55 @@ export default function UsersGovernancePage() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'verified' | 'gold' | 'blocked'>('active');
+
+  // URL query parameter support (e.g. ?filter=active or ?filter=all)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const f = params.get('filter');
+      if (f === 'all' || f === 'active' || f === 'verified' || f === 'gold' || f === 'blocked') {
+        setActiveTab(f);
+      }
+    }
+  }, []);
+
+  const isUserBlocked = (uid: string) => {
+    return Array.isArray(blocks) && blocks.some((b: any) => (b.uid === uid || b.subjectId === uid) && b.status === 'active');
+  };
+
+  const isUserActive = (u: UserProfile) => {
+    return !isUserBlocked(u.uid) && !u.isPlanExpired;
+  };
+
+  const activeUsers = useMemo(() => users.filter(isUserActive), [users, blocks]);
+  const verifiedUsers = useMemo(() => users.filter((u) => u.isVerified), [users]);
+  const goldUsers = useMemo(() => users.filter((u) => u.hasGoldenTick), [users]);
+  const blockedUsers = useMemo(() => users.filter((u) => isUserBlocked(u.uid)), [users, blocks]);
+
+  const displayedUsers = useMemo(() => {
+    let list = users;
+    if (activeTab === 'active') {
+      list = activeUsers;
+    } else if (activeTab === 'verified') {
+      list = verifiedUsers;
+    } else if (activeTab === 'gold') {
+      list = goldUsers;
+    } else if (activeTab === 'blocked') {
+      list = blockedUsers;
+    }
+
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(
+      (u) =>
+        u.displayName?.toLowerCase().includes(q) ||
+        u.email?.toLowerCase().includes(q) ||
+        u.company?.toLowerCase().includes(q) ||
+        (u.gstn && u.gstn.toLowerCase().includes(q)) ||
+        (u.role && u.role.toLowerCase().includes(q))
+    );
+  }, [users, activeTab, activeUsers, verifiedUsers, goldUsers, blockedUsers, searchQuery]);
 
   // Free trial modal state
   const [trialUserTarget, setTrialUserTarget] = useState<UserProfile | null>(null);
@@ -69,14 +119,6 @@ export default function UsersGovernancePage() {
   // Profile correction modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editFormData, setEditFormData] = useState<Partial<UserProfile>>({});
-
-  const filteredUsers = users.filter(
-    (u) =>
-      u.displayName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (u.gstn && u.gstn.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
   const handleToggleVerification = (u: UserProfile) => {
     const newState = !u.isVerified;
@@ -209,6 +251,89 @@ export default function UsersGovernancePage() {
         </div>
       </div>
 
+      {/* Member Filter Tabs (All, Active, Verified, Gold, Blocked) */}
+      <div className="flex items-center gap-2 flex-wrap pb-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab('active')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'active'
+              ? 'bg-emerald-600 text-white shadow-sm ring-2 ring-emerald-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <span>Active Members</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${activeTab === 'active' ? 'bg-emerald-700 text-emerald-100' : 'bg-slate-100 text-slate-600'}`}>
+            {activeUsers.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('all')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'all'
+              ? 'bg-sky-600 text-white shadow-sm ring-2 ring-sky-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <Users className="w-3.5 h-3.5" />
+          <span>All Registered</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${activeTab === 'all' ? 'bg-sky-700 text-sky-100' : 'bg-slate-100 text-slate-600'}`}>
+            {users.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('verified')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'verified'
+              ? 'bg-blue-600 text-white shadow-sm ring-2 ring-blue-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Verified KYC</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${activeTab === 'verified' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'}`}>
+            {verifiedUsers.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('gold')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'gold'
+              ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <Award className="w-3.5 h-3.5" />
+          <span>Gold Verified</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${activeTab === 'gold' ? 'bg-amber-700 text-amber-100' : 'bg-slate-100 text-slate-600'}`}>
+            {goldUsers.length}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('blocked')}
+          className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+            activeTab === 'blocked'
+              ? 'bg-rose-600 text-white shadow-sm ring-2 ring-rose-500/20'
+              : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+          }`}
+        >
+          <ShieldAlert className="w-3.5 h-3.5" />
+          <span>Blocked / Suspended</span>
+          <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${activeTab === 'blocked' ? 'bg-rose-700 text-rose-100' : 'bg-slate-100 text-slate-600'}`}>
+            {blockedUsers.length}
+          </span>
+        </button>
+      </div>
+
       {/* Filter & Search Bar */}
       <div className="gf-card">
         {/* Excel Formula Bar Toolbar */}
@@ -225,7 +350,7 @@ export default function UsersGovernancePage() {
           </div>
 
           <div className="flex items-center gap-3 text-xs text-slate-600 font-mono">
-            <span>SHOWING: <strong className="text-slate-900">{filteredUsers.length}</strong> / {users.length} ROWS</span>
+            <span>SHOWING: <strong className="text-slate-900">{displayedUsers.length}</strong> / {users.length} ROWS</span>
           </div>
         </div>
 
@@ -244,7 +369,7 @@ export default function UsersGovernancePage() {
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map((u, idx) => {
+              {displayedUsers.map((u, idx) => {
                 return (
                   <tr key={u.uid}>
                     {/* Index */}
@@ -252,11 +377,24 @@ export default function UsersGovernancePage() {
 
                     {/* Identity */}
                     <td className="text-left">
-                      <div className="font-bold text-slate-900 flex items-center gap-1.5">
+                      <div className="font-bold text-slate-900 flex items-center gap-1.5 flex-wrap">
                         {u.displayName}
                         {u.hasGoldenTick && (
                           <span className="text-amber-500 font-bold" title="Premium Gold Tick Verified">
                             ★
+                          </span>
+                        )}
+                        {isUserBlocked(u.uid) ? (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-rose-100 text-rose-700 border border-rose-200">
+                            BLOCKED
+                          </span>
+                        ) : u.isPlanExpired ? (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                            EXPIRED
+                          </span>
+                        ) : (
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> ACTIVE
                           </span>
                         )}
                       </div>
@@ -403,7 +541,7 @@ export default function UsersGovernancePage() {
           </table>
           <div className="gf-excel-status-bar">
             <span>● OPERATOR DIRECTORY</span>
-            <span>Total Rows: {filteredUsers.length} of {users.length} | Selected: 0 | Auto-Filter: Active</span>
+            <span>Total Rows: {displayedUsers.length} of {users.length} | Selected: 0 | Auto-Filter: {activeTab.toUpperCase()}</span>
           </div>
         </div>
       </div>

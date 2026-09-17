@@ -30,6 +30,7 @@ import {
   Layers,
   FileCheck,
   Search,
+  AlertCircle,
 } from 'lucide-react';
 import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
@@ -49,39 +50,48 @@ import { getBidderGroupsFromDB, saveBidderGroupInDB } from '@/lib/firebase/fires
 
 const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [
   {
-    id: 'u-msc',
-    name: 'MSC Mediterranean Shipping',
-    role: 'Carrier Line Operator',
-    company: 'Mediterranean Shipping Company',
-    location: 'Geneva / Mumbai',
+    id: 'u-apex',
+    name: 'Apex Global Logistics & Freight',
+    role: 'Freight Forwarder',
+    company: 'Apex Global Logistics Pvt Ltd',
+    location: 'Mumbai / Nhava Sheva',
     timezone: 'Asia/Kolkata',
     hasGoldenTick: true,
   },
   {
-    id: 'u-hapag',
-    name: 'Hapag-Lloyd Ocean Desk',
-    role: 'Trade Lane Manager',
-    company: 'Hapag-Lloyd AG',
-    location: 'Hamburg / Rotterdam',
-    timezone: 'Europe/Amsterdam',
+    id: 'u-transworld',
+    name: 'TransWorld NVOCC Solutions',
+    role: 'NVOCC Equipment Operator',
+    company: 'TransWorld Container Line',
+    location: 'Mundra / Dubai',
+    timezone: 'Asia/Kolkata',
     hasGoldenTick: true,
   },
   {
-    id: 'u-cma',
-    name: 'CMA CGM Commercial',
-    role: 'Ocean Freight Lead',
-    company: 'CMA CGM S.A.',
-    location: 'Marseille / Dubai',
-    timezone: 'Asia/Dubai',
+    id: 'u-radiant',
+    name: 'Radiant Multimodal Freight',
+    role: 'Freight Forwarder',
+    company: 'Radiant Global Logistics',
+    location: 'Chennai / Singapore',
+    timezone: 'Asia/Kolkata',
     hasGoldenTick: true,
   },
   {
-    id: 'u-one',
-    name: 'Ocean Network Express',
-    role: 'Procurement Specialist',
-    company: 'ONE Line',
-    location: 'Singapore',
-    timezone: 'Asia/Singapore',
+    id: 'u-interglobal',
+    name: 'InterGlobal Line NVOCC',
+    role: 'NVOCC Equipment Operator',
+    company: 'InterGlobal Container Lines',
+    location: 'New Delhi / ICD Tughlakabad',
+    timezone: 'Asia/Kolkata',
+    hasGoldenTick: true,
+  },
+  {
+    id: 'u-bluedart',
+    name: 'BlueOcean Freight Forwarding',
+    role: 'Freight Forwarder',
+    company: 'BlueOcean Logistics Group',
+    location: 'Ahmedabad / Pipavav',
+    timezone: 'Asia/Kolkata',
     hasGoldenTick: true,
   },
 ];
@@ -180,7 +190,77 @@ export default function CreateReverseAuctionPage() {
         if (groups && groups.length > 0) setSavedBidderGroups(groups);
       }).catch(() => {});
     }
+
+    // Load registered Freight Forwarders and NVOCCs from platform directory
+    fetch('/api/members?role=forwarder_nvocc')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && Array.isArray(data.members) && data.members.length > 0) {
+          const registeredCandidates: VerifiedBidderCandidate[] = data.members.map((m: any) => ({
+            id: m.uid,
+            name: m.displayName || m.company,
+            role: m.role?.toLowerCase().includes('nvocc') ? 'NVOCC Equipment Operator' : 'Freight Forwarder',
+            company: m.company,
+            location: m.location || `${m.city}, ${m.country}`,
+            timezone: m.timezone || 'Asia/Kolkata',
+            hasGoldenTick: Boolean(m.hasGoldenTick),
+          }));
+          setAvailableBidders((prev) => {
+            const map = new Map<string, VerifiedBidderCandidate>();
+            registeredCandidates.forEach((c) => map.set(c.id, c));
+            prev.forEach((c) => {
+              if (!map.has(c.id)) map.set(c.id, c);
+            });
+            return Array.from(map.values());
+          });
+        }
+      })
+      .catch(() => {});
   }, [user?.uid]);
+
+  // MSDS Modal & Data State (Requirement 3)
+  const [showMsdsModal, setShowMsdsModal] = useState(false);
+  const [msdsData, setMsdsData] = useState({
+    chemicalName: '',
+    unNumber: '',
+    imoClass: 'Class 3 - Flammable Liquids',
+    packingGroup: 'PG II',
+    flashPoint: '',
+    emergencyContact: '',
+    emergencyPhone: '',
+    specialHandling: '',
+    isConfirmed: false,
+    isSaved: false,
+  });
+
+  // Packing Dimensions Modal & Data State (Requirement 3)
+  const [showPackingDimsModal, setShowPackingDimsModal] = useState(false);
+  const [packingDimsData, setPackingDimsData] = useState({
+    packageType: 'Wooden Pallets',
+    quantity: 10,
+    lengthCm: 120,
+    widthCm: 100,
+    heightCm: 150,
+    weightKg: 850,
+    isStackable: 'Yes (Up to 2 tiers)',
+    isConfirmed: false,
+    isSaved: false,
+  });
+
+  // Routing Requirements: Custom unlisted carriers with Maroon status (Requirement 4)
+  const [customCarriers, setCustomCarriers] = useState<Array<{ name: string; scac?: string; notes?: string; status: string }>>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('fr8x_custom_carriers_v1');
+        if (saved) return JSON.parse(saved);
+      } catch {}
+    }
+    return [];
+  });
+  const [showAddCarrierModal, setShowAddCarrierModal] = useState(false);
+  const [newCarrierName, setNewCarrierName] = useState('');
+  const [newCarrierScac, setNewCarrierScac] = useState('');
+  const [newCarrierNotes, setNewCarrierNotes] = useState('');
 
   // Auction Rules
   const [autoExtension, setAutoExtension] = useState(true);
@@ -214,9 +294,6 @@ export default function CreateReverseAuctionPage() {
   const [originDemurrage, setOriginDemurrage] = useState('');
   const [clearanceDetention, setClearanceDetention] = useState('');
   const [specialFreeTime, setSpecialFreeTime] = useState<Array<{ label: string; days: string }>>([]);
-
-  // Preview Modal
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   // Payment Modal — triggered before publish
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -460,7 +537,6 @@ export default function CreateReverseAuctionPage() {
       competitionCeiling: showCompetitionCeiling ? Number(competitionCeilingAmount || 2850) : 0,
     });
 
-    setShowPreviewModal(false);
     router.push(`/auctions/${newAuctionId}`);
   };
 
@@ -1363,19 +1439,53 @@ export default function CreateReverseAuctionPage() {
             <div className="grid g2">
               {/* Routing Requirements card */}
               <div className="card">
-                <div className="cardhead">Routing Requirements</div>
+                <div className="cardhead" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Routing Requirements</span>
+                  <button
+                    type="button"
+                    className="btn secondary sm"
+                    onClick={() => setShowAddCarrierModal(true)}
+                    style={{ fontSize: '10.5px', padding: '2px 8px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                    title="Add carrier not found in Masters"
+                  >
+                    <Plus size={12} /> Add Carrier
+                  </button>
+                </div>
                 <div className="cardbody">
                   <div className="field" style={{ marginBottom: '8px' }}>
-                    <label>Preferred Shipping Line</label>
-                    <select className="input" value={preferredShippingLine} onChange={(e) => setPreferredShippingLine(e.target.value)}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <label>Preferred Shipping Line</label>
+                      {customCarriers.some((c) => c.name === preferredShippingLine) && (
+                        <span style={{ fontSize: '9.5px', color: '#800000', background: '#fee2e2', border: '1px solid #800000', padding: '1px 5px', borderRadius: '3px', fontWeight: 700 }}>
+                          Maroon: Pending Godfather Approval
+                        </span>
+                      )}
+                    </div>
+                    <select
+                      className="input"
+                      value={preferredShippingLine}
+                      onChange={(e) => setPreferredShippingLine(e.target.value)}
+                      style={customCarriers.some((c) => c.name === preferredShippingLine) ? { borderColor: '#800000', color: '#800000', fontWeight: 'bold', background: '#fff5f5' } : {}}
+                    >
                       <option value="">-- Select --</option>
-                      <option value="Maersk">Maersk</option>
-                      <option value="Hapag-Lloyd">Hapag-Lloyd</option>
-                      <option value="CMA CGM">CMA CGM</option>
-                      <option value="MSC">MSC</option>
-                      <option value="ONE Line">ONE Line</option>
-                      <option value="Evergreen">Evergreen</option>
-                      <option value="COSCO">COSCO</option>
+                      <optgroup label="Standard Master Carriers">
+                        <option value="Maersk">Maersk</option>
+                        <option value="Hapag-Lloyd">Hapag-Lloyd</option>
+                        <option value="CMA CGM">CMA CGM</option>
+                        <option value="MSC">MSC</option>
+                        <option value="ONE Line">ONE Line</option>
+                        <option value="Evergreen">Evergreen</option>
+                        <option value="COSCO">COSCO</option>
+                      </optgroup>
+                      {customCarriers.length > 0 && (
+                        <optgroup label="Unapproved Carriers (Pending Godfather)" style={{ color: '#800000' }}>
+                          {customCarriers.map((c) => (
+                            <option key={c.name} value={c.name} style={{ color: '#800000', fontWeight: 'bold' }}>
+                              {c.name} {c.scac ? `(${c.scac})` : ''} — [Pending Approval]
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
                     </select>
                   </div>
                   <div className="field" style={{ marginBottom: '8px' }}>
@@ -1745,12 +1855,22 @@ export default function CreateReverseAuctionPage() {
                       onChange={(e) => setNotes(e.target.value)}
                     />
                   </div>
-                  <div style={{ marginTop: '10px', display: 'flex', gap: '6px' }}>
-                    <button type="button" className="btn secondary sm" onClick={() => toast('MSDS Attachment uploaded.')}>
-                      <FileCheck size={12} /> MSDS Sheet
+                  <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className={`btn sm ${msdsData.isSaved ? 'primary' : 'secondary'}`}
+                      onClick={() => setShowMsdsModal(true)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                    >
+                      <FileCheck size={12} /> {msdsData.isSaved ? `MSDS Attached (${msdsData.unNumber || 'Saved'}) ✓` : 'MSDS Sheet'}
                     </button>
-                    <button type="button" className="btn secondary sm" onClick={() => toast('Packing list dimensions attached.')}>
-                      <Layers size={12} /> Packing Dimensions
+                    <button
+                      type="button"
+                      className={`btn sm ${packingDimsData.isSaved ? 'primary' : 'secondary'}`}
+                      onClick={() => setShowPackingDimsModal(true)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                    >
+                      <Layers size={12} /> {packingDimsData.isSaved ? `Packing Dims Configured (${((packingDimsData.quantity * packingDimsData.lengthCm * packingDimsData.widthCm * packingDimsData.heightCm) / 1000000).toFixed(1)} CBM) ✓` : 'Packing Dimensions'}
                     </button>
                   </div>
                 </div>
@@ -1762,81 +1882,406 @@ export default function CreateReverseAuctionPage() {
         {/* Sticky Publication Action Bar */}
         <div className="actionbar">
           <small>
-            Draft auto-saved · Assigned bidders receive structured formal auction tables upon publication. Payment required to publish.
+            Draft auto-saved · Assigned NVOCCs &amp; Freight Forwarders receive structured reverse auction room upon publication.
           </small>
           <div className="actions">
-            <button
-              type="button"
-              className="btn secondary"
-              onClick={() => setShowPreviewModal(true)}
-            >
-              <Eye size={14} /> Preview Summary
-            </button>
             <button type="submit" className="btn primary" onClick={(e) => { e.preventDefault(); setShowPaymentModal(true); }}>
-              <Rocket size={14} /> Pay & Publish Auction
+              <Rocket size={14} /> Pay &amp; Publish Auction
             </button>
           </div>
         </div>
       </form>
 
-      {/* Preview Modal */}
+      {/* MSDS Sheet Modal (Requirement 3) */}
       <Modal
-        isOpen={showPreviewModal}
-        onClose={() => setShowPreviewModal(false)}
-        title="Preview Reverse Auction Publication"
+        isOpen={showMsdsModal}
+        onClose={() => setShowMsdsModal(false)}
+        title="Material Safety Data Sheet (MSDS) & Dangerous Goods Configuration"
+        maxWidth="640px"
         footer={
           <>
-            <button className="btn secondary" onClick={() => setShowPreviewModal(false)}>
-              Edit Details
+            <button type="button" className="btn secondary" onClick={() => setShowMsdsModal(false)}>
+              Close
             </button>
-            <button className="btn primary" onClick={() => { setShowPreviewModal(false); setShowPaymentModal(true); }}>
-              Continue to Payment
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                if (!msdsData.isConfirmed) {
+                  toast('Please confirm the MSDS verification statement to save.');
+                  return;
+                }
+                setMsdsData((prev) => ({ ...prev, isSaved: true }));
+                toast('MSDS Sheet details saved and attached to auction.');
+                setShowMsdsModal(false);
+              }}
+            >
+              Save &amp; Close
             </button>
           </>
         }
       >
-        <div className="grid g3" style={{ marginBottom: '12px' }}>
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
-            <b style={{ fontSize: '12px' }}>{title || 'Untitled Auction'}</b>
-            <p style={{ fontSize: '11px', color: 'var(--mut)', margin: '3px 0 0' }}>
-              Type: {auctionType} · RFQ: {rfqId}
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--mut)', margin: '2px 0 0' }}>
-              Duration: {durationMinutes} min · End: {endDateTime}
-            </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af' }}>
+            <FileCheck size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            Provide compliant IMDG Dangerous Goods details for carrier stowage declaration.
           </div>
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
-            <b style={{ fontSize: '12px' }}>Lane & Incoterms</b>
-            <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: '3px 0 0' }}>
-              POL: <b>{pol || '—'}</b>
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: '2px 0 0' }}>
-              POD: <b>{pod || '—'}</b>
-            </p>
-            <p style={{ fontSize: '11px', color: 'var(--mut)', margin: '2px 0 0' }}>
-              Incoterm: {incoterm}
-            </p>
+
+          <div className="grid g2">
+            <div className="field">
+              <label>Chemical / Product Name *</label>
+              <input
+                className="input"
+                placeholder="e.g. Ethyl Acetate Solution"
+                value={msdsData.chemicalName}
+                onChange={(e) => setMsdsData({ ...msdsData, chemicalName: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label>UN Number (4 digits) *</label>
+              <input
+                className="input"
+                placeholder="e.g. UN 1173"
+                value={msdsData.unNumber}
+                onChange={(e) => setMsdsData({ ...msdsData, unNumber: e.target.value })}
+              />
+            </div>
           </div>
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
-            <b style={{ fontSize: '12px' }}>Selected Forwarders</b>
-            <p style={{ fontSize: '11px', color: 'var(--brand)', margin: '3px 0 0', fontWeight: 600 }}>
-              {assignedBidders.size} Invited Verified Bidder(s)
-            </p>
-            <p style={{ fontSize: '10.5px', color: 'var(--mut)', margin: '2px 0 0' }}>
-              {Array.from(assignedBidders)
-                .map((id) => availableBidders.find((b) => b.id === id)?.name)
-                .filter(Boolean)
-                .join(', ')}
-            </p>
+
+          <div className="grid g3">
+            <div className="field">
+              <label>IMO Hazard Class *</label>
+              <select
+                className="input"
+                value={msdsData.imoClass}
+                onChange={(e) => setMsdsData({ ...msdsData, imoClass: e.target.value })}
+              >
+                <option value="Class 1 - Explosives">Class 1 - Explosives</option>
+                <option value="Class 2.1 - Flammable Gas">Class 2.1 - Flammable Gas</option>
+                <option value="Class 2.2 - Non-Flammable Gas">Class 2.2 - Non-Flammable Gas</option>
+                <option value="Class 3 - Flammable Liquids">Class 3 - Flammable Liquids</option>
+                <option value="Class 4.1 - Flammable Solids">Class 4.1 - Flammable Solids</option>
+                <option value="Class 5.1 - Oxidizing Substances">Class 5.1 - Oxidizing Substances</option>
+                <option value="Class 6.1 - Toxic Substances">Class 6.1 - Toxic Substances</option>
+                <option value="Class 8 - Corrosives">Class 8 - Corrosives</option>
+                <option value="Class 9 - Miscellaneous DG">Class 9 - Miscellaneous DG</option>
+                <option value="Non-DG Cargo">Non-DG Cargo</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Packing Group</label>
+              <select
+                className="input"
+                value={msdsData.packingGroup}
+                onChange={(e) => setMsdsData({ ...msdsData, packingGroup: e.target.value })}
+              >
+                <option value="PG I - Great Danger">PG I - Great Danger</option>
+                <option value="PG II - Medium Danger">PG II - Medium Danger</option>
+                <option value="PG III - Minor Danger">PG III - Minor Danger</option>
+                <option value="None / Not Applicable">None / N/A</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Flash Point (°C)</label>
+              <input
+                className="input"
+                placeholder="e.g. -4°C"
+                value={msdsData.flashPoint}
+                onChange={(e) => setMsdsData({ ...msdsData, flashPoint: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="grid g2">
+            <div className="field">
+              <label>Emergency Contact Person</label>
+              <input
+                className="input"
+                placeholder="e.g. Dr. Rajesh Kumar (DG Coordinator)"
+                value={msdsData.emergencyContact}
+                onChange={(e) => setMsdsData({ ...msdsData, emergencyContact: e.target.value })}
+              />
+            </div>
+            <div className="field">
+              <label>24/7 Emergency Phone Number</label>
+              <input
+                className="input"
+                placeholder="e.g. +91 98200 12345"
+                value={msdsData.emergencyPhone}
+                onChange={(e) => setMsdsData({ ...msdsData, emergencyPhone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <label>Special Stowage &amp; Handling Instructions</label>
+            <textarea
+              className="input"
+              rows={2}
+              placeholder="e.g. Keep away from heat sources. Stow away from foodstuffs. Reefer temp 18°C-22°C."
+              value={msdsData.specialHandling}
+              onChange={(e) => setMsdsData({ ...msdsData, specialHandling: e.target.value })}
+            />
+          </div>
+
+          {/* Confirm Text Box */}
+          <div style={{ padding: '12px', background: '#f8fafc', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: '#0f172a' }}>
+              <input
+                type="checkbox"
+                checked={msdsData.isConfirmed}
+                onChange={(e) => setMsdsData({ ...msdsData, isConfirmed: e.target.checked })}
+                style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: '#0284c7', cursor: 'pointer' }}
+              />
+              <span>
+                <b>Confirmation &amp; Compliance Statement:</b> I confirm that the MSDS data, UN classification, and DG technical details provided above are verified against official manufacturer safety datasheets, match physical cargo packaging, and strictly comply with IMDG Code and carrier stowage standards.
+              </span>
+            </label>
           </div>
         </div>
+      </Modal>
 
-        <div className="card cardbody">
-          <b style={{ fontSize: '12px', display: 'block', marginBottom: '6px' }}>Container Equipment Summary</b>
-          <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)' }}>
-            {containers.length} container equipment row(s) configured. Total quantity:{' '}
-            {containers.reduce((sum, c) => sum + c.quantity, 0)} units. Commodity: {commodity} (HS {hsCode}).
-          </p>
+      {/* Packing Dimensions Modal (Requirement 3) */}
+      <Modal
+        isOpen={showPackingDimsModal}
+        onClose={() => setShowPackingDimsModal(false)}
+        title="Cargo Packaging Dimensions & Unit Specifications"
+        maxWidth="640px"
+        footer={
+          <>
+            <button type="button" className="btn secondary" onClick={() => setShowPackingDimsModal(false)}>
+              Close
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              onClick={() => {
+                if (!packingDimsData.isConfirmed) {
+                  toast('Please confirm the packaging verification statement to save.');
+                  return;
+                }
+                const totalCbm = Number(((packingDimsData.quantity * packingDimsData.lengthCm * packingDimsData.widthCm * packingDimsData.heightCm) / 1000000).toFixed(2));
+                const totalGross = Number((packingDimsData.quantity * packingDimsData.weightKg).toFixed(0));
+                setCbm(totalCbm);
+                setGrossWeight(totalGross);
+                setPackingDimsData((prev) => ({ ...prev, isSaved: true }));
+                toast(`Packing dimensions saved: ${totalCbm} CBM · ${totalGross} kg total.`);
+                setShowPackingDimsModal(false);
+              }}
+            >
+              Save &amp; Close
+            </button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '10px 12px', background: '#eff6ff', borderRadius: '6px', border: '1px solid #bfdbfe', fontSize: '11.5px', color: '#1e40af' }}>
+            <Layers size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            Configure individual package dimensions and unit weights to compute total container volume (CBM) and payload.
+          </div>
+
+          <div className="grid g2">
+            <div className="field">
+              <label>Packaging Type *</label>
+              <select
+                className="input"
+                value={packingDimsData.packageType}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, packageType: e.target.value })}
+              >
+                <option value="Wooden Pallets">Wooden Pallets (Heat Treated ISPM-15)</option>
+                <option value="Euro Pallets (120x80cm)">Euro Pallets (120x80cm)</option>
+                <option value="Standard Pallets (120x100cm)">Standard Pallets (120x100cm)</option>
+                <option value="Wooden Crates">Wooden Crates / Boxes</option>
+                <option value="Corrugated Cartons">Corrugated Cartons</option>
+                <option value="Steel Drums (200L)">Steel Drums (200L)</option>
+                <option value="Plastic Drums">Plastic Drums</option>
+                <option value="FIBC / Jumbo Bulk Bags">FIBC / Jumbo Bulk Bags</option>
+                <option value="Loose / Unpacked Machinery">Loose / Unpacked Machinery</option>
+              </select>
+            </div>
+            <div className="field">
+              <label>Number of Packages / Units *</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={packingDimsData.quantity}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, quantity: Math.max(1, Number(e.target.value)) })}
+              />
+            </div>
+          </div>
+
+          <div className="grid g3">
+            <div className="field">
+              <label>Length per unit (cm) *</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={packingDimsData.lengthCm}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, lengthCm: Number(e.target.value) })}
+              />
+            </div>
+            <div className="field">
+              <label>Width per unit (cm) *</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={packingDimsData.widthCm}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, widthCm: Number(e.target.value) })}
+              />
+            </div>
+            <div className="field">
+              <label>Height per unit (cm) *</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={packingDimsData.heightCm}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, heightCm: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+
+          <div className="grid g2">
+            <div className="field">
+              <label>Gross Weight per Unit (kg) *</label>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                value={packingDimsData.weightKg}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, weightKg: Number(e.target.value) })}
+              />
+            </div>
+            <div className="field">
+              <label>Cargo Stackability</label>
+              <select
+                className="input"
+                value={packingDimsData.isStackable}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, isStackable: e.target.value })}
+              >
+                <option value="Yes (Up to 2 tiers)">Yes (Up to 2 tiers)</option>
+                <option value="Yes (Up to 3 tiers)">Yes (Up to 3 tiers)</option>
+                <option value="Non-Stackable / Do Not Stack">Non-Stackable / Do Not Stack</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Auto-Calculated Volume & Weight Summary Box */}
+          <div style={{ padding: '10px 14px', background: '#f1f5f9', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Calculated Total Volume:</span>
+              <b style={{ fontSize: '15px', color: '#0369a1' }}>
+                {((packingDimsData.quantity * packingDimsData.lengthCm * packingDimsData.widthCm * packingDimsData.heightCm) / 1000000).toFixed(2)} CBM (m³)
+              </b>
+            </div>
+            <div>
+              <span style={{ fontSize: '11px', color: '#64748b', display: 'block' }}>Calculated Total Gross Weight:</span>
+              <b style={{ fontSize: '15px', color: '#0f172a' }}>
+                {(packingDimsData.quantity * packingDimsData.weightKg).toLocaleString()} kg
+              </b>
+            </div>
+          </div>
+
+          {/* Confirm Text Box */}
+          <div style={{ padding: '12px', background: '#f8fafc', border: '1.5px solid #0284c7', borderRadius: '6px' }}>
+            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '11.5px', color: '#0f172a' }}>
+              <input
+                type="checkbox"
+                checked={packingDimsData.isConfirmed}
+                onChange={(e) => setPackingDimsData({ ...packingDimsData, isConfirmed: e.target.checked })}
+                style={{ marginTop: '2px', width: '16px', height: '16px', accentColor: '#0284c7', cursor: 'pointer' }}
+              />
+              <span>
+                <b>Confirmation &amp; Dimension Guarantee:</b> I confirm that cargo unit dimensions, packaging integrity, and total gross weight have been measured accurately and comply with international container stuffing limits and ISO container door clearance.
+              </span>
+            </label>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Add Unlisted Carrier Modal (Requirement 4) */}
+      <Modal
+        isOpen={showAddCarrierModal}
+        onClose={() => setShowAddCarrierModal(false)}
+        title="Add Unlisted Carrier / Shipping Line"
+        maxWidth="520px"
+        footer={
+          <>
+            <button type="button" className="btn secondary" onClick={() => setShowAddCarrierModal(false)}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="btn primary"
+              style={{ background: '#800000', borderColor: '#800000' }}
+              onClick={() => {
+                if (!newCarrierName.trim()) {
+                  toast('Please enter the carrier / shipping line name.');
+                  return;
+                }
+                const newCarrier = {
+                  name: newCarrierName.trim(),
+                  scac: newCarrierScac.trim().toUpperCase(),
+                  notes: newCarrierNotes.trim(),
+                  status: 'pending_godfather_approval',
+                };
+                const updated = [...customCarriers, newCarrier];
+                setCustomCarriers(updated);
+                setPreferredShippingLine(newCarrier.name);
+                try {
+                  localStorage.setItem('fr8x_custom_carriers_v1', JSON.stringify(updated));
+                } catch {}
+                toast(`Unlisted carrier "${newCarrier.name}" added with Maroon styling (Pending Godfather Approval).`);
+                setNewCarrierName('');
+                setNewCarrierScac('');
+                setNewCarrierNotes('');
+                setShowAddCarrierModal(false);
+              }}
+            >
+              Add Carrier (Maroon / Pending)
+            </button>
+          </>
+        }
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ padding: '10px 12px', background: '#fee2e2', borderRadius: '6px', border: '1px solid #800000', fontSize: '11.5px', color: '#800000' }}>
+            <AlertCircle size={14} style={{ display: 'inline', marginRight: '6px' }} />
+            <b>Godfather Governance Notice:</b> Unlisted carriers not yet in master records will be highlighted in <b>Maroon</b> and marked as <i>Pending Godfather Approval</i>. Dummy staging is allowed for immediate bidding.
+          </div>
+
+          <div className="field">
+            <label>Carrier / Shipping Line Name *</label>
+            <input
+              className="input"
+              placeholder="e.g. ZIM Integrated Shipping / Wan Hai / Samudera"
+              value={newCarrierName}
+              onChange={(e) => setNewCarrierName(e.target.value)}
+            />
+          </div>
+
+          <div className="field">
+            <label>Carrier SCAC / Code (Optional)</label>
+            <input
+              className="input"
+              placeholder="e.g. ZIMU / WHLC / SAMU"
+              value={newCarrierScac}
+              onChange={(e) => setNewCarrierScac(e.target.value)}
+            />
+          </div>
+
+          <div className="field">
+            <label>Reason / Corridor Justification</label>
+            <textarea
+              className="input"
+              rows={2}
+              placeholder="e.g. Direct service required on Asia-Gulf express route."
+              value={newCarrierNotes}
+              onChange={(e) => setNewCarrierNotes(e.target.value)}
+            />
+          </div>
         </div>
       </Modal>
 

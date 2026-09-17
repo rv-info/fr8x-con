@@ -138,6 +138,7 @@ export interface UserProfile {
   skills?: string[];
   languages?: string[];
   keyTradeLanes?: string[];
+  operatingCorridors?: string;
   teuVolumeYear?: string;
   trustScore?: number;
   trialUsedYear?: number;

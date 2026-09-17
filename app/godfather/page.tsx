@@ -314,6 +314,15 @@ export default function GodfatherDashboardPage() {
           </button>
 
           <Link
+            href="/godfather/operations/users?filter=active"
+            className="gf-launchpad-action-btn"
+          >
+            <Users size={14} className="action-icon emerald" />
+            <span className="action-label">Active Members</span>
+            <span className="action-badge green">{users.filter((u) => !u.isPlanExpired).length}</span>
+          </Link>
+
+          <Link
             href="/godfather/operations/companies"
             className="gf-launchpad-action-btn"
           >

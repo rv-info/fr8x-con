@@ -158,10 +158,16 @@ export default function ProfilePage() {
   });
   const [privacyPreviewMode, setPrivacyPreviewMode] = useState<'public' | 'contact'>('public');
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+  const [operatingCorridors, setOperatingCorridors] = useState<string>(() => {
+    return user.operatingCorridors || (user.keyTradeLanes && user.keyTradeLanes.length > 0 ? user.keyTradeLanes.join(', ') : 'Nhava Sheva ⇄ Jebel Ali, Rotterdam');
+  });
 
   useEffect(() => {
     setPrivacySettings(getUserPrivacySettings(user.uid, user.privacySettings));
-  }, [user.uid, user.privacySettings]);
+    if (user.operatingCorridors) {
+      setOperatingCorridors(user.operatingCorridors);
+    }
+  }, [user.uid, user.privacySettings, user.operatingCorridors]);
 
   const handleUpdatePrivacy = <K extends keyof UserPrivacySettings>(key: K, value: UserPrivacySettings[K]) => {
     setPrivacySettings((prev) => ({
@@ -175,6 +181,7 @@ export default function ProfilePage() {
     saveUserPrivacySettings(user.uid, privacySettings);
     updateUser({
       privacySettings,
+      operatingCorridors: operatingCorridors.trim(),
     });
     setTimeout(() => {
       setIsSavingPrivacy(false);
@@ -2375,6 +2382,33 @@ export default function ProfilePage() {
                   </button>
                 ))}
               </div>
+
+              {/* Operating Corridors Content & Edit */}
+              <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--line-light)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label htmlFor="preferred-trade-lanes-input" style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
+                    Operating Trade Corridors:
+                  </label>
+                  <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)' }}>Visible according to visibility setting above</span>
+                </div>
+                <input
+                  id="preferred-trade-lanes-input"
+                  type="text"
+                  value={operatingCorridors}
+                  onChange={(e) => setOperatingCorridors(e.target.value)}
+                  placeholder="e.g. Nhava Sheva ⇄ Jebel Ali, Rotterdam"
+                  style={{
+                    width: '100%',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    borderRadius: '6px',
+                    border: '1px solid var(--fr8x-outline)',
+                    background: '#ffffff',
+                    color: 'var(--fr8x-text)',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
             </div>
 
             {/* Setting 5: Connection Requests Inbound */}
@@ -2400,6 +2434,40 @@ export default function ProfilePage() {
                   </span>
                 </label>
               </div>
+            </div>
+
+            {/* Dedicated Save Privacy Settings button inside the left controls column (Addresses Issue 7 / Image 5) */}
+            <div style={{ paddingTop: '6px' }}>
+              <button
+                type="button"
+                className="btn primary"
+                onClick={handleSavePrivacySettings}
+                disabled={isSavingPrivacy}
+                style={{
+                  width: '100%',
+                  padding: '11px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  borderRadius: '8px',
+                  background: 'var(--fr8x-primary, #00a3c4)',
+                  boxShadow: '0 2px 6px rgba(0, 163, 196, 0.25)',
+                  cursor: 'pointer'
+                }}
+              >
+                {isSavingPrivacy ? (
+                  <>
+                    <Loader2 size={15} className="spin" /> Saving Privacy Settings...
+                  </>
+                ) : (
+                  <>
+                    <Save size={15} /> Save Privacy Settings
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -2611,9 +2679,11 @@ export default function ProfilePage() {
                   <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Compass size={12} /> Operating Corridors:
                   </span>
-                  <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {privacyPreviewMode === 'contact' || privacySettings.tradeLanesVisibility === 'public' ? (
-                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>Nhava Sheva ⇄ Jebel Ali, Rotterdam</span>
+                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>
+                        {operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam'}
+                      </span>
                     ) : privacySettings.tradeLanesVisibility === 'contacts_only' ? (
                       <span style={{ color: 'var(--fr8x-muted)', fontSize: '11px' }}>
                         •••••••••••• (Connect to unlock)
@@ -2621,6 +2691,32 @@ export default function ProfilePage() {
                     ) : (
                       <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const el = document.getElementById('preferred-trade-lanes-input');
+                        if (el) {
+                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          el.focus();
+                        }
+                      }}
+                      title="Edit Operating Corridors in Settings"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid var(--fr8x-outline)',
+                        background: '#f1f5f9',
+                        color: '#00a3c4',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <Edit2 size={10} /> Edit
+                    </button>
                   </div>
                 </div>
               </div>

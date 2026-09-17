@@ -175,7 +175,28 @@ export function ProfilePreviewModal({
     return undefined;
   }, [isCurrentUser, user, rawTargetName, targetUid, allUsers]);
 
-  const effectiveUser = matchedUser;
+  const [remoteUser, setRemoteUser] = React.useState<UserProfile | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen && !matchedUser && (targetUid || rawTargetName)) {
+      const searchKey = targetUid || rawTargetName;
+      fetch(`/api/members?q=${encodeURIComponent(searchKey)}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && data.members && data.members.length > 0) {
+            const found = targetUid
+              ? data.members.find((m: any) => m.uid === targetUid) || data.members[0]
+              : data.members[0];
+            setRemoteUser(found);
+          }
+        })
+        .catch(() => {});
+    } else if (!isOpen) {
+      setRemoteUser(null);
+    }
+  }, [isOpen, matchedUser, targetUid, rawTargetName]);
+
+  const effectiveUser = matchedUser || remoteUser;
 
   // Genuine fields resolution (strict real-data mapping — zero fabricated claims)
   const resolvedName =

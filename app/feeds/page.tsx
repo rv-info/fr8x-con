@@ -549,6 +549,23 @@ export default function FeedsPage() {
   const [manageContactsTab, setManageContactsTab] = useState<'contacts' | 'requests' | 'discover'>('contacts');
   const [discoverMemberSearch, setDiscoverMemberSearch] = useState('');
   const [selectedProfileUid, setSelectedProfileUid] = useState<string | null>(null);
+  const [remoteMembers, setRemoteMembers] = useState<any[]>([]);
+  const [isSearchingMembers, setIsSearchingMembers] = useState(false);
+
+  React.useEffect(() => {
+    if (showManageContactsModal && manageContactsTab === 'discover') {
+      setIsSearchingMembers(true);
+      fetch(`/api/members?q=${encodeURIComponent(discoverMemberSearch.trim())}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data && Array.isArray(data.members)) {
+            setRemoteMembers(data.members);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setIsSearchingMembers(false));
+    }
+  }, [showManageContactsModal, manageContactsTab, discoverMemberSearch]);
 
   // New Job Form State + Payment calculation (₹300 for 2 days + ₹180/day thereafter)
   const [newJobTitle, setNewJobTitle] = useState('');
@@ -1350,11 +1367,20 @@ export default function FeedsPage() {
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
               <span>{user.mobile || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
-              <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
-              </span>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+                <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.formattedAddress || user.city}>
+                  {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
+                </span>
+              </div>
+              <Link
+                href="/profile"
+                style={{ color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', textDecoration: 'none', padding: '1px 5px', borderRadius: '3px', background: 'rgba(0, 163, 196, 0.1)', flexShrink: 0 }}
+                title="Edit Freight Terminal / Address in Profile"
+              >
+                <Edit2 size={10} /> Edit
+              </Link>
             </div>
 
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
@@ -3355,7 +3381,15 @@ export default function FeedsPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
                   {(() => {
                     const q = discoverMemberSearch.trim().toLowerCase();
-                    const candidates = (allUsers || []).filter((u) => {
+                    const pool = [...remoteMembers];
+                    const seenUids = new Set(pool.map((p) => p.uid));
+                    for (const u of (allUsers || [])) {
+                      if (u.uid && !seenUids.has(u.uid)) {
+                        seenUids.add(u.uid);
+                        pool.push(u);
+                      }
+                    }
+                    const candidates = pool.filter((u) => {
                       if (!u.uid || u.uid === user.uid) return false;
                       if (!q) return true;
                       const name = (u.displayName || `${u.firstName} ${u.lastName}` || '').toLowerCase();
