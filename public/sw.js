@@ -1,7 +1,7 @@
-// FR8X HyperSpeed Service Worker v1.0.0
+// FR8X HyperSpeed Service Worker v1.1.0
 // Ultra-low latency caching and offline resilience for port operators and field teams.
 
-const CACHE_NAME = 'fr8x-hyperspeed-v1';
+const CACHE_NAME = 'fr8x-hyperspeed-v1.1';
 const STATIC_ASSETS = [
   '/',
   '/feeds',
@@ -12,6 +12,8 @@ const STATIC_ASSETS = [
   '/logo.png',
   '/icon.png',
   '/favicon.ico',
+  '/favicon.png',
+  '/apple-icon.png',
 ];
 
 self.addEventListener('install', (event) => {

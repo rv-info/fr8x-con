@@ -1015,9 +1015,11 @@ export default function RegisterPage() {
               style={{
                 width: '52px',
                 height: '52px',
-                margin: '0 auto 8px',
+                margin: '0 auto 10px',
                 objectFit: 'contain',
                 display: 'block',
+                borderRadius: '12px',
+                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
               }}
             />
             <div

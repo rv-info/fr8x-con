@@ -68,11 +68,13 @@ export default function NotFoundPage() {
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '50px',
-              height: '50px',
+              width: '52px',
+              height: '52px',
               margin: '0 auto 14px',
               objectFit: 'contain',
               display: 'block',
+              borderRadius: '12px',
+              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
             }}
           />
           <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a' }}>

@@ -1,5 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
+@property --border-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
 :root {
   --font: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
@@ -9918,4 +9924,198 @@ tr.compared-row td.rates-sticky-action-col {
 [data-theme='dark'] .rates-compact-table tr:hover td.rates-sticky-action-col {
   background: #334155 !important;
 }
+
+/* ==========================================================================
+   FR8X GLOBAL MICRO-INTERACTIONS
+   1. LESS ANIMATED HOVER EFFECT: 1% ZOOM (scale(1.01))
+   2. TEXT BOXES: 1% ZOOM OUT (scale(0.99)) MAKING PAPER CUT EFFECT
+   3. WHILE TYPING / ACTIVE CELL: 2% BIGGER '-' MOVING ON EDGE OF BOX LINE
+   ========================================================================== */
+
+/* 1. LESS ANIMATED HOVER EFFECT: 1% ZOOM (scale(1.01)) */
+.card,
+[class*='card']:not(.rates-compact-table):not(.gf-table),
+.btn,
+button:not(.btn-no-zoom),
+[role='button'],
+.navitem,
+.navlink,
+.chip,
+.tab,
+.tabs button,
+.feed-action-btn,
+.badge-interactive,
+table tbody tr.clickable {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.2s ease;
+  will-change: transform;
+}
+
+.card:hover,
+[class*='card']:not(.rates-compact-table):not(.gf-table):hover,
+.btn:hover,
+button:not(.btn-no-zoom):hover:not(:disabled),
+[role='button']:hover:not([aria-disabled='true']),
+.navitem:hover,
+.navlink:hover,
+.chip:hover,
+.tab:hover,
+.tabs button:hover,
+.feed-action-btn:hover,
+.badge-interactive:hover,
+table tbody tr.clickable:hover {
+  transform: scale(1.01);
+}
+
+/* 2. TEXT BOXES: 1% ZOOM OUT (scale(0.99)) MAKING PAPER CUT (DEBOSSED / DIE-CUT) EFFECT */
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']),
+textarea,
+select,
+.input,
+select.input,
+textarea.input,
+.topsearch input,
+.chatsearch input,
+.feed-search-box input,
+.comment-input-row input,
+.reply-input-box input,
+.login-card input,
+.reg-input,
+.gf-input,
+.gf-select,
+.gf-textarea,
+.gfl-input,
+.gfl-textarea,
+.gfl-clean-input {
+  transform: scale(0.99);
+  transform-origin: center center;
+  box-shadow: 
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.02),
+    0 1px 0 rgba(255, 255, 255, 0.85);
+  transition: 
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.22s ease,
+    border-color 0.22s ease,
+    background-color 0.22s ease;
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']):hover,
+textarea:hover,
+select:hover,
+.input:hover,
+select.input:hover,
+textarea.input:hover,
+.topsearch input:hover,
+.chatsearch input:hover,
+.feed-search-box input:hover,
+.comment-input-row input:hover,
+.reply-input-box input:hover,
+.login-card input:hover,
+.reg-input:hover,
+.gf-input:hover,
+.gf-select:hover,
+.gf-textarea:hover,
+.gfl-input:hover,
+.gfl-textarea:hover,
+.gfl-clean-input:hover {
+  transform: scale(0.99);
+  border-color: #94a3b8;
+  box-shadow: 
+    inset 0 2px 4.5px rgba(0, 0, 0, 0.11),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.04),
+    0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+/* 3. WHILE TYPING / ACTIVE CELL: 2% BIGGER '-' MOVING ON EDGE OF BOX LINE */
+@keyframes activeCellBorderRunner {
+  0% {
+    --border-angle: 0deg;
+  }
+  100% {
+    --border-angle: 360deg;
+  }
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']):focus,
+textarea:focus,
+select:focus,
+.input:focus,
+select.input:focus,
+textarea.input:focus,
+.topsearch input:focus,
+.chatsearch input:focus,
+.feed-search-box input:focus,
+.comment-input-row input:focus,
+.reply-input-box input:focus,
+.login-card input:focus,
+.reg-input:focus,
+.gf-input:focus,
+.gf-select:focus,
+.gf-textarea:focus,
+.gfl-input:focus,
+.gfl-textarea:focus,
+.gfl-clean-input:focus,
+.gf-table td:focus-within,
+.gf-table td.active-cell,
+td.active-cell,
+.active-cell,
+[contenteditable='true']:focus {
+  outline: none !important;
+  transform: scale(0.99) !important;
+  border: 2px solid transparent !important;
+  background-image: 
+    linear-gradient(var(--fr8x-background, #ffffff), var(--fr8x-background, #ffffff)),
+    conic-gradient(
+      from var(--border-angle),
+      var(--fr8x-outline, #c5c3c6) 0deg,
+      var(--fr8x-outline, #c5c3c6) 336deg,
+      var(--brand, #1985a1) 338deg,
+      #0ea5e9 344deg,
+      #ffffff 347deg,
+      #0ea5e9 350deg,
+      var(--brand, #1985a1) 355deg,
+      var(--fr8x-outline, #c5c3c6) 357deg,
+      var(--fr8x-outline, #c5c3c6) 360deg
+    ) !important;
+  background-origin: padding-box, border-box !important;
+  background-clip: padding-box, border-box !important;
+  animation: activeCellBorderRunner 2.4s linear infinite !important;
+  box-shadow: 
+    inset 0 2px 4px rgba(0, 0, 0, 0.09),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(25, 133, 161, 0.22),
+    0 2px 8px -1px rgba(25, 133, 161, 0.35) !important;
+}
+
+/* Dark mode compatibility */
+[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']),
+[data-theme='dark'] textarea,
+[data-theme='dark'] select,
+[data-theme='dark'] .input {
+  box-shadow: 
+    inset 0 1.5px 3px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+[data-theme='dark'] input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']):focus,
+[data-theme='dark'] textarea:focus,
+[data-theme='dark'] select:focus,
+[data-theme='dark'] .input:focus {
+  background-image: 
+    linear-gradient(#0f172a, #0f172a),
+    conic-gradient(
+      from var(--border-angle),
+      #334155 0deg,
+      #334155 336deg,
+      var(--brand, #1985a1) 338deg,
+      #38bdf8 344deg,
+      #ffffff 347deg,
+      #38bdf8 350deg,
+      var(--brand, #1985a1) 355deg,
+      #334155 357deg,
+      #334155 360deg
+    ) !important;
+}
+
 

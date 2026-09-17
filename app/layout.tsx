@@ -17,9 +17,14 @@ export const metadata: Metadata = {
     'Enterprise-grade digital logistics and freight forwarding workspace with reverse auctions, rate intelligence, nexus ratings, and trade chat.',
   manifest: '/manifest.json',
   icons: {
-    icon: '/logo.png',
-    shortcut: '/logo.png',
-    apple: '/logo.png',
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png', sizes: '64x64' },
+      { url: '/icon.png', type: 'image/png', sizes: '192x192' },
+      { url: '/logo.png', type: 'image/png', sizes: '512x512' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-icon.png',
   },
   appleWebApp: {
     capable: true,
@@ -39,7 +44,10 @@ export default function RootLayout({
         <meta charSet="utf-8" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <link rel="icon" type="image/png" href="/logo.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
       </head>
       <body>
         <AppShell>{children}</AppShell>

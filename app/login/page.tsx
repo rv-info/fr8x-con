@@ -363,11 +363,13 @@ export default function LoginPage() {
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '44px',
-              height: '44px',
-              margin: '0 auto 10px',
+              width: '46px',
+              height: '46px',
+              margin: '0 auto 12px',
               objectFit: 'contain',
               display: 'block',
+              borderRadius: '10px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
             }}
           />
           <h1 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>

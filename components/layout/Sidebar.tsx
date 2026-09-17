@@ -64,6 +64,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
             objectFit: 'contain',
             flexShrink: 0,
             display: 'block',
+            borderRadius: '6px',
+            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
           }}
         />
         {!isCollapsed && (
