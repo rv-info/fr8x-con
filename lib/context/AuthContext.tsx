@@ -189,6 +189,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged)); } catch {}
                 return merged;
               });
+
+              // Synchronize currentUser with authoritative server-side DBMS record
+              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
+              if (activeUid) {
+                const serverRecord = data.members.find((m: any) => m.uid === activeUid);
+                if (serverRecord) {
+                  setCurrentUser((prev) => (prev ? { ...prev, ...serverRecord } : serverRecord));
+                }
+              }
             }
           })
           .catch(() => {});

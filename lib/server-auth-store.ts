@@ -172,6 +172,31 @@ export interface ServerUserRecord {
   updatedAt?: string;
 }
 
+/**
+ * Rigorous filter to reject test fixtures, lockout test accounts, and automated dummy users
+ * from entering or persisting in the DBMS / authentication store.
+ */
+export function isDummyOrTestUser(u?: { uid?: string; email?: string; displayName?: string }): boolean {
+  if (!u) return true;
+  const uid = (u.uid || '').toLowerCase();
+  const email = (u.email || '').toLowerCase();
+  const name = (u.displayName || '').toLowerCase();
+
+  // Test patterns in uid
+  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp)[-_0-9]/i.test(uid)) return true;
+  if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true; // e.g. u-neha-1789208393001
+
+  // Test patterns in email
+  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@')) return true;
+  if (/^(lockout|sureset|test\.|tester|dummy|temp)[-_0-9.]/i.test(email)) return true;
+  if (/^[a-z]+\.[0-9]{10,}@/i.test(email)) return true; // e.g. neha.1789208393001@...
+
+  // Test patterns in displayName
+  if (name.includes('dummy') || name.includes('test user') || name.includes('mock user')) return true;
+
+  return false;
+}
+
 export interface VerificationTokenRecord {
   tokenHash: string; // SHA-256 hex digest
   user_id: string;   // UID of the user
@@ -792,6 +817,188 @@ class ServerSecurityStore {
         firstLoginCompleted: true,
         createdAt: '2026-09-12T15:37:00.000Z',
       },
+      {
+        uid: 'u-vikram',
+        email: 'vikram.malhotra@samudralogistics.com',
+        passwordPlain: 'Samudra@2026',
+        displayName: 'Vikram Malhotra',
+        firstName: 'Vikram',
+        lastName: 'Malhotra',
+        company: 'Samudra Logistics Lines',
+        companyId: 'CMP-00106',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+919820055667',
+        designation: 'Senior Vice President - Liner Shipping & Commercial Desk',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        postalCode: '400005',
+        formattedAddress: 'World Trade Centre, Cuffe Parade, Mumbai 400005',
+        timezone: 'Asia/Kolkata',
+        operatingCorridors: 'Nhava Sheva ⇄ Jebel Ali, Mundra, Singapore',
+        experiences: [
+          {
+            id: 'exp-v1',
+            company: 'Samudra Logistics Lines',
+            designation: 'Senior Vice President - Liner Shipping & Commercial Desk',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2021-06',
+            isCurrent: true,
+            description: 'Directing vessel space management, liner agency agreements, and pan-India ocean cargo logistics.',
+            skills: 'Liner Operations, Fleet Allocation, Port Terminal Operations, Spot Quotes, Ocean Freight',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-v2',
+            company: 'Maersk Logistics India',
+            designation: 'Line Operations & Commercial Lead',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2016-01',
+            endDate: '2021-05',
+            isCurrent: false,
+            description: 'Led container line allocations, carrier spot pricing, and port terminal operations.',
+            skills: 'Ocean Liner Desk, Carrier Relations, Port Operations, Spot Bidding',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-v1',
+            institution: 'Indian Institute of Foreign Trade (IIFT)',
+            qualification: 'MBA',
+            fieldOfStudy: 'International Trade & Logistics',
+            startYear: '2014',
+            endYear: '2016',
+            visibility: 'public',
+          },
+          {
+            id: 'edu-v2',
+            institution: 'University of Mumbai',
+            qualification: 'B.Sc.',
+            fieldOfStudy: 'Maritime Operations & Supply Chain',
+            startYear: '2010',
+            endYear: '2013',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-v1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'International Federation of Freight Forwarders Associations',
+            certificateNumber: 'FIATA-IND-5592',
+            issueDate: '2017-10-12',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+          {
+            id: 'cert-v2',
+            title: 'Customs & Port Logistics Specialist',
+            issuingAuthority: 'Federation of Freight Forwarders in India (FFFAI)',
+            certificateNumber: 'FFFAI-CPS-2019',
+            issueDate: '2019-03-15',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-20T08:00:00.000Z',
+      },
+      {
+        uid: 'u-ananya',
+        email: 'ananya.sen@apollomaritime.in',
+        passwordPlain: 'Apollo@Pass2026',
+        displayName: 'Ananya Sen',
+        firstName: 'Ananya',
+        lastName: 'Sen',
+        company: 'Apollo Maritime India',
+        companyId: 'CMP-00107',
+        role: 'company_admin' as const,
+        status: 'active' as const,
+        mobile: '+919820077889',
+        designation: 'Head of Ocean Freight Solutions',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        postalCode: '400051',
+        formattedAddress: 'Bandra-Kurla Complex, Trade Avenue, Mumbai 400051',
+        timezone: 'Asia/Kolkata',
+        operatingCorridors: 'Nhava Sheva ⇄ Colombo, Rotterdam, Singapore',
+        experiences: [
+          {
+            id: 'exp-an1',
+            company: 'Apollo Maritime India',
+            designation: 'Head of Ocean Freight Solutions',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2022-01',
+            isCurrent: true,
+            description: 'Directing ocean freight procurement, contract rates, and digital booking desks.',
+            skills: 'Ocean Freight Procurement, Contract Pricing, Carrier Management',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-an2',
+            company: 'COGOPORT',
+            designation: 'Senior Trade Specialist & Ocean Pricing Desk',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2018-08',
+            endDate: '2021-12',
+            isCurrent: false,
+            description: 'Managed enterprise shipper rates, spot quotation algorithms, and NVOCC partnerships.',
+            skills: 'Digital Freight Desk, Spot Contract Negotiation, Ocean Freight, NVOCC Operations',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-an1',
+            institution: 'University of Mumbai',
+            qualification: 'Master of Management Studies (MMS)',
+            fieldOfStudy: 'Supply Chain & Logistics Management',
+            startYear: '2016',
+            endYear: '2018',
+            visibility: 'public',
+          },
+          {
+            id: 'edu-an2',
+            institution: 'University of Mumbai',
+            qualification: 'Bachelor of Commerce (B.Com)',
+            fieldOfStudy: 'Commerce & Economics',
+            startYear: '2013',
+            endYear: '2016',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-an1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'International Federation of Freight Forwarders Associations',
+            certificateNumber: 'FIATA-IND-6104',
+            issueDate: '2019-11-20',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+          {
+            id: 'cert-an2',
+            title: 'Customs & Port Logistics Specialist',
+            issuingAuthority: 'Federation of Freight Forwarders in India (FFFAI)',
+            certificateNumber: 'FFFAI-CPS-2020',
+            issueDate: '2020-02-14',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
+        failedLoginAttempts: 0,
+        firstLoginCompleted: true,
+        createdAt: '2026-01-20T08:00:00.000Z',
+      },
     ];
 
     for (const acc of defaultAccounts) {
@@ -882,6 +1089,7 @@ class ServerSecurityStore {
           const diskData = JSON.parse(raw);
           if (Array.isArray(diskData.users)) {
             for (const [k, u] of diskData.users) {
+              if (isDummyOrTestUser(u) || isDummyOrTestUser({ uid: k, email: k })) continue;
               if (!this.users.has(k)) {
                 this.users.set(k, u);
               }
@@ -911,8 +1119,12 @@ class ServerSecurityStore {
         }
       }
 
+      const filteredUsers = Array.from(this.users.entries()).filter(
+        ([k, u]) => !isDummyOrTestUser(u) && !isDummyOrTestUser({ uid: k, email: k })
+      );
+
       const payload = {
-        users: Array.from(this.users.entries()),
+        users: filteredUsers,
         emailVerifications: Array.from(this.emailVerifications.entries()),
         verificationTokens: Array.from(this.verificationTokens.entries()),
         verificationTokenRecords: Array.from(this.verificationTokenRecords.entries()),
@@ -975,6 +1187,7 @@ class ServerSecurityStore {
         if (Array.isArray(data.users)) {
           const canonicalUsers = new Map<string, ServerUserRecord>();
           for (const [k, u] of data.users) {
+            if (isDummyOrTestUser(u) || isDummyOrTestUser({ uid: k, email: k })) continue;
             const uidKey = (u.uid || k).toLowerCase();
             const existing = canonicalUsers.get(uidKey);
             if (!existing) {
@@ -1112,6 +1325,7 @@ class ServerSecurityStore {
     const seen = new Set<string>();
     const list: ServerUserRecord[] = [];
     for (const u of this.users.values()) {
+      if (isDummyOrTestUser(u)) continue;
       if (u.email && !seen.has(u.email.toLowerCase())) {
         seen.add(u.email.toLowerCase());
         list.push(u);
@@ -1121,6 +1335,7 @@ class ServerSecurityStore {
       const dbmsUsers = getPersistedUsers();
       for (const du of dbmsUsers) {
         const u = du as unknown as ServerUserRecord;
+        if (isDummyOrTestUser(u)) continue;
         if (u.email && !seen.has(u.email.toLowerCase())) {
           seen.add(u.email.toLowerCase());
           list.push(u);

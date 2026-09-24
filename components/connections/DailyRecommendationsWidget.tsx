@@ -49,6 +49,7 @@ export function DailyRecommendationsWidget({
 }: DailyRecommendationsWidgetProps) {
   const { toast } = useToast();
   const [candidates, setCandidates] = useState<UserProfile[]>([]);
+  const [hydratedSelf, setHydratedSelf] = useState<UserProfile | null>(null);
   const [recommendations, setRecommendations] = useState<RecommendedConnection[]>([]);
   const [dismissedUids, setDismissedUids] = useState<Set<string>>(new Set());
   const [scrollIndex, setScrollIndex] = useState(0);
@@ -63,6 +64,10 @@ export function DailyRecommendationsWidget({
       const data = await res.json();
       if (data && Array.isArray(data.members)) {
         setCandidates(data.members);
+        const selfFromDbms = data.members.find((m: any) => m.uid === currentUser.uid);
+        if (selfFromDbms) {
+          setHydratedSelf(selfFromDbms);
+        }
       }
     } catch (err) {
       console.error('[DailyRecommendationsWidget] Failed to load candidate members:', err);
@@ -77,19 +82,20 @@ export function DailyRecommendationsWidget({
 
   // Compute recommendations whenever candidates or connection storage changes
   const refreshRecommendations = () => {
-    if (!currentUser?.uid || candidates.length === 0) return;
+    const activeSelf = hydratedSelf ? { ...currentUser, ...hydratedSelf } : currentUser;
+    if (!activeSelf?.uid || candidates.length === 0) return;
 
-    const connectedUids = getConnectedUserIds(currentUser.uid);
+    const connectedUids = getConnectedUserIds(activeSelf.uid);
     const requests = getAllConnectionRequests();
     const pendingSentUids = requests
-      .filter((r) => r.fromUid === currentUser.uid && r.status === 'pending')
+      .filter((r) => r.fromUid === activeSelf.uid && r.status === 'pending')
       .map((r) => r.toUid);
     const pendingReceivedUids = requests
-      .filter((r) => r.toUid === currentUser.uid && r.status === 'pending')
+      .filter((r) => r.toUid === activeSelf.uid && r.status === 'pending')
       .map((r) => r.fromUid);
 
     const recs = getDailyConnectionRecommendations(
-      currentUser,
+      activeSelf,
       candidates,
       connectedUids,
       pendingSentUids,
@@ -109,7 +115,7 @@ export function DailyRecommendationsWidget({
 
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
     return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
-  }, [candidates, currentUser]);
+  }, [candidates, currentUser, hydratedSelf]);
 
   const handleConnect = async (rec: RecommendedConnection) => {
     if (!currentUser.uid || !rec.user.uid) return;

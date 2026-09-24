@@ -53,6 +53,46 @@ function tokenize(str?: string): Set<string> {
   return new Set(tokens);
 }
 
+function tokenizeCompany(str?: string): Set<string> {
+  const cleaned = cleanString(str);
+  if (!cleaned) return new Set();
+  const COMPANY_STOP_WORDS = new Set([
+    'and', 'or', 'the', 'of', 'in', 'at', 'on', 'for', 'with', 'by',
+    'pvt', 'ltd', 'limited', 'private', 'llc', 'corp', 'inc', 'co',
+    'lines', 'logistics', 'freight', 'shipping', 'transport', 'group',
+    'global', 'india', 'international', 'intl', 'solutions', 'services',
+    'nv', 'eu', 'sg', 'agency', 'line', 'desk'
+  ]);
+  const tokens = cleaned.split(' ').filter((w) => w.length > 2 && !COMPANY_STOP_WORDS.has(w));
+  return new Set(tokens);
+}
+
+function tokenizeInstitution(str?: string): Set<string> {
+  const cleaned = cleanString(str);
+  if (!cleaned) return new Set();
+  const INSTITUTION_STOP_WORDS = new Set([
+    'and', 'or', 'the', 'of', 'in', 'at', 'on', 'for', 'with', 'by',
+    'university', 'univ', 'institute', 'college', 'school', 'academy',
+    'faculty', 'department', 'studies', 'national', 'international',
+    'global', 'management', 'business', 'commerce', 'trade', 'technology', 'tech'
+  ]);
+  const tokens = cleaned.split(' ').filter((w) => w.length > 2 && !INSTITUTION_STOP_WORDS.has(w));
+  return new Set(tokens);
+}
+
+function tokenizeCertification(str?: string): Set<string> {
+  const cleaned = cleanString(str);
+  if (!cleaned) return new Set();
+  const CERT_STOP_WORDS = new Set([
+    'and', 'or', 'the', 'of', 'in', 'at', 'on', 'for', 'with', 'by',
+    'diploma', 'certificate', 'certification', 'certified', 'specialist',
+    'specialism', 'association', 'associations', 'federation', 'international',
+    'national', 'india', 'indian', 'chartered', 'program', 'course'
+  ]);
+  const tokens = cleaned.split(' ').filter((w) => w.length > 2 && !CERT_STOP_WORDS.has(w));
+  return new Set(tokens);
+}
+
 function hasOverlap(tokensA: Set<string>, tokensB: Set<string>): boolean {
   for (const token of tokensA) {
     if (tokensB.has(token)) return true;
@@ -103,9 +143,9 @@ export function calculateConnectionAffinity(
   const myComp = cleanString(me.company);
   const targetComp = cleanString(target.company);
   if (myComp && targetComp) {
-    const myCompTokens = tokenize(me.company);
-    const targetCompTokens = tokenize(target.company);
-    if (myComp === targetComp || hasOverlap(myCompTokens, targetCompTokens)) {
+    const myCompTokens = tokenizeCompany(me.company);
+    const targetCompTokens = tokenizeCompany(target.company);
+    if (myComp === targetComp || (myCompTokens.size > 0 && hasOverlap(myCompTokens, targetCompTokens))) {
       const points = 35;
       score += points;
       reasons.push({
@@ -128,16 +168,22 @@ export function calculateConnectionAffinity(
   const sharedExCompanies = new Set<string>();
 
   for (const myPast of myPastCompanies) {
+    const pTokens = tokenizeCompany(myPast);
+    if (pTokens.size === 0) continue;
     for (const targetCompName of targetAllCompanies) {
-      if (cleanString(myPast) === cleanString(targetCompName) || hasOverlap(tokenize(myPast), tokenize(targetCompName))) {
+      const tTokens = tokenizeCompany(targetCompName);
+      if (cleanString(myPast) === cleanString(targetCompName) || hasOverlap(pTokens, tTokens)) {
         sharedExCompanies.add(myPast);
       }
     }
   }
 
   for (const targetPast of targetPastCompanies) {
+    const pTokens = tokenizeCompany(targetPast);
+    if (pTokens.size === 0) continue;
     for (const myCompName of myAllCompanies) {
-      if (cleanString(targetPast) === cleanString(myCompName) || hasOverlap(tokenize(targetPast), tokenize(myCompName))) {
+      const mTokens = tokenizeCompany(myCompName);
+      if (cleanString(targetPast) === cleanString(myCompName) || hasOverlap(pTokens, mTokens)) {
         sharedExCompanies.add(targetPast);
       }
     }
@@ -161,8 +207,6 @@ export function calculateConnectionAffinity(
   const targetCity = cleanString(target.city);
   const myState = cleanString(me.state);
   const targetState = cleanString(target.state);
-  const myCountry = cleanString(me.country);
-  const targetCountry = cleanString(target.country);
 
   if (myCity && targetCity && (myCity === targetCity || myCity.includes(targetCity) || targetCity.includes(myCity))) {
     const points = 25;
@@ -182,16 +226,6 @@ export function calculateConnectionAffinity(
       badge: `📍 Region: ${target.state}`,
       label: 'Regional Maritime Cluster',
       detail: `Both based in ${target.state}`,
-      points,
-    });
-  } else if (myCountry && targetCountry && myCountry === targetCountry) {
-    const points = 6;
-    score += points;
-    reasons.push({
-      category: 'location',
-      badge: `🌐 Same Jurisdiction: ${target.country}`,
-      label: 'National Trade Corridor',
-      detail: `Both operating in ${target.country}`,
       points,
     });
   }
@@ -225,20 +259,20 @@ export function calculateConnectionAffinity(
   const matchedDegrees: string[] = [];
 
   for (const myEdu of myEdus) {
-    const myInstTokens = tokenize(myEdu.institution);
+    const myInstTokens = tokenizeInstitution(myEdu.institution);
     const myQualTokens = tokenize(myEdu.qualification);
 
     for (const tEdu of targetEdus) {
-      const tInstTokens = tokenize(tEdu.institution);
+      const tInstTokens = tokenizeInstitution(tEdu.institution);
       const tQualTokens = tokenize(tEdu.qualification);
 
-      if (hasOverlap(myInstTokens, tInstTokens)) {
+      if (myInstTokens.size > 0 && tInstTokens.size > 0 && hasOverlap(myInstTokens, tInstTokens)) {
         if (!matchedColleges.includes(tEdu.institution)) {
           matchedColleges.push(tEdu.institution);
         }
       }
 
-      if (hasOverlap(myQualTokens, tQualTokens)) {
+      if (myQualTokens.size > 0 && tQualTokens.size > 0 && hasOverlap(myQualTokens, tQualTokens)) {
         if (!matchedDegrees.includes(tEdu.qualification)) {
           matchedDegrees.push(tEdu.qualification);
         }
@@ -287,10 +321,10 @@ export function calculateConnectionAffinity(
   const matchedCerts: string[] = [];
 
   for (const myCert of myCerts) {
-    const myCertTokens = tokenize(`${myCert.title} ${myCert.issuingAuthority}`);
+    const myCertTokens = tokenizeCertification(`${myCert.title} ${myCert.issuingAuthority}`);
     for (const tCert of targetCerts) {
-      const tCertTokens = tokenize(`${tCert.title} ${tCert.issuingAuthority}`);
-      if (hasOverlap(myCertTokens, tCertTokens)) {
+      const tCertTokens = tokenizeCertification(`${tCert.title} ${tCert.issuingAuthority}`);
+      if (myCertTokens.size > 0 && tCertTokens.size > 0 && hasOverlap(myCertTokens, tCertTokens)) {
         const title = tCert.title || myCert.title;
         if (!matchedCerts.includes(title)) {
           matchedCerts.push(title);
@@ -341,14 +375,29 @@ export function calculateConnectionAffinity(
     }
   }
 
-  // Base network affinity if verified
+  // Only calculate percentage if there are valid affinity reasons
+  if (reasons.length === 0) {
+    return {
+      score: 0,
+      percentage: 0,
+      reasons: [],
+      topBadges: [],
+    };
+  }
+
+  // Base network credibility boost for verified members
   if (target.isVerified || target.hasGoldenTick) {
     score += 5;
   }
 
-  // Calculate percentage: baseline 40% + score-weighted calculation, capped at 99%
-  // Score range typical: 20 - 150
-  const percentage = Math.min(99, Math.max(48, Math.round(45 + (score / 150) * 54)));
+  // Calibrate industry-grade percentage:
+  // 1 reason: 72% - 82%
+  // 2 reasons: 84% - 91%
+  // 3 reasons: 92% - 95%
+  // 4+ reasons: 96% - 99%
+  const reasonScore = Math.min(reasons.length * 12, 48);
+  const depthScore = Math.min((score / 130) * 45, 45);
+  const percentage = Math.min(99, Math.max(68, Math.round(10 + reasonScore + depthScore)));
 
   const topBadges = reasons.slice(0, 3).map((r) => r.badge);
 
@@ -412,9 +461,16 @@ export function getDailyConnectionRecommendations(
 
     const { score, percentage, reasons, topBadges } = calculateConnectionAffinity(currentUser, candidate);
 
+    // STRICT INDUSTRY-GRADE QUALITY FILTER:
+    // Only recommend profiles with genuine connection points (minimum 65% affinity and at least 1 verified reason).
+    // Never show dummy filler cards with zero connection points or blank badges!
+    if (reasons.length === 0 || percentage < 65) {
+      continue;
+    }
+
     // Apply minor daily jitter to break ties and keep recommendations fresh each day
     const userSeed = (candidate.uid.charCodeAt(0) || 1) * 17 + daySeed;
-    const dailyJitter = seededPseudoRandom(userSeed) * 4;
+    const dailyJitter = seededPseudoRandom(userSeed) * 2;
     const totalRankScore = score + dailyJitter;
 
     evaluated.push({

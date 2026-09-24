@@ -163,6 +163,20 @@ export interface DbmsUserRecord {
   [key: string]: any;
 }
 
+function isDummyUser(u: any): boolean {
+  if (!u) return true;
+  const uid = (u.uid || '').toLowerCase();
+  const email = (u.email || '').toLowerCase();
+  const name = (u.displayName || '').toLowerCase();
+  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp)[-_0-9]/i.test(uid)) return true;
+  if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true;
+  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@')) return true;
+  if (/^(lockout|sureset|test\.|tester|dummy|temp)[-_0-9.]/i.test(email)) return true;
+  if (/^[a-z]+\.[0-9]{10,}@/i.test(email)) return true;
+  if (name.includes('dummy') || name.includes('mock user')) return true;
+  return false;
+}
+
 export function getPersistedUsers(): DbmsUserRecord[] {
   ensureDirExists();
   try {
@@ -171,7 +185,7 @@ export function getPersistedUsers(): DbmsUserRecord[] {
     }
     const raw = fs.readFileSync(USERS_FILE, 'utf8');
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.filter((u: any) => !isDummyUser(u)) : [];
   } catch (err) {
     console.error('[DBMS] Error reading persisted users:', err);
     return [];
@@ -188,6 +202,9 @@ export function getPersistedUserByIdentifier(identifier: string): DbmsUserRecord
 }
 
 export function savePersistedUser(user: DbmsUserRecord): DbmsUserRecord {
+  if (isDummyUser(user)) {
+    return user;
+  }
   ensureDirExists();
   try {
     const existing = getPersistedUsers();
@@ -218,6 +235,22 @@ export function savePersistedUser(user: DbmsUserRecord): DbmsUserRecord {
   } catch (err) {
     console.error('[DBMS] Error saving persisted user:', err);
     return user;
+  }
+}
+
+export function deletePersistedUser(identifier: string): boolean {
+  ensureDirExists();
+  try {
+    const existing = getPersistedUsers();
+    const clean = identifier.trim().toLowerCase();
+    const filtered = existing.filter(
+      (u) => u.uid?.toLowerCase() !== clean && u.email?.toLowerCase() !== clean
+    );
+    fs.writeFileSync(USERS_FILE, JSON.stringify(filtered, null, 2), 'utf8');
+    return true;
+  } catch (err) {
+    console.error('[DBMS] Error deleting persisted user:', err);
+    return false;
   }
 }
 

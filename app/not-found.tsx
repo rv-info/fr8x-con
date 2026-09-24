@@ -22,6 +22,8 @@ export default function NotFoundPage() {
         const gfAuth = typeof window !== 'undefined' && sessionStorage.getItem('fr8x_godfather_auth') === 'true';
         if (gfAuth) {
           router.replace('/godfather');
+        } else if (pathname.includes('/login') || pathname.includes('/godfatheron')) {
+          router.replace('/godfather/login');
         } else {
           router.replace('/godfather/login?reason=not_found');
         }

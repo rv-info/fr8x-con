@@ -47,32 +47,32 @@ import {
 } from '@/lib/utils';
 
 const CONTAINER_20_OPTIONS = [
-  { value: "20' Standard (20DV)", label: "20' Standard Dry (20DV)" },
-  { value: "20' High Cube (20HC)", label: "20' High Cube (20HC)" },
-  { value: "20' Reefer (20RF)", label: "20' Reefer (20RF)" },
-  { value: "20' Open Top (20OT)", label: "20' Open Top (20OT)" },
-  { value: "20' Flat Rack (20FR)", label: "20' Flat Rack (20FR)" },
-  { value: "20' Platform (20PL)", label: "20' Platform (20PL)" },
-  { value: "20' ISO Tank (20TK)", label: "20' ISO Tank (20TK)" },
-  { value: "20' Bulk (20BK)", label: "20' Bulk (20BK)" },
-  { value: "20' Ventilated (20VN)", label: "20' Ventilated (20VN)" },
-  { value: "20' Insulated (20IN)", label: "20' Insulated (20IN)" },
-  { value: "20' Hard Top (20HT)", label: "20' Hard Top (20HT)" },
+  { value: '20DV', label: '20DV' },
+  { value: '20RF', label: '20RF' },
+  { value: '20HC', label: '20HC' },
+  { value: '20OT', label: '20OT' },
+  { value: '20FR', label: '20FR' },
+  { value: '20PL', label: '20PL' },
+  { value: '20TK', label: '20TK' },
+  { value: '20BK', label: '20BK' },
+  { value: '20VN', label: '20VN' },
+  { value: '20IN', label: '20IN' },
+  { value: '20HT', label: '20HT' },
 ];
 
 const CONTAINER_40_OPTIONS = [
-  { value: "40' High Cube (40HC)", label: "40' High Cube (40HC)" },
-  { value: "40' Standard (40DV)", label: "40' Standard Dry (40DV)" },
-  { value: "40' Reefer (40RF)", label: "40' Reefer (40RF)" },
-  { value: "40' Reefer HC (40HR)", label: "40' Reefer High Cube (40HR)" },
-  { value: "40' Open Top (40OT)", label: "40' Open Top (40OT)" },
-  { value: "40' Open Top HC (40OH)", label: "40' Open Top High Cube (40OH)" },
-  { value: "40' Flat Rack (40FR)", label: "40' Flat Rack (40FR)" },
-  { value: "40' Flat Rack Collapsible (40FC)", label: "40' Flat Rack Collapsible (40FC)" },
-  { value: "40' Platform (40PL)", label: "40' Platform (40PL)" },
-  { value: "45' High Cube (45HC)", label: "45' High Cube (45HC)" },
-  { value: "40' ISO Tank (40TK)", label: "40' ISO Tank (40TK)" },
-  { value: "40' Pallet Wide (40PW)", label: "40' Pallet Wide (40PW)" },
+  { value: '40HC', label: '40HC' },
+  { value: '40DV', label: '40DV' },
+  { value: '40RF', label: '40RF' },
+  { value: '40HR', label: '40HR' },
+  { value: '40OT', label: '40OT' },
+  { value: '40OH', label: '40OH' },
+  { value: '40FR', label: '40FR' },
+  { value: '40FC', label: '40FC' },
+  { value: '40PL', label: '40PL' },
+  { value: '45HC', label: '45HC' },
+  { value: '40TK', label: '40TK' },
+  { value: '40PW', label: '40PW' },
 ];
 
 const RATE_TYPE_OPTIONS = [
@@ -133,9 +133,9 @@ export default function RatesPage() {
   const [routing, setRouting] = useState('');
   const [transitTime, setTransitTime] = useState('');
   const [d20, setD20] = useState<number | ''>('');
-  const [d20Type, setD20Type] = useState("20' Standard (20DV)");
+  const [d20Type, setD20Type] = useState('20DV');
   const [h40, setH40] = useState<number | ''>('');
-  const [h40Type, setH40Type] = useState("40' High Cube (40HC)");
+  const [h40Type, setH40Type] = useState('40HC');
   const [freeTime, setFreeTime] = useState('');
   const [validDate, setValidDate] = useState('');
   const [rateType, setRateType] = useState('Direct Spot');
@@ -195,8 +195,6 @@ US $${r.d20.toLocaleString()}/${d20TypeStr} & US $${r.h40.toLocaleString()}/${h4
 Validity Date    : ${r.valid}
 Rate Category    : ${r.rateType || 'Spot Contract'}
 Remarks & Terms  : ${r.remark || ''}
--------------------------------------------------------
-Generated via FR8X Freight Exchange
 =======================================================`;
   };
 
@@ -337,9 +335,9 @@ Generated via FR8X Freight Exchange
     setRouting('');
     setTransitTime('');
     setD20('');
-    setD20Type("20' Standard (20DV)");
+    setD20Type('20DV');
     setH40('');
-    setH40Type("40' High Cube (40HC)");
+    setH40Type('40HC');
     setFreeTime('');
     setValidDate('');
     setRateType('Direct Spot');
@@ -360,9 +358,9 @@ Generated via FR8X Freight Exchange
       pod: pod.trim(),
       fpod: (fpod || pod).trim(),
       d20: Number(d20),
-      d20Type: d20Type || "20' Standard (20DV)",
+      d20Type: d20Type || '20DV',
       h40: Number(h40),
-      h40Type: h40Type || "40' High Cube (40HC)",
+      h40Type: h40Type || '40HC',
       ft: freeTime.trim() || '14 days combined',
       tt: transitTime.trim() || '28 days',
       valid: validDate,
@@ -407,9 +405,9 @@ Generated via FR8X Freight Exchange
       pod: pod.trim(),
       fpod: (fpod || pod).trim(),
       d20: Number(d20),
-      d20Type: d20Type || "20' Standard (20DV)",
+      d20Type: d20Type || '20DV',
       h40: Number(h40),
-      h40Type: h40Type || "40' High Cube (40HC)",
+      h40Type: h40Type || '40HC',
       ft: freeTime.trim() || '14 days combined',
       tt: transitTime.trim() || '28 days',
       valid: validDate,
@@ -1297,22 +1295,22 @@ Generated via FR8X Freight Exchange
               </div>
 
               {/* Row 4: 20 TYPE (All Container Types Dropdown) + 20 [USD] */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>20 TYPE</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>20 TYPE</label>
                   <SearchableDropdown
                     options={CONTAINER_20_OPTIONS}
                     value={d20Type}
                     onChange={setD20Type}
-                    searchPlaceholder="Search 20' type…"
+                    searchPlaceholder="20' size…"
                     style={{ fontSize: '11px' }}
                   />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>20DV ($) *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>{d20Type || '20DV'} ($) *</label>
                   <input
                     className="input"
-                    style={{ fontSize: '11.5px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 600 }}
+                    style={{ fontSize: '12px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 700, width: '100%', boxSizing: 'border-box' }}
                     type="number"
                     placeholder="e.g. 1480"
                     value={d20}
@@ -1322,22 +1320,22 @@ Generated via FR8X Freight Exchange
               </div>
 
               {/* Row 5: 40 TYPE (All Container Types Dropdown) + 40HC [USD] */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>40 TYPE</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>40 TYPE</label>
                   <SearchableDropdown
                     options={CONTAINER_40_OPTIONS}
                     value={h40Type}
                     onChange={setH40Type}
-                    searchPlaceholder="Search 40' type…"
+                    searchPlaceholder="40' size…"
                     style={{ fontSize: '11px' }}
                   />
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>40HC ($) *</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>{h40Type || '40HC'} ($) *</label>
                   <input
                     className="input"
-                    style={{ fontSize: '11.5px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 600 }}
+                    style={{ fontSize: '12px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 700, width: '100%', boxSizing: 'border-box' }}
                     type="number"
                     placeholder="e.g. 2320"
                     value={h40}
@@ -1974,9 +1972,9 @@ Generated via FR8X Freight Exchange
                           setPod(rate.pod);
                           setFpod(rate.fpod || '');
                           setD20(rate.d20);
-                          setD20Type(rate.d20Type || "20' Standard (20DV)");
+                          setD20Type(rate.d20Type || '20DV');
                           setH40(rate.h40);
-                          setH40Type(rate.h40Type || "40' High Cube (40HC)");
+                          setH40Type(rate.h40Type || '40HC');
                           setFreeTime(rate.ft || '');
                           setValidDate(rate.valid || '');
                           setTransitTime(rate.tt || '');

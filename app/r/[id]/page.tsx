@@ -318,7 +318,7 @@ export default function SmartRatePublicPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>20&apos; Standard Dry (20DV)</span>
+                  <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600 }}>{matchedRate.d20Type || '20DV'}</span>
                   <div style={{ fontSize: '28px', fontWeight: 900, color: '#f8fafc', marginTop: '4px' }}>
                     ${matchedRate.d20.toLocaleString()} <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>USD</span>
                   </div>
@@ -353,7 +353,7 @@ export default function SmartRatePublicPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 700 }}>40&apos; High Cube (40HC)</span>
+                  <span style={{ fontSize: '12px', color: '#38bdf8', fontWeight: 700 }}>{matchedRate.h40Type || '40HC'}</span>
                   <div style={{ fontSize: '28px', fontWeight: 900, color: '#38bdf8', marginTop: '4px' }}>
                     ${matchedRate.h40.toLocaleString()} <span style={{ fontSize: '13px', color: '#94a3b8', fontWeight: 600 }}>USD</span>
                   </div>

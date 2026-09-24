@@ -11,13 +11,15 @@ const nextConfig = {
       },
     ],
   },
-  async redirects() {
+  async rewrites() {
     return [
       {
-        // /godfather/login is an alias — redirect to the actual login page
-        source: '/godfather/login',
-        destination: '/godfatheron',
-        permanent: true,
+        source: '/godfatheron',
+        destination: '/godfather/login',
+      },
+      {
+        source: '/GODFATHERON',
+        destination: '/godfather/login',
       },
     ];
   },
