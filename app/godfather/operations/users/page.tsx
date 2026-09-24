@@ -193,16 +193,24 @@ export default function UsersGovernancePage() {
     e.preventDefault();
     if (!selectedUser) return;
 
+    const updatedDisplayName =
+      `${editFormData.firstName || ''} ${editFormData.lastName || ''}`.trim() ||
+      selectedUser.displayName;
+    const payload = {
+      ...editFormData,
+      displayName: updatedDisplayName,
+    };
+
     setModalConfig({
       isOpen: true,
       title: 'Commit Audited Profile Corrections',
       actionType: 'USER_PROFILE_CORRECTED',
-      targetLabel: selectedUser.displayName,
+      targetLabel: updatedDisplayName,
       targetId: selectedUser.uid,
       beforeSnapshot: selectedUser,
-      afterSnapshot: { ...selectedUser, ...editFormData },
+      afterSnapshot: { ...selectedUser, ...payload },
       onConfirm: async (reason) => {
-        await updateUserProfileAudited(selectedUser.uid, editFormData, reason);
+        await updateUserProfileAudited(selectedUser.uid, payload, reason);
         setIsEditModalOpen(false);
         setModalConfig(null);
       },

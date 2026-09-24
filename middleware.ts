@@ -24,11 +24,10 @@ const PROTECTED_USER_ROUTES = [
   '/rates',
   '/profile',
   '/nexus',
-  '/godfather',
 ];
 
 /** Routes that require the Godfather operator session cookie */
-const PROTECTED_GODFATHER_ROUTES = ['/godfatheron', '/GODFATHERON'];
+const PROTECTED_GODFATHER_ROUTES = ['/godfather'];
 
 /** Routes explicitly public — no auth check */
 const PUBLIC_ROUTES = [
@@ -40,11 +39,18 @@ const PUBLIC_ROUTES = [
   '/ref',
   '/privacy',
   '/download',
+  '/godfatheron',
+  '/GODFATHERON',
+  '/godfather/login',
 ];
 
 function isGodfatherRoute(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  if (lower === '/godfatheron' || lower.startsWith('/godfatheron/') || lower === '/godfather/login') {
+    return false;
+  }
   return PROTECTED_GODFATHER_ROUTES.some(
-    (r) => pathname.toLowerCase() === r.toLowerCase() || pathname.toLowerCase().startsWith(r.toLowerCase() + '/')
+    (r) => lower === r.toLowerCase() || lower.startsWith(r.toLowerCase() + '/')
   );
 }
 
@@ -79,10 +85,11 @@ export function middleware(request: NextRequest) {
       request.cookies.get('__Secure-FR8X-Godfather-Session');
 
     if (!godfatherCookie?.value) {
-      // Do NOT reveal the Godfather panel URL — redirect to plain login
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('reason', 'auth_required');
-      return NextResponse.redirect(loginUrl);
+      // Redirect to dedicated Godfather operator login portal, preserving target URL
+      const gfLoginUrl = new URL('/godfatheron', request.url);
+      gfLoginUrl.searchParams.set('reason', 'auth_required');
+      gfLoginUrl.searchParams.set('next', encodeURIComponent(pathname));
+      return NextResponse.redirect(gfLoginUrl);
     }
 
     return NextResponse.next();

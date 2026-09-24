@@ -120,7 +120,9 @@ export function GodfatherShell({ children }: GodfatherShellProps) {
 
       {/* Sidebar Navigation */}
       <div className={`gf-sidebar-container ${isMobileSidebarOpen ? 'mobile-visible' : ''}`}>
-        <GodfatherSidebar />
+        <React.Suspense fallback={<div className="gf-sidebar" />}>
+          <GodfatherSidebar />
+        </React.Suspense>
       </div>
 
       {/* Main Workspace View */}

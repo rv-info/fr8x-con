@@ -6208,7 +6208,7 @@ textarea.input {
     position: relative;
   }
   .mobile-nav-item:active {
-    transform: scale(0.92);
+    opacity: 0.82;
   }
   .mobile-nav-item.active {
     color: var(--brand);
@@ -8825,8 +8825,7 @@ textarea.input {
   }
 
   .mobile-rate-action-btn:active {
-    background: #f1f5f9 !important;
-    transform: scale(0.96) !important;
+    background: #e2e8f0 !important;
   }
 
   .mobile-rate-action-btn.primary {
@@ -9926,13 +9925,28 @@ tr.compared-row td.rates-sticky-action-col {
 }
 
 /* ==========================================================================
-   FR8X GLOBAL MICRO-INTERACTIONS
-   1. LESS ANIMATED HOVER EFFECT: 1% ZOOM (scale(1.01))
-   2. TEXT BOXES: 1% ZOOM OUT (scale(0.99)) MAKING PAPER CUT EFFECT
-   3. WHILE TYPING / ACTIVE CELL: 2% BIGGER '-' MOVING ON EDGE OF BOX LINE
+   FR8X GLOBAL CRISP TEXT RENDERING & MICRO-INTERACTIONS
+   1. ZERO TEXT BLUR GUARANTEE: Strictly NO fractional transform scaling on text
+   2. SHARP PAPER CUT EFFECT: Purely pixel-aligned debossed shadows (transform: none)
+   3. ACTIVE CELL TYPING RUNNER: Conic gradient border animation with transform: none
    ========================================================================== */
 
-/* 1. LESS ANIMATED HOVER EFFECT: 1% ZOOM (scale(1.01)) */
+/* Universal sharp font rendering */
+html,
+body,
+input,
+textarea,
+select,
+button,
+table,
+td,
+th {
+  -webkit-font-smoothing: antialiased !important;
+  -moz-osx-font-smoothing: grayscale !important;
+  text-rendering: optimizeLegibility !important;
+}
+
+/* 1. CRISP HOVER ELEVATION (ZERO TEXT SCALING) */
 .card,
 [class*='card']:not(.rates-compact-table):not(.gf-table),
 .btn,
@@ -9946,27 +9960,22 @@ button:not(.btn-no-zoom),
 .feed-action-btn,
 .badge-interactive,
 table tbody tr.clickable {
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.2s ease;
-  will-change: transform;
+  transition: box-shadow 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+  transform: none !important;
 }
 
 .card:hover,
-[class*='card']:not(.rates-compact-table):not(.gf-table):hover,
-.btn:hover,
-button:not(.btn-no-zoom):hover:not(:disabled),
-[role='button']:hover:not([aria-disabled='true']),
-.navitem:hover,
-.navlink:hover,
-.chip:hover,
-.tab:hover,
-.tabs button:hover,
-.feed-action-btn:hover,
-.badge-interactive:hover,
-table tbody tr.clickable:hover {
-  transform: scale(1.01);
+[class*='card']:not(.rates-compact-table):not(.gf-table):hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
 }
 
-/* 2. TEXT BOXES: 1% ZOOM OUT (scale(0.99)) MAKING PAPER CUT (DEBOSSED / DIE-CUT) EFFECT */
+.btn:hover:not(:disabled),
+button:not(.btn-no-zoom):hover:not(:disabled),
+[role='button']:hover:not([aria-disabled='true']) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+}
+
+/* 2. TEXT BOXES: CRISP PAPER CUT (DEBOSSED / DIE-CUT) EFFECT WITHOUT SCALING */
 input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']),
 textarea,
 select,
@@ -9986,17 +9995,15 @@ textarea.input,
 .gfl-input,
 .gfl-textarea,
 .gfl-clean-input {
-  transform: scale(0.99);
-  transform-origin: center center;
+  transform: none !important;
   box-shadow: 
     inset 0 1.5px 3px rgba(0, 0, 0, 0.08),
-    inset 0 0 0 1px rgba(0, 0, 0, 0.02),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.03),
     0 1px 0 rgba(255, 255, 255, 0.85);
   transition: 
-    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 0.22s ease,
-    border-color 0.22s ease,
-    background-color 0.22s ease;
+    box-shadow 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease;
 }
 
 input:not([type='checkbox']):not([type='radio']):not([type='button']):not([type='submit']):not([type='reset']):not([type='range']):not([type='hidden']):not([type='file']):hover,
@@ -10018,15 +10025,15 @@ textarea.input:hover,
 .gfl-input:hover,
 .gfl-textarea:hover,
 .gfl-clean-input:hover {
-  transform: scale(0.99);
+  transform: none !important;
   border-color: #94a3b8;
   box-shadow: 
-    inset 0 2px 4.5px rgba(0, 0, 0, 0.11),
+    inset 0 2px 4px rgba(0, 0, 0, 0.11),
     inset 0 0 0 1px rgba(0, 0, 0, 0.04),
     0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
-/* 3. WHILE TYPING / ACTIVE CELL: 2% BIGGER '-' MOVING ON EDGE OF BOX LINE */
+/* 3. WHILE TYPING / ACTIVE CELL: CONIC RUNNER WITH TRANSFORM: NONE (ZERO BLUR) */
 @keyframes activeCellBorderRunner {
   0% {
     --border-angle: 0deg;
@@ -10061,7 +10068,7 @@ td.active-cell,
 .active-cell,
 [contenteditable='true']:focus {
   outline: none !important;
-  transform: scale(0.99) !important;
+  transform: none !important;
   border: 2px solid transparent !important;
   background-image: 
     linear-gradient(var(--fr8x-background, #ffffff), var(--fr8x-background, #ffffff)),
@@ -10081,7 +10088,7 @@ td.active-cell,
   background-clip: padding-box, border-box !important;
   animation: activeCellBorderRunner 2.4s linear infinite !important;
   box-shadow: 
-    inset 0 2px 4px rgba(0, 0, 0, 0.09),
+    inset 0 2px 4px rgba(0, 0, 0, 0.08),
     inset 0 0 0 1px rgba(0, 0, 0, 0.03),
     0 0 0 1px rgba(25, 133, 161, 0.22),
     0 2px 8px -1px rgba(25, 133, 161, 0.35) !important;

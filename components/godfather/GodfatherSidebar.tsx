@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   Users, Building, Gavel, DollarSign, Briefcase, Database,
   Filter, BadgeCheck, Shield, MessageSquare, FileCheck,
@@ -28,6 +28,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Users & Profiles', href: '/godfather/operations/users', icon: Users },
       { label: 'Companies & KYC', href: '/godfather/operations/companies', icon: Building },
+      { label: 'DBMS Master Registry', href: '/godfather/operations/companies?tab=master_dbms', icon: Database },
       { label: 'Auctions & Bids', href: '/godfather/operations/auctions', icon: Gavel },
       { label: 'Rates & Imports', href: '/godfather/operations/rates', icon: DollarSign },
       { label: 'Jobs & Advertisements', href: '/godfather/operations/jobs', icon: Briefcase },
@@ -83,6 +84,8 @@ const NAV_SECTIONS: NavSection[] = [
 
 export function GodfatherSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentTab = searchParams?.get('tab');
   const { operator, operatorsList, switchOperator, environment, setEnvironment } = useGodfatherAuth();
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
@@ -244,7 +247,17 @@ export function GodfatherSidebar() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', marginTop: '2px' }}>
                   {section.items.map((item) => {
                     const Icon = item.icon;
-                    const isActive = pathname === item.href || (item.href !== '/godfather' && pathname.startsWith(item.href));
+                    const itemPath = item.href.split('?')[0];
+                    const itemQuery = item.href.includes('?') ? item.href.split('?')[1] : null;
+                    const isCurrentPath = pathname === itemPath;
+                    let isActive = false;
+                    if (itemQuery && itemQuery.includes('tab=master_dbms')) {
+                      isActive = isCurrentPath && currentTab === 'master_dbms';
+                    } else if (item.href === '/godfather/operations/companies') {
+                      isActive = isCurrentPath && currentTab !== 'master_dbms';
+                    } else {
+                      isActive = pathname === item.href || (item.href !== '/godfather' && pathname.startsWith(item.href + '/'));
+                    }
                     return (
                       <Link key={item.href} href={item.href} className={`gf-nav-link ${isActive ? 'active' : ''}`}>
                         <Icon className="lucide" />

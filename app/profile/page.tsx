@@ -449,10 +449,10 @@ export default function ProfilePage() {
     setFormattedAddress(user.formattedAddress || '');
     setTimezone(user.timezone || 'Asia/Kolkata');
     setKycCountry((user as any).kycCountry || user.country || 'India');
-    setTaxId((user as any).taxId || user.gstn || '');
-    setCorporateReg((user as any).corporateRegNumber || user.pan || '');
-    setTradeCustoms((user as any).tradeCustomsCode || user.iec || '');
-    setLogisticsLicense((user as any).logisticsLicenseNumber || user.mto || '');
+    setTaxId((user as any).taxId || '');
+    setCorporateReg((user as any).corporateRegNumber || '');
+    setTradeCustoms((user as any).tradeCustomsCode || '');
+    setLogisticsLicense((user as any).logisticsLicenseNumber || '');
     setGstn(user.gstn || '');
     setPan(user.pan || '');
     setIec(user.iec || '');
@@ -599,10 +599,10 @@ export default function ProfilePage() {
       corporateRegNumber: corporateReg,
       tradeCustomsCode: tradeCustoms,
       logisticsLicenseNumber: logisticsLicense,
-      gstn: kycCountry === 'India' || !taxId ? gstn : taxId,
-      pan: kycCountry === 'India' || !corporateReg ? pan : corporateReg,
-      iec: kycCountry === 'India' || !tradeCustoms ? iec : tradeCustoms,
-      mto: kycCountry === 'India' || !logisticsLicense ? mto : logisticsLicense,
+      gstn: gstn || '',
+      pan: pan || '',
+      iec: iec || '',
+      mto: mto || '',
     });
     setIsEditMode(false);
     toast('Enterprise profile updated successfully.');

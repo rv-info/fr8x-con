@@ -36,8 +36,9 @@ import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { CompanyVerificationItem } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
 import { getStatutoryProfile } from '@/lib/utils/statutory-kyc';
+import { useSearchParams } from 'next/navigation';
 
-export default function CompaniesKYCPage() {
+function CompaniesKYCContent() {
   const { companies, verifyCompany, rejectCompany, requestCompanyInfo, auditLogs } = useGodfatherData();
   const { requestStepUpVerification, hasPermission } = useGodfatherAuth();
 
@@ -102,6 +103,35 @@ export default function CompaniesKYCPage() {
       console.error('Failed to fetch DBMS companies:', err);
     } finally {
       setIsLoadingDbms(false);
+    }
+  };
+
+  // Synchronize tab with URL search param on mount and navigation
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get('tab');
+
+  useEffect(() => {
+    if (tabParam === 'master_dbms' || tabParam === 'dbms') {
+      setActiveTab('master_dbms');
+      fetchDbmsCompanies();
+    } else if (tabParam === 'kyc') {
+      setActiveTab('kyc');
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (tab: 'kyc' | 'master_dbms') => {
+    setActiveTab(tab);
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      if (tab === 'master_dbms') {
+        url.searchParams.set('tab', 'master_dbms');
+        if (dbmsCompanies.length === 0) {
+          fetchDbmsCompanies();
+        }
+      } else {
+        url.searchParams.delete('tab');
+      }
+      window.history.replaceState(null, '', url.toString());
     }
   };
 
@@ -344,7 +374,7 @@ export default function CompaniesKYCPage() {
       <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
         <button
           type="button"
-          onClick={() => setActiveTab('kyc')}
+          onClick={() => handleTabChange('kyc')}
           className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'kyc'
               ? 'bg-sky-600 text-white shadow-sm'
@@ -364,12 +394,7 @@ export default function CompaniesKYCPage() {
 
         <button
           type="button"
-          onClick={() => {
-            setActiveTab('master_dbms');
-            if (dbmsCompanies.length === 0) {
-              fetchDbmsCompanies();
-            }
-          }}
+          onClick={() => handleTabChange('master_dbms')}
           className={`px-3.5 py-2 rounded-lg text-xs font-bold flex items-center gap-2 transition-all cursor-pointer ${
             activeTab === 'master_dbms'
               ? 'bg-slate-900 text-white shadow-sm ring-2 ring-sky-500/20'
@@ -946,9 +971,14 @@ export default function CompaniesKYCPage() {
                       gstn: '',
                       pan: '',
                       iec: '',
+                      mto: '',
                       taxId: '',
                       corporateRegNumber: '',
+                      tradeCustomsCode: '',
                       logisticsLicenseNumber: '',
+                      primaryContactName: '',
+                      primaryContactEmail: '',
+                      primaryContactPhone: '',
                       status: 'verified',
                       verified: true,
                       memberCount: 1,
@@ -1591,54 +1621,217 @@ export default function CompaniesKYCPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Statutory Tax & Corporate Identifiers (Country Adaptive - Clean Distinct Fields) */}
+              <div className="pt-2 border-t border-slate-100">
+                <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                  <ShieldCheck className="lucide w-3.5 h-3.5 text-sky-600" />
+                  <span>
+                    {(editModal.company.country || '').trim().toLowerCase() === 'india'
+                      ? 'India Statutory Filings (GSTN, PAN, IEC, MTO)'
+                      : `International Corporate Filings (${editModal.company.country || 'Global'})`}
+                  </span>
+                </div>
+
+                {(editModal.company.country || '').trim().toLowerCase() === 'india' ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">GST Identification (GSTN)</label>
+                      <input
+                        type="text"
+                        value={editModal.company.gstn || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, gstn: e.target.value.toUpperCase().trim() },
+                          }))
+                        }
+                        placeholder="e.g. 27AABCA1234F1Z5"
+                        className="gf-input font-mono uppercase"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Company PAN</label>
+                      <input
+                        type="text"
+                        value={editModal.company.pan || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, pan: e.target.value.toUpperCase().trim() },
+                          }))
+                        }
+                        placeholder="e.g. AABCA1234F"
+                        className="gf-input font-mono uppercase"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Import Export Code (IEC)</label>
+                      <input
+                        type="text"
+                        value={editModal.company.iec || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, iec: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. 0312004561"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">MTO Registration License</label>
+                      <input
+                        type="text"
+                        value={editModal.company.mto || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, mto: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. MTO/DGS/2024/9912"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Statutory Tax ID / VAT</label>
+                      <input
+                        type="text"
+                        value={editModal.company.taxId || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, taxId: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. NL884210992B01 / EIN"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Corporate Reg Number (KvK/CR)</label>
+                      <input
+                        type="text"
+                        value={editModal.company.corporateRegNumber || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, corporateRegNumber: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. KvK-24389102 / 913100"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Customs / EORI / FMC Code</label>
+                      <input
+                        type="text"
+                        value={editModal.company.tradeCustomsCode || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, tradeCustomsCode: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. NL-EORI-884210992 / FMC"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+
+                    <div className="gf-form-group">
+                      <label className="gf-form-label">Logistics Operating License</label>
+                      <input
+                        type="text"
+                        value={editModal.company.logisticsLicenseNumber || ''}
+                        onChange={(e) =>
+                          setEditModal((prev) => ({
+                            ...prev,
+                            company: { ...prev.company, logisticsLicenseNumber: e.target.value.trim() },
+                          }))
+                        }
+                        placeholder="e.g. OTI-19924-NF / FAK-882"
+                        className="gf-input font-mono"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Primary Contact & Verification Status */}
+              <div className="pt-2 border-t border-slate-100 grid grid-cols-1 md:grid-cols-4 gap-3">
                 <div className="gf-form-group">
-                  <label className="gf-form-label">GSTN / Tax ID</label>
+                  <label className="gf-form-label">Primary Contact Person</label>
                   <input
                     type="text"
-                    value={editModal.company.gstn || editModal.company.taxId || ''}
+                    value={editModal.company.primaryContactName || ''}
                     onChange={(e) =>
                       setEditModal((prev) => ({
                         ...prev,
-                        company: { ...prev.company, gstn: e.target.value, taxId: e.target.value },
+                        company: { ...prev.company, primaryContactName: e.target.value },
                       }))
                     }
-                    placeholder="e.g. 27AABCA1234F1Z5"
+                    placeholder="e.g. Sarah Lewis / Arjun Rao"
+                    className="gf-input"
+                  />
+                </div>
+
+                <div className="gf-form-group">
+                  <label className="gf-form-label">Contact Email</label>
+                  <input
+                    type="email"
+                    value={editModal.company.primaryContactEmail || ''}
+                    onChange={(e) =>
+                      setEditModal((prev) => ({
+                        ...prev,
+                        company: { ...prev.company, primaryContactEmail: e.target.value },
+                      }))
+                    }
+                    placeholder="ops@company.com"
                     className="gf-input font-mono"
                   />
                 </div>
 
                 <div className="gf-form-group">
-                  <label className="gf-form-label">PAN / Corporate Reg Number</label>
+                  <label className="gf-form-label">Contact Phone</label>
                   <input
                     type="text"
-                    value={editModal.company.pan || editModal.company.corporateRegNumber || ''}
+                    value={editModal.company.primaryContactPhone || ''}
                     onChange={(e) =>
                       setEditModal((prev) => ({
                         ...prev,
-                        company: {
-                          ...prev.company,
-                          pan: e.target.value,
-                          corporateRegNumber: e.target.value,
-                        },
+                        company: { ...prev.company, primaryContactPhone: e.target.value },
                       }))
                     }
-                    placeholder="e.g. AABCA1234F"
+                    placeholder="+91 98765 43210"
                     className="gf-input font-mono"
                   />
                 </div>
 
                 <div className="gf-form-group">
-                  <label className="gf-form-label">Status</label>
+                  <label className="gf-form-label">Verification Governance Status</label>
                   <select
                     value={editModal.company.status || 'verified'}
                     onChange={(e) =>
                       setEditModal((prev) => ({
                         ...prev,
-                        company: { ...prev.company, status: e.target.value as any },
+                        company: {
+                          ...prev.company,
+                          status: e.target.value as any,
+                          verified: e.target.value === 'verified',
+                        },
                       }))
                     }
-                    className="gf-select w-full"
+                    className="gf-select w-full font-bold"
                   >
                     <option value="verified">Verified Canonical</option>
                     <option value="pending">Pending Review</option>
@@ -1670,5 +1863,20 @@ export default function CompaniesKYCPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CompaniesKYCPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="p-6 text-slate-500 font-mono text-xs flex items-center gap-2">
+          <Database className="w-4 h-4 text-emerald-600 animate-spin" />
+          <span>Loading DBMS & KYC Registry...</span>
+        </div>
+      }
+    >
+      <CompaniesKYCContent />
+    </React.Suspense>
   );
 }
