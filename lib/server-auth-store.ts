@@ -124,11 +124,41 @@ export interface ServerUserRecord {
   passwordHash: string; // SHA-256 / PBKDF2 hashed password
   salt: string;
   displayName: string;
+  firstName?: string;
+  lastName?: string;
   company: string;
   companyId: string;
   role: 'company_admin' | 'user' | 'billing_admin';
   status: 'active' | 'blocked' | 'suspended' | 'pending_verification';
   mobile?: string;
+  alternateMobile?: string;
+  designation?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  formattedAddress?: string;
+  timezone?: string;
+  avatarUrl?: string;
+  companyLogoUrl?: string;
+  experiences?: any[];
+  educations?: any[];
+  certifications?: any[];
+  operatingCorridors?: string;
+  companyTransferStatus?: 'none' | 'pending_godfather_approval' | 'verified';
+  pendingCompany?: string;
+  pendingEmail?: string;
+  transferRequestId?: string;
+  transferSubmittedAt?: string;
+  contacts?: string[];
+  activeSessionId?: string;
+  activeDevice?: {
+    deviceId?: string;
+    userAgent?: string;
+    ip?: string;
+    loggedInAt: string;
+    lastActiveAt: string;
+  };
   failedLoginAttempts: number;
   lastFailedAttemptAt?: string;
   blockedAt?: string;
@@ -139,6 +169,7 @@ export interface ServerUserRecord {
   emailVerifiedAt?: string;
   firstLoginCompleted?: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface VerificationTokenRecord {
@@ -320,11 +351,88 @@ class ServerSecurityStore {
         email: 'arjun@atlaslogistics.com',
         passwordPlain: 'Atlas@2025',
         displayName: 'Arjun Rao',
+        firstName: 'Arjun',
+        lastName: 'Rao',
         company: 'Atlas Logistics Pvt. Ltd.',
         companyId: 'CMP-00101',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+919820011223',
+        designation: 'Senior Vice President - Ocean Trade',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        postalCode: '400001',
+        formattedAddress: 'Nariman Point Maritime Centre, 6th Floor, Mumbai 400001',
+        timezone: 'Asia/Kolkata',
+        operatingCorridors: 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
+        experiences: [
+          {
+            id: 'exp-a1',
+            company: 'Atlas Logistics Pvt. Ltd.',
+            designation: 'Senior Vice President - Ocean Trade',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2021-04',
+            isCurrent: true,
+            description: 'Directing liner procurement, multimodal logistics and major freight forwarding operations.',
+            skills: 'Ocean Freight, Multimodal Transport, Port Operations, Customs Clearance',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-a2',
+            company: 'Maersk Logistics India',
+            designation: 'Trade Route Manager',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2016-02',
+            endDate: '2021-03',
+            isCurrent: false,
+            description: 'Managed India-Middle East liner trade corridor volumes and vessel space allocation.',
+            skills: 'Liner Operations, Fleet Allocation, Rate Negotiation',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-a1',
+            institution: 'Indian Institute of Foreign Trade (IIFT)',
+            qualification: 'MBA',
+            fieldOfStudy: 'International Business & Trade Logistics',
+            startYear: '2014',
+            endYear: '2016',
+            visibility: 'public',
+          },
+          {
+            id: 'edu-a2',
+            institution: 'University of Mumbai',
+            qualification: 'Bachelor of Commerce',
+            fieldOfStudy: 'Financial Accounting & Commerce',
+            startYear: '2011',
+            endYear: '2014',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-a1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'International Federation of Freight Forwarders Associations',
+            certificateNumber: 'FIATA-IND-7712',
+            issueDate: '2017-08-15',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+          {
+            id: 'cert-a2',
+            title: 'Customs & Port Logistics Specialist',
+            issuingAuthority: 'Federation of Freight Forwarders in India (FFFAI)',
+            certificateNumber: 'FFFAI-CPS-2018',
+            issueDate: '2018-05-10',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
@@ -334,11 +442,57 @@ class ServerSecurityStore {
         email: 'sarah.lewis@rotterdamfreight.nl',
         passwordPlain: 'Rotterdam@2025',
         displayName: 'Sarah Lewis',
+        firstName: 'Sarah',
+        lastName: 'Lewis',
         company: 'Rotterdam Freight NV',
         companyId: 'CMP-00102',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+31612345678',
+        designation: 'Managing Director - European Logistics',
+        city: 'Rotterdam',
+        state: 'South Holland',
+        country: 'Netherlands',
+        postalCode: '3011 AD',
+        formattedAddress: 'Willemskade 18, Port Gateway Building, Rotterdam 3011 AD',
+        timezone: 'Europe/Amsterdam',
+        operatingCorridors: 'Rotterdam ⇄ Hamburg, Antwerp, Nhava Sheva',
+        experiences: [
+          {
+            id: 'exp-s1',
+            company: 'Rotterdam Freight NV',
+            designation: 'Managing Director',
+            employmentType: 'Full-time',
+            location: 'Rotterdam, Netherlands',
+            startDate: '2020-01',
+            isCurrent: true,
+            description: 'Overseeing North European container transport, barge feeder services, and inland shipping.',
+            skills: 'Port Operations, Container Logistics, European Freight Corridors',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-s1',
+            institution: 'Rotterdam School of Management (RSM)',
+            qualification: 'M.Sc.',
+            fieldOfStudy: 'Maritime Economics & Supply Chain Management',
+            startYear: '2013',
+            endYear: '2015',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-s1',
+            title: 'Chartered Shipbroker (ICS)',
+            issuingAuthority: 'Institute of Chartered Shipbrokers',
+            certificateNumber: 'ICS-EU-9921',
+            issueDate: '2016-11-20',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
@@ -348,11 +502,70 @@ class ServerSecurityStore {
         email: 'kiran.sharma@gatewaylines.in',
         passwordPlain: 'Gateway@Pass2026',
         displayName: 'Kiran Sharma',
+        firstName: 'Kiran',
+        lastName: 'Sharma',
         company: 'Gateway Lines India',
         companyId: 'CMP-00103',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+919820033445',
+        designation: 'Head of Multimodal Procurement',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        postalCode: '400093',
+        formattedAddress: 'Andheri East Logistics Park, Gate 4, Mumbai 400093',
+        timezone: 'Asia/Kolkata',
+        operatingCorridors: 'Nhava Sheva ⇄ Jebel Ali, Colombo, Singapore',
+        experiences: [
+          {
+            id: 'exp-k1',
+            company: 'Gateway Lines India',
+            designation: 'Head of Multimodal Procurement',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2022-03',
+            isCurrent: true,
+            description: 'Managing domestic and cross-border container fleet allocations and spot rate booking.',
+            skills: 'Freight Procurement, NVOCC Operations, Container Pricing',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-k2',
+            company: 'COGOPORT',
+            designation: 'Senior Freight Specialist',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2019-06',
+            endDate: '2022-02',
+            isCurrent: false,
+            description: 'Led ocean container pricing and customer spot bidding desk.',
+            skills: 'Ocean Freight, Cogoport Digital Freight Platform, Spot Quotes',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-k1',
+            institution: 'University of Mumbai',
+            qualification: 'B.Tech',
+            fieldOfStudy: 'Logistics & Supply Chain Management',
+            startYear: '2015',
+            endYear: '2019',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-k1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'International Federation of Freight Forwarders Associations',
+            certificateNumber: 'FIATA-IND-6632',
+            issueDate: '2020-09-12',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
@@ -362,11 +575,56 @@ class ServerSecurityStore {
         email: 'elena.rostova@balticlogistics.eu',
         passwordPlain: 'Baltic@2025',
         displayName: 'Elena Rostova',
+        firstName: 'Elena',
+        lastName: 'Rostova',
         company: 'Baltic Logistics EU',
         companyId: 'CMP-00104',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+491512345678',
+        designation: 'Director of Carrier Relations',
+        city: 'Hamburg',
+        state: 'Hamburg',
+        country: 'Germany',
+        formattedAddress: 'HafenCity Port Complex, Am Sandtorkai 48, Hamburg 20457',
+        timezone: 'Europe/Berlin',
+        operatingCorridors: 'Hamburg ⇄ Rotterdam, Gdansk, Antwerp',
+        experiences: [
+          {
+            id: 'exp-e1',
+            company: 'Baltic Logistics EU',
+            designation: 'Director of Carrier Relations',
+            employmentType: 'Full-time',
+            location: 'Hamburg, Germany',
+            startDate: '2019-05',
+            isCurrent: true,
+            description: 'Directing vessel space contracts and feeder routes across North and Baltic Sea ports.',
+            skills: 'Feeder Vessels, Carrier Agreements, Port Hamburg Logistics',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-e1',
+            institution: 'Kühne Logistics University (KLU)',
+            qualification: 'M.Sc.',
+            fieldOfStudy: 'Global Logistics & Maritime Management',
+            startYear: '2014',
+            endYear: '2016',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-e1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'FIATA',
+            certificateNumber: 'FIATA-DE-5541',
+            issueDate: '2017-03-10',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
@@ -376,11 +634,69 @@ class ServerSecurityStore {
         email: 'david.chen@pacificfreight.sg',
         passwordPlain: 'Pacific@2025',
         displayName: 'David Chen',
+        firstName: 'David',
+        lastName: 'Chen',
         company: 'Pacific Freight Singapore',
         companyId: 'CMP-00105',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+6591234567',
+        designation: 'Managing Director - APAC Operations',
+        city: 'Singapore',
+        state: 'Central Singapore',
+        country: 'Singapore',
+        formattedAddress: 'Marina Bay Financial Centre, Tower 2, Singapore 018983',
+        timezone: 'Asia/Singapore',
+        operatingCorridors: 'Singapore ⇄ Port Klang, Shanghai, Nhava Sheva',
+        experiences: [
+          {
+            id: 'exp-d1',
+            company: 'Pacific Freight Singapore',
+            designation: 'Managing Director - APAC Operations',
+            employmentType: 'Full-time',
+            location: 'Singapore',
+            startDate: '2021-08',
+            isCurrent: true,
+            description: 'Leading transshipment logistics and hub terminal routing for Southeast Asia.',
+            skills: 'Transshipment Hub Routing, Maritime Operations, APAC Trade Lanes',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-d2',
+            company: 'Maersk Logistics Singapore',
+            designation: 'Regional Route Director',
+            employmentType: 'Full-time',
+            location: 'Singapore',
+            startDate: '2015-04',
+            endDate: '2021-07',
+            isCurrent: false,
+            description: 'Managed South East Asia container route operations and depot logistics.',
+            skills: 'Liner Routing, Port Klang and Singapore Hub Operations',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-d1',
+            institution: 'National University of Singapore (NUS)',
+            qualification: 'B.Sc.',
+            fieldOfStudy: 'Maritime Studies & International Logistics',
+            startYear: '2011',
+            endYear: '2015',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-d1',
+            title: 'Chartered Shipbroker (ICS)',
+            issuingAuthority: 'Institute of Chartered Shipbrokers',
+            certificateNumber: 'ICS-SG-4412',
+            issueDate: '2016-10-18',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-01-15T08:00:00.000Z',
@@ -390,11 +706,88 @@ class ServerSecurityStore {
         email: 'rajat.rai@cogoport.com',
         passwordPlain: 'QWERTY@123a',
         displayName: 'Rajat RAI',
+        firstName: 'Rajat',
+        lastName: 'RAI',
         company: 'COGOPORT',
         companyId: 'CMP-COGOPORT-001',
         role: 'company_admin' as const,
         status: 'active' as const,
         mobile: '+919876543210',
+        designation: 'Trade Specialist',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        postalCode: '400069',
+        formattedAddress: 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069',
+        timezone: 'Asia/Kolkata',
+        operatingCorridors: 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
+        experiences: [
+          {
+            id: 'exp-r1',
+            company: 'COGOPORT',
+            designation: 'Trade Specialist',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2023-01',
+            isCurrent: true,
+            description: 'Managing cross-border ocean freight procurement, enterprise shipper accounts, and container logistics.',
+            skills: 'Ocean Freight, Trade Logistics, NVOCC, Port Terminal Operations, Spot Quotes',
+            visibility: 'public',
+          },
+          {
+            id: 'exp-r2',
+            company: 'Maersk Logistics India',
+            designation: 'Senior Logistics Specialist',
+            employmentType: 'Full-time',
+            location: 'Mumbai, India',
+            startDate: '2020-03',
+            endDate: '2022-12',
+            isCurrent: false,
+            description: 'Handled carrier allocations, container tracking, port terminal operations, and shipping lines coordination.',
+            skills: 'Carrier Relations, Container Tracking, Terminal Operations, Liner Procurement',
+            visibility: 'public',
+          },
+        ],
+        educations: [
+          {
+            id: 'edu-r1',
+            institution: 'Indian Institute of Foreign Trade (IIFT)',
+            qualification: 'MBA',
+            fieldOfStudy: 'International Trade & Logistics',
+            startYear: '2018',
+            endYear: '2020',
+            visibility: 'public',
+          },
+          {
+            id: 'edu-r2',
+            institution: 'University of Mumbai',
+            qualification: 'Bachelor of Commerce (B.Com)',
+            fieldOfStudy: 'Commerce & Economics',
+            startYear: '2015',
+            endYear: '2018',
+            visibility: 'public',
+          },
+        ],
+        certifications: [
+          {
+            id: 'cert-r1',
+            title: 'FIATA Diploma in Freight Forwarding',
+            issuingAuthority: 'International Federation of Freight Forwarders Associations',
+            certificateNumber: 'FIATA-IND-8821',
+            issueDate: '2021-06-15',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+          {
+            id: 'cert-r2',
+            title: 'Customs & Port Logistics Specialist',
+            issuingAuthority: 'Federation of Freight Forwarders in India (FFFAI)',
+            certificateNumber: 'FFFAI-CPS-2022',
+            issueDate: '2022-04-10',
+            verificationStatus: 'verified',
+            visibility: 'public',
+          },
+        ],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-09-12T15:37:00.000Z',
@@ -430,13 +823,33 @@ class ServerSecurityStore {
           });
         } catch {}
       } else {
-        // Guarantee both cleanUid and cleanEmail point to the same user instance
+        // Guarantee both cleanUid and cleanEmail point to the same user instance,
+        // and ensure contact, location, and educational attributes exist
         existing.status = 'active';
         existing.email_verified = true;
         existing.failedLoginAttempts = 0;
         existing.firstLoginCompleted = true;
+        if (!existing.mobile && acc.mobile) existing.mobile = acc.mobile;
+        if (!existing.city && acc.city) existing.city = acc.city;
+        if (!existing.state && acc.state) existing.state = acc.state;
+        if (!existing.country && acc.country) existing.country = acc.country;
+        if (!existing.formattedAddress && acc.formattedAddress) existing.formattedAddress = acc.formattedAddress;
+        if (!existing.timezone && acc.timezone) existing.timezone = acc.timezone;
+        if (!existing.designation && acc.designation) existing.designation = acc.designation;
+        if (!existing.experiences && (acc as any).experiences) existing.experiences = (acc as any).experiences;
+        if (!existing.educations && (acc as any).educations) existing.educations = (acc as any).educations;
+        if (!existing.certifications && (acc as any).certifications) existing.certifications = (acc as any).certifications;
+        if (!existing.operatingCorridors && (acc as any).operatingCorridors) existing.operatingCorridors = (acc as any).operatingCorridors;
         this.users.set(cleanUid, existing);
         this.users.set(cleanEmail, existing);
+        try {
+          savePersistedUser({
+            ...existing,
+            email_verified: true,
+            status: 'active',
+            firstLoginCompleted: true,
+          });
+        } catch {}
       }
     }
   }
@@ -629,11 +1042,23 @@ class ServerSecurityStore {
     try {
       const dbmsUsers = getPersistedUsers();
       for (const u of dbmsUsers) {
-        if (u.uid && !this.users.has(u.uid.toLowerCase())) {
-          this.users.set(u.uid.toLowerCase(), u as unknown as ServerUserRecord);
+        const uidKey = u.uid ? u.uid.toLowerCase() : '';
+        const emailKey = u.email ? u.email.toLowerCase() : '';
+        if (uidKey) {
+          const existing = this.users.get(uidKey);
+          if (existing) {
+            Object.assign(existing, u);
+          } else {
+            this.users.set(uidKey, u as unknown as ServerUserRecord);
+          }
         }
-        if (u.email && !this.users.has(u.email.toLowerCase())) {
-          this.users.set(u.email.toLowerCase(), u as unknown as ServerUserRecord);
+        if (emailKey) {
+          const existing = this.users.get(emailKey);
+          if (existing) {
+            Object.assign(existing, u);
+          } else {
+            this.users.set(emailKey, u as unknown as ServerUserRecord);
+          }
         }
       }
     } catch (dbmsUserErr: any) {
@@ -705,6 +1130,178 @@ class ServerSecurityStore {
       // ignore DBMS sync error
     }
     return list;
+  }
+
+  /**
+   * Updates user profile fields (mobile, location, company link, etc.)
+   * and persists them synchronously to authoritative DBMS (.knox/dbms/users.json).
+   */
+  public updateUserProfile(
+    identifier: string,
+    updates: Partial<ServerUserRecord> & Record<string, any>
+  ): { success: boolean; user?: ServerUserRecord; error?: string } {
+    if (!identifier) return { success: false, error: 'Identifier is required.' };
+    this.loadPersistedState();
+    const clean = identifier.trim().toLowerCase();
+    const existing = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    if (!existing) {
+      return { success: false, error: 'User record not found in DBMS.' };
+    }
+
+    const now = new Date().toISOString();
+    const merged: ServerUserRecord = {
+      ...existing,
+      ...updates,
+      uid: existing.uid, // preserve canonical uid
+      email: (updates.email || existing.email).trim().toLowerCase(),
+      updatedAt: now,
+    };
+
+    if (updates.mobile !== undefined) merged.mobile = updates.mobile;
+    if (updates.city !== undefined) merged.city = updates.city;
+    if (updates.state !== undefined) merged.state = updates.state;
+    if (updates.country !== undefined) merged.country = updates.country;
+    if (updates.postalCode !== undefined) merged.postalCode = updates.postalCode;
+    if (updates.formattedAddress !== undefined) merged.formattedAddress = updates.formattedAddress;
+    if (updates.timezone !== undefined) merged.timezone = updates.timezone;
+    if (updates.designation !== undefined) merged.designation = updates.designation;
+    if (updates.firstName !== undefined) merged.firstName = updates.firstName;
+    if (updates.lastName !== undefined) merged.lastName = updates.lastName;
+    if (updates.displayName !== undefined) merged.displayName = updates.displayName;
+    if (updates.company !== undefined) merged.company = updates.company;
+    if (updates.companyId !== undefined) merged.companyId = updates.companyId;
+    if (updates.avatarUrl !== undefined) merged.avatarUrl = updates.avatarUrl;
+    if (updates.companyLogoUrl !== undefined) merged.companyLogoUrl = updates.companyLogoUrl;
+    if (updates.experiences !== undefined) merged.experiences = updates.experiences;
+    if (updates.educations !== undefined) merged.educations = updates.educations;
+    if (updates.certifications !== undefined) merged.certifications = updates.certifications;
+    if (updates.operatingCorridors !== undefined) merged.operatingCorridors = updates.operatingCorridors;
+    if (updates.companyTransferStatus !== undefined) merged.companyTransferStatus = updates.companyTransferStatus;
+    if (updates.pendingCompany !== undefined) merged.pendingCompany = updates.pendingCompany;
+    if (updates.pendingEmail !== undefined) merged.pendingEmail = updates.pendingEmail;
+    if (updates.transferRequestId !== undefined) merged.transferRequestId = updates.transferRequestId;
+    if (updates.transferSubmittedAt !== undefined) merged.transferSubmittedAt = updates.transferSubmittedAt;
+    if (updates.contacts !== undefined) merged.contacts = updates.contacts;
+
+    const cleanUid = merged.uid.toLowerCase();
+    const cleanEmail = merged.email.toLowerCase();
+
+    this.users.set(cleanUid, merged);
+    this.users.set(cleanEmail, merged);
+
+    try {
+      savePersistedUser(merged as any);
+    } catch (saveErr: any) {
+      console.error('[ServerSecurityStore] Failed to persist user to DBMS:', saveErr.message);
+    }
+
+    this.persistState();
+    return { success: true, user: merged };
+  }
+
+  /**
+   * Registers an active device session for a user, enforcing strict
+   * One User, One Active Device policy. Any prior device session is superseded.
+   */
+  public setActiveSession(
+    identifier: string,
+    sessionId: string,
+    deviceMeta?: { ip?: string; userAgent?: string; deviceId?: string }
+  ): boolean {
+    if (!identifier || !sessionId) return false;
+    const clean = identifier.trim().toLowerCase();
+    const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    if (!user) return false;
+
+    const now = new Date().toISOString();
+    user.activeSessionId = sessionId;
+    user.activeDevice = {
+      deviceId: deviceMeta?.deviceId || `dev_${Date.now()}`,
+      userAgent: deviceMeta?.userAgent || 'Browser Client',
+      ip: deviceMeta?.ip || '127.0.0.1',
+      loggedInAt: now,
+      lastActiveAt: now,
+    };
+
+    const cleanUid = user.uid.toLowerCase();
+    const cleanEmail = user.email.toLowerCase();
+    this.users.set(cleanUid, user);
+    this.users.set(cleanEmail, user);
+
+    try {
+      savePersistedUser(user as any);
+    } catch {}
+    this.persistState();
+
+    this.addSecurityEvent({
+      type: 'GODFATHER_LOGIN',
+      severity: 'INFO',
+      userEmail: user.email,
+      uid: user.uid,
+      company: user.company,
+      details: `Active device session bound. Session ID: ${sessionId.slice(0, 10)}... (Concurrent sessions on other devices terminated).`,
+      ipAddress: deviceMeta?.ip,
+    });
+
+    return true;
+  }
+
+  /**
+   * Validates whether a device's session matches the active session in DBMS.
+   * If a newer device logged in, this session is rejected.
+   */
+  public validateActiveSession(
+    identifier: string,
+    sessionId: string
+  ): { valid: boolean; reason?: string; message?: string } {
+    if (!identifier || !sessionId) {
+      return { valid: false, reason: 'missing_session', message: 'No session credentials provided.' };
+    }
+    const clean = identifier.trim().toLowerCase();
+    const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    if (!user) {
+      return { valid: false, reason: 'user_not_found', message: 'User record not found in DBMS.' };
+    }
+
+    // If an activeSessionId exists on user, enforce strict equality
+    if (user.activeSessionId && user.activeSessionId !== sessionId) {
+      return {
+        valid: false,
+        reason: 'concurrent_device_login',
+        message: 'This account was logged in from another device. FR8X enforces a strict One User, One Device active session policy. This session has been terminated.',
+      };
+    }
+
+    // If session was not previously recorded, bind it now
+    if (!user.activeSessionId) {
+      user.activeSessionId = sessionId;
+      try { savePersistedUser(user as any); } catch {}
+    } else if (user.activeDevice) {
+      user.activeDevice.lastActiveAt = new Date().toISOString();
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Clears active session upon explicit user logout
+   */
+  public clearActiveSession(identifier: string): void {
+    if (!identifier) return;
+    const clean = identifier.trim().toLowerCase();
+    const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    if (!user) return;
+
+    user.activeSessionId = undefined;
+    if (user.activeDevice) {
+      user.activeDevice.lastActiveAt = new Date().toISOString();
+    }
+    const cleanUid = user.uid.toLowerCase();
+    const cleanEmail = user.email.toLowerCase();
+    this.users.set(cleanUid, user);
+    this.users.set(cleanEmail, user);
+    try { savePersistedUser(user as any); } catch {}
+    this.persistState();
   }
 
   public registerUser(

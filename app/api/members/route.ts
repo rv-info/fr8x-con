@@ -29,11 +29,14 @@ export async function GET(req: NextRequest) {
         firstName: u.firstName || displayName.split(' ')[0] || '',
         lastName: u.lastName || displayName.split(' ').slice(1).join(' ') || '',
         company: u.company || 'Enterprise Logistics Member',
+        companyId: u.companyId || '',
         designation: u.designation || 'Trade Specialist',
         role,
         city: u.city || 'Mumbai',
+        state: u.state || 'Maharashtra',
         country: u.country || 'India',
         location: `${u.city || 'Mumbai'}, ${u.country || 'India'}`,
+        formattedAddress: u.formattedAddress || '',
         timezone: u.timezone || 'Asia/Kolkata',
         isVerified,
         hasGoldenTick,
@@ -43,6 +46,11 @@ export async function GET(req: NextRequest) {
         mobile: u.mobile || '',
         operatingCorridors: u.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam',
         avatarUrl: u.avatarUrl || null,
+        companyLogoUrl: u.companyLogoUrl || null,
+        experiences: u.experiences || [],
+        educations: u.educations || [],
+        certifications: u.certifications || [],
+        contacts: u.contacts || [],
         isOnline: true,
         createdAt: u.createdAt || new Date().toISOString(),
       };
@@ -53,15 +61,37 @@ export async function GET(req: NextRequest) {
 
     if (q) {
       results = results.filter((m) => {
-        return (
+        const matchesBasic =
           m.displayName.toLowerCase().includes(q) ||
           m.email.toLowerCase().includes(q) ||
           m.company.toLowerCase().includes(q) ||
           m.designation.toLowerCase().includes(q) ||
           m.city.toLowerCase().includes(q) ||
+          m.state.toLowerCase().includes(q) ||
           m.country.toLowerCase().includes(q) ||
-          (m.gstn && m.gstn.toLowerCase().includes(q))
+          (m.gstn && m.gstn.toLowerCase().includes(q));
+
+        const matchesExp = (m.experiences as any[]).some(
+          (exp) =>
+            exp.company?.toLowerCase().includes(q) ||
+            exp.designation?.toLowerCase().includes(q) ||
+            exp.skills?.toLowerCase().includes(q)
         );
+
+        const matchesEdu = (m.educations as any[]).some(
+          (edu) =>
+            edu.institution?.toLowerCase().includes(q) ||
+            edu.qualification?.toLowerCase().includes(q) ||
+            edu.fieldOfStudy?.toLowerCase().includes(q)
+        );
+
+        const matchesCert = (m.certifications as any[]).some(
+          (cert) =>
+            cert.title?.toLowerCase().includes(q) ||
+            cert.issuingAuthority?.toLowerCase().includes(q)
+        );
+
+        return matchesBasic || matchesExp || matchesEdu || matchesCert;
       });
     }
 

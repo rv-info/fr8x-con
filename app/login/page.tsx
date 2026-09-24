@@ -135,6 +135,8 @@ export default function LoginPage() {
       const reason = params.get('reason');
       if (reason === 'session_expired' || reason === 'inactivity') {
         setSessionNotice('Your session has expired due to inactivity. Please sign in again to continue.');
+      } else if (reason === 'concurrent_device_login') {
+        setSessionNotice('⚠️ Single Active Device Security: Your account was logged in from another device. FR8X enforces strict One User, One Active Device policy. The previous device session was terminated.');
       } else if (reason === 'not_found') {
         setSessionNotice('Requested page not found or unauthenticated. Please sign in to access the workspace.');
       } else if (reason === 'unauthorized') {

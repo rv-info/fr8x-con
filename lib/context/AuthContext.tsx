@@ -270,9 +270,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Periodic and visibility/focus session validity checks (handles browser left open / dormant for a long time)
+  // Periodic and visibility/focus session validity checks (handles browser left open / dormant for a long time & enforces single-device session)
   useEffect(() => {
-    const performSessionCheck = () => {
+    const performSessionCheck = async () => {
       if (!currentUserRef.current) return;
 
       if (checkIsSessionExpired()) {
@@ -284,12 +284,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem(ACTIVE_SESSION_KEY);
           localStorage.removeItem(SESSION_START_KEY);
           localStorage.removeItem(LAST_ACTIVITY_KEY);
+          localStorage.removeItem('fr8x_device_session_id');
           localStorage.setItem(STATUS_KEY, 'offline');
         } catch {}
 
         if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
           window.location.href = '/login?reason=session_expired';
         }
+        return;
+      }
+
+      // Check single active device enforcement via server heartbeat
+      const deviceSessionId = localStorage.getItem('fr8x_device_session_id');
+      if (deviceSessionId && currentUserRef.current?.uid) {
+        try {
+          const res = await fetch('/api/auth/session-heartbeat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              uid: currentUserRef.current.uid,
+              sessionId: deviceSessionId,
+            }),
+          });
+          const data = await res.json();
+          if (!data.valid && data.reason === 'concurrent_device_login') {
+            // Concurrent device logged in! Terminate this device session immediately.
+            setCurrentUser(null);
+            setUserStatusState('offline');
+            try {
+              localStorage.removeItem(ACTIVE_SESSION_KEY);
+              localStorage.removeItem(SESSION_START_KEY);
+              localStorage.removeItem(LAST_ACTIVITY_KEY);
+              localStorage.removeItem('fr8x_device_session_id');
+              localStorage.setItem(STATUS_KEY, 'offline');
+            } catch {}
+
+            if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+              window.location.href = '/login?reason=concurrent_device_login';
+            }
+          }
+        } catch {}
       }
     };
 
@@ -303,8 +337,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('visibilitychange', onVisibilityOrFocus);
     window.addEventListener('focus', onVisibilityOrFocus);
 
-    // Periodic check every 20 seconds
-    const interval = setInterval(performSessionCheck, 20000);
+    // Periodic check every 15 seconds
+    const interval = setInterval(performSessionCheck, 15000);
 
     return () => {
       window.removeEventListener('visibilitychange', onVisibilityOrFocus);
@@ -335,6 +369,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
+
+    // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore)
+    try {
+      fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          updates: updatedFields,
+        }),
+      }).catch((err) => {
+        console.warn('[Auth] Background DBMS user sync error:', err);
+      });
+    } catch {}
   };
 
   const upgradePlan = (plan: PlanTier) => {
@@ -427,6 +476,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const now = Date.now().toString();
     try {
       localStorage.setItem(ACTIVE_SESSION_KEY, found.uid);
+      if ((serverVerifiedUser as any).sessionId) {
+        localStorage.setItem('fr8x_device_session_id', (serverVerifiedUser as any).sessionId);
+      }
       localStorage.setItem(STATUS_KEY, 'available');
       localStorage.setItem(SESSION_START_KEY, now);
       localStorage.setItem(LAST_ACTIVITY_KEY, now);
@@ -607,7 +659,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(ACTIVE_SESSION_KEY);
       localStorage.removeItem(SESSION_START_KEY);
       localStorage.removeItem(LAST_ACTIVITY_KEY);
+      localStorage.removeItem('fr8x_device_session_id');
       localStorage.setItem(STATUS_KEY, 'offline');
+      if (typeof window !== 'undefined') {
+        fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
+      }
     } catch {}
 
     if (reason && typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {

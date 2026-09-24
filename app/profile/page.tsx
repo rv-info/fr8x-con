@@ -59,6 +59,7 @@ import {
   Phone,
   Clock,
   Compass,
+  Info,
   Eye,
   Lock,
   Globe2,
@@ -194,6 +195,8 @@ export default function ProfilePage() {
   const [editFirstName, setEditFirstName] = useState(user.firstName || '');
   const [editLastName, setEditLastName] = useState(user.lastName || '');
   const [editEmail, setEditEmail] = useState(user.email || '');
+  const [editPersonId, setEditPersonId] = useState(user.uid || '');
+  const [editDepartment, setEditDepartment] = useState((user as any).department || 'Ocean & Multimodal Freight Operations');
   const [editMobile, setEditMobile] = useState(user.mobile || '');
   const [editDesignation, setEditDesignation] = useState(user.designation || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
@@ -1378,6 +1381,8 @@ export default function ProfilePage() {
               setEditFirstName(user.firstName || firstName || '');
               setEditLastName(user.lastName || lastName || '');
               setEditEmail(user.email || '');
+              setEditPersonId(user.uid || '');
+              setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
               setEditMobile(user.mobile || mobile || '');
               setEditDesignation(user.designation || designation || '');
               setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
@@ -3131,7 +3136,7 @@ export default function ProfilePage() {
           maxWidth="680px"
         >
           <form
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
 
               let newCompanyTransferStatus = user.companyTransferStatus || 'none';
@@ -3139,12 +3144,13 @@ export default function ProfilePage() {
               let newPendingEmail = user.pendingEmail;
               let newTransferRequestId = user.transferRequestId;
               let finalCompany = user.company;
-              let finalEmail = editEmail;
+              let finalEmail = editEmail.trim();
+              const finalUid = editPersonId.trim() || user.uid;
 
               if (isChangingCompany && transferTargetCompany.trim()) {
                 if (transferMethod === 'self') {
                   finalCompany = transferTargetCompany.trim();
-                  finalEmail = transferTargetEmail.trim() || editEmail;
+                  finalEmail = transferTargetEmail.trim() || editEmail.trim();
                   newCompanyTransferStatus = 'verified';
                   setCompany(finalCompany);
                   toast(`✓ Company transferred to ${finalCompany} and login email updated via Domain Self-Link.`);
@@ -3152,7 +3158,7 @@ export default function ProfilePage() {
                   const ticket = `TRF-CO-${Math.floor(1000 + Math.random() * 9000)}`;
                   newCompanyTransferStatus = 'pending_godfather_approval';
                   newPendingCompany = transferTargetCompany.trim();
-                  newPendingEmail = transferTargetEmail.trim() || editEmail;
+                  newPendingEmail = transferTargetEmail.trim() || editEmail.trim();
                   newTransferRequestId = ticket;
                   toast(`Corporate transfer docket ${ticket} submitted for Godfather Governance review.`);
                 }
@@ -3171,7 +3177,8 @@ export default function ProfilePage() {
               setAvatarUrl(editAvatarUrl || null);
               setCompanyLogoUrl(editCompanyLogoUrl || null);
 
-              updateUser({
+              const profilePayload = {
+                uid: finalUid,
                 firstName: editFirstName,
                 lastName: editLastName,
                 displayName: `${editFirstName} ${editLastName}`.trim(),
@@ -3179,6 +3186,7 @@ export default function ProfilePage() {
                 mobile: editMobile,
                 designation: editDesignation,
                 company: finalCompany,
+                department: editDepartment,
                 city: editCity,
                 state: editState,
                 country: editCountry,
@@ -3191,10 +3199,28 @@ export default function ProfilePage() {
                 pendingEmail: newPendingEmail,
                 transferRequestId: newTransferRequestId,
                 transferSubmittedAt: isChangingCompany ? new Date().toISOString() : user.transferSubmittedAt,
-              });
+              };
+
+              updateUser(profilePayload);
+
+              try {
+                const res = await fetch('/api/user/profile', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    uid: user.uid,
+                    updates: profilePayload,
+                  }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                  toast('✓ Contact credentials, location and corporate affiliation saved in DBMS successfully.');
+                }
+              } catch (err) {
+                console.warn('[Profile] DBMS update call error:', err);
+              }
 
               setShowEditIdentityModal(false);
-              toast('Enterprise identity and location updated successfully.');
             }}
             style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
@@ -3503,15 +3529,15 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* 4. Company Link & Affiliation Governance */}
-            <div style={{ background: '#f8fafc', padding: '14px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            {/* 4. Company Link & Affiliation Governance (User Requirement 2: Company Profile is Fixed, Person ID changes) */}
+            <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '8px', border: '1px solid var(--line-light)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                 <div>
                   <span style={{ fontSize: '11px', fontWeight: 800, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block' }}>
                     4. Enterprise Company Link & Login Affiliation
                   </span>
                   <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '2px' }}>
-                    Current Associated Organization: <b style={{ color: 'var(--ink)' }}>{user.company}</b>
+                    <b>Governance Architecture:</b> Company Profile is fixed and verified in DBMS, whereas Person ID, Employee Code & affiliation can be updated.
                   </div>
                 </div>
                 <button
@@ -3520,8 +3546,103 @@ export default function ProfilePage() {
                   style={{ fontSize: '11px', padding: '4px 10px' }}
                   onClick={() => setIsChangingCompany(!isChangingCompany)}
                 >
-                  {isChangingCompany ? 'Cancel Switch' : 'Link / Switch Company'}
+                  {isChangingCompany ? 'Cancel Company Switch' : 'Transfer to Another Company'}
                 </button>
+              </div>
+
+              {/* FIXED COMPANY PROFILE CARD */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Building2 size={15} color="#0284c7" />
+                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Enterprise Company Profile (Fixed & Immutable)
+                    </span>
+                  </div>
+                  <span className="badge green" style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <ShieldCheck size={10} /> FIXED IN DBMS
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', fontSize: '11px', background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  <div>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Master Legal Entity:</span>
+                    <b style={{ color: '#0f172a', fontSize: '12px' }}>{user.company || 'COGOPORT'}</b>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Enterprise Company ID:</span>
+                    <code style={{ color: '#0284c7', fontWeight: 700 }}>{user.companyId || 'CMP-COGOPORT-001'}</code>
+                  </div>
+                  <div>
+                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Operating Headquarters:</span>
+                    <span style={{ color: '#334155', fontWeight: 600 }}>{editCity || user.city || 'Mumbai'}, {editCountry || user.country || 'India'}</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <Info size={11} color="#64748b" /> Company Profile is permanent and locked under Platform Regulatory Compliance.
+                </div>
+              </div>
+
+              {/* CHANGEABLE PERSON ID & MEMBER AFFILIATION CREDENTIALS */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '12px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <UserCheck size={15} color="#0284c7" />
+                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Member Person ID & Staff Credentials (Editable & Changeable)
+                    </span>
+                  </div>
+                  <span className="badge blue" style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px' }}>
+                    PERSON SPECIFIC
+                  </span>
+                </div>
+
+                <div className="grid g2">
+                  <div className="field">
+                    <label style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>Person ID / Corporate Staff Code <span className="req">*</span></span>
+                      <span style={{ fontSize: '9.5px', color: '#0284c7' }}>Unique Person Identifier</span>
+                    </label>
+                    <input
+                      className="input"
+                      value={editPersonId}
+                      onChange={(e) => setEditPersonId(e.target.value)}
+                      placeholder="e.g. u-rajat or COG-8821"
+                      required
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Operating Department / Logistics Desk</label>
+                    <input
+                      className="input"
+                      value={editDepartment}
+                      onChange={(e) => setEditDepartment(e.target.value)}
+                      placeholder="e.g. Ocean & Multimodal Freight Operations"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid g2" style={{ marginTop: '8px' }}>
+                  <div className="field">
+                    <label>Affiliated Corporate Email</label>
+                    <input
+                      className="input"
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="e.g. rajat.rai@cogoport.com"
+                      required
+                    />
+                  </div>
+                  <div className="field">
+                    <label>Personal Designation at Company</label>
+                    <input
+                      className="input"
+                      value={editDesignation}
+                      onChange={(e) => setEditDesignation(e.target.value)}
+                      placeholder="Senior Freight Procurement Specialist"
+                    />
+                  </div>
+                </div>
               </div>
 
               {isChangingCompany && (

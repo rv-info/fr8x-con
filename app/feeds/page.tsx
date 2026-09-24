@@ -70,6 +70,8 @@ import {
   removeConnection,
   CONNECTIONS_CHANGED_EVENT,
 } from '@/lib/connections';
+import { DailyRecommendationsWidget } from '@/components/connections/DailyRecommendationsWidget';
+import { SearchConnectionsModal } from '@/components/connections/SearchConnectionsModal';
 import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
@@ -546,6 +548,7 @@ export default function FeedsPage() {
   // Left Sidebar Contacts List state (Requirement 5)
   const [contactRailSearch, setContactRailSearch] = useState('');
   const [showManageContactsModal, setShowManageContactsModal] = useState(false);
+  const [showSearchConnectionsModal, setShowSearchConnectionsModal] = useState(false);
   const [manageContactsTab, setManageContactsTab] = useState<'contacts' | 'requests' | 'discover'>('contacts');
   const [discoverMemberSearch, setDiscoverMemberSearch] = useState('');
   const [selectedProfileUid, setSelectedProfileUid] = useState<string | null>(null);
@@ -1617,8 +1620,7 @@ export default function FeedsPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setManageContactsTab('discover');
-                  setShowManageContactsModal(true);
+                  setShowSearchConnectionsModal(true);
                 }}
                 className="btn secondary sm"
                 style={{
@@ -1688,6 +1690,27 @@ export default function FeedsPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Quick Discover & Search Connections Button */}
+            <button
+              type="button"
+              onClick={() => setShowSearchConnectionsModal(true)}
+              className="btn secondary sm"
+              style={{
+                height: '32px',
+                padding: '0 12px',
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: 'var(--brand)',
+                borderColor: 'var(--brand)',
+                background: 'rgba(0, 163, 196, 0.06)',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <UserPlus size={13} /> Find Connections
+            </button>
+
             {/* Integrated Category Filter Dropdown */}
             <select
               value={selectedPostType}
@@ -1858,6 +1881,19 @@ export default function FeedsPage() {
             </div>
           </form>
         </div>
+
+        {/* Daily Recommended Connections based on Work, Ex-Company, Locations, Designation, Qualifications, Colleges & Certifications */}
+        <DailyRecommendationsWidget
+          currentUser={user}
+          onOpenSearchModal={() => setShowSearchConnectionsModal(true)}
+          onViewProfile={(uid, name) => {
+            setSelectedProfileUid(uid);
+            setSelectedProfileName(name);
+          }}
+          onOpenChat={(uid, name) =>
+            openChatWith(uid, { type: 'company', id: uid, title: `Chat with ${name}` })
+          }
+        />
 
         {/* Post Items in Large Spacious Cards (No Like/Dislike) */}
         {displayedPosts.length === 0 ? (
@@ -3543,6 +3579,22 @@ export default function FeedsPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Global Search Connections & Networking Modal */}
+      {showSearchConnectionsModal && (
+        <SearchConnectionsModal
+          isOpen={showSearchConnectionsModal}
+          onClose={() => setShowSearchConnectionsModal(false)}
+          currentUser={user}
+          onViewProfile={(uid, name) => {
+            setSelectedProfileUid(uid);
+            setSelectedProfileName(name);
+          }}
+          onOpenChat={(uid, name) =>
+            openChatWith(uid, { type: 'company', id: uid, title: `Chat with ${name}` })
+          }
+        />
       )}
     </div>
   );

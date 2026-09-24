@@ -67,11 +67,20 @@ export async function POST(req: NextRequest) {
       );
     }
     user.firstLoginCompleted = true;
+
+    // Generate unique session ID for single-device login enforcement
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+    const userAgent = req.headers.get('user-agent') || 'Browser Client';
+    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
+
     const res = NextResponse.json({
       success: true,
       uid: user.uid,
+      sessionId,
       email: user.email,
       displayName: user.displayName,
+      firstName: user.firstName || user.displayName?.split(' ')[0] || '',
+      lastName: user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '',
       company: user.company,
       companyId: user.companyId,
       role: user.role,
@@ -83,14 +92,20 @@ export async function POST(req: NextRequest) {
       country: (user as any).country || '',
       formattedAddress: (user as any).formattedAddress || '',
       timezone: (user as any).timezone || '',
+      avatarUrl: (user as any).avatarUrl || null,
+      companyLogoUrl: (user as any).companyLogoUrl || null,
+      experiences: (user as any).experiences || [],
+      educations: (user as any).educations || [],
+      certifications: (user as any).certifications || [],
     });
 
-    // Cryptographically signed httpOnly session cookie
+    // Cryptographically signed httpOnly session cookie with bound sessionId
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      sessionId,
       issuedAt: Date.now(),
     });
 
@@ -108,7 +123,17 @@ export async function POST(req: NextRequest) {
   }
 }
 
-export async function DELETE(_req: NextRequest) {
+export async function DELETE(req: NextRequest) {
+  try {
+    const sessionCookie = req.cookies.get('fr8x_session')?.value;
+    if (sessionCookie) {
+      const { verifySignedSessionToken } = await import('@/lib/crypto');
+      const verified = verifySignedSessionToken<any>(sessionCookie);
+      if (verified.valid && verified.payload?.uid) {
+        serverSecurityStore.clearActiveSession(verified.payload.uid);
+      }
+    }
+  } catch {}
   const res = NextResponse.json({ success: true, message: 'Session terminated.' });
   res.cookies.delete('fr8x_session');
   return res;
