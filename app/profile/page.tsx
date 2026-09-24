@@ -402,40 +402,80 @@ export default function ProfilePage() {
   // Persistent storage key helper for records
   const userStorageKey = user.uid || user.email || 'guest';
 
-  // Load real user experiences, educations, and certifications from localStorage or user profile
+  // Load real user experiences, educations, and certifications from authoritative DBMS and fallback to local store
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      const storedExp = localStorage.getItem(`fr8x_user_exp_${userStorageKey}`);
-      if (storedExp) {
-        setExperiences(JSON.parse(storedExp));
-      } else if (user.experiences && Array.isArray(user.experiences)) {
-        setExperiences(user.experiences);
-      } else {
-        setExperiences([]);
-      }
 
-      const storedEdu = localStorage.getItem(`fr8x_user_edu_${userStorageKey}`);
-      if (storedEdu) {
-        setEducations(JSON.parse(storedEdu));
-      } else if (user.educations && Array.isArray(user.educations)) {
-        setEducations(user.educations);
-      } else {
-        setEducations([]);
-      }
-
-      const storedCert = localStorage.getItem(`fr8x_user_cert_${userStorageKey}`);
-      if (storedCert) {
-        setCertifications(JSON.parse(storedCert));
-      } else if (user.certifications && Array.isArray(user.certifications)) {
-        setCertifications(user.certifications);
-      } else {
-        setCertifications([]);
-      }
-    } catch (e) {
-      console.error('[Profile] Failed to load stored records:', e);
+    // 1. Initial hydration from user object
+    if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
+      setExperiences(user.experiences);
+    } else {
+      try {
+        const storedExp = localStorage.getItem(`fr8x_user_exp_${userStorageKey}`);
+        if (storedExp) {
+          const parsed = JSON.parse(storedExp);
+          if (Array.isArray(parsed) && parsed.length > 0) setExperiences(parsed);
+        }
+      } catch {}
     }
-  }, [userStorageKey, user.experiences, user.educations, user.certifications]);
+
+    if (user.educations && Array.isArray(user.educations) && user.educations.length > 0) {
+      setEducations(user.educations);
+    } else {
+      try {
+        const storedEdu = localStorage.getItem(`fr8x_user_edu_${userStorageKey}`);
+        if (storedEdu) {
+          const parsed = JSON.parse(storedEdu);
+          if (Array.isArray(parsed) && parsed.length > 0) setEducations(parsed);
+        }
+      } catch {}
+    }
+
+    if (user.certifications && Array.isArray(user.certifications) && user.certifications.length > 0) {
+      setCertifications(user.certifications);
+    } else {
+      try {
+        const storedCert = localStorage.getItem(`fr8x_user_cert_${userStorageKey}`);
+        if (storedCert) {
+          const parsed = JSON.parse(storedCert);
+          if (Array.isArray(parsed) && parsed.length > 0) setCertifications(parsed);
+        }
+      } catch {}
+    }
+
+    // 2. Authoritative live fetch from DBMS API /api/user/profile
+    const targetUid = user.uid || user.email;
+    if (targetUid) {
+      fetch(`/api/user/profile?uid=${encodeURIComponent(targetUid)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.success && data?.user) {
+            const u = data.user;
+            if (Array.isArray(u.experiences) && u.experiences.length > 0) {
+              setExperiences(u.experiences);
+              try { localStorage.setItem(`fr8x_user_exp_${userStorageKey}`, JSON.stringify(u.experiences)); } catch {}
+            }
+            if (Array.isArray(u.educations) && u.educations.length > 0) {
+              setEducations(u.educations);
+              try { localStorage.setItem(`fr8x_user_edu_${userStorageKey}`, JSON.stringify(u.educations)); } catch {}
+            }
+            if (Array.isArray(u.certifications) && u.certifications.length > 0) {
+              setCertifications(u.certifications);
+              try { localStorage.setItem(`fr8x_user_cert_${userStorageKey}`, JSON.stringify(u.certifications)); } catch {}
+            }
+            if (u.designation) setDesignation(u.designation);
+            if (u.city) setCity(u.city);
+            if (u.state) setStateName(u.state);
+            if (u.country) setCountry(u.country);
+            if (u.formattedAddress) setFormattedAddress(u.formattedAddress);
+            if (u.mobile) setMobile(u.mobile);
+            if (u.company) setCompany(u.company);
+            updateUser(u);
+          }
+        })
+        .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
+    }
+  }, [userStorageKey, user.uid, user.email]);
 
   // Synchronize component form states whenever the user object in AuthContext changes or reloads
   useEffect(() => {
@@ -474,6 +514,11 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_exp_${userStorageKey}`, JSON.stringify(newExp));
     } catch {}
     updateUser({ experiences: newExp });
+    fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid || user.email, updates: { experiences: newExp } }),
+    }).catch(() => {});
   };
 
   const persistEducations = (newEdu: ProfileEducation[]) => {
@@ -482,6 +527,11 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_edu_${userStorageKey}`, JSON.stringify(newEdu));
     } catch {}
     updateUser({ educations: newEdu });
+    fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid || user.email, updates: { educations: newEdu } }),
+    }).catch(() => {});
   };
 
   const persistCertifications = (newCert: ProfileCertification[]) => {
@@ -490,6 +540,11 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_cert_${userStorageKey}`, JSON.stringify(newCert));
     } catch {}
     updateUser({ certifications: newCert });
+    fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid: user.uid || user.email, updates: { certifications: newCert } }),
+    }).catch(() => {});
   };
 
   // Modal State for Adding/Editing Records

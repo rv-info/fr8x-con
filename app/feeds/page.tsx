@@ -2814,23 +2814,29 @@ export default function FeedsPage() {
               </a>
             </div>
           ) : (
-            <div style={{ textAlign: 'center', padding: '16px 12px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
-                Promote your business with us
-              </h3>
-              <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Advertise your company · Reach more customers · Grow your business
-              </p>
-              <button
-                className="btn primary sm"
-                style={{ width: '100%', justifyContent: 'center', height: '32px' }}
-                onClick={() => {
-                  setActiveAdSlot(2);
-                  setShowBookAdModal(true);
-                }}
-              >
-                Book ad space
-              </button>
+            <div style={{ padding: '4px 0' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <b style={{ fontSize: '12px', color: 'var(--ink)' }}>Live Port Terminals</b>
+                <span className="badge green" style={{ fontSize: '9px' }}>OPERATIONAL</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
+                  <span style={{ color: 'var(--ink)' }}>Nhava Sheva (JNPT)</span>
+                  <b style={{ color: '#16a34a' }}>Gate-in Open</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
+                  <span style={{ color: 'var(--ink)' }}>Mundra Port (APSEZ)</span>
+                  <b style={{ color: '#16a34a' }}>Smooth Flow</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
+                  <span style={{ color: 'var(--ink)' }}>Jebel Ali (DP World)</span>
+                  <b style={{ color: '#0284c7' }}>High Capacity</b>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--ink)' }}>Rotterdam ECT</span>
+                  <b style={{ color: '#16a34a' }}>On Schedule</b>
+                </div>
+              </div>
             </div>
           )}
         </div>

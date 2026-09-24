@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const authResult = await authenticateOperatorCredentials(String(password), ip);
+    const authResult = await authenticateOperatorCredentials(normEmail, String(password), ip);
     if (!authResult.success) {
       return NextResponse.json(
         { error: authResult.error || 'Unable to sign in. Please check your credentials.' },

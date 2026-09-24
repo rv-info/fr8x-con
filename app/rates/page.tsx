@@ -103,6 +103,10 @@ export default function RatesPage() {
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
 
+  // Dynamic Rates Pagination State
+  const [ratesPage, setRatesPage] = useState(1);
+  const [ratesPageSize, setRatesPageSize] = useState(25);
+
   // Rate Detail Modal
   const [selectedRateDetail, setSelectedRateDetail] = useState<RateItem | null>(null);
 
@@ -314,6 +318,21 @@ Remarks & Terms  : ${r.remark || ''}
     return true;
   });
 
+  // Reset pagination to page 1 whenever any search filter or tab changes
+  React.useEffect(() => {
+    setRatesPage(1);
+  }, [searchQuery, polSearch, podSearch, colSearch, activeTab]);
+
+  // Derived pagination calculations
+  const totalFilteredRates = filteredRates.length;
+  const totalRatePages = Math.max(1, Math.ceil(totalFilteredRates / ratesPageSize));
+  const safeRatesPage = Math.min(Math.max(1, ratesPage), totalRatePages);
+  const startIndex = (safeRatesPage - 1) * ratesPageSize;
+  const endIndex = Math.min(startIndex + ratesPageSize, totalFilteredRates);
+  const paginatedRates = React.useMemo(() => {
+    return filteredRates.slice(startIndex, endIndex);
+  }, [filteredRates, startIndex, endIndex]);
+
   const handleToggleCompare = (rateId: string) => {
     if (comparedRateIds.includes(rateId)) {
       setComparedRateIds((prev) => prev.filter((id) => id !== rateId));
@@ -518,7 +537,7 @@ Remarks & Terms  : ${r.remark || ''}
         <Modal
           isOpen={Boolean(selectedRateDetail)}
           onClose={() => setSelectedRateDetail(null)}
-          title={`Freight Rate Intelligence Matrix · ${getRateSeq(selectedRateDetail, allAvailableRates.indexOf(selectedRateDetail))}`}
+          title={`Freight Rate Matrix · ${getRateSeq(selectedRateDetail, allAvailableRates.indexOf(selectedRateDetail))}`}
           maxWidth="760px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -549,7 +568,7 @@ Remarks & Terms  : ${r.remark || ''}
               {/* 20DV Card */}
               <div style={{ background: '#f0f7ff', border: '1px solid #bae6fd', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <small style={{ color: '#0369a1', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>20&apos; Standard Container (20DV)</small>
+                  <small style={{ color: '#0369a1', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800 }}>20DV</small>
                   <span className="badge blue" style={{ fontSize: '9.5px' }}>{selectedRateDetail.d20Type || 'Dry Standard'}</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 850, color: '#0284c7' }}>
@@ -563,7 +582,7 @@ Remarks & Terms  : ${r.remark || ''}
               {/* 40HC Card */}
               <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '12px 14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <small style={{ color: '#15803d', fontSize: '10.5px', textTransform: 'uppercase', fontWeight: 800 }}>40&apos; High Cube Container (40HC)</small>
+                  <small style={{ color: '#15803d', fontSize: '11px', textTransform: 'uppercase', fontWeight: 800 }}>40HC</small>
                   <span className="badge green" style={{ fontSize: '9.5px' }}>{selectedRateDetail.h40Type || 'High Cube'}</span>
                 </div>
                 <div style={{ fontSize: '22px', fontWeight: 850, color: '#16a34a' }}>
@@ -600,37 +619,21 @@ Remarks & Terms  : ${r.remark || ''}
               </div>
             </div>
 
-            {/* Itemized Terms, Surcharges & Free Time */}
-            <div className="grid g2" style={{ gap: '10px' }}>
-              <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '10px', fontSize: '11px', background: '#fff' }}>
-                <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '6px', fontSize: '11.5px' }}>Free Time & Liner Terms</b>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)' }}>Combined Demurrage & Detention:</span>
-                  <b>{selectedRateDetail.ft || '14 Days Combined'}</b>
+            {/* Itemized Terms & Free Time */}
+            <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '12px 14px', fontSize: '11.5px', background: '#fff' }}>
+              <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '8px', fontSize: '12px' }}>Free Time & Liner Terms</b>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Combined Demurrage & Detention:</span>
+                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.ft || '14 Days Combined'}</b>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)' }}>Rate Type Classification:</span>
-                  <b>{selectedRateDetail.rateType || 'Direct Spot'}</b>
+                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Rate Type Classification:</span>
+                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.rateType || 'Direct Spot'}</b>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
-                  <span style={{ color: 'var(--mut)' }}>Corridor Transit Time:</span>
-                  <b>{selectedRateDetail.tt || '28 days'}</b>
-                </div>
-              </div>
-
-              <div style={{ border: '1px solid var(--line)', borderRadius: '8px', padding: '10px', fontSize: '11px', background: '#fff' }}>
-                <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '6px', fontSize: '11.5px' }}>Standard Liner Inclusions</b>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)' }}>Base Ocean Freight (BAS):</span>
-                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--mut)' }}>Bunker Adjustment (BAF / LSS):</span>
-                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0' }}>
-                  <span style={{ color: 'var(--mut)' }}>ISPS / Security & Seal:</span>
-                  <span className="badge green" style={{ fontSize: '9px' }}>INCLUDED</span>
+                <div style={{ background: '#f8fafc', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
+                  <span style={{ color: 'var(--mut)', display: 'block', fontSize: '10.5px' }}>Corridor Transit Time:</span>
+                  <b style={{ color: 'var(--ink)', fontSize: '12px' }}>{selectedRateDetail.tt || '28 days'}</b>
                 </div>
               </div>
             </div>
@@ -1949,7 +1952,8 @@ Remarks & Terms  : ${r.remark || ''}
                     </td>
                   </tr>
                 ) : (
-                  filteredRates.map((rate, idx) => {
+                  paginatedRates.map((rate, pageIdx) => {
+                    const idx = startIndex + pageIdx;
                     const isCompared = comparedRateIds.includes(rate.id);
                     const isExpiring = isExpiringSoon(rate.valid);
                     const isOwner =
@@ -2149,14 +2153,108 @@ Remarks & Terms  : ${r.remark || ''}
               </tbody>
             </table>
           </div>
-          {/* Pagination footer */}
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '10px 16px', borderTop: '1px solid var(--line)', gap: '12px', fontSize: '12px', color: 'var(--mut)' }}>
-            <span>Showing {filteredRates.length} of {allAvailableRates.length} rates</span>
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {['‹ Prev', '1', '2', '3', '4', '5', '…', 'Next ›'].map((p, i) => (
-                <button key={i} className="btn secondary sm" style={{ fontSize: '11px', padding: '2px 7px', minWidth: 'unset' }}>{p}</button>
-              ))}
+          {/* Dynamic Rates Pagination Footer */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 18px', borderTop: '1px solid var(--line)', flexWrap: 'wrap', gap: '12px', fontSize: '12px', color: 'var(--mut)', background: '#fafbfc' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                {totalFilteredRates === 0
+                  ? 'No rates match current filters'
+                  : totalRatePages <= 1
+                  ? `Showing all ${totalFilteredRates} of ${allAvailableRates.length} rates`
+                  : `Showing ${startIndex + 1}–${endIndex} of ${totalFilteredRates} rates (${allAvailableRates.length} total)`}
+              </span>
             </div>
+
+            {totalRatePages > 1 ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '4px', cursor: safeRatesPage <= 1 ? 'not-allowed' : 'pointer' }}
+                  disabled={safeRatesPage <= 1}
+                  onClick={() => setRatesPage((p) => Math.max(1, p - 1))}
+                  title="Previous Page"
+                >
+                  ‹ Prev
+                </button>
+
+                {(() => {
+                  const pages: (number | string)[] = [];
+                  if (totalRatePages <= 7) {
+                    for (let i = 1; i <= totalRatePages; i++) pages.push(i);
+                  } else {
+                    pages.push(1);
+                    if (safeRatesPage > 3) pages.push('…');
+                    const start = Math.max(2, safeRatesPage - 1);
+                    const end = Math.min(totalRatePages - 1, safeRatesPage + 1);
+                    for (let i = start; i <= end; i++) pages.push(i);
+                    if (safeRatesPage < totalRatePages - 2) pages.push('…');
+                    pages.push(totalRatePages);
+                  }
+                  return pages.map((p, i) => {
+                    if (typeof p === 'string') {
+                      return <span key={`ellipsis-${i}`} style={{ padding: '0 4px', color: 'var(--mut)' }}>{p}</span>;
+                    }
+                    const isActive = p === safeRatesPage;
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        className={`btn ${isActive ? 'primary' : 'secondary'} sm`}
+                        style={{
+                          fontSize: '11px',
+                          padding: '3px 8px',
+                          minWidth: '28px',
+                          borderRadius: '4px',
+                          fontWeight: isActive ? 700 : 500,
+                          background: isActive ? '#0f766e' : undefined,
+                          borderColor: isActive ? '#0f766e' : undefined,
+                          color: isActive ? '#ffffff' : undefined,
+                        }}
+                        onClick={() => setRatesPage(p)}
+                      >
+                        {p}
+                      </button>
+                    );
+                  });
+                })()}
+
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '3px 9px', borderRadius: '4px', cursor: safeRatesPage >= totalRatePages ? 'not-allowed' : 'pointer' }}
+                  disabled={safeRatesPage >= totalRatePages}
+                  onClick={() => setRatesPage((p) => Math.min(totalRatePages, p + 1))}
+                  title="Next Page"
+                >
+                  Next ›
+                </button>
+
+                <div style={{ marginLeft: '10px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--mut)' }}>Per page:</span>
+                  <select
+                    className="select sm"
+                    value={ratesPageSize}
+                    onChange={(e) => {
+                      setRatesPageSize(Number(e.target.value));
+                      setRatesPage(1);
+                    }}
+                    style={{ fontSize: '11px', padding: '2px 6px', height: '24px', borderRadius: '4px' }}
+                  >
+                    <option value={10}>10</option>
+                    <option value={25}>25</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                  </select>
+                </div>
+              </div>
+            ) : totalFilteredRates > 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="badge teal font-mono" style={{ fontSize: '10px', padding: '3px 10px', borderRadius: '12px' }}>
+                  1 Page · All Available Rates Shown
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
         {/* End of Desktop Table Container */}
@@ -2214,7 +2312,7 @@ Remarks & Terms  : ${r.remark || ''}
             </div>
           ) : (
             <div className="rates-card-grid">
-              {filteredRates.map((rate) => {
+              {paginatedRates.map((rate) => {
                 const isCompared = comparedRateIds.includes(rate.id);
                 const isExpiring = isExpiringSoon(rate.valid);
                 const seqCode = getRateSeq(rate, allAvailableRates.indexOf(rate));
@@ -2417,9 +2515,40 @@ Remarks & Terms  : ${r.remark || ''}
             </div>
           )}
 
-          {/* Mobile pagination summary */}
-          <div style={{ textAlign: 'center', padding: '12px 8px 4px', fontSize: '11px', color: 'var(--mut)' }}>
-            Showing {filteredRates.length} of {allAvailableRates.length} rates in catalog
+          {/* Mobile pagination summary & controls */}
+          <div style={{ textAlign: 'center', padding: '14px 8px 6px', fontSize: '11px', color: 'var(--mut)' }}>
+            <div>
+              {totalFilteredRates === 0
+                ? 'No matching rates'
+                : totalRatePages <= 1
+                ? `Showing all ${totalFilteredRates} rates`
+                : `Showing ${startIndex + 1}–${endIndex} of ${totalFilteredRates} rates`}
+            </div>
+            {totalRatePages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
+                  disabled={safeRatesPage <= 1}
+                  onClick={() => setRatesPage((p) => Math.max(1, p - 1))}
+                >
+                  ‹ Prev
+                </button>
+                <span style={{ fontWeight: 600, color: 'var(--ink)' }}>
+                  Page {safeRatesPage} of {totalRatePages}
+                </span>
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
+                  disabled={safeRatesPage >= totalRatePages}
+                  onClick={() => setRatesPage((p) => Math.min(totalRatePages, p + 1))}
+                >
+                  Next ›
+                </button>
+              </div>
+            )}
           </div>
         </div>
         </div>

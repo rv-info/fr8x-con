@@ -123,9 +123,9 @@ const DUMMY_JOB_TITLES = new Set([
 const DUMMY_NOTIFICATION_IDS = new Set(['notif-1', 'notif-2', 'notif-3', 'notif-4', 'notif-5', 'notif-6']);
 
 const DUMMY_PERSONAS = new Set([
-  'Priya Nair', 'Sarah Lewis', 'Elena Rostova', 'Kiran Mehta', 'Arjun Rao',
+  'Priya Nair', 'Sarah Lewis', 'Elena Rostova', 'Kiran Mehta',
   'Vikram Patel', 'Rajesh Sharma', 'Michael Zhang', 'Carlos Mendez', 'Carlos Mendoza',
-  'Ananya Deshmukh', 'Ananya Sen', 'Ahmed Al-Mansoor', 'Hannah Schmidt', 'Kenji Tanaka',
+  'Ananya Deshmukh', 'Ahmed Al-Mansoor', 'Hannah Schmidt', 'Kenji Tanaka',
   'Sophie Dubois', 'Fatima Zahra', 'Viktor Lindqvist', 'Amara Okafor', 'Li Wei Chen',
   'Lucas Silva', 'Dmitri Pavlov', 'Yasmin Khan', 'Zoe Christensen', 'David Chen',
   'Capt. Sunil Deshmukh', 'Alex Van Der Meer', 'Kavita Reddy', 'Hans Gruber',
