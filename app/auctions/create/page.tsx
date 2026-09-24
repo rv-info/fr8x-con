@@ -48,53 +48,7 @@ interface VerifiedBidderCandidate {
 import { BidderGroup } from '@/lib/types';
 import { getBidderGroupsFromDB, saveBidderGroupInDB } from '@/lib/firebase/firestore';
 
-const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [
-  {
-    id: 'u-apex',
-    name: 'Apex Global Logistics & Freight',
-    role: 'Freight Forwarder',
-    company: 'Apex Global Logistics Pvt Ltd',
-    location: 'Mumbai / Nhava Sheva',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-  },
-  {
-    id: 'u-transworld',
-    name: 'TransWorld NVOCC Solutions',
-    role: 'NVOCC Equipment Operator',
-    company: 'TransWorld Container Line',
-    location: 'Mundra / Dubai',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-  },
-  {
-    id: 'u-radiant',
-    name: 'Radiant Multimodal Freight',
-    role: 'Freight Forwarder',
-    company: 'Radiant Global Logistics',
-    location: 'Chennai / Singapore',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-  },
-  {
-    id: 'u-interglobal',
-    name: 'InterGlobal Line NVOCC',
-    role: 'NVOCC Equipment Operator',
-    company: 'InterGlobal Container Lines',
-    location: 'New Delhi / ICD Tughlakabad',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-  },
-  {
-    id: 'u-bluedart',
-    name: 'BlueOcean Freight Forwarding',
-    role: 'Freight Forwarder',
-    company: 'BlueOcean Logistics Group',
-    location: 'Ahmedabad / Pipavav',
-    timezone: 'Asia/Kolkata',
-    hasGoldenTick: true,
-  },
-];
+const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [];
 
 export default function CreateReverseAuctionPage() {
   const router = useRouter();
@@ -191,28 +145,21 @@ export default function CreateReverseAuctionPage() {
       }).catch(() => {});
     }
 
-    // Load registered Freight Forwarders and NVOCCs from platform directory
-    fetch('/api/members?role=forwarder_nvocc')
+    // Load registered verified members from authoritative DBMS directory
+    fetch('/api/members')
       .then((r) => r.json())
       .then((data) => {
-        if (data && Array.isArray(data.members) && data.members.length > 0) {
+        if (data && Array.isArray(data.members)) {
           const registeredCandidates: VerifiedBidderCandidate[] = data.members.map((m: any) => ({
             id: m.uid,
             name: m.displayName || m.company,
-            role: m.role?.toLowerCase().includes('nvocc') ? 'NVOCC Equipment Operator' : 'Freight Forwarder',
+            role: m.designation || 'Forwarding Specialist',
             company: m.company,
-            location: m.location || `${m.city}, ${m.country}`,
+            location: m.formattedAddress || `${m.city || ''}, ${m.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
             timezone: m.timezone || 'Asia/Kolkata',
             hasGoldenTick: Boolean(m.hasGoldenTick),
           }));
-          setAvailableBidders((prev) => {
-            const map = new Map<string, VerifiedBidderCandidate>();
-            registeredCandidates.forEach((c) => map.set(c.id, c));
-            prev.forEach((c) => {
-              if (!map.has(c.id)) map.set(c.id, c);
-            });
-            return Array.from(map.values());
-          });
+          setAvailableBidders(registeredCandidates);
         }
       })
       .catch(() => {});

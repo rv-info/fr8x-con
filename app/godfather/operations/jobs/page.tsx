@@ -45,102 +45,7 @@ interface JobListing {
   contactEmail: string;
 }
 
-const INITIAL_JOBS: JobListing[] = [
-  {
-    id: 'JOB-2026-081',
-    title: 'Senior Ocean Freight Forwarding Specialist',
-    company: 'Atlas Logistics Pvt. Ltd.',
-    location: 'Mumbai, India (BKC & Nhava Sheva)',
-    packageDetails: '₹14 - 18 LPA + Performance Bonus',
-    status: 'active',
-    postedBy: 'Arjun Rao',
-    posterEmail: 'arjun.rao@atlaslogistics.in',
-    posterKyc: true,
-    postedDate: '2026-08-28',
-    employmentType: 'Full-time',
-    experience: '5 - 8 Years',
-    department: 'Ocean Freight & Liner Booking',
-    description:
-      'Responsible for managing end-to-end FCL/LCL ocean freight operations across Indian West Coast ports. Key responsibilities include negotiating rate contracts with top-tier ocean carriers (Maersk, MSC, CMA CGM), coordinating customs clearance via ICD Tughlakabad/JNPT, and optimizing container turnaround times.',
-    requirements: [
-      'Minimum 5 years of verified freight forwarding experience.',
-      'Extensive knowledge of UN/LOCODEs, HS codes, and Incoterms 2020.',
-      'Strong carrier relationship network across major shipping lines.',
-      'Proficiency in digital freight tracking platforms and customs ERPs.',
-    ],
-    skills: ['FCL / LCL Booking', 'Customs Broking', 'Carrier Negotiations', 'Documentation'],
-    contactEmail: 'careers@atlaslogistics.in',
-  },
-  {
-    id: 'JOB-2026-079',
-    title: 'Trade Lane Manager (Asia - Europe Corridor)',
-    company: 'Northstar Freight Group',
-    location: 'Dubai, UAE / Remote',
-    packageDetails: 'AED 24,000 - 30,000 / month ($78,000 - $98,000 p.a.)',
-    status: 'active',
-    postedBy: 'Kiran Mehta',
-    posterEmail: 'kiran.m@northstarfreight.ae',
-    posterKyc: true,
-    postedDate: '2026-08-25',
-    employmentType: 'Full-time',
-    experience: '8+ Years',
-    department: 'Trade Lane Development',
-    description:
-      'Lead container volume procurement, slot charter agreements, and carrier contract yields on the high-frequency Eastbound & Westbound Far East - Mediterranean - Northern Europe corridors. Direct reporting to Chief Commercial Officer.',
-    requirements: [
-      'Proven track record in Asia-Europe ocean freight procurement (>50,000 TEU annually).',
-      'Strong analytical capabilities in container spot vs index rate hedging (SCFI/WCI benchmark).',
-      'Bilingual proficiency in English and Mandarin preferred.',
-    ],
-    skills: ['Trade Lane Strategy', 'Index Hedging', 'Slot Procurement', 'Global Key Accounts'],
-    contactEmail: 'hr@northstarfreight.ae',
-  },
-  {
-    id: 'JOB-2026-085',
-    title: 'Customs Compliance & Bonded Warehouse Lead',
-    company: 'Pacific Trans-Cargo Inc.',
-    location: 'Chennai, India',
-    packageDetails: '₹9 - 12 LPA',
-    status: 'pending',
-    postedBy: 'Ramesh Sundaram',
-    posterEmail: 'ramesh@pacificcargo.com',
-    posterKyc: false,
-    postedDate: '2026-09-01',
-    employmentType: 'Full-time',
-    experience: '4 - 6 Years',
-    department: 'Customs & Regulatory',
-    description:
-      'Manage Indian Customs EDI documentation, ICEGATE filings, AEO certification audits, and bonded warehouse container destuffing protocols.',
-    requirements: [
-      'Rule 6 Customs Broker License / F-Card preferred.',
-      'Expertise in FTWZ (Free Trade Warehousing Zones) and duty drawback procedures.',
-    ],
-    skills: ['ICEGATE Filings', 'Customs Audits', 'FTWZ Management', 'AEO Compliance'],
-    contactEmail: 'jobs@pacificcargo.com',
-  },
-  {
-    id: 'JOB-2026-072',
-    title: 'Intermodal Rail & DPD Operations Executive',
-    company: 'TransIndia Multimodal Hub',
-    location: 'Dadri ICD / Delhi NCR',
-    packageDetails: '₹6.5 - 8.5 LPA',
-    status: 'suspended',
-    postedBy: 'Sanjay Verma',
-    posterEmail: 'sanjay.v@transindiahub.com',
-    posterKyc: true,
-    postedDate: '2026-08-15',
-    employmentType: 'Full-time',
-    experience: '3 - 5 Years',
-    department: 'Intermodal Rail Logistics',
-    description:
-      'Listing temporarily suspended pending verification of wage transparency standards and valid company registration documentation.',
-    requirements: [
-      'Hands-on experience with CONCOR rail rake scheduling and DPD clearance at JNPT/Mundra.',
-    ],
-    skills: ['CONCOR Rakes', 'ICD Operations', 'First/Last Mile', 'Direct Port Delivery (DPD)'],
-    contactEmail: 'recruitment@transindiahub.com',
-  },
-];
+const INITIAL_JOBS: JobListing[] = [];
 
 export default function JobsModerationPage() {
   const { jobs: dataJobs, verifyJobPayment } = useData();
@@ -401,7 +306,14 @@ export default function JobsModerationPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredJobs.map((job) => (
+              {filteredJobs.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-slate-500 font-medium text-xs">
+                    No job postings found. Newly published maritime and logistics opportunities will appear here for operational approval.
+                  </td>
+                </tr>
+              ) : (
+                filteredJobs.map((job) => (
                 <tr key={job.id} className="hover:bg-slate-50">
                   <td>
                     <div
@@ -481,7 +393,8 @@ export default function JobsModerationPage() {
                     </div>
                   </td>
                 </tr>
-              ))}
+              ))
+              )}
             </tbody>
           </table>
         </div>

@@ -1510,7 +1510,7 @@ function CompaniesKYCContent() {
                         company: { ...prev.company, legalName: e.target.value },
                       }))
                     }
-                    placeholder="e.g. Apex Global Forwarders Private Limited"
+                    placeholder="e.g. Cogoport India Private Limited"
                     className="gf-input font-bold"
                   />
                 </div>
@@ -1780,7 +1780,7 @@ function CompaniesKYCContent() {
                         company: { ...prev.company, primaryContactName: e.target.value },
                       }))
                     }
-                    placeholder="e.g. Sarah Lewis / Arjun Rao"
+                    placeholder="e.g. Rajat RAI"
                     className="gf-input"
                   />
                 </div>

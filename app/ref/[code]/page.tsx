@@ -32,12 +32,8 @@ export default function CompanyReferencePage() {
   const companySlug = codeParts[2] || 'CORP';
 
   const companyMap: Record<string, { name: string; city: string; country: string; lanes: string[]; teu: string; score: number }> = {
-    ROTT: { name: 'Rotterdam Freight NV', city: 'Rotterdam', country: 'Netherlands', lanes: ['NLRTM ↔ INNSA', 'NLRTM ↔ SGSIN', 'NLRTM ↔ USNYC'], teu: '24,000+ TEUs / yr', score: 99 },
-    INDO: { name: 'Indo Ocean Lines Ltd.', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'INMUN ↔ SGSIN', 'INNSA ↔ JED'], teu: '18,500+ TEUs / yr', score: 98 },
-    NAIR: { name: 'Nair Cargo Solutions', city: 'Cochin', country: 'India', lanes: ['INCOK ↔ SGSIN', 'INCOK ↔ NLRTM', 'INCOK ↔ DXB'], teu: '12,000+ TEUs / yr', score: 96 },
-    CARG: { name: 'CargoLink Global Logistics', city: 'Singapore', country: 'Singapore', lanes: ['SGSIN ↔ NLRTM', 'SGSIN ↔ USLAX', 'SGSIN ↔ INNSA'], teu: '32,000+ TEUs / yr', score: 99 },
-    ATLA: { name: 'Atlas Logistics Pvt. Ltd.', city: 'New Delhi', country: 'India', lanes: ['INNSA ↔ HAM', 'INNSA ↔ USNYC'], teu: '14,000+ TEUs / yr', score: 97 },
-    FR8X: { name: 'FR8X Verified Logistics Partner', city: 'Global Gateway', country: 'International', lanes: ['INNSA ↔ NLRTM', 'CNSHA ↔ USLAX', 'SGSIN ↔ HAM'], teu: '15,000+ TEUs / yr', score: 98 },
+    COGO: { name: 'Cogoport India Private Limited', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'INNSA ↔ SGSIN', 'INNSA ↔ JED'], teu: '50,000+ TEUs / yr', score: 100 },
+    FR8X: { name: 'FR8X Verified Logistics Partner', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'CNSHA ↔ USLAX', 'SGSIN ↔ HAM'], teu: '25,000+ TEUs / yr', score: 99 },
   };
 
   const matched = companyMap[companySlug] || {

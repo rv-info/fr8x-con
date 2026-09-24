@@ -960,7 +960,7 @@ export default function GodfatherPromotionsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. u-arjun or user UID"
+                  placeholder="e.g. u-rajat or user UID"
                   value={overrideUserId}
                   onChange={(e) => setOverrideUserId(e.target.value)}
                   className="input"
@@ -972,7 +972,7 @@ export default function GodfatherPromotionsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Arjun Rao (Atlas Logistics)"
+                  placeholder="e.g. Rajat RAI (COGOPORT)"
                   value={overrideUserName}
                   onChange={(e) => setOverrideUserName(e.target.value)}
                   className="input"

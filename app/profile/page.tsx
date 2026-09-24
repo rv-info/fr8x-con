@@ -406,12 +406,15 @@ export default function ProfilePage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const resolvedUid = user.uid || user.email || localStorage.getItem('fr8x_active_user_uid') || 'u-rajat';
+    const storageKey = resolvedUid;
+
     // 1. Initial hydration from user object
     if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
       setExperiences(user.experiences);
     } else {
       try {
-        const storedExp = localStorage.getItem(`fr8x_user_exp_${userStorageKey}`);
+        const storedExp = localStorage.getItem(`fr8x_user_exp_${storageKey}`);
         if (storedExp) {
           const parsed = JSON.parse(storedExp);
           if (Array.isArray(parsed) && parsed.length > 0) setExperiences(parsed);
@@ -423,7 +426,7 @@ export default function ProfilePage() {
       setEducations(user.educations);
     } else {
       try {
-        const storedEdu = localStorage.getItem(`fr8x_user_edu_${userStorageKey}`);
+        const storedEdu = localStorage.getItem(`fr8x_user_edu_${storageKey}`);
         if (storedEdu) {
           const parsed = JSON.parse(storedEdu);
           if (Array.isArray(parsed) && parsed.length > 0) setEducations(parsed);
@@ -435,7 +438,7 @@ export default function ProfilePage() {
       setCertifications(user.certifications);
     } else {
       try {
-        const storedCert = localStorage.getItem(`fr8x_user_cert_${userStorageKey}`);
+        const storedCert = localStorage.getItem(`fr8x_user_cert_${storageKey}`);
         if (storedCert) {
           const parsed = JSON.parse(storedCert);
           if (Array.isArray(parsed) && parsed.length > 0) setCertifications(parsed);
@@ -444,44 +447,45 @@ export default function ProfilePage() {
     }
 
     // 2. Authoritative live fetch from DBMS API /api/user/profile
-    const targetUid = user.uid || user.email;
-    if (targetUid) {
-      fetch(`/api/user/profile?uid=${encodeURIComponent(targetUid)}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data?.success && data?.user) {
-            const u = data.user;
-            if (Array.isArray(u.experiences) && u.experiences.length > 0) {
-              setExperiences(u.experiences);
-              try { localStorage.setItem(`fr8x_user_exp_${userStorageKey}`, JSON.stringify(u.experiences)); } catch {}
-            }
-            if (Array.isArray(u.educations) && u.educations.length > 0) {
-              setEducations(u.educations);
-              try { localStorage.setItem(`fr8x_user_edu_${userStorageKey}`, JSON.stringify(u.educations)); } catch {}
-            }
-            if (Array.isArray(u.certifications) && u.certifications.length > 0) {
-              setCertifications(u.certifications);
-              try { localStorage.setItem(`fr8x_user_cert_${userStorageKey}`, JSON.stringify(u.certifications)); } catch {}
-            }
-            if (u.designation) setDesignation(u.designation);
-            if (u.city) setCity(u.city);
-            if (u.state) setStateName(u.state);
-            if (u.country) setCountry(u.country);
-            if (u.formattedAddress) setFormattedAddress(u.formattedAddress);
-            if (u.mobile) setMobile(u.mobile);
-            if (u.company) setCompany(u.company);
-            updateUser(u);
+    fetch(`/api/user/profile?uid=${encodeURIComponent(resolvedUid)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.user) {
+          const u = data.user;
+          if (Array.isArray(u.experiences) && u.experiences.length > 0) {
+            setExperiences(u.experiences);
+            try { localStorage.setItem(`fr8x_user_exp_${storageKey}`, JSON.stringify(u.experiences)); } catch {}
           }
-        })
-        .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
-    }
-  }, [userStorageKey, user.uid, user.email]);
+          if (Array.isArray(u.educations) && u.educations.length > 0) {
+            setEducations(u.educations);
+            try { localStorage.setItem(`fr8x_user_edu_${storageKey}`, JSON.stringify(u.educations)); } catch {}
+          }
+          if (Array.isArray(u.certifications) && u.certifications.length > 0) {
+            setCertifications(u.certifications);
+            try { localStorage.setItem(`fr8x_user_cert_${storageKey}`, JSON.stringify(u.certifications)); } catch {}
+          }
+          if (u.firstName) setFirstName(u.firstName);
+          if (u.lastName) setLastName(u.lastName);
+          if (u.designation) setDesignation(u.designation);
+          if (u.city) setCity(u.city);
+          if (u.state) setStateName(u.state);
+          if (u.country) setCountry(u.country);
+          if (u.formattedAddress) setFormattedAddress(u.formattedAddress);
+          if (u.mobile) setMobile(u.mobile);
+          if (u.company) setCompany(u.company);
+          if (u.summary) setSummary(u.summary);
+          if (u.operatingCorridors) setOperatingCorridors(u.operatingCorridors);
+          updateUser(u);
+        }
+      })
+      .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
+  }, [user.uid, user.email]);
 
   // Synchronize component form states whenever the user object in AuthContext changes or reloads
   useEffect(() => {
     if (!user) return;
-    setFirstName(user.firstName || '');
-    setLastName(user.lastName || '');
+    setFirstName(user.firstName || user.displayName?.split(' ')[0] || '');
+    setLastName(user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '');
     setDesignation(user.designation || '');
     setMobile(user.mobile || '');
     setCompany(user.company || '');
@@ -491,6 +495,15 @@ export default function ProfilePage() {
     setCountry(user.country || '');
     setFormattedAddress(user.formattedAddress || '');
     setTimezone(user.timezone || 'Asia/Kolkata');
+    if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
+      setExperiences(user.experiences);
+    }
+    if (user.educations && Array.isArray(user.educations) && user.educations.length > 0) {
+      setEducations(user.educations);
+    }
+    if (user.certifications && Array.isArray(user.certifications) && user.certifications.length > 0) {
+      setCertifications(user.certifications);
+    }
     setKycCountry((user as any).kycCountry || user.country || 'India');
     setTaxId((user as any).taxId || '');
     setCorporateReg((user as any).corporateRegNumber || '');
@@ -510,40 +523,43 @@ export default function ProfilePage() {
 
   const persistExperiences = (newExp: ProfileExperience[]) => {
     setExperiences(newExp);
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
     try {
-      localStorage.setItem(`fr8x_user_exp_${userStorageKey}`, JSON.stringify(newExp));
+      localStorage.setItem(`fr8x_user_exp_${activeUid}`, JSON.stringify(newExp));
     } catch {}
     updateUser({ experiences: newExp });
     fetch('/api/user/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: user.uid || user.email, updates: { experiences: newExp } }),
+      body: JSON.stringify({ uid: activeUid, email: user.email, updates: { experiences: newExp } }),
     }).catch(() => {});
   };
 
   const persistEducations = (newEdu: ProfileEducation[]) => {
     setEducations(newEdu);
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
     try {
-      localStorage.setItem(`fr8x_user_edu_${userStorageKey}`, JSON.stringify(newEdu));
+      localStorage.setItem(`fr8x_user_edu_${activeUid}`, JSON.stringify(newEdu));
     } catch {}
     updateUser({ educations: newEdu });
     fetch('/api/user/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: user.uid || user.email, updates: { educations: newEdu } }),
+      body: JSON.stringify({ uid: activeUid, email: user.email, updates: { educations: newEdu } }),
     }).catch(() => {});
   };
 
   const persistCertifications = (newCert: ProfileCertification[]) => {
     setCertifications(newCert);
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
     try {
-      localStorage.setItem(`fr8x_user_cert_${userStorageKey}`, JSON.stringify(newCert));
+      localStorage.setItem(`fr8x_user_cert_${activeUid}`, JSON.stringify(newCert));
     } catch {}
     updateUser({ certifications: newCert });
     fetch('/api/user/profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid: user.uid || user.email, updates: { certifications: newCert } }),
+      body: JSON.stringify({ uid: activeUid, email: user.email, updates: { certifications: newCert } }),
     }).catch(() => {});
   };
 
@@ -588,6 +604,12 @@ export default function ProfilePage() {
         const url = loadEvt.target?.result as string;
         setAvatarUrl(url);
         updateUser({ avatarUrl: url });
+        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+        fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: url } }),
+        }).catch(() => {});
         toast('Profile photo updated.');
       };
       reader.readAsDataURL(file);
@@ -602,6 +624,12 @@ export default function ProfilePage() {
         const url = loadEvt.target?.result as string;
         setCompanyLogoUrl(url);
         updateUser({ companyLogoUrl: url });
+        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+        fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: url } }),
+        }).catch(() => {});
         toast('Company logo uploaded successfully.');
       };
       reader.readAsDataURL(file);
@@ -611,12 +639,13 @@ export default function ProfilePage() {
   // Profile Completeness Calculation
   const calculateCompleteness = () => {
     let score = 0;
-    if (firstName && lastName) score += 15;
+    const hasFullName = (firstName && lastName) || (user.displayName && user.displayName.trim().length > 3);
+    if (hasFullName) score += 15;
     if (company && designation) score += 15;
-    if (avatarUrl) score += 10;
-    if (companyLogoUrl) score += 10;
-    if (formattedAddress && city) score += 10;
-    if (summary) score += 10;
+    if (avatarUrl || user.avatarUrl) score += 10;
+    if (companyLogoUrl || user.companyLogoUrl) score += 10;
+    if ((formattedAddress && city) || (user.formattedAddress && user.city)) score += 10;
+    if (summary || (user as any).summary) score += 10;
     const complianceEval = evaluateCompliance(kycCountry || country, {
       taxId,
       corporateReg,
@@ -628,18 +657,19 @@ export default function ProfilePage() {
       mto,
     });
     if (complianceEval.isCompliant) score += 10;
-    if (experiences.length > 0) score += 10;
-    if (certifications.length > 0) score += 10;
+    if (experiences.length > 0 || (user.experiences && user.experiences.length > 0)) score += 10;
+    if (certifications.length > 0 || (user.certifications && user.certifications.length > 0)) score += 10;
     return Math.min(100, score);
   };
 
   const completeness = calculateCompleteness();
 
   const handleSaveProfile = () => {
-    updateUser({
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const profilePayload = {
       firstName,
       lastName,
-      displayName: `${firstName} ${lastName}`.trim(),
+      displayName: `${firstName} ${lastName}`.trim() || user.displayName,
       designation,
       company,
       mobile,
@@ -652,6 +682,10 @@ export default function ProfilePage() {
       formattedAddress,
       coordinates: { lat, lng },
       timezone,
+      experiences,
+      educations,
+      certifications,
+      operatingCorridors,
       kycCountry,
       taxId,
       corporateRegNumber: corporateReg,
@@ -661,9 +695,19 @@ export default function ProfilePage() {
       pan: pan || '',
       iec: iec || '',
       mto: mto || '',
-    });
+    };
+    updateUser(profilePayload);
+    fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        uid: activeUid,
+        email: user.email,
+        updates: profilePayload,
+      }),
+    }).catch(() => {});
     setIsEditMode(false);
-    toast('Enterprise profile updated successfully.');
+    toast('✓ Enterprise profile, contact details and professional records saved in DBMS.');
   };
 
   const handleOpenExpModal = (exp?: ProfileExperience) => {
@@ -979,7 +1023,7 @@ export default function ProfilePage() {
               </div>
               <div className="field">
                 <label>Company Name <span className="req">*</span></label>
-                <input className="input" value={expCompany} onChange={(e) => setExpCompany(e.target.value)} placeholder="Atlas Logistics Pvt. Ltd." required />
+                <input className="input" value={expCompany} onChange={(e) => setExpCompany(e.target.value)} placeholder="COGOPORT" required />
               </div>
             </div>
 
@@ -3258,17 +3302,25 @@ export default function ProfilePage() {
 
               updateUser(profilePayload);
 
+              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
               try {
                 const res = await fetch('/api/user/profile', {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
-                    uid: user.uid,
-                    updates: profilePayload,
+                    uid: targetUid,
+                    email: finalEmail,
+                    updates: {
+                      ...profilePayload,
+                      experiences,
+                      educations,
+                      certifications,
+                    },
                   }),
                 });
                 const data = await res.json();
                 if (data.success) {
+                  try { localStorage.setItem('fr8x_active_user_uid', targetUid); } catch {}
                   toast('✓ Contact credentials, location and corporate affiliation saved in DBMS successfully.');
                 }
               } catch (err) {

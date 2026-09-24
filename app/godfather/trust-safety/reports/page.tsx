@@ -43,46 +43,11 @@ export default function ReportsAppealsPage() {
   const { auditLogs } = useGodfatherData();
   const { operator } = useGodfatherAuth();
 
-  const [reports, setReports] = useState<PlatformReport[]>([
-    {
-      id: 'REP-2026-001',
-      type: 'Commercial Dispute',
-      reporterName: 'Arjun Rao',
-      reporterEmail: 'arjun@atlaslogistics.com',
-      targetType: 'Company',
-      targetId: 'CMP-00103',
-      targetCompany: 'Indo Ocean Lines',
-      module: 'Auctions',
-      severity: 'HIGH',
-      status: 'open',
-      reason: 'Demurrage free time deviation in spot quote confirmation',
-      description: 'Liner billed additional $450 demurrage despite 14 combined free days agreement agreed in auction bid terms.',
-      evidenceRef: 'BL-98127391-JEA',
-      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: 'REP-2026-002',
-      type: 'Content Violation',
-      reporterName: 'Sarah Lewis',
-      reporterEmail: 'sarah.lewis@rotterdamfreight.nl',
-      targetType: 'User Post',
-      targetId: 'post-109',
-      targetCompany: 'Unverified Entity',
-      module: 'Feeds',
-      severity: 'MEDIUM',
-      status: 'under_review',
-      reason: 'Off-platform payment solicitation',
-      description: 'User repeatedly posted personal WhatsApp numbers requesting upfront crypto deposit.',
-      evidenceRef: 'POST-088-SS.png',
-      createdAt: new Date(Date.now() - 14 * 3600 * 1000).toISOString(),
-      assignedAdmin: 'Vikramaditya Singhania',
-    },
-  ]);
-
+  const [reports, setReports] = useState<PlatformReport[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [severityFilter, setSeverityFilter] = useState('ALL');
   const [moduleFilter, setModuleFilter] = useState('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedReport, setSelectedReport] = useState<PlatformReport | null>(null);
 
   // Request info modal

@@ -23,31 +23,19 @@ export default function ContentModerationPage() {
   const { resolveReport } = useGodfatherData();
   const { requestStepUpVerification } = useGodfatherAuth();
 
-  const [posts, setPosts] = useState([
-    {
-      id: 'post-109',
-      author: 'Priya Nair',
-      authorCompany: 'Nair Cargo Solutions',
-      text: '*Blank sailings* have tightened capacity on Asia-Europe lanes through mid-September. Booking 10-14 days ahead is strongly advised.',
-      status: 'active',
-      reportsCount: 0,
-      likes: 24,
-      commentsCount: 3,
-      createdAt: '2026-08-29 14:00',
-    },
-    {
-      id: 'post-088',
-      author: 'Ramesh Cargo Agent',
-      authorCompany: 'Transoceanic Express Logistics Ltd',
-      text: 'Direct carrier contract slots available at $400/40HC. WhatsApp urgently on +91 99999 00000 for immediate booking.',
-      status: 'hidden',
-      reportsCount: 4,
-      reportCategory: 'Commercial Solicitation / Off-Platform Fraud',
-      likes: 0,
-      commentsCount: 1,
-      createdAt: '2026-08-27 10:30',
-    },
-  ]);
+  const [posts, setPosts] = useState<any[]>([]);
+
+  // Load real posts from DBMS feed API
+  React.useEffect(() => {
+    fetch('/api/feed')
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data?.posts)) {
+          setPosts(data.posts);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;

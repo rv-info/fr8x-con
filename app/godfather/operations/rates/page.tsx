@@ -26,7 +26,10 @@ export default function RatesManagementPage() {
 
   const [activeTab, setActiveTab] = useState<'inventory' | 'imports'>('imports');
   const [rateSearch, setRateSearch] = useState('');
-  const [selectedBatch, setSelectedBatch] = useState<any>(rateImports[0]);
+  const [selectedBatch, setSelectedBatch] = useState<any>(null);
+
+  // Synchronize selected batch with active rate imports
+  const activeBatch = selectedBatch || (rateImports.length > 0 ? rateImports[0] : null);
 
   // Confirmation modal state
   const [modalConfig, setModalConfig] = useState<{
@@ -120,6 +123,19 @@ export default function RatesManagementPage() {
       </div>
 
       {activeTab === 'imports' ? (
+        rateImports.length === 0 ? (
+          <div className="gf-card p-12 text-center space-y-3 bg-slate-50 border-slate-200">
+            <div className="w-12 h-12 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-center mx-auto text-sky-600">
+              <FileSpreadsheet className="w-6 h-6" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-800">No Pending Tariff Batches in ETL Pipeline</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                There are currently no carrier tariff sheets awaiting ETL parsing or manual operator validation. When members or carriers upload bulk rate files, they will be cataloged here for automated schema inspection.
+              </p>
+            </div>
+          </div>
+        ) : (
         /* Bulk Imports Pipeline View */
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Batches List on Left (5 cols) */}
@@ -131,7 +147,7 @@ export default function RatesManagementPage() {
 
             <div className="space-y-2">
               {rateImports.map((batch) => {
-                const isSelected = selectedBatch?.importId === batch.importId;
+                const isSelected = activeBatch?.importId === batch.importId;
                 return (
                   <div
                     key={batch.importId}
@@ -169,30 +185,30 @@ export default function RatesManagementPage() {
 
           {/* Batch Detail Inspector on Right (7 cols) */}
           <div className="lg:col-span-7">
-            {selectedBatch ? (
+            {activeBatch ? (
               <div className="gf-card divide-y divide-slate-100">
                 {/* Header */}
                 <div className="p-4 bg-slate-50 flex items-start justify-between flex-wrap gap-2">
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-base font-extrabold text-slate-900">{selectedBatch.batchCode}</h2>
+                      <h2 className="text-base font-extrabold text-slate-900">{activeBatch.batchCode}</h2>
                       <span className="gf-badge gf-badge-blue text-[10px] uppercase font-mono font-bold">
-                        {selectedBatch.importId}
+                        {activeBatch.importId}
                       </span>
                     </div>
                     <p className="text-xs text-slate-600 mt-1">
-                      File: <strong className="text-slate-900">{selectedBatch.filename}</strong> · Uploader: {selectedBatch.uploaderCompany}
+                      File: <strong className="text-slate-900">{activeBatch.filename}</strong> · Uploader: {activeBatch.uploaderCompany}
                     </p>
                   </div>
 
-                  {selectedBatch.status !== 'Finalized' && (
+                  {activeBatch.status !== 'Finalized' && (
                     <button
                       type="button"
-                      onClick={() => handleFinalizeBatch(selectedBatch)}
+                      onClick={() => handleFinalizeBatch(activeBatch)}
                       className="gf-btn gf-btn-success text-xs font-bold flex items-center gap-1"
                     >
                       <CheckCircle2 className="lucide w-3.5 h-3.5" />
-                      Finalize Valid Rows ({selectedBatch.validRows})
+                      Finalize Valid Rows ({activeBatch.validRows})
                     </button>
                   )}
                 </div>
@@ -201,36 +217,36 @@ export default function RatesManagementPage() {
                 <div className="p-4 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 text-xs">
                   <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Total Rows</span>
-                    <span className="font-mono text-slate-900 font-bold text-sm block mt-0.5">{selectedBatch.totalRows}</span>
+                    <span className="font-mono text-slate-900 font-bold text-sm block mt-0.5">{activeBatch.totalRows}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Valid Rows</span>
-                    <span className="font-mono text-emerald-700 font-bold text-sm block mt-0.5">{selectedBatch.validRows}</span>
+                    <span className="font-mono text-emerald-700 font-bold text-sm block mt-0.5">{activeBatch.validRows}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Invalid Flags</span>
-                    <span className="font-mono text-rose-700 font-bold text-sm block mt-0.5">{selectedBatch.invalidRows}</span>
+                    <span className="font-mono text-rose-700 font-bold text-sm block mt-0.5">{activeBatch.invalidRows}</span>
                   </div>
                   <div className="p-2.5 rounded-lg bg-white border border-slate-200 shadow-2xs">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Duplicates</span>
-                    <span className="font-mono text-amber-700 font-bold text-sm block mt-0.5">{selectedBatch.duplicateRows}</span>
+                    <span className="font-mono text-amber-700 font-bold text-sm block mt-0.5">{activeBatch.duplicateRows}</span>
                   </div>
                 </div>
 
                 {/* Validation Anomaly Report */}
                 <div className="p-4 space-y-2">
                   <div className="text-xs font-bold text-slate-800 flex items-center justify-between">
-                    <span>Validation Anomaly & Error Report ({selectedBatch.validationReport.length})</span>
+                    <span>Validation Anomaly & Error Report ({activeBatch.validationReport?.length || 0})</span>
                     <span className="text-[10px] font-mono text-rose-700 font-bold">AUTOMATED GATEWAY SCAN</span>
                   </div>
 
-                  {selectedBatch.validationReport.length === 0 ? (
+                  {!activeBatch.validationReport || activeBatch.validationReport.length === 0 ? (
                     <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg font-medium">
                       ✅ Clean batch: All rows conform to UN/LOCODE, positive pricing, and valid Gregorian date ranges.
                     </div>
                   ) : (
                     <div className="space-y-1.5">
-                      {selectedBatch.validationReport.map((err: any, idx: number) => (
+                      {activeBatch.validationReport.map((err: any, idx: number) => (
                         <div
                           key={idx}
                           className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs flex items-start gap-2.5"
@@ -256,6 +272,7 @@ export default function RatesManagementPage() {
             )}
           </div>
         </div>
+        )
       ) : (
         /* Active Rate Inventory View */
         <div className="gf-card">
@@ -287,32 +304,44 @@ export default function RatesManagementPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredRates.map((r) => (
-                  <tr key={r.id}>
-                    <td>
-                      <span className="font-mono font-bold text-sky-700">{r.id}</span>
-                      <div className="text-[10px] text-slate-500 font-medium">{r.id.startsWith('IRT') ? 'Self-Posted' : 'Market Rate'}</div>
-                    </td>
-                    <td>
-                      <div className="font-bold text-slate-900">{r.carrier}</div>
-                      <div className="text-[11px] text-slate-500">{r.sp}</div>
-                    </td>
-                    <td className="font-semibold text-slate-800">{r.route}</td>
-                    <td className="font-mono font-bold text-emerald-700">${r.d20}</td>
-                    <td className="font-mono font-bold text-emerald-700">${r.h40}</td>
-                    <td className="text-slate-600">{r.ft}</td>
-                    <td className="font-mono text-slate-700">{r.valid}</td>
-                    <td className="text-right">
-                      <button
-                        type="button"
-                        onClick={() => handleModerateRate(r, 'hide')}
-                        className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 text-rose-700 hover:bg-rose-50 border-slate-200 hover:border-rose-300 font-semibold"
-                      >
-                        Moderate / Hide
-                      </button>
+                {filteredRates.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-10 text-center text-slate-500 font-medium text-xs">
+                      <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+                        <Ship className="w-5 h-5" />
+                      </div>
+                      No carrier freight tariffs currently in active inventory.
+                      <div className="text-[11px] text-slate-400 mt-0.5">Rates published via Freight Matrix or imported via tariff sheets will appear here.</div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredRates.map((r) => (
+                    <tr key={r.id}>
+                      <td>
+                        <span className="font-mono font-bold text-sky-700">{r.id}</span>
+                        <div className="text-[10px] text-slate-500 font-medium">{r.id.startsWith('IRT') ? 'Self-Posted' : 'Market Rate'}</div>
+                      </td>
+                      <td>
+                        <div className="font-bold text-slate-900">{r.carrier}</div>
+                        <div className="text-[11px] text-slate-500">{r.sp}</div>
+                      </td>
+                      <td className="font-semibold text-slate-800">{r.route}</td>
+                      <td className="font-mono font-bold text-emerald-700">${r.d20}</td>
+                      <td className="font-mono font-bold text-emerald-700">${r.h40}</td>
+                      <td className="text-slate-600">{r.ft}</td>
+                      <td className="font-mono text-slate-700">{r.valid}</td>
+                      <td className="text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleModerateRate(r, 'hide')}
+                          className="gf-btn gf-btn-secondary text-[11px] py-1 px-2.5 text-rose-700 hover:bg-rose-50 border-slate-200 hover:border-rose-300 font-semibold"
+                        >
+                          Moderate / Hide
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

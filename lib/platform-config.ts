@@ -87,15 +87,7 @@ export const DEFAULT_PROMOTIONAL_FEATURES: PromotionalFeatureConfig[] = [
     pricingMode: 'fixed',
     priceAmount: 300,
     currency: 'INR',
-    userOverrides: [
-      {
-        userId: 'u-arjun',
-        userName: 'Arjun Rao',
-        userEmail: 'arjun@atlaslogistics.com',
-        status: 'free',
-        reason: 'Strategic Founding Tier-1 Partner Campaign',
-      },
-    ],
+    userOverrides: [],
   },
   {
     key: 'AD_POSTING',

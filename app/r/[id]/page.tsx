@@ -34,7 +34,7 @@ export default function SmartRatePublicPage() {
 
   const matchedRate = allRates.find((r) => r.id.toLowerCase() === rateId.toLowerCase()) || {
     id: rateId.toUpperCase(),
-    sp: 'Atlas Logistics Pvt. Ltd.',
+    sp: 'COGOPORT',
     carrier: 'Maersk Line',
     por: 'Nhava Sheva (INNSA)',
     pol: 'Nhava Sheva (INNSA)',
@@ -571,7 +571,7 @@ export default function SmartRatePublicPage() {
                       fontSize: '13px',
                       boxSizing: 'border-box',
                     }}
-                    placeholder="e.g. Apex Global Trading Ltd."
+                    placeholder="e.g. Cogoport India Private Limited"
                     value={bookingShipperName}
                     onChange={(e) => setBookingShipperName(e.target.value)}
                   />

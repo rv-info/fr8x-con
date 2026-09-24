@@ -8,26 +8,7 @@ import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
 
 export default function NexusModerationPage() {
   const [activeTab, setActiveTab] = useState<'topics' | 'reviews'>('reviews');
-  const [reviews, setReviews] = useState([
-    {
-      id: 'rev-01',
-      companyName: 'Atlas Logistics Pvt. Ltd.',
-      author: 'Sarah Lewis',
-      rating: 5,
-      text: 'Exceptional transparency and fast documentation on the Nhava Sheva to Rotterdam corridor. Highly reliable forwarder.',
-      date: '2026-08-20',
-      status: 'verified',
-    },
-    {
-      id: 'rev-02',
-      companyName: 'OceanStar Maritime Forwarding',
-      author: 'Kiran Mehta',
-      rating: 1,
-      text: 'Released cargo without original BL at Jebel Ali. Left us with $42,500 unresolved demurrage charges.',
-      date: '2026-08-10',
-      status: 'flagged_dispute',
-    },
-  ]);
+  const [reviews, setReviews] = useState<any[]>([]);
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -92,7 +73,12 @@ export default function NexusModerationPage() {
       </div>
 
       <div className="space-y-4">
-        {reviews.map((rev) => (
+        {reviews.length === 0 ? (
+          <div className="gf-card p-10 text-center text-slate-500 text-xs">
+            No company reviews pending moderation or compliance inspection.
+          </div>
+        ) : (
+          reviews.map((rev) => (
           <div key={rev.id} className="gf-card p-4 space-y-3">
             <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
@@ -135,7 +121,8 @@ export default function NexusModerationPage() {
               &ldquo;{rev.text}&rdquo;
             </div>
           </div>
-        ))}
+        ))
+        )}
       </div>
 
       {modalConfig && (

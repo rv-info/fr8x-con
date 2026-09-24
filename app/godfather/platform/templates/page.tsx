@@ -67,8 +67,8 @@ export default function TemplatesManagementPage() {
 
   // Sample interpolated preview values
   const previewVars = {
-    bidderName: 'Sarah Lewis',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
+    bidderName: 'Authorized Procurement Lead',
+    creatorCompany: 'Cogoport India Private Limited',
     auctionId: 'RA-2026-0842',
     rfqId: 'RFQ-8842-AUTO',
     route: 'Nhava Sheva (INNSA) → Rotterdam (NLRTM)',
@@ -78,14 +78,14 @@ export default function TemplatesManagementPage() {
     endTime: '17:00',
     timezone: 'Asia/Kolkata',
     structuredAuctionTable: '📦 Equipment: 2x 40HC | Commodity: Automotive Parts | Incoterm: FOB',
-    winnerName: 'Sarah Lewis (Rotterdam Freight NV)',
+    winnerName: 'Verified Carrier Partner',
     winningRate: '$2,320 USD',
     docketId: 'DOC-2026-NLRTM-8821',
     carrier: 'Hapag-Lloyd Ocean Direct',
     transitTime: '26 Days Direct',
     freeTime: '14 Days Origin / 21 Days Dest',
-    creatorContact: 'Arjun Rao (+91 98765 43210)',
-    userName: 'Ramesh Cargo Agent',
+    creatorContact: 'Chief Administrator (tech@fr8x.in)',
+    userName: 'Platform Member',
     targetId: 'post-088',
     violationCategory: 'Commercial Solicitation',
     reasonText: 'Posting off-platform contact information without verified IEC credential',

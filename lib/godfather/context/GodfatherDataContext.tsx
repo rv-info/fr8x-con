@@ -47,598 +47,14 @@ import { formatAuctionDetailTable } from '../utils/templateBuilder';
 
 // Comprehensive Seed Data for GODFATHER console
 
-const SEED_ADMIN_ACTIONS: AdminAction[] = [
-  {
-    actionId: 'act_1725010200_a1b2',
-    actorUid: 'gf-op-001',
-    actorEmail: 'admin.security@con.fr8x.in',
-    actorName: 'Vikramaditya Singhania',
-    actorRole: 'godfather_owner',
-    targetType: 'plan',
-    targetId: 'PV-PREM-2026-V3',
-    targetLabel: 'Premium Enterprise Plan V3.0',
-    actionType: 'PLAN_PRICE_UPDATE',
-    beforeSnapshot: { monthlyPrice: 2800, bidDiscountPercent: 35 },
-    afterSnapshot: { monthlyPrice: 3000, bidDiscountPercent: 40 },
-    reason: 'Annual pricing realignment and increased 40% bid fee discount incentive',
-    correlationId: 'GF-L3K9Q-8821',
-    createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    ipHash: 'sha256:8f4c2e...',
-    deviceInfo: 'Edge 128.0 / Windows NT 10.0',
-    stepUpVerified: true,
-  },
-  {
-    actionId: 'act_1725010800_c3d4',
-    actorUid: 'gf-op-005',
-    actorEmail: 'legal.compliance@con.fr8x.in',
-    actorName: 'Anirudh Roy Chowdhury',
-    actorRole: 'godfather_compliance',
-    targetType: 'company',
-    targetId: 'CMP-00101',
-    targetLabel: 'Atlas Logistics Pvt. Ltd.',
-    actionType: 'COMPANY_KYC_VERIFIED',
-    beforeSnapshot: { status: 'pending' },
-    afterSnapshot: { status: 'verified', gstnVerified: true, panVerified: true },
-    reason: 'Verified against GSTN portal API and verified IEC code validity',
-    correlationId: 'GF-L3K9R-1142',
-    createdAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    ipHash: 'sha256:8f4c2e...',
-    deviceInfo: 'Edge 128.0 / Windows NT 10.0',
-    stepUpVerified: true,
-  },
-  {
-    actionId: 'act_1725011400_e5f6',
-    actorUid: 'gf-op-003',
-    actorEmail: 'trust.moderation@con.fr8x.in',
-    actorName: 'Marcus Van Der Berg',
-    actorRole: 'godfather_moderator',
-    targetType: 'post',
-    targetId: 'post-109',
-    targetLabel: 'Spam rate solicitation post',
-    actionType: 'POST_CONTENT_HIDDEN',
-    beforeSnapshot: { status: 'active', visibility: 'public' },
-    afterSnapshot: { status: 'hidden', moderationReason: 'Unauthorized off-platform solicitation' },
-    reason: 'Repeated unverified rate solicitation violating platform TOS section 4.2',
-    correlationId: 'GF-L3K9S-9901',
-    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    ipHash: 'sha256:8f4c2e...',
-    deviceInfo: 'Firefox 129.0 / macOS 14.5',
-    stepUpVerified: false,
-  },
-];
-
-const SEED_USERS: UserProfile[] = [
-  {
-    uid: 'u-arjun',
-    email: 'arjun@atlaslogistics.com',
-    firstName: 'Arjun',
-    lastName: 'Rao',
-    displayName: 'Arjun Rao',
-    designation: 'Freight Manager',
-    company: 'Atlas Logistics Pvt. Ltd.',
-    companyId: 'CMP-00101',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    mobile: '+91 98765 43210',
-    timezone: 'Asia/Kolkata',
-    preferredContactMethod: 'tradeChat',
-    contactAvailability: '09:00 - 18:30 IST',
-    plan: 'premium',
-    hasGoldenTick: true,
-    isVerified: true,
-    role: 'company_admin',
-    avatarUrl: '',
-    gstn: '27AABCA1234F1Z5',
-    pan: 'AABCA1234F',
-    iec: '0312004561',
-    mto: 'MTO/DGS/2024/9912',
-    bio: 'Freight procurement specialist with 9+ years managing ocean FCL and OOG breakbulk across Asia-Europe corridors.',
-    summary: 'Expertise in carrier contract negotiations, multimodal inland haulage, customs liaison.',
-    specializations: ['FCL Ocean', 'OOG Breakbulk', 'Reefer Logistics', 'Customs Clearance'],
-    skills: ['Rate Procurement', 'Carrier Negotiation', 'UN/LOCODE Routing', 'ERP Logistics'],
-    languages: ['English', 'Hindi', 'Marathi'],
-  },
-  {
-    uid: 'u-sarah',
-    email: 'sarah.lewis@rotterdamfreight.nl',
-    firstName: 'Sarah',
-    lastName: 'Lewis',
-    displayName: 'Sarah Lewis',
-    designation: 'Ocean Freight Lead',
-    company: 'Rotterdam Freight NV',
-    companyId: 'CMP-00102',
-    city: 'Rotterdam',
-    state: 'South Holland',
-    country: 'Netherlands',
-    mobile: '+31 10 123 4567',
-    timezone: 'Europe/Amsterdam',
-    preferredContactMethod: 'email',
-    contactAvailability: '08:30 - 17:00 CET',
-    plan: 'professional',
-    hasGoldenTick: false,
-    isVerified: true,
-    role: 'user',
-    bio: 'North Continent port logistics specialist and container supply chain manager.',
-    languages: ['English', 'Dutch', 'German'],
-  },
-  {
-    uid: 'u-kiran',
-    email: 'kiran.mehta@indoocean.com',
-    firstName: 'Kiran',
-    lastName: 'Mehta',
-    displayName: 'Kiran Mehta',
-    designation: 'Trade Lane Manager',
-    company: 'Indo Ocean Lines',
-    companyId: 'CMP-00103',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    mobile: '+91 98111 22334',
-    timezone: 'Asia/Kolkata',
-    preferredContactMethod: 'whatsapp',
-    contactAvailability: '10:00 - 19:00 IST',
-    plan: 'trial',
-    hasGoldenTick: false,
-    isVerified: true,
-    role: 'user',
-    languages: ['English', 'Hindi', 'Gujarati'],
-  },
-  {
-    uid: 'u-vikas',
-    email: 'vikas.dubey@apexforwarders.in',
-    firstName: 'Vikas',
-    lastName: 'Dubey',
-    displayName: 'Vikas Dubey',
-    designation: 'Managing Director',
-    company: 'Apex Global Forwarders',
-    companyId: 'CMP-00104',
-    city: 'New Delhi',
-    state: 'Delhi',
-    country: 'India',
-    mobile: '+91 99555 44332',
-    timezone: 'Asia/Kolkata',
-    preferredContactMethod: 'email',
-    contactAvailability: '09:30 - 18:30 IST',
-    plan: 'professional',
-    hasGoldenTick: false,
-    isVerified: false,
-    role: 'user',
-    gstn: '07AAACA4321K1Z8',
-    pan: 'AAACA4321K',
-    iec: '0714002341',
-  },
-  {
-    uid: 'u-chen',
-    email: 'chen.wei@orientfreight.cn',
-    firstName: 'Chen',
-    lastName: 'Wei',
-    displayName: 'Chen Wei',
-    designation: 'NVOCC Operations Manager',
-    company: 'Orient Gateway Logistics Shanghai',
-    companyId: 'CMP-00105',
-    city: 'Shanghai',
-    state: 'Shanghai',
-    country: 'China',
-    mobile: '+86 21 8899 0011',
-    timezone: 'Asia/Shanghai',
-    preferredContactMethod: 'tradeChat',
-    contactAvailability: '08:00 - 18:00 CST',
-    plan: 'premium',
-    hasGoldenTick: true,
-    isVerified: true,
-    role: 'company_admin',
-    languages: ['English', 'Mandarin'],
-  },
-];
-
-const SEED_COMPANIES: CompanyVerificationItem[] = [
-  {
-    companyId: 'CMP-00101',
-    legalName: 'Atlas Logistics Private Limited',
-    tradeName: 'Atlas Logistics',
-    country: 'India',
-    city: 'Mumbai',
-    gstn: '27AABCA1234F1Z5',
-    pan: 'AABCA1234F',
-    iec: '0312004561',
-    mto: 'MTO/DGS/2024/9912',
-    status: 'verified',
-    submittedAt: '2026-06-10T10:00:00Z',
-    reviewedAt: '2026-06-11T14:30:00Z',
-    reviewedBy: 'gf-op-005',
-    adminNotes: ['GST and PAN numbers cross-verified on government portal.', 'MTO registration certificate valid through Dec 2027.'],
-    documents: [
-      { docId: 'doc-1', type: 'GST_CERTIFICATE', name: 'Atlas_GST_Reg_27AABCA1234F1Z5.pdf', fileUrl: 'https://con.fr8x.in/docs/gst-sample.pdf', verified: true, uploadedAt: '2026-06-10T10:00:00Z' },
-      { docId: 'doc-2', type: 'PAN_CARD', name: 'Atlas_PAN_AABCA1234F.pdf', fileUrl: 'https://con.fr8x.in/docs/pan-sample.pdf', verified: true, uploadedAt: '2026-06-10T10:00:00Z' },
-      { docId: 'doc-3', type: 'MTO_REGISTRATION', name: 'DGS_MTO_Atlas_2024.pdf', fileUrl: 'https://con.fr8x.in/docs/mto-sample.pdf', verified: true, uploadedAt: '2026-06-10T10:00:00Z' },
-    ],
-    primaryContactName: 'Arjun Rao',
-    primaryContactEmail: 'arjun@atlaslogistics.com',
-    primaryContactPhone: '+91 98765 43210',
-  },
-  {
-    companyId: 'CMP-00102',
-    legalName: 'Rotterdam Freight NV',
-    tradeName: 'Rotterdam Freight',
-    country: 'Netherlands',
-    city: 'Rotterdam',
-    status: 'verified',
-    submittedAt: '2026-07-01T09:00:00Z',
-    reviewedAt: '2026-07-02T11:00:00Z',
-    reviewedBy: 'gf-op-005',
-    adminNotes: ['KvK Chamber of Commerce registry verified.', 'Valid EU VAT ID NL884210992B01.'],
-    documents: [
-      { docId: 'doc-4', type: 'INCORPORATION_CERT', name: 'KvK_RotterdamFreight_Extract.pdf', fileUrl: 'https://con.fr8x.in/docs/kvk-sample.pdf', verified: true, uploadedAt: '2026-07-01T09:00:00Z' },
-    ],
-    primaryContactName: 'Sarah Lewis',
-    primaryContactEmail: 'sarah.lewis@rotterdamfreight.nl',
-    primaryContactPhone: '+31 10 123 4567',
-  },
-  {
-    companyId: 'CMP-00104',
-    legalName: 'Apex Global Forwarders LLP',
-    tradeName: 'Apex Forwarders',
-    country: 'India',
-    city: 'New Delhi',
-    gstn: '07AAACA4321K1Z8',
-    pan: 'AAACA4321K',
-    iec: '0714002341',
-    status: 'pending',
-    submittedAt: '2026-08-28T16:00:00Z',
-    adminNotes: ['Uploaded GST certificate shows address mismatch with submitted registered address.'],
-    documents: [
-      { docId: 'doc-5', type: 'GST_CERTIFICATE', name: 'Apex_GST_Reg_07AAACA4321K1Z8.pdf', fileUrl: 'https://con.fr8x.in/docs/gst-apex.pdf', verified: false, uploadedAt: '2026-08-28T16:00:00Z' },
-      { docId: 'doc-6', type: 'IEC_LICENSE', name: 'Apex_IEC_DGFT.pdf', fileUrl: 'https://con.fr8x.in/docs/iec-apex.pdf', verified: false, uploadedAt: '2026-08-28T16:00:00Z' },
-    ],
-    primaryContactName: 'Vikas Dubey',
-    primaryContactEmail: 'vikas.dubey@apexforwarders.in',
-    primaryContactPhone: '+91 99555 44332',
-  },
-  {
-    companyId: 'CMP-00106',
-    legalName: 'Blue Horizon Maritime Sp. z o.o.',
-    tradeName: 'Blue Horizon Logistics',
-    country: 'Poland',
-    city: 'Gdynia',
-    status: 'additional_info_required',
-    submittedAt: '2026-08-25T12:00:00Z',
-    reviewedAt: '2026-08-26T15:00:00Z',
-    reviewedBy: 'gf-op-005',
-    adminNotes: ['Requested certified translation of Polish KRS incorporation extract.'],
-    documents: [
-      { docId: 'doc-7', type: 'INCORPORATION_CERT', name: 'KRS_BlueHorizon_PL.pdf', fileUrl: 'https://con.fr8x.in/docs/krs-sample.pdf', verified: false, uploadedAt: '2026-08-25T12:00:00Z' },
-    ],
-    primaryContactName: 'Piotr Kowalski',
-    primaryContactEmail: 'p.kowalski@bluehorizon.pl',
-    primaryContactPhone: '+48 58 660 1122',
-  },
-];
-
-const SEED_AUCTIONS: Auction[] = [
-  {
-    id: 'RA-2026-0842',
-    title: 'Automotive Parts FCL - Mumbai to Rotterdam Direct',
-    rfqId: 'RFQ-8842-AUTO',
-    creatorUid: 'u-arjun',
-    creatorName: 'Arjun Rao',
-    creatorCompany: 'Atlas Logistics Pvt. Ltd.',
-    auctionType: 'Specific bidder',
-    startDate: '2026-08-29',
-    startTime: '10:00',
-    durationMinutes: 1440,
-    endDateTime: '2026-08-30 17:00',
-    timezone: 'Asia/Kolkata',
-    status: 'Live',
-    timeLeft: '1h 25m',
-    isPublished: true,
-    publishedAt: '2026-08-29T10:00:00Z',
-    postingFeeINR: 180,
-    postingFeeUSD: 2.1,
-    shipment: {
-      por: 'Pune ICD',
-      pol: 'Nhava Sheva (INNSA), India',
-      pod: 'Rotterdam (NLRTM), Netherlands',
-      finalDestination: 'Rotterdam Port Terminal',
-      cargoReadyDate: '2026-09-15',
-      shipmentType: 'FCL',
-      incoterm: 'FOB - Free on Board',
-      rateCurrency: 'USD',
-      commodity: 'Precision Automotive Gear Components',
-      hsCode: '8708.29.00',
-      weightKg: 48000,
-      cbm: 120,
-    },
-    containers: [
-      {
-        id: 'c1',
-        equipmentType: "40' High Cube (40HC)",
-        containerType: 'Standard',
-        quantity: 2,
-        pickupLocation: 'Nhava Sheva Yard',
-        emptyReturnLocation: 'Rotterdam Depot',
-        isSpecial: false,
-        commodity: 'Automotive Parts',
-        hsCode: '8708.29.00',
-        grossWeight: 24000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: { transportation: true, clearance: true, carrierLocal: true },
-    destinationCharges: { transportation: false, clearance: false, carrierLocal: true },
-    selectedBidders: [
-      { id: 'b1', name: 'Sarah Lewis', company: 'Rotterdam Freight NV', role: 'Ocean Lead', location: 'Rotterdam, NL', timezone: 'Europe/Amsterdam', hasGoldenTick: false },
-      { id: 'b2', name: 'Chen Wei', company: 'Orient Gateway Logistics Shanghai', role: 'NVOCC Manager', location: 'Shanghai, CN', timezone: 'Asia/Shanghai', hasGoldenTick: true },
-    ],
-    blockedBidders: [],
-    rules: {
-      autoExtension: true,
-      rankingVisible: true,
-      hideCompetitorNames: true,
-      bidderAnonymity: true,
-      bidLimit: 5,
-    },
-    competitionCeiling: 2800,
-    bidsSubmittedCount: 3,
-    bids: [
-      {
-        id: 'bid-01',
-        auctionId: 'RA-2026-0842',
-        bidderUid: 'u-sarah',
-        bidderName: 'Sarah Lewis',
-        bidderCompany: 'Rotterdam Freight NV',
-        bidderHasGoldenTick: false,
-        charges: [
-          { equipment: "40' High Cube (40HC)", quantity: 2, oceanFreight: 2100, freightSurcharges: 150, originTransport: 0, originClearance: 0, originLocal: 70, destTransport: 0, destClearance: 0, destLocal: 0, totalUnit: 2320 }
-        ],
-        grandTotalUSD: 2320,
-        rank: 1,
-        feePaid: 300,
-        currency: 'USD',
-        submittedAt: '2026-08-29T14:20:00Z',
-        status: 'active',
-      },
-      {
-        id: 'bid-02',
-        auctionId: 'RA-2026-0842',
-        bidderUid: 'u-chen',
-        bidderName: 'Chen Wei',
-        bidderCompany: 'Orient Gateway Logistics Shanghai',
-        bidderHasGoldenTick: true,
-        charges: [
-          { equipment: "40' High Cube (40HC)", quantity: 2, oceanFreight: 2200, freightSurcharges: 180, originTransport: 0, originClearance: 0, originLocal: 80, destTransport: 0, destClearance: 0, destLocal: 0, totalUnit: 2460 }
-        ],
-        grandTotalUSD: 2460,
-        rank: 2,
-        feePaid: 180,
-        currency: 'USD',
-        submittedAt: '2026-08-29T15:10:00Z',
-        status: 'active',
-      },
-    ],
-  },
-  {
-    id: 'GB-2026-0311',
-    title: 'Industrial Heavy Machinery Tender - Nhava Sheva to Antwerp',
-    rfqId: 'RFQ-0311-MACH',
-    creatorUid: 'u-kiran',
-    creatorName: 'Kiran Mehta',
-    creatorCompany: 'Indo Ocean Lines',
-    auctionType: 'General bidding',
-    startDate: '2026-08-20',
-    startTime: '09:00',
-    durationMinutes: 2880,
-    endDateTime: '2026-08-22 18:00',
-    timezone: 'Asia/Kolkata',
-    status: 'Awarded',
-    isPublished: true,
-    publishedAt: '2026-08-20T09:00:00Z',
-    closedAt: '2026-08-22T18:00:00Z',
-    result: 'won',
-    winningBidId: 'bid-0311-win',
-    postingFeeINR: 300,
-    postingFeeUSD: 3.5,
-    shipment: {
-      por: 'Ahmedabad ICD',
-      pol: 'Nhava Sheva (INNSA), India',
-      pod: 'Antwerp (BEANR), Belgium',
-      finalDestination: 'Antwerp Gateway',
-      cargoReadyDate: '2026-09-01',
-      shipmentType: 'FCL',
-      incoterm: 'CIF - Cost, Insurance and Freight',
-      rateCurrency: 'USD',
-      commodity: 'CNC Milling Heavy Industrial Machinery',
-      hsCode: '8458.11.00',
-      weightKg: 38000,
-      cbm: 95,
-    },
-    containers: [
-      {
-        id: 'c2',
-        equipmentType: "40' Flat Rack (40FR)",
-        containerType: 'OOG',
-        quantity: 2,
-        pickupLocation: 'Nhava Sheva',
-        emptyReturnLocation: 'Antwerp',
-        isSpecial: true,
-        commodity: 'CNC Machinery',
-        hsCode: '8458.11.00',
-        grossWeight: 19000,
-        weightUnit: 'KG',
-      },
-    ],
-    originCharges: { transportation: true, clearance: true, carrierLocal: true },
-    destinationCharges: { transportation: false, clearance: true, carrierLocal: true },
-    selectedBidders: [],
-    blockedBidders: [],
-    rules: {
-      autoExtension: true,
-      rankingVisible: true,
-      hideCompetitorNames: false,
-      bidderAnonymity: false,
-      bidLimit: 10,
-    },
-    competitionCeiling: 3200,
-    bidsSubmittedCount: 4,
-    awardedDetails: {
-      awardedAt: '2026-08-22T18:15:00Z',
-      docketId: 'DOC-2026-ANT-0912',
-      winningCompany: 'Atlas Logistics Pvt. Ltd.',
-      winningContact: 'Arjun Rao (+91 98765 43210)',
-      winningRateUSD: 2990,
-      carrier: 'CMA CGM',
-      transitTime: '24 Days Direct',
-      freeTimeOrigin: '14 Days',
-      freeTimeDest: '21 Days',
-      equipmentBreakdown: "2x 40' Flat Rack (40FR)",
-      shipperCompany: 'Indo Ocean Lines',
-      shipperContact: 'Kiran Mehta',
-      settlementTerms: 'Net 30 Days on BL presentation',
-    },
-  },
-];
-
-const SEED_RATES: RateItem[] = [
-  {
-    id: 'RT-884210',
-    sp: 'Hapag-Lloyd Ocean',
-    carrier: 'Hapag-Lloyd',
-    por: 'Nhava Sheva (INNSA)',
-    pol: 'Nhava Sheva (INNSA), India',
-    pod: 'Rotterdam (NLRTM), Netherlands',
-    fpod: 'Rotterdam Port',
-    d20: 1450,
-    h40: 2280,
-    ft: '14 days',
-    tt: '26 days',
-    valid: '2026-09-30',
-    route: 'Nhava Sheva → Rotterdam',
-    remark: 'Direct weekly service. Valid for general commercial non-DG cargo.',
-    ownerUid: 'u-arjun',
-    isOwner: true,
-  },
-  {
-    id: 'IRT-901234',
-    sp: 'Atlas Logistics Self-Posted',
-    carrier: 'Maersk Line',
-    por: 'Mundra (INMUN)',
-    pol: 'Mundra (INMUN), India',
-    pod: 'Antwerp (BEANR), Belgium',
-    fpod: 'Antwerp Euroports',
-    d20: 1380,
-    h40: 2150,
-    ft: '21 days',
-    tt: '28 days',
-    valid: '2026-10-15',
-    route: 'Mundra → Antwerp',
-    remark: 'Secured slot allocation with guaranteed equipment at Mundra ICD.',
-    ownerUid: 'u-arjun',
-    isOwner: true,
-  },
-  {
-    id: 'RT-773322',
-    sp: 'Orient Gateway Logistics',
-    carrier: 'COSCO Shipping',
-    por: 'Shanghai Port',
-    pol: 'Shanghai (CNSHA), China',
-    pod: 'Nhava Sheva (INNSA), India',
-    fpod: 'Nhava Sheva Port',
-    d20: 890,
-    h40: 1350,
-    ft: '14 days',
-    tt: '16 days',
-    valid: '2026-09-25',
-    route: 'Shanghai → Nhava Sheva',
-    remark: 'Direct Far East to West Coast India express corridor.',
-    ownerUid: 'u-chen',
-    isOwner: false,
-  },
-];
-
-const SEED_RATE_IMPORTS: RateImportBatch[] = [
-  {
-    importId: 'IMP-2026-0801',
-    batchCode: 'BATCH-AUG-EU-WEST',
-    filename: 'Maersk_Europe_Rates_Aug2026_V2.xlsx',
-    uploaderUid: 'u-arjun',
-    uploaderName: 'Arjun Rao',
-    uploaderCompany: 'Atlas Logistics Pvt. Ltd.',
-    uploadedAt: '2026-08-27T11:30:00Z',
-    status: 'Needs Review',
-    totalRows: 142,
-    validRows: 138,
-    invalidRows: 4,
-    duplicateRows: 2,
-    validationReport: [
-      { rowNumber: 14, errorType: 'INVALID_DATE', field: 'validity_date', message: 'Validity date "31-02-2026" is not a valid Gregorian date.' },
-      { rowNumber: 47, errorType: 'MISSING_POR', field: 'por_code', message: 'Mandatory Port of Receipt UN/LOCODE is missing.' },
-      { rowNumber: 88, errorType: 'OUT_OF_BOUND_RATE', field: 'd20_usd', message: 'Rate $45,000 USD exceeds sanity threshold for 20DV.' },
-      { rowNumber: 104, errorType: 'DUPLICATE_ID', field: 'rate_code', message: 'Rate code RT-884210 already exists in active inventory.' },
-    ],
-    sampleRows: [
-      { row: 1, pol: 'INNSA', pod: 'NLRTM', carrier: 'Maersk', d20: 1420, h40: 2200, valid: '2026-09-30', status: 'VALID' },
-      { row: 2, pol: 'INMUN', pod: 'DEHAM', carrier: 'Maersk', d20: 1490, h40: 2310, valid: '2026-09-30', status: 'VALID' },
-      { row: 3, pol: 'INMAA', pod: 'GBFXT', carrier: 'Maersk', d20: 1550, h40: 2400, valid: '2026-09-30', status: 'VALID' },
-    ],
-  },
-  {
-    importId: 'IMP-2026-0715',
-    batchCode: 'BATCH-JUL-MED-GULF',
-    filename: 'CMA_Gulf_Med_Corridor_Rates.csv',
-    uploaderUid: 'u-chen',
-    uploaderName: 'Chen Wei',
-    uploaderCompany: 'Orient Gateway Logistics',
-    uploadedAt: '2026-07-20T08:15:00Z',
-    status: 'Finalized',
-    totalRows: 85,
-    validRows: 85,
-    invalidRows: 0,
-    duplicateRows: 0,
-    validationReport: [],
-    sampleRows: [],
-    approvedBy: 'gf-op-002',
-    approvedAt: '2026-07-20T10:00:00Z',
-    finalizedBy: 'gf-op-002',
-    finalizedAt: '2026-07-20T10:05:00Z',
-  },
-];
-
-const SEED_BLOCKS: BlockAction[] = [
-  {
-    blockId: 'blk-001',
-    subjectType: 'user',
-    subjectId: 'u-suspended-01',
-    subjectName: 'Ramesh Cargo Agent',
-    subjectEmail: 'ramesh@transoceanicexpress.in',
-    scopes: ['feed_post', 'auction_bid', 'chat'],
-    reasonCode: 'fraud_risk',
-    reasonText: 'Multiple fraudulent bid submissions with unverified GST credentials and failure to honor lowest price bids.',
-    evidenceRefs: ['DOC-DISPUTE-8812', 'COMPLAINT-ATLAS-AUG26'],
-    status: 'active',
-    expiresAt: '2026-11-30T00:00:00Z',
-    createdBy: 'gf-op-003',
-    createdByName: 'Marcus Van Der Berg',
-    createdAt: '2026-08-15T14:00:00Z',
-  },
-];
-
-const SEED_BLACKLIST: BlacklistCase[] = [
-  {
-    id: 'BL-2026-004',
-    companyName: 'OceanStar Maritime Forwarding Ltd.',
-    location: 'Dubai, UAE',
-    reason: 'Non-payment of container demurrage and unauthorized retention of original Bills of Lading.',
-    severity: 'critical',
-    reportedDate: '2026-08-10',
-    status: 'active',
-    reporter: 'Indo Ocean Lines',
-    reporterUid: 'u-kiran',
-    description: 'Cargo released to unauthorized consignee without original BL surrender at Jebel Ali port. Unresolved commercial claim USD $42,500.',
-    evidenceRef: 'CLAIM-BL-JEA-44910.pdf',
-    agreedCount: 14,
-    disputeCount: 1,
-  },
-];
+const SEED_ADMIN_ACTIONS: AdminAction[] = [];
+const SEED_USERS: UserProfile[] = [];
+const SEED_COMPANIES: CompanyVerificationItem[] = [];
+const SEED_AUCTIONS: Auction[] = [];
+const SEED_RATES: RateItem[] = [];
+const SEED_RATE_IMPORTS: RateImportBatch[] = [];
+const SEED_BLOCKS: BlockAction[] = [];
+const SEED_BLACKLIST: BlacklistCase[] = [];
 
 const SEED_PLANS: PlanVersion[] = [
   {
@@ -852,76 +268,7 @@ const SEED_PAYMENT_CONFIGS: PaymentConfig[] = [
   },
 ];
 
-const SEED_INVOICES: InvoiceRecord[] = [
-  {
-    invoiceId: 'INV-2026-08-001',
-    invoiceNumber: 'FR8X-2627-0891',
-    userUid: 'u-arjun',
-    userName: 'Arjun Rao',
-    userEmail: 'arjun@atlaslogistics.com',
-    companyName: 'Atlas Logistics Pvt. Ltd.',
-    companyGstn: '27AABCA1234F1Z5',
-    companyAddress: 'Trade Center, BKC, Bandra East, Mumbai, MH 400051',
-    date: '2026-08-01',
-    dueDate: '2026-08-01',
-    planTier: 'premium',
-    amountSubtotal: 2542.37,
-    cgst: 228.81,
-    sgst: 228.81,
-    igst: 0,
-    totalTax: 457.63,
-    amountTotal: 3000.0,
-    currency: 'INR',
-    status: 'paid',
-    paymentProvider: 'Razorpay',
-    paymentRef: 'pay_P991209412',
-    sacCode: '998431 (Online Information and Database Access/Retrieval Services)',
-  },
-  {
-    invoiceId: 'INV-2026-08-002',
-    invoiceNumber: 'FR8X-2627-0892',
-    userUid: 'u-sarah',
-    userName: 'Sarah Lewis',
-    userEmail: 'sarah.lewis@rotterdamfreight.nl',
-    companyName: 'Rotterdam Freight NV',
-    date: '2026-08-01',
-    dueDate: '2026-08-01',
-    planTier: 'professional',
-    amountSubtotal: 27.0,
-    cgst: 0,
-    sgst: 0,
-    igst: 0,
-    totalTax: 0,
-    amountTotal: 27.0,
-    currency: 'USD',
-    status: 'paid',
-    paymentProvider: 'Stripe',
-    paymentRef: 'ch_3P8X9920194812',
-    sacCode: '998431',
-  },
-  {
-    invoiceId: 'INV-2026-08-003',
-    invoiceNumber: 'FR8X-2627-0893',
-    userUid: 'u-chen',
-    userName: 'Chen Wei',
-    userEmail: 'chen.wei@orientfreight.cn',
-    companyName: 'Orient Gateway Logistics Shanghai',
-    date: '2026-08-01',
-    dueDate: '2026-08-01',
-    planTier: 'premium',
-    amountSubtotal: 50.0,
-    cgst: 0,
-    sgst: 0,
-    igst: 0,
-    totalTax: 0,
-    amountTotal: 50.0,
-    currency: 'USD',
-    status: 'paid',
-    paymentProvider: 'Stripe',
-    paymentRef: 'ch_3P8X9920194899',
-    sacCode: '998431',
-  },
-];
+const SEED_INVOICES: InvoiceRecord[] = [];
 
 const SEED_TEMPLATES: NotificationTemplate[] = [
   {
@@ -971,48 +318,7 @@ const SEED_TEMPLATES: NotificationTemplate[] = [
   },
 ];
 
-const SEED_CASES: AdminCase[] = [
-  {
-    caseId: 'CASE-2026-091',
-    title: 'KYC Document Address Discrepancy · Apex Global Forwarders',
-    type: 'kyc_dispute',
-    subjectType: 'company',
-    subjectId: 'CMP-00104',
-    subjectLabel: 'Apex Global Forwarders LLP',
-    status: 'investigating',
-    severity: 'medium',
-    assignedToUid: 'gf-op-005',
-    assignedToName: 'Anirudh Roy Chowdhury',
-    notes: [
-      { id: 'n1', authorName: 'Anirudh Roy Chowdhury', authorRole: 'godfather_compliance', text: 'GST registration certificate shows registered address in Okhla Phase III whereas DGFT IEC certificate lists Connaught Place.', createdAt: '2026-08-28T17:00:00Z' },
-    ],
-    evidenceRefs: [
-      { name: 'Apex_GST_Reg.pdf', url: 'https://con.fr8x.in/docs/gst-apex.pdf', type: 'PDF', uploadedAt: '2026-08-28T16:00:00Z' },
-    ],
-    createdAt: '2026-08-28T16:30:00Z',
-    updatedAt: '2026-08-28T17:00:00Z',
-  },
-  {
-    caseId: 'CASE-2026-088',
-    title: 'OceanStar Maritime Blacklist Dispute & Demurrage Claim',
-    type: 'compliance',
-    subjectType: 'company',
-    subjectId: 'CMP-00999',
-    subjectLabel: 'OceanStar Maritime Forwarding Ltd.',
-    status: 'open',
-    severity: 'critical',
-    assignedToUid: 'gf-op-003',
-    assignedToName: 'Marcus Van Der Berg',
-    notes: [
-      { id: 'n2', authorName: 'Marcus Van Der Berg', authorRole: 'godfather_moderator', text: 'Reporter provided BL copy and port demurrage invoice for $42,500 USD.', createdAt: '2026-08-12T11:00:00Z' },
-    ],
-    evidenceRefs: [
-      { name: 'CLAIM-BL-JEA-44910.pdf', url: 'https://con.fr8x.in/docs/claim-bl.pdf', type: 'PDF', uploadedAt: '2026-08-10T10:00:00Z' },
-    ],
-    createdAt: '2026-08-10T10:00:00Z',
-    updatedAt: '2026-08-12T11:00:00Z',
-  },
-];
+const SEED_CASES: AdminCase[] = [];
 
 const SEED_MAILBOXES: MailboxStatus[] = [
   {
@@ -1050,64 +356,7 @@ const SEED_MAILBOXES: MailboxStatus[] = [
   },
 ];
 
-const SEED_EMAIL_LOGS: EmailLog[] = [
-  {
-    logId: 'EML-2026-0891',
-    recipient: 'arjun@atlaslogistics.com',
-    sender: 'FR8X Platform Security <password@fr8x.in>',
-    subject: '[FR8X GODFATHER] Login Verification Code: 884210',
-    templateId: 'TMPL_OTP_CHALLENGE',
-    templateName: 'Godfather Operator OTP Challenge',
-    correlationId: 'GF-EML-9921-8842',
-    status: 'delivered',
-    provider: 'Zoho_SMTP',
-    sentAt: '2026-08-30T17:15:00Z',
-    deliveredAt: '2026-08-30T17:15:02Z',
-    entityContext: { entityType: 'user', entityId: 'u-arjun' },
-  },
-  {
-    logId: 'EML-2026-0890',
-    recipient: 'sarah.lewis@rotterdamfreight.nl',
-    sender: 'FR8X Platform <password@fr8x.in>',
-    subject: 'Action Required: Tender Invitation for Reverse Freight Auction RA-2026-0842',
-    templateId: 'TMPL_AUCTION_INVITE',
-    templateName: 'Reverse Auction Tender Invitation',
-    correlationId: 'GF-EML-8842-1092',
-    status: 'delivered',
-    provider: 'Zoho_SMTP',
-    sentAt: '2026-08-30T16:20:00Z',
-    deliveredAt: '2026-08-30T16:20:03Z',
-    entityContext: { entityType: 'auction', entityId: 'RA-2026-0842' },
-  },
-  {
-    logId: 'EML-2026-0889',
-    recipient: 'kiran.mehta@indoocean.com',
-    sender: 'FR8X Commerce <password@fr8x.in>',
-    subject: 'Tender Concluded: Winning Award Confirmation for RA-2026-0842',
-    templateId: 'TMPL_BID_RESULT',
-    templateName: 'Auction Winning Award Notification',
-    correlationId: 'GF-EML-7741-0091',
-    status: 'delivered',
-    provider: 'Zoho_SMTP',
-    sentAt: '2026-08-30T15:00:00Z',
-    deliveredAt: '2026-08-30T15:00:02Z',
-    entityContext: { entityType: 'auction', entityId: 'RA-2026-0842' },
-  },
-  {
-    logId: 'EML-2026-0888',
-    recipient: 'vikas.dubey@apexforwarders.in',
-    sender: 'FR8X Compliance <password@fr8x.in>',
-    subject: 'Action Required: Additional Corporate Verification Documents Needed',
-    templateId: 'TMPL_KYC_INFO_REQ',
-    templateName: 'KYC Additional Information Notice',
-    correlationId: 'GF-EML-6612-4412',
-    status: 'delivered',
-    provider: 'Zoho_SMTP',
-    sentAt: '2026-08-28T16:30:00Z',
-    deliveredAt: '2026-08-28T16:30:04Z',
-    entityContext: { entityType: 'blacklist', entityId: 'BLK-009' },
-  },
-];
+const SEED_EMAIL_LOGS: EmailLog[] = [];
 
 const SEED_SENSITIVE_WORDS: SensitiveWordRule[] = [
   {
@@ -1343,58 +592,17 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
 const SEED_COMPLIANCE_RECORDS: ComplianceRecord[] = [
   {
     id: 'cmp-rec-001',
-    entityId: 'CMP-00101',
-    entityName: 'Atlas Logistics Pvt. Ltd.',
+    entityId: 'CMP-COGOPORT-001',
+    entityName: 'Cogoport India Private Limited',
     entityType: 'company',
     type: 'gstin_audit',
     status: 'compliant',
-    riskScore: 5,
-    lastAuditedAt: '2026-08-28T10:00:00Z',
+    riskScore: 0,
+    lastAuditedAt: '2026-09-01T10:00:00Z',
     auditedBy: 'tech@fr8x.in',
-    details: 'GSTIN 27AABCA1234F1Z5 active and verified via GST portal API with 100% filing compliance.',
+    details: 'GSTIN 27AAACC4321A1Z1 and PAN verified via government portal with 100% filing compliance.',
     validUntil: '2027-08-28',
-    certificateRef: 'GST-AUDIT-2026-8812',
-  },
-  {
-    id: 'cmp-rec-002',
-    entityId: 'CMP-00102',
-    entityName: 'Rotterdam Freight NV',
-    entityType: 'company',
-    type: 'aml_sanctions',
-    status: 'compliant',
-    riskScore: 8,
-    lastAuditedAt: '2026-08-27T14:30:00Z',
-    auditedBy: 'tech@fr8x.in',
-    details: 'Screened against EU & UN maritime sanctions list. No PEP or high-risk entity matches.',
-    validUntil: '2027-02-27',
-    certificateRef: 'AML-EU-2026-1049',
-  },
-  {
-    id: 'cmp-rec-003',
-    entityId: 'CMP-00104',
-    entityName: 'Apex Global Forwarders LLP',
-    entityType: 'company',
-    type: 'mto_license',
-    status: 'remediation_required',
-    riskScore: 45,
-    lastAuditedAt: '2026-08-25T11:00:00Z',
-    auditedBy: 'legal.compliance@con.fr8x.in',
-    details: 'MTO registration document expired on 2026-07-31. Formal request sent for updated DGS certificate.',
-    validUntil: '2026-07-31',
-    certificateRef: 'MTO-EXP-2026-004',
-  },
-  {
-    id: 'cmp-rec-004',
-    entityId: 'CMP-00105',
-    entityName: 'OceanStar Maritime Forwarding Ltd.',
-    entityType: 'company',
-    type: 'aml_sanctions',
-    status: 'under_investigation',
-    riskScore: 92,
-    lastAuditedAt: '2026-08-20T09:00:00Z',
-    auditedBy: 'tech@fr8x.in',
-    details: 'Unresolved commercial fraud claim (USD $42,500) and unauthorized Bill of Lading release at Jebel Ali.',
-    certificateRef: 'FRAUD-DISPUTE-2026-04',
+    certificateRef: 'GST-AUDIT-2026-001',
   },
 ];
 
@@ -2841,20 +2049,8 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         const res = await fetch('/api/members');
         if (res.ok && isMounted) {
           const data = await res.json();
-          if (Array.isArray(data.members) && data.members.length > 0) {
-            setUsers((prev) => {
-              const map = new Map<string, UserProfile>();
-              prev.forEach((u) => map.set(u.uid || u.email, u));
-              data.members.forEach((m: UserProfile) => {
-                const key = m.uid || m.email;
-                if (!map.has(key)) {
-                  map.set(key, m);
-                } else {
-                  map.set(key, { ...map.get(key)!, ...m });
-                }
-              });
-              return Array.from(map.values());
-            });
+          if (Array.isArray(data.members)) {
+            setUsers(data.members);
           }
         }
       } catch (err) {
@@ -2862,6 +2058,70 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       }
     }
     syncLiveMembers();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Sync companies from authoritative DBMS Master Registry
+  useEffect(() => {
+    let isMounted = true;
+    async function syncLiveCompanies() {
+      try {
+        const res = await fetch('/api/godfather/companies');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (Array.isArray(data.companies)) {
+            const mapped: CompanyVerificationItem[] = data.companies.map((c: any) => ({
+              companyId: c.id,
+              legalName: c.legalName,
+              tradeName: c.tradeName || c.legalName,
+              country: c.country,
+              city: c.city,
+              gstn: c.gstn,
+              pan: c.pan,
+              iec: c.iec,
+              mto: c.mto,
+              status: c.status || (c.verified ? 'verified' : 'pending'),
+              phone: c.primaryContactPhone,
+              submittedAt: c.createdAt || new Date().toISOString(),
+              reviewedAt: c.updatedAt,
+              adminNotes: c.adminNotes || [],
+              documents: c.documents || [],
+              primaryContactName: c.primaryContactName || '',
+              primaryContactEmail: c.primaryContactEmail || '',
+              primaryContactPhone: c.primaryContactPhone || '',
+            }));
+            setCompanies(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('[GodfatherData] Failed to sync live companies:', err);
+      }
+    }
+    syncLiveCompanies();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // Sync rates from authoritative DBMS
+  useEffect(() => {
+    let isMounted = true;
+    async function syncLiveRates() {
+      try {
+        const res = await fetch('/api/rates');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (Array.isArray(data.rates)) {
+            setRates(data.rates);
+          }
+        }
+      } catch (err) {
+        console.error('[GodfatherData] Failed to sync live rates:', err);
+      }
+    }
+    syncLiveRates();
     return () => {
       isMounted = false;
     };

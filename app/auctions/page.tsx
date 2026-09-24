@@ -236,8 +236,8 @@ export default function AuctionsPage() {
                       2. Bid Winning Party (Awarded Forwarder)
                     </small>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: 'var(--ink)' }}>
-                      <div>Winning Company: <b style={{ color: '#15803d' }}>{selectedAuctionModal.awardedDetails?.winningCompany || 'Atlas Logistics Pvt. Ltd.'}</b></div>
-                      <div>Procurement Lead: <b>{selectedAuctionModal.awardedDetails?.winningContact || 'Arjun Rao (Director)'}</b></div>
+                      <div>Winning Company: <b style={{ color: '#15803d' }}>{selectedAuctionModal.awardedDetails?.winningCompany || 'Verified Enterprise Carrier'}</b></div>
+                      <div>Procurement Lead: <b>{selectedAuctionModal.awardedDetails?.winningContact || 'Authorized Procurement Desk'}</b></div>
                       <div>Awarded Rate: <b style={{ color: '#15803d', fontSize: '13px' }}>${selectedAuctionModal.awardedDetails?.winningRateUSD?.toLocaleString() || 2990} USD</b> (L1 Lowest Bid)</div>
                       <div>Nominated Carrier: <b>{selectedAuctionModal.awardedDetails?.carrier || 'CMA CGM Direct'}</b> ({selectedAuctionModal.awardedDetails?.transitTime || '26 Days'})</div>
                       <div>Free Time Terms: <b>{selectedAuctionModal.awardedDetails?.freeTimeOrigin || '14d Origin'} / {selectedAuctionModal.awardedDetails?.freeTimeDest || '21d Destination'}</b></div>

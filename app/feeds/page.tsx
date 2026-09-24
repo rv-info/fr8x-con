@@ -183,16 +183,16 @@ const IN_FEED_JOB_ADS: InFeedJobAd[] = [
   {
     id: 'ad-job-1',
     type: 'job',
-    jobTitle: 'Senior Ocean Freight Pricing & Trade Lead',
-    companyName: 'Atlas Global Logistics Pvt. Ltd.',
-    location: 'Mumbai (BKC Hub) · Hybrid',
-    salaryPackage: '₹18,00,000 – ₹24,00,000 LPA + Quarterly Incentives',
+    jobTitle: 'Senior Ocean Freight Procurement Specialist',
+    companyName: 'COGOPORT',
+    location: 'Mumbai (Andheri East HQ) · Hybrid',
+    salaryPackage: 'Competitive Industry Standards',
     employmentType: 'Full-time',
     experience: '5–8 Years Maritime Experience',
-    headline: 'Urgently Hiring: Lead containerized freight procurement across Asia-Europe lanes',
-    skills: ['FCL Spot Procurement', 'Carrier Space Contracts', 'P&L Management', 'UN/LOCODE'],
-    posterEmail: 'careers@atlaslogistics.com',
-    contactUid: 'u-arjun',
+    headline: 'Procurement Specialist: Lead cross-border ocean freight procurement & carrier allocations',
+    skills: ['FCL Spot Procurement', 'Carrier Space Contracts', 'NVOCC Operations', 'UN/LOCODE'],
+    posterEmail: 'careers@cogoport.com',
+    contactUid: 'u-rajat',
   },
   {
     id: 'ad-job-2',
@@ -363,9 +363,86 @@ export default function FeedsPage() {
     addJob,
   } = useData();
 
-  const { user, allUsers } = useAuth();
+  const { user, allUsers, updateUser } = useAuth();
   const { toast } = useToast();
   const { openChatWith } = useChat();
+
+  // Hydrate user profile authoritatively from DBMS on feeds mount
+  React.useEffect(() => {
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    if (!activeUid) return;
+
+    fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.user) {
+          updateUser(data.user);
+        }
+      })
+      .catch((err) => console.warn('[Feeds] Profile DBMS sync warning:', err));
+  }, [user.uid]);
+
+  // Quick Edit Contact & Terminal Modal State
+  const [showQuickContactModal, setShowQuickContactModal] = useState(false);
+  const [quickMobile, setQuickMobile] = useState('');
+  const [quickEmail, setQuickEmail] = useState('');
+  const [quickAddress, setQuickAddress] = useState('');
+  const [quickCity, setQuickCity] = useState('');
+  const [quickCountry, setQuickCountry] = useState('');
+  const [quickDesignation, setQuickDesignation] = useState('');
+  const [quickCompany, setQuickCompany] = useState('');
+  const [isSavingQuickContact, setIsSavingQuickContact] = useState(false);
+
+  const handleOpenQuickContactModal = () => {
+    setQuickMobile(user.mobile || '');
+    setQuickEmail(user.email || '');
+    setQuickAddress(user.formattedAddress || '');
+    setQuickCity(user.city || 'Mumbai');
+    setQuickCountry(user.country || 'India');
+    setQuickDesignation(user.designation || 'Trade Specialist');
+    setQuickCompany(user.company || 'COGOPORT');
+    setShowQuickContactModal(true);
+  };
+
+  const handleSaveQuickContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingQuickContact(true);
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const payload = {
+      mobile: quickMobile.trim(),
+      email: quickEmail.trim(),
+      formattedAddress: quickAddress.trim(),
+      city: quickCity.trim(),
+      country: quickCountry.trim(),
+      designation: quickDesignation.trim(),
+      company: quickCompany.trim(),
+    };
+
+    updateUser(payload);
+
+    try {
+      const res = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: activeUid,
+          email: quickEmail.trim() || user.email,
+          updates: payload,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast('✓ Contact credentials & terminal location updated in DBMS.');
+        setShowQuickContactModal(false);
+      } else {
+        toast(data.error || 'Failed to update contact in DBMS.');
+      }
+    } catch (err: any) {
+      toast('Network error saving contact details.');
+    } finally {
+      setIsSavingQuickContact(false);
+    }
+  };
 
   // Navigation & Surface State
   const [activeSurface, setActiveSurface] = useState<FeedSurface>('home');
@@ -1357,33 +1434,69 @@ export default function FeedsPage() {
 
           {/* Contact Details & Direct Contact Action below profile */}
           <div style={{ padding: '10px 12px 14px', borderTop: '1px solid var(--fr8x-outline)', display: 'flex', flexDirection: 'column', gap: '8px', background: '#fafbfc' }}>
-            <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-              Contact &amp; Trade Connect
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                Contact &amp; Trade Connect
+              </div>
+              <button
+                type="button"
+                onClick={handleOpenQuickContactModal}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--brand)',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  backgroundColor: 'rgba(0, 163, 196, 0.08)',
+                }}
+                title="Edit Phone Number, Email & Terminal Location (Saves to DBMS)"
+              >
+                <Edit2 size={10} /> Edit
+              </button>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
+              onClick={handleOpenQuickContactModal}
+              title="Click to edit contact email"
+            >
               <Mail size={12} style={{ flexShrink: 0, color: 'var(--fr8x-text)' }} />
               <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>
                 {user.email}
               </span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
+              onClick={handleOpenQuickContactModal}
+              title="Click to edit phone number in DBMS"
+            >
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
               <span>{user.mobile || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1, cursor: 'pointer' }}
+                onClick={handleOpenQuickContactModal}
+                title="Click to edit freight terminal in DBMS"
+              >
                 <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.formattedAddress || user.city}>
                   {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
                 </span>
               </div>
-              <Link
-                href="/profile"
-                style={{ color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', textDecoration: 'none', padding: '1px 5px', borderRadius: '3px', background: 'rgba(0, 163, 196, 0.1)', flexShrink: 0 }}
-                title="Edit Freight Terminal / Address in Profile"
+              <button
+                type="button"
+                onClick={handleOpenQuickContactModal}
+                style={{ color: 'var(--brand)', background: 'rgba(0, 163, 196, 0.1)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', padding: '1px 5px', borderRadius: '3px', cursor: 'pointer', flexShrink: 0 }}
+                title="Edit Freight Terminal / Address in DBMS"
               >
                 <Edit2 size={10} /> Edit
-              </Link>
+              </button>
             </div>
 
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
@@ -3601,6 +3714,116 @@ export default function FeedsPage() {
             openChatWith(uid, { type: 'company', id: uid, title: `Chat with ${name}` })
           }
         />
+      )}
+
+      {/* Quick Edit Contact & Terminal Modal (Linked directly with DBMS) */}
+      {showQuickContactModal && (
+        <Modal
+          isOpen={showQuickContactModal}
+          onClose={() => setShowQuickContactModal(false)}
+          title="Edit Contact & Terminal Location (Authoritative DBMS)"
+          maxWidth="540px"
+        >
+          <form onSubmit={handleSaveQuickContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid var(--fr8x-outline, #e2e8f0)', fontSize: '11.5px', color: 'var(--fr8x-muted)' }}>
+              Changes made here are persisted directly to the authoritative database (<code>.knox/dbms/users.json</code>) and synchronize instantly across Feeds, Profile, and B2B Networking.
+            </div>
+
+            <div className="grid g2">
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>Mobile Number / Phone <span className="req">*</span></label>
+                <input
+                  className="input"
+                  value={quickMobile}
+                  onChange={(e) => setQuickMobile(e.target.value)}
+                  placeholder="+91 98200 12345"
+                  required
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>Contact Email ID <span className="req">*</span></label>
+                <input
+                  className="input"
+                  type="email"
+                  value={quickEmail}
+                  onChange={(e) => setQuickEmail(e.target.value)}
+                  placeholder="name@company.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '11px', fontWeight: 700 }}>Freight Terminal / Corporate Address</label>
+              <input
+                className="input"
+                value={quickAddress}
+                onChange={(e) => setQuickAddress(e.target.value)}
+                placeholder="e.g. Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069"
+              />
+            </div>
+
+            <div className="grid g2">
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>City / Port Hub</label>
+                <input
+                  className="input"
+                  value={quickCity}
+                  onChange={(e) => setQuickCity(e.target.value)}
+                  placeholder="Mumbai"
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>Country</label>
+                <input
+                  className="input"
+                  value={quickCountry}
+                  onChange={(e) => setQuickCountry(e.target.value)}
+                  placeholder="India"
+                />
+              </div>
+            </div>
+
+            <div className="grid g2">
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>Designation</label>
+                <input
+                  className="input"
+                  value={quickDesignation}
+                  onChange={(e) => setQuickDesignation(e.target.value)}
+                  placeholder="Trade Specialist"
+                />
+              </div>
+              <div className="field">
+                <label style={{ fontSize: '11px', fontWeight: 700 }}>Company Name</label>
+                <input
+                  className="input"
+                  value={quickCompany}
+                  onChange={(e) => setQuickCompany(e.target.value)}
+                  placeholder="COGOPORT"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setShowQuickContactModal(false)}
+                disabled={isSavingQuickContact}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={isSavingQuickContact}
+              >
+                {isSavingQuickContact ? 'Saving to DBMS...' : '✓ Save to DBMS'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       )}
     </div>
   );

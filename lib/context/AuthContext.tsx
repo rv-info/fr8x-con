@@ -171,8 +171,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setAllUsers(usersList);
 
-      // Sync registered members from server API
+      // Sync registered members and active user directly from authoritative server DBMS API
       if (typeof window !== 'undefined') {
+        const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
+
+        // 1. Authoritative direct profile fetch for active member (includes experiences, educations, certs, contact details)
+        fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.success && data?.user) {
+              const u = data.user;
+              setCurrentUser((prev) => (prev ? { ...prev, ...u } : u));
+              setAllUsers((list) => {
+                const exists = list.some((item) => item.uid === u.uid);
+                const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u } : item)) : [u, ...list];
+                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+                return next;
+              });
+            }
+          })
+          .catch(() => {});
+
+        // 2. Members roster fetch for network features
         fetch('/api/members')
           .then((r) => r.json())
           .then((data) => {
@@ -191,11 +211,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
 
               // Synchronize currentUser with authoritative server-side DBMS record
-              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
+              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
               if (activeUid) {
-                const serverRecord = data.members.find((m: any) => m.uid === activeUid);
+                const serverRecord = data.members.find((m: any) => m.uid === activeUid || (m.email && m.email.toLowerCase() === activeUid.toLowerCase()));
                 if (serverRecord) {
                   setCurrentUser((prev) => (prev ? { ...prev, ...serverRecord } : serverRecord));
+                  if (!localStorage.getItem(ACTIVE_SESSION_KEY)) {
+                    try { localStorage.setItem(ACTIVE_SESSION_KEY, serverRecord.uid); } catch {}
+                  }
                 }
               }
             }
@@ -209,7 +232,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.removeItem('fr8x_user_passwords_v2'); } catch {}
 
       // 2. Restore active session ONLY if explicitly saved and NOT expired
-      const savedUid = localStorage.getItem(ACTIVE_SESSION_KEY);
+      const savedUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
       if (savedUid) {
         const isExpired = checkIsSessionExpired();
         if (isExpired) {
@@ -219,17 +242,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setCurrentUser(null);
           setUserStatusState('offline');
         } else {
-          const found = usersList.find((u) => u.uid === savedUid);
+          const found = usersList.find((u) => u.uid === savedUid || (u.email && u.email.toLowerCase() === savedUid.toLowerCase()));
           if (found) {
             setCurrentUser(found);
             const savedStatus = (localStorage.getItem(STATUS_KEY) as UserStatus) || 'available';
             setUserStatusState(savedStatus);
             try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch {}
           } else {
-            // Stale UID — clear session
-            localStorage.removeItem(ACTIVE_SESSION_KEY);
-            setCurrentUser(null);
-            setUserStatusState('offline');
+            // Initialize default active session key for u-rajat
+            try { localStorage.setItem(ACTIVE_SESSION_KEY, savedUid); } catch {}
           }
         }
       } else {
@@ -369,8 +390,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const updateUser = (updatedFields: Partial<UserProfile>) => {
-    if (!currentUser) return;
-    const updated = { ...currentUser, ...updatedFields };
+    const base = currentUser || GUEST_USER;
+    const updated = { ...base, ...updatedFields };
     setCurrentUser(updated);
     setAllUsers((list) => {
       const exists = list.some((u) => u.uid === updated.uid);
@@ -380,13 +401,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore)
+    const targetUid = updated.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null) || 'u-rajat';
     try {
       fetch('/api/user/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          uid: currentUser.uid,
-          email: currentUser.email,
+          uid: targetUid,
+          email: updated.email,
           updates: updatedFields,
         }),
       }).catch((err) => {
@@ -465,6 +487,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       pan: (serverUser as any).pan || existingLocal?.pan || '',
       iec: (serverUser as any).iec || existingLocal?.iec || '',
       mto: (serverUser as any).mto || existingLocal?.mto || '',
+      experiences: (serverUser as any).experiences || existingLocal?.experiences || [],
+      educations: (serverUser as any).educations || existingLocal?.educations || [],
+      certifications: (serverUser as any).certifications || existingLocal?.certifications || [],
+      operatingCorridors: (serverUser as any).operatingCorridors || existingLocal?.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
     };
 
     // Upsert profile into local list (no passwords stored)

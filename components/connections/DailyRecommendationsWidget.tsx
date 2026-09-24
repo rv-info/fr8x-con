@@ -60,11 +60,20 @@ export function DailyRecommendationsWidget({
   const loadMembers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/members?limit=100');
-      const data = await res.json();
-      if (data && Array.isArray(data.members)) {
-        setCandidates(data.members);
-        const selfFromDbms = data.members.find((m: any) => m.uid === currentUser.uid);
+      const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+      const [membersRes, profileRes] = await Promise.all([
+        fetch('/api/members?limit=100').then((r) => r.json()).catch(() => null),
+        fetch(`/api/user/profile?uid=${encodeURIComponent(myUid)}`).then((r) => r.json()).catch(() => null),
+      ]);
+
+      if (membersRes && Array.isArray(membersRes.members)) {
+        setCandidates(membersRes.members);
+      }
+
+      if (profileRes?.success && profileRes?.user) {
+        setHydratedSelf(profileRes.user);
+      } else if (membersRes && Array.isArray(membersRes.members)) {
+        const selfFromDbms = membersRes.members.find((m: any) => m.uid === myUid || m.uid === currentUser.uid);
         if (selfFromDbms) {
           setHydratedSelf(selfFromDbms);
         }
@@ -82,7 +91,8 @@ export function DailyRecommendationsWidget({
 
   // Compute recommendations whenever candidates or connection storage changes
   const refreshRecommendations = () => {
-    const activeSelf = hydratedSelf ? { ...currentUser, ...hydratedSelf } : currentUser;
+    const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeSelf = hydratedSelf ? { ...currentUser, ...hydratedSelf, uid: myUid } : { ...currentUser, uid: myUid };
     if (!activeSelf?.uid || candidates.length === 0) return;
 
     const connectedUids = getConnectedUserIds(activeSelf.uid);
