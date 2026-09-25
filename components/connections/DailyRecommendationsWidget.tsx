@@ -60,7 +60,11 @@ export function DailyRecommendationsWidget({
   const loadMembers = async () => {
     try {
       setLoading(true);
-      const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+      const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      if (!myUid) {
+        setLoading(false);
+        return;
+      }
       const [membersRes, profileRes] = await Promise.all([
         fetch('/api/members?limit=100').then((r) => r.json()).catch(() => null),
         fetch(`/api/user/profile?uid=${encodeURIComponent(myUid)}`).then((r) => r.json()).catch(() => null),
@@ -91,7 +95,8 @@ export function DailyRecommendationsWidget({
 
   // Compute recommendations whenever candidates or connection storage changes
   const refreshRecommendations = () => {
-    const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const myUid = currentUser.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!myUid) return;
     const activeSelf = hydratedSelf ? { ...currentUser, ...hydratedSelf, uid: myUid } : { ...currentUser, uid: myUid };
     if (!activeSelf?.uid || candidates.length === 0) return;
 

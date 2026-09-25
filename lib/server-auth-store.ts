@@ -184,19 +184,29 @@ export function isDummyOrTestUser(u?: { uid?: string; email?: string; displayNam
 
   // Test patterns in uid
   if (['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david', 'u-vikram', 'u-ananya', 'u-suspended-01', 'u-chen', 'u-vikas'].includes(uid)) return true;
-  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp)[-_0-9]/i.test(uid)) return true;
+  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp|su|exp)[-_0-9]/i.test(uid)) return true;
   if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true; // e.g. u-neha-1789208393001
+  if (/^u-[0-9]{10,}/i.test(uid)) return true;
 
   // Test patterns in email
   if (['arjun@atlaslogistics.com', 'sarah.lewis@rotterdamfreight.nl', 'kiran.sharma@gatewaylines.in', 'elena.rostova@balticlogistics.eu', 'david.chen@pacificfreight.sg', 'vikram.malhotra@samudralogistics.com', 'ananya.sen@apollomaritime.in', 'ramesh@transoceanicexpress.in', 'chen.wei@orientfreight.cn', 'vikas.dubey@apexforwarders.in', 'kiran.mehta@indoocean.com'].includes(email)) return true;
-  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@')) return true;
-  if (/^(lockout|sureset|test\.|tester|dummy|temp)[-_0-9.]/i.test(email)) return true;
-  if (/^[a-z]+\.[0-9]{10,}@/i.test(email)) return true; // e.g. neha.1789208393001@...
+  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@') || email.includes('@freightforwarders.com') || email.includes('@oceanmarine.com') || email.includes('@shippinglogistics.com') || email.includes('@oceanfreight.corp') || email.includes('@oceanfreight.com') || email.includes('@railfreight.net') || email.includes('@atlaslogistics.com') || email.includes('@gatewaylines.in')) return true;
+  if (/^(lockout|sureset|test\.|tester|dummy|temp|single-use|expiry-user|real-user|delivery-test|otprate)[-_0-9.]/i.test(email)) return true;
+  if (/^[a-z0-9._-]+[0-9]{10,}@/i.test(email)) return true;
 
   // Test patterns in displayName
-  if (name.includes('dummy') || name.includes('test user') || name.includes('mock user')) return true;
+  if (name.includes('dummy') || name.includes('test user') || name.includes('mock user') || name.includes('lockout test')) return true;
 
   return false;
+}
+
+export function isTestArtifactKey(str?: string): boolean {
+  if (!str) return false;
+  const s = str.toLowerCase();
+  return isDummyOrTestUser({ uid: s, email: s, displayName: s }) ||
+    s.includes('test') || s.includes('single-use') || s.includes('expiry-user') ||
+    s.includes('real-user') || s.includes('delivery-test') || s.includes('lockout') ||
+    s.includes('otprate') || /^[a-z0-9._-]+[0-9]{10,}/.test(s);
 }
 
 export interface VerificationTokenRecord {
@@ -389,85 +399,21 @@ class ServerSecurityStore {
         firstName: 'Rajat',
         lastName: 'RAI',
         company: 'COGOPORT',
-        companyId: 'CMP-COGOPORT-001',
+        companyId: '',
         role: 'company_admin' as const,
         status: 'active' as const,
-        mobile: '+91 98200 88210',
-        designation: 'Trade Specialist',
-        city: 'Mumbai',
-        state: 'Maharashtra',
+        mobile: '',
+        designation: '',
+        city: '',
+        state: '',
         country: 'India',
-        postalCode: '400069',
-        formattedAddress: 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069',
+        postalCode: '',
+        formattedAddress: '',
         timezone: 'Asia/Kolkata',
-        operatingCorridors: 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
-        experiences: [
-          {
-            id: 'exp-r1',
-            company: 'COGOPORT',
-            designation: 'Trade Specialist',
-            employmentType: 'Full-time',
-            location: 'Mumbai, India',
-            startDate: '2023-01',
-            isCurrent: true,
-            description: 'Managing cross-border ocean freight procurement, enterprise shipper accounts, and container logistics.',
-            skills: 'Ocean Freight, Trade Logistics, NVOCC, Port Terminal Operations, Spot Quotes',
-            visibility: 'public',
-          },
-          {
-            id: 'exp-r2',
-            company: 'Maersk Logistics India',
-            designation: 'Senior Logistics Specialist',
-            employmentType: 'Full-time',
-            location: 'Mumbai, India',
-            startDate: '2020-03',
-            endDate: '2022-12',
-            isCurrent: false,
-            description: 'Handled carrier allocations, container tracking, port terminal operations, and shipping lines coordination.',
-            skills: 'Carrier Relations, Container Tracking, Terminal Operations, Liner Procurement',
-            visibility: 'public',
-          },
-        ],
-        educations: [
-          {
-            id: 'edu-r1',
-            institution: 'Indian Institute of Foreign Trade (IIFT)',
-            qualification: 'MBA',
-            fieldOfStudy: 'International Trade & Logistics',
-            startYear: '2018',
-            endYear: '2020',
-            visibility: 'public',
-          },
-          {
-            id: 'edu-r2',
-            institution: 'University of Mumbai',
-            qualification: 'Bachelor of Commerce (B.Com)',
-            fieldOfStudy: 'Commerce & Economics',
-            startYear: '2015',
-            endYear: '2018',
-            visibility: 'public',
-          },
-        ],
-        certifications: [
-          {
-            id: 'cert-r1',
-            title: 'FIATA Diploma in Freight Forwarding',
-            issuingAuthority: 'International Federation of Freight Forwarders Associations',
-            certificateNumber: 'FIATA-IND-8821',
-            issueDate: '2021-06-15',
-            verificationStatus: 'verified',
-            visibility: 'public',
-          },
-          {
-            id: 'cert-r2',
-            title: 'Customs & Port Logistics Specialist',
-            issuingAuthority: 'Federation of Freight Forwarders in India (FFFAI)',
-            certificateNumber: 'FFFAI-CPS-2022',
-            issueDate: '2022-04-10',
-            verificationStatus: 'verified',
-            visibility: 'public',
-          },
-        ],
+        operatingCorridors: '',
+        experiences: [],
+        educations: [],
+        certifications: [],
         failedLoginAttempts: 0,
         firstLoginCompleted: true,
         createdAt: '2026-09-12T15:37:00.000Z',
@@ -504,22 +450,27 @@ class ServerSecurityStore {
         } catch {}
       } else {
         // Guarantee both cleanUid and cleanEmail point to the same user instance,
-        // and ensure contact, location, and educational attributes exist
+        // and purge any legacy mock/dummy professional records
         existing.status = 'active';
         existing.email_verified = true;
         existing.failedLoginAttempts = 0;
         existing.firstLoginCompleted = true;
-        if (!existing.mobile && acc.mobile) existing.mobile = acc.mobile;
-        if (!existing.city && acc.city) existing.city = acc.city;
-        if (!existing.state && acc.state) existing.state = acc.state;
-        if (!existing.country && acc.country) existing.country = acc.country;
-        if (!existing.formattedAddress && acc.formattedAddress) existing.formattedAddress = acc.formattedAddress;
-        if (!existing.timezone && acc.timezone) existing.timezone = acc.timezone;
-        if (!existing.designation && acc.designation) existing.designation = acc.designation;
-        if (!existing.experiences && (acc as any).experiences) existing.experiences = (acc as any).experiences;
-        if (!existing.educations && (acc as any).educations) existing.educations = (acc as any).educations;
-        if (!existing.certifications && (acc as any).certifications) existing.certifications = (acc as any).certifications;
-        if (!existing.operatingCorridors && (acc as any).operatingCorridors) existing.operatingCorridors = (acc as any).operatingCorridors;
+        if (existing.mobile === '+91 98200 88210') existing.mobile = '';
+        if (existing.companyId === 'CMP-COGOPORT-001') existing.companyId = '';
+        if (existing.formattedAddress?.includes('Cogoport Headquarters, Andheri East')) existing.formattedAddress = '';
+        if (existing.designation === 'Trade Specialist') existing.designation = '';
+        if (existing.city === 'Mumbai') existing.city = '';
+        if (existing.state === 'Maharashtra') existing.state = '';
+        if (existing.operatingCorridors?.includes('Nhava Sheva')) existing.operatingCorridors = '';
+        if (Array.isArray(existing.experiences)) {
+          existing.experiences = existing.experiences.filter((e: any) => e.id !== 'exp-r1' && e.id !== 'exp-r2');
+        }
+        if (Array.isArray(existing.educations)) {
+          existing.educations = existing.educations.filter((e: any) => e.id !== 'edu-r1' && e.id !== 'edu-r2');
+        }
+        if (Array.isArray(existing.certifications)) {
+          existing.certifications = existing.certifications.filter((c: any) => c.id !== 'cert-r1' && c.id !== 'cert-r2');
+        }
         this.users.set(cleanUid, existing);
         this.users.set(cleanEmail, existing);
         try {
@@ -681,36 +632,43 @@ class ServerSecurityStore {
         }
         if (Array.isArray(data.emailVerifications)) {
           for (const [k, v] of data.emailVerifications) {
+            if (isTestArtifactKey(k) || isTestArtifactKey(v?.email)) continue;
             this.emailVerifications.set(k, v);
           }
         }
         if (Array.isArray(data.verificationTokens)) {
           for (const [k, t] of data.verificationTokens) {
+            if (isTestArtifactKey(t)) continue;
             this.verificationTokens.set(k, t);
           }
         }
         if (Array.isArray(data.verificationTokenRecords)) {
           for (const [k, r] of data.verificationTokenRecords) {
+            if (isTestArtifactKey(r?.email) || isTestArtifactKey(r?.user_id)) continue;
             this.verificationTokenRecords.set(k, r);
           }
         }
         if (Array.isArray(data.activeResetOtps)) {
           for (const [k, r] of data.activeResetOtps) {
+            if (isTestArtifactKey(k)) continue;
             this.activeResetOtps.set(k, r);
           }
         }
         if (Array.isArray(data.activeLoginOtps)) {
           for (const [k, o] of data.activeLoginOtps) {
+            if (isTestArtifactKey(k)) continue;
             this.activeLoginOtps.set(k, o);
           }
         }
         if (Array.isArray(data.resetTokens)) {
           for (const [k, t] of data.resetTokens) {
+            if (isTestArtifactKey(t)) continue;
             this.resetTokens.set(k, t);
           }
         }
         if (Array.isArray(data.blockedAccounts)) {
           for (const [k, b] of data.blockedAccounts) {
+            if (isTestArtifactKey(k) || isTestArtifactKey(b?.uid) || isTestArtifactKey(b?.email)) continue;
             this.blockedAccounts.set(k, b);
           }
         }
@@ -1855,7 +1813,6 @@ class ServerSecurityStore {
     if (isPasswordValid) {
       // Reset failed attempts on successful authentication
       user.failedLoginAttempts = 0;
-      user.firstLoginCompleted = true;
       this.failedAttemptsByIdentifier.delete(key);
       this.failedAttemptsByIdentifier.delete(user.email.toLowerCase());
       this.failedAttemptsByIdentifier.delete(user.uid.toLowerCase());
@@ -1863,6 +1820,7 @@ class ServerSecurityStore {
 
       // Check if first-login OTP verification is required
       if (!user.firstLoginCompleted) {
+
         const cleanEmail = user.email.toLowerCase();
         const now = Date.now();
         const sendTimestamps = this.firstLoginOtpSendTimestamps.get(cleanEmail) || [];
@@ -1943,6 +1901,8 @@ class ServerSecurityStore {
         };
       }
 
+      // Normal login (first-login already completed or not required)
+      user.firstLoginCompleted = true;
       return {
         success: true,
         firstLoginRequired: false,

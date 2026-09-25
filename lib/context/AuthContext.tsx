@@ -173,24 +173,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Sync registered members and active user directly from authoritative server DBMS API
       if (typeof window !== 'undefined') {
-        const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
+        const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
 
         // 1. Authoritative direct profile fetch for active member (includes experiences, educations, certs, contact details)
-        fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
-          .then((r) => r.json())
-          .then((data) => {
-            if (data?.success && data?.user) {
-              const u = data.user;
-              setCurrentUser((prev) => (prev ? { ...prev, ...u } : u));
-              setAllUsers((list) => {
-                const exists = list.some((item) => item.uid === u.uid);
-                const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u } : item)) : [u, ...list];
-                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
-                return next;
-              });
-            }
-          })
-          .catch(() => {});
+        if (activeUid) {
+          fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
+            .then((r) => r.json())
+            .then((data) => {
+              if (data?.success && data?.user) {
+                const u = data.user;
+                setCurrentUser((prev) => (prev ? { ...prev, ...u } : u));
+                setAllUsers((list) => {
+                  const exists = list.some((item) => item.uid === u.uid);
+                  const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u } : item)) : [u, ...list];
+                  try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+                  return next;
+                });
+              }
+            })
+            .catch(() => {});
+        }
 
         // 2. Members roster fetch for network features
         fetch('/api/members')
@@ -211,14 +213,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               });
 
               // Synchronize currentUser with authoritative server-side DBMS record
-              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
+              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
               if (activeUid) {
                 const serverRecord = data.members.find((m: any) => m.uid === activeUid || (m.email && m.email.toLowerCase() === activeUid.toLowerCase()));
                 if (serverRecord) {
                   setCurrentUser((prev) => (prev ? { ...prev, ...serverRecord } : serverRecord));
-                  if (!localStorage.getItem(ACTIVE_SESSION_KEY)) {
-                    try { localStorage.setItem(ACTIVE_SESSION_KEY, serverRecord.uid); } catch {}
-                  }
                 }
               }
             }
@@ -232,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.removeItem('fr8x_user_passwords_v2'); } catch {}
 
       // 2. Restore active session ONLY if explicitly saved and NOT expired
-      const savedUid = localStorage.getItem(ACTIVE_SESSION_KEY) || 'u-rajat';
+      const savedUid = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null;
       if (savedUid) {
         const isExpired = checkIsSessionExpired();
         if (isExpired) {
@@ -249,8 +248,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUserStatusState(savedStatus);
             try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch {}
           } else {
-            // Initialize default active session key for u-rajat
-            try { localStorage.setItem(ACTIVE_SESSION_KEY, savedUid); } catch {}
+            setCurrentUser(null);
+            setUserStatusState('offline');
           }
         }
       } else {
@@ -401,7 +400,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore)
-    const targetUid = updated.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null) || 'u-rajat';
+    const targetUid = updated.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null);
+    if (!targetUid) return;
     try {
       fetch('/api/user/profile', {
         method: 'POST',

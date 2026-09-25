@@ -142,73 +142,9 @@ interface InFeedJobAd {
   contactUid: string;
 }
 
-const IN_FEED_COMPANY_ADS: InFeedCompanyAd[] = [
-  {
-    id: 'ad-comp-1',
-    type: 'company',
-    sponsorName: 'Sarah Jenkins',
-    sponsorRole: 'Key Accounts Director',
-    companyName: 'Maersk Line Direct Services',
-    headline: 'Guaranteed Equipment & Zero-Rollover Priority Slots · India-Europe Directs',
-    body: 'Lock in priority spot allocations for 20DV & 40HC dry containers from Nhava Sheva (INNSA) & Mundra (INMUN) to Rotterdam and Hamburg. Enjoy 21 days free detention and instant digital gate-in approval.',
-    tradeLanes: ['Nhava Sheva ➔ Rotterdam', 'Mundra ➔ Hamburg', 'Pipavav ➔ Felixstowe'],
-    metrics: [
-      { label: 'On-Time SLA', value: '98.6%' },
-      { label: 'Available TEUs', value: '140+ TEU' },
-      { label: 'Equipment Guarantee', value: 'Tier-1 Priority' },
-    ],
-    contactUid: 'u-sarah',
-    verified: true,
-  },
-  {
-    id: 'ad-comp-2',
-    type: 'company',
-    sponsorName: 'Capt. Kiran Rao',
-    sponsorRole: 'VP Middle East & Indian Ocean',
-    companyName: 'Hapag-Lloyd Ocean Express',
-    headline: 'Express Gulf & Red Sea Shuttle · 4 Days Rapid Transit to Jebel Ali',
-    body: 'Daily feeder frequency with guaranteed reefer plugs and pharmaceutical cold chain certification. Competitive spot freight matrices with zero destination congestion surcharges.',
-    tradeLanes: ['Mundra ➔ Jebel Ali', 'Nhava Sheva ➔ Dammam', 'Cochin ➔ Salalah'],
-    metrics: [
-      { label: 'Transit Time', value: '4 Days' },
-      { label: 'Detention Free', value: '24 Days' },
-      { label: 'Reefer Monitoring', value: '24/7 IoT' },
-    ],
-    contactUid: 'u-kiran',
-    verified: true,
-  },
-];
+const IN_FEED_COMPANY_ADS: InFeedCompanyAd[] = [];
 
-const IN_FEED_JOB_ADS: InFeedJobAd[] = [
-  {
-    id: 'ad-job-1',
-    type: 'job',
-    jobTitle: 'Senior Ocean Freight Procurement Specialist',
-    companyName: 'COGOPORT',
-    location: 'Mumbai (Andheri East HQ) · Hybrid',
-    salaryPackage: 'Competitive Industry Standards',
-    employmentType: 'Full-time',
-    experience: '5–8 Years Maritime Experience',
-    headline: 'Procurement Specialist: Lead cross-border ocean freight procurement & carrier allocations',
-    skills: ['FCL Spot Procurement', 'Carrier Space Contracts', 'NVOCC Operations', 'UN/LOCODE'],
-    posterEmail: 'careers@cogoport.com',
-    contactUid: 'u-rajat',
-  },
-  {
-    id: 'ad-job-2',
-    type: 'job',
-    jobTitle: 'Regional Port Operations & Demurrage Manager',
-    companyName: 'Pacific Star Liner Agency',
-    location: 'Mundra / Ahmedabad · On-site',
-    salaryPackage: '₹14,00,000 – ₹19,00,000 LPA',
-    employmentType: 'Full-time',
-    experience: '4–7 Years Port/Terminal Ops',
-    headline: 'High-Impact Role: Oversee container turnaround, terminal dwell time and CHA SLA delivery',
-    skills: ['Port Dwell Management', 'Demurrage Mitigation', 'ICEGATE Customs', 'Terminal Liaison'],
-    posterEmail: 'talent@pacificstarshipping.com',
-    contactUid: 'u-michael',
-  },
-];
+const IN_FEED_JOB_ADS: InFeedJobAd[] = [];
 
 // ── AI Job Requirements Suggestion Component ─────────────────────────────────
 const AI_SUGGESTION_CATEGORIES: { label: string; color: string; chips: string[] }[] = [
@@ -369,7 +305,7 @@ export default function FeedsPage() {
 
   // Hydrate user profile authoritatively from DBMS on feeds mount
   React.useEffect(() => {
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     if (!activeUid) return;
 
     fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
@@ -397,17 +333,21 @@ export default function FeedsPage() {
     setQuickMobile(user.mobile || '');
     setQuickEmail(user.email || '');
     setQuickAddress(user.formattedAddress || '');
-    setQuickCity(user.city || 'Mumbai');
-    setQuickCountry(user.country || 'India');
-    setQuickDesignation(user.designation || 'Trade Specialist');
-    setQuickCompany(user.company || 'COGOPORT');
+    setQuickCity(user.city || '');
+    setQuickCountry(user.country || '');
+    setQuickDesignation(user.designation || '');
+    setQuickCompany(user.company || '');
     setShowQuickContactModal(true);
   };
 
   const handleSaveQuickContact = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSavingQuickContact(true);
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) {
+      setIsSavingQuickContact(false);
+      return;
+    }
     const payload = {
       mobile: quickMobile.trim(),
       email: quickEmail.trim(),
@@ -2491,7 +2431,9 @@ export default function FeedsPage() {
                 const isCompany = adIndex % 2 === 0;
 
                 if (isCompany) {
+                  if (IN_FEED_COMPANY_ADS.length === 0) return null;
                   const companyAd = IN_FEED_COMPANY_ADS[adIndex % IN_FEED_COMPANY_ADS.length];
+                  if (!companyAd) return null;
                   const adTitle = (adIndex === 0 && bookedSlot1) ? bookedSlot1.headline : companyAd.headline;
                   const adCompany = (adIndex === 0 && bookedSlot1) ? bookedSlot1.businessName : companyAd.companyName;
                   const adBody = (adIndex === 0 && bookedSlot1) ? (bookedSlot1.description || companyAd.body) : companyAd.body;
@@ -2648,7 +2590,9 @@ export default function FeedsPage() {
                     </div>
                   );
                 } else {
+                  if (IN_FEED_JOB_ADS.length === 0) return null;
                   const jobAd = IN_FEED_JOB_ADS[adIndex % IN_FEED_JOB_ADS.length];
+                  if (!jobAd) return null;
                   return (
                     <div
                       key={`ad-job-${postIndex}`}

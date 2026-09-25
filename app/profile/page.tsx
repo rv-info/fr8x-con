@@ -406,7 +406,8 @@ export default function ProfilePage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const resolvedUid = user.uid || user.email || localStorage.getItem('fr8x_active_user_uid') || 'u-rajat';
+    const resolvedUid = user.uid || user.email || localStorage.getItem('fr8x_active_user_uid');
+    if (!resolvedUid) return;
     const storageKey = resolvedUid;
 
     // 1. Initial hydration from user object
@@ -523,7 +524,8 @@ export default function ProfilePage() {
 
   const persistExperiences = (newExp: ProfileExperience[]) => {
     setExperiences(newExp);
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) return;
     try {
       localStorage.setItem(`fr8x_user_exp_${activeUid}`, JSON.stringify(newExp));
     } catch {}
@@ -537,7 +539,8 @@ export default function ProfilePage() {
 
   const persistEducations = (newEdu: ProfileEducation[]) => {
     setEducations(newEdu);
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) return;
     try {
       localStorage.setItem(`fr8x_user_edu_${activeUid}`, JSON.stringify(newEdu));
     } catch {}
@@ -551,7 +554,8 @@ export default function ProfilePage() {
 
   const persistCertifications = (newCert: ProfileCertification[]) => {
     setCertifications(newCert);
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) return;
     try {
       localStorage.setItem(`fr8x_user_cert_${activeUid}`, JSON.stringify(newCert));
     } catch {}
@@ -604,12 +608,14 @@ export default function ProfilePage() {
         const url = loadEvt.target?.result as string;
         setAvatarUrl(url);
         updateUser({ avatarUrl: url });
-        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
-        fetch('/api/user/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: url } }),
-        }).catch(() => {});
+        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+        if (activeUid) {
+          fetch('/api/user/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: url } }),
+          }).catch(() => {});
+        }
         toast('Profile photo updated.');
       };
       reader.readAsDataURL(file);
@@ -624,12 +630,14 @@ export default function ProfilePage() {
         const url = loadEvt.target?.result as string;
         setCompanyLogoUrl(url);
         updateUser({ companyLogoUrl: url });
-        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
-        fetch('/api/user/profile', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: url } }),
-        }).catch(() => {});
+        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+        if (activeUid) {
+          fetch('/api/user/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: url } }),
+          }).catch(() => {});
+        }
         toast('Company logo uploaded successfully.');
       };
       reader.readAsDataURL(file);
@@ -665,7 +673,8 @@ export default function ProfilePage() {
   const completeness = calculateCompleteness();
 
   const handleSaveProfile = () => {
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) return;
     const profilePayload = {
       firstName,
       lastName,
@@ -3302,7 +3311,8 @@ export default function ProfilePage() {
 
               updateUser(profilePayload);
 
-              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null) || 'u-rajat';
+              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+              if (!targetUid) return;
               try {
                 const res = await fetch('/api/user/profile', {
                   method: 'POST',
@@ -3674,15 +3684,15 @@ export default function ProfilePage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', fontSize: '11px', background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                   <div>
                     <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Master Legal Entity:</span>
-                    <b style={{ color: '#0f172a', fontSize: '12px' }}>{user.company || 'COGOPORT'}</b>
+                    <b style={{ color: '#0f172a', fontSize: '12px' }}>{user.company || 'Not Specified'}</b>
                   </div>
                   <div>
                     <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Enterprise Company ID:</span>
-                    <code style={{ color: '#0284c7', fontWeight: 700 }}>{user.companyId || 'CMP-COGOPORT-001'}</code>
+                    <code style={{ color: '#0284c7', fontWeight: 700 }}>{user.companyId || 'Unassigned'}</code>
                   </div>
                   <div>
                     <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Operating Headquarters:</span>
-                    <span style={{ color: '#334155', fontWeight: 600 }}>{editCity || user.city || 'Mumbai'}, {editCountry || user.country || 'India'}</span>
+                    <span style={{ color: '#334155', fontWeight: 600 }}>{(editCity || user.city) ? `${editCity || user.city}, ${editCountry || user.country || ''}` : (editCountry || user.country || 'Not Specified')}</span>
                   </div>
                 </div>
                 <div style={{ fontSize: '10px', color: '#64748b', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>

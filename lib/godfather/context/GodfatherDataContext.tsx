@@ -589,22 +589,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
   },
 ];
 
-const SEED_COMPLIANCE_RECORDS: ComplianceRecord[] = [
-  {
-    id: 'cmp-rec-001',
-    entityId: 'CMP-COGOPORT-001',
-    entityName: 'Cogoport India Private Limited',
-    entityType: 'company',
-    type: 'gstin_audit',
-    status: 'compliant',
-    riskScore: 0,
-    lastAuditedAt: '2026-09-01T10:00:00Z',
-    auditedBy: 'tech@fr8x.in',
-    details: 'GSTIN 27AAACC4321A1Z1 and PAN verified via government portal with 100% filing compliance.',
-    validUntil: '2027-08-28',
-    certificateRef: 'GST-AUDIT-2026-001',
-  },
-];
+const SEED_COMPLIANCE_RECORDS: ComplianceRecord[] = [];
 
 export const SEED_BANK_DETAILS: PlatformBankDetails = {
   bankName: 'HDFC Bank Ltd.',
@@ -756,7 +741,8 @@ const SEED_PAYMENT_GATEWAYS: PaymentGatewayConfig[] = [
   },
 ];
 
-const SEED_MONTHLY_ACCOUNTING: MonthlyAccountingSummary[] = [
+const SEED_MONTHLY_ACCOUNTING: MonthlyAccountingSummary[] = [];
+const _UNUSED_ACCOUNTING: MonthlyAccountingSummary[] = [
   {
     monthId: '2026-08',
     monthName: 'August 2026',

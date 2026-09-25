@@ -417,52 +417,20 @@ export interface DbmsCompanyRecord {
   updatedAt: string;
 }
 
-const DEFAULT_SEED_COMPANIES: DbmsCompanyRecord[] = [
-  {
-    id: 'CMP-COGOPORT-001',
-    legalName: 'Cogoport India Private Limited',
-    tradeName: 'COGOPORT',
-    country: 'India',
-    state: 'Maharashtra',
-    city: 'Mumbai',
-    postalCode: '400069',
-    registeredAddress: 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069',
-    gstn: '27AAACC4321A1Z1',
-    pan: 'AAACC4321A',
-    iec: '0311009988',
-    mto: 'MTO/DGS/2024/0011',
-    status: 'verified',
-    verified: true,
-    memberCount: 1,
-    primaryContactName: 'Rajat RAI',
-    primaryContactEmail: 'rajat.rai@cogoport.com',
-    primaryContactPhone: '+91 98200 88210',
-    adminNotes: [
-      'Primary Enterprise logistics network entity',
-      'Statutory GSTN & PAN verified on DGFT portal',
-    ],
-    createdAt: '2026-01-01T00:00:00Z',
-    updatedAt: '2026-09-24T00:00:00Z',
-  },
-];
+const DEFAULT_SEED_COMPANIES: DbmsCompanyRecord[] = [];
 
 export function getPersistedCompanies(): DbmsCompanyRecord[] {
   ensureDirExists();
   try {
     if (!fs.existsSync(COMPANIES_FILE)) {
-      fs.writeFileSync(COMPANIES_FILE, JSON.stringify(DEFAULT_SEED_COMPANIES, null, 2), 'utf8');
-      return DEFAULT_SEED_COMPANIES;
+      return [];
     }
     const raw = fs.readFileSync(COMPANIES_FILE, 'utf8');
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      fs.writeFileSync(COMPANIES_FILE, JSON.stringify(DEFAULT_SEED_COMPANIES, null, 2), 'utf8');
-      return DEFAULT_SEED_COMPANIES;
-    }
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
     console.error('[DBMS] Error reading persisted companies:', err);
-    return DEFAULT_SEED_COMPANIES;
+    return [];
   }
 }
 

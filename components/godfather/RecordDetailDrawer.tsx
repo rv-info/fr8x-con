@@ -92,21 +92,33 @@ export function RecordDetailDrawer({ record, onClose }: RecordDetailDrawerProps)
             </pre>
           </div>
 
-          {/* Audit Timeline Mock */}
+          {/* Security & Audit History */}
           <div>
             <div className="text-xs font-bold text-mut mb-2 flex items-center gap-1.5">
               <Clock className="lucide w-3.5 h-3.5" />
               Security & Audit History
             </div>
             <div className="gf-timeline-list text-xs space-y-2 border-l-2 border-slate-200 dark:border-slate-700 pl-3">
-              <div className="gf-timeline-item">
-                <span className="text-faint block text-[10px]">2026-08-29 10:00 UTC</span>
-                <span className="font-semibold text-ink">Record inspected by authorized operator</span>
-              </div>
-              <div className="gf-timeline-item">
-                <span className="text-faint block text-[10px]">2026-08-20 09:15 UTC</span>
-                <span className="font-semibold text-ink">Entity verified through automated GSTN gateway</span>
-              </div>
+              {raw?.updatedAt || raw?.createdAt ? (
+                <>
+                  {raw?.updatedAt && (
+                    <div className="gf-timeline-item">
+                      <span className="text-faint block text-[10px]">{raw.updatedAt}</span>
+                      <span className="font-semibold text-ink">Last updated</span>
+                    </div>
+                  )}
+                  {raw?.createdAt && (
+                    <div className="gf-timeline-item">
+                      <span className="text-faint block text-[10px]">{raw.createdAt}</span>
+                      <span className="font-semibold text-ink">Record created</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="gf-timeline-item text-faint">
+                  No previous audit events recorded
+                </div>
+              )}
             </div>
           </div>
         </div>
