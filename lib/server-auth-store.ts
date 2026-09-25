@@ -914,7 +914,7 @@ class ServerSecurityStore {
       return {
         valid: false,
         reason: 'concurrent_device_login',
-        message: 'This account was logged in from another device. FR8X enforces a strict One User, One Device active session policy. This session has been terminated.',
+        message: "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
       };
     }
 

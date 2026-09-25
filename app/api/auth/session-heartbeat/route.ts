@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
           reason: result.reason || 'session_invalid',
           message:
             result.message ||
-            'Your session was terminated because this account was logged in from another device. FR8X enforces strict One User, One Active Device policy.',
+            "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
         },
         { status: 401 }
       );
