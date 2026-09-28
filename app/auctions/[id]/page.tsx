@@ -41,7 +41,6 @@ import {
   ExternalLink,
   ShieldAlert,
   Maximize2,
-  ClipboardList,
   Coins,
   Receipt,
   X,
@@ -70,12 +69,24 @@ export default function BidRoomPage() {
   const router = useRouter();
   const auctionId = String(params.id || '');
 
-  const { auctions, submitBid } = useData();
+  const { auctions, submitBid, recordRecentAction } = useData();
   const { format, availableCurrencies, getRateFromUSD, convertToUSD, lastUpdatedTime } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
 
   const auction = auctions.find((a) => a.id === auctionId);
+
+  // Record Recently Viewed in IndexedDB Cache (Low-Bandwidth / Offline-First)
+  useEffect(() => {
+    if (auction?.id) {
+      recordRecentAction(
+        auction.id,
+        'auction',
+        auction.title || `Auction ${auction.id}`,
+        `${auction.shipment?.pol || ''} → ${auction.shipment?.pod || ''}`
+      ).catch(() => {});
+    }
+  }, [auction?.id, auction?.title, auction?.shipment?.pol, auction?.shipment?.pod, recordRecentAction]);
 
   // Requirements 4 & 5: Conditional Container Number & Competition Ceiling visibility
   const asksContainerNo = Boolean(
@@ -121,7 +132,6 @@ export default function BidRoomPage() {
   const [showRfqTermsModal, setShowRfqTermsModal] = useState<boolean>(false);
   const [showMsdsModal, setShowMsdsModal] = useState<boolean>(false);
   const [showDimensionModal, setShowDimensionModal] = useState<boolean>(false);
-  const [showInstructionsModal, setShowInstructionsModal] = useState<boolean>(false);
 
   // Simulated Live Countdown Timer
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(3840); // ~1h 4m
@@ -1098,15 +1108,6 @@ export default function BidRoomPage() {
                 >
                   <Maximize2 size={13} color="var(--teal)" /> Dimension Table
                 </button>
-
-                <button
-                  type="button"
-                  className="btn secondary sm"
-                  style={{ justifyContent: 'flex-start', fontSize: '11px', padding: '6px 8px', color: 'var(--ink)', fontWeight: 600, borderRadius: '0px' }}
-                  onClick={() => setShowInstructionsModal(true)}
-                >
-                  <ClipboardList size={13} color="#d97706" /> Instructions
-                </button>
               </div>
 
               <div style={{ padding: '0 10px 10px' }}>
@@ -1660,37 +1661,6 @@ export default function BidRoomPage() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
             <button className="btn primary" onClick={() => setShowDimensionModal(false)}>
               Close Dimensions
-            </button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* POPUP MODAL 4: ADDITIONAL INSTRUCTIONS (Requirement 4) */}
-      <Modal
-        isOpen={showInstructionsModal}
-        onClose={() => setShowInstructionsModal(false)}
-        title="Special Shipper Instructions & Terminal Protocol"
-        maxWidth="720px"
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '12.5px', color: 'var(--ink-secondary)', lineHeight: 1.6 }}>
-          <div style={{ padding: '10px 14px', background: '#fefce8', borderRadius: '8px', border: '1px solid #fef08a', color: '#854d0e' }}>
-            <b>Special Shipper Requirements & Drayage Protocol</b>
-          </div>
-          <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>• Container Stuffing & Sealing:</b>
-            <p>Self-sealing with high-security ISO 17712 bolt seals at factory CFS. Photo verification required upon gate-in at JNPT.</p>
-          </div>
-          <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>• Transshipment Notice:</b>
-            <p>Direct service preferred. If transshipment via Colombo or Singapore, connecting mother vessel feeder voyage must be pre-confirmed with confirmed slot booking.</p>
-          </div>
-          <div>
-            <b style={{ color: 'var(--ink)', display: 'block', marginBottom: '2px' }}>• Destination Dwell & Release:</b>
-            <p>Consignee will arrange direct port drayage at Rotterdam ECT. Delivery order (DO) must be issued electronically within 6 hours of manifest filing.</p>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-            <button className="btn primary" onClick={() => setShowInstructionsModal(false)}>
-              Close Instructions
             </button>
           </div>
         </div>

@@ -17,7 +17,6 @@ import {
   History,
   RefreshCw,
   Zap,
-  BookOpen,
   ArrowUpRight,
   TrendingUp,
   Mail,
@@ -36,7 +35,6 @@ import {
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { usePlatformConfig } from '@/lib/platform-config';
-import { ZohoEmailGuidebookModal } from '@/components/godfather/ZohoEmailGuidebookModal';
 import { RankingConfig, KYCDossier, KYCStatus } from '@/lib/types';
 import { getRankingConfigFromDB, saveRankingConfigInDB, upsertKYCDossierInDB } from '@/lib/firebase/firestore';
 
@@ -55,7 +53,6 @@ export default function GodfatherDashboardPage() {
   const [securityEvents, setSecurityEvents] = useState<any[]>([]);
   const [passwordResets, setPasswordResets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isGuidebookOpen, setIsGuidebookOpen] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
 
   // Ranking Engine Config State
@@ -267,16 +264,6 @@ export default function GodfatherDashboardPage() {
         </div>
 
         <div className="gf-page-actions">
-          {/* Quick Guidebook Launch */}
-          <button
-            type="button"
-            onClick={() => setIsGuidebookOpen(true)}
-            className="gf-btn gf-btn-primary text-xs font-bold flex items-center gap-1.5 bg-gradient-to-r from-sky-600 to-blue-600 shadow-sm"
-          >
-            <BookOpen className="lucide w-3.5 h-3.5" />
-            <span>📖 Zoho Free Mail Guidebook</span>
-          </button>
-
           <button
             type="button"
             onClick={fetchSecurityOverview}
@@ -303,15 +290,14 @@ export default function GodfatherDashboardPage() {
         </div>
 
         <div className="gf-launchpad-grid">
-          <button
-            type="button"
-            onClick={() => setIsGuidebookOpen(true)}
+          <Link
+            href="/godfather/platform/email"
             className="gf-launchpad-action-btn primary"
           >
             <Mail size={14} className="action-icon sky" />
-            <span className="action-label">Zoho Free SMTP Setup</span>
+            <span className="action-label">Platform Mailboxes</span>
             <span className="action-badge cyan">ACTIVE</span>
-          </button>
+          </Link>
 
           <Link
             href="/godfather/operations/users?filter=active"
@@ -1269,9 +1255,6 @@ export default function GodfatherDashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Guidebook Modal */}
-      <ZohoEmailGuidebookModal isOpen={isGuidebookOpen} onClose={() => setIsGuidebookOpen(false)} />
     </div>
   );
 }

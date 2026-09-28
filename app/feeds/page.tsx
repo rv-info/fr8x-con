@@ -553,9 +553,6 @@ export default function FeedsPage() {
   const [reportCategory, setReportCategory] = useState<'malicious' | 'spam' | 'fraud' | 'copyright' | 'harassment' | 'misleading' | 'prohibited' | 'other'>('spam');
   const [reportDesc, setReportDesc] = useState('');
 
-  // Post Composer formatting tooltip state (Requirement 3)
-  const [showFormattingHelp, setShowFormattingHelp] = useState(false);
-
   // Send Post to Contact Selection Modal state (Requirement 4)
   const [sendPostTarget, setSendPostTarget] = useState<FeedPost | null>(null);
   const [sendContactSearch, setSendContactSearch] = useState('');
@@ -1853,80 +1850,6 @@ export default function FeedsPage() {
               style={{ minHeight: '60px', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}
             />
             <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
-              {/* Information / Supported Markdown Formatting Guide Tooltip (Requirement 3) */}
-              <div style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowFormattingHelp(!showFormattingHelp)}
-                  onMouseEnter={() => setShowFormattingHelp(true)}
-                  className="btn secondary sm"
-                  style={{ width: '28px', height: '28px', padding: 0, justifyContent: 'center', borderRadius: '6px', color: 'var(--fr8x-muted)' }}
-                  title="Markdown Formatting Guide"
-                >
-                  <Info size={14} />
-                </button>
-
-                {showFormattingHelp && (
-                  <div
-                    onMouseLeave={() => setShowFormattingHelp(false)}
-                    style={{
-                      position: 'absolute',
-                      bottom: '100%',
-                      right: 0,
-                      marginBottom: '8px',
-                      width: '280px',
-                      background: '#ffffff',
-                      border: '1px solid var(--fr8x-outline, #cbd5e1)',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15)',
-                      zIndex: 50,
-                      fontSize: '11.5px',
-                      color: 'var(--fr8x-text)',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid var(--fr8x-outline, #e2e8f0)', paddingBottom: '5px' }}>
-                      <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <Sparkles size={12} color="var(--brand)" /> Formatting Guide
-                      </b>
-                      <button
-                        type="button"
-                        onClick={() => setShowFormattingHelp(false)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--fr8x-muted)', fontSize: '12px' }}
-                      >
-                        ✕
-                      </button>
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>**bold**</code>
-                        <span><b>Bold text</b></span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>*italic*</code>
-                        <span><i>Italic text</i></span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>[title](url)</code>
-                        <span style={{ color: '#0284c7', textDecoration: 'underline' }}>Clickable link</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>- item</code>
-                        <span>• Bulleted list</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>&gt; quote</code>
-                        <span style={{ color: '#64748b', fontStyle: 'italic' }}>Blockquote</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <code style={{ color: '#0369a1', background: '#f0f9ff', padding: '1px 5px', borderRadius: '3px' }}>(#Name)</code>
-                        <span style={{ color: '#0891b2', fontWeight: 600 }}>@Mention contact</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
 
               <button type="submit" className="btn primary" disabled={!postText.trim()} style={{ padding: '0 16px', height: '32px' }}>
                 <Send size={13} /> Post Update

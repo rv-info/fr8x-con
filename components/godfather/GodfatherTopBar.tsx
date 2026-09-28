@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Search, Bell, ShieldCheck, ShieldAlert, Command, Menu, LogOut, Radio, BookOpen, Clock } from 'lucide-react';
+import { Search, Bell, ShieldCheck, ShieldAlert, Command, Menu, LogOut, Radio, Clock } from 'lucide-react';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { CommandPalette } from './CommandPalette';
 import { NotificationDrawer } from './NotificationDrawer';
-import { ZohoEmailGuidebookModal } from './ZohoEmailGuidebookModal';
 
 interface GodfatherTopBarProps {
   activeTitle?: string;
@@ -58,7 +57,6 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
   const { operator, isStepUpValid, requestStepUpVerification, logoutOperator } = useGodfatherAuth();
   const [isCommandOpen, setIsCommandOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [isGuidebookOpen, setIsGuidebookOpen] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -174,30 +172,6 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
           {/* Live Clock */}
           <LiveClock />
-
-          {/* Zoho Guidebook Quick Launcher */}
-          <button
-            type="button"
-            onClick={() => setIsGuidebookOpen(true)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-              fontSize: '11.5px',
-              fontWeight: 700,
-              color: '#0369a1',
-              background: '#f0f9ff',
-              border: '1px solid #bae6fd',
-              padding: '4px 9px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s',
-            }}
-            title="Open Interactive Zoho Free Mail Setup Guidebook"
-          >
-            <BookOpen style={{ width: '13px', height: '13px', color: '#0284c7' }} />
-            <span>Zoho Guide</span>
-          </button>
 
           {/* Secured Node Status */}
           <div
@@ -354,7 +328,6 @@ export function GodfatherTopBar({ activeTitle = 'Overview Dashboard', onMobileMe
 
       <CommandPalette isOpen={isCommandOpen} onClose={() => setIsCommandOpen(false)} />
       <NotificationDrawer isOpen={isNotifOpen} onClose={() => setIsNotifOpen(false)} />
-      <ZohoEmailGuidebookModal isOpen={isGuidebookOpen} onClose={() => setIsGuidebookOpen(false)} />
     </>
   );
 }

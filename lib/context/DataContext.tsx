@@ -52,6 +52,15 @@ import {
 import { eventBus } from '@/lib/intelligence/events';
 import { presenceService } from '@/lib/presence/presenceService';
 import { useNetwork } from './NetworkContext';
+import {
+  getCachedMasterData,
+  setCachedMasterData,
+  saveDraft,
+  getDraft,
+  deleteDraft,
+  recordRecentlyViewed,
+  getRecentlyViewed,
+} from '@/lib/cache/indexedDBCache';
 
 // Clean Datasets — Production strict mode: only real, verified, user-created data is presented
 const SEED_NOTIFICATIONS: AppNotification[] = [];
@@ -258,6 +267,12 @@ interface DataContextType {
   masterCommodities: CommodityMasterItem[];
   masterIncoterms: IncotermMasterItem[];
   masterTaxCodes: TaxSACMasterItem[];
+  // Offline Drafts & Recently Viewed (Low-Bandwidth / Offline-First)
+  saveDraftAction: (id: string, type: 'auction' | 'rate' | 'post' | 'shipment', data: any) => Promise<void>;
+  getDraftAction: <T = any>(id: string) => Promise<T | null>;
+  deleteDraftAction: (id: string) => Promise<void>;
+  recordRecentAction: (id: string, type: 'shipment' | 'auction' | 'quotation' | 'rate', title: string, summary?: string) => Promise<void>;
+  getRecentlyViewedAction: (type?: 'shipment' | 'auction' | 'quotation' | 'rate', limitCount?: number) => Promise<Array<{ id: string; type: string; title: string; summary?: string; viewedAt: number }>>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -299,6 +314,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // SWR Data Synchronization: Non-sensitive local cache -> Live Firestore revalidation
   useEffect(() => {
     let isMounted = true;
+
+    // 0. Hydrate Master Logistics Data from IndexedDB cache (0ms instant access)
+    if (typeof window !== 'undefined') {
+      getCachedMasterData<LocationMasterItem[]>('master_locations').then((locs) => {
+        if (locs && Array.isArray(locs) && locs.length > 0 && isMounted) setMasterLocations(locs);
+        else setCachedMasterData('master_locations', MASTER_LOCATIONS);
+      }).catch(() => {});
+
+      getCachedMasterData<CarrierMasterItem[]>('master_carriers').then((cars) => {
+        if (cars && Array.isArray(cars) && cars.length > 0 && isMounted) setMasterCarriers(cars);
+        else setCachedMasterData('master_carriers', MASTER_CARRIERS);
+      }).catch(() => {});
+
+      getCachedMasterData<EquipmentMasterItem[]>('master_equipment').then((eq) => {
+        if (eq && Array.isArray(eq) && eq.length > 0 && isMounted) setMasterEquipment(eq);
+        else setCachedMasterData('master_equipment', MASTER_EQUIPMENT);
+      }).catch(() => {});
+
+      getCachedMasterData<CommodityMasterItem[]>('master_commodities').then((com) => {
+        if (com && Array.isArray(com) && com.length > 0 && isMounted) setMasterCommodities(com);
+        else setCachedMasterData('master_commodities', MASTER_COMMODITIES);
+      }).catch(() => {});
+    }
 
     // 1. Instant paint from non-sensitive local cache (0ms paint for offline / slow connections)
     try {
@@ -485,9 +523,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
         // Secondary data queries (auctions and rates)
         const fetchSecondary = async () => {
           if (!isMounted) return;
+          const auctionLimit = isLowBandwidth ? 12 : 30;
+          const rateLimit = isLowBandwidth ? 20 : 50;
           const [auctionsRes, ratesRes] = await Promise.allSettled([
-            getAuctionsFromDB(),
-            getRatesFromDB(),
+            getAuctionsFromDB(auctionLimit),
+            getRatesFromDB(undefined, rateLimit),
           ]);
 
           if (!isMounted) return;
@@ -1979,6 +2019,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
         masterCommodities,
         masterIncoterms,
         masterTaxCodes,
+        saveDraftAction: async (id, type, data) => {
+          await saveDraft(id, type, data);
+        },
+        getDraftAction: async (id) => {
+          return await getDraft(id);
+        },
+        deleteDraftAction: async (id) => {
+          await deleteDraft(id);
+        },
+        recordRecentAction: async (id, type, title, summary) => {
+          await recordRecentlyViewed(id, type, title, summary);
+        },
+        getRecentlyViewedAction: async (type, limitCount) => {
+          return await getRecentlyViewed(type, limitCount);
+        },
       }}
     >
       {children}

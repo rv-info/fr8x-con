@@ -73,6 +73,22 @@ function ShellLayout({ children }: { children: ReactNode }) {
     }
   }, [isLoading, isAuthenticated, isPublicPage, isGodfather]);
 
+  // Auto-close mobile sidebar when route changes
+  React.useEffect(() => {
+    setIsMobileSidebarOpen(false);
+  }, [pathname]);
+
+  // Close mobile sidebar on Escape key
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isMobileSidebarOpen) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileSidebarOpen]);
+
   if (isGodfather || isPublicPage) {
     return (
       <main
@@ -145,6 +161,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
         <div
           className="mobile-sidebar-overlay"
           onClick={() => setIsMobileSidebarOpen(false)}
+          aria-label="Close menu overlay"
         />
       )}
 
@@ -153,6 +170,8 @@ function ShellLayout({ children }: { children: ReactNode }) {
         <Sidebar
           isCollapsed={isSidebarCollapsed}
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onCloseMobile={() => setIsMobileSidebarOpen(false)}
+          isMobileDrawer={isMobileSidebarOpen}
         />
       </div>
 

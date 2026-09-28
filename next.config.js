@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  compress: true,
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -39,6 +40,37 @@ const nextConfig = {
         ],
       },
       {
+        source: '/_next/static/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/(logo.png|icon.png|favicon.ico|favicon.png|apple-icon.png)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, stale-while-revalidate=604800',
+          },
+        ],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
+          },
+          {
+            key: 'Service-Worker-Allowed',
+            value: '/',
+          },
+        ],
+      },
+      {
         source: '/(.*)',
         headers: [
           {
@@ -56,8 +88,6 @@ const nextConfig = {
           {
             // Content Security Policy — blocks XSS injection.
             // Configured for Firebase, Google Fonts, Vercel, and ZeptoMail REST (server-side only).
-            // 'unsafe-inline' retained for styles until CSS-in-JS nonce migration is done.
-            // 'unsafe-eval' retained for Next.js dev HMR; removed in production via Vercel env.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",

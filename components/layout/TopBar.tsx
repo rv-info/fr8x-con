@@ -326,7 +326,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </button>
 
         <div className="crumb">
-          Workspace / <b>{activePageTitle}</b>
+          <span className="crumb-prefix">Workspace / </span><b>{activePageTitle}</b>
         </div>
 
         {/* Global Search Trigger */}
@@ -336,18 +336,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           title="Global Search (Ctrl+K)"
         >
           <Search size={13} />
-          <span>Search…</span>
+          <span className="search-text">Search…</span>
           <kbd className="search-kbd">⌘K</kbd>
         </button>
 
         <div className="topright">
-          {/* User Availability Status (Live / Away) */}
+          {/* User Availability Status (Live / Away / 2G) */}
           <NetworkStatusPill />
 
           {/* Location Badge */}
           <span className="country" title={`Location: ${user.city}, ${user.country}`}>
             <MapPin size={13} style={{ color: 'var(--brand)' }} />
-            <b>{user.city}, {user.country}</b>
+            <b className="country-name">{user.city}, {user.country}</b>
           </span>
 
           {/* Currency Converter */}
@@ -358,8 +358,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               title="Currency Converter & Workspace Currency"
             >
               <Calculator size={13} />
-              <span>CR · {currentCurrency}</span>
-              <ChevronDown size={12} />
+              <span className="currency-label">CR · {currentCurrency}</span>
+              <ChevronDown size={11} className="currency-chevron" />
             </button>
 
             {showCurrencyModal && (
@@ -606,9 +606,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
                 </div>
               )}
-              <span>{user.displayName}</span>
+              <span className="user-name-text">{user.displayName}</span>
               {user.hasGoldenTick && <GoldenTick />}
-              <ChevronDown size={13} style={{ color: 'var(--mut)' }} />
+              <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron" />
             </button>
 
             {showUserDropdown && (

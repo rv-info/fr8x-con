@@ -12,22 +12,37 @@ export interface NetworkConnectionInfo {
 
 export interface QueuedOfflineAction {
   id: string;
-  actionType: 'like_post' | 'save_post' | 'add_comment' | 'create_post' | 'edit_post' | 'read_receipt' | 'rate_bookmark';
+  actionType:
+    | 'like_post'
+    | 'save_post'
+    | 'add_comment'
+    | 'create_post'
+    | 'edit_post'
+    | 'read_receipt'
+    | 'rate_bookmark'
+    | 'submit_bid'
+    | 'create_auction'
+    | 'create_rate';
   payload: any;
   actorUid: string;
   createdAt: string;
   retryCount: number;
 }
 
-const OUTBOX_STORAGE_KEY = 'fr8x_offline_outbox';
-const SAVED_BOOKMARKS_KEY = 'fr8x_saved_bookmarks';
-
-type NetworkChangeListener = (info: {
+export interface NetworkStatusPayload {
   isOnline: boolean;
   tier: NetworkSpeedTier;
   connection: NetworkConnectionInfo;
   pendingCount: number;
-}) => void;
+  isSyncing: boolean;
+  measuredLatency: number;
+  lastSyncedAt: string | null;
+}
+
+const OUTBOX_STORAGE_KEY = 'fr8x_offline_outbox';
+const SAVED_BOOKMARKS_KEY = 'fr8x_saved_bookmarks';
+
+type NetworkChangeListener = (info: NetworkStatusPayload) => void;
 
 class NetworkSpeedManager {
   private listeners: Set<NetworkChangeListener> = new Set();
@@ -41,6 +56,9 @@ class NetworkSpeedManager {
   private syncInProgress = false;
   private memoryOutbox: QueuedOfflineAction[] = [];
   private memoryBookmarks: Set<string> = new Set();
+  private measuredLatency = 50;
+  private lastSyncedAt: string | null = null;
+  private pingTimer: any = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -54,7 +72,27 @@ class NetworkSpeedManager {
       if (nav.connection) {
         nav.connection.addEventListener('change', this.handleConnectionChange);
       }
+
+      // Initial latency test after a short delay
+      setTimeout(() => {
+        this.measureLatency();
+      }, 1200);
+
+      // Heartbeat ping every 45s (or 15s if slow) to detect stealth packet loss / carrier throttling
+      this.startHeartbeat();
     }
+  }
+
+  private startHeartbeat() {
+    if (typeof window === 'undefined') return;
+    if (this.pingTimer) clearInterval(this.pingTimer);
+
+    const interval = this.getSpeedTier() === 'saver' ? 18000 : 45000;
+    this.pingTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && this.isOnline) {
+        this.measureLatency();
+      }
+    }, interval);
   }
 
   private inspectConnection() {
@@ -64,23 +102,61 @@ class NetworkSpeedManager {
     if (conn) {
       this.connectionInfo = {
         effectiveType: conn.effectiveType || '4g',
-        downlink: conn.downlink || 10,
-        rtt: conn.rtt || 50,
+        downlink: typeof conn.downlink === 'number' ? conn.downlink : 10,
+        rtt: typeof conn.rtt === 'number' ? conn.rtt : 50,
         saveData: Boolean(conn.saveData),
       };
     }
   }
 
+  public async measureLatency(): Promise<number> {
+    if (typeof window === 'undefined' || !this.isOnline) return 999;
+    try {
+      const start = performance.now();
+      const ctrl = new AbortController();
+      const timeoutId = setTimeout(() => ctrl.abort(), 4000);
+
+      const res = await fetch('/api/ping', {
+        method: 'GET',
+        cache: 'no-store',
+        signal: ctrl.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const duration = Math.round(performance.now() - start);
+        this.measuredLatency = duration;
+        // Merge measured latency with navigator RTT
+        this.connectionInfo.rtt = Math.round((this.connectionInfo.rtt + duration) / 2);
+        this.notify();
+        return duration;
+      }
+    } catch {
+      // Latency probe failed or timed out — indicates high packet drop or 2G stalling
+      this.measuredLatency = 950;
+      this.connectionInfo.rtt = Math.max(this.connectionInfo.rtt, 800);
+      this.notify();
+    }
+    return this.measuredLatency;
+  }
+
   public getSpeedTier(): NetworkSpeedTier {
     if (!this.isOnline) return 'offline';
     const { effectiveType, rtt, saveData } = this.connectionInfo;
-    if (saveData || effectiveType === 'slow-2g' || effectiveType === '2g' || rtt > 600) {
+    const effectiveRtt = Math.max(rtt, this.measuredLatency);
+
+    if (saveData || effectiveType === 'slow-2g' || effectiveType === '2g' || effectiveRtt > 500) {
       return 'saver'; // Aggressive data saver, small page batches, zero background polling
     }
-    if (effectiveType === '3g' || rtt > 250) {
+    if (effectiveType === '3g' || effectiveRtt > 220) {
       return 'adaptive'; // Stale-while-revalidate prioritized, deferred secondary queries
     }
     return 'hyper'; // Full throughput, instant background revalidation
+  }
+
+  public isLowBandwidth(): boolean {
+    const tier = this.getSpeedTier();
+    return tier === 'saver' || tier === 'offline';
   }
 
   public getRecommendedBatchSize(): number {
@@ -101,6 +177,7 @@ class NetworkSpeedManager {
   private handleOnline = () => {
     this.isOnline = true;
     this.inspectConnection();
+    this.measureLatency();
     this.notify();
     this.flushOutbox();
   };
@@ -112,33 +189,33 @@ class NetworkSpeedManager {
 
   private handleConnectionChange = () => {
     this.inspectConnection();
+    this.measureLatency();
     this.notify();
   };
 
   public subscribe(listener: NetworkChangeListener): () => void {
     this.listeners.add(listener);
-    listener({
-      isOnline: this.isOnline,
-      tier: this.getSpeedTier(),
-      connection: this.connectionInfo,
-      pendingCount: this.getPendingOutboxCount(),
-    });
+    listener(this.getStatusPayload());
     return () => {
       this.listeners.delete(listener);
     };
   }
 
+  private getStatusPayload(): NetworkStatusPayload {
+    return {
+      isOnline: this.isOnline,
+      tier: this.getSpeedTier(),
+      connection: this.connectionInfo,
+      pendingCount: this.getPendingOutboxCount(),
+      isSyncing: this.syncInProgress,
+      measuredLatency: this.measuredLatency,
+      lastSyncedAt: this.lastSyncedAt,
+    };
+  }
+
   private notify() {
-    const tier = this.getSpeedTier();
-    const count = this.getPendingOutboxCount();
-    this.listeners.forEach((fn) =>
-      fn({
-        isOnline: this.isOnline,
-        tier,
-        connection: this.connectionInfo,
-        pendingCount: count,
-      })
-    );
+    const payload = this.getStatusPayload();
+    this.listeners.forEach((fn) => fn(payload));
   }
 
   // ─── Offline Outbox Management ─────────────────────────────────────────────
@@ -173,8 +250,10 @@ class NetworkSpeedManager {
       retryCount: 0,
     };
 
-    this.memoryOutbox.push(action);
     const current = this.getOutbox();
+    current.push(action);
+    this.memoryOutbox = current;
+
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       try {
         localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(current));
@@ -183,9 +262,9 @@ class NetworkSpeedManager {
 
     this.notify();
 
-    // If online, schedule non-blocking background flush
+    // If online, schedule non-blocking background flush with jitter
     if (this.isOnline) {
-      setTimeout(() => this.flushOutbox(), 200);
+      setTimeout(() => this.flushOutbox(), 200 + Math.random() * 200);
     }
 
     return action;
@@ -203,11 +282,13 @@ class NetworkSpeedManager {
     if (queue.length === 0) return { synced: 0, remaining: 0 };
 
     this.syncInProgress = true;
+    this.notify();
+
     let syncedCount = 0;
     const remainingQueue: QueuedOfflineAction[] = [];
 
     // Lazy import DB helpers to avoid SSR circular imports
-    const { upsertPostInDB } = await import('@/lib/firebase/firestore');
+    const { upsertPostInDB, upsertAuctionInDB, submitBidInDB, upsertRateInDB } = await import('@/lib/firebase/firestore');
 
     for (const item of queue) {
       try {
@@ -218,8 +299,19 @@ class NetworkSpeedManager {
               await upsertPostInDB({ ...item.payload, id: payloadId });
             }
           }
+        } else if (item.actionType === 'create_auction') {
+          if (item.payload && item.payload.id) {
+            await upsertAuctionInDB(item.payload);
+          }
+        } else if (item.actionType === 'submit_bid') {
+          if (item.payload && item.payload.auctionId && item.payload.bid) {
+            await submitBidInDB(item.payload.auctionId, item.payload.bid);
+          }
+        } else if (item.actionType === 'create_rate') {
+          if (item.payload && item.payload.id) {
+            await upsertRateInDB(item.payload);
+          }
         }
-        // Low-risk actions like save_post or read_receipt are already persisted to local storage
         syncedCount++;
       } catch (err) {
         console.warn('[HyperSpeed Sync] Retrying item later:', item.id, err);
@@ -238,6 +330,7 @@ class NetworkSpeedManager {
     }
 
     this.syncInProgress = false;
+    this.lastSyncedAt = new Date().toLocaleTimeString();
     this.notify();
 
     return { synced: syncedCount, remaining: remainingQueue.length };

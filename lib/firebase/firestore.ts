@@ -173,11 +173,11 @@ export async function deletePostInDB(postId: string): Promise<void> {
 }
 
 // ─── AUCTIONS REPOSITORY ─────────────────────────────────────────────────────
-export async function getAuctionsFromDB(): Promise<Auction[]> {
+export async function getAuctionsFromDB(limitCount: number = 30): Promise<Auction[]> {
   if (typeof window === 'undefined' || !auth?.currentUser) return [];
   try {
     const coll = collection(db, COLLECTIONS.AUCTIONS);
-    const q = query(coll, orderBy('startDate', 'desc'), firestoreLimit(50));
+    const q = query(coll, orderBy('startDate', 'desc'), firestoreLimit(limitCount));
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({
       id: d.id,
@@ -219,15 +219,15 @@ export async function submitBidInDB(auctionId: string, bid: SubmittedBid): Promi
 }
 
 // ─── RATES REPOSITORY ────────────────────────────────────────────────────────
-export async function getRatesFromDB(ownerUid?: string): Promise<RateItem[]> {
+export async function getRatesFromDB(ownerUid?: string, limitCount: number = 40): Promise<RateItem[]> {
   if (typeof window === 'undefined' || !auth?.currentUser) {
     return [];
   }
   try {
     const coll = collection(db, COLLECTIONS.RATES);
-    let q = query(coll, firestoreLimit(100));
+    let q = query(coll, firestoreLimit(limitCount));
     if (ownerUid) {
-      q = query(coll, where('ownerUid', '==', ownerUid), firestoreLimit(100));
+      q = query(coll, where('ownerUid', '==', ownerUid), firestoreLimit(limitCount));
     }
     const snap = await getDocs(q);
     return snap.docs.map((d) => ({

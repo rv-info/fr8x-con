@@ -5,6 +5,7 @@ import { useData } from '@/lib/context/DataContext';
 import { useCurrency } from '@/lib/context/CurrencyContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
+import { useNetwork } from '@/lib/context/NetworkContext';
 import { Modal } from '@/components/ui/Modal';
 import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
@@ -84,7 +85,8 @@ const RATE_TYPE_OPTIONS = [
 
 export default function RatesPage() {
 
-  const { rates, myRates, addMyRate, updateMyRate, deleteMyRate, clearAllMyRates, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes } = useData();
+  const { rates, myRates, addMyRate, updateMyRate, deleteMyRate, clearAllMyRates, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes, recordRecentAction } = useData();
+  const { isLowBandwidth } = useNetwork();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -103,12 +105,24 @@ export default function RatesPage() {
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
 
-  // Dynamic Rates Pagination State
+  // Dynamic Rates Pagination State (Adaptive for low bandwidth / 2G)
   const [ratesPage, setRatesPage] = useState(1);
-  const [ratesPageSize, setRatesPageSize] = useState(25);
+  const [ratesPageSize, setRatesPageSize] = useState(isLowBandwidth ? 12 : 25);
 
   // Rate Detail Modal
   const [selectedRateDetail, setSelectedRateDetail] = useState<RateItem | null>(null);
+
+  // Cache Recently Viewed Rates in IndexedDB (Low-Bandwidth / Offline-First)
+  React.useEffect(() => {
+    if (selectedRateDetail?.id) {
+      recordRecentAction(
+        selectedRateDetail.id,
+        'rate',
+        `${selectedRateDetail.pol} → ${selectedRateDetail.pod}`,
+        `${selectedRateDetail.carrier} · 20': $${selectedRateDetail.d20} / 40': $${selectedRateDetail.h40}`
+      ).catch(() => {});
+    }
+  }, [selectedRateDetail, recordRecentAction]);
 
   // Email Rate Quote State (Requirement 8)
   const [emailTargetRate, setEmailTargetRate] = useState<RateItem | null>(null);

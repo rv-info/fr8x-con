@@ -52,7 +52,7 @@ const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [];
 
 export default function CreateReverseAuctionPage() {
   const router = useRouter();
-  const { addAuction, masterLocations, masterEquipment, masterCommodities, masterIncoterms } = useData();
+  const { addAuction, masterLocations, masterEquipment, masterCommodities, masterIncoterms, saveDraftAction, getDraftAction, deleteDraftAction } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -252,6 +252,34 @@ export default function CreateReverseAuctionPage() {
     { id: 'enterprise', label: 'Enterprise', price: 2499, duration: '30 days', features: ['Unlimited bidders', 'Priority support', 'Custom branding', 'Analytics dashboard'] },
   ] as const;
 
+
+  // Offline / Low-Bandwidth Draft Hydration from IndexedDB
+  useEffect(() => {
+    getDraftAction('auction_create_draft').then((draft) => {
+      if (draft && typeof draft === 'object') {
+        if (draft.title && !title) setTitle(draft.title);
+        if (draft.pol && !pol) setPol(draft.pol);
+        if (draft.pod && !pod) setPod(draft.pod);
+        if (draft.commodity && !commodity) setCommodity(draft.commodity);
+        if (draft.notes && !notes) setNotes(draft.notes);
+      }
+    }).catch(() => {});
+  }, [getDraftAction]);
+
+  // Debounced auto-save draft to IndexedDB
+  useEffect(() => {
+    if (!title && !pol && !pod) return;
+    const timer = setTimeout(() => {
+      saveDraftAction('auction_create_draft', 'auction', {
+        title,
+        pol,
+        pod,
+        commodity,
+        notes,
+      }).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [title, pol, pod, commodity, notes, saveDraftAction]);
 
   // Auto-calculate end date & time
   useEffect(() => {
@@ -484,6 +512,7 @@ export default function CreateReverseAuctionPage() {
       competitionCeiling: showCompetitionCeiling ? Number(competitionCeilingAmount || 2850) : 0,
     });
 
+    deleteDraftAction('auction_create_draft').catch(() => {});
     router.push(`/auctions/${newAuctionId}`);
   };
 
