@@ -67,6 +67,9 @@ export async function POST(req: NextRequest) {
           actorId: payload.payload?.payment?.entity?.notes?.userEmail || 'system',
           targetId: paymentId,
           targetType: 'razorpay_payment',
+          sourceSurface: 'godfather',
+          correlationId: `corr_rzp_${paymentId}`,
+          rankingVersion: 'v2',
           timestamp: new Date().toISOString(),
           metadata: {
             paymentId,

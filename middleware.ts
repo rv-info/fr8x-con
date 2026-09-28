@@ -73,9 +73,22 @@ function isPublicRoute(pathname: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Correlation ID for distributed end-to-end request tracing
+  const requestId =
+    request.headers.get('x-request-id') ||
+    `req_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-request-id', requestId);
+
+  const forward = () => {
+    const res = NextResponse.next({ request: { headers: requestHeaders } });
+    res.headers.set('x-request-id', requestId);
+    return res;
+  };
+
   // ── Allow public routes through without any auth check ───────────────────────
   if (isPublicRoute(pathname)) {
-    return NextResponse.next();
+    return forward();
   }
 
   // ── Godfather operator routes ─────────────────────────────────────────────────
@@ -89,10 +102,12 @@ export function middleware(request: NextRequest) {
       const gfLoginUrl = new URL('/godfatheron', request.url);
       gfLoginUrl.searchParams.set('reason', 'auth_required');
       gfLoginUrl.searchParams.set('next', encodeURIComponent(pathname));
-      return NextResponse.redirect(gfLoginUrl);
+      const res = NextResponse.redirect(gfLoginUrl);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
 
-    return NextResponse.next();
+    return forward();
   }
 
   // ── Protected user routes ────────────────────────────────────────────────────
@@ -103,14 +118,16 @@ export function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('reason', 'auth_required');
       loginUrl.searchParams.set('next', encodeURIComponent(pathname));
-      return NextResponse.redirect(loginUrl);
+      const res = NextResponse.redirect(loginUrl);
+      res.headers.set('x-request-id', requestId);
+      return res;
     }
 
-    return NextResponse.next();
+    return forward();
   }
 
   // ── All other routes pass through ───────────────────────────────────────────
-  return NextResponse.next();
+  return forward();
 }
 
 export const config = {
