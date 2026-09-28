@@ -132,6 +132,7 @@ export interface ServerUserRecord {
   status: 'active' | 'blocked' | 'suspended' | 'pending_verification';
   mobile?: string;
   alternateMobile?: string;
+  whatsappSameAsMobile?: boolean;
   designation?: string;
   city?: string;
   state?: string;

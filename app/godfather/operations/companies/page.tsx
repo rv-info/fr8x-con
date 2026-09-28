@@ -1604,7 +1604,7 @@ function CompaniesKYCContent() {
 
               <div className="gf-form-group">
                 <label className="gf-form-label">
-                  Registered Street Address / Logistics Terminal <span className="text-rose-600">*</span>
+                  Registered Street Address <span className="text-rose-600">*</span>
                 </label>
                 <textarea
                   rows={2}

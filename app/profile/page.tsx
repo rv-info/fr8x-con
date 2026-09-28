@@ -39,6 +39,7 @@ import {
   getCitiesForState,
   getCitiesForCountry,
   getAllGlobalTimezones,
+  getAllGlobalISDCodes,
 } from '@/lib/geo/global-geo';
 import {
   UserCheck,
@@ -197,7 +198,19 @@ export default function ProfilePage() {
   const [editEmail, setEditEmail] = useState(user.email || '');
   const [editPersonId, setEditPersonId] = useState(user.uid || '');
   const [editDepartment, setEditDepartment] = useState((user as any).department || 'Ocean & Multimodal Freight Operations');
+  // ISD code is stored separately for the phone selector UI; on save they are concatenated
+  const parseISD = (m: string) => {
+    if (!m) return { isdCode: '+91', phoneNum: '' };
+    const m2 = m.trim();
+    const match = m2.match(/^(\+\d{1,4})\s*(.*)$/);
+    if (match) return { isdCode: match[1], phoneNum: match[2].trim() };
+    return { isdCode: '+91', phoneNum: m2 };
+  };
+  const parsedMobile = parseISD(user.mobile || '');
+  const [editIsdCode, setEditIsdCode] = useState(parsedMobile.isdCode);
+  const [editPhoneNum, setEditPhoneNum] = useState(parsedMobile.phoneNum);
   const [editMobile, setEditMobile] = useState(user.mobile || '');
+  const [editWhatsapp, setEditWhatsapp] = useState((user as any).whatsappSameAsMobile !== false);
   const [editDesignation, setEditDesignation] = useState(user.designation || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
@@ -1491,7 +1504,12 @@ export default function ProfilePage() {
               setEditEmail(user.email || '');
               setEditPersonId(user.uid || '');
               setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
-              setEditMobile(user.mobile || mobile || '');
+              const initMobile = user.mobile || mobile || '';
+              const parsedInit = parseISD(initMobile);
+              setEditIsdCode(parsedInit.isdCode);
+              setEditPhoneNum(parsedInit.phoneNum);
+              setEditMobile(initMobile);
+              setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
               setEditDesignation(user.designation || designation || '');
               setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
               setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
@@ -1810,18 +1828,8 @@ export default function ProfilePage() {
 
           </div>
 
-          {/* D&B / Ariba Trust Index & Completeness Score */}
+          {/* Profile Completeness Score */}
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div style={{ background: 'var(--fr8x-input)', border: '1px solid var(--fr8x-outline)', padding: '10px 16px', borderRadius: '6px', textAlign: 'center' }}>
-              <small style={{ color: 'var(--fr8x-muted)', fontSize: '9.5px', fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                <Star size={11} color="var(--fr8x-outline)" /> FR8X TRUST SCORE
-              </small>
-              <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--fr8x-text)', marginTop: '2px' }}>
-                98<span style={{ fontSize: '13px', color: 'var(--fr8x-muted)', fontWeight: 500 }}>/100</span>
-              </div>
-              <small style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', fontWeight: 700 }}>Tier-1 Accredited</small>
-            </div>
-
             <div style={{ minWidth: '190px', background: '#ffffff', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                 <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--fr8x-text)' }}>Profile Completeness</span>
@@ -2739,23 +2747,27 @@ export default function ProfilePage() {
 
                 {/* Phone Item */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--fr8x-muted)', display: 'center', alignItems: 'center', gap: '4px' }}>
+                  <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Phone size={12} /> Mobile / WhatsApp:
                   </span>
                   <div>
-                    {privacyPreviewMode === 'contact' ? (
-                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile || '+91 98200 12345'}</span>
-                    ) : privacySettings.phoneVisibility === 'public' ? (
-                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile || '+91 98200 12345'}</span>
-                    ) : privacySettings.phoneVisibility === 'contacts_only' ? (
-                      <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
-                        {maskPhone(mobile || user.mobile || '+91 98200 12345')}{' '}
-                        <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
-                          <Lock size={8} /> Connect to view
+                    {(mobile || user.mobile) ? (
+                      privacyPreviewMode === 'contact' ? (
+                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile}</span>
+                      ) : privacySettings.phoneVisibility === 'public' ? (
+                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile}</span>
+                      ) : privacySettings.phoneVisibility === 'contacts_only' ? (
+                        <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
+                          {maskPhone(mobile || user.mobile)}{' '}
+                          <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
+                            <Lock size={8} /> Connect to view
+                          </span>
                         </span>
-                      </span>
+                      ) : (
+                        <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                      )
                     ) : (
-                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Not provided</span>
                     )}
                   </div>
                 </div>
@@ -2795,7 +2807,7 @@ export default function ProfilePage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {privacyPreviewMode === 'contact' || privacySettings.tradeLanesVisibility === 'public' ? (
                       <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>
-                        {operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam'}
+                        {operatingCorridors || '—'}
                       </span>
                     ) : privacySettings.tradeLanesVisibility === 'contacts_only' ? (
                       <span style={{ color: 'var(--fr8x-muted)', fontSize: '11px' }}>
@@ -2804,32 +2816,6 @@ export default function ProfilePage() {
                     ) : (
                       <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const el = document.getElementById('preferred-trade-lanes-input');
-                        if (el) {
-                          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                          el.focus();
-                        }
-                      }}
-                      title="Edit Operating Corridors in Settings"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '3px',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        border: '1px solid var(--fr8x-outline)',
-                        background: '#f1f5f9',
-                        color: '#00a3c4',
-                        fontSize: '10px',
-                        fontWeight: 700,
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <Edit2 size={10} /> Edit
-                    </button>
                   </div>
                 </div>
               </div>
@@ -3292,6 +3278,7 @@ export default function ProfilePage() {
                 displayName: `${editFirstName} ${editLastName}`.trim(),
                 email: finalEmail,
                 mobile: editMobile,
+                whatsappSameAsMobile: editWhatsapp,
                 designation: editDesignation,
                 company: finalCompany,
                 department: editDepartment,
@@ -3446,8 +3433,53 @@ export default function ProfilePage() {
                   <input className="input" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} required />
                 </div>
                 <div className="field">
-                  <label>Mobile Number (with Country Code) <span className="req">*</span></label>
-                  <input className="input" value={editMobile} onChange={(e) => setEditMobile(e.target.value)} placeholder="+91 98200 12345" required />
+                  <label>Mobile Number <span className="req">*</span></label>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    {/* ISD Code Selector */}
+                    <select
+                      className="input"
+                      value={editIsdCode}
+                      onChange={(e) => {
+                        setEditIsdCode(e.target.value);
+                        setEditMobile(`${e.target.value} ${editPhoneNum}`.trim());
+                      }}
+                      style={{ width: '120px', flexShrink: 0, fontSize: '12px', paddingRight: '4px' }}
+                      title="Select country ISD code"
+                    >
+                      {getAllGlobalISDCodes().map((isd) => (
+                        <option key={`${isd.isoCode}-${isd.code}`} value={isd.code}>
+                          {isd.flag} {isd.code} {isd.isoCode}
+                        </option>
+                      ))}
+                    </select>
+                    {/* Phone Number Input */}
+                    <input
+                      className="input"
+                      type="tel"
+                      value={editPhoneNum}
+                      onChange={(e) => {
+                        const num = e.target.value.replace(/[^0-9 \-]/g, '');
+                        setEditPhoneNum(num);
+                        setEditMobile(`${editIsdCode} ${num}`.trim());
+                      }}
+                      placeholder="9820012345"
+                      style={{ flex: 1 }}
+                      maxLength={15}
+                    />
+                  </div>
+                  {/* WhatsApp same as mobile toggle */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontSize: '11.5px', cursor: 'pointer', color: 'var(--fr8x-text)' }}>
+                    <input
+                      type="checkbox"
+                      checked={editWhatsapp}
+                      onChange={(e) => setEditWhatsapp(e.target.checked)}
+                      style={{ accentColor: '#25d366', width: '14px', height: '14px' }}
+                    />
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span style={{ color: '#25d366', fontWeight: 700 }}>✓</span>
+                      WhatsApp available on this number
+                    </span>
+                  </label>
                 </div>
               </div>
 
@@ -3579,7 +3611,7 @@ export default function ProfilePage() {
 
               <div className="field">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ margin: 0 }}>Registered Street Address / Logistics Terminal</label>
+                  <label style={{ margin: 0 }}>Street Address</label>
                   <button
                     type="button"
                     onClick={handleAutoDetectLocation}
@@ -3591,58 +3623,27 @@ export default function ProfilePage() {
                       color: '#0284c7',
                       fontSize: '11px',
                       fontWeight: 600,
-                      cursor: 'pointer',
+                      cursor: isDetectingLocation ? 'wait' : 'pointer',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '4px',
                     }}
+                    title="Auto-fill address from your device location"
                   >
-                    <MapPin size={11} /> Auto-suggest from device location
+                    {isDetectingLocation ? (
+                      <><Loader2 size={11} className="spin" /> Detecting…</>
+                    ) : (
+                      <><MapPin size={11} /> Use my location</>
+                    )}
                   </button>
                 </div>
                 <input
                   className="input"
                   value={editFormattedAddress}
                   onChange={(e) => setEditFormattedAddress(e.target.value)}
-                  placeholder="e.g. CFS / ICD Logistics Park, Port Gate 3, Andheri East, Mumbai 400093"
+                  placeholder="e.g. 42 Freight Lane, Port Area, Mumbai 400001"
                   style={{ height: '36px', fontSize: '13px' }}
                 />
-
-                {/* Suggestions Pills / Chips */}
-                {effectiveAddressSuggestions.length > 0 && (
-                  <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div style={{ fontSize: '10.5px', color: 'var(--mut)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <Sparkles size={11} color="#0284c7" />
-                      Suggested Logistics Hub Addresses (Click to apply):
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {effectiveAddressSuggestions.map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setEditFormattedAddress(sug);
-                            toast('Address applied to registration field.');
-                          }}
-                          style={{
-                            textAlign: 'left',
-                            fontSize: '11px',
-                            padding: '4px 8px',
-                            background: editFormattedAddress === sug ? '#e0f2fe' : '#ffffff',
-                            border: editFormattedAddress === sug ? '1px solid #0284c7' : '1px solid #cbd5e1',
-                            borderRadius: '4px',
-                            color: editFormattedAddress === sug ? '#0284c7' : '#334155',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease',
-                          }}
-                          title={`Click to fill: ${sug}`}
-                        >
-                          📍 {sug}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 

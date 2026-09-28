@@ -122,6 +122,7 @@ export interface UserProfile {
   coordinates?: Coordinates;
   mobile: string;
   alternateMobile?: string;
+  whatsappSameAsMobile?: boolean;
   timezone: string; // IANA string e.g. "Asia/Kolkata", "Europe/Rotterdam", "America/New_York"
   preferredContactMethod: 'email' | 'mobile' | 'whatsapp' | 'tradeChat';
   contactAvailability: string;
