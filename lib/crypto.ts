@@ -4,6 +4,14 @@ import crypto from 'crypto';
 // Key must be exactly 32 bytes (64 hex chars).
 // In production, set GODFATHER_KMS_ENCRYPTION_KEY via secrets manager (never commit).
 const DEFAULT_KEY_HEX = 'e1a3b5c7d9f2e4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4';
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!process.env.GODFATHER_KMS_ENCRYPTION_KEY || process.env.GODFATHER_KMS_ENCRYPTION_KEY === DEFAULT_KEY_HEX)
+) {
+  console.warn(
+    '[SECURITY AUDIT ALERT] Running in production with default GODFATHER_KMS_ENCRYPTION_KEY! Generate and set a unique 64-char hex key in Vercel Environment Variables immediately.'
+  );
+}
 const ENCRYPTION_KEY = Buffer.from(
   process.env.GODFATHER_KMS_ENCRYPTION_KEY || DEFAULT_KEY_HEX,
   'hex'

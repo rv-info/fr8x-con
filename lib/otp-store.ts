@@ -38,6 +38,48 @@ function safeDynamicRequire(modName: string): any {
   }
 }
 
+async function executeKvRestCommand(...args: (string | number)[]): Promise<any> {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) {
+    throw new Error(`KV REST command [${args[0]}] failed (${res.status}): ${await res.text()}`);
+  }
+  const data = await res.json();
+  return data?.result ?? null;
+}
+
+const restKvClient = {
+  async setex(key: string, seconds: number, value: string): Promise<void> {
+    await executeKvRestCommand('SET', key, value, 'EX', seconds);
+  },
+  async get(key: string): Promise<any> {
+    return await executeKvRestCommand('GET', key);
+  },
+  async del(key: string): Promise<void> {
+    await executeKvRestCommand('DEL', key);
+  },
+  async incr(key: string): Promise<number> {
+    const res = await executeKvRestCommand('INCR', key);
+    return Number(res || 0);
+  },
+  async expire(key: string, seconds: number): Promise<void> {
+    await executeKvRestCommand('EXPIRE', key, seconds);
+  },
+  async ttl(key: string): Promise<number> {
+    const res = await executeKvRestCommand('TTL', key);
+    return typeof res === 'number' ? res : Number(res || -1);
+  },
+};
+
 async function getVercelKV(): Promise<any> {
   if (kvClient) return kvClient;
   if (kvInitAttempted) return null;
@@ -47,16 +89,19 @@ async function getVercelKV(): Promise<any> {
   if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
 
   try {
-    // Dynamic import avoids compile-time errors when @vercel/kv is not installed
+    // Dynamic import if @vercel/kv is installed
     const kvModule = safeDynamicRequire('@vercel/kv');
-    if (!kvModule?.kv) return null;
-    kvClient = kvModule.kv;
-    console.log('[OTP Store] Using Vercel KV adapter.');
-    return kvClient;
-  } catch {
-    console.warn('[OTP Store] @vercel/kv not available — will try ioredis.');
-    return null;
-  }
+    if (kvModule?.kv) {
+      kvClient = kvModule.kv;
+      console.log('[OTP Store] Using @vercel/kv package adapter.');
+      return kvClient;
+    }
+  } catch {}
+
+  // Zero-dependency HTTP REST adapter for Vercel KV / Upstash
+  console.log('[OTP Store] Using zero-dependency Vercel KV REST API adapter.');
+  kvClient = restKvClient;
+  return kvClient;
 }
 
 // ── ioredis client (lazy, optional) ──────────────────────────────────────────

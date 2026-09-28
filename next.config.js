@@ -91,18 +91,18 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // Scripts: self + Firebase + Vercel analytics (unsafe-eval for Next.js dev)
-              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://www.gstatic.com https://www.google.com https://apis.google.com https://va.vercel-scripts.com`,
+              // Scripts: self + Firebase + Vercel analytics + Razorpay checkout
+              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://www.gstatic.com https://www.google.com https://apis.google.com https://va.vercel-scripts.com https://checkout.razorpay.com`,
               // Styles: self + Google Fonts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Fonts
               "font-src 'self' https://fonts.gstatic.com",
               // Images: self + Firebase Storage + data URIs
               "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
-              // XHR/fetch: self + Firebase + Google APIs
-              "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://fcmregistrations.googleapis.com",
-              // Frames: none
-              "frame-src 'none'",
+              // XHR/fetch: self + Firebase + Google APIs + Razorpay
+              "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://fcmregistrations.googleapis.com https://api.razorpay.com https://lumberjack.razorpay.com",
+              // Frames: Razorpay checkout modal
+              "frame-src 'self' https://api.razorpay.com",
               // Objects: none
               "object-src 'none'",
               // Base URI: self only

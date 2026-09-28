@@ -943,6 +943,8 @@ export type LogisticsEventType =
   | 'review_dispute'
   | 'ad_create'
   | 'ad_payment'
+  | 'payment_captured'
+  | 'payment_failed'
   | 'presence_heartbeat';
 
 export interface IdempotentEvent {

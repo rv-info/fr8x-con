@@ -2,7 +2,49 @@ import fs from 'fs';
 import path from 'path';
 import { RateItem, FeedPost } from '@/lib/types';
 
-const DBMS_DIR = path.join(process.cwd(), '.knox', 'dbms');
+function initDbmsDir(): string {
+  const primaryDir = path.join(process.cwd(), '.knox', 'dbms');
+  try {
+    if (!fs.existsSync(primaryDir)) {
+      fs.mkdirSync(primaryDir, { recursive: true });
+    }
+    const testFile = path.join(primaryDir, '.w_test');
+    fs.writeFileSync(testFile, '1');
+    fs.unlinkSync(testFile);
+    return primaryDir;
+  } catch {
+    // Read-only filesystem (e.g. Vercel serverless / AWS Lambda)
+    const tmpDir = path.join(process.env.TMPDIR || '/tmp', 'fr8x-knox', 'dbms');
+    try {
+      if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+      }
+      // Seed files from packaged build if they exist
+      const files = [
+        'rates.json',
+        'posts.json',
+        'users.json',
+        'verifications.json',
+        'verification_audit.json',
+        'companies.json',
+      ];
+      for (const file of files) {
+        const src = path.join(primaryDir, file);
+        const dest = path.join(tmpDir, file);
+        if (fs.existsSync(src) && !fs.existsSync(dest)) {
+          try {
+            fs.copyFileSync(src, dest);
+          } catch {}
+        }
+      }
+    } catch (tmpErr) {
+      console.error('[DBMS] Failed initializing /tmp directory:', tmpErr);
+    }
+    return tmpDir;
+  }
+}
+
+const DBMS_DIR = initDbmsDir();
 const RATES_FILE = path.join(DBMS_DIR, 'rates.json');
 const POSTS_FILE = path.join(DBMS_DIR, 'posts.json');
 const USERS_FILE = path.join(DBMS_DIR, 'users.json');
