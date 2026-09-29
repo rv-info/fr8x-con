@@ -12,4 +12,4 @@ Welcome to the **FR8X** engineering and design specifications documentation.
 
 ## Live Production Target
 - **Platform Domain**: `con.fr8x.in`
-- **Prototype Source of Truth**: `fr8x_updated_upgraded_complete.html`
+- **Application**: Next.js 14 Enterprise Web Platform
