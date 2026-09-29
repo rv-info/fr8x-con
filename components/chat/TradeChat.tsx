@@ -143,8 +143,19 @@ function SingleChatBox({
               {contact?.hasGoldenTick && <GoldenTick />}
             </b>
             <small style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <PresenceDot status={contact?.presenceStatus || (contact?.online ? 'active' : 'away')} />
-              <span>{contact?.presenceStatus === 'active' || contact?.online ? 'Active' : contact?.presenceStatus === 'idle' ? 'Idle' : 'Away'} · {contact?.company}</span>
+              <PresenceDot status={contact?.presenceStatus ?? (contact?.online ? 'active' : 'away')} />
+              <span>
+                {contact?.presenceStatus
+                  ? contact.presenceStatus === 'active'
+                    ? 'Active'
+                    : contact.presenceStatus === 'idle'
+                    ? 'Idle'
+                    : 'Away'
+                  : contact?.online
+                  ? 'Active'
+                  : 'Away'}{' '}
+                · {contact?.company}
+              </span>
             </small>
           </div>
         </div>
@@ -344,8 +355,19 @@ export function TradeChat() {
                         {c.hasGoldenTick && <GoldenTick />}
                       </b>
                       <small style={{ display: 'flex', alignItems: 'center' }}>
-                        <PresenceDot status={c.presenceStatus || (c.online ? 'active' : 'away')} />
-                        <span>{c.presenceStatus === 'active' || c.online ? 'Active' : c.presenceStatus === 'idle' ? 'Idle' : 'Away'} · {c.role} ({c.company})</span>
+                        <PresenceDot status={c.presenceStatus ?? (c.online ? 'active' : 'away')} />
+                        <span>
+                          {c.presenceStatus
+                            ? c.presenceStatus === 'active'
+                              ? 'Active'
+                              : c.presenceStatus === 'idle'
+                              ? 'Idle'
+                              : 'Away'
+                            : c.online
+                            ? 'Active'
+                            : 'Away'}{' '}
+                          · {c.role} ({c.company})
+                        </span>
                       </small>
                       {c.contextRecord && (
                         <span

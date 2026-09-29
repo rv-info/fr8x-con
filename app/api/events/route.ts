@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordIdempotentEventsBatchInDB, saveUserIntentInDB, getUserIntentFromDB } from '@/lib/firebase/firestore';
+import { recordPersistedEvents, savePersistedUserIntent, getPersistedUserIntent } from '@/lib/dbms/server-dbms';
 import { IdempotentEvent, LogisticsIntent } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
 
@@ -27,7 +28,10 @@ export async function POST(req: NextRequest) {
     // Security: override actorId with the verified session uid — client cannot spoof a foreign actorId
     const events: IdempotentEvent[] = rawEvents.map((evt) => ({ ...evt, actorId: user.uid }));
 
-    // Persist events idempotently
+    // 1. Authoritative persistence in server-side DBMS
+    const diskInserted = recordPersistedEvents(events);
+
+    // 2. Persist events idempotently in memory / Firestore
     const count = await recordIdempotentEventsBatchInDB(events);
 
     // Extract logistics intent from search, rate-view, and auction events
@@ -48,18 +52,20 @@ export async function POST(req: NextRequest) {
           const now = Date.now();
           const expiresAt = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days TTL
 
-          // Fetch or initialize intent
-          const existing = (await getUserIntentFromDB(evt.actorId)) || {
-            userId: evt.actorId,
-            recentSearchedPorts: [],
-            viewedRates: [],
-            activeAuctionRoutes: [],
-            savedTradeLanes: [],
-            followedCommodities: [],
-            carrierSearches: [],
-            lastActiveAt: new Date(now).toISOString(),
-            expiresAt,
-          };
+          // Fetch or initialize intent (Server DBMS first, fallback to Firestore/Memory)
+          const existing =
+            getPersistedUserIntent(evt.actorId) ||
+            (await getUserIntentFromDB(evt.actorId)) || {
+              userId: evt.actorId,
+              recentSearchedPorts: [],
+              viewedRates: [],
+              activeAuctionRoutes: [],
+              savedTradeLanes: [],
+              followedCommodities: [],
+              carrierSearches: [],
+              lastActiveAt: new Date(now).toISOString(),
+              expiresAt,
+            };
 
           if (port && !existing.recentSearchedPorts.includes(port)) {
             existing.recentSearchedPorts = [port, ...existing.recentSearchedPorts].slice(0, 10);
@@ -76,7 +82,8 @@ export async function POST(req: NextRequest) {
           existing.lastActiveAt = new Date(now).toISOString();
           existing.expiresAt = expiresAt;
 
-          await saveUserIntentInDB(existing);
+          savePersistedUserIntent(existing);
+          await saveUserIntentInDB(existing).catch(() => {});
         }
       }
     }

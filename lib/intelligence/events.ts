@@ -97,12 +97,16 @@ class EventBus {
   private async sendBatch(events: IdempotentEvent[]): Promise<void> {
     if (events.length === 0 || typeof window === 'undefined') return;
 
-    await fetch('/api/events', {
+    const res = await fetch('/api/events', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ events }),
       keepalive: true,
     });
+
+    if (!res.ok) {
+      throw new Error(`Telemetry batch delivery failed: HTTP ${res.status}`);
+    }
   }
 
   private flushSync(): void {

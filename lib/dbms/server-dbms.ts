@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { RateItem, FeedPost } from '@/lib/types';
+import { RateItem, FeedPost, UserPresenceState, IdempotentEvent, LogisticsIntent } from '@/lib/types';
 
 function initDbmsDir(): string {
   const primaryDir = path.join(process.cwd(), '.knox', 'dbms');
@@ -27,6 +27,9 @@ function initDbmsDir(): string {
         'verifications.json',
         'verification_audit.json',
         'companies.json',
+        'presence.json',
+        'events.json',
+        'intents.json',
       ];
       for (const file of files) {
         const src = path.join(primaryDir, file);
@@ -51,6 +54,9 @@ const USERS_FILE = path.join(DBMS_DIR, 'users.json');
 const VERIFICATIONS_FILE = path.join(DBMS_DIR, 'verifications.json');
 const VERIFICATION_AUDIT_FILE = path.join(DBMS_DIR, 'verification_audit.json');
 const COMPANIES_FILE = path.join(DBMS_DIR, 'companies.json');
+const PRESENCE_FILE = path.join(DBMS_DIR, 'presence.json');
+const EVENTS_FILE = path.join(DBMS_DIR, 'events.json');
+const INTENTS_FILE = path.join(DBMS_DIR, 'intents.json');
 
 function ensureDirExists() {
   try {
@@ -640,5 +646,135 @@ export function mergePersistedCompanies(canonicalId: string, duplicateId: string
     return false;
   }
 }
+
+// ─── PRESENCE REPOSITORY ──────────────────────────────────────────────────────
+
+export function getPersistedPresence(): Record<string, UserPresenceState> {
+  ensureDirExists();
+  try {
+    if (!fs.existsSync(PRESENCE_FILE)) {
+      return {};
+    }
+    const raw = fs.readFileSync(PRESENCE_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (err) {
+    console.error('[DBMS] Error reading persisted presence:', err);
+    return {};
+  }
+}
+
+export function savePersistedPresence(state: UserPresenceState): void {
+  if (!state || !state.userId) return;
+  ensureDirExists();
+  try {
+    const existing = getPersistedPresence();
+    existing[state.userId] = {
+      ...state,
+      lastHeartbeat: state.lastHeartbeat || new Date().toISOString(),
+    };
+    fs.writeFileSync(PRESENCE_FILE, JSON.stringify(existing, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted presence:', err);
+  }
+}
+
+export function getPersistedUserPresence(userId: string): UserPresenceState | null {
+  if (!userId) return null;
+  const store = getPersistedPresence();
+  const cached = store[userId];
+  if (!cached) return null;
+
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (cached.ttlExpiry && nowSec > cached.ttlExpiry) {
+    return { ...cached, status: 'away' };
+  }
+  return cached;
+}
+
+// ─── TELEMETRY & IDEMPOTENT EVENTS REPOSITORY ────────────────────────────────
+
+export function getPersistedEvents(): IdempotentEvent[] {
+  ensureDirExists();
+  try {
+    if (!fs.existsSync(EVENTS_FILE)) {
+      return [];
+    }
+    const raw = fs.readFileSync(EVENTS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error('[DBMS] Error reading persisted events:', err);
+    return [];
+  }
+}
+
+export function recordPersistedEvents(events: IdempotentEvent[]): number {
+  if (!Array.isArray(events) || events.length === 0) return 0;
+  ensureDirExists();
+  try {
+    const existing = getPersistedEvents();
+    const existingIds = new Set(existing.map((e) => e.eventId));
+    let inserted = 0;
+
+    for (const evt of events) {
+      if (!existingIds.has(evt.eventId)) {
+        existingIds.add(evt.eventId);
+        existing.unshift(evt);
+        inserted++;
+      }
+    }
+
+    // Keep up to 2000 recent events on disk
+    const trimmed = existing.slice(0, 2000);
+    fs.writeFileSync(EVENTS_FILE, JSON.stringify(trimmed, null, 2), 'utf8');
+    return inserted;
+  } catch (err) {
+    console.error('[DBMS] Error recording persisted events:', err);
+    return 0;
+  }
+}
+
+// ─── LOGISTICS INTENT REPOSITORY ─────────────────────────────────────────────
+
+export function getPersistedIntents(): Record<string, LogisticsIntent> {
+  ensureDirExists();
+  try {
+    if (!fs.existsSync(INTENTS_FILE)) {
+      return {};
+    }
+    const raw = fs.readFileSync(INTENTS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (err) {
+    console.error('[DBMS] Error reading persisted intents:', err);
+    return {};
+  }
+}
+
+export function getPersistedUserIntent(userId: string): LogisticsIntent | null {
+  if (!userId) return null;
+  const intents = getPersistedIntents();
+  const cached = intents[userId];
+  if (!cached) return null;
+
+  if (new Date(cached.expiresAt).getTime() < Date.now()) {
+    return null;
+  }
+  return cached;
+}
+
+export function savePersistedUserIntent(intent: LogisticsIntent): void {
+  if (!intent || !intent.userId) return;
+  ensureDirExists();
+  try {
+    const existing = getPersistedIntents();
+    existing[intent.userId] = intent;
+    fs.writeFileSync(INTENTS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted user intent:', err);
+  }
+}
+
 
 

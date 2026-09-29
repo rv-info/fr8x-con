@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { ChatContact, ChatMessage, ActiveChatWindow } from '@/lib/types';
 import { useAuth } from './AuthContext';
+import { presenceService } from '@/lib/presence/presenceService';
 
 const INITIAL_CONTACTS: ChatContact[] = [];
 const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {};
@@ -73,6 +74,41 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       }
     } catch {}
   }, []);
+
+  // Periodic background presence synchronizer for chat contacts
+  useEffect(() => {
+    if (typeof window === 'undefined' || contacts.length === 0) return;
+
+    let isMounted = true;
+    const syncPresence = async () => {
+      let changed = false;
+      const updated = await Promise.all(
+        contacts.map(async (c) => {
+          try {
+            const status = await presenceService.getContactPresence(c.id);
+            const isOnline = status === 'active' || status === 'idle';
+            if (c.presenceStatus !== status || c.online !== isOnline) {
+              changed = true;
+              return { ...c, presenceStatus: status, online: isOnline };
+            }
+          } catch {}
+          return c;
+        })
+      );
+
+      if (changed && isMounted) {
+        setContacts(updated);
+        safeSaveLocalStorage(CHAT_CONTACTS_KEY, updated);
+      }
+    };
+
+    syncPresence();
+    const interval = setInterval(syncPresence, 45_000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [contacts.length]);
 
   const totalUnreadCount = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
 

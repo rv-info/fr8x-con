@@ -47,6 +47,8 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
+import { subscribeToAuction, subscribeToAuctionBids } from '@/lib/firebase/firestore';
+import { Auction, SubmittedBid } from '@/lib/types';
 
 interface ChargeRow {
   equipment: string;
@@ -74,7 +76,55 @@ export default function BidRoomPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const auction = auctions.find((a) => a.id === auctionId);
+  const initialAuction = auctions.find((a) => a.id === auctionId);
+  const [liveAuction, setLiveAuction] = useState<Auction | null>(initialAuction || null);
+  const [liveBids, setLiveBids] = useState<SubmittedBid[]>(initialAuction?.bids || []);
+  const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
+
+  // Sync initial auction when DataContext loads
+  useEffect(() => {
+    if (initialAuction) {
+      setLiveAuction((prev) => prev || initialAuction);
+      if (initialAuction.bids && initialAuction.bids.length > 0) {
+        setLiveBids((prev) => (prev.length === 0 ? initialAuction.bids! : prev));
+      }
+    }
+  }, [initialAuction]);
+
+  // Subscribe to real-time updates from Firestore
+  useEffect(() => {
+    if (!auctionId) return;
+
+    const unsubAuction = subscribeToAuction(
+      auctionId,
+      (updated) => {
+        if (updated) {
+          setLiveAuction(updated);
+          setIsLiveConnected(true);
+        }
+      },
+      () => setIsLiveConnected(false)
+    );
+
+    const unsubBids = subscribeToAuctionBids(
+      auctionId,
+      (bids) => {
+        if (Array.isArray(bids) && bids.length > 0) {
+          setLiveBids(bids);
+          setIsLiveConnected(true);
+        }
+      },
+      () => setIsLiveConnected(false)
+    );
+
+    return () => {
+      unsubAuction();
+      unsubBids();
+    };
+  }, [auctionId]);
+
+  const auction = liveAuction || initialAuction;
+  const currentBids = liveBids.length > 0 ? liveBids : auction?.bids || [];
 
   // Record Recently Viewed in IndexedDB Cache (Low-Bandwidth / Offline-First)
   useEffect(() => {
@@ -102,7 +152,7 @@ export default function BidRoomPage() {
 
   const configuredBidLimit = Number(auction?.rules?.bidLimit);
   const bidLimit = ([1, 3, 5] as number[]).includes(configuredBidLimit) ? configuredBidLimit : 5;
-  const bidCount = (auction?.bids || []).filter((bid) => bid.bidderUid === user.uid).length;
+  const bidCount = currentBids.filter((bid) => bid.bidderUid === user.uid).length;
   const bidsRemaining = Math.max(0, bidLimit - bidCount);
 
   // Active Tab: console | specs | terms | ledger | docs
@@ -224,23 +274,33 @@ export default function BidRoomPage() {
   let l2Display = 0;
   let l3Display = 0;
 
+  // Real-time rank calculation against live bids
+  const sortedBids = [...currentBids].sort((a, b) => (a.grandTotalUSD || 0) - (b.grandTotalUSD || 0));
+  const userPlacedBid = sortedBids.find((b) => b.bidderUid === user.uid);
+
   if (grandTotalUSD > 0) {
-    if (grandTotalUSD < ceiling) {
-      calculatedRank = '#1';
-      l1Display = grandTotalUSD;
-      l2Display = ceiling;
-      l3Display = ceiling + 50;
-    } else if (grandTotalUSD === ceiling) {
-      calculatedRank = '#1';
-      l1Display = grandTotalUSD;
-      l2Display = ceiling + 45;
-      l3Display = ceiling + 95;
-    } else {
-      calculatedRank = '#2';
-      l1Display = ceiling;
-      l2Display = grandTotalUSD;
-      l3Display = grandTotalUSD + 50;
+    // If user has entered an offer in the charge table, see where it ranks
+    let rankIdx = 1;
+    for (const b of sortedBids) {
+      if (b.bidderUid !== user.uid && (b.grandTotalUSD || 0) < grandTotalUSD) {
+        rankIdx++;
+      }
     }
+    calculatedRank = `#${rankIdx}`;
+    l1Display = sortedBids[0]?.grandTotalUSD ? Math.min(sortedBids[0].grandTotalUSD, grandTotalUSD) : grandTotalUSD;
+    l2Display = sortedBids[1]?.grandTotalUSD || (sortedBids[0]?.grandTotalUSD ? Math.max(sortedBids[0].grandTotalUSD, grandTotalUSD) : ceiling);
+    l3Display = sortedBids[2]?.grandTotalUSD || l2Display + 50;
+  } else if (userPlacedBid) {
+    const userIdx = sortedBids.findIndex((b) => b.id === userPlacedBid.id);
+    calculatedRank = userIdx >= 0 ? `#${userIdx + 1}` : '#1';
+    l1Display = sortedBids[0]?.grandTotalUSD || ceiling;
+    l2Display = sortedBids[1]?.grandTotalUSD || ceiling + 45;
+    l3Display = sortedBids[2]?.grandTotalUSD || ceiling + 95;
+  } else if (sortedBids.length > 0) {
+    calculatedRank = '—';
+    l1Display = sortedBids[0]?.grandTotalUSD || ceiling - 50;
+    l2Display = sortedBids[1]?.grandTotalUSD || ceiling;
+    l3Display = sortedBids[2]?.grandTotalUSD || ceiling + 50;
   } else {
     calculatedRank = '—';
     l1Display = ceiling - 50;
@@ -1381,7 +1441,9 @@ export default function BidRoomPage() {
                   Audited event log with cryptographic timestamps and price decrement history (Lowest bid = Rank #1).
                 </span>
               </div>
-              <span className="badge green"><Activity size={11} /> Streaming Live</span>
+              <span className={`badge ${isLiveConnected ? 'green' : 'blue'}`}>
+                <Activity size={11} /> {isLiveConnected ? 'Streaming Live (Firestore)' : 'Streaming Live'}
+              </span>
             </div>
 
             <div className="tablewrap flush">
@@ -1396,34 +1458,63 @@ export default function BidRoomPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr style={{ background: '#f0fdf4' }}>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>Just now</td>
-                    <td><b>Bidder #804 (You)</b></td>
-                    <td style={{ fontWeight: 800, color: 'var(--green)', fontSize: '12.5px' }}>${grandTotalUSD.toFixed(2)} USD</td>
-                    <td><span className="badge green">{calculatedRank} {calculatedRank === '#1' ? 'LEADING (L1)' : ''}</span></td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 7f8a9...b4c2</td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>4 mins ago</td>
-                    <td>Bidder #412 (Verified Forwarder)</td>
-                    <td style={{ fontWeight: 700 }}>$2,495.00 USD</td>
-                    <td><span className="badge blue">L2 (2nd Best)</span></td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 3c91a...e11f</td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>12 mins ago</td>
-                    <td>Bidder #619 (Verified NVOCC)</td>
-                    <td style={{ fontWeight: 700 }}>$2,550.00 USD</td>
-                    <td><span className="badge amber">L3 (3rd Best)</span></td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 1a88b...d990</td>
-                  </tr>
-                  <tr>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>45 mins ago</td>
-                    <td>Competition Ceiling (Starting Baseline)</td>
-                    <td style={{ fontWeight: 700, color: 'var(--mut)' }}>${ceiling.toFixed(2)} USD</td>
-                    <td><span className="badge grey">Ceiling</span></td>
-                    <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 0b12a...77dd</td>
-                  </tr>
+                  {sortedBids.length > 0 ? (
+                    sortedBids.map((b, idx) => {
+                      const isUser = b.bidderUid === user.uid;
+                      const rankLabel = idx === 0 ? 'LEADING (L1)' : idx === 1 ? 'L2 (2nd Best)' : idx === 2 ? 'L3 (3rd Best)' : `L${idx + 1}`;
+                      const badgeClass = idx === 0 ? 'badge green' : idx === 1 ? 'badge blue' : idx === 2 ? 'badge amber' : 'badge grey';
+                      const timeStr = b.submittedAt
+                        ? new Date(b.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : 'Recent';
+                      const alias = isUser
+                        ? `Bidder #${b.bidderUid.slice(-4).toUpperCase()} (You)`
+                        : `Bidder #${(b.bidderUid || '0000').slice(-4).toUpperCase()} (${b.bidderCompany || 'Verified Enterprise'})`;
+                      const hash = b.id ? `SHA-256: ${b.id.substring(0, 5)}...${b.id.substring(b.id.length - 4)}` : 'SHA-256: verified';
+
+                      return (
+                        <tr key={b.id || idx} style={{ background: isUser ? '#f0fdf4' : undefined }}>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{timeStr}</td>
+                          <td><b>{alias}</b></td>
+                          <td style={{ fontWeight: 800, color: idx === 0 ? 'var(--green)' : 'var(--ink)', fontSize: '12.5px' }}>
+                            ${b.grandTotalUSD.toFixed(2)} USD
+                          </td>
+                          <td><span className={badgeClass}>{`#${idx + 1} ${rankLabel}`}</span></td>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>{hash}</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <tr style={{ background: '#f0fdf4' }}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>Just now</td>
+                        <td><b>Bidder #804 (You)</b></td>
+                        <td style={{ fontWeight: 800, color: 'var(--green)', fontSize: '12.5px' }}>${grandTotalUSD.toFixed(2)} USD</td>
+                        <td><span className="badge green">{calculatedRank} {calculatedRank === '#1' ? 'LEADING (L1)' : ''}</span></td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 7f8a9...b4c2</td>
+                      </tr>
+                      <tr>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>4 mins ago</td>
+                        <td>Bidder #412 (Verified Forwarder)</td>
+                        <td style={{ fontWeight: 700 }}>$2,495.00 USD</td>
+                        <td><span className="badge blue">L2 (2nd Best)</span></td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 3c91a...e11f</td>
+                      </tr>
+                      <tr>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>12 mins ago</td>
+                        <td>Bidder #619 (Verified NVOCC)</td>
+                        <td style={{ fontWeight: 700 }}>$2,550.00 USD</td>
+                        <td><span className="badge amber">L3 (3rd Best)</span></td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 1a88b...d990</td>
+                      </tr>
+                      <tr>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>45 mins ago</td>
+                        <td>Competition Ceiling (Starting Baseline)</td>
+                        <td style={{ fontWeight: 700, color: 'var(--mut)' }}>${ceiling.toFixed(2)} USD</td>
+                        <td><span className="badge grey">Ceiling</span></td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 0b12a...77dd</td>
+                      </tr>
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>
