@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "npx -y tsx scripts/verify-all-gates.ts",
     "test:auth-email": "npx -y tsx scripts/test-auth-email-system.ts",
     "test:email": "npx -y tsx scripts/test-email-config.ts",
     "build:apk": "node fr8x-android-app/tools/build-official-apk.js"

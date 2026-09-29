@@ -31,6 +31,9 @@ jobs:
       - name: Next.js ESLint Verification
         run: npm run lint
 
+      - name: Architectural Quality Gates (Phase 7-11 Verification Suites)
+        run: npm test
+
       - name: Next.js Production Build
         run: npm run build
         env:

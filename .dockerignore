@@ -1,0 +1,46 @@
+# Dependency directories
+node_modules/
+.pnp
+.pnp.js
+
+# Build and production output
+.next/
+out/
+build/
+dist/
+
+# Git metadata
+.git/
+.gitignore
+.github/
+
+# Environment files and credentials (CRITICAL FOR CONTAINER SECURITY)
+.env*.local
+.env
+.env.production
+.env.development
+
+# Knox local DBMS store & logs
+.knox/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android build outputs & local toolchain artifacts
+*.apk
+fr8x-android-app/build/
+fr8x-android-app/dist/
+fr8x-android-app/keystore/
+
+# IDE and OS files
+.DS_Store
+*.pem
+*.key
+Thumbs.db
+.idea/
+.vscode/
+
+# Word strategy documentation & scratch assets
+*.docx
+fr8x-ui-ux-showcase.html

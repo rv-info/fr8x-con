@@ -4,14 +4,14 @@
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
-    "url": "http://localhost:3000",
-    "cleartext": true,
+    "url": "https://con.fr8x.in",
+    "cleartext": false,
     "androidScheme": "https"
   },
   "android": {
-    "allowMixedContent": true,
+    "allowMixedContent": false,
     "captureInput": true,
-    "webContentsDebuggingEnabled": true
+    "webContentsDebuggingEnabled": false
   },
   "plugins": {
     "SplashScreen": {
