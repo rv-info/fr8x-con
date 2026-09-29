@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     const body = await req.json();
-    const { reportId, targetType, targetId, action, reason, operatorUid } = body;
+    const { reportId, action, reason } = body;
+    const operatorUid = auth.operator!.uid;
 
     if (!reportId || !action || !reason) {
       return NextResponse.json({ error: 'Missing report ID, action, or resolution rationale' }, { status: 400 });
@@ -15,6 +22,7 @@ export async function POST(req: NextRequest) {
       success: true,
       reportId,
       actionTaken: action,
+      operatorUid,
       correlationId,
       message: `Moderation report ${reportId} resolved with action [${action}]`,
     });

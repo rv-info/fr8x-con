@@ -7,6 +7,12 @@ import {
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function GET(req: NextRequest) {
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
     const posts = getPersistedPosts();
     return NextResponse.json({ success: true, posts }, { status: 200 });
@@ -33,9 +39,20 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (userAuth.authenticated && userAuth.user?.uid) {
-      body.authorId = body.authorId || userAuth.user.uid;
+
+    // Ownership & Impersonation Prevention
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = getPersistedPosts().find((p) => p.id === body.id);
+      if (existing && existing.authorUid !== userAuth.user!.uid && (existing as any).authorId !== userAuth.user!.uid) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You cannot modify another user’s post.' },
+          { status: 403 }
+        );
+      }
+      body.authorUid = userAuth.user!.uid;
+      body.authorId = userAuth.user!.uid;
     }
+
     const saved = savePersistedPost(body);
     return NextResponse.json({ success: true, post: saved }, { status: 200 });
   } catch (err: any) {
@@ -62,6 +79,18 @@ export async function DELETE(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ownership check for non-operator callers
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = getPersistedPosts().find((p) => p.id === id);
+      if (existing && existing.authorUid !== userAuth.user!.uid && (existing as any).authorId !== userAuth.user!.uid) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You do not have permission to delete this post.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const deleted = deletePersistedPost(id);
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {

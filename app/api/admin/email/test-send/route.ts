@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
 import { sendSystemEmail } from '@/lib/mailer';
 import { EmailService } from '@/lib/email-service';
-import { serverSecurityStore } from '@/lib/server-auth-store';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,22 +10,14 @@ export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
   try {
     // Protected backend test mechanism: verify authorized admin/godfather session or dev environment
-    const sessionCookie =
-      req.cookies.get('fr8x_godfather_session')?.value ||
-      req.cookies.get('__Secure-FR8X-Godfather-Session')?.value;
+    const auth = authenticateGodfatherOperator(req);
     const authHeader = req.headers.get('authorization');
     const adminKey = process.env.ADMIN_API_KEY || process.env.GODFATHER_ADMIN_KEY;
     const isDev = process.env.NODE_ENV === 'development';
 
-    const body = await req.json().catch(() => ({}));
-    const { recipient, templateId, reason, actorRole, actorUid, testType } = body;
-    const preferredProvider = body.preferredProvider || 'Zoho_ZeptoMail';
-
     const isAuthorized =
-      (sessionCookie && serverSecurityStore.isGodfatherSessionActive(sessionCookie)) ||
+      auth.authenticated ||
       (adminKey && authHeader === `Bearer ${adminKey}`) ||
-      actorRole === 'godfather_owner' ||
-      actorRole === 'godfather_operations' ||
       isDev;
 
     if (!isAuthorized) {
@@ -34,6 +26,12 @@ export async function POST(req: NextRequest) {
         { status: 403 }
       );
     }
+
+    const body = await req.json().catch(() => ({}));
+    const { recipient, templateId, reason, testType } = body;
+    const actorUid = auth.operator?.uid || 'gf-op-godfather';
+    const actorRole = auth.operator?.role || 'godfather_owner';
+    const preferredProvider = body.preferredProvider || 'Zoho_ZeptoMail';
 
     const targetRecipient =
       recipient || process.env.TEST_EMAIL_RECIPIENT || process.env.DEVELOPMENT_TEST_EMAIL || 'tech@fr8x.in';

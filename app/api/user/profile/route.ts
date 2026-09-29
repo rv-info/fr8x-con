@@ -1,38 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
-import { verifySignedSessionToken } from '@/lib/crypto';
-import { authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
-function getAuthenticatedUid(req: NextRequest): string | null {
-  const sessionCookie = req.cookies.get('fr8x_session')?.value;
-  if (!sessionCookie) return null;
-  const verified = verifySignedSessionToken<any>(sessionCookie);
-  if (verified.valid && verified.payload?.uid) {
-    return verified.payload.uid;
-  }
-  return null;
-}
-
 /**
  * GET /api/user/profile
- * Retrieves full persisted user profile from DBMS.
- * Requires authenticated session; users can access their own profile or public member profiles.
+ * Retrieves user profile from DBMS.
+ * Requires authenticated session; users can access their own full profile or public profile for others.
  */
 export async function GET(req: NextRequest) {
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
-    const authUid = getAuthenticatedUid(req);
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
     const { searchParams } = new URL(req.url);
     const requestedUid = searchParams.get('uid');
 
     // Default to the authenticated user's own profile if no specific UID requested
-    const targetUid = requestedUid || authUid;
+    const targetUid = requestedUid || callerUid;
 
     if (!targetUid) {
       return NextResponse.json(
-        { success: false, error: 'Unauthorized: Valid session or target UID required.' },
-        { status: 401 }
+        { success: false, error: 'Target UID required.' },
+        { status: 400 }
       );
     }
 
@@ -44,7 +39,40 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Sanitize sensitive credentials
+    const isSelf = userAuth.authenticated && user.uid === userAuth.user!.uid;
+    const isOperator = gfAuth.authenticated;
+    const u = user as any;
+
+    // Non-owner / public view sanitization
+    if (!isSelf && !isOperator) {
+      return NextResponse.json({
+        success: true,
+        user: {
+          uid: user.uid,
+          id: user.uid,
+          displayName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Enterprise Member',
+          firstName: u.firstName,
+          lastName: u.lastName,
+          company: u.company,
+          companyId: u.companyId,
+          designation: u.designation,
+          role: user.role,
+          city: u.city,
+          state: u.state,
+          country: u.country,
+          location: u.location,
+          avatarUrl: u.avatarUrl,
+          isVerified: Boolean(u.isVerified || u.email_verified),
+          hasGoldenTick: Boolean(u.hasGoldenTick),
+          plan: u.plan,
+          experiences: u.experiences || [],
+          educations: u.educations || [],
+          skills: u.skills || [],
+        },
+      });
+    }
+
+    // Owner or Operator view: sanitize internal cryptographic credentials
     const { passwordHash, salt, ...safeUser } = user;
     return NextResponse.json({ success: true, user: safeUser });
   } catch (err: any) {
@@ -64,22 +92,22 @@ export async function GET(req: NextRequest) {
  * Persists immediately to authoritative DBMS.
  */
 export async function POST(req: NextRequest) {
-  try {
-    const authUid = getAuthenticatedUid(req);
-    const gfAuth = authenticateGodfatherOperator(req);
-    const isGodfather = gfAuth.authenticated;
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
 
+  try {
+    const isGodfather = gfAuth.authenticated;
     const body = await req.json();
 
     // Determine target UID with strict privilege isolation
     let targetUid: string | null = null;
     if (isGodfather && body.uid) {
       targetUid = body.uid;
-    } else if (authUid) {
-      targetUid = authUid;
-    } else if (body.uid && process.env.NODE_ENV !== 'production') {
-      // Local dev testing fallback
-      targetUid = body.uid;
+    } else if (userAuth.authenticated && userAuth.user?.uid) {
+      targetUid = userAuth.user.uid;
     }
 
     if (!targetUid) {

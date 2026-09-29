@@ -7,22 +7,22 @@ import { authenticateUserSession } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
   // ── Authentication guard ────────────────────────────────────────────────
-  const { authenticated, errorResponse } = authenticateUserSession(req);
-  if (!authenticated) return errorResponse!;
+  const { authenticated, user, errorResponse } = authenticateUserSession(req);
+  if (!authenticated || !user) return errorResponse!;
   // ───────────────────────────────────────────────────────────────────────
 
   try {
     const body = await req.json();
     const surface: FeedSurface = body.surface || 'home';
-    const viewer = body.viewer || null;
-    const limitCount = body.limit || 25;
+    const viewer = { ...(body.viewer || {}), uid: user.uid, role: user.role };
+    const limitCount = Math.min(Number(body.limit || 25), 100);
 
     // 1. Fetch raw candidate posts
     const { posts } = await getPostsFromDB({ limitCount: 100 });
 
     // 2. Fetch ranking config and user intent
     const config = (await getRankingConfigFromDB()) || DEFAULT_RANKING_CONFIG;
-    const intent = viewer?.uid ? await getUserIntentFromDB(viewer.uid) : null;
+    const intent = await getUserIntentFromDB(user.uid);
 
     // 3. Execute two-stage ranking
     const rankedPosts = feedRankingEngine.rankFeed(posts, {

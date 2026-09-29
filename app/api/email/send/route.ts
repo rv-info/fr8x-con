@@ -2,12 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail, EmailSenderType, isValidEmailAddress } from '@/lib/email-service';
 import { checkRateLimit, recordFailedAttempt } from '@/lib/crypto';
 import { generateCorrelationId } from '@/lib/godfather/utils/audit';
+import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+
+const ALLOWED_USER_RECIPIENTS = new Set([
+  'support@fr8x.in',
+  'compliance@fr8x.in',
+  'tech@fr8x.in',
+  'password@fr8x.in',
+]);
 
 /**
  * POST /api/email/send
  * Secure, server-side email dispatch endpoint.
  *
  * Enforces:
+ * - Caller authentication (session or operator)
+ * - Anti-relay restriction (standard users can only send to verified FR8X inboxes)
  * - Server-controlled sender mapping (support -> support@fr8x.in, password -> password@fr8x.in)
  * - Strict client input validation
  * - Anti-abuse rate limiting by client IP
@@ -15,6 +25,17 @@ import { generateCorrelationId } from '@/lib/godfather/utils/audit';
  */
 export async function POST(req: NextRequest) {
   const correlationId = generateCorrelationId();
+
+  // Authentication Guard: require user session or godfather operator
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return NextResponse.json(
+      { error: 'Unauthorized: Authentication required to dispatch emails.', correlationId },
+      { status: 401 }
+    );
+  }
+
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
 
   // Rate limiting by client IP
@@ -39,6 +60,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: 'A valid recipient email address is required.', correlationId },
         { status: 400 }
+      );
+    }
+
+    const cleanTo = to.trim().toLowerCase();
+
+    // Anti-Relay Guard: Non-operators can only email internal support addresses
+    if (!gfAuth.authenticated && !ALLOWED_USER_RECIPIENTS.has(cleanTo)) {
+      return NextResponse.json(
+        {
+          error: 'Forbidden: Regular enterprise users may only dispatch inquiries to FR8X Support or Compliance inboxes.',
+          correlationId,
+        },
+        { status: 403 }
       );
     }
 

@@ -17,6 +17,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    if (rates.length > 500) {
+      return NextResponse.json(
+        { success: false, error: 'Payload too large: Bulk rate imports are capped at 500 items per request.' },
+        { status: 413 }
+      );
+    }
     const saved = bulkSavePersistedRates(rates);
     return NextResponse.json({ success: true, count: saved.length }, { status: 200 });
   } catch (err: any) {

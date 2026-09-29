@@ -7,6 +7,12 @@ import {
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function GET(req: NextRequest) {
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
     const rates = getPersistedRates();
     return NextResponse.json({ success: true, rates }, { status: 200 });
@@ -33,9 +39,25 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (userAuth.authenticated && userAuth.user?.uid) {
-      body.createdBy = body.createdBy || userAuth.user.uid;
+
+    // Ownership & Impersonation Prevention
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = getPersistedRates().find((r) => r.id === body.id);
+      if (existing) {
+        const isOwner =
+          existing.createdBy === userAuth.user!.uid ||
+          existing.ownerUid === userAuth.user!.uid;
+        if (!isOwner) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You cannot modify another enterprise’s rate card.' },
+            { status: 403 }
+          );
+        }
+      }
+      body.createdBy = userAuth.user!.uid;
+      body.ownerUid = userAuth.user!.uid;
     }
+
     const saved = savePersistedRate(body);
     return NextResponse.json({ success: true, rate: saved }, { status: 200 });
   } catch (err: any) {
@@ -62,6 +84,23 @@ export async function DELETE(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Ownership check for non-operator callers
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = getPersistedRates().find((r) => r.id === id);
+      if (existing) {
+        const isOwner =
+          existing.createdBy === userAuth.user!.uid ||
+          existing.ownerUid === userAuth.user!.uid;
+        if (!isOwner) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You do not have permission to delete this rate.' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     const deleted = deletePersistedRate(id);
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {

@@ -1,4 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+
+const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
+  trial: { amountINR: 0, title: 'Trial Plan' },
+  professional: { amountINR: 1500, title: 'Professional Plan' },
+  premium: { amountINR: 3000, title: 'Premium Plan' },
+  enterprise: { amountINR: 9999, title: 'Enterprise Custom Plan' },
+};
 
 /**
  * Razorpay Payment API & Automation Diagnostics
@@ -41,9 +49,31 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  // Authentication Guard
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
     const body = await req.json();
-    const { amount, currency = 'INR', itemType, itemTitle, userEmail } = body;
+    const { currency = 'INR', itemType = 'subscription', planId } = body;
+    const callerEmail = userAuth.user?.email || gfAuth.operator?.email || '';
+
+    // Enforce server-side pricing catalog to prevent client price tampering
+    let authoritativeAmount = 1500;
+    let authoritativeTitle = 'FR8X Plan';
+
+    const normalizedPlan = String(planId || body.itemTitle || '').toLowerCase().trim();
+    if (PLAN_CATALOG[normalizedPlan]) {
+      authoritativeAmount = PLAN_CATALOG[normalizedPlan].amountINR;
+      authoritativeTitle = PLAN_CATALOG[normalizedPlan].title;
+    } else if (typeof body.amount === 'number' && gfAuth.authenticated) {
+      // Only Godfather operators can specify arbitrary custom transaction amounts
+      authoritativeAmount = body.amount;
+      authoritativeTitle = body.itemTitle || 'Custom Payment';
+    }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
@@ -59,13 +89,13 @@ export async function POST(req: NextRequest) {
             Authorization: authHeader,
           },
           body: JSON.stringify({
-            amount: Math.round((amount || 300) * 100), // amount in paisa
+            amount: Math.round(authoritativeAmount * 100), // amount in paisa
             currency: currency || 'INR',
             receipt: `rcpt_${Date.now().toString(36)}`,
             notes: {
-              itemType: itemType || 'subscription',
-              itemTitle: itemTitle || 'FR8X Plan',
-              userEmail: userEmail || '',
+              itemType,
+              itemTitle: authoritativeTitle,
+              userEmail: callerEmail,
             },
           }),
         });
@@ -75,12 +105,12 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({
             success: true,
             orderId: rzpOrder.id,
-            amount: rzpOrder.amount ? rzpOrder.amount / 100 : amount || 300,
+            amount: authoritativeAmount,
             currency: rzpOrder.currency || currency,
             keyId,
             itemType,
-            itemTitle,
-            userEmail,
+            itemTitle: authoritativeTitle,
+            userEmail: callerEmail,
             paymentReference: rzpOrder.id,
             status: rzpOrder.status || 'created',
             timestamp: new Date().toISOString(),
@@ -100,11 +130,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId,
-      amount: amount || 300,
+      amount: authoritativeAmount,
       currency,
       itemType,
-      itemTitle,
-      userEmail,
+      itemTitle: authoritativeTitle,
+      userEmail: callerEmail,
       paymentReference,
       status: 'created',
       timestamp: new Date().toISOString(),

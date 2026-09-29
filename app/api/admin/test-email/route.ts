@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverSecurityStore } from '@/lib/server-auth-store';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 import { isValidEmailAddress } from '@/lib/email-service';
 
 export const dynamic = 'force-dynamic';
@@ -21,16 +21,14 @@ export const dynamic = 'force-dynamic';
 async function handleTestEmail(req: NextRequest) {
   try {
     // 1. Authenticate Request: Admin API key, Godfather session, or Dev environment
+    const auth = authenticateGodfatherOperator(req);
     const authHeader = req.headers.get('authorization');
     const adminKey = process.env.ADMIN_API_KEY || process.env.GODFATHER_ADMIN_KEY;
-    const sessionCookie =
-      req.cookies.get('fr8x_godfather_session')?.value ||
-      req.cookies.get('__Secure-FR8X-Godfather-Session')?.value;
     const isDev = process.env.NODE_ENV === 'development';
 
     const isAuthorized =
       (adminKey && authHeader === `Bearer ${adminKey}`) ||
-      (sessionCookie && serverSecurityStore.isGodfatherSessionActive(sessionCookie)) ||
+      auth.authenticated ||
       isDev;
 
     if (!isAuthorized) {

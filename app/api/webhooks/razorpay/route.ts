@@ -33,10 +33,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Production security guard: reject untrusted requests if webhook secret is configured
-    if (process.env.NODE_ENV === 'production' && process.env.RAZORPAY_WEBHOOK_SECRET) {
+    // Production security guard: fail closed unconditionally
+    if (process.env.NODE_ENV === 'production') {
+      if (!process.env.RAZORPAY_WEBHOOK_SECRET) {
+        console.error('[Razorpay Webhook] Rejected: RAZORPAY_WEBHOOK_SECRET is unconfigured in production environment.');
+        return NextResponse.json(
+          { received: false, error: 'Server Configuration Error: Webhook receiver disabled.' },
+          { status: 500 }
+        );
+      }
       if (!isSignatureValid) {
-        console.error('[Razorpay Webhook] Rejected: Invalid or missing x-razorpay-signature');
+        console.error('[Razorpay Webhook] Rejected: Invalid or missing x-razorpay-signature.');
         return NextResponse.json(
           { received: false, error: 'Unauthorized: Invalid webhook signature' },
           { status: 401 }

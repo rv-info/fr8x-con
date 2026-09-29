@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendSystemEmail, getEmailHealth } from '@/lib/mailer';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/godfather/email/test
  * Tests production ZeptoMail REST API connectivity and dispatches a verification test email.
+ * Protected: Requires authenticated Godfather operator session.
  */
 export async function POST(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     const body = await req.json().catch(() => ({}));
     const recipient = body.recipient || 'tech@fr8x.in';

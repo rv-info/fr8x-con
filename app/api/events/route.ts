@@ -17,6 +17,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'No events provided' }, { status: 400 });
     }
 
+    if (rawEvents.length > 100) {
+      return NextResponse.json(
+        { success: false, error: 'Payload too large: Event batches are capped at 100 events per request.' },
+        { status: 413 }
+      );
+    }
+
     // Security: override actorId with the verified session uid — client cannot spoof a foreign actorId
     const events: IdempotentEvent[] = rawEvents.map((evt) => ({ ...evt, actorId: user.uid }));
 
