@@ -30,6 +30,8 @@ function initDbmsDir(): string {
         'presence.json',
         'events.json',
         'intents.json',
+        'transactions.json',
+        'email_delivery_events.json',
       ];
       for (const file of files) {
         const src = path.join(primaryDir, file);
@@ -57,6 +59,8 @@ const COMPANIES_FILE = path.join(DBMS_DIR, 'companies.json');
 const PRESENCE_FILE = path.join(DBMS_DIR, 'presence.json');
 const EVENTS_FILE = path.join(DBMS_DIR, 'events.json');
 const INTENTS_FILE = path.join(DBMS_DIR, 'intents.json');
+const TRANSACTIONS_FILE = path.join(DBMS_DIR, 'transactions.json');
+const EMAIL_DELIVERY_EVENTS_FILE = path.join(DBMS_DIR, 'email_delivery_events.json');
 
 function ensureDirExists() {
   try {
@@ -773,6 +777,124 @@ export function savePersistedUserIntent(intent: LogisticsIntent): void {
     fs.writeFileSync(INTENTS_FILE, JSON.stringify(existing, null, 2), 'utf8');
   } catch (err) {
     console.error('[DBMS] Error saving persisted user intent:', err);
+  }
+}
+
+// ─── TRANSACTIONS REPOSITORY ──────────────────────────────────────────────────
+
+export interface TransactionRecord {
+  id: string; // tx_... or rzp_...
+  orderId?: string;
+  paymentId?: string;
+  userId?: string;
+  userEmail?: string;
+  amount: number;
+  currency: string;
+  planId?: string;
+  itemType?: string;
+  itemTitle?: string;
+  status: 'created' | 'captured' | 'failed' | 'refunded' | 'adjusted';
+  gateway: 'Razorpay' | 'BankTransfer' | 'UPI' | 'ManualCredit' | string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export function getPersistedTransactions(): TransactionRecord[] {
+  ensureDirExists();
+  try {
+    if (!fs.existsSync(TRANSACTIONS_FILE)) {
+      return [];
+    }
+    const raw = fs.readFileSync(TRANSACTIONS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error('[DBMS] Error reading persisted transactions:', err);
+    return [];
+  }
+}
+
+export function savePersistedTransaction(tx: TransactionRecord): TransactionRecord {
+  ensureDirExists();
+  try {
+    const existing = getPersistedTransactions();
+    const idx = existing.findIndex(
+      (t) => t.id === tx.id || (tx.paymentId && t.paymentId === tx.paymentId)
+    );
+    const now = new Date().toISOString();
+    const recordToSave: TransactionRecord = {
+      ...tx,
+      updatedAt: now,
+      createdAt: tx.createdAt || now,
+    };
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...recordToSave };
+    } else {
+      existing.unshift(recordToSave);
+    }
+    fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    return recordToSave;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted transaction:', err);
+    return tx;
+  }
+}
+
+export function getPersistedTransactionById(id: string): TransactionRecord | undefined {
+  if (!id) return undefined;
+  const transactions = getPersistedTransactions();
+  return transactions.find((t) => t.id === id || t.paymentId === id || t.orderId === id);
+}
+
+// ─── EMAIL DELIVERY EVENTS REPOSITORY ─────────────────────────────────────────
+
+export interface EmailDeliveryEventRecord {
+  eventId: string;
+  messageId?: string;
+  to: string;
+  from?: string;
+  subject?: string;
+  status: 'delivered' | 'soft_bounce' | 'hard_bounce' | 'failed' | string;
+  bounceType?: string;
+  bounceReason?: string;
+  clientReference?: string;
+  timestamp: string;
+  receivedAt: string;
+}
+
+export function getPersistedEmailDeliveryEvents(): EmailDeliveryEventRecord[] {
+  ensureDirExists();
+  try {
+    if (!fs.existsSync(EMAIL_DELIVERY_EVENTS_FILE)) {
+      return [];
+    }
+    const raw = fs.readFileSync(EMAIL_DELIVERY_EVENTS_FILE, 'utf8');
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (err) {
+    console.error('[DBMS] Error reading persisted email delivery events:', err);
+    return [];
+  }
+}
+
+export function savePersistedEmailDeliveryEvent(event: EmailDeliveryEventRecord): EmailDeliveryEventRecord {
+  ensureDirExists();
+  try {
+    const existing = getPersistedEmailDeliveryEvents();
+    const idx = existing.findIndex((e) => e.eventId === event.eventId);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...event };
+    } else {
+      existing.unshift(event);
+    }
+    // Cap at 1000 events to prevent unbounded file growth
+    const trimmed = existing.slice(0, 1000);
+    fs.writeFileSync(EMAIL_DELIVERY_EVENTS_FILE, JSON.stringify(trimmed, null, 2), 'utf8');
+    return event;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted email delivery event:', err);
+    return event;
   }
 }
 

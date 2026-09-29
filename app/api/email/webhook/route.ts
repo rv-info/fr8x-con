@@ -19,10 +19,14 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
+import {
+  savePersistedEmailDeliveryEvent,
+  getPersistedEmailDeliveryEvents,
+  EmailDeliveryEventRecord,
+} from '@/lib/dbms/server-dbms';
 
-// ── In-memory delivery event log (FIFO, max 500) ─────────────────────────────
-// In production, replace/extend with Firestore writes or Vercel KV for persistence.
-interface DeliveryEvent {
+// ── In-memory delivery event log (FIFO cache, max 500) ───────────────────────
+export interface DeliveryEvent {
   eventId: string;
   messageId: string;
   to: string;
@@ -92,7 +96,7 @@ function isValidWebhookToken(request: NextRequest): boolean {
 export async function POST(request: NextRequest) {
   // ── Auth ──────────────────────────────────────────────────────────────────
   if (!isValidWebhookToken(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized: Invalid webhook token' }, { status: 401 });
   }
 
   // ── Body size guard (256KB) ───────────────────────────────────────────────
@@ -142,7 +146,33 @@ export async function POST(request: NextRequest) {
       clientReference: String(raw.client_reference || raw.clientReference || '').trim() || undefined,
     };
 
-    // FIFO eviction
+    // 1. Authoritative persistence in Knox DBMS (.knox/dbms/email_delivery_events.json)
+    try {
+      savePersistedEmailDeliveryEvent({
+        eventId: event.eventId,
+        messageId: event.messageId,
+        to: event.to,
+        from: event.from,
+        subject: event.subject,
+        status: event.status,
+        bounceType: event.bounceType,
+        bounceReason: event.bounceReason,
+        clientReference: event.clientReference,
+        timestamp: event.timestamp,
+        receivedAt: event.receivedAt,
+      });
+    } catch (saveErr: any) {
+      console.error('[EmailWebhook] Failed to persist delivery event to DBMS:', saveErr.message);
+    }
+
+    // 2. Critical Action on Hard Bounces
+    if (event.status === 'hard_bounce' || event.status === 'failed') {
+      console.warn(
+        `[EmailWebhook] CRITICAL DELIVERY FAILURE: ${event.status.toUpperCase()} for ${event.to}. Reason: ${event.bounceReason || 'unspecified'}`
+      );
+    }
+
+    // 3. In-memory FIFO cache eviction
     if (log.length >= MAX_EVENT_LOG) {
       log.shift();
     }
@@ -163,31 +193,25 @@ export async function POST(request: NextRequest) {
   );
 }
 
-export async function GET() {
-  return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
-}
-
 /**
- * Returns the in-memory email delivery event log (for Godfather admin audit).
+ * Diagnostic & health endpoint for delivery events
  */
-function getEmailDeliveryLog(): DeliveryEvent[] {
-  return [...getDeliveryLog()];
-}
-
-/**
- * Returns delivery statistics summary.
- */
-function getEmailDeliveryStats(): {
-  total: number;
-  delivered: number;
-  bounced: number;
-  failed: number;
-} {
-  const log = getDeliveryLog();
-  return {
-    total: log.length,
-    delivered: log.filter((e) => e.status === 'delivered').length,
-    bounced: log.filter((e) => e.status === 'soft_bounce' || e.status === 'hard_bounce').length,
-    failed: log.filter((e) => e.status === 'failed').length,
-  };
+export async function GET(request: NextRequest) {
+  try {
+    const persisted = getPersistedEmailDeliveryEvents();
+    return NextResponse.json({
+      status: 'active',
+      service: 'ZeptoMail Webhook Receiver',
+      totalRecorded: persisted.length,
+      recentEvents: persisted.slice(0, 10),
+      summary: {
+        delivered: persisted.filter((e) => e.status === 'delivered').length,
+        bounced: persisted.filter((e) => e.status === 'soft_bounce' || e.status === 'hard_bounce').length,
+        failed: persisted.filter((e) => e.status === 'failed').length,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
 }

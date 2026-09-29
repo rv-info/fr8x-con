@@ -174,6 +174,9 @@ export interface ServerUserRecord {
   pan?: string;
   cin?: string;
   iec?: string;
+  plan?: string;
+  lastPaymentReference?: string;
+  planUpgradedAt?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -864,6 +867,50 @@ class ServerSecurityStore {
       savePersistedUser(merged as any);
     } catch (saveErr: any) {
       console.error('[ServerSecurityStore] Failed to persist user to DBMS:', saveErr.message);
+    }
+
+    this.persistState();
+    return { success: true, user: merged };
+  }
+
+  /**
+   * Authoritative system/operator method to update user subscription plan
+   * and payment entitlement in the DBMS.
+   */
+  public updateUserPlan(
+    identifier: string,
+    plan: string,
+    metadata?: { paymentReference?: string; upgradedBy?: string }
+  ): { success: boolean; user?: ServerUserRecord; error?: string } {
+    if (!identifier || !plan) return { success: false, error: 'Identifier and plan are required.' };
+    this.loadPersistedState();
+    const clean = identifier.trim().toLowerCase();
+    const existing = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    if (!existing) {
+      return { success: false, error: 'User record not found in DBMS.' };
+    }
+
+    const now = new Date().toISOString();
+    const merged: ServerUserRecord = {
+      ...existing,
+      plan: plan.toLowerCase().trim() as any,
+      updatedAt: now,
+    };
+    if (metadata?.paymentReference) {
+      merged.lastPaymentReference = metadata.paymentReference;
+      merged.planUpgradedAt = now;
+    }
+
+    const cleanUid = merged.uid.toLowerCase();
+    const cleanEmail = merged.email.toLowerCase();
+
+    this.users.set(cleanUid, merged);
+    this.users.set(cleanEmail, merged);
+
+    try {
+      savePersistedUser(merged as any);
+    } catch (saveErr: any) {
+      console.error('[ServerSecurityStore] Failed to persist user plan update to DBMS:', saveErr.message);
     }
 
     this.persistState();

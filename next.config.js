@@ -110,7 +110,7 @@ const nextConfig = {
               // XHR/fetch: self + Firebase + Google APIs + Razorpay
               "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://fcmregistrations.googleapis.com https://api.razorpay.com https://lumberjack.razorpay.com",
               // Frames: Razorpay checkout modal
-              "frame-src 'self' https://api.razorpay.com",
+              "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
               // Objects: none
               "object-src 'none'",
               // Base URI: self only

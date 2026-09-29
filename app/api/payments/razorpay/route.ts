@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { savePersistedTransaction } from '@/lib/dbms/server-dbms';
 
 const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
   trial: { amountINR: 0, title: 'Trial Plan' },
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { currency = 'INR', itemType = 'subscription', planId } = body;
     const callerEmail = userAuth.user?.email || gfAuth.operator?.email || '';
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid || '';
 
     // Enforce server-side pricing catalog to prevent client price tampering
     let authoritativeAmount = 1500;
@@ -73,6 +75,11 @@ export async function POST(req: NextRequest) {
       // Only Godfather operators can specify arbitrary custom transaction amounts
       authoritativeAmount = body.amount;
       authoritativeTitle = body.itemTitle || 'Custom Payment';
+    } else if (planId && !PLAN_CATALOG[normalizedPlan]) {
+      return NextResponse.json(
+        { success: false, error: `Invalid subscription plan '${planId}'. Allowed plans: trial, professional, premium, enterprise.` },
+        { status: 400 }
+      );
     }
 
     const keyId = process.env.RAZORPAY_KEY_ID;
@@ -96,12 +103,39 @@ export async function POST(req: NextRequest) {
               itemType,
               itemTitle: authoritativeTitle,
               userEmail: callerEmail,
+              userId: callerUid,
+              planId: normalizedPlan,
             },
           }),
         });
 
         if (rzpRes.ok) {
           const rzpOrder = await rzpRes.json();
+          // Record live created order in authoritative DBMS
+          try {
+            savePersistedTransaction({
+              id: `tx_${rzpOrder.id}`,
+              orderId: rzpOrder.id,
+              userId: callerUid,
+              userEmail: callerEmail,
+              amount: authoritativeAmount,
+              currency: rzpOrder.currency || currency,
+              planId: normalizedPlan,
+              itemType,
+              itemTitle: authoritativeTitle,
+              status: 'created',
+              gateway: 'Razorpay',
+              metadata: {
+                live: true,
+                keyId,
+                status: rzpOrder.status,
+              },
+              createdAt: new Date().toISOString(),
+            });
+          } catch (txErr: any) {
+            console.error('[Razorpay API] Failed to persist live order in DBMS:', txErr.message);
+          }
+
           return NextResponse.json({
             success: true,
             orderId: rzpOrder.id,
@@ -126,6 +160,30 @@ export async function POST(req: NextRequest) {
     // Deterministic simulated order reference for sandbox/testing without keys
     const orderId = `order_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const paymentReference = `RZP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+    // Record sandbox created order in authoritative DBMS
+    try {
+      savePersistedTransaction({
+        id: `tx_${orderId}`,
+        orderId,
+        userId: callerUid,
+        userEmail: callerEmail,
+        amount: authoritativeAmount,
+        currency,
+        planId: normalizedPlan,
+        itemType,
+        itemTitle: authoritativeTitle,
+        status: 'created',
+        gateway: 'Razorpay',
+        metadata: {
+          live: false,
+          paymentReference,
+        },
+        createdAt: new Date().toISOString(),
+      });
+    } catch (txErr: any) {
+      console.error('[Razorpay API] Failed to persist sandbox order in DBMS:', txErr.message);
+    }
 
     return NextResponse.json({
       success: true,
