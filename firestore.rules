@@ -93,7 +93,7 @@ service cloud.firestore {
 
     // Users Collection (Profile metadata & Entitlements)
     match /users/{userId} {
-      allow read: if isAuthenticated();
+      allow read: if isOwner(userId) || isPlatformAdmin();
       allow create: if isOwner(userId);
       allow update: if isPlatformAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'isVerified', 'hasGoldenTick', 'role']));
       allow delete: if isPlatformAdmin();

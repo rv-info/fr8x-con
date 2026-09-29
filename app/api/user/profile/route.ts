@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { DEFAULT_PRIVACY_SETTINGS, UserPrivacySettings } from '@/lib/types';
+import { maskEmail, maskPhone, maskStatutory } from '@/lib/connections';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,8 +45,53 @@ export async function GET(req: NextRequest) {
     const isOperator = gfAuth.authenticated;
     const u = user as any;
 
-    // Non-owner / public view sanitization
+    // Non-owner / public view sanitization with Privacy Settings enforcement (SEC-03)
     if (!isSelf && !isOperator) {
+      const isConnected = Boolean(callerUid && Array.isArray(u.contacts) && u.contacts.includes(callerUid));
+      const privacy: UserPrivacySettings = {
+        ...DEFAULT_PRIVACY_SETTINGS,
+        ...(u.privacySettings || {}),
+      };
+
+      // Email privacy resolution
+      let resolvedEmail: string | undefined;
+      if (privacy.emailVisibility === 'public' || (privacy.emailVisibility === 'contacts_only' && isConnected)) {
+        resolvedEmail = user.email;
+      } else if (user.email) {
+        resolvedEmail = maskEmail(user.email);
+      }
+
+      // Phone privacy resolution
+      let resolvedPhone: string | undefined;
+      const rawPhone = u.mobile || u.phone;
+      if (privacy.phoneVisibility === 'public' || (privacy.phoneVisibility === 'contacts_only' && isConnected)) {
+        resolvedPhone = rawPhone;
+      } else if (rawPhone) {
+        resolvedPhone = maskPhone(rawPhone);
+      }
+
+      // Statutory / KYC numbers (GSTN, PAN, CIN, IEC)
+      let resolvedGstn: string | undefined;
+      let resolvedPan: string | undefined;
+      let resolvedCin: string | undefined;
+      let resolvedIec: string | undefined;
+      if (privacy.statutoryVisibility === 'public' || (privacy.statutoryVisibility === 'contacts_only' && isConnected)) {
+        resolvedGstn = u.gstn;
+        resolvedPan = u.pan;
+        resolvedCin = u.cin;
+        resolvedIec = u.iec;
+      } else {
+        if (u.gstn) resolvedGstn = maskStatutory(u.gstn);
+        if (u.pan) resolvedPan = maskStatutory(u.pan);
+        if (u.cin) resolvedCin = maskStatutory(u.cin);
+        if (u.iec) resolvedIec = maskStatutory(u.iec);
+      }
+
+      // Company and bio visibility
+      const companyVisible = privacy.companyVisibility !== 'private';
+      const tradeLanesVisible = privacy.tradeLanesVisibility !== 'private';
+      const bioVisible = privacy.bioVisibility !== 'private';
+
       return NextResponse.json({
         success: true,
         user: {
@@ -53,9 +100,18 @@ export async function GET(req: NextRequest) {
           displayName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Enterprise Member',
           firstName: u.firstName,
           lastName: u.lastName,
-          company: u.company,
-          companyId: u.companyId,
-          designation: u.designation,
+          email: resolvedEmail,
+          mobile: resolvedPhone,
+          phone: resolvedPhone,
+          gstn: resolvedGstn,
+          pan: resolvedPan,
+          cin: resolvedCin,
+          iec: resolvedIec,
+          company: companyVisible ? u.company : undefined,
+          companyId: companyVisible ? u.companyId : undefined,
+          designation: bioVisible ? u.designation : undefined,
+          bio: bioVisible ? u.bio : undefined,
+          operatingCorridors: tradeLanesVisible ? u.operatingCorridors : undefined,
           role: user.role,
           city: u.city,
           state: u.state,
@@ -68,6 +124,8 @@ export async function GET(req: NextRequest) {
           experiences: u.experiences || [],
           educations: u.educations || [],
           skills: u.skills || [],
+          isConnected,
+          allowConnectionRequests: privacy.allowConnectionRequests,
         },
       });
     }

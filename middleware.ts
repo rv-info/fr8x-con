@@ -70,6 +70,28 @@ function isPublicRoute(pathname: string): boolean {
   );
 }
 
+/**
+ * Helper: inject universal security headers & correlation ID
+ */
+export function applySecurityHeaders(res: NextResponse, requestId?: string): NextResponse {
+  if (requestId) {
+    res.headers.set('x-request-id', requestId);
+  }
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('X-XSS-Protection', '1; mode=block');
+  res.headers.set(
+    'Strict-Transport-Security',
+    'max-age=31536000; includeSubDomains; preload'
+  );
+  res.headers.set(
+    'Permissions-Policy',
+    'camera=(), microphone=(), geolocation=(), browsing-topics=()'
+  );
+  return res;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -82,8 +104,7 @@ export function middleware(request: NextRequest) {
 
   const forward = () => {
     const res = NextResponse.next({ request: { headers: requestHeaders } });
-    res.headers.set('x-request-id', requestId);
-    return res;
+    return applySecurityHeaders(res, requestId);
   };
 
   // ── Allow public routes through without any auth check ───────────────────────
@@ -103,8 +124,7 @@ export function middleware(request: NextRequest) {
       gfLoginUrl.searchParams.set('reason', 'auth_required');
       gfLoginUrl.searchParams.set('next', encodeURIComponent(pathname));
       const res = NextResponse.redirect(gfLoginUrl);
-      res.headers.set('x-request-id', requestId);
-      return res;
+      return applySecurityHeaders(res);
     }
 
     return forward();
@@ -119,8 +139,7 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('reason', 'auth_required');
       loginUrl.searchParams.set('next', encodeURIComponent(pathname));
       const res = NextResponse.redirect(loginUrl);
-      res.headers.set('x-request-id', requestId);
-      return res;
+      return applySecurityHeaders(res);
     }
 
     return forward();

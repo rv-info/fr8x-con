@@ -72,33 +72,34 @@ export async function GET(req: NextRequest) {
     if (q) {
       results = results.filter((m) => {
         const matchesBasic =
-          m.displayName.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q) ||
-          m.company.toLowerCase().includes(q) ||
-          m.designation.toLowerCase().includes(q) ||
-          m.city.toLowerCase().includes(q) ||
-          m.state.toLowerCase().includes(q) ||
-          m.country.toLowerCase().includes(q) ||
-          (m.gstn && m.gstn.toLowerCase().includes(q));
+          Boolean(m.displayName?.toLowerCase().includes(q)) ||
+          Boolean(m.email && m.email.toLowerCase().includes(q)) ||
+          Boolean(m.company?.toLowerCase().includes(q)) ||
+          Boolean(m.designation?.toLowerCase().includes(q)) ||
+          Boolean(m.city?.toLowerCase().includes(q)) ||
+          Boolean(m.state?.toLowerCase().includes(q)) ||
+          Boolean(m.country?.toLowerCase().includes(q)) ||
+          Boolean(m.gstn && m.gstn.toLowerCase().includes(q)) ||
+          Boolean(m.operatingCorridors && m.operatingCorridors.toLowerCase().includes(q));
 
         const matchesExp = (m.experiences as any[]).some(
           (exp) =>
-            exp.company?.toLowerCase().includes(q) ||
-            exp.designation?.toLowerCase().includes(q) ||
-            exp.skills?.toLowerCase().includes(q)
+            Boolean(exp?.company?.toLowerCase().includes(q)) ||
+            Boolean(exp?.designation?.toLowerCase().includes(q)) ||
+            Boolean(exp?.skills?.toLowerCase().includes(q))
         );
 
         const matchesEdu = (m.educations as any[]).some(
           (edu) =>
-            edu.institution?.toLowerCase().includes(q) ||
-            edu.qualification?.toLowerCase().includes(q) ||
-            edu.fieldOfStudy?.toLowerCase().includes(q)
+            Boolean(edu?.institution?.toLowerCase().includes(q)) ||
+            Boolean(edu?.qualification?.toLowerCase().includes(q)) ||
+            Boolean(edu?.fieldOfStudy?.toLowerCase().includes(q))
         );
 
         const matchesCert = (m.certifications as any[]).some(
           (cert) =>
-            cert.title?.toLowerCase().includes(q) ||
-            cert.issuingAuthority?.toLowerCase().includes(q)
+            Boolean(cert?.title?.toLowerCase().includes(q)) ||
+            Boolean(cert?.issuingAuthority?.toLowerCase().includes(q))
         );
 
         return matchesBasic || matchesExp || matchesEdu || matchesCert;

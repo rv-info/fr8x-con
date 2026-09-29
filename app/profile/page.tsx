@@ -13,6 +13,7 @@ import {
   ProfileCertification,
   PlanTier,
   KYCDossier,
+  KYCStatus,
   UserPrivacySettings,
   DEFAULT_PRIVACY_SETTINGS,
   PrivacyLevel,
@@ -2898,6 +2899,25 @@ export default function ProfilePage() {
                 const finalIec = isIndia ? (tradeCustoms || iec).trim() : (iec || '');
                 const finalMto = isIndia ? (logisticsLicense || mto).trim() : (mto || '');
 
+                const complianceEval = evaluateCompliance(kycCountry, {
+                  taxId,
+                  corporateReg,
+                  tradeCustomsCode: tradeCustoms,
+                  logisticsLicense,
+                  gstn: finalGstn,
+                  pan: finalPan,
+                  iec: finalIec,
+                  mto: finalMto,
+                });
+
+                const isCompliant = complianceEval.isCompliant;
+                const computedStatus: KYCStatus = isCompliant ? 'verified' : 'under_review';
+                const missingList = complianceEval.missingFields.map((f, idx) => ({
+                  key: `missing_${idx}`,
+                  label: f,
+                  isMissing: true,
+                }));
+
                 const dossier: KYCDossier = {
                   userId: user.uid,
                   companyId: user.company,
@@ -2933,22 +2953,26 @@ export default function ProfilePage() {
                       verified: true,
                     },
                   ],
-                  status: 'verified',
-                  missingItemsChecklist: [],
+                  status: computedStatus,
+                  missingItemsChecklist: missingList,
                   statusHistory: [
                     {
-                      status: 'verified',
+                      status: computedStatus,
                       timestamp: now,
                       reviewerUid: 'system',
-                      reviewerName: 'FR8X Multi-Jurisdiction Automated Verifier',
-                      notes: `Self-declaration certified under ${activeProfile.nonRepudiationStatute} with non-repudiation audit trail.`,
+                      reviewerName: isCompliant
+                        ? 'FR8X Multi-Jurisdiction Automated Verifier'
+                        : 'FR8X Statutory Compliance Engine',
+                      notes: isCompliant
+                        ? `Self-declaration certified under ${activeProfile.nonRepudiationStatute} with non-repudiation audit trail.`
+                        : `Submission under review. Missing mandatory statutory filings: ${complianceEval.missingFields.join(', ')}.`,
                     },
                   ],
                   termsAccepted: true,
                   termsAcceptedAt: now,
                   termsVersion: 'v2.4-2026',
                   submittedAt: now,
-                  verifiedAt: now,
+                  verifiedAt: isCompliant ? now : undefined,
                   updatedAt: now,
                 };
 
@@ -2978,7 +3002,11 @@ export default function ProfilePage() {
                   associationId,
                 });
                 setShowKycModal(false);
-                toast(`Corporate KYC & Statutory filings for ${activeProfile.countryName} saved to ledger.`);
+                toast(
+                  isCompliant
+                    ? `Corporate KYC & Statutory filings for ${activeProfile.countryName} verified.`
+                    : `Corporate KYC submitted for ${activeProfile.countryName}. Status: Under Review (${complianceEval.missingFields.join(', ') || 'filings pending'}).`
+                );
               }}
               style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
             >

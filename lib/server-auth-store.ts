@@ -169,6 +169,11 @@ export interface ServerUserRecord {
   emailVerificationExpiresAt?: number;
   emailVerifiedAt?: string;
   firstLoginCompleted?: boolean;
+  privacySettings?: any;
+  gstn?: string;
+  pan?: string;
+  cin?: string;
+  iec?: string;
   createdAt: string;
   updatedAt?: string;
 }
@@ -842,6 +847,12 @@ class ServerSecurityStore {
     if (sanitizedUpdates.transferRequestId !== undefined) merged.transferRequestId = sanitizedUpdates.transferRequestId;
     if (sanitizedUpdates.transferSubmittedAt !== undefined) merged.transferSubmittedAt = sanitizedUpdates.transferSubmittedAt;
     if (sanitizedUpdates.contacts !== undefined) merged.contacts = sanitizedUpdates.contacts;
+    if (sanitizedUpdates.privacySettings !== undefined) merged.privacySettings = sanitizedUpdates.privacySettings;
+    if (sanitizedUpdates.gstn !== undefined) merged.gstn = sanitizedUpdates.gstn;
+    if (sanitizedUpdates.pan !== undefined) merged.pan = sanitizedUpdates.pan;
+    if (sanitizedUpdates.cin !== undefined) merged.cin = sanitizedUpdates.cin;
+    if (sanitizedUpdates.iec !== undefined) merged.iec = sanitizedUpdates.iec;
+    if (sanitizedUpdates.bio !== undefined) (merged as any).bio = sanitizedUpdates.bio;
 
     const cleanUid = merged.uid.toLowerCase();
     const cleanEmail = merged.email.toLowerCase();

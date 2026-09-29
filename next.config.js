@@ -86,6 +86,14 @@ const nextConfig = {
             value: 'strict-origin-when-cross-origin',
           },
           {
+            key: 'Strict-Transport-Security',
+            value: 'max-age=31536000; includeSubDomains; preload',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()',
+          },
+          {
             // Content Security Policy — blocks XSS injection.
             // Configured for Firebase, Google Fonts, Vercel, and ZeptoMail REST (server-side only).
             key: 'Content-Security-Policy',
