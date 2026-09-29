@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import {
   FeedPost,
   PostComment,
@@ -1525,6 +1525,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
       return next;
     });
+    queueAction('create_auction', newAuction, user.uid);
     upsertAuctionInDB(newAuction).catch(() => {});
     eventBus.recordEvent({
       eventType: 'auction_create',
@@ -1674,6 +1675,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     submitBidInDB(auctionId, newBid).catch(() => {});
+    queueAction('submit_bid', { auctionId, bid: newBid }, user.uid);
 
     // Save evidence docket directly into Firestore bid_audit_logs collection for Godfather
     try {
@@ -1692,7 +1694,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       }).catch(() => {});
     } catch {}
-    return true;
 
     eventBus.recordEvent({
       eventType: 'auction_bid',
@@ -1706,6 +1707,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     toast(
       `Bid of USD $${grandTotalUSD.toFixed(2)} submitted with Terms Evidence (${evidenceDocket.docketRef}).`
     );
+
+    return true;
   };
 
   // Rates
@@ -1744,7 +1747,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify(newRate),
     }).catch(() => {});
 
-    // Cloud Firestore sync
+    // Cloud Firestore sync + offline outbox queue
+    queueAction('create_rate', newRate, user.uid);
     upsertRateInDB(newRate).catch(() => {});
     eventBus.recordEvent({
       eventType: 'rate_edit',
@@ -1776,7 +1780,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ id: rateId, ...updates, updatedAt: now }),
     }).catch(() => {});
 
-    // Cloud Firestore sync
+    // Cloud Firestore sync + offline outbox queue
+    queueAction('update_rate', { id: rateId, ...updates, updatedAt: now }, user.uid);
     upsertRateInDB({ id: rateId, ...updates, updatedAt: now } as RateItem).catch(() => {});
     toast(`i-Rate ${rateId} updated.`);
   };
@@ -1798,7 +1803,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       method: 'DELETE',
     }).catch(() => {});
 
-    // Cloud Firestore deletion
+    // Cloud Firestore deletion + offline outbox queue
+    queueAction('delete_rate', { id: rateId }, user.uid);
     deleteRateInDB(rateId).catch(() => {});
     toast(`Rate ${rateId} removed from inventory.`);
   };
@@ -1957,85 +1963,106 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return { count: validRows.length, errors };
   };
 
+  const dataContextValue = useMemo<DataContextType>(
+    () => ({
+      posts,
+      addPost,
+      editPost,
+      deletePost,
+      reactPost,
+      togglePostSupport,
+      togglePostCritique,
+      togglePostAmplify,
+      savePost,
+      reportTarget,
+      reports,
+      addComment,
+      addReply,
+      addNestedReply,
+      reactComment,
+      reactReply,
+      jobs,
+      addJob,
+      deleteJob,
+      verifyJobPayment,
+      topics,
+      addTopic,
+      updateTopic,
+      deleteTopic,
+      addTopicReply,
+      deleteTopicReply,
+      reactTopic,
+      reactTopicReply,
+      reviews,
+      addReview,
+      updateReviewRemark,
+      reactReviewRemark,
+      cases,
+      addCase,
+      agreeCase,
+      disputeCase,
+      auctions,
+      addAuction,
+      updateAuctionStatus,
+      verifyAuctionPayment,
+      submitBid,
+      mySubmittedBids,
+      rates,
+      myRates,
+      addMyRate,
+      updateMyRate,
+      deleteMyRate,
+      clearAllMyRates,
+      bulkImportRates,
+      bulkUpdateRates,
+      notifications,
+      markNotificationRead,
+      markAllNotificationsRead,
+      masterLocations,
+      masterCarriers,
+      masterEquipment,
+      masterCommodities,
+      masterIncoterms,
+      masterTaxCodes,
+      saveDraftAction: async (id, type, data) => {
+        await saveDraft(id, type, data);
+      },
+      getDraftAction: async (id) => {
+        return await getDraft(id);
+      },
+      deleteDraftAction: async (id) => {
+        await deleteDraft(id);
+      },
+      recordRecentAction: async (id, type, title, summary) => {
+        await recordRecentlyViewed(id, type, title, summary);
+      },
+      getRecentlyViewedAction: async (type, limitCount) => {
+        return await getRecentlyViewed(type, limitCount);
+      },
+    }),
+    [
+      posts,
+      reports,
+      jobs,
+      topics,
+      reviews,
+      cases,
+      auctions,
+      mySubmittedBids,
+      rates,
+      myRates,
+      notifications,
+      masterLocations,
+      masterCarriers,
+      masterEquipment,
+      masterCommodities,
+      masterIncoterms,
+      masterTaxCodes,
+    ]
+  );
+
   return (
-    <DataContext.Provider
-      value={{
-        posts,
-        addPost,
-        editPost,
-        deletePost,
-        reactPost,
-        togglePostSupport,
-        togglePostCritique,
-        togglePostAmplify,
-        savePost,
-        reportTarget,
-        reports,
-        addComment,
-        addReply,
-        addNestedReply,
-        reactComment,
-        reactReply,
-        jobs,
-        addJob,
-        deleteJob,
-        verifyJobPayment,
-        topics,
-        addTopic,
-        updateTopic,
-        deleteTopic,
-        addTopicReply,
-        deleteTopicReply,
-        reactTopic,
-        reactTopicReply,
-        reviews,
-        addReview,
-        updateReviewRemark,
-        reactReviewRemark,
-        cases,
-        addCase,
-        agreeCase,
-        disputeCase,
-        auctions,
-        addAuction,
-        updateAuctionStatus,
-        verifyAuctionPayment,
-        submitBid,
-        mySubmittedBids,
-        rates,
-        myRates,
-        addMyRate,
-        updateMyRate,
-        deleteMyRate,
-        clearAllMyRates,
-        bulkImportRates,
-        bulkUpdateRates,
-        notifications,
-        markNotificationRead,
-        markAllNotificationsRead,
-        masterLocations,
-        masterCarriers,
-        masterEquipment,
-        masterCommodities,
-        masterIncoterms,
-        masterTaxCodes,
-        saveDraftAction: async (id, type, data) => {
-          await saveDraft(id, type, data);
-        },
-        getDraftAction: async (id) => {
-          return await getDraft(id);
-        },
-        deleteDraftAction: async (id) => {
-          await deleteDraft(id);
-        },
-        recordRecentAction: async (id, type, title, summary) => {
-          await recordRecentlyViewed(id, type, title, summary);
-        },
-        getRecentlyViewedAction: async (type, limitCount) => {
-          return await getRecentlyViewed(type, limitCount);
-        },
-      }}
-    >
+    <DataContext.Provider value={dataContextValue}>
       {children}
     </DataContext.Provider>
   );

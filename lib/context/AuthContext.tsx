@@ -266,6 +266,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Cross-tab synchronization: broadcast & listen for login, logout, and user switch
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if ('BroadcastChannel' in window) {
+        channel = new BroadcastChannel('fr8x_auth_sync');
+      }
+    } catch {}
+
+    const handleSync = (data: { type: string; uid?: string | null }) => {
+      if (data.type === 'LOGOUT') {
+        setCurrentUser(null);
+        setUserStatusState('offline');
+      } else if (data.type === 'LOGIN' || data.type === 'USER_SWITCHED') {
+        const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
+        if (activeUid) {
+          const stored = localStorage.getItem(USERS_STORAGE_KEY);
+          if (stored) {
+            try {
+              const list: UserProfile[] = JSON.parse(stored);
+              const found = list.find((u) => u.uid === activeUid || (u.email && u.email.toLowerCase() === activeUid.toLowerCase()));
+              if (found) {
+                setCurrentUser(found);
+                setUserStatusState('available');
+              }
+            } catch {}
+          }
+        }
+      }
+    };
+
+    if (channel) {
+      channel.onmessage = (event) => {
+        if (event.data) handleSync(event.data);
+      };
+    }
+
+    const handleStorageEvent = (event: StorageEvent) => {
+      if (event.key === ACTIVE_SESSION_KEY) {
+        if (!event.newValue) {
+          handleSync({ type: 'LOGOUT' });
+        } else {
+          handleSync({ type: 'LOGIN', uid: event.newValue });
+        }
+      } else if (event.key === STATUS_KEY && event.newValue) {
+        setUserStatusState(event.newValue as UserStatus);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      if (channel) {
+        channel.close();
+      }
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, []);
+
   // Mark user offline when tab/window closes
   useEffect(() => {
     const onUnload = () => {
@@ -546,6 +607,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearRememberedEmail();
     }
 
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const bc = new BroadcastChannel('fr8x_auth_sync');
+        bc.postMessage({ type: 'LOGIN', uid: found.uid });
+        bc.close();
+      }
+    } catch {}
+
     return true;
   };
 
@@ -721,6 +790,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (auth && (auth as any).app && auth.currentUser) {
           firebaseSignOut(auth).catch(() => {});
         }
+        try {
+          if ('BroadcastChannel' in window) {
+            const bc = new BroadcastChannel('fr8x_auth_sync');
+            bc.postMessage({ type: 'LOGOUT' });
+            bc.close();
+          }
+        } catch {}
       }
     } catch {}
 
@@ -735,28 +811,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const bidPostingFee = isPremium ? 180 : 300;
   const bidDiscountPercentage = isPremium ? 40 : 0;
 
+  const authContextValue = React.useMemo<AuthContextType>(
+    () => ({
+      user: activeUser,
+      isAuthenticated,
+      isLoading,
+      allUsers,
+      userStatus,
+      setUserStatus,
+      switchUser,
+      updateUser,
+      upgradePlan,
+      login,
+      register,
+      resetPasswordWithOtp,
+      logout,
+      loadRememberedEmail: loadRememberedEmailFn,
+      loadRemembered: loadRememberedEmailFn,
+      bidPostingFee,
+      bidDiscountPercentage,
+    }),
+    [
+      activeUser,
+      isAuthenticated,
+      isLoading,
+      allUsers,
+      userStatus,
+      bidPostingFee,
+      bidDiscountPercentage,
+      loadRememberedEmailFn,
+    ]
+  );
+
   return (
-    <AuthContext.Provider
-      value={{
-        user: activeUser,
-        isAuthenticated,
-        isLoading,
-        allUsers,
-        userStatus,
-        setUserStatus,
-        switchUser,
-        updateUser,
-        upgradePlan,
-        login,
-        register,
-        resetPasswordWithOtp,
-        logout,
-        loadRememberedEmail: loadRememberedEmailFn,
-        loadRemembered: loadRememberedEmailFn,
-        bidPostingFee,
-        bidDiscountPercentage,
-      }}
-    >
+    <AuthContext.Provider value={authContextValue}>
       {children}
     </AuthContext.Provider>
   );

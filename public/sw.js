@@ -146,8 +146,15 @@ self.addEventListener('fetch', (event) => {
 
   // 3. API Read Calls: Network with 2.5s Timeout and Stale Cache Fallback
   if (url.pathname.startsWith('/api/')) {
-    // Ping probe bypasses service worker cache entirely
-    if (url.pathname === '/api/ping') {
+    // SECURITY: Never cache sensitive auth, user profile, payment, or administrative endpoints
+    if (
+      url.pathname === '/api/ping' ||
+      url.pathname.startsWith('/api/auth/') ||
+      url.pathname.startsWith('/api/user/') ||
+      url.pathname.startsWith('/api/godfather/') ||
+      url.pathname.startsWith('/api/payments/') ||
+      url.pathname.startsWith('/api/admin/')
+    ) {
       return;
     }
 

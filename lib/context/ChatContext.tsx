@@ -1,12 +1,13 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { ChatContact, ChatMessage, ActiveChatWindow } from '@/lib/types';
 import { useAuth } from './AuthContext';
 
 const INITIAL_CONTACTS: ChatContact[] = [];
-
 const INITIAL_MESSAGES: Record<string, ChatMessage[]> = {};
+const CHAT_CONTACTS_KEY = 'fr8x_chat_contacts';
+const CHAT_MESSAGES_KEY = 'fr8x_chat_messages';
 
 interface ChatContextType {
   isLauncherOpen: boolean;
@@ -26,44 +27,52 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
+function safeSaveLocalStorage(key: string, data: any) {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (err: any) {
+    if (err.name === 'QuotaExceededError') {
+      console.warn(`[ChatContext] LocalStorage quota exceeded writing ${key}. Pruning old records.`);
+    }
+  }
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [isLauncherOpen, setIsLauncherOpen] = useState(false);
   const [activeWindows, setActiveWindows] = useState<ActiveChatWindow[]>([]);
-  const [contacts, setContacts] = useState<ChatContact[]>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fr8x_chat_contacts');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (Array.isArray(parsed)) {
-            const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
-            return parsed.filter((c: any) => !dummyIds.has(c.id));
-          }
+  // SSR Hydration Safe: Initialize to empty on both server & client initial render
+  const [contacts, setContacts] = useState<ChatContact[]>(INITIAL_CONTACTS);
+  const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(INITIAL_MESSAGES);
+
+  // Client hydration from localStorage after mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const savedContacts = localStorage.getItem(CHAT_CONTACTS_KEY);
+      if (savedContacts) {
+        const parsed = JSON.parse(savedContacts);
+        if (Array.isArray(parsed)) {
+          const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
+          setContacts(parsed.filter((c: any) => !dummyIds.has(c.id)));
         }
-      } catch {}
-    }
-    return [];
-  });
-  const [allMessages, setAllMessages] = useState<Record<string, ChatMessage[]>>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const saved = localStorage.getItem('fr8x_chat_messages');
-        if (saved) {
-          const parsed = JSON.parse(saved);
-          if (parsed && typeof parsed === 'object') {
-            const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
-            const clean: Record<string, ChatMessage[]> = {};
-            Object.keys(parsed).forEach((k) => {
-              if (!dummyIds.has(k)) clean[k] = parsed[k];
-            });
-            return clean;
-          }
+      }
+
+      const savedMessages = localStorage.getItem(CHAT_MESSAGES_KEY);
+      if (savedMessages) {
+        const parsed = JSON.parse(savedMessages);
+        if (parsed && typeof parsed === 'object') {
+          const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
+          const clean: Record<string, ChatMessage[]> = {};
+          Object.keys(parsed).forEach((k) => {
+            if (!dummyIds.has(k)) clean[k] = parsed[k];
+          });
+          setAllMessages(clean);
         }
-      } catch {}
-    }
-    return {};
-  });
+      }
+    } catch {}
+  }, []);
 
   const totalUnreadCount = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
 
@@ -80,8 +89,9 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   const openChatWith = (contactId: string, context?: ChatContact['contextRecord']) => {
-    // Ensure contact exists in state
     let target = contacts.find((c) => c.id === contactId);
+    let nextContacts: ChatContact[];
+
     if (!target) {
       target = {
         id: contactId,
@@ -94,25 +104,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         unreadCount: 0,
         contextRecord: context,
       };
-      setContacts((prev) => [target!, ...prev]);
-    } else if (context) {
-      setContacts((prev) =>
-        prev.map((c) => (c.id === contactId ? { ...c, contextRecord: context } : c))
-      );
+      nextContacts = [target, ...contacts];
+    } else {
+      nextContacts = contacts.map((c) => {
+        if (c.id !== contactId) return c;
+        return {
+          ...c,
+          unreadCount: 0,
+          contextRecord: context || c.contextRecord,
+        };
+      });
     }
 
-    // Reset unread count for this contact
-    setContacts((prev) =>
-      prev.map((c) => (c.id === contactId ? { ...c, unreadCount: 0 } : c))
-    );
+    setContacts(nextContacts);
+    safeSaveLocalStorage(CHAT_CONTACTS_KEY, nextContacts);
 
-    // Open or restore window
+    // Open or restore window (Max 4 windows open on desktop side-by-side)
     setActiveWindows((prev) => {
       const existing = prev.find((w) => w.contactId === contactId);
       if (existing) {
         return prev.map((w) => (w.contactId === contactId ? { ...w, isMinimized: false } : w));
       }
-      // Maximum 4 windows open on desktop side-by-side in parallel
       const currentList = prev.length >= 4 ? prev.slice(1) : prev;
       return [...currentList, { contactId, isMinimized: false }];
     });
@@ -141,10 +153,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       status: 'sent',
     };
 
-    setAllMessages((prev) => ({
-      ...prev,
-      [contactId]: [...(prev[contactId] || []), newMsg],
-    }));
+    setAllMessages((prev) => {
+      const updatedList = [...(prev[contactId] || []), newMsg];
+      const nextMap = { ...prev, [contactId]: updatedList };
+      safeSaveLocalStorage(CHAT_MESSAGES_KEY, nextMap);
+      return nextMap;
+    });
 
     // Counterpart automated acknowledgement simulation
     const targetContact = contacts.find((c) => c.id === contactId);
@@ -158,31 +172,42 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: 'delivered',
       };
-      setAllMessages((prev) => ({
-        ...prev,
-        [contactId]: [...(prev[contactId] || []), replyMsg],
-      }));
+      setAllMessages((prev) => {
+        const updatedList = [...(prev[contactId] || []), replyMsg];
+        const nextMap = { ...prev, [contactId]: updatedList };
+        safeSaveLocalStorage(CHAT_MESSAGES_KEY, nextMap);
+        return nextMap;
+      });
     }, 1500);
   };
 
+  const contextValue = useMemo<ChatContextType>(
+    () => ({
+      isLauncherOpen,
+      setIsLauncherOpen,
+      toggleLauncher,
+      activeWindows,
+      contacts,
+      allMessages,
+      totalUnreadCount,
+      openChatWith,
+      closeChatWindow,
+      toggleMinimizeWindow,
+      sendMessageTo,
+      getContact,
+      getMessagesFor,
+    }),
+    [
+      isLauncherOpen,
+      activeWindows,
+      contacts,
+      allMessages,
+      totalUnreadCount,
+    ]
+  );
+
   return (
-    <ChatContext.Provider
-      value={{
-        isLauncherOpen,
-        setIsLauncherOpen,
-        toggleLauncher,
-        activeWindows,
-        contacts,
-        allMessages,
-        totalUnreadCount,
-        openChatWith,
-        closeChatWindow,
-        toggleMinimizeWindow,
-        sendMessageTo,
-        getContact,
-        getMessagesFor,
-      }}
-    >
+    <ChatContext.Provider value={contextValue}>
       {children}
     </ChatContext.Provider>
   );
@@ -195,3 +220,4 @@ export function useChat() {
   }
   return context;
 }
+

@@ -9,10 +9,10 @@
  * - Cursor & limit pagination support.
  */
 
+import React, { useRef, useEffect, useState } from 'react';
 import useSWR, { SWRConfiguration } from 'swr';
 import { useNetwork } from '@/lib/context/NetworkContext';
 import { getCachedMasterData, setCachedMasterData } from '@/lib/cache/indexedDBCache';
-import { useRef, useEffect } from 'react';
 
 export interface LowBandwidthFetchOptions extends RequestInit {
   cacheKey?: string;
@@ -102,7 +102,7 @@ export function useAdaptiveSWR<T = any>(
  * Debounced search query hook with active in-flight request cancellation.
  */
 export function useDebouncedSearch(searchTerm: string, delayMs: number = 300) {
-  const [debouncedValue, setDebouncedValue] = React.useState(searchTerm);
+  const [debouncedValue, setDebouncedValue] = useState(searchTerm);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -126,5 +126,3 @@ export function useDebouncedSearch(searchTerm: string, delayMs: number = 300) {
 
   return { debouncedValue, getAbortSignal: () => abortControllerRef.current?.signal };
 }
-
-import * as React from 'react';

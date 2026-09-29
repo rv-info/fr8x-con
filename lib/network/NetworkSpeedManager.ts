@@ -22,7 +22,9 @@ export interface QueuedOfflineAction {
     | 'rate_bookmark'
     | 'submit_bid'
     | 'create_auction'
-    | 'create_rate';
+    | 'create_rate'
+    | 'update_rate'
+    | 'delete_rate';
   payload: any;
   actorUid: string;
   createdAt: string;
@@ -80,6 +82,24 @@ class NetworkSpeedManager {
 
       // Heartbeat ping every 45s (or 15s if slow) to detect stealth packet loss / carrier throttling
       this.startHeartbeat();
+
+      // Cross-tab synchronization for outbox state
+      if ('BroadcastChannel' in window) {
+        try {
+          const bc = new BroadcastChannel('fr8x_network_sync');
+          bc.onmessage = (evt) => {
+            if (evt.data?.type === 'OUTBOX_CHANGED') {
+              this.notify();
+            }
+          };
+        } catch {}
+      }
+
+      window.addEventListener('storage', (evt) => {
+        if (evt.key === OUTBOX_STORAGE_KEY) {
+          this.notify();
+        }
+      });
     }
   }
 
@@ -260,6 +280,24 @@ class NetworkSpeedManager {
       } catch {}
     }
 
+    // Bridge with IndexedDB pending_sync_queue for durable fallback
+    if (typeof window !== 'undefined') {
+      import('@/lib/cache/indexedDBCache')
+        .then(({ enqueueOfflineAction }) => {
+          enqueueOfflineAction(actionType, '', payload).catch(() => {});
+        })
+        .catch(() => {});
+
+      // Cross-tab broadcast
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('fr8x_network_sync');
+          bc.postMessage({ type: 'OUTBOX_CHANGED' });
+          bc.close();
+        }
+      } catch {}
+    }
+
     this.notify();
 
     // If online, schedule non-blocking background flush with jitter
@@ -288,16 +326,41 @@ class NetworkSpeedManager {
     const remainingQueue: QueuedOfflineAction[] = [];
 
     // Lazy import DB helpers to avoid SSR circular imports
-    const { upsertPostInDB, upsertAuctionInDB, submitBidInDB, upsertRateInDB } = await import('@/lib/firebase/firestore');
+    const {
+      upsertPostInDB,
+      upsertAuctionInDB,
+      submitBidInDB,
+      upsertRateInDB,
+      deleteRateInDB,
+    } = await import('@/lib/firebase/firestore');
 
     for (const item of queue) {
       try {
-        if (item.actionType === 'like_post' || item.actionType === 'create_post') {
+        if (item.actionType === 'create_post') {
           if (item.payload) {
             const payloadId = item.payload.id || item.payload.postId;
             if (payloadId) {
               await upsertPostInDB({ ...item.payload, id: payloadId });
+              // Sync with authoritative server DBMS
+              await fetch('/api/feed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...item.payload, id: payloadId }),
+              }).catch(() => {});
             }
+          }
+        } else if (item.actionType === 'edit_post') {
+          if (item.payload) {
+            await upsertPostInDB(item.payload);
+            await fetch('/api/feed', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item.payload),
+            }).catch(() => {});
+          }
+        } else if (item.actionType === 'like_post') {
+          if (item.payload) {
+            await upsertPostInDB(item.payload);
           }
         } else if (item.actionType === 'create_auction') {
           if (item.payload && item.payload.id) {
@@ -306,10 +369,42 @@ class NetworkSpeedManager {
         } else if (item.actionType === 'submit_bid') {
           if (item.payload && item.payload.auctionId && item.payload.bid) {
             await submitBidInDB(item.payload.auctionId, item.payload.bid);
+            if (item.payload.bid.evidenceDocket) {
+              try {
+                const { db } = await import('@/lib/firebase/client');
+                if (db) {
+                  const { doc, setDoc } = await import('firebase/firestore');
+                  const auditRef = doc(db, 'bid_audit_logs', item.payload.bid.evidenceDocket.docketRef);
+                  await setDoc(
+                    auditRef,
+                    {
+                      ...item.payload.bid.evidenceDocket,
+                      auctionId: item.payload.auctionId,
+                      grandTotalUSD: item.payload.bid.grandTotalUSD,
+                      createdAt: new Date().toISOString(),
+                      status: 'VERIFIED_LEGAL_EVIDENCE',
+                    },
+                    { merge: true }
+                  );
+                }
+              } catch {}
+            }
           }
-        } else if (item.actionType === 'create_rate') {
+        } else if (item.actionType === 'create_rate' || item.actionType === 'update_rate') {
           if (item.payload && item.payload.id) {
             await upsertRateInDB(item.payload);
+            await fetch('/api/rates', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(item.payload),
+            }).catch(() => {});
+          }
+        } else if (item.actionType === 'delete_rate') {
+          if (item.payload && item.payload.id) {
+            await deleteRateInDB(item.payload.id);
+            await fetch(`/api/rates?id=${encodeURIComponent(item.payload.id)}`, {
+              method: 'DELETE',
+            }).catch(() => {});
           }
         }
         syncedCount++;
@@ -326,6 +421,14 @@ class NetworkSpeedManager {
     if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
       try {
         localStorage.setItem(OUTBOX_STORAGE_KEY, JSON.stringify(remainingQueue));
+      } catch {}
+
+      try {
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('fr8x_network_sync');
+          bc.postMessage({ type: 'OUTBOX_CHANGED' });
+          bc.close();
+        }
       } catch {}
     }
 
