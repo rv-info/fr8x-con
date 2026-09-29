@@ -4,6 +4,7 @@ import path from 'path';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { EmailService } from '@/lib/email-service';
 import { BroadcastEmailTemplateParams } from '@/lib/email-templates';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 function getHistoryFilePath(): string {
   const dir = path.join(process.cwd(), '.knox');
@@ -36,6 +37,11 @@ function saveBroadcastHistory(history: any[]) {
 }
 
 export async function GET(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     // 1. Get all registered users from persistent server security store
     const rawUsers = serverSecurityStore.getAllRegisteredUsers();
@@ -69,6 +75,11 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     const body = await req.json();
     const {

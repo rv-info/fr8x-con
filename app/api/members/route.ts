@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { authenticateUserSession } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
+  // ── Authentication guard ────────────────────────────────────────────────
+  const { authenticated, user, errorResponse } = authenticateUserSession(req);
+  if (!authenticated || !user) return errorResponse!;
+  // ───────────────────────────────────────────────────────────────────────
+
   try {
     const { searchParams } = new URL(req.url);
     const q = (searchParams.get('q') || '').trim().toLowerCase();
@@ -12,19 +18,22 @@ export async function GET(req: NextRequest) {
     const limit = Math.min(Number(searchParams.get('limit') || 100), 200);
 
     const allRecords = serverSecurityStore.getAllRegisteredUsers();
+    const callerUid = user.uid;
 
-    // Map to sanitized public profile
+    // Map to sanitized public profiles — strip PII except for the caller's own record
     const sanitized = allRecords.map((uRaw) => {
       const u = uRaw as any;
       const displayName = u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email;
       const role = u.role || 'freight_forwarder';
       const isVerified = Boolean(u.isEmailVerified || u.email_verified || u.isVerified);
       const hasGoldenTick = Boolean(u.hasGoldenTick || u.plan === 'premium');
+      const isSelf = u.uid === callerUid;
 
       return {
         uid: u.uid,
         id: u.uid,
-        email: u.email,
+        // Email only visible on own record to prevent harvesting
+        email: isSelf ? u.email : undefined,
         displayName,
         firstName: u.firstName || displayName.split(' ')[0] || '',
         lastName: u.lastName || displayName.split(' ').slice(1).join(' ') || '',
@@ -41,9 +50,10 @@ export async function GET(req: NextRequest) {
         isVerified,
         hasGoldenTick,
         plan: u.plan || 'trial',
-        gstn: u.gstn || '',
-        pan: u.pan || '',
-        mobile: u.mobile || '',
+        // PII fields — only expose to the record owner
+        gstn: isSelf ? (u.gstn || '') : undefined,
+        pan: isSelf ? (u.pan || '') : undefined,
+        mobile: isSelf ? (u.mobile || '') : undefined,
         operatingCorridors: u.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam',
         avatarUrl: u.avatarUrl || null,
         companyLogoUrl: u.companyLogoUrl || null,

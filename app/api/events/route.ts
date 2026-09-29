@@ -1,15 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { recordIdempotentEventsBatchInDB, saveUserIntentInDB, getUserIntentFromDB } from '@/lib/firebase/firestore';
 import { IdempotentEvent, LogisticsIntent } from '@/lib/types';
+import { authenticateUserSession } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
+  // ── Authentication guard ────────────────────────────────────────────────
+  const { authenticated, user, errorResponse } = authenticateUserSession(req);
+  if (!authenticated || !user) return errorResponse!;
+  // ───────────────────────────────────────────────────────────────────────
+
   try {
     const body = await req.json();
-    const events: IdempotentEvent[] = body.events || (body.event ? [body.event] : []);
+    const rawEvents: IdempotentEvent[] = body.events || (body.event ? [body.event] : []);
 
-    if (!Array.isArray(events) || events.length === 0) {
+    if (!Array.isArray(rawEvents) || rawEvents.length === 0) {
       return NextResponse.json({ success: false, error: 'No events provided' }, { status: 400 });
     }
+
+    // Security: override actorId with the verified session uid — client cannot spoof a foreign actorId
+    const events: IdempotentEvent[] = rawEvents.map((evt) => ({ ...evt, actorId: user.uid }));
 
     // Persist events idempotently
     const count = await recordIdempotentEventsBatchInDB(events);

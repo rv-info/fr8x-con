@@ -795,40 +795,53 @@ class ServerSecurityStore {
       return { success: false, error: 'User record not found in DBMS.' };
     }
 
+    // SECURITY: Prevent unauthorized elevation of role, plan, status, or verification flags
+    const sanitizedUpdates = { ...updates };
+    delete (sanitizedUpdates as any).role;
+    delete (sanitizedUpdates as any).plan;
+    delete (sanitizedUpdates as any).status;
+    delete (sanitizedUpdates as any).isVerified;
+    delete (sanitizedUpdates as any).email_verified;
+    delete (sanitizedUpdates as any).hasGoldenTick;
+    delete (sanitizedUpdates as any).passwordHash;
+    delete (sanitizedUpdates as any).salt;
+
     const now = new Date().toISOString();
     const merged: ServerUserRecord = {
       ...existing,
-      ...updates,
+      ...sanitizedUpdates,
       uid: existing.uid, // preserve canonical uid
-      email: (updates.email || existing.email).trim().toLowerCase(),
+      email: (sanitizedUpdates.email || existing.email).trim().toLowerCase(),
       updatedAt: now,
     };
 
-    if (updates.mobile !== undefined) merged.mobile = updates.mobile;
-    if (updates.city !== undefined) merged.city = updates.city;
-    if (updates.state !== undefined) merged.state = updates.state;
-    if (updates.country !== undefined) merged.country = updates.country;
-    if (updates.postalCode !== undefined) merged.postalCode = updates.postalCode;
-    if (updates.formattedAddress !== undefined) merged.formattedAddress = updates.formattedAddress;
-    if (updates.timezone !== undefined) merged.timezone = updates.timezone;
-    if (updates.designation !== undefined) merged.designation = updates.designation;
-    if (updates.firstName !== undefined) merged.firstName = updates.firstName;
-    if (updates.lastName !== undefined) merged.lastName = updates.lastName;
-    if (updates.displayName !== undefined) merged.displayName = updates.displayName;
-    if (updates.company !== undefined) merged.company = updates.company;
-    if (updates.companyId !== undefined) merged.companyId = updates.companyId;
-    if (updates.avatarUrl !== undefined) merged.avatarUrl = updates.avatarUrl;
-    if (updates.companyLogoUrl !== undefined) merged.companyLogoUrl = updates.companyLogoUrl;
-    if (updates.experiences !== undefined) merged.experiences = updates.experiences;
-    if (updates.educations !== undefined) merged.educations = updates.educations;
-    if (updates.certifications !== undefined) merged.certifications = updates.certifications;
-    if (updates.operatingCorridors !== undefined) merged.operatingCorridors = updates.operatingCorridors;
-    if (updates.companyTransferStatus !== undefined) merged.companyTransferStatus = updates.companyTransferStatus;
-    if (updates.pendingCompany !== undefined) merged.pendingCompany = updates.pendingCompany;
-    if (updates.pendingEmail !== undefined) merged.pendingEmail = updates.pendingEmail;
-    if (updates.transferRequestId !== undefined) merged.transferRequestId = updates.transferRequestId;
-    if (updates.transferSubmittedAt !== undefined) merged.transferSubmittedAt = updates.transferSubmittedAt;
-    if (updates.contacts !== undefined) merged.contacts = updates.contacts;
+    if (sanitizedUpdates.mobile !== undefined) merged.mobile = sanitizedUpdates.mobile;
+    if (sanitizedUpdates.whatsappSameAsMobile !== undefined) (merged as any).whatsappSameAsMobile = Boolean(sanitizedUpdates.whatsappSameAsMobile);
+    if (sanitizedUpdates.isdCode !== undefined) (merged as any).isdCode = sanitizedUpdates.isdCode;
+    if (sanitizedUpdates.city !== undefined) merged.city = sanitizedUpdates.city;
+    if (sanitizedUpdates.state !== undefined) merged.state = sanitizedUpdates.state;
+    if (sanitizedUpdates.country !== undefined) merged.country = sanitizedUpdates.country;
+    if (sanitizedUpdates.postalCode !== undefined) merged.postalCode = sanitizedUpdates.postalCode;
+    if (sanitizedUpdates.formattedAddress !== undefined) merged.formattedAddress = sanitizedUpdates.formattedAddress;
+    if (sanitizedUpdates.timezone !== undefined) merged.timezone = sanitizedUpdates.timezone;
+    if (sanitizedUpdates.designation !== undefined) merged.designation = sanitizedUpdates.designation;
+    if (sanitizedUpdates.firstName !== undefined) merged.firstName = sanitizedUpdates.firstName;
+    if (sanitizedUpdates.lastName !== undefined) merged.lastName = sanitizedUpdates.lastName;
+    if (sanitizedUpdates.displayName !== undefined) merged.displayName = sanitizedUpdates.displayName;
+    if (sanitizedUpdates.company !== undefined) merged.company = sanitizedUpdates.company;
+    if (sanitizedUpdates.companyId !== undefined) merged.companyId = sanitizedUpdates.companyId;
+    if (sanitizedUpdates.avatarUrl !== undefined) merged.avatarUrl = sanitizedUpdates.avatarUrl;
+    if (sanitizedUpdates.companyLogoUrl !== undefined) merged.companyLogoUrl = sanitizedUpdates.companyLogoUrl;
+    if (sanitizedUpdates.experiences !== undefined) merged.experiences = sanitizedUpdates.experiences;
+    if (sanitizedUpdates.educations !== undefined) merged.educations = sanitizedUpdates.educations;
+    if (sanitizedUpdates.certifications !== undefined) merged.certifications = sanitizedUpdates.certifications;
+    if (sanitizedUpdates.operatingCorridors !== undefined) merged.operatingCorridors = sanitizedUpdates.operatingCorridors;
+    if (sanitizedUpdates.companyTransferStatus !== undefined) merged.companyTransferStatus = sanitizedUpdates.companyTransferStatus;
+    if (sanitizedUpdates.pendingCompany !== undefined) merged.pendingCompany = sanitizedUpdates.pendingCompany;
+    if (sanitizedUpdates.pendingEmail !== undefined) merged.pendingEmail = sanitizedUpdates.pendingEmail;
+    if (sanitizedUpdates.transferRequestId !== undefined) merged.transferRequestId = sanitizedUpdates.transferRequestId;
+    if (sanitizedUpdates.transferSubmittedAt !== undefined) merged.transferSubmittedAt = sanitizedUpdates.transferSubmittedAt;
+    if (sanitizedUpdates.contacts !== undefined) merged.contacts = sanitizedUpdates.contacts;
 
     const cleanUid = merged.uid.toLowerCase();
     const cleanEmail = merged.email.toLowerCase();
@@ -1050,7 +1063,7 @@ class ServerSecurityStore {
       email_verified: emailVerified,
       mobile: user.mobile,
       failedLoginAttempts: 0,
-      firstLoginCompleted: options?.firstLoginCompleted ?? true,
+      firstLoginCompleted: options?.firstLoginCompleted ?? false,
       emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
       emailVerifiedAt: emailVerified ? new Date().toISOString() : undefined,
       createdAt: new Date().toISOString(),

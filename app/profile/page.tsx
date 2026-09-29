@@ -325,16 +325,18 @@ export default function ProfilePage() {
     }));
   }, []);
 
+  const isdOptions = useMemo<DropdownOption[]>(() => {
+    return getAllGlobalISDCodes().map((isd) => ({
+      value: isd.code,
+      label: `${isd.code} (${isd.country})`,
+      subLabel: isd.isoCode,
+      flag: isd.flag || '🌐',
+    }));
+  }, []);
+
   const effectiveAddressSuggestions = useMemo(() => {
-    const list: string[] = [...addressSuggestions];
-    if (editCity || editCountry) {
-      const cityHub = `${editCity || 'Central'} Container Terminal / CFS Area, ${editState || editCountry}`;
-      const icdHub = `Inland Container Depot (ICD) Logistics Park, ${editCity || editState || editCountry}`;
-      if (!list.includes(cityHub)) list.push(cityHub);
-      if (!list.includes(icdHub)) list.push(icdHub);
-    }
-    return list.slice(0, 4);
-  }, [addressSuggestions, editCity, editState, editCountry]);
+    return addressSuggestions.filter(Boolean).slice(0, 3);
+  }, [addressSuggestions]);
 
   // Location Auto-Detect Handler via device GPS + free reverse geocoding API
   const handleAutoDetectLocation = async () => {
@@ -509,6 +511,25 @@ export default function ProfilePage() {
     setCountry(user.country || '');
     setFormattedAddress(user.formattedAddress || '');
     setTimezone(user.timezone || 'Asia/Kolkata');
+
+    const m = user.mobile || '';
+    const parsed = parseISD(m);
+    setEditIsdCode((user as any).isdCode || parsed.isdCode);
+    setEditPhoneNum(parsed.phoneNum);
+    setEditMobile(m);
+    setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
+    setEditFirstName(user.firstName || user.displayName?.split(' ')[0] || '');
+    setEditLastName(user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '');
+    setEditEmail(user.email || '');
+    setEditPersonId(user.uid || '');
+    setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
+    setEditDesignation(user.designation || '');
+    setEditCity(user.city || '');
+    setEditState(user.state || '');
+    setEditCountry(user.country || '');
+    setEditFormattedAddress(user.formattedAddress || '');
+    setEditTimezone(user.timezone || 'Asia/Kolkata');
+
     if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
       setExperiences(user.experiences);
     }
@@ -2753,9 +2774,23 @@ export default function ProfilePage() {
                   <div>
                     {(mobile || user.mobile) ? (
                       privacyPreviewMode === 'contact' ? (
-                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{mobile || user.mobile}</span>
+                          {(user as any).whatsappSameAsMobile !== false && (
+                            <span style={{ color: '#16a34a', fontSize: '9.5px', fontWeight: 700, background: '#dcfce7', padding: '1px 5px', borderRadius: '4px' }}>
+                              ✓ WhatsApp
+                            </span>
+                          )}
+                        </span>
                       ) : privacySettings.phoneVisibility === 'public' ? (
-                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{mobile || user.mobile}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <span>{mobile || user.mobile}</span>
+                          {(user as any).whatsappSameAsMobile !== false && (
+                            <span style={{ color: '#16a34a', fontSize: '9.5px', fontWeight: 700, background: '#dcfce7', padding: '1px 5px', borderRadius: '4px' }}>
+                              ✓ WhatsApp
+                            </span>
+                          )}
+                        </span>
                       ) : privacySettings.phoneVisibility === 'contacts_only' ? (
                         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
                           {maskPhone(mobile || user.mobile)}{' '}
@@ -3259,9 +3294,12 @@ export default function ProfilePage() {
               }
 
               // Update local state
+              const cleanPhone = editPhoneNum.trim();
+              const finalMobile = cleanPhone ? `${editIsdCode.trim()} ${cleanPhone}`.trim() : (editMobile.trim() || '');
+
               setFirstName(editFirstName);
               setLastName(editLastName);
-              setMobile(editMobile);
+              setMobile(finalMobile);
               setDesignation(editDesignation);
               setCity(editCity);
               setStateName(editState);
@@ -3277,7 +3315,8 @@ export default function ProfilePage() {
                 lastName: editLastName,
                 displayName: `${editFirstName} ${editLastName}`.trim(),
                 email: finalEmail,
-                mobile: editMobile,
+                mobile: finalMobile,
+                isdCode: editIsdCode.trim(),
                 whatsappSameAsMobile: editWhatsapp,
                 designation: editDesignation,
                 company: finalCompany,
@@ -3435,23 +3474,29 @@ export default function ProfilePage() {
                 <div className="field">
                   <label>Mobile Number <span className="req">*</span></label>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    {/* ISD Code Selector */}
-                    <select
-                      className="input"
-                      value={editIsdCode}
-                      onChange={(e) => {
-                        setEditIsdCode(e.target.value);
-                        setEditMobile(`${e.target.value} ${editPhoneNum}`.trim());
-                      }}
-                      style={{ width: '120px', flexShrink: 0, fontSize: '12px', paddingRight: '4px' }}
-                      title="Select country ISD code"
-                    >
-                      {getAllGlobalISDCodes().map((isd) => (
-                        <option key={`${isd.isoCode}-${isd.code}`} value={isd.code}>
-                          {isd.flag} {isd.code} {isd.isoCode}
-                        </option>
-                      ))}
-                    </select>
+                    {/* ISD Code Selector with Search */}
+                    <div style={{ width: '135px', flexShrink: 0 }}>
+                      <SearchableDropdown
+                        options={isdOptions}
+                        value={editIsdCode}
+                        onChange={(val) => {
+                          setEditIsdCode(val);
+                          setEditMobile(`${val} ${editPhoneNum}`.trim());
+                        }}
+                        placeholder="+91"
+                        searchPlaceholder="Search country or code…"
+                        popoverWidth={260}
+                        triggerHeight="36px"
+                        allowCustom={false}
+                        showClear={false}
+                        renderTriggerValue={(opt, val) => (
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', fontWeight: 600 }}>
+                            <span>{opt?.flag || '🌐'}</span>
+                            <span>{val || '+91'}</span>
+                          </span>
+                        )}
+                      />
+                    </div>
                     {/* Phone Number Input */}
                     <input
                       className="input"
@@ -3463,7 +3508,7 @@ export default function ProfilePage() {
                         setEditMobile(`${editIsdCode} ${num}`.trim());
                       }}
                       placeholder="9820012345"
-                      style={{ flex: 1 }}
+                      style={{ flex: 1, height: '36px' }}
                       maxLength={15}
                     />
                   </div>
@@ -3644,6 +3689,30 @@ export default function ProfilePage() {
                   placeholder="e.g. 42 Freight Lane, Port Area, Mumbai 400001"
                   style={{ height: '36px', fontSize: '13px' }}
                 />
+                {effectiveAddressSuggestions.length > 0 && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 600, alignSelf: 'center' }}>Detected suggestions:</span>
+                    {effectiveAddressSuggestions.map((sug, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setEditFormattedAddress(sug)}
+                        style={{
+                          background: '#f1f5f9',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '4px',
+                          padding: '3px 8px',
+                          fontSize: '11px',
+                          color: '#0f172a',
+                          cursor: 'pointer',
+                          textAlign: 'left',
+                        }}
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

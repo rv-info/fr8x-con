@@ -11,7 +11,7 @@ service cloud.firestore {
     }
     
     function isVerifiedUser() {
-      return isAuthenticated() && (request.auth.token.isVerified == true || request.auth.token.email_verified == true);
+      return isAuthenticated() && (request.auth.token.isVerified == true || isPlatformAdmin());
     }
     
     function isPlatformAdmin() {
@@ -108,17 +108,25 @@ service cloud.firestore {
     // Feed Posts & Threaded Comments (Post -> Comment -> Reply -> Reply-to-Reply)
     match /posts/{postId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow create: if isVerifiedUser() && request.resource.data.authorUid == request.auth.uid;
       allow update: if isPlatformAdmin() || (isAuthenticated() && (
-        (isOwner(resource.data.authorUid) && !resource.data.isAuctionAnnouncement && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'dis', 'comments'])) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'dis', 'liked', 'disliked', 'isSaved', 'comments'])
+        (isOwner(resource.data.authorUid) && !resource.data.isAuctionAnnouncement && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'likesCount', 'dis', 'dislikesCount', 'comments'])) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'likes', 'likesCount', 'dis', 'dislikesCount',
+          'liked', 'likedBy', 'disliked', 'dislikedBy',
+          'isSaved', 'savedBy', 'comments', 'commentCount',
+          'updatedAt'
+        ])
       ));
       allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
       
       match /comments/{commentId} {
         allow read: if isAuthenticated();
         allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
-        allow update: if isAuthenticated();
+        allow update: if isPlatformAdmin() || (isAuthenticated() && (
+          isOwner(resource.data.authorUid) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'dislikedBy', 'likesCount', 'dislikesCount', 'likes', 'dis'])
+        ));
         allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
       }
     }
@@ -171,7 +179,10 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids);
         allow create: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids) && request.resource.data.senderUid == request.auth.uid;
-        allow update: if isOwner(resource.data.senderUid) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'readAt']);
+        allow update: if isAuthenticated() && (
+          isOwner(resource.data.senderUid) ||
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids
+        ) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'readAt', 'isEdited', 'text', 'readBy']);
         allow delete: if isOwner(resource.data.senderUid) || isPlatformAdmin();
       }
     }
@@ -180,7 +191,10 @@ service cloud.firestore {
     match /nexusTopics/{topicId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isAuthenticated();
+      allow update: if isPlatformAdmin() || (isAuthenticated() && (
+        isOwner(resource.data.authorUid) ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'upvotes', 'downvotes', 'replyCount', 'lastActivityAt'])
+      ));
       allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
     }
 
@@ -363,6 +377,37 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
       allow update, delete: if isPlatformAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
+    }
+
+    // High-Resolution Logistics Intent Signals
+    match /intents/{userId} {
+      allow read, write: if isOwner(userId) || isPlatformAdmin();
+    }
+
+    // Broadcast Feeds
+    match /feeds/{feedId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    // App User Push & Bell Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.recipientUid == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isPlatformAdmin()
+      );
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.recipientUid == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isPlatformAdmin()
+      ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead', 'readAt', 'status']);
+      allow delete: if isAuthenticated() && (
+        resource.data.recipientUid == request.auth.uid ||
+        resource.data.userId == request.auth.uid ||
+        isPlatformAdmin()
+      );
     }
   }
 }

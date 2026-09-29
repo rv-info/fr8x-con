@@ -6,35 +6,9 @@ import {
   DbmsCompanyRecord,
   checkCompanyDuplicate,
 } from '@/lib/dbms/server-dbms';
-import { verifySignedSessionToken } from '@/lib/crypto';
-import { serverSecurityStore } from '@/lib/server-auth-store';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
-
-function checkGodfatherAuth(req: NextRequest): boolean {
-  const sessionCookie =
-    req.cookies.get('fr8x_godfather_session') ||
-    req.cookies.get('__Secure-FR8X-Godfather-Session');
-
-  if (!sessionCookie || !sessionCookie.value) {
-    if (process.env.NODE_ENV !== 'production') return true;
-    return false;
-  }
-
-  const verification = verifySignedSessionToken<any>(sessionCookie.value);
-  if (!verification.valid || !verification.payload) {
-    if (process.env.NODE_ENV !== 'production') return true;
-    return false;
-  }
-
-  const { sessionId, role, expiresAt } = verification.payload;
-  if (expiresAt && new Date() > new Date(expiresAt)) return false;
-  if (!serverSecurityStore.isGodfatherSessionActive(sessionId) && process.env.NODE_ENV === 'production') {
-    return false;
-  }
-
-  return ['godfather_owner', 'godfather_admin', 'godfather_compliance', 'godfather_moderator'].includes(role);
-}
 
 /**
  * GET /api/godfather/companies
@@ -42,12 +16,8 @@ function checkGodfatherAuth(req: NextRequest): boolean {
  * Accessible exclusively to verified Godfather operators.
  */
 export async function GET(req: NextRequest) {
-  if (!checkGodfatherAuth(req)) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized: Godfather operator privileges required.' },
-      { status: 401 }
-    );
-  }
+  const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
+  if (!authenticated) return errorResponse!;
 
   try {
     const companies = getPersistedCompanies();
@@ -84,12 +54,8 @@ export async function GET(req: NextRequest) {
  * Direct create or update of master company in DBMS.
  */
 export async function POST(req: NextRequest) {
-  if (!checkGodfatherAuth(req)) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized: Godfather operator privileges required.' },
-      { status: 401 }
-    );
-  }
+  const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
+  if (!authenticated) return errorResponse!;
 
   try {
     const body: DbmsCompanyRecord = await req.json();
@@ -120,12 +86,8 @@ export async function POST(req: NextRequest) {
  * Merges a duplicate company into a canonical parent entity.
  */
 export async function PUT(req: NextRequest) {
-  if (!checkGodfatherAuth(req)) {
-    return NextResponse.json(
-      { success: false, error: 'Unauthorized: Godfather operator privileges required.' },
-      { status: 401 }
-    );
-  }
+  const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
+  if (!authenticated) return errorResponse!;
 
   try {
     const { canonicalId, duplicateId } = await req.json();

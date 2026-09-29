@@ -10,16 +10,21 @@ service firebase.storage {
         request.resource.size < 2 * 1024 * 1024;
     }
 
-    // KYC Compliance Documents (PDF, JPEG, PNG, max 10MB)
+    // KYC Compliance Documents (PDF, JPEG, PNG, WEBP max 10MB)
     match /kyc/{companyId}/{fileName} {
       allow read: if request.auth != null && (
         request.auth.uid == companyId ||
-        request.auth.token.role == 'super_admin'
+        request.auth.token.companyId == companyId ||
+        request.auth.token.role == 'super_admin' ||
+        request.auth.token.role == 'godfather'
       );
       allow write: if request.auth != null && (
         request.auth.uid == companyId ||
-        request.auth.token.role == 'super_admin'
-      ) && request.resource.size < 10 * 1024 * 1024;
+        request.auth.token.companyId == companyId ||
+        request.auth.token.role == 'super_admin' ||
+        request.auth.token.role == 'godfather'
+      ) && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('application/pdf|image/(jpeg|png|webp)');
     }
 
     // Profile Avatars

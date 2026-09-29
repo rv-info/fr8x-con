@@ -73,8 +73,8 @@ export async function GET(req: NextRequest) {
               suggestedStreetAddress,
               data.display_name
                 ? data.display_name.split(',').slice(0, 3).join(',').trim()
-                : `${city} Logistics Hub, ${state}`,
-              `${city || 'Port'} Container Terminal / CFS Area, ${state} ${postalCode}`.trim(),
+                : `${city}, ${state}`,
+              streetLine ? `${streetLine}, ${city}`.trim() : `${city}, ${country}`.trim(),
             ].filter((s, idx, self) => Boolean(s) && self.indexOf(s) === idx);
 
             // Infer timezone
@@ -135,15 +135,15 @@ export async function GET(req: NextRequest) {
         const postalCode = ipData.zipCode || '';
         const timezone = ipData.timeZone || 'Asia/Kolkata';
 
-        const suggestedStreetAddress = city
-          ? `${city} Freight Terminal, ${state || country} ${postalCode}`.trim()
-          : `${country} Central Logistics Terminal`;
+        const suggestedStreetAddress = [city, state, postalCode, country]
+          .filter(Boolean)
+          .join(', ');
 
         const suggestions = [
           suggestedStreetAddress,
-          `${city} Inland Container Depot (ICD) / Port Hub, ${state}`.trim(),
-          `${city} Logistics & Cargo Logistics Park, ${postalCode}`.trim(),
-        ].filter(Boolean);
+          city && state ? `${city}, ${state}` : null,
+          city && country ? `${city}, ${country}` : null,
+        ].filter((s, idx, self): s is string => Boolean(s) && self.indexOf(s) === idx);
 
         return NextResponse.json({
           success: true,
@@ -174,11 +174,10 @@ export async function GET(req: NextRequest) {
       postalCode: '400069',
       timezone: 'Asia/Kolkata',
       formattedAddress: 'Mumbai, Maharashtra, India',
-      suggestedStreetAddress: 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069',
+      suggestedStreetAddress: 'Andheri East, Mumbai, Maharashtra 400069',
       suggestions: [
-        'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069',
-        'Jawaharlal Nehru Port (JNPT) Terminal Hub, Nhava Sheva, Navi Mumbai, Maharashtra 400707',
-        'Ballard Pier Maritime Logistics Corridor, Fort, Mumbai, Maharashtra 400001',
+        'Andheri East, Mumbai, Maharashtra 400069',
+        'Mumbai, Maharashtra, India',
       ],
     });
   } catch (error: any) {

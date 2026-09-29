@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bulkSavePersistedRates } from '@/lib/dbms/server-dbms';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
+  // ── Operator authentication guard ────────────────────────────────────────
+  const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
+  if (!authenticated) return errorResponse!;
+  // ─────────────────────────────────────────────────────────────────────────
+
   try {
     const body = await req.json().catch(() => null);
     const rates = Array.isArray(body?.rates) ? body.rates : Array.isArray(body) ? body : null;
@@ -20,3 +26,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

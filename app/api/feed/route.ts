@@ -4,6 +4,7 @@ import {
   savePersistedPost,
   deletePersistedPost,
 } from '@/lib/dbms/server-dbms';
+import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,6 +19,12 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
     const body = await req.json().catch(() => null);
     if (!body || !body.id) {
@@ -25,6 +32,9 @@ export async function POST(req: NextRequest) {
         { success: false, error: 'Valid post payload with id is required' },
         { status: 400 }
       );
+    }
+    if (userAuth.authenticated && userAuth.user?.uid) {
+      body.authorId = body.authorId || userAuth.user.uid;
     }
     const saved = savePersistedPost(body);
     return NextResponse.json({ success: true, post: saved }, { status: 200 });
@@ -37,6 +47,12 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const userAuth = authenticateUserSession(req);
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');

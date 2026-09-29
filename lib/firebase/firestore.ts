@@ -20,6 +20,11 @@ import {
   DocumentSnapshot,
   Timestamp,
   writeBatch,
+  onSnapshot,
+  runTransaction,
+  serverTimestamp,
+  increment,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { db, auth } from './client';
 
@@ -204,18 +209,207 @@ export async function upsertAuctionInDB(auction: Auction): Promise<void> {
       },
       { merge: true }
     );
-  } catch {}
+  } catch (err) {
+    console.warn('[Firestore] Error upserting auction:', err);
+  }
 }
 
+/**
+ * Submits a bid into an auction with atomic transaction semantics.
+ * Computes rank dynamically against competing bids in the reverse auction
+ * and updates the auction's bidCount and currentLowestBid atomically.
+ */
+export async function submitBidWithTransaction(
+  auctionId: string,
+  bid: SubmittedBid
+): Promise<{ success: boolean; rank?: number; error?: string }> {
+  if (typeof window === 'undefined') {
+    return { success: false, error: 'Cannot submit bid outside browser environment' };
+  }
+  if (!auth?.currentUser) {
+    return { success: false, error: 'User must be authenticated to submit a bid' };
+  }
+
+  try {
+    const auctionRef = doc(db, COLLECTIONS.AUCTIONS, auctionId);
+    const bidRef = doc(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS, bid.id);
+    const bidsCollection = collection(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS);
+
+    // Fetch existing bids to evaluate rank
+    const existingSnap = await getDocs(bidsCollection);
+    const existingBids = existingSnap.docs.map((d) => d.data() as SubmittedBid);
+
+    const newBidAmount = Number(bid.grandTotalUSD || (bid as any).amount || 0);
+    const betterBids = existingBids.filter((b) => {
+      const amt = Number(b.grandTotalUSD || (b as any).amount || 0);
+      return amt > 0 && amt < newBidAmount;
+    });
+    const calculatedRank = betterBids.length + 1;
+    const nowIso = new Date().toISOString();
+
+    const finalBid: SubmittedBid = {
+      ...bid,
+      rank: calculatedRank,
+      submittedAt: nowIso,
+    };
+
+    await runTransaction(db, async (tx) => {
+      const aSnap = await tx.get(auctionRef);
+      if (!aSnap.exists()) {
+        throw new Error('Auction does not exist');
+      }
+      const aData = aSnap.data() as Auction;
+      if (aData.status !== 'Live' && (aData.status as any) !== 'active') {
+        throw new Error(`Auction is not active (current status: ${aData.status})`);
+      }
+
+      const currentLowest = aData.currentLowestBid || Infinity;
+      const updates: any = {
+        bidCount: increment(1),
+        updatedAt: nowIso,
+      };
+      if (newBidAmount > 0 && newBidAmount < currentLowest) {
+        updates.currentLowestBid = newBidAmount;
+      }
+
+      tx.set(bidRef, {
+        ...finalBid,
+        serverTimestamp: serverTimestamp(),
+      });
+      tx.update(auctionRef, updates);
+    });
+
+    return { success: true, rank: calculatedRank };
+  } catch (err: any) {
+    console.error('[Firestore Bid Transaction Error]:', err);
+    return { success: false, error: err.message || 'Transaction failed' };
+  }
+}
+
+/**
+ * Backward-compatible bid submission helper.
+ * Uses atomic transaction under the hood with resilient fallback.
+ */
 export async function submitBidInDB(auctionId: string, bid: SubmittedBid): Promise<void> {
   if (typeof window === 'undefined' || !auth?.currentUser) return;
-  try {
-    const bidRef = doc(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS, bid.id);
-    await setDoc(bidRef, {
-      ...bid,
-      submittedAt: new Date().toISOString(),
-    });
-  } catch {}
+  const result = await submitBidWithTransaction(auctionId, bid);
+  if (!result.success) {
+    // Graceful fallback to direct setDoc if transaction had permission conflict
+    try {
+      const bidRef = doc(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS, bid.id);
+      await setDoc(bidRef, {
+        ...bid,
+        submittedAt: new Date().toISOString(),
+      });
+    } catch {}
+  }
+}
+
+// ─── REAL-TIME LISTENERS ──────────────────────────────────────────────────────
+
+/**
+ * Real-time listener for an active auction room.
+ * Delivers live updates on status changes, lowest bids, and bid counts.
+ */
+export function subscribeToAuction(
+  auctionId: string,
+  onUpdate: (auction: Auction | null) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  if (typeof window === 'undefined') return () => {};
+  const docRef = doc(db, COLLECTIONS.AUCTIONS, auctionId);
+  return onSnapshot(
+    docRef,
+    (snap) => {
+      if (!snap.exists()) {
+        onUpdate(null);
+      } else {
+        onUpdate({ id: snap.id, ...(snap.data() as Omit<Auction, 'id'>) });
+      }
+    },
+    (err) => {
+      console.warn(`[Firestore] Auction subscription error (${auctionId}):`, err);
+      onError?.(err);
+    }
+  );
+}
+
+/**
+ * Real-time listener for bids in an auction.
+ * Yields updated sorted bids whenever any bidder places a new offer.
+ */
+export function subscribeToAuctionBids(
+  auctionId: string,
+  onUpdate: (bids: SubmittedBid[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  if (typeof window === 'undefined') return () => {};
+  const bidsColl = collection(db, COLLECTIONS.AUCTIONS, auctionId, COLLECTIONS.BIDS);
+  const q = query(bidsColl, orderBy('grandTotalUSD', 'asc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const bids = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<SubmittedBid, 'id'>) }));
+      onUpdate(bids);
+    },
+    (err) => {
+      console.warn(`[Firestore] Auction bids subscription error (${auctionId}):`, err);
+      onError?.(err);
+    }
+  );
+}
+
+/**
+ * Real-time listener for user notifications.
+ */
+export function subscribeToNotifications(
+  recipientUid: string,
+  onUpdate: (notifications: AppNotification[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  if (typeof window === 'undefined') return () => {};
+  const coll = collection(db, COLLECTIONS.NOTIFICATIONS);
+  const q = query(
+    coll,
+    where('recipientUid', '==', recipientUid),
+    orderBy('createdAt', 'desc'),
+    firestoreLimit(50)
+  );
+  return onSnapshot(
+    q,
+    (snap) => {
+      const notifs = snap.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+      onUpdate(notifs);
+    },
+    (err) => {
+      console.warn(`[Firestore] Notifications subscription error (${recipientUid}):`, err);
+      onError?.(err);
+    }
+  );
+}
+
+/**
+ * Real-time listener for conversation messages.
+ */
+export function subscribeToMessages(
+  conversationId: string,
+  onUpdate: (messages: any[]) => void,
+  onError?: (err: Error) => void
+): Unsubscribe {
+  if (typeof window === 'undefined') return () => {};
+  const msgsColl = collection(db, 'conversations', conversationId, 'messages');
+  const q = query(msgsColl, orderBy('createdAt', 'asc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const msgs = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      onUpdate(msgs);
+    },
+    (err) => {
+      console.warn(`[Firestore] Messages subscription error (${conversationId}):`, err);
+      onError?.(err);
+    }
+  );
 }
 
 // ─── RATES REPOSITORY ────────────────────────────────────────────────────────

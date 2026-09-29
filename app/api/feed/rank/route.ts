@@ -3,8 +3,14 @@ import { getPostsFromDB, getRankingConfigFromDB, getUserIntentFromDB } from '@/l
 import { feedRankingEngine } from '@/lib/ranking/engine';
 import { DEFAULT_RANKING_CONFIG } from '@/lib/ranking/config';
 import { FeedSurface } from '@/lib/types';
+import { authenticateUserSession } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
+  // ── Authentication guard ────────────────────────────────────────────────
+  const { authenticated, errorResponse } = authenticateUserSession(req);
+  if (!authenticated) return errorResponse!;
+  // ───────────────────────────────────────────────────────────────────────
+
   try {
     const body = await req.json();
     const surface: FeedSurface = body.surface || 'home';
@@ -47,3 +53,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

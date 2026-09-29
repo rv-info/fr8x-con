@@ -516,6 +516,8 @@ export interface Auction {
   status: 'Live' | 'Closed' | 'Draft' | 'Awarded' | 'Cancelled' | 'Expired';
   rank?: string;
   timeLeft?: string;
+  bidCount?: number;
+  currentLowestBid?: number;
   isPublished: boolean;
   publishedAt?: string;
   draftedAt?: string;

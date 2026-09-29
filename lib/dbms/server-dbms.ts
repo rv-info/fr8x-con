@@ -210,12 +210,11 @@ function isDummyUser(u: any): boolean {
   const uid = (u.uid || '').toLowerCase();
   const email = (u.email || '').toLowerCase();
   const name = (u.displayName || '').toLowerCase();
-  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp)[-_0-9]/i.test(uid)) return true;
-  if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true;
-  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@')) return true;
-  if (/^(lockout|sureset|test\.|tester|dummy|temp)[-_0-9.]/i.test(email)) return true;
-  if (/^[a-z]+\.[0-9]{10,}@/i.test(email)) return true;
-  if (name.includes('dummy') || name.includes('mock user')) return true;
+  // Only filter genuine automated test fixtures; never legitimate user accounts
+  if (/^(u-)?(lockout-test|sureset-test|fixture-user|mock-test)[-_0-9]/i.test(uid)) return true;
+  if (email.includes('@test.invalid') || email.includes('@example.com') || email.includes('automated.fixture@')) return true;
+  if (/^test-automated[-_0-9]/i.test(email)) return true;
+  if (name === 'mock test user' || name === 'automated fixture') return true;
   return false;
 }
 

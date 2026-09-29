@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 /**
  * GET /api/godfather/security
  * Returns live real security stats, blocked accounts, and security events.
+ * Protected: Requires authenticated Godfather operator session.
  */
 export async function GET(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   const type = req.nextUrl.searchParams.get('type') || 'summary';
 
   if (type === 'blocked') {
@@ -50,8 +57,14 @@ export async function GET(req: NextRequest) {
 /**
  * POST /api/godfather/security
  * Handles high-privilege unblock operations with mandatory reason.
+ * Protected: Requires authenticated Godfather operator session.
  */
 export async function POST(req: NextRequest) {
+  const auth = authenticateGodfatherOperator(req);
+  if (!auth.authenticated) {
+    return auth.errorResponse!;
+  }
+
   try {
     const { action, uid, unblockReason, adminName } = await req.json();
 
