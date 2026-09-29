@@ -184,10 +184,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             .then((data) => {
               if (data?.success && data?.user) {
                 const u = data.user;
-                setCurrentUser((prev) => (prev ? { ...prev, ...u } : u));
+                setCurrentUser((prev) => {
+                  if (!prev) return u;
+                  return {
+                    ...prev,
+                    ...u,
+                    avatarUrl: u.avatarUrl || prev.avatarUrl || '',
+                    companyLogoUrl: u.companyLogoUrl || prev.companyLogoUrl || '',
+                    experiences: (u.experiences && u.experiences.length > 0) ? u.experiences : (prev.experiences || []),
+                    educations: (u.educations && u.educations.length > 0) ? u.educations : (prev.educations || []),
+                    certifications: (u.certifications && u.certifications.length > 0) ? u.certifications : (prev.certifications || []),
+                    designation: u.designation || prev.designation || '',
+                    city: u.city || prev.city || '',
+                    state: u.state || prev.state || '',
+                    country: u.country || prev.country || '',
+                    formattedAddress: u.formattedAddress || prev.formattedAddress || '',
+                    mobile: u.mobile || prev.mobile || '',
+                    company: u.company || prev.company || '',
+                    summary: u.summary || prev.summary || '',
+                  };
+                });
                 setAllUsers((list) => {
                   const exists = list.some((item) => item.uid === u.uid);
-                  const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u } : item)) : [u, ...list];
+                  const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u, avatarUrl: u.avatarUrl || item.avatarUrl, companyLogoUrl: u.companyLogoUrl || item.companyLogoUrl } : item)) : [u, ...list];
                   try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
                   return next;
                 });
@@ -197,21 +216,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 2. Members roster fetch for network features
-        fetch('/api/members')
+        fetch('/api/members', {
+          headers: activeUid
+            ? {
+                'x-fr8x-user-uid': activeUid,
+                'x-fr8x-session': activeUid,
+              }
+            : {},
+        })
           .then((r) => r.json())
           .then((data) => {
             if (data && data.members && Array.isArray(data.members)) {
               setAllUsers((prev) => {
-                const map = new Map<string, UserProfile>();
-                for (const u of data.members) {
-                  if (u.uid) map.set(u.uid, u);
-                }
+                const prevMap = new Map<string, UserProfile>();
                 for (const u of prev) {
-                  if (u.uid && !map.has(u.uid)) map.set(u.uid, u);
+                  if (u.uid) prevMap.set(u.uid, u);
                 }
-                const merged = Array.from(map.values());
-                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged)); } catch {}
-                return merged;
+                const mergedList: UserProfile[] = [];
+                for (const member of data.members) {
+                  if (!member.uid) continue;
+                  const existingLocal = prevMap.get(member.uid);
+                  if (existingLocal) {
+                    mergedList.push({
+                      ...existingLocal,
+                      ...member,
+                      avatarUrl: member.avatarUrl || existingLocal.avatarUrl || '',
+                      companyLogoUrl: member.companyLogoUrl || existingLocal.companyLogoUrl || '',
+                      experiences: (member.experiences && member.experiences.length > 0) ? member.experiences : (existingLocal.experiences || []),
+                      educations: (member.educations && member.educations.length > 0) ? member.educations : (existingLocal.educations || []),
+                      certifications: (member.certifications && member.certifications.length > 0) ? member.certifications : (existingLocal.certifications || []),
+                      designation: member.designation || existingLocal.designation || '',
+                      city: member.city || existingLocal.city || '',
+                      state: member.state || existingLocal.state || '',
+                      country: member.country || existingLocal.country || '',
+                      formattedAddress: member.formattedAddress || existingLocal.formattedAddress || '',
+                      mobile: member.mobile || existingLocal.mobile || '',
+                      gstn: member.gstn || existingLocal.gstn || '',
+                      pan: member.pan || existingLocal.pan || '',
+                    });
+                    prevMap.delete(member.uid);
+                  } else {
+                    mergedList.push(member);
+                  }
+                }
+                for (const remaining of prevMap.values()) {
+                  mergedList.push(remaining);
+                }
+                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(mergedList)); } catch {}
+                return mergedList;
               });
 
               // Synchronize currentUser with authoritative server-side DBMS record
@@ -219,7 +271,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (activeUid) {
                 const serverRecord = data.members.find((m: any) => m.uid === activeUid || (m.email && m.email.toLowerCase() === activeUid.toLowerCase()));
                 if (serverRecord) {
-                  setCurrentUser((prev) => (prev ? { ...prev, ...serverRecord } : serverRecord));
+                  setCurrentUser((prev) => {
+                    if (!prev) return serverRecord;
+                    return {
+                      ...prev,
+                      ...serverRecord,
+                      avatarUrl: serverRecord.avatarUrl || prev.avatarUrl || '',
+                      companyLogoUrl: serverRecord.companyLogoUrl || prev.companyLogoUrl || '',
+                      experiences: (serverRecord.experiences && serverRecord.experiences.length > 0) ? serverRecord.experiences : (prev.experiences || []),
+                      educations: (serverRecord.educations && serverRecord.educations.length > 0) ? serverRecord.educations : (prev.educations || []),
+                      certifications: (serverRecord.certifications && serverRecord.certifications.length > 0) ? serverRecord.certifications : (prev.certifications || []),
+                      designation: serverRecord.designation || prev.designation || '',
+                      city: serverRecord.city || prev.city || '',
+                      state: serverRecord.state || prev.state || '',
+                      country: serverRecord.country || prev.country || '',
+                      formattedAddress: serverRecord.formattedAddress || prev.formattedAddress || '',
+                      mobile: serverRecord.mobile || prev.mobile || '',
+                      company: serverRecord.company || prev.company || '',
+                      summary: serverRecord.summary || prev.summary || '',
+                    };
+                  });
                 }
               }
             }
@@ -461,14 +532,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
       return next;
     });
+    const targetUid = updated.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null);
+
+    // Cache rich assets to dedicated keys for instant hydration
+    if (typeof window !== 'undefined' && targetUid) {
+      if (updatedFields.avatarUrl) {
+        try {
+          localStorage.setItem(`fr8x_user_avatar_${targetUid}`, updatedFields.avatarUrl);
+          localStorage.setItem('fr8x_user_avatar', updatedFields.avatarUrl);
+        } catch {}
+      }
+      if (updatedFields.companyLogoUrl) {
+        try {
+          localStorage.setItem(`fr8x_user_logo_${targetUid}`, updatedFields.companyLogoUrl);
+          localStorage.setItem('fr8x_user_logo', updatedFields.companyLogoUrl);
+        } catch {}
+      }
+      if (Array.isArray(updatedFields.experiences) && updatedFields.experiences.length > 0) {
+        try {
+          localStorage.setItem(`fr8x_user_exp_${targetUid}`, JSON.stringify(updatedFields.experiences));
+        } catch {}
+      }
+      if (Array.isArray(updatedFields.educations) && updatedFields.educations.length > 0) {
+        try {
+          localStorage.setItem(`fr8x_user_edu_${targetUid}`, JSON.stringify(updatedFields.educations));
+        } catch {}
+      }
+      if (Array.isArray(updatedFields.certifications) && updatedFields.certifications.length > 0) {
+        try {
+          localStorage.setItem(`fr8x_user_cert_${targetUid}`, JSON.stringify(updatedFields.certifications));
+        } catch {}
+      }
+    }
 
     // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore)
-    const targetUid = updated.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null);
     if (!targetUid) return;
     try {
       fetch('/api/user/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fr8x-user-uid': targetUid,
+          'x-fr8x-session': targetUid,
+        },
         body: JSON.stringify({
           uid: targetUid,
           email: updated.email,
@@ -543,8 +649,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isVerified: serverUser.isVerified ?? serverUser.email_verified ?? existingLocal?.isVerified ?? true,
       email_verified: serverUser.email_verified ?? serverUser.isVerified ?? existingLocal?.email_verified ?? true,
       role: serverUser.role || existingLocal?.role || 'user',
-      avatarUrl: (serverUser as any).avatarUrl || existingLocal?.avatarUrl || '',
-      companyLogoUrl: (serverUser as any).companyLogoUrl || existingLocal?.companyLogoUrl || '',
+      avatarUrl: (serverUser as any).avatarUrl || existingLocal?.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${serverUser.uid}`) || localStorage.getItem('fr8x_user_avatar') || '') : ''),
+      companyLogoUrl: (serverUser as any).companyLogoUrl || existingLocal?.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${serverUser.uid}`) || localStorage.getItem('fr8x_user_logo') || '') : ''),
       summary: (serverUser as any).summary || existingLocal?.summary || '',
       gstn: (serverUser as any).gstn || existingLocal?.gstn || '',
       pan: (serverUser as any).pan || existingLocal?.pan || '',
@@ -553,7 +659,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       experiences: (serverUser as any).experiences || existingLocal?.experiences || [],
       educations: (serverUser as any).educations || existingLocal?.educations || [],
       certifications: (serverUser as any).certifications || existingLocal?.certifications || [],
-      operatingCorridors: (serverUser as any).operatingCorridors || existingLocal?.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
       firebaseCustomToken: serverUser.firebaseCustomToken || existingLocal?.firebaseCustomToken,
     };
 

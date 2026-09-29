@@ -416,11 +416,6 @@ export function SearchConnectionsModal({
                               <MapPin size={11} /> {candidate.city}, {candidate.country || 'India'}
                             </span>
                           )}
-                          {candidate.operatingCorridors && (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                              🚢 {candidate.operatingCorridors}
-                            </span>
-                          )}
                         </div>
                       </div>
                     </div>

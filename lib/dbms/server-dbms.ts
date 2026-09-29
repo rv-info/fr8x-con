@@ -72,13 +72,29 @@ function ensureDirExists() {
   }
 }
 
+export function readFileSyncWithRetry(filePath: string, retries = 5, delayMs = 30): string {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return fs.readFileSync(filePath, 'utf8');
+    } catch (err: any) {
+      if ((err.code === 'EBUSY' || err.code === 'EPERM' || err.code === 'EACCES') && i < retries - 1) {
+        const start = Date.now();
+        while (Date.now() - start < delayMs) {}
+        continue;
+      }
+      throw err;
+    }
+  }
+  return '';
+}
+
 export function safeReadJsonFile<T>(filePath: string, defaultValue: T): T {
   ensureDirExists();
   try {
     if (!fs.existsSync(filePath)) {
       return defaultValue;
     }
-    const raw = fs.readFileSync(filePath, 'utf8');
+    const raw = readFileSyncWithRetry(filePath);
     if (!raw || !raw.trim()) {
       return defaultValue;
     }
@@ -255,7 +271,7 @@ export function getPersistedUsers(): DbmsUserRecord[] {
     if (!fs.existsSync(USERS_FILE)) {
       return [];
     }
-    const raw = fs.readFileSync(USERS_FILE, 'utf8');
+    const raw = readFileSyncWithRetry(USERS_FILE);
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.filter((u: any) => !isDummyUser(u)) : [];
   } catch (err) {

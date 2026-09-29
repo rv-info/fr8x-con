@@ -419,7 +419,6 @@ class ServerSecurityStore {
         postalCode: '',
         formattedAddress: '',
         timezone: 'Asia/Kolkata',
-        operatingCorridors: '',
         experiences: [],
         educations: [],
         certifications: [],
@@ -466,11 +465,7 @@ class ServerSecurityStore {
         existing.firstLoginCompleted = true;
         if (existing.mobile === '+91 98200 88210') existing.mobile = '';
         if (existing.companyId === 'CMP-COGOPORT-001') existing.companyId = '';
-        if (existing.formattedAddress?.includes('Cogoport Headquarters, Andheri East')) existing.formattedAddress = '';
-        if (existing.designation === 'Trade Specialist') existing.designation = '';
-        if (existing.city === 'Mumbai') existing.city = '';
-        if (existing.state === 'Maharashtra') existing.state = '';
-        if (existing.operatingCorridors?.includes('Nhava Sheva')) existing.operatingCorridors = '';
+        if (existing.formattedAddress === 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069, India') existing.formattedAddress = '';
         if (Array.isArray(existing.experiences)) {
           existing.experiences = existing.experiences.filter((e: any) => e.id !== 'exp-r1' && e.id !== 'exp-r2');
         }
@@ -838,12 +833,41 @@ class ServerSecurityStore {
     if (sanitizedUpdates.displayName !== undefined) merged.displayName = sanitizedUpdates.displayName;
     if (sanitizedUpdates.company !== undefined) merged.company = sanitizedUpdates.company;
     if (sanitizedUpdates.companyId !== undefined) merged.companyId = sanitizedUpdates.companyId;
-    if (sanitizedUpdates.avatarUrl !== undefined) merged.avatarUrl = sanitizedUpdates.avatarUrl;
-    if (sanitizedUpdates.companyLogoUrl !== undefined) merged.companyLogoUrl = sanitizedUpdates.companyLogoUrl;
-    if (sanitizedUpdates.experiences !== undefined) merged.experiences = sanitizedUpdates.experiences;
-    if (sanitizedUpdates.educations !== undefined) merged.educations = sanitizedUpdates.educations;
-    if (sanitizedUpdates.certifications !== undefined) merged.certifications = sanitizedUpdates.certifications;
-    if (sanitizedUpdates.operatingCorridors !== undefined) merged.operatingCorridors = sanitizedUpdates.operatingCorridors;
+    if (sanitizedUpdates.avatarUrl !== undefined) {
+      if (sanitizedUpdates.avatarUrl === null) {
+        merged.avatarUrl = '';
+      } else if (sanitizedUpdates.avatarUrl) {
+        merged.avatarUrl = sanitizedUpdates.avatarUrl;
+      }
+    }
+    if (sanitizedUpdates.companyLogoUrl !== undefined) {
+      if (sanitizedUpdates.companyLogoUrl === null) {
+        merged.companyLogoUrl = '';
+      } else if (sanitizedUpdates.companyLogoUrl) {
+        merged.companyLogoUrl = sanitizedUpdates.companyLogoUrl;
+      }
+    }
+    if (sanitizedUpdates.experiences !== undefined) {
+      if (Array.isArray(sanitizedUpdates.experiences) && sanitizedUpdates.experiences.length > 0) {
+        merged.experiences = sanitizedUpdates.experiences;
+      } else if (!existing.experiences || existing.experiences.length === 0) {
+        merged.experiences = [];
+      }
+    }
+    if (sanitizedUpdates.educations !== undefined) {
+      if (Array.isArray(sanitizedUpdates.educations) && sanitizedUpdates.educations.length > 0) {
+        merged.educations = sanitizedUpdates.educations;
+      } else if (!existing.educations || existing.educations.length === 0) {
+        merged.educations = [];
+      }
+    }
+    if (sanitizedUpdates.certifications !== undefined) {
+      if (Array.isArray(sanitizedUpdates.certifications) && sanitizedUpdates.certifications.length > 0) {
+        merged.certifications = sanitizedUpdates.certifications;
+      } else if (!existing.certifications || existing.certifications.length === 0) {
+        merged.certifications = [];
+      }
+    }
     if (sanitizedUpdates.companyTransferStatus !== undefined) merged.companyTransferStatus = sanitizedUpdates.companyTransferStatus;
     if (sanitizedUpdates.pendingCompany !== undefined) merged.pendingCompany = sanitizedUpdates.pendingCompany;
     if (sanitizedUpdates.pendingEmail !== undefined) merged.pendingEmail = sanitizedUpdates.pendingEmail;

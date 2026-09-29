@@ -1029,36 +1029,8 @@ export function ProfilePreviewModal({
           )}
         </div>
 
-        {/* Trade Lanes & Certifications Grid */}
-        <div className="grid g2">
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
-            <small
-              style={{
-                color: 'var(--mut)',
-                fontWeight: 700,
-                fontSize: '10px',
-                textTransform: 'uppercase',
-                display: 'block',
-                marginBottom: '6px',
-              }}
-            >
-              Primary Trade Corridors
-            </small>
-            {realTradeLanes.length > 0 ? (
-              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                {realTradeLanes.map((lane, idx) => (
-                  <span key={idx} className="badge blue" style={{ fontSize: '10px' }}>
-                    {lane}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <span style={{ fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
-                Corridors declared upon bilateral inquiry or spot auction RFQs.
-              </span>
-            )}
-          </div>
-
+        {/* Accredited Credentials & Statutory Filings */}
+        <div style={{ marginTop: '12px' }}>
           <div className="card cardbody" style={{ background: '#f8fafc' }}>
             <small
               style={{

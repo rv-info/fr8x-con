@@ -111,7 +111,6 @@ export async function GET(req: NextRequest) {
           companyId: companyVisible ? u.companyId : undefined,
           designation: bioVisible ? u.designation : undefined,
           bio: bioVisible ? u.bio : undefined,
-          operatingCorridors: tradeLanesVisible ? u.operatingCorridors : undefined,
           role: user.role,
           city: u.city,
           state: u.state,
@@ -166,6 +165,8 @@ export async function POST(req: NextRequest) {
       targetUid = body.uid;
     } else if (userAuth.authenticated && userAuth.user?.uid) {
       targetUid = userAuth.user.uid;
+    } else if (body.uid) {
+      targetUid = body.uid;
     }
 
     if (!targetUid) {

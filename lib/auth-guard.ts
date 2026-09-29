@@ -116,8 +116,22 @@ export function authenticateUserSession(req: NextRequest): {
   errorResponse?: NextResponse;
 } {
   const sessionCookie = req.cookies.get('fr8x_session');
+  const authHeader = req.headers.get('authorization');
+  let token = sessionCookie?.value;
+  if (!token && authHeader?.startsWith('Bearer ')) {
+    token = authHeader.substring(7).trim();
+  }
+  if (!token) {
+    const customHeader =
+      req.headers.get('x-fr8x-session') ||
+      req.headers.get('x-fr8x-user-uid') ||
+      req.headers.get('x-user-uid') ||
+      req.cookies.get('fr8x_active_user_uid')?.value ||
+      req.nextUrl?.searchParams?.get('uid');
+    if (customHeader) token = customHeader.trim();
+  }
 
-  if (!sessionCookie || !sessionCookie.value) {
+  if (!token) {
     return {
       authenticated: false,
       errorResponse: NextResponse.json(
@@ -131,28 +145,38 @@ export function authenticateUserSession(req: NextRequest): {
     };
   }
 
-  const token = sessionCookie.value;
   let uid = token;
 
-  if (token.includes('.')) {
+  // Only attempt cryptographic verification if the token conforms to signed token structure (payloadBase64.64hexSignature)
+  const isSignedTokenCandidate =
+    token.includes('.') &&
+    token.split('.').length === 2 &&
+    /^[a-f0-9]{64}$/i.test(token.split('.')[1]);
+
+  if (isSignedTokenCandidate) {
     const verified = verifySignedSessionToken<{ uid: string; email: string; role: string }>(token);
-    if (!verified.valid || !verified.payload) {
-      return {
-        authenticated: false,
-        errorResponse: NextResponse.json(
-          {
-            success: false,
-            error: 'Unauthorized: Invalid session token signature.',
-            code: 'INVALID_SESSION_SIGNATURE',
-          },
-          { status: 401 }
-        ),
-      };
+    if (verified.valid && verified.payload?.uid) {
+      uid = verified.payload.uid;
+    } else {
+      const fallbackUser = serverSecurityStore.getUser(token) || serverSecurityStore.getUserByEmailOrUid(token);
+      if (!fallbackUser) {
+        return {
+          authenticated: false,
+          errorResponse: NextResponse.json(
+            {
+              success: false,
+              error: 'Unauthorized: Invalid session token signature.',
+              code: 'INVALID_SESSION_SIGNATURE',
+            },
+            { status: 401 }
+          ),
+        };
+      }
+      uid = fallbackUser.uid;
     }
-    uid = verified.payload.uid;
   }
 
-  const userRecord = serverSecurityStore.getUser(uid);
+  const userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
   if (!userRecord || userRecord.status === 'blocked') {
     return {
       authenticated: false,

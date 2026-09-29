@@ -33,6 +33,7 @@ import {
   STATUTORY_PROFILES,
   StatutoryJurisdictionProfile,
 } from '@/lib/utils/statutory-kyc';
+import { compressImage } from '@/lib/utils/image-utils';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import {
   getAllGlobalCountries,
@@ -114,18 +115,56 @@ export default function ProfilePage() {
   const [company, setCompany] = useState(user.company || '');
   const [summary, setSummary] = useState(user.summary || '');
 
-  // Profile Image & Company Logo State
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
-  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl ? user.companyLogoUrl : null);
+  // Persistent storage key helper
+  const userStorageKey = user.uid || user.email || 'guest';
 
-  // Sync avatar and logo state whenever user object in AuthContext updates
+  // Profile Image & Company Logo State with robust local storage fallback
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
+    if (user.avatarUrl) return user.avatarUrl;
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        return localStorage.getItem(`fr8x_user_avatar_${activeUid}`) || null;
+      }
+    }
+    return null;
+  });
+  const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(() => {
+    if (user.companyLogoUrl) return user.companyLogoUrl;
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        return localStorage.getItem(`fr8x_user_logo_${activeUid}`) || null;
+      }
+    }
+    return null;
+  });
+
+  // Sync avatar and logo state whenever user object in AuthContext updates,
+  // without allowing empty server responses to wipe out locally stored images
   useEffect(() => {
-    setAvatarUrl(user.avatarUrl ? user.avatarUrl : null);
-  }, [user.avatarUrl]);
+    if (user.avatarUrl) {
+      setAvatarUrl(user.avatarUrl);
+    } else if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        const cached = localStorage.getItem(`fr8x_user_avatar_${activeUid}`);
+        if (cached) setAvatarUrl(cached);
+      }
+    }
+  }, [user.avatarUrl, user.uid]);
 
   useEffect(() => {
-    setCompanyLogoUrl(user.companyLogoUrl ? user.companyLogoUrl : null);
-  }, [user.companyLogoUrl]);
+    if (user.companyLogoUrl) {
+      setCompanyLogoUrl(user.companyLogoUrl);
+    } else if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        const cached = localStorage.getItem(`fr8x_user_logo_${activeUid}`);
+        if (cached) setCompanyLogoUrl(cached);
+      }
+    }
+  }, [user.companyLogoUrl, user.uid]);
 
   // Address & Google Maps State
   const [city, setCity] = useState(user.city || '');
@@ -161,16 +200,10 @@ export default function ProfilePage() {
   });
   const [privacyPreviewMode, setPrivacyPreviewMode] = useState<'public' | 'contact'>('public');
   const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
-  const [operatingCorridors, setOperatingCorridors] = useState<string>(() => {
-    return user.operatingCorridors || (user.keyTradeLanes && user.keyTradeLanes.length > 0 ? user.keyTradeLanes.join(', ') : 'Nhava Sheva ⇄ Jebel Ali, Rotterdam');
-  });
 
   useEffect(() => {
     setPrivacySettings(getUserPrivacySettings(user.uid, user.privacySettings));
-    if (user.operatingCorridors) {
-      setOperatingCorridors(user.operatingCorridors);
-    }
-  }, [user.uid, user.privacySettings, user.operatingCorridors]);
+  }, [user.uid, user.privacySettings]);
 
   const handleUpdatePrivacy = <K extends keyof UserPrivacySettings>(key: K, value: UserPrivacySettings[K]) => {
     setPrivacySettings((prev) => ({
@@ -184,7 +217,6 @@ export default function ProfilePage() {
     saveUserPrivacySettings(user.uid, privacySettings);
     updateUser({
       privacySettings,
-      operatingCorridors: operatingCorridors.trim(),
     });
     setTimeout(() => {
       setIsSavingPrivacy(false);
@@ -411,12 +443,60 @@ export default function ProfilePage() {
   const [kycPrivacy, setKycPrivacy] = useState<'public' | 'network' | 'private'>('network');
 
   // Professional Record Cards (Experience, Education, Certifications) - Real user state only, no mock/dummy records
-  const [experiences, setExperiences] = useState<ProfileExperience[]>([]);
-  const [educations, setEducations] = useState<ProfileEducation[]>([]);
-  const [certifications, setCertifications] = useState<ProfileCertification[]>([]);
-
-  // Persistent storage key helper for records
-  const userStorageKey = user.uid || user.email || 'guest';
+  const [experiences, setExperiences] = useState<ProfileExperience[]>(() => {
+    if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
+      return user.experiences;
+    }
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_exp_${activeUid}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  });
+  const [educations, setEducations] = useState<ProfileEducation[]>(() => {
+    if (user.educations && Array.isArray(user.educations) && user.educations.length > 0) {
+      return user.educations;
+    }
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_edu_${activeUid}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  });
+  const [certifications, setCertifications] = useState<ProfileCertification[]>(() => {
+    if (user.certifications && Array.isArray(user.certifications) && user.certifications.length > 0) {
+      return user.certifications;
+    }
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      if (activeUid) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_cert_${activeUid}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  });
 
   // Load real user experiences, educations, and certifications from authoritative DBMS and fallback to local store
   useEffect(() => {
@@ -464,7 +544,12 @@ export default function ProfilePage() {
     }
 
     // 2. Authoritative live fetch from DBMS API /api/user/profile
-    fetch(`/api/user/profile?uid=${encodeURIComponent(resolvedUid)}`)
+    fetch(`/api/user/profile?uid=${encodeURIComponent(resolvedUid)}`, {
+      headers: {
+        'x-fr8x-user-uid': resolvedUid,
+        'x-fr8x-session': resolvedUid,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data?.success && data?.user) {
@@ -481,6 +566,14 @@ export default function ProfilePage() {
             setCertifications(u.certifications);
             try { localStorage.setItem(`fr8x_user_cert_${storageKey}`, JSON.stringify(u.certifications)); } catch {}
           }
+          if (u.avatarUrl) {
+            setAvatarUrl(u.avatarUrl);
+            try { localStorage.setItem(`fr8x_user_avatar_${storageKey}`, u.avatarUrl); } catch {}
+          }
+          if (u.companyLogoUrl) {
+            setCompanyLogoUrl(u.companyLogoUrl);
+            try { localStorage.setItem(`fr8x_user_logo_${storageKey}`, u.companyLogoUrl); } catch {}
+          }
           if (u.firstName) setFirstName(u.firstName);
           if (u.lastName) setLastName(u.lastName);
           if (u.designation) setDesignation(u.designation);
@@ -491,8 +584,17 @@ export default function ProfilePage() {
           if (u.mobile) setMobile(u.mobile);
           if (u.company) setCompany(u.company);
           if (u.summary) setSummary(u.summary);
-          if (u.operatingCorridors) setOperatingCorridors(u.operatingCorridors);
-          updateUser(u);
+
+          const currentStoredAvatar = (typeof window !== 'undefined' ? localStorage.getItem(`fr8x_user_avatar_${storageKey}`) : null) || avatarUrl || '';
+          const currentStoredLogo = (typeof window !== 'undefined' ? localStorage.getItem(`fr8x_user_logo_${storageKey}`) : null) || companyLogoUrl || '';
+          updateUser({
+            ...u,
+            avatarUrl: u.avatarUrl || currentStoredAvatar,
+            companyLogoUrl: u.companyLogoUrl || currentStoredLogo,
+            experiences: (u.experiences && u.experiences.length > 0) ? u.experiences : (experiences.length > 0 ? experiences : (user.experiences || [])),
+            educations: (u.educations && u.educations.length > 0) ? u.educations : (educations.length > 0 ? educations : (user.educations || [])),
+            certifications: (u.certifications && u.certifications.length > 0) ? u.certifications : (certifications.length > 0 ? certifications : (user.certifications || [])),
+          });
         }
       })
       .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
@@ -532,6 +634,20 @@ export default function ProfilePage() {
     setEditFormattedAddress(user.formattedAddress || '');
     setEditTimezone(user.timezone || 'Asia/Kolkata');
 
+    const storageKey = user.uid || (user.email ? user.email.toLowerCase().replace(/[^a-z0-9]/g, '_') : 'guest');
+    const cachedAvatar = (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${storageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
+    const resolvedAvatar = user.avatarUrl || cachedAvatar || null;
+    if (resolvedAvatar) {
+      setAvatarUrl(resolvedAvatar);
+      setEditAvatarUrl(resolvedAvatar);
+    }
+    const cachedLogo = (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${storageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
+    const resolvedLogo = user.companyLogoUrl || cachedLogo || null;
+    if (resolvedLogo) {
+      setCompanyLogoUrl(resolvedLogo);
+      setEditCompanyLogoUrl(resolvedLogo);
+    }
+
     if (user.experiences && Array.isArray(user.experiences) && user.experiences.length > 0) {
       setExperiences(user.experiences);
     }
@@ -568,7 +684,11 @@ export default function ProfilePage() {
     updateUser({ experiences: newExp });
     fetch('/api/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
       body: JSON.stringify({ uid: activeUid, email: user.email, updates: { experiences: newExp } }),
     }).catch(() => {});
   };
@@ -583,7 +703,11 @@ export default function ProfilePage() {
     updateUser({ educations: newEdu });
     fetch('/api/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
       body: JSON.stringify({ uid: activeUid, email: user.email, updates: { educations: newEdu } }),
     }).catch(() => {});
   };
@@ -598,7 +722,11 @@ export default function ProfilePage() {
     updateUser({ certifications: newCert });
     fetch('/api/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
       body: JSON.stringify({ uid: activeUid, email: user.email, updates: { certifications: newCert } }),
     }).catch(() => {});
   };
@@ -635,48 +763,70 @@ export default function ProfilePage() {
   const [certExpiry, setCertExpiry] = useState('');
   const [certUrl, setCertUrl] = useState('');
 
-  // Avatar and Logo upload handlers
-  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Avatar and Logo upload handlers with automatic compression
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const url = loadEvt.target?.result as string;
-        setAvatarUrl(url);
-        updateUser({ avatarUrl: url });
+      try {
+        const compressedUrl = await compressImage(file, 256, 0.85);
+        setAvatarUrl(compressedUrl);
         const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+        if (activeUid) {
+          try {
+            localStorage.setItem(`fr8x_user_avatar_${activeUid}`, compressedUrl);
+            localStorage.setItem('fr8x_user_avatar', compressedUrl);
+          } catch {}
+        }
+        updateUser({ avatarUrl: compressedUrl });
         if (activeUid) {
           fetch('/api/user/profile', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: url } }),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-fr8x-user-uid': activeUid,
+              'x-fr8x-session': activeUid,
+            },
+            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: compressedUrl } }),
           }).catch(() => {});
         }
         toast('Profile photo updated.');
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Image compression error:', err);
+        toast('Failed to process image. Please try a different photo.');
+      }
     }
   };
 
-  const handleCompanyLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCompanyLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const url = loadEvt.target?.result as string;
-        setCompanyLogoUrl(url);
-        updateUser({ companyLogoUrl: url });
+      try {
+        const compressedUrl = await compressImage(file, 256, 0.85);
+        setCompanyLogoUrl(compressedUrl);
         const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+        if (activeUid) {
+          try {
+            localStorage.setItem(`fr8x_user_logo_${activeUid}`, compressedUrl);
+            localStorage.setItem('fr8x_user_logo', compressedUrl);
+          } catch {}
+        }
+        updateUser({ companyLogoUrl: compressedUrl });
         if (activeUid) {
           fetch('/api/user/profile', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: url } }),
+            headers: {
+              'Content-Type': 'application/json',
+              'x-fr8x-user-uid': activeUid,
+              'x-fr8x-session': activeUid,
+            },
+            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: compressedUrl } }),
           }).catch(() => {});
         }
         toast('Company logo uploaded successfully.');
-      };
-      reader.readAsDataURL(file);
+      } catch (err) {
+        console.error('Logo compression error:', err);
+        toast('Failed to process logo. Please try a different file.');
+      }
     }
   };
 
@@ -686,8 +836,10 @@ export default function ProfilePage() {
     const hasFullName = (firstName && lastName) || (user.displayName && user.displayName.trim().length > 3);
     if (hasFullName) score += 15;
     if (company && designation) score += 15;
-    if (avatarUrl || user.avatarUrl) score += 10;
-    if (companyLogoUrl || user.companyLogoUrl) score += 10;
+    const currentAvatar = avatarUrl || user.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
+    const currentLogo = companyLogoUrl || user.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
+    if (currentAvatar) score += 10;
+    if (currentLogo) score += 10;
     if ((formattedAddress && city) || (user.formattedAddress && user.city)) score += 10;
     if (summary || (user as any).summary) score += 10;
     const complianceEval = evaluateCompliance(kycCountry || country, {
@@ -707,6 +859,8 @@ export default function ProfilePage() {
   };
 
   const completeness = calculateCompleteness();
+  const effectiveAvatarUrl = avatarUrl || user.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
+  const effectiveCompanyLogoUrl = companyLogoUrl || user.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
 
   const handleSaveProfile = () => {
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
@@ -730,7 +884,6 @@ export default function ProfilePage() {
       experiences,
       educations,
       certifications,
-      operatingCorridors,
       kycCountry,
       taxId,
       corporateRegNumber: corporateReg,
@@ -741,10 +894,26 @@ export default function ProfilePage() {
       iec: iec || '',
       mto: mto || '',
     };
+    if (avatarUrl) {
+      try {
+        localStorage.setItem(`fr8x_user_avatar_${activeUid}`, avatarUrl);
+        localStorage.setItem('fr8x_user_avatar', avatarUrl);
+      } catch {}
+    }
+    if (companyLogoUrl) {
+      try {
+        localStorage.setItem(`fr8x_user_logo_${activeUid}`, companyLogoUrl);
+        localStorage.setItem('fr8x_user_logo', companyLogoUrl);
+      } catch {}
+    }
     updateUser(profilePayload);
     fetch('/api/user/profile', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
       body: JSON.stringify({
         uid: activeUid,
         email: user.email,
@@ -1643,9 +1812,9 @@ export default function ProfilePage() {
                   boxShadow: 'var(--sh)',
                 }}
               >
-                {avatarUrl ? (
+                {effectiveAvatarUrl ? (
                   <img
-                    src={avatarUrl}
+                    src={effectiveAvatarUrl}
                     alt="Profile"
                     style={{
                       width: '76px',
@@ -1716,12 +1885,29 @@ export default function ProfilePage() {
                 </label>
 
                 {/* Remove Profile Photo Trigger (if photo exists) */}
-                {avatarUrl && (
+                {effectiveAvatarUrl && (
                   <button
                     type="button"
                     onClick={() => {
                       setAvatarUrl(null);
+                      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+                      if (activeUid) {
+                        try {
+                          localStorage.removeItem(`fr8x_user_avatar_${activeUid}`);
+                          localStorage.removeItem('fr8x_user_avatar');
+                        } catch {}
+                      }
                       updateUser({ avatarUrl: '' });
+                      if (activeUid) {
+                        fetch('/api/user/profile', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'x-fr8x-user-uid': activeUid,
+                          },
+                          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
+                        }).catch(() => {});
+                      }
                       toast('Profile photo removed.');
                     }}
                     style={{
@@ -1757,9 +1943,9 @@ export default function ProfilePage() {
                   }}
                 >
                   <div style={{ position: 'relative' }}>
-                    {companyLogoUrl ? (
+                    {effectiveCompanyLogoUrl ? (
                       <img
-                        src={companyLogoUrl}
+                        src={effectiveCompanyLogoUrl}
                         alt="Company Logo"
                         style={{
                           width: '30px',
@@ -2484,78 +2670,7 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Setting 4: Trade Lanes & Corridors */}
-            <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
-                    <Compass size={14} color="#d97706" /> Preferred Trade Lanes & Port Corridors
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '2px' }}>
-                    Manage visibility of your operating sectors (e.g. Nhava Sheva to Jebel Ali, Rotterdam).
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginTop: '8px' }}>
-                {[
-                  { value: 'public' as const, label: 'Public', desc: 'Attract relevant trade inquiries' },
-                  { value: 'contacts_only' as const, label: 'Contacts Only', desc: 'Visible to approved partners' },
-                  { value: 'private' as const, label: 'Private', desc: 'Hidden completely' },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => handleUpdatePrivacy('tradeLanesVisibility', opt.value)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: privacySettings.tradeLanesVisibility === opt.value ? '2px solid #00a3c4' : '1px solid var(--fr8x-outline)',
-                      background: privacySettings.tradeLanesVisibility === opt.value ? 'rgba(0, 163, 196, 0.08)' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <div style={{ fontSize: '11.5px', fontWeight: 700, color: privacySettings.tradeLanesVisibility === opt.value ? '#007a93' : 'var(--fr8x-text)' }}>
-                      {opt.label}
-                    </div>
-                    <div style={{ fontSize: '9.5px', color: 'var(--fr8x-muted)', marginTop: '2px', lineHeight: 1.2 }}>
-                      {opt.desc}
-                    </div>
-                  </button>
-                ))}
-              </div>
-
-              {/* Operating Corridors Content & Edit */}
-              <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px dashed var(--line-light)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                  <label htmlFor="preferred-trade-lanes-input" style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--fr8x-text)' }}>
-                    Operating Trade Corridors:
-                  </label>
-                  <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)' }}>Visible according to visibility setting above</span>
-                </div>
-                <input
-                  id="preferred-trade-lanes-input"
-                  type="text"
-                  value={operatingCorridors}
-                  onChange={(e) => setOperatingCorridors(e.target.value)}
-                  placeholder="e.g. Nhava Sheva ⇄ Jebel Ali, Rotterdam"
-                  style={{
-                    width: '100%',
-                    padding: '8px 12px',
-                    fontSize: '12px',
-                    borderRadius: '6px',
-                    border: '1px solid var(--fr8x-outline)',
-                    background: '#ffffff',
-                    color: 'var(--fr8x-text)',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Setting 5: Connection Requests Inbound */}
+            {/* Setting 4: Connection Requests Inbound */}
             <div style={{ padding: '14px 16px', borderRadius: '8px', background: '#f8fafc', border: '1px solid var(--line-light)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
@@ -2815,40 +2930,22 @@ export default function ProfilePage() {
                     <ShieldCheck size={12} /> Statutory Tax / Reg:
                   </span>
                   <div>
-                    {privacyPreviewMode === 'contact' ? (
+                    {!(taxId || gstn) ? (
+                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Not provided</span>
+                    ) : privacyPreviewMode === 'contact' ? (
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--fr8x-text)' }}>
-                        {taxId || gstn || '27AABCR1234F1Z5'}
+                        {taxId || gstn}
                       </span>
                     ) : privacySettings.statutoryVisibility === 'public' ? (
                       <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 600, color: 'var(--fr8x-text)' }}>
-                        {taxId || gstn || '27AABCR1234F1Z5'}
+                        {taxId || gstn}
                       </span>
                     ) : privacySettings.statutoryVisibility === 'contacts_only' ? (
                       <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-muted)', fontSize: '11px' }}>
-                        {maskStatutory(taxId || gstn || '27AABCR1234F1Z5')}{' '}
+                        {maskStatutory(taxId || gstn)}{' '}
                         <span className="badge amber" style={{ fontSize: '8.5px', padding: '1px 4px' }}>
                           <Lock size={8} /> Connect to view
                         </span>
-                      </span>
-                    ) : (
-                      <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Trade Lanes Item */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11.5px', padding: '6px 8px', background: '#fff', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
-                  <span style={{ color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Compass size={12} /> Operating Corridors:
-                  </span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {privacyPreviewMode === 'contact' || privacySettings.tradeLanesVisibility === 'public' ? (
-                      <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>
-                        {operatingCorridors || '—'}
-                      </span>
-                    ) : privacySettings.tradeLanesVisibility === 'contacts_only' ? (
-                      <span style={{ color: 'var(--fr8x-muted)', fontSize: '11px' }}>
-                        •••••••••••• (Connect to unlock)
                       </span>
                     ) : (
                       <span style={{ color: 'var(--fr8x-muted)', fontStyle: 'italic' }}>Private / Hidden</span>
@@ -3338,6 +3435,28 @@ export default function ProfilePage() {
               setAvatarUrl(editAvatarUrl || null);
               setCompanyLogoUrl(editCompanyLogoUrl || null);
 
+              // Persist visual assets to dedicated local cache immediately
+              if (typeof window !== 'undefined') {
+                try {
+                  if (editAvatarUrl) {
+                    localStorage.setItem(`fr8x_user_avatar_${finalUid}`, editAvatarUrl);
+                    localStorage.setItem('fr8x_user_avatar', editAvatarUrl);
+                  } else {
+                    localStorage.removeItem(`fr8x_user_avatar_${finalUid}`);
+                    localStorage.removeItem('fr8x_user_avatar');
+                  }
+                  if (editCompanyLogoUrl) {
+                    localStorage.setItem(`fr8x_user_logo_${finalUid}`, editCompanyLogoUrl);
+                    localStorage.setItem('fr8x_user_logo', editCompanyLogoUrl);
+                  } else {
+                    localStorage.removeItem(`fr8x_user_logo_${finalUid}`);
+                    localStorage.removeItem('fr8x_user_logo');
+                  }
+                } catch (e) {
+                  console.warn('[Profile] Failed to cache avatar/logo:', e);
+                }
+              }
+
               const profilePayload = {
                 uid: finalUid,
                 firstName: editFirstName,
@@ -3371,7 +3490,11 @@ export default function ProfilePage() {
               try {
                 const res = await fetch('/api/user/profile', {
                   method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-fr8x-user-uid': targetUid,
+                    'x-fr8x-session': targetUid,
+                  },
                   body: JSON.stringify({
                     uid: targetUid,
                     email: finalEmail,
@@ -3385,7 +3508,17 @@ export default function ProfilePage() {
                 });
                 const data = await res.json();
                 if (data.success) {
-                  try { localStorage.setItem('fr8x_active_user_uid', targetUid); } catch {}
+                  try {
+                    localStorage.setItem('fr8x_active_user_uid', targetUid);
+                    if (editAvatarUrl) {
+                      localStorage.setItem(`fr8x_user_avatar_${targetUid}`, editAvatarUrl);
+                      localStorage.setItem('fr8x_user_avatar', editAvatarUrl);
+                    }
+                    if (editCompanyLogoUrl) {
+                      localStorage.setItem(`fr8x_user_logo_${targetUid}`, editCompanyLogoUrl);
+                      localStorage.setItem('fr8x_user_logo', editCompanyLogoUrl);
+                    }
+                  } catch {}
                   toast('✓ Contact credentials, location and corporate affiliation saved in DBMS successfully.');
                 }
               } catch (err) {
@@ -3422,12 +3555,17 @@ export default function ProfilePage() {
                         type="file"
                         accept="image/*"
                         style={{ display: 'none' }}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const f = e.target.files?.[0];
                           if (f) {
-                            const r = new FileReader();
-                            r.onload = (ev) => setEditAvatarUrl(ev.target?.result as string);
-                            r.readAsDataURL(f);
+                            try {
+                              const compressed = await compressImage(f, 256, 0.85);
+                              setEditAvatarUrl(compressed);
+                            } catch {
+                              const r = new FileReader();
+                              r.onload = (ev) => setEditAvatarUrl(ev.target?.result as string);
+                              r.readAsDataURL(f);
+                            }
                           }
                         }}
                       />
@@ -3459,12 +3597,17 @@ export default function ProfilePage() {
                         type="file"
                         accept="image/*"
                         style={{ display: 'none' }}
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           const f = e.target.files?.[0];
                           if (f) {
-                            const r = new FileReader();
-                            r.onload = (ev) => setEditCompanyLogoUrl(ev.target?.result as string);
-                            r.readAsDataURL(f);
+                            try {
+                              const compressed = await compressImage(f, 256, 0.85);
+                              setEditCompanyLogoUrl(compressed);
+                            } catch {
+                              const r = new FileReader();
+                              r.onload = (ev) => setEditCompanyLogoUrl(ev.target?.result as string);
+                              r.readAsDataURL(f);
+                            }
                           }
                         }}
                       />

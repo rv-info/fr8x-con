@@ -54,7 +54,6 @@ export async function GET(req: NextRequest) {
         gstn: isSelf ? (u.gstn || '') : undefined,
         pan: isSelf ? (u.pan || '') : undefined,
         mobile: isSelf ? (u.mobile || '') : undefined,
-        operatingCorridors: u.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam',
         avatarUrl: u.avatarUrl || null,
         companyLogoUrl: u.companyLogoUrl || null,
         experiences: u.experiences || [],
@@ -79,8 +78,7 @@ export async function GET(req: NextRequest) {
           Boolean(m.city?.toLowerCase().includes(q)) ||
           Boolean(m.state?.toLowerCase().includes(q)) ||
           Boolean(m.country?.toLowerCase().includes(q)) ||
-          Boolean(m.gstn && m.gstn.toLowerCase().includes(q)) ||
-          Boolean(m.operatingCorridors && m.operatingCorridors.toLowerCase().includes(q));
+          Boolean(m.gstn && m.gstn.toLowerCase().includes(q));
 
         const matchesExp = (m.experiences as any[]).some(
           (exp) =>

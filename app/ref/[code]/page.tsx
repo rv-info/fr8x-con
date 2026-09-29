@@ -321,30 +321,7 @@ export default function CompanyReferencePage() {
             </div>
           </div>
 
-          {/* Primary Trade Corridors */}
-          <div style={{ marginTop: '24px' }}>
-            <span style={{ fontSize: '11.5px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-              Primary Active Trade Corridors
-            </span>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              {matched.lanes.map((lane, idx) => (
-                <span
-                  key={idx}
-                  style={{
-                    background: 'rgba(56, 189, 248, 0.1)',
-                    border: '1px solid rgba(56, 189, 248, 0.25)',
-                    color: '#38bdf8',
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                  }}
-                >
-                  {lane}
-                </span>
-              ))}
-            </div>
-          </div>
+
 
           {/* Call to Actions */}
           <div
