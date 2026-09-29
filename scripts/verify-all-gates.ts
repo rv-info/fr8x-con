@@ -13,10 +13,11 @@ const suites = [
   { name: 'Phase 9: Security, Privacy & Data Protection Architecture', file: 'scripts/verify-phase9-security-privacy.ts' },
   { name: 'Phase 10: Payments, Settlement Webhooks & Communications', file: 'scripts/verify-phase10-payments-integrations.ts' },
   { name: 'Phase 11: CI/CD, Containerization & Infrastructure Architecture', file: 'scripts/verify-phase11-cicd-infra.ts' },
+  { name: 'Phase 12: Observability, Error Boundaries & Production Hardening', file: 'scripts/verify-phase12-observability-hardening.ts' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-11)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-12)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;

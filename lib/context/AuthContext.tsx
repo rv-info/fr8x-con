@@ -831,6 +831,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       bidPostingFee,
       bidDiscountPercentage,
     }),
+    // Intentional: Context value is memoized on identity & auth state; handlers reference latest state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       activeUser,
       isAuthenticated,

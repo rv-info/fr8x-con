@@ -261,6 +261,7 @@ export function ProfilePreviewModal({
   const targetUserUid = effectiveUser?.uid || targetUid || (profile as any)?.uid || undefined;
 
   const connStatus = useMemo<ConnectionStatus>(() => {
+    void connRevision;
     if (isCurrentUser) return 'self';
     if (!user?.uid || !targetUserUid) return 'none';
     return getConnectionStatus(user.uid, targetUserUid);
@@ -269,6 +270,7 @@ export function ProfilePreviewModal({
   const isConnected = connStatus === 'connected';
 
   const targetPrivacy = useMemo(() => {
+    void connRevision;
     return getUserPrivacySettings(effectiveUser);
   }, [effectiveUser, connRevision]);
 

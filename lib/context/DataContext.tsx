@@ -2040,6 +2040,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         return await getRecentlyViewed(type, limitCount);
       },
     }),
+    // Intentional: Context value is memoized on dataset mutations; handler closures reference live state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       posts,
       reports,

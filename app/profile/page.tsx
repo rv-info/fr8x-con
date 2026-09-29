@@ -496,6 +496,7 @@ export default function ProfilePage() {
         }
       })
       .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.uid, user.email]);
 
   // Synchronize component form states whenever the user object in AuthContext changes or reloads

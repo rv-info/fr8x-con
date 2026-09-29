@@ -108,6 +108,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       isMounted = false;
       clearInterval(interval);
     };
+    // Re-run presence synchronization when contact list cardinality changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contacts.length]);
 
   const totalUnreadCount = contacts.reduce((sum, c) => sum + c.unreadCount, 0);
@@ -233,6 +235,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       getContact,
       getMessagesFor,
     }),
+    // Intentional: Memoized on conversation state & unread counts; action handlers reference live state
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       isLauncherOpen,
       activeWindows,

@@ -72,25 +72,61 @@ function ensureDirExists() {
   }
 }
 
-// ─── RATES REPOSITORY ────────────────────────────────────────────────────────
-
-export function getPersistedRates(): RateItem[] {
+export function safeReadJsonFile<T>(filePath: string, defaultValue: T): T {
   ensureDirExists();
   try {
-    if (!fs.existsSync(RATES_FILE)) {
-      return [];
+    if (!fs.existsSync(filePath)) {
+      return defaultValue;
     }
-    const raw = fs.readFileSync(RATES_FILE, 'utf8');
+    const raw = fs.readFileSync(filePath, 'utf8');
+    if (!raw || !raw.trim()) {
+      return defaultValue;
+    }
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(defaultValue) && !Array.isArray(parsed) ? defaultValue : (parsed as T);
   } catch (err) {
-    console.error('[DBMS] Error reading persisted rates:', err);
-    return [];
+    console.error(`[DBMS] Error reading or parsing ${filePath}:`, err);
+    return defaultValue;
   }
 }
 
-export function savePersistedRate(rate: RateItem): RateItem {
+export function atomicWriteJsonFile(filePath: string, data: any): void {
   ensureDirExists();
+  const dir = path.dirname(filePath);
+  const tempFile = path.join(
+    dir,
+    `.${path.basename(filePath)}.${Date.now()}.${Math.random().toString(36).substring(2, 8)}.tmp`
+  );
+  const content = JSON.stringify(data, null, 2);
+  try {
+    fs.writeFileSync(tempFile, content, 'utf8');
+    try {
+      fs.renameSync(tempFile, filePath);
+    } catch (renameErr: any) {
+      if (process.platform === 'win32' || renameErr.code === 'EPERM' || renameErr.code === 'EBUSY') {
+        fs.copyFileSync(tempFile, filePath);
+        try {
+          fs.unlinkSync(tempFile);
+        } catch {}
+      } else {
+        throw renameErr;
+      }
+    }
+  } catch (err) {
+    try {
+      if (fs.existsSync(tempFile)) fs.unlinkSync(tempFile);
+    } catch {}
+    throw err;
+  }
+}
+
+// ─── RATES REPOSITORY ────────────────────────────────────────────────────────
+
+export function getPersistedRates(): RateItem[] {
+  return safeReadJsonFile<RateItem[]>(RATES_FILE, []);
+}
+
+export function savePersistedRate(rate: RateItem): RateItem {
   try {
     const existing = getPersistedRates();
     const idx = existing.findIndex((r) => r.id === rate.id);
@@ -99,7 +135,7 @@ export function savePersistedRate(rate: RateItem): RateItem {
     } else {
       existing.unshift({ ...rate, createdAt: rate.createdAt || new Date().toISOString() });
     }
-    fs.writeFileSync(RATES_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(RATES_FILE, existing);
     return rate;
   } catch (err) {
     console.error('[DBMS] Error saving persisted rate:', err);
@@ -108,11 +144,10 @@ export function savePersistedRate(rate: RateItem): RateItem {
 }
 
 export function deletePersistedRate(rateId: string): boolean {
-  ensureDirExists();
   try {
     const existing = getPersistedRates();
     const filtered = existing.filter((r) => r.id !== rateId);
-    fs.writeFileSync(RATES_FILE, JSON.stringify(filtered, null, 2), 'utf8');
+    atomicWriteJsonFile(RATES_FILE, filtered);
     return true;
   } catch (err) {
     console.error('[DBMS] Error deleting persisted rate:', err);
@@ -121,7 +156,6 @@ export function deletePersistedRate(rateId: string): boolean {
 }
 
 export function bulkSavePersistedRates(rates: RateItem[]): RateItem[] {
-  ensureDirExists();
   try {
     const existing = getPersistedRates();
     const map = new Map<string, RateItem>();
@@ -137,7 +171,7 @@ export function bulkSavePersistedRates(rates: RateItem[]): RateItem[] {
       });
     }
     const merged = Array.from(map.values());
-    fs.writeFileSync(RATES_FILE, JSON.stringify(merged, null, 2), 'utf8');
+    atomicWriteJsonFile(RATES_FILE, merged);
     return rates;
   } catch (err) {
     console.error('[DBMS] Error bulk saving persisted rates:', err);
@@ -148,22 +182,10 @@ export function bulkSavePersistedRates(rates: RateItem[]): RateItem[] {
 // ─── POSTS REPOSITORY ────────────────────────────────────────────────────────
 
 export function getPersistedPosts(): FeedPost[] {
-  ensureDirExists();
-  try {
-    if (!fs.existsSync(POSTS_FILE)) {
-      return [];
-    }
-    const raw = fs.readFileSync(POSTS_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (err) {
-    console.error('[DBMS] Error reading persisted posts:', err);
-    return [];
-  }
+  return safeReadJsonFile<FeedPost[]>(POSTS_FILE, []);
 }
 
 export function savePersistedPost(post: FeedPost): FeedPost {
-  ensureDirExists();
   try {
     const existing = getPersistedPosts();
     const idx = existing.findIndex((p) => String(p.id) === String(post.id));
@@ -172,7 +194,7 @@ export function savePersistedPost(post: FeedPost): FeedPost {
     } else {
       existing.unshift({ ...post, createdAt: post.createdAt || new Date().toISOString() });
     }
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(POSTS_FILE, existing);
     return post;
   } catch (err) {
     console.error('[DBMS] Error saving persisted post:', err);
@@ -181,11 +203,10 @@ export function savePersistedPost(post: FeedPost): FeedPost {
 }
 
 export function deletePersistedPost(postId: string | number): boolean {
-  ensureDirExists();
   try {
     const existing = getPersistedPosts();
     const filtered = existing.filter((p) => String(p.id) !== String(postId));
-    fs.writeFileSync(POSTS_FILE, JSON.stringify(filtered, null, 2), 'utf8');
+    atomicWriteJsonFile(POSTS_FILE, filtered);
     return true;
   } catch (err) {
     console.error('[DBMS] Error deleting persisted post:', err);
@@ -281,7 +302,7 @@ export function savePersistedUser(user: DbmsUserRecord): DbmsUserRecord {
       existing.unshift(recordToSave);
     }
 
-    fs.writeFileSync(USERS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(USERS_FILE, existing);
     return existing[idx >= 0 ? idx : 0];
   } catch (err) {
     console.error('[DBMS] Error saving persisted user:', err);
@@ -297,7 +318,7 @@ export function deletePersistedUser(identifier: string): boolean {
     const filtered = existing.filter(
       (u) => u.uid?.toLowerCase() !== clean && u.email?.toLowerCase() !== clean
     );
-    fs.writeFileSync(USERS_FILE, JSON.stringify(filtered, null, 2), 'utf8');
+    atomicWriteJsonFile(USERS_FILE, filtered);
     return true;
   } catch (err) {
     console.error('[DBMS] Error deleting persisted user:', err);
@@ -349,7 +370,7 @@ export function savePersistedVerification(record: DbmsVerificationRecord): DbmsV
     } else {
       existing.unshift(record);
     }
-    fs.writeFileSync(VERIFICATIONS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(VERIFICATIONS_FILE, existing);
     return record;
   } catch (err) {
     console.error('[DBMS] Error saving persisted verification record:', err);
@@ -365,7 +386,7 @@ export function markPersistedVerificationUsed(tokenHash: string): boolean {
     if (target) {
       target.used = true;
       target.usedAt = new Date().toISOString();
-      fs.writeFileSync(VERIFICATIONS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+      atomicWriteJsonFile(VERIFICATIONS_FILE, existing);
       return true;
     }
     return false;
@@ -415,7 +436,7 @@ export function recordVerificationAudit(audit: Omit<DbmsVerificationAudit, 'id' 
       existing = existing.slice(0, 500);
     }
 
-    fs.writeFileSync(VERIFICATION_AUDIT_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(VERIFICATION_AUDIT_FILE, existing);
   } catch (err) {
     console.error('[DBMS] Error writing verification audit entry:', err);
   }
@@ -643,7 +664,7 @@ export function mergePersistedCompanies(canonicalId: string, duplicateId: string
       `Merged into canonical entity ${canonical.legalName} (${canonicalId}) on ${new Date().toISOString()}`,
     ];
 
-    fs.writeFileSync(COMPANIES_FILE, JSON.stringify(companies, null, 2), 'utf8');
+    atomicWriteJsonFile(COMPANIES_FILE, companies);
     return true;
   } catch (err) {
     console.error('[DBMS] Error merging companies:', err);
@@ -677,7 +698,7 @@ export function savePersistedPresence(state: UserPresenceState): void {
       ...state,
       lastHeartbeat: state.lastHeartbeat || new Date().toISOString(),
     };
-    fs.writeFileSync(PRESENCE_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(PRESENCE_FILE, existing);
   } catch (err) {
     console.error('[DBMS] Error saving persisted presence:', err);
   }
@@ -731,7 +752,7 @@ export function recordPersistedEvents(events: IdempotentEvent[]): number {
 
     // Keep up to 2000 recent events on disk
     const trimmed = existing.slice(0, 2000);
-    fs.writeFileSync(EVENTS_FILE, JSON.stringify(trimmed, null, 2), 'utf8');
+    atomicWriteJsonFile(EVENTS_FILE, trimmed);
     return inserted;
   } catch (err) {
     console.error('[DBMS] Error recording persisted events:', err);
@@ -774,7 +795,7 @@ export function savePersistedUserIntent(intent: LogisticsIntent): void {
   try {
     const existing = getPersistedIntents();
     existing[intent.userId] = intent;
-    fs.writeFileSync(INTENTS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(INTENTS_FILE, existing);
   } catch (err) {
     console.error('[DBMS] Error saving persisted user intent:', err);
   }
@@ -833,7 +854,7 @@ export function savePersistedTransaction(tx: TransactionRecord): TransactionReco
     } else {
       existing.unshift(recordToSave);
     }
-    fs.writeFileSync(TRANSACTIONS_FILE, JSON.stringify(existing, null, 2), 'utf8');
+    atomicWriteJsonFile(TRANSACTIONS_FILE, existing);
     return recordToSave;
   } catch (err) {
     console.error('[DBMS] Error saving persisted transaction:', err);
@@ -890,7 +911,7 @@ export function savePersistedEmailDeliveryEvent(event: EmailDeliveryEventRecord)
     }
     // Cap at 1000 events to prevent unbounded file growth
     const trimmed = existing.slice(0, 1000);
-    fs.writeFileSync(EMAIL_DELIVERY_EVENTS_FILE, JSON.stringify(trimmed, null, 2), 'utf8');
+    atomicWriteJsonFile(EMAIL_DELIVERY_EVENTS_FILE, trimmed);
     return event;
   } catch (err) {
     console.error('[DBMS] Error saving persisted email delivery event:', err);

@@ -81,13 +81,7 @@ export function SearchConnectionsModal({
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchMembers(searchTerm);
-    }
-  }, [isOpen]);
-
-  // Debounced search on typing
+  // Debounced search on typing or modal opening
   useEffect(() => {
     if (!isOpen) return;
     const timer = setTimeout(() => {

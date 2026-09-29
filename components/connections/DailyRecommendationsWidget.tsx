@@ -91,6 +91,7 @@ export function DailyRecommendationsWidget({
 
   useEffect(() => {
     loadMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser.uid]);
 
   // Compute recommendations whenever candidates or connection storage changes
@@ -130,6 +131,7 @@ export function DailyRecommendationsWidget({
 
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
     return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candidates, currentUser, hydratedSelf]);
 
   const handleConnect = async (rec: RecommendedConnection) => {
