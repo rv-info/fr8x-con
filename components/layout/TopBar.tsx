@@ -398,6 +398,30 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </div>
 
                   <div className="calc-tool-box">
+                    {/* Quick Amount Chips */}
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '8px', overflowX: 'auto', paddingBottom: '2px' }}>
+                      {[100, 500, 1000, 2500, 5000, 10000].map((amt) => (
+                        <button
+                          key={amt}
+                          type="button"
+                          onClick={() => setCalcSourceAmount(amt)}
+                          style={{
+                            padding: '2px 7px',
+                            fontSize: '10px',
+                            fontWeight: calcSourceAmount === amt ? 700 : 500,
+                            borderRadius: '4px',
+                            border: calcSourceAmount === amt ? '1px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                            background: calcSourceAmount === amt ? 'var(--brand-soft)' : '#ffffff',
+                            color: calcSourceAmount === amt ? 'var(--brand)' : 'var(--fr8x-text)',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {amt >= 1000 ? `${amt / 1000}k` : amt}
+                        </button>
+                      ))}
+                    </div>
+
                     <div className="calc-row">
                       <div>
                         <label style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--fr8x-muted, #64748b)', display: 'block', marginBottom: '3px' }}>Amount</label>
@@ -492,16 +516,24 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                      <small style={{ color: 'var(--mut)', fontSize: '10px' }}>
-                        1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}
-                      </small>
-                      <button
-                        onClick={() => refreshLiveRates()}
-                        style={{ fontSize: '9.5px', color: 'var(--brand)', textDecoration: 'underline', cursor: 'pointer' }}
-                      >
-                        Sync Now
-                      </button>
+                    {/* Live Reciprocal & Calculation Options */}
+                    <div style={{ background: '#f8fafc', border: '1px solid var(--fr8x-outline)', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-text)' }}>
+                        <span>Direct: <b>1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}</b></span>
+                        <span>Inverse: <b>1 {calcTargetCurrency} = {(1 / (directRate || 1)).toFixed(4)} {calcSourceCurrency}</b></span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #e2e8f0' }}>
+                        <span style={{ fontSize: '9.5px', color: 'var(--mut)' }}>
+                          Live Forex Rate · Real-time Interbank Feed
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => refreshLiveRates()}
+                          style={{ fontSize: '9.5px', color: 'var(--brand)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                        >
+                          Sync Now
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

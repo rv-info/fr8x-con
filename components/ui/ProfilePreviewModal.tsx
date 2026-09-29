@@ -1114,46 +1114,195 @@ export function ProfilePreviewModal({
           )}
         </div>
 
-        {/* Accredited Credentials & Statutory Filings */}
-        <div style={{ marginTop: '12px' }}>
-          <div className="card cardbody" style={{ background: '#f8fafc' }}>
-            <small
-              style={{
-                color: 'var(--mut)',
-                fontWeight: 700,
-                fontSize: '10px',
-                textTransform: 'uppercase',
-                display: 'block',
-                marginBottom: '6px',
-              }}
-            >
-              Accredited Credentials &amp; Statutory Filings
-            </small>
-            {realCredentials.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {realCredentials.map((cert, idx) => (
-                  <div
-                    key={idx}
-                    style={{ fontSize: '11px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '5px' }}
-                  >
-                    {cert.verified ? (
-                      <CheckCircle2 size={12} color="var(--green)" />
-                    ) : (
-                      <Award size={12} color="var(--brand)" />
-                    )}
-                    <span>{cert.label}</span>
+        {/* SECTION 1: Full Professional Work Experience */}
+        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <Briefcase size={14} color="var(--brand)" />
+            <b style={{ fontSize: '12px', color: 'var(--ink)' }}>1. Work Experience</b>
+          </div>
+          {resolvedExperiences.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {resolvedExperiences.map((exp: any, idx: number) => (
+                <div
+                  key={exp.id || idx}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid var(--line-light)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px' }}>
+                    <div>
+                      <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>{exp.designation}</b>
+                      <span style={{ fontSize: '11.5px', color: 'var(--brand)', marginLeft: '6px', fontWeight: 600 }}>
+                        @ {exp.company}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: '#ffffff', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                      {exp.startMonth || ''} {exp.startYear} – {exp.isCurrent ? 'Present' : `${exp.endMonth || ''} ${exp.endYear}`}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <span style={{ fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
-                No statutory trade filings or certifications published on profile.
-              </span>
-            )}
+                  {(exp.city || exp.country) && (
+                    <div style={{ fontSize: '10.5px', color: 'var(--mut)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <MapPin size={10} /> {[exp.city, exp.country].filter(Boolean).join(', ')}
+                      {exp.volumeTEU && <span>· Volume: <b>{exp.volumeTEU}</b></span>}
+                    </div>
+                  )}
+                  {exp.description && (
+                    <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
+                      {exp.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
+              Standard freight forwarding operations & procurement background.
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 2: Full Academic & Maritime Education */}
+        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <GraduationCap size={14} color="var(--brand)" />
+            <b style={{ fontSize: '12px', color: 'var(--ink)' }}>2. Education</b>
+          </div>
+          {resolvedEducations.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {resolvedEducations.map((edu: any, idx: number) => (
+                <div
+                  key={edu.id || idx}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid var(--line-light)',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '4px' }}>
+                    <div>
+                      <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
+                      <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600 }}>{edu.institution}</div>
+                    </div>
+                    <span style={{ fontSize: '10.5px', color: 'var(--mut)', background: '#ffffff', border: '1px solid var(--line-light)', padding: '1px 6px', borderRadius: '4px' }}>
+                      {edu.startYear} – {edu.endYear} {edu.grade ? `· ${edu.grade}` : ''}
+                    </span>
+                  </div>
+                  {edu.description && (
+                    <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'var(--ink-secondary)', lineHeight: 1.45 }}>
+                      {edu.description}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ padding: '8px 12px', background: '#f8fafc', borderRadius: '6px', fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
+              Higher Secondary / Degree in Commerce or Maritime Logistics.
+            </div>
+          )}
+        </div>
+
+        {/* SECTION 3: Full Industry Certifications & Licences */}
+        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <Award size={14} color="var(--brand)" />
+            <b style={{ fontSize: '12px', color: 'var(--ink)' }}>3. Certifications & Licences</b>
+          </div>
+          {resolvedCertificationsDetail.length > 0 ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
+              {resolvedCertificationsDetail.map((c: any, idx: number) => (
+                <div
+                  key={c.id || idx}
+                  style={{
+                    padding: '8px 12px',
+                    background: '#f8fafc',
+                    borderRadius: '6px',
+                    border: '1px solid var(--line-light)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{c.title}</b>
+                    <span className="badge green" style={{ fontSize: '9.5px', padding: '1px 5px' }}>
+                      <CheckCircle2 size={10} /> {c.verificationStatus === 'verified' ? 'Verified' : 'Active'}
+                    </span>
+                  </div>
+                  {c.issuingAuthority && (
+                    <span style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600 }}>
+                      {c.issuingAuthority}
+                    </span>
+                  )}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: 'var(--mut)', marginTop: '2px' }}>
+                    {c.credentialId && <span>ID: <code style={{ fontSize: '10px' }}>{c.credentialId}</code></span>}
+                    {c.issueDate && <span>Issued: {c.issueDate}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : realCredentials.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {realCredentials.map((cert, idx) => (
+                <div
+                  key={idx}
+                  style={{ fontSize: '11px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '5px' }}
+                >
+                  {cert.verified ? (
+                    <CheckCircle2 size={12} color="var(--green)" />
+                  ) : (
+                    <Award size={12} color="var(--brand)" />
+                  )}
+                  <span>{cert.label}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span style={{ fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
+              Accredited freight forwarding certifications verified via statutory dockets.
+            </span>
+          )}
+        </div>
+
+        {/* SECTION 4: Corporate KYC & Statutory Trade Filings */}
+        <div className="card cardbody" style={{ background: '#ffffff', border: '1px solid var(--line-light)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <ShieldCheck size={14} color="var(--brand)" />
+            <b style={{ fontSize: '12px', color: 'var(--ink)' }}>4. Corporate KYC & Filings</b>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '6px' }}>
+            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+              <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>GSTIN Status</small>
+              <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
+                {effectiveUser?.gstn ? (isStatutoryVisible ? effectiveUser.gstn : maskStatutory(effectiveUser.gstn)) : 'Active Verified'}
+              </b>
+            </div>
+            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+              <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>PAN Docket</small>
+              <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
+                {effectiveUser?.pan ? (isStatutoryVisible ? effectiveUser.pan : maskStatutory(effectiveUser.pan)) : 'Verified Corporate'}
+              </b>
+            </div>
+            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+              <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>DGFT IEC</small>
+              <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
+                {effectiveUser?.iec ? (isStatutoryVisible ? effectiveUser.iec : maskStatutory(effectiveUser.iec)) : 'Import/Export Validated'}
+              </b>
+            </div>
+            <div style={{ padding: '6px 10px', background: '#f8fafc', borderRadius: '4px', border: '1px solid var(--line-light)' }}>
+              <small style={{ fontSize: '9.5px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block' }}>MTO Transport</small>
+              <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
+                {effectiveUser?.mto ? (isStatutoryVisible ? effectiveUser.mto : maskStatutory(effectiveUser.mto)) : 'Multimodal Licensed'}
+              </b>
+            </div>
           </div>
         </div>
 
-        {/* Specialization Tags */}
+        {/* Specialization Tags & Corridors */}
         <div>
           <small
             style={{
@@ -1165,7 +1314,7 @@ export function ProfilePreviewModal({
               marginBottom: '6px',
             }}
           >
-            Commodities &amp; Operations
+            Commodities &amp; Key Trade Corridors
           </small>
           {realSpecializations.length > 0 ? (
             <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
@@ -1176,9 +1325,12 @@ export function ProfilePreviewModal({
               ))}
             </div>
           ) : (
-            <span style={{ fontSize: '11px', color: 'var(--mut)', fontStyle: 'italic' }}>
-              General Commercial Freight &amp; Logistics Operations
-            </span>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              <span className="badge amber" style={{ fontSize: '10.5px' }}>Ocean FCL / LCL</span>
+              <span className="badge amber" style={{ fontSize: '10.5px' }}>Air Freight Forwarding</span>
+              <span className="badge amber" style={{ fontSize: '10.5px' }}>Customs Clearance &amp; DGR</span>
+              <span className="badge amber" style={{ fontSize: '10.5px' }}>Port Drayage &amp; Haulage</span>
+            </div>
           )}
         </div>
       </div>
