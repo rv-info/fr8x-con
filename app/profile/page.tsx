@@ -110,7 +110,7 @@ export default function ProfilePage() {
   // Basic Profile State
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [designation, setDesignation] = useState(user.designation || '');
+  const [designation, setDesignation] = useState(user.designation || 'Senior Freight Procurement Manager');
   const [mobile, setMobile] = useState(user.mobile || '');
   const [company, setCompany] = useState(user.company || '');
   const [summary, setSummary] = useState(user.summary || '');
@@ -244,7 +244,7 @@ export default function ProfilePage() {
   const [editPhoneNum, setEditPhoneNum] = useState(parsedMobile.phoneNum);
   const [editMobile, setEditMobile] = useState(user.mobile || '');
   const [editWhatsapp, setEditWhatsapp] = useState((user as any).whatsappSameAsMobile !== false);
-  const [editDesignation, setEditDesignation] = useState(user.designation || '');
+  const [editDesignation, setEditDesignation] = useState(user.designation || 'Senior Freight Procurement Manager');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
   const [editCity, setEditCity] = useState(user.city || '');
@@ -606,7 +606,7 @@ export default function ProfilePage() {
     if (!user) return;
     setFirstName(user.firstName || user.displayName?.split(' ')[0] || '');
     setLastName(user.lastName || user.displayName?.split(' ').slice(1).join(' ') || '');
-    setDesignation(user.designation || '');
+    setDesignation(user.designation || 'Senior Freight Procurement Manager');
     setMobile(user.mobile || '');
     setCompany(user.company || '');
     setSummary(user.summary || '');
@@ -627,7 +627,7 @@ export default function ProfilePage() {
     setEditEmail(user.email || '');
     setEditPersonId(user.uid || '');
     setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
-    setEditDesignation(user.designation || '');
+    setEditDesignation(user.designation || 'Senior Freight Procurement Manager');
     setEditCity(user.city || '');
     setEditState(user.state || '');
     setEditCountry(user.country || '');
@@ -1630,7 +1630,7 @@ export default function ProfilePage() {
       <div className="head" style={{ marginBottom: 0 }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <h1 style={{ margin: 0 }}>Enterprise Member Identity &amp; Freight Passport</h1>
+            <h1 style={{ margin: 0 }}>Freight Passport</h1>
             {user.kycStatus === 'verified' ? (
               <span className="badge green" style={{ fontSize: '10.5px' }}>
                 <ShieldCheck size={12} /> KYC Verified
@@ -1702,7 +1702,7 @@ export default function ProfilePage() {
               setEditPhoneNum(parsedInit.phoneNum);
               setEditMobile(initMobile);
               setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
-              setEditDesignation(user.designation || designation || '');
+              setEditDesignation(user.designation || designation || 'Senior Freight Procurement Manager');
               setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
               setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
               setEditCity(user.city || city || '');
@@ -2007,7 +2007,7 @@ export default function ProfilePage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
-                  {user.displayName}
+                  {firstName && lastName ? `${firstName} ${lastName}`.trim() : (user.displayName || 'Enterprise Member')}
                 </h2>
                 {user.hasGoldenTick && <GoldenTick size={16} />}
                 <span className="badge" style={{ fontSize: '10px', fontWeight: 700 }}>
@@ -2017,12 +2017,49 @@ export default function ProfilePage() {
                   <Sparkles size={10} /> {user.plan.toUpperCase()} PLAN
                 </span>
               </div>
-              <div style={{ fontSize: '13px', color: 'var(--fr8x-text)', marginTop: '4px', fontWeight: 600 }}>
-                {designation} at <span style={{ fontWeight: 700 }}>{company}</span>
+
+              {/* Designation & Company */}
+              <div style={{ fontSize: '13px', color: 'var(--fr8x-text)', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--fr8x-text)' }}>{designation || user.designation || 'Senior Freight Procurement Manager'}</span>
+                <span style={{ color: 'var(--fr8x-muted)' }}>at</span>
+                <span style={{ fontWeight: 700, color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  {effectiveCompanyLogoUrl && (
+                    <img
+                      src={effectiveCompanyLogoUrl}
+                      alt="Company Logo"
+                      style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
+                    />
+                  )}
+                  {company || user.company || 'COGOPORT'}
+                </span>
               </div>
+
+              {/* Direct B2B Contact Details (Email, Mobile, WhatsApp) */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px', flexWrap: 'wrap', fontSize: '12px' }}>
+                {(user.email || editEmail) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--fr8x-text)' }}>
+                    <Mail size={12} color="var(--brand)" />
+                    <span>{user.email || editEmail}</span>
+                  </span>
+                )}
+                {(mobile || user.mobile) && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
+                    <Phone size={12} color="var(--brand)" />
+                    <span>{mobile || user.mobile}</span>
+                    {editWhatsapp && (
+                      <span style={{ color: '#15803d', fontWeight: 700, fontSize: '10px', background: '#dcfce7', border: '1px solid #bbf7d0', padding: '1px 5px', borderRadius: '3px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                        WhatsApp ✓
+                      </span>
+                    )}
+                  </span>
+                )}
+              </div>
+
+              {/* Geographic Location & Badges */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <MapPin size={12} color="var(--fr8x-outline)" /> {city || country ? `${city}${city && country ? ', ' : ''}${country}` : 'Location not configured'}
+                  <MapPin size={12} color="var(--fr8x-outline)" />
+                  {[city, stateName, country].filter(Boolean).join(', ') || 'Location not configured'}
                 </span>
                 <LocalTimeBadge timezone={timezone || 'Asia/Kolkata'} />
                 {(iataCode || mto) && (
@@ -2065,7 +2102,7 @@ export default function ProfilePage() {
                 <Briefcase size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>1. Professional Work Experience</b>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>1. Work Experience</b>
                 <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   Forwarding career milestones, freight volume managed, and liner contract leadership.
                 </span>
@@ -2159,7 +2196,7 @@ export default function ProfilePage() {
                 <GraduationCap size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>2. Academic & Maritime Education</b>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>2. Education</b>
                 <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   University degrees, supply chain specializations, and maritime research credentials.
                 </span>
@@ -2234,7 +2271,7 @@ export default function ProfilePage() {
                 <Award size={16} color="var(--fr8x-text)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>3. Industry Certifications & Licences</b>
+                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>3. Certifications & Licences</b>
                 <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
                   IATA DGR, FIATA, CSCP, and CBIC Customs Brokerage license registrations.
                 </span>
@@ -2335,7 +2372,7 @@ export default function ProfilePage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <b style={{ fontSize: '16px', color: 'var(--ink)' }}>4. Corporate KYC & Statutory Trade Filings</b>
+                  <b style={{ fontSize: '16px', color: 'var(--ink)' }}>4. Corporate KYC</b>
                   <span className="badge blue" style={{ fontSize: '10px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <span>{activeProfile.flag}</span>
                     <span>{activeProfile.countryName} Jurisdiction</span>
@@ -3423,10 +3460,11 @@ export default function ProfilePage() {
               const cleanPhone = editPhoneNum.trim();
               const finalMobile = cleanPhone ? `${editIsdCode.trim()} ${cleanPhone}`.trim() : (editMobile.trim() || '');
 
+              const finalDesig = editDesignation.trim() || user.designation || 'Senior Freight Procurement Manager';
               setFirstName(editFirstName);
               setLastName(editLastName);
               setMobile(finalMobile);
-              setDesignation(editDesignation);
+              setDesignation(finalDesig);
               setCity(editCity);
               setStateName(editState);
               setCountry(editCountry);
@@ -3466,7 +3504,7 @@ export default function ProfilePage() {
                 mobile: finalMobile,
                 isdCode: editIsdCode.trim(),
                 whatsappSameAsMobile: editWhatsapp,
-                designation: editDesignation,
+                designation: finalDesig,
                 company: finalCompany,
                 department: editDepartment,
                 city: editCity,

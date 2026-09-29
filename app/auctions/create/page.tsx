@@ -634,7 +634,7 @@ export default function CreateReverseAuctionPage() {
                 </label>
                 <input
                   className="input"
-                  placeholder="e.g. Mumbai → Rotterdam | FCL Auto Parts"
+                  placeholder="Auction Title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   required
@@ -726,7 +726,7 @@ export default function CreateReverseAuctionPage() {
                 <label>Place of Receipt (POR)</label>
                 <input
                   className="input"
-                  placeholder="Type 3+ letters…"
+                  placeholder="Place of Receipt (POR)"
                   value={por}
                   onChange={(e) => handlePortInput('por', e.target.value)}
                 />
@@ -748,7 +748,7 @@ export default function CreateReverseAuctionPage() {
                 </label>
                 <input
                   className="input"
-                  placeholder="Type 3+ letters (e.g. Nhava Sheva)…"
+                  placeholder="Port of Loading (POL)"
                   value={pol}
                   onChange={(e) => handlePortInput('pol', e.target.value)}
                   required
@@ -771,7 +771,7 @@ export default function CreateReverseAuctionPage() {
                 </label>
                 <input
                   className="input"
-                  placeholder="Type 3+ letters (e.g. Rotterdam)…"
+                  placeholder="Port of Discharge (POD)"
                   value={pod}
                   onChange={(e) => handlePortInput('pod', e.target.value)}
                   required
@@ -792,7 +792,7 @@ export default function CreateReverseAuctionPage() {
                 <label>Final Destination</label>
                 <input
                   className="input"
-                  placeholder="Type 3+ letters…"
+                  placeholder="Final Destination"
                   value={finalDest}
                   onChange={(e) => handlePortInput('finalDest', e.target.value)}
                 />

@@ -1284,18 +1284,18 @@ Remarks & Terms  : ${r.remark || ''}
               {/* Row 1: CARRIER search with 3-letter typeahead */}
               <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px', alignItems: 'center' }}>
                 <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '3px', textAlign: 'center' }}>CARRIER *</label>
-                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Type carrier (e.g. Maersk, MSC, Hapag)…" />
+                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Carrier" />
               </div>
 
               {/* Row 2: POR + POL — 3-letter port search */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POR</label>
-                  <PortSearch value={por} onChange={setPor} placeholder="POR (e.g. INNSA)" />
+                  <PortSearch value={por} onChange={setPor} placeholder="POR" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POL *</label>
-                  <PortSearch value={pol} onChange={setPol} placeholder="POL (e.g. INNSA)" />
+                  <PortSearch value={pol} onChange={setPol} placeholder="POL" />
                 </div>
               </div>
 
@@ -1303,11 +1303,11 @@ Remarks & Terms  : ${r.remark || ''}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POD *</label>
-                  <PortSearch value={pod} onChange={setPod} placeholder="POD (e.g. NLRTM)" />
+                  <PortSearch value={pod} onChange={setPod} placeholder="POD" />
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
                   <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>FPOD</label>
-                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD (e.g. NLRTM)" />
+                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD" />
                 </div>
               </div>
 
@@ -1768,61 +1768,8 @@ Remarks & Terms  : ${r.remark || ''}
               </div>
             )}
 
-            {/* Quick Lane Chips */}
-            <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', marginTop: '7px', paddingBottom: '2px', scrollbarWidth: 'none' }}>
-              <button
-                type="button"
-                onClick={() => { setPolSearch(''); setPodSearch(''); setSearchQuery(''); }}
-                style={{
-                  padding: '2px 8px',
-                  fontSize: '10px',
-                  fontWeight: (!polSearch && !podSearch && !searchQuery) ? 700 : 500,
-                  borderRadius: '4px',
-                  border: (!polSearch && !podSearch && !searchQuery) ? '1px solid #1985a1' : '1px solid #cbd5e1',
-                  background: (!polSearch && !podSearch && !searchQuery) ? '#e0f2fe' : '#ffffff',
-                  color: (!polSearch && !podSearch && !searchQuery) ? '#0369a1' : '#475569',
-                  cursor: 'pointer',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
-              >
-                All Lanes ({filteredRates.length})
-              </button>
-              {[
-                { label: 'Mundra ➔ Jebel Ali', pol: 'Mundra', pod: 'Jebel Ali' },
-                { label: 'Nhava Sheva ➔ Rotterdam', pol: 'Nhava Sheva', pod: 'Rotterdam' },
-                { label: 'Pipavav ➔ Singapore', pol: 'Pipavav', pod: 'Singapore' },
-                { label: 'Mundra ➔ Felixstowe', pol: 'Mundra', pod: 'Felixstowe' },
-              ].map((lane) => {
-                const isSelected = polSearch.toLowerCase().includes(lane.pol.toLowerCase()) && podSearch.toLowerCase().includes(lane.pod.toLowerCase());
-                return (
-                  <button
-                    key={lane.label}
-                    type="button"
-                    onClick={() => {
-                      setSearchMode('corridor');
-                      setPolSearch(lane.pol);
-                      setPodSearch(lane.pod);
-                      setSearchQuery('');
-                    }}
-                    style={{
-                      padding: '2px 8px',
-                      fontSize: '10px',
-                      fontWeight: isSelected ? 700 : 500,
-                      borderRadius: '4px',
-                      border: isSelected ? '1px solid #1985a1' : '1px solid #cbd5e1',
-                      background: isSelected ? '#e0f2fe' : '#ffffff',
-                      color: isSelected ? '#0369a1' : '#475569',
-                      cursor: 'pointer',
-                      whiteSpace: 'nowrap',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {lane.label}
-                  </button>
-                );
-              })}
-            </div>
+
+
           </div>
 
           {/* Desktop full-width rates table fitting screen wide without text wrap */}

@@ -45,6 +45,8 @@ import {
   Check,
   X,
   AlertCircle,
+  GraduationCap,
+  Calendar,
 } from 'lucide-react';
 
 export interface ProfilePreviewData {
@@ -307,6 +309,78 @@ export function ProfilePreviewModal({
     effectiveUser?.teuVolumeYear ||
     profile?.teuVolumeYear ||
     null;
+
+  const resolvedCompanyLogo =
+    effectiveUser?.companyLogoUrl ||
+    (profile as any)?.companyLogoUrl ||
+    (typeof window !== 'undefined' && targetUserUid ? localStorage.getItem(`fr8x_user_logo_${targetUserUid}`) : null) ||
+    (typeof window !== 'undefined' ? localStorage.getItem('fr8x_user_logo') : null);
+
+  const resolvedExperiences = useMemo(() => {
+    if (Array.isArray(effectiveUser?.experiences) && effectiveUser.experiences.length > 0) {
+      return effectiveUser.experiences;
+    }
+    if (Array.isArray((profile as any)?.experiences) && (profile as any).experiences.length > 0) {
+      return (profile as any).experiences;
+    }
+    if (typeof window !== 'undefined') {
+      const uidKey = targetUserUid || (isCurrentUser ? user?.uid : null);
+      if (uidKey) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_exp_${uidKey}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  }, [effectiveUser?.experiences, (profile as any)?.experiences, targetUserUid, isCurrentUser, user?.uid]);
+
+  const resolvedEducations = useMemo(() => {
+    if (Array.isArray(effectiveUser?.educations) && effectiveUser.educations.length > 0) {
+      return effectiveUser.educations;
+    }
+    if (Array.isArray((profile as any)?.educations) && (profile as any).educations.length > 0) {
+      return (profile as any).educations;
+    }
+    if (typeof window !== 'undefined') {
+      const uidKey = targetUserUid || (isCurrentUser ? user?.uid : null);
+      if (uidKey) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_edu_${uidKey}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  }, [effectiveUser?.educations, (profile as any)?.educations, targetUserUid, isCurrentUser, user?.uid]);
+
+  const resolvedCertificationsDetail = useMemo(() => {
+    if (Array.isArray(effectiveUser?.certifications) && effectiveUser.certifications.length > 0) {
+      return effectiveUser.certifications;
+    }
+    if (Array.isArray((profile as any)?.certifications) && (profile as any).certifications.length > 0) {
+      return (profile as any).certifications;
+    }
+    if (typeof window !== 'undefined') {
+      const uidKey = targetUserUid || (isCurrentUser ? user?.uid : null);
+      if (uidKey) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_cert_${uidKey}`);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          }
+        } catch {}
+      }
+    }
+    return [];
+  }, [effectiveUser?.certifications, (profile as any)?.certifications, targetUserUid, isCurrentUser, user?.uid]);
 
   const realSpecializations: string[] = useMemo(() => {
     const raw = [
@@ -781,9 +855,20 @@ export function ProfilePreviewModal({
               </span>
             </div>
 
-            <p style={{ color: 'var(--ink-secondary)', fontSize: '12.5px', margin: '4px 0 0', fontWeight: 600 }}>
-              {resolvedRole} at <span style={{ color: 'var(--brand)' }}>{resolvedCompany}</span>
-            </p>
+            <div style={{ color: 'var(--ink-secondary)', fontSize: '12.5px', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              <span>{resolvedRole}</span>
+              <span style={{ color: 'var(--mut)' }}>at</span>
+              <span style={{ color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                {resolvedCompanyLogo && (
+                  <img
+                    src={resolvedCompanyLogo}
+                    alt=""
+                    style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
+                  />
+                )}
+                {resolvedCompany}
+              </span>
+            </div>
 
             <p style={{ color: 'var(--mut)', fontSize: '11.5px', margin: '3px 0 0' }}>
               <MapPin size={11} style={{ verticalAlign: '-2px', marginRight: '3px' }} />

@@ -17,7 +17,6 @@ import {
   PanelLeftOpen,
   LogOut,
   Smartphone,
-  X,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -87,30 +86,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             </span>
           )}
         </div>
-
-        {/* Mobile Close Button */}
-        {onCloseMobile && (
-          <button
-            type="button"
-            className="mobile-sidebar-close-btn"
-            onClick={onCloseMobile}
-            aria-label="Close navigation menu"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '28px',
-              height: '28px',
-              border: '1px solid var(--fr8x-outline)',
-              borderRadius: '6px',
-              background: '#f1f5f9',
-              color: 'var(--fr8x-text)',
-              cursor: 'pointer',
-            }}
-          >
-            <X size={15} />
-          </button>
-        )}
       </div>
 
       {/* Workspace Box */}
