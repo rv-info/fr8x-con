@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { otpStore } from '@/lib/otp-store';
 
 /**
  * POST /api/auth/forgot-password
  * Initiates password reset for FR8X user accounts.
- * Enforces strict anti-enumeration:
+ * Enforces strict anti-enumeration and distributed rate limits.
  * Always returns "If an account exists for this email address, password reset instructions have been sent."
  */
 export async function POST(req: NextRequest) {
@@ -19,8 +20,29 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const cleanEmail = email.trim().toLowerCase();
     const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '127.0.0.1';
-    const result = serverSecurityStore.requestPasswordReset(email.trim(), ip);
+
+    // AUTH-03: Distributed cooldown and rate limit check across serverless instances
+    const cd = await otpStore.checkCooldown(`reset:${cleanEmail}`, 60);
+    if (cd.inCooldown) {
+      return NextResponse.json(
+        { success: false, error: `Please wait ${cd.waitSeconds} second(s) before requesting another password reset code.` },
+        { status: 429 }
+      );
+    }
+
+    const rate = await otpStore.recordOtpSend(`reset:${cleanEmail}`, 3, 25 * 3600);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Maximum daily password reset requests reached. Please try again later or contact tech@fr8x.in.' },
+        { status: 429 }
+      );
+    }
+
+    await otpStore.recordCooldown(`reset:${cleanEmail}`, 60);
+
+    const result = serverSecurityStore.requestPasswordReset(cleanEmail, ip);
 
     if (!result.success && result.error && result.error.includes('wait')) {
       return NextResponse.json(

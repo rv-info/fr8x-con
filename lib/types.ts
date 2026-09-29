@@ -130,6 +130,7 @@ export interface UserProfile {
   hasGoldenTick: boolean;
   isVerified: boolean;
   email_verified?: boolean;
+  firebaseCustomToken?: string;
   role: UserRole;
   avatarUrl?: string;
   companyLogoUrl?: string;

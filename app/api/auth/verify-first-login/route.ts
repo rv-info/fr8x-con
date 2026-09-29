@@ -26,10 +26,34 @@ export async function POST(req: NextRequest) {
     }
 
     const user = verifyResult.user;
+
+    // Generate unique session ID for single-device login enforcement
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const userAgent = req.headers.get('user-agent') || 'Browser Client';
+    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
+
+    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
+    let firebaseCustomToken: string | null = null;
+    try {
+      const { createCustomToken } = await import('@/lib/firebase/admin');
+      firebaseCustomToken = await createCustomToken(user.uid, {
+        role: user.role,
+        companyId: user.companyId,
+        isVerified: Boolean(user.email_verified && user.status === 'active'),
+        plan: (user as any).plan || 'trial',
+        hasGoldenTick: Boolean((user as any).hasGoldenTick),
+      });
+    } catch (fbErr: any) {
+      console.warn('[VerifyFirstLoginAPI] Firebase custom token generation warning:', fbErr.message);
+    }
+
     const res = NextResponse.json({
       success: true,
       message: 'First-time login verified. Session created.',
       uid: user.uid,
+      sessionId,
+      firebaseCustomToken,
       email: user.email,
       displayName: user.displayName,
       company: user.company,
@@ -43,6 +67,7 @@ export async function POST(req: NextRequest) {
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      sessionId,
       issuedAt: Date.now(),
     });
 

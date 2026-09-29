@@ -128,6 +128,23 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [resetResendCooldown]);
 
+  // First-login OTP challenge state (AUTH-01)
+  const [isFirstLoginModalOpen, setIsFirstLoginModalOpen] = useState(false);
+  const [firstLoginChallengeToken, setFirstLoginChallengeToken] = useState('');
+  const [firstLoginOtp, setFirstLoginOtp] = useState('');
+  const [firstLoginMaskedEmail, setFirstLoginMaskedEmail] = useState('');
+  const [firstLoginError, setFirstLoginError] = useState('');
+  const [firstLoginLoading, setFirstLoginLoading] = useState(false);
+  const [firstLoginCooldown, setFirstLoginCooldown] = useState(0);
+
+  useEffect(() => {
+    if (firstLoginCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setFirstLoginCooldown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [firstLoginCooldown]);
+
   // Read URL reason parameter (session_expired, inactivity, not_found)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -192,7 +209,17 @@ export default function LoginPage() {
       setIsLoading(false);
 
       if (res.ok && json.success) {
-
+        // AUTH-01: Intercept first-login 2FA challenge
+        if (json.firstLoginRequired) {
+          setFirstLoginChallengeToken(json.challengeToken || '');
+          setFirstLoginMaskedEmail(json.maskedEmail || json.email || id);
+          setFirstLoginOtp('');
+          setFirstLoginError('');
+          setFirstLoginCooldown(60);
+          setIsFirstLoginModalOpen(true);
+          toast('First-time authentication challenge sent to your corporate email.');
+          return;
+        }
 
         // Server authenticated — hand off verified profile to client session
         const loggedIn = login(id, remember, json);
@@ -239,7 +266,63 @@ export default function LoginPage() {
     }
   };
 
+  const handleVerifyFirstLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (firstLoginOtp.trim().length < 6) {
+      setFirstLoginError('Please enter the full 6-digit verification code.');
+      return;
+    }
+    setFirstLoginLoading(true);
+    setFirstLoginError('');
+    try {
+      const res = await fetch('/api/auth/verify-first-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challengeToken: firstLoginChallengeToken,
+          otp: firstLoginOtp.trim(),
+        }),
+      });
+      const data = await res.json();
+      setFirstLoginLoading(false);
+      if (res.ok && data.success) {
+        setIsFirstLoginModalOpen(false);
+        const loggedIn = login(identifier.trim(), remember, data);
+        if (loggedIn) {
+          toast('First-time authentication verified! Welcome to FR8X Workspace.');
+          router.push('/feeds');
+        } else {
+          setFirstLoginError('Session initialization failed. Please try again.');
+        }
+      } else {
+        setFirstLoginError(data.error || 'Verification code invalid or expired.');
+      }
+    } catch {
+      setFirstLoginLoading(false);
+      setFirstLoginError('Unable to connect to authentication server.');
+    }
+  };
 
+  const handleResendFirstLoginOtp = async () => {
+    if (firstLoginCooldown > 0 || firstLoginLoading) return;
+    setFirstLoginError('');
+    try {
+      const res = await fetch('/api/auth/resend-first-login-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeToken: firstLoginChallengeToken }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFirstLoginCooldown(60);
+        toast('New verification code dispatched to your email.');
+      } else {
+        setFirstLoginError(data.error || 'Failed to resend code.');
+      }
+    } catch {
+      setFirstLoginError('Unable to reach server to resend code.');
+    }
+  };
 
   const openForgotModal = () => {
     if (!resetEmail && identifier.trim() && identifier.includes('@')) {
@@ -888,6 +971,121 @@ export default function LoginPage() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* First-Login 2FA Challenge Modal (AUTH-01) */}
+      {isFirstLoginModalOpen && (
+        <div className="gf-modal-overlay gf-modal-backdrop">
+          <div className="gf-modal-card" style={{ width: '92vw', maxWidth: '440px' }}>
+            <div className="gf-modal-header">
+              <div className="gf-modal-title flex items-center gap-2">
+                <ShieldCheck className="lucide w-4 h-4 text-emerald-600" />
+                <span>First-Time Sign-In Verification</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsFirstLoginModalOpen(false);
+                  setFirstLoginError('');
+                  setFirstLoginOtp('');
+                }}
+                className="gf-modal-close-btn"
+              >
+                <X className="lucide w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleVerifyFirstLogin} style={{ padding: '20px' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                  To secure your enterprise workspace account, a 6-digit verification code has been dispatched to{' '}
+                  <strong style={{ color: 'var(--text-primary)' }}>{firstLoginMaskedEmail}</strong>.
+                </p>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Please enter the code below to complete first-time account authorization.
+                </p>
+              </div>
+
+              {firstLoginError && (
+                <div
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    color: '#ef4444',
+                    fontSize: '12px',
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <AlertCircle className="lucide w-4 h-4 shrink-0" />
+                  <span>{firstLoginError}</span>
+                </div>
+              )}
+
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, marginBottom: '6px' }}>
+                  6-Digit Verification Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={firstLoginOtp}
+                  onChange={(e) => setFirstLoginOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="e.g. 123456"
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    backgroundColor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    fontSize: '18px',
+                    letterSpacing: '4px',
+                    textAlign: 'center',
+                    fontWeight: 600,
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  onClick={handleResendFirstLoginOtp}
+                  disabled={firstLoginCooldown > 0 || firstLoginLoading}
+                  className="btn secondary sm"
+                  style={{ fontSize: '11px', padding: '4px 10px' }}
+                >
+                  {firstLoginCooldown > 0 ? `Resend in ${firstLoginCooldown}s` : 'Resend Code'}
+                </button>
+
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsFirstLoginModalOpen(false);
+                      setFirstLoginError('');
+                      setFirstLoginOtp('');
+                    }}
+                    className="btn secondary sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={firstLoginLoading || firstLoginOtp.trim().length !== 6}
+                    className="btn primary sm"
+                  >
+                    {firstLoginLoading ? 'Verifying…' : 'Verify & Sign In'}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

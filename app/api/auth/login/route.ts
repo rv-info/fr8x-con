@@ -59,6 +59,26 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // AUTH-01: Intercept mandatory first-login 2FA challenge
+    if (result.firstLoginRequired) {
+      if (result.emailPromise) {
+        try {
+          await result.emailPromise;
+        } catch (err: any) {
+          console.error('[LoginAPI] First-login OTP delivery warning:', err.message);
+        }
+      }
+      return NextResponse.json({
+        success: true,
+        firstLoginRequired: true,
+        challengeToken: result.challengeToken,
+        email: result.email,
+        maskedEmail: result.maskedEmail,
+        expiresIn: result.expiresIn || 10,
+        message: 'First-time authentication challenge sent to your corporate email.',
+      });
+    }
+
     const user = result.user || serverSecurityStore.getUserByEmailOrUid(identifier);
     if (!user) {
       return NextResponse.json(
@@ -66,17 +86,32 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    user.firstLoginCompleted = true;
 
     // Generate unique session ID for single-device login enforcement
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
 
+    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
+    let firebaseCustomToken: string | null = null;
+    try {
+      const { createCustomToken } = await import('@/lib/firebase/admin');
+      firebaseCustomToken = await createCustomToken(user.uid, {
+        role: user.role,
+        companyId: user.companyId,
+        isVerified: Boolean(user.email_verified && user.status === 'active'),
+        plan: (user as any).plan || 'trial',
+        hasGoldenTick: Boolean((user as any).hasGoldenTick),
+      });
+    } catch (fbErr: any) {
+      console.warn('[LoginAPI] Firebase custom token generation warning:', fbErr.message);
+    }
+
     const res = NextResponse.json({
       success: true,
       uid: user.uid,
       sessionId,
+      firebaseCustomToken,
       email: user.email,
       displayName: user.displayName,
       firstName: user.firstName || user.displayName?.split(' ')[0] || '',

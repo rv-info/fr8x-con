@@ -15,29 +15,15 @@ import type { Firestore } from 'firebase-admin/firestore';
 import type { Storage } from 'firebase-admin/storage';
 
 // ─── Environment validation ───────────────────────────────────────────────────
-function assertEnv(key: string): string {
-  const val = process.env[key];
-  if (!val) {
-    throw new Error(
-      `[FR8X Admin] Missing required server-side environment variable: ${key}. ` +
-      `Ensure it is set in Vercel Environment Variables (Production / Preview / Development) ` +
-      `or in .env.local for local development.`
-    );
-  }
-  return val;
-}
-
-// ─── Lazy singleton — initialised once per cold-start ────────────────────────
 let _app: App | null = null;
-let _auth: Auth | null = null;
 let _db: Firestore | null = null;
+let _auth: Auth | null = null;
 let _storage: Storage | null = null;
 
-function getAdminApp(): App {
+function getAdminApp(): App | null {
   if (_app) return _app;
 
   // Dynamic import keeps firebase-admin OUT of client bundles
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { initializeApp, getApps, cert } = require('firebase-admin/app');
 
   if (getApps().length > 0) {
@@ -45,9 +31,30 @@ function getAdminApp(): App {
     return _app!;
   }
 
-  const projectId   = assertEnv('FIREBASE_ADMIN_PROJECT_ID');
-  const clientEmail = assertEnv('FIREBASE_ADMIN_CLIENT_EMAIL');
-  const privateKey  = assertEnv('FIREBASE_ADMIN_PRIVATE_KEY').replace(/\\n/g, '\n');
+  const projectId =
+    process.env.FIREBASE_ADMIN_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
+    'fr8x-con';
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const rawPrivateKey = process.env.FIREBASE_ADMIN_PRIVATE_KEY;
+
+  // If emulator is active, initialize without credentials
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.FIRESTORE_EMULATOR_HOST) {
+    _app = initializeApp({ projectId });
+    return _app;
+  }
+
+  if (!clientEmail || !rawPrivateKey) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(
+        '[FR8X Admin] FIREBASE_ADMIN_CLIENT_EMAIL or FIREBASE_ADMIN_PRIVATE_KEY is not set. ' +
+        'Firebase Admin operations will operate in mock/degraded mode.'
+      );
+    }
+    return null;
+  }
+
+  const privateKey = rawPrivateKey.replace(/\\n/g, '\n');
 
   _app = initializeApp({
     credential: cert({ projectId, clientEmail, privateKey }),
@@ -63,37 +70,59 @@ function getAdminApp(): App {
 /** Server-side Firestore instance with full Admin privileges */
 export function getAdminDb(): Firestore {
   if (_db) return _db;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const app = getAdminApp();
+  if (!app) return {} as Firestore;
   const { getFirestore } = require('firebase-admin/firestore');
-  _db = getFirestore(getAdminApp());
+  _db = getFirestore(app);
   _db!.settings({ ignoreUndefinedProperties: true });
   return _db!;
 }
 
 /** Server-side Auth instance */
-export function getAdminAuth(): Auth {
+export function getAdminAuth(): Auth | null {
   if (_auth) return _auth;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const app = getAdminApp();
+  if (!app) return null;
   const { getAuth } = require('firebase-admin/auth');
-  _auth = getAuth(getAdminApp());
-  return _auth!;
+  _auth = getAuth(app);
+  return _auth;
 }
 
 /** Server-side Storage instance */
-export function getAdminStorage(): Storage {
+export function getAdminStorage(): Storage | null {
   if (_storage) return _storage;
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const app = getAdminApp();
+  if (!app) return null;
   const { getStorage } = require('firebase-admin/storage');
-  _storage = getStorage(getAdminApp());
-  return _storage!;
+  _storage = getStorage(app);
+  return _storage;
 }
 
 // Convenience named exports (lazy properties — initialized on first access)
-export const adminDb      = new Proxy({} as Firestore, { get: (_, k) => (getAdminDb() as any)[k] });
-export const adminAuth    = new Proxy({} as Auth,      { get: (_, k) => (getAdminAuth() as any)[k] });
-export const adminStorage = new Proxy({} as Storage,   { get: (_, k) => (getAdminStorage() as any)[k] });
+export const adminDb      = new Proxy({} as Firestore, { get: (_, k) => (getAdminDb() as any)?.[k] });
+export const adminAuth    = new Proxy({} as Auth,      { get: (_, k) => (getAdminAuth() as any)?.[k] });
+export const adminStorage = new Proxy({} as Storage,   { get: (_, k) => (getAdminStorage() as any)?.[k] });
 
 // ─── Auth Utilities ───────────────────────────────────────────────────────────
+
+/**
+ * Mint a Firebase Custom Auth Token for client-side signInWithCustomToken().
+ * Bridges server session tokens / cookies to client Firebase Auth SDK,
+ * granting auth.currentUser and populating custom claims for Firestore Security Rules.
+ */
+export async function createCustomToken(
+  uid: string,
+  claims?: Partial<FR8XCustomClaims>
+): Promise<string | null> {
+  try {
+    const auth = getAdminAuth();
+    if (!auth) return null;
+    return await auth.createCustomToken(uid, claims as any);
+  } catch (err: any) {
+    console.warn('[FR8X Admin] Failed to create custom token for uid:', uid, err.message);
+    return null;
+  }
+}
 
 /**
  * Verify a Firebase ID token from the Authorization header.
@@ -104,7 +133,9 @@ export async function verifyIdToken(
   checkRevoked = true
 ): Promise<DecodedIdToken | null> {
   try {
-    return await getAdminAuth().verifyIdToken(token, checkRevoked);
+    const auth = getAdminAuth();
+    if (!auth) return null;
+    return await auth.verifyIdToken(token, checkRevoked);
   } catch {
     return null;
   }
@@ -120,7 +151,7 @@ export interface FR8XCustomClaims {
   /** KYC verification status — only true after manual admin review */
   isVerified: boolean;
   /** User role, enforced by security rules */
-  role: 'user' | 'company_admin' | 'moderator' | 'super_admin' | 'godfather';
+  role: 'user' | 'company_admin' | 'billing_admin' | 'moderator' | 'super_admin' | 'godfather';
   /** Subscription plan */
   plan: 'trial' | 'professional' | 'premium';
   /** Golden Tick — awarded to verified premium users */
@@ -148,6 +179,7 @@ export async function setCustomClaims(
   claims: Partial<FR8XCustomClaims>
 ): Promise<void> {
   const auth = getAdminAuth();
+  if (!auth) return;
   // Fetch current claims to merge (never blindly overwrite)
   const user = await auth.getUser(uid);
   const existing = (user.customClaims ?? {}) as Partial<FR8XCustomClaims>;
@@ -160,7 +192,9 @@ export async function setCustomClaims(
  * Use on account suspension, password change, or security incidents.
  */
 export async function revokeAllSessions(uid: string): Promise<void> {
-  await getAdminAuth().revokeRefreshTokens(uid);
+  const auth = getAdminAuth();
+  if (!auth) return;
+  await auth.revokeRefreshTokens(uid);
 }
 
 /**

@@ -59,10 +59,33 @@ export async function POST(req: NextRequest) {
       console.error('[VerifyEmailAPI] Welcome email dispatch warning:', welcomeErr.message);
     }
 
+    // Generate unique session ID for single-device login enforcement
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const userAgent = req.headers.get('user-agent') || 'Browser Client';
+    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
+
+    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
+    let firebaseCustomToken: string | null = null;
+    try {
+      const { createCustomToken } = await import('@/lib/firebase/admin');
+      firebaseCustomToken = await createCustomToken(user.uid, {
+        role: user.role,
+        companyId: user.companyId,
+        isVerified: true,
+        plan: (user as any).plan || 'trial',
+        hasGoldenTick: Boolean((user as any).hasGoldenTick),
+      });
+    } catch (fbErr: any) {
+      console.warn('[VerifyEmailAPI] Firebase custom token generation warning:', fbErr.message);
+    }
+
     const res = NextResponse.json({
       success: true,
       message: result.message || 'Email verified successfully!',
       welcomeEmailSent: true,
+      sessionId,
+      firebaseCustomToken,
       user: {
         uid: user.uid,
         email: user.email,
@@ -75,12 +98,13 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Set authenticated cryptographically signed session cookie with email_verified: true
+    // Set authenticated cryptographically signed session cookie with email_verified: true and bound sessionId
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      sessionId,
       email_verified: true,
       issuedAt: Date.now(),
     });
@@ -150,10 +174,33 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Generate unique session ID for single-device login enforcement
+    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
+    const userAgent = req.headers.get('user-agent') || 'Browser Client';
+    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
+
+    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
+    let firebaseCustomToken: string | null = null;
+    try {
+      const { createCustomToken } = await import('@/lib/firebase/admin');
+      firebaseCustomToken = await createCustomToken(user.uid, {
+        role: user.role,
+        companyId: user.companyId,
+        isVerified: true,
+        plan: (user as any).plan || 'trial',
+        hasGoldenTick: Boolean((user as any).hasGoldenTick),
+      });
+    } catch (fbErr: any) {
+      console.warn('[VerifyEmailAPI-GET] Firebase custom token generation warning:', fbErr.message);
+    }
+
     const res = NextResponse.json({
       success: true,
       alreadyVerified: result.code === 'ALREADY_VERIFIED',
       message: result.message || 'Email verified successfully!',
+      sessionId,
+      firebaseCustomToken,
       user: {
         uid: user.uid,
         email: user.email,
@@ -166,12 +213,13 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Set authenticated cryptographically signed session cookie
+    // Set authenticated cryptographically signed session cookie with bound sessionId
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
+      sessionId,
       email_verified: true,
       issuedAt: Date.now(),
     });

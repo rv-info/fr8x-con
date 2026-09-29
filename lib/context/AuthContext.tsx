@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, PlanTier, UserRole } from '@/lib/types';
+import { auth } from '@/lib/firebase/client';
+import { signInWithCustomToken, signOut as firebaseSignOut } from 'firebase/auth';
 
 // SECURITY: INITIAL_USERS seed data removed.
 // Demo/test users must NOT be hardcoded in client-side code.
@@ -491,7 +493,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       educations: (serverUser as any).educations || existingLocal?.educations || [],
       certifications: (serverUser as any).certifications || existingLocal?.certifications || [],
       operatingCorridors: (serverUser as any).operatingCorridors || existingLocal?.operatingCorridors || 'Nhava Sheva ⇄ Jebel Ali, Rotterdam, Singapore',
+      firebaseCustomToken: serverUser.firebaseCustomToken || existingLocal?.firebaseCustomToken,
     };
+
+    // AUTH-02: Connect client to Firebase Auth via Custom Token for live Firestore permissions
+    if (serverUser.firebaseCustomToken && typeof window !== 'undefined') {
+      try {
+        if (auth && (auth as any).app) {
+          signInWithCustomToken(auth, serverUser.firebaseCustomToken)
+            .then((cred) => {
+              console.info('[AuthContext] Signed into Firebase Auth successfully as', cred.user.uid);
+            })
+            .catch((err) => {
+              console.warn('[AuthContext] Firebase Custom Token sign-in warning:', err.message);
+            });
+        }
+      } catch (e: any) {
+        console.warn('[AuthContext] Firebase Auth sign-in caught exception:', e.message);
+      }
+    }
 
     // Upsert profile into local list (no passwords stored)
     setAllUsers((prev) => {
@@ -698,6 +718,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STATUS_KEY, 'offline');
       if (typeof window !== 'undefined') {
         fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
+        if (auth && (auth as any).app && auth.currentUser) {
+          firebaseSignOut(auth).catch(() => {});
+        }
       }
     } catch {}
 

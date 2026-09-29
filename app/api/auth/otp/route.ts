@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { otpStore } from '@/lib/otp-store';
+import { authenticateUserSession } from '@/lib/auth-guard';
 
 /**
  * POST /api/auth/otp
  * Generates and dispatches secure 6-digit OTP via Zoho ZeptoMail REST API (password@fr8x.in)
- * with a daily rate limit of 3 attempts per user/date.
+ * with distributed Vercel KV / Redis / in-memory rate limiting and 60-second cooldowns.
  * Also supports verifying submitted OTP when `otp` is included in the payload.
  */
 export async function POST(req: NextRequest) {
@@ -73,6 +75,33 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // AUTH-03: Distributed cooldown and rate limit check across serverless instances
+    const cd = await otpStore.checkCooldown(`otp:${cleanEmail}`, 60);
+    if (cd.inCooldown) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Please wait ${cd.waitSeconds} second(s) before requesting another verification code.`,
+        },
+        { status: 429 }
+      );
+    }
+
+    const rate = await otpStore.recordOtpSend(cleanEmail, 3, 25 * 3600);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          remaining: 0,
+          remainingAttemptsToday: 0,
+          error: 'Maximum daily verification code requests reached. Please try again later or contact tech@fr8x.in.',
+        },
+        { status: 429 }
+      );
+    }
+
+    await otpStore.recordCooldown(`otp:${cleanEmail}`, 60);
+
     // Dispatch mode
     const result = serverSecurityStore.requestOTP(cleanEmail, ip);
 
@@ -91,8 +120,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      remaining: result.remaining,
-      remainingAttemptsToday: result.remaining,
+      remaining: Math.min(rate.remaining, result.remaining ?? 3),
+      remainingAttemptsToday: Math.min(rate.remaining, result.remaining ?? 3),
       date: result.date,
       message: result.message,
       otpDispatched: true,
@@ -105,10 +134,24 @@ export async function POST(req: NextRequest) {
   }
 }
 
+// AUTH-05: Authenticate GET endpoint to prevent unauthenticated enumeration of OTP quotas
 export async function GET(req: NextRequest) {
+  const auth = authenticateUserSession(req);
+  if (!auth.authenticated || !auth.user) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required to inspect OTP status.' },
+      { status: 401 }
+    );
+  }
+
   const email = req.nextUrl.searchParams.get('email');
   if (!email) {
     return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
+  }
+
+  // Non-admins can only check their own email
+  if (email.toLowerCase() !== auth.user.email.toLowerCase() && auth.user.role !== 'company_admin') {
+    return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
   const status = serverSecurityStore.getOTPStatus(email);

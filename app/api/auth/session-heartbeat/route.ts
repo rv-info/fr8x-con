@@ -23,15 +23,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const uid = body.uid || cookieUid;
-    const sessionId = body.sessionId || cookieSessionId;
-
-    if (!uid || !sessionId) {
+    if (!cookieUid || !cookieSessionId) {
       return NextResponse.json(
-        { valid: false, reason: 'missing_credentials', message: 'No active session or UID provided.' },
-        { status: 400 }
+        { valid: false, reason: 'missing_credentials', message: 'No active authenticated session cookie provided.' },
+        { status: 401 }
       );
     }
+
+    // Prevent body mismatch attacks
+    if ((body.uid && body.uid !== cookieUid) || (body.sessionId && body.sessionId !== cookieSessionId)) {
+      return NextResponse.json(
+        { valid: false, reason: 'session_mismatch', message: 'Session credential mismatch.' },
+        { status: 401 }
+      );
+    }
+
+    const uid = cookieUid;
+    const sessionId = cookieSessionId;
 
     const result = serverSecurityStore.validateActiveSession(uid, sessionId);
 

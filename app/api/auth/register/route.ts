@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isCorporateEmail } from '@/lib/utils';
 import { createSignedSessionToken } from '@/lib/crypto';
@@ -44,7 +45,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const uid = body.uid || `u-${Date.now()}`;
+    // AUTH-05: Server-generated cryptographically secure UID (prevent client UID injection)
+    const uid = `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
     const host = req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
@@ -55,6 +57,9 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_APP_URL ||
       'https://con.fr8x.in';
 
+    // Disallow unverified privilege elevation (only 'company_admin' or 'user' allowed on registration)
+    const assignedRole = role === 'user' ? 'user' : 'company_admin';
+
     // Register user with email_verified = false and generate 15-minute hashed verification challenge
     const result = serverSecurityStore.registerUser(
       {
@@ -64,7 +69,7 @@ export async function POST(req: NextRequest) {
         displayName,
         company: company.trim(),
         companyId: companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
-        role: role || 'company_admin',
+        role: assignedRole,
         mobile: mobile ? mobile.trim() : undefined,
       },
       { origin }

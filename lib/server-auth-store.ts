@@ -2576,11 +2576,18 @@ class ServerSecurityStore {
       user = this.users.get(cleanEmail);
     }
 
-    // Refuse reset if user is blocked
+    // Refuse reset if user is blocked (AUTH-05: preserve anti-enumeration, do not leak blocked status)
     if (user && user.status === 'blocked') {
+      this.addSecurityEvent({
+        type: 'ACCOUNT_BLOCKED',
+        severity: 'HIGH',
+        userEmail: cleanEmail,
+        details: `Password reset requested for blocked account: ${cleanEmail}. Denied.`,
+        ipAddress: ip,
+      });
       return {
-        success: false,
-        error: 'Your account has been blocked. Please contact tech@fr8x.in to unlock your account.',
+        success: true,
+        message: 'If an account exists for this email address, password reset instructions have been sent.',
         otpDispatched: false,
       };
     }
