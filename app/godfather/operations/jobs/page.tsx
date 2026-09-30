@@ -513,18 +513,26 @@ export default function JobsModerationPage() {
               )}
 
               {/* Skills Tags */}
-              {selectedJob.skills && selectedJob.skills.length > 0 && (
-                <div>
-                  <label className="text-xs font-bold text-slate-800 block mb-1">Required Skills & Capabilities</label>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedJob.skills.map((skill, idx) => (
-                      <span key={idx} className="gf-badge gf-badge-blue text-xs font-mono">
-                        {skill}
-                      </span>
-                    ))}
+              {(() => {
+                const sList = Array.isArray(selectedJob.skills)
+                  ? selectedJob.skills
+                  : typeof selectedJob.skills === 'string'
+                    ? (selectedJob.skills as string).split(',').map((s) => s.trim()).filter(Boolean)
+                    : [];
+                if (sList.length === 0) return null;
+                return (
+                  <div>
+                    <label className="text-xs font-bold text-slate-800 block mb-1">Required Skills & Capabilities</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sList.map((skill, idx) => (
+                        <span key={idx} className="gf-badge gf-badge-blue text-xs font-mono">
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
             </div>
 
             <div className="gf-modal-footer flex items-center justify-between">

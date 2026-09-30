@@ -998,15 +998,20 @@ export default function ProfilePage() {
   const handleOpenExpModal = (exp?: ProfileExperience) => {
     if (exp) {
       setEditingRecordId(exp.id);
-      setExpTitle(exp.designation);
-      setExpCompany(exp.company);
-      setExpLocation(exp.location);
-      setExpEmpType(exp.employmentType);
-      setExpStart(exp.startDate);
-      setExpEnd(exp.endDate || '');
-      setExpCurrent(exp.isCurrent);
-      setExpDesc(exp.description);
-      setExpSkills(exp.skills);
+      setExpTitle(exp.designation || (exp as any).title || '');
+      setExpCompany(exp.company || '');
+      setExpLocation(exp.location || '');
+      setExpEmpType((exp.employmentType || (exp as any).type || 'Full-time') as ProfileExperience['employmentType']);
+      setExpStart(exp.startDate || (exp as any).period?.split('-')?.[0]?.trim() || '');
+      setExpEnd(exp.endDate || (exp as any).period?.split('-')?.[1]?.trim() || '');
+      setExpCurrent(Boolean(exp.isCurrent || (exp as any).period?.includes('Present')));
+      setExpDesc(exp.description || '');
+      const skillsString = Array.isArray(exp.skills)
+        ? exp.skills.map((s: any) => String(s).trim()).filter(Boolean).join(', ')
+        : typeof exp.skills === 'string'
+          ? exp.skills
+          : '';
+      setExpSkills(skillsString);
     } else {
       setEditingRecordId(null);
       setExpTitle('');
@@ -2206,36 +2211,46 @@ export default function ProfilePage() {
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                       <div>
-                        <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{exp.designation}</b>
+                        <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{exp.designation || (exp as any).title || 'Designation'}</b>
                         <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
                           {exp.company} · <span style={{ color: 'var(--fr8x-muted)' }}>{exp.location}</span>
                         </div>
                       </div>
                       <span className="badge" style={{ fontSize: '9.5px', background: '#f1f5f9', color: 'var(--fr8x-text)', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }}>
-                        {exp.employmentType}
+                        {exp.employmentType || (exp as any).type || 'Full-time'}
                       </span>
                     </div>
 
                     <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Clock size={11} />
-                      {exp.startDate} – {exp.isCurrent ? 'Present' : exp.endDate}
+                      {exp.startDate ? `${exp.startDate} – ${exp.isCurrent ? 'Present' : (exp.endDate || 'Present')}` : ((exp as any).period || 'Present')}
                     </div>
 
-                    <p style={{ margin: '10px 0 8px', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
-                      {exp.description}
-                    </p>
+                    {exp.description && (
+                      <p style={{ margin: '10px 0 8px', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
+                        {exp.description}
+                      </p>
+                    )}
                   </div>
 
                   <div>
-                    {exp.skills && (
-                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '8px 0' }}>
-                        {exp.skills.split(',').map((s, idx) => (
-                          <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', border: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)' }}>
-                            {s.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {(() => {
+                      const skillsList: string[] = Array.isArray(exp.skills)
+                        ? exp.skills.map((s: any) => String(s).trim()).filter(Boolean)
+                        : typeof exp.skills === 'string' && exp.skills.trim()
+                          ? exp.skills.split(',').map((s) => s.trim()).filter(Boolean)
+                          : [];
+                      if (skillsList.length === 0) return null;
+                      return (
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '8px 0' }}>
+                          {skillsList.map((s, idx) => (
+                            <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', border: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)' }}>
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      );
+                    })()}
 
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)' }}>
                       <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenExpModal(exp)}>

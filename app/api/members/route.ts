@@ -84,7 +84,15 @@ export async function GET(req: NextRequest) {
           (exp) =>
             Boolean(exp?.company?.toLowerCase().includes(q)) ||
             Boolean(exp?.designation?.toLowerCase().includes(q)) ||
-            Boolean(exp?.skills?.toLowerCase().includes(q))
+            Boolean(exp?.title?.toLowerCase().includes(q)) ||
+            Boolean(
+              (Array.isArray(exp?.skills)
+                ? exp.skills.join(' ')
+                : typeof exp?.skills === 'string'
+                  ? exp.skills
+                  : ''
+              ).toLowerCase().includes(q)
+            )
         );
 
         const matchesEdu = (m.educations as any[]).some(

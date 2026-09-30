@@ -91,7 +91,7 @@ export default function JobsPage() {
       j.company.toLowerCase().includes(q) ||
       j.location.toLowerCase().includes(q) ||
       (j.requirements || '').toLowerCase().includes(q) ||
-      (j.skills || []).join(' ').toLowerCase().includes(q);
+      (Array.isArray(j.skills) ? j.skills.join(' ') : typeof j.skills === 'string' ? j.skills : '').toLowerCase().includes(q);
 
     const matchesTab = activeTab === 'all' || j.posterUid === user.uid;
     const matchesType = !filterType || j.employmentType === filterType;
@@ -204,16 +204,24 @@ export default function JobsPage() {
             )}
 
             {/* Skills */}
-            {selectedJob.skills && selectedJob.skills.length > 0 && (
-              <div>
-                <b style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)', textTransform: 'uppercase', marginBottom: '6px' }}>Required Skills</b>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                  {selectedJob.skills.map((s) => (
-                    <span key={s} className="badge grey">{s}</span>
-                  ))}
+            {(() => {
+              const sList = Array.isArray(selectedJob.skills)
+                ? selectedJob.skills
+                : typeof selectedJob.skills === 'string'
+                  ? (selectedJob.skills as string).split(',').map((s) => s.trim()).filter(Boolean)
+                  : [];
+              if (sList.length === 0) return null;
+              return (
+                <div>
+                  <b style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)', textTransform: 'uppercase', marginBottom: '6px' }}>Required Skills</b>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {sList.map((s) => (
+                      <span key={s} className="badge grey">{s}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Sections */}
             {[
@@ -516,16 +524,24 @@ export default function JobsPage() {
                 </div>
               )}
 
-              {job.skills && job.skills.length > 0 && (
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
-                  {job.skills.slice(0, 4).map((s) => (
-                    <span key={s} className="badge grey" style={{ fontSize: '9px' }}>{s}</span>
-                  ))}
-                  {job.skills.length > 4 && (
-                    <span className="badge grey" style={{ fontSize: '9px' }}>+{job.skills.length - 4}</span>
-                  )}
-                </div>
-              )}
+              {(() => {
+                const sList = Array.isArray(job.skills)
+                  ? job.skills
+                  : typeof job.skills === 'string'
+                    ? (job.skills as string).split(',').map((s) => s.trim()).filter(Boolean)
+                    : [];
+                if (sList.length === 0) return null;
+                return (
+                  <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '4px' }}>
+                    {sList.slice(0, 4).map((s) => (
+                      <span key={s} className="badge grey" style={{ fontSize: '9px' }}>{s}</span>
+                    ))}
+                    {sList.length > 4 && (
+                      <span className="badge grey" style={{ fontSize: '9px' }}>+{sList.length - 4}</span>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="job-card-footer">
                 <small style={{ color: 'var(--faint)', fontSize: '10px' }}>

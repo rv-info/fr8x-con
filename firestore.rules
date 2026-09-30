@@ -93,8 +93,8 @@ service cloud.firestore {
 
     // Users Collection (Profile metadata & Entitlements)
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isAuthenticated();
+      allow read: if isOwner(userId) || isPlatformAdmin();
+      allow write: if isOwner(userId) || isPlatformAdmin();
     }
 
     // Profiles Collection (Professional history, Experience, Education, Certifications)

@@ -610,7 +610,7 @@ export function SearchConnectionsModal({
                       {candidate.experiences && candidate.experiences.length > 0 && (
                         <div>
                           <strong style={{ color: '#334155' }}>Work History:</strong>{' '}
-                          {candidate.experiences.map((exp: any) => `${exp.designation} at ${exp.company}`).join(' · ')}
+                          {candidate.experiences.map((exp: any) => `${exp.designation || exp.title || 'Professional'} at ${exp.company}`).join(' · ')}
                         </div>
                       )}
                       {candidate.educations && candidate.educations.length > 0 && (

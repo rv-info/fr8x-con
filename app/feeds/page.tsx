@@ -2589,7 +2589,12 @@ export default function FeedsPage() {
                       </p>
 
                       <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '12px' }}>
-                        {jobAd.skills.map((skill) => (
+                        {(Array.isArray(jobAd.skills)
+                          ? jobAd.skills
+                          : typeof jobAd.skills === 'string'
+                            ? (jobAd.skills as string).split(',').map((s) => s.trim()).filter(Boolean)
+                            : []
+                        ).map((skill) => (
                           <span
                             key={skill}
                             style={{

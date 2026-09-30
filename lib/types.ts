@@ -76,8 +76,11 @@ export interface ProfileExperience {
   endDate?: string;
   isCurrent: boolean;
   description: string;
-  skills: string;
+  skills: string | string[];
   visibility: 'public' | 'network' | 'private';
+  title?: string;
+  type?: 'Full-time' | 'Part-time' | 'Contract' | 'Freelance' | 'Internship';
+  period?: string;
 }
 
 export interface ProfileEducation {

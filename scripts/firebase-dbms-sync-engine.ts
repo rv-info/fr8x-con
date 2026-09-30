@@ -291,8 +291,8 @@ export class FirebaseSyncEngine {
       console.log(`     - Designation:         ${data?.designation}`);
       console.log(`     - Location Hub:        ${data?.city}, ${data?.state}, ${data?.country}`);
       console.log(`     - Timezone:            ${data?.timezone}`);
-      console.log(`     - Work Experience:     ${data?.experiences?.[0]?.title} at ${data?.experiences?.[0]?.company}`);
-      console.log(`     - Experience Skills:   ${data?.experiences?.[0]?.skills?.join(', ')}`);
+      console.log(`     - Work Experience:     ${data?.experiences?.[0]?.designation || data?.experiences?.[0]?.title} at ${data?.experiences?.[0]?.company}`);
+      console.log(`     - Experience Skills:   ${Array.isArray(data?.experiences?.[0]?.skills) ? data?.experiences?.[0]?.skills?.join(', ') : (data?.experiences?.[0]?.skills || '')}`);
       console.log(`     - Completeness:        ${data?.profileCompleteness}%`);
 
       result.success = true;
