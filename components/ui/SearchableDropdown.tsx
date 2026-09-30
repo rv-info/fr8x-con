@@ -141,6 +141,11 @@ export default function SearchableDropdown({
     return scored.map((s) => s.opt);
   }, [normalizedOptions, searchTerm]);
 
+  const MAX_VISIBLE_OPTIONS = 100;
+  const visibleOptions = useMemo(() => {
+    return filteredOptions.slice(0, MAX_VISIBLE_OPTIONS);
+  }, [filteredOptions]);
+
   // Open dropdown and focus search input
   const handleOpen = () => {
     if (disabled) return;
@@ -211,16 +216,16 @@ export default function SearchableDropdown({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev < filteredOptions.length - 1 ? prev + 1 : 0));
+        setHighlightedIndex((prev) => (prev < visibleOptions.length - 1 ? prev + 1 : 0));
         break;
       case 'ArrowUp':
         e.preventDefault();
-        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : filteredOptions.length - 1));
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : visibleOptions.length - 1));
         break;
       case 'Enter':
         e.preventDefault();
-        if (filteredOptions[highlightedIndex]) {
-          handleSelect(filteredOptions[highlightedIndex].value);
+        if (visibleOptions[highlightedIndex]) {
+          handleSelect(visibleOptions[highlightedIndex].value);
         } else if (allowCustom && searchTerm.trim()) {
           handleSelect(searchTerm.trim());
         }
@@ -445,50 +450,67 @@ export default function SearchableDropdown({
               flex: 1,
             }}
           >
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((opt, idx) => {
-                const isSelected = opt.value === value;
-                const isHighlighted = idx === highlightedIndex;
+            {visibleOptions.length > 0 ? (
+              <>
+                {visibleOptions.map((opt, idx) => {
+                  const isSelected = opt.value === value;
+                  const isHighlighted = idx === highlightedIndex;
 
-                return (
-                  <div
-                    key={`${opt.value}-${idx}`}
-                    data-dropdown-item
-                    onClick={() => handleSelect(opt.value)}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      padding: '8px 12px',
-                      fontSize: '11pt',
-                      fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
-                      color: isSelected ? '#0284c7' : '#1e293b',
-                      fontWeight: isSelected ? 700 : 400,
-                      cursor: 'pointer',
-                      background: isHighlighted
-                        ? '#f1f5f9'
-                        : isSelected
-                        ? '#f0f9ff'
-                        : 'transparent',
-                      transition: 'background-color 0.1s ease',
-                    }}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {opt.flag && <span style={{ fontSize: '13pt', lineHeight: 1 }}>{opt.flag}</span>}
-                      <span style={{ fontSize: '11pt' }}>{opt.label}</span>
-                      {opt.subLabel && (
-                        <span style={{ fontSize: '9.5pt', color: '#64748b' }}>
-                          {opt.subLabel}
-                        </span>
+                  return (
+                    <div
+                      key={`${opt.value}-${idx}`}
+                      data-dropdown-item
+                      onClick={() => handleSelect(opt.value)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '8px 12px',
+                        fontSize: '11pt',
+                        fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                        color: isSelected ? '#0284c7' : '#1e293b',
+                        fontWeight: isSelected ? 700 : 400,
+                        cursor: 'pointer',
+                        background: isHighlighted
+                          ? '#f1f5f9'
+                          : isSelected
+                          ? '#f0f9ff'
+                          : 'transparent',
+                        transition: 'background-color 0.1s ease',
+                      }}
+                      onMouseEnter={() => setHighlightedIndex(idx)}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {opt.flag && <span style={{ fontSize: '13pt', lineHeight: 1 }}>{opt.flag}</span>}
+                        <span style={{ fontSize: '11pt' }}>{opt.label}</span>
+                        {opt.subLabel && (
+                          <span style={{ fontSize: '9.5pt', color: '#64748b' }}>
+                            {opt.subLabel}
+                          </span>
+                        )}
+                      </div>
+                      {isSelected && (
+                        <Check size={14} color="#0284c7" style={{ flexShrink: 0 }} />
                       )}
                     </div>
-                    {isSelected && (
-                      <Check size={14} color="#0284c7" style={{ flexShrink: 0 }} />
-                    )}
+                  );
+                })}
+                {filteredOptions.length > MAX_VISIBLE_OPTIONS && (
+                  <div
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '9.5pt',
+                      color: '#64748b',
+                      background: '#f8fafc',
+                      borderTop: '1px solid #e2e8f0',
+                      textAlign: 'center',
+                      fontStyle: 'italic',
+                    }}
+                  >
+                    Showing first {MAX_VISIBLE_OPTIONS} of {filteredOptions.length} results. Type in search to narrow down.
                   </div>
-                );
-              })
+                )}
+              </>
             ) : (
               <div
                 style={{

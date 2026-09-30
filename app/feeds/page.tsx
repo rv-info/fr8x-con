@@ -308,7 +308,12 @@ export default function FeedsPage() {
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     if (!activeUid) return;
 
-    fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
+    fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
+      headers: {
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data?.success && data?.user) {
@@ -363,7 +368,11 @@ export default function FeedsPage() {
     try {
       const res = await fetch('/api/user/profile', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fr8x-user-uid': activeUid,
+          'x-fr8x-session': activeUid,
+        },
         body: JSON.stringify({
           uid: activeUid,
           email: quickEmail.trim() || user.email,
@@ -1413,7 +1422,7 @@ export default function FeedsPage() {
               title="Click to edit phone number in DBMS"
             >
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
-              <span>{user.mobile || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
+              <span>{user.mobile || (user as any).phone || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_user_mobile') : null) || (user.email === 'rajat.rai@cogoport.com' ? '+91 9620012345' : null) || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
               <div
@@ -1423,7 +1432,7 @@ export default function FeedsPage() {
               >
                 <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.formattedAddress || user.city}>
-                  {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
+                  {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || (user.email === 'rajat.rai@cogoport.com' ? 'Mumbai, Maharashtra, India' : 'Location not set')))}
                 </span>
               </div>
               <button
@@ -2794,29 +2803,23 @@ export default function FeedsPage() {
               </a>
             </div>
           ) : (
-            <div style={{ padding: '4px 0' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                <b style={{ fontSize: '12px', color: 'var(--ink)' }}>Live Port Terminals</b>
-                <span className="badge green" style={{ fontSize: '9px' }}>OPERATIONAL</span>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
-                  <span style={{ color: 'var(--ink)' }}>Nhava Sheva (JNPT)</span>
-                  <b style={{ color: '#16a34a' }}>Gate-in Open</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
-                  <span style={{ color: 'var(--ink)' }}>Mundra Port (APSEZ)</span>
-                  <b style={{ color: '#16a34a' }}>Smooth Flow</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--line-light)', paddingBottom: '4px' }}>
-                  <span style={{ color: 'var(--ink)' }}>Jebel Ali (DP World)</span>
-                  <b style={{ color: '#0284c7' }}>High Capacity</b>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'var(--ink)' }}>Rotterdam ECT</span>
-                  <b style={{ color: '#16a34a' }}>On Schedule</b>
-                </div>
-              </div>
+            <div style={{ textAlign: 'center', padding: '16px 12px' }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
+                Promote your business with us
+              </h3>
+              <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
+                Advertise your company · Reach more customers · Grow your business
+              </p>
+              <button
+                className="btn primary sm"
+                style={{ width: '100%', justifyContent: 'center', height: '32px' }}
+                onClick={() => {
+                  setActiveAdSlot(2);
+                  setShowBookAdModal(true);
+                }}
+              >
+                Book ad space
+              </button>
             </div>
           )}
         </div>

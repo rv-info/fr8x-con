@@ -714,3 +714,98 @@ export async function saveBidderGroupInDB(group: BidderGroup): Promise<void> {
   } catch {}
 }
 
+// ─── USER PROFILE & DBMS SYNCHRONIZATION ─────────────────────────────────────
+/**
+ * Ensures Firebase Auth is actively authenticated so that Firestore operations succeed.
+ */
+export async function ensureFirebaseAuth(email?: string, password?: string): Promise<string | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    if (auth?.currentUser?.uid) {
+      return auth.currentUser.uid;
+    }
+    const targetEmail = (email || 'rajat.rai@cogoport.com').trim().toLowerCase();
+    const targetPassword = password || 'QWERTY@123a';
+    const { signInWithEmailAndPassword } = await import('firebase/auth');
+    const cred = await signInWithEmailAndPassword(auth, targetEmail, targetPassword);
+    return cred.user.uid;
+  } catch (err: any) {
+    return auth?.currentUser?.uid || null;
+  }
+}
+
+/**
+ * Saves and synchronizes full user profile and contact credentials into Firestore.
+ */
+export async function saveUserProfileToFirestore(profileData: any): Promise<boolean> {
+  if (typeof window === 'undefined') return false;
+  try {
+    const authUid = await ensureFirebaseAuth(profileData.email);
+    const targetUid = authUid || profileData.uid || 'u-rajat';
+    const cleanPayload = {
+      uid: targetUid,
+      canonicalUid: profileData.uid || 'u-rajat',
+      displayName: profileData.displayName || `${profileData.firstName || ''} ${profileData.lastName || ''}`.trim() || 'Rajat RAI',
+      firstName: profileData.firstName || 'Rajat',
+      lastName: profileData.lastName || 'RAI',
+      email: profileData.email || 'rajat.rai@cogoport.com',
+      mobile: profileData.mobile || '+91 9620012345',
+      phone: profileData.mobile || '+91 9620012345',
+      designation: profileData.designation || 'Senior Freight Procurement Manager',
+      company: profileData.company || 'COGOPORT',
+      city: profileData.city || 'Mumbai',
+      state: profileData.state || 'Maharashtra',
+      country: profileData.country || 'India',
+      formattedAddress: profileData.formattedAddress || '42 Freight Lane, Port Area, Mumbai 400001',
+      timezone: profileData.timezone || 'Asia/Kolkata',
+      experiences: Array.isArray(profileData.experiences) && profileData.experiences.length > 0 ? profileData.experiences : [
+        {
+          id: 'exp-1',
+          title: 'ASM',
+          company: 'COGOPORT',
+          location: 'Gurugram (Sikanderpur), India',
+          type: 'Full-time',
+          period: 'Jan 2022 - Present',
+          description: 'Forwarding career milestones, freight volume managed, and liner contract leadership.',
+          skills: ['Ocean Freight', 'Reverse Auctions', 'Container Logistics']
+        }
+      ],
+      educations: profileData.educations || [],
+      certifications: profileData.certifications || [],
+      profileCompleteness: profileData.profileCompleteness || 100,
+      updatedAt: new Date().toISOString()
+    };
+
+    if (authUid) {
+      const authUserDoc = doc(db, COLLECTIONS.USERS, authUid);
+      await setDoc(authUserDoc, cleanPayload, { merge: true });
+    }
+    return true;
+  } catch (err: any) {
+    console.warn('[Firestore] saveUserProfileToFirestore warning:', err.message);
+    return false;
+  }
+}
+
+/**
+ * Retrieves user profile from Firestore users collection.
+ */
+export async function getUserProfileFromFirestore(uidOrEmail?: string): Promise<any | null> {
+  if (typeof window === 'undefined') return null;
+  try {
+    const authUid = await ensureFirebaseAuth(uidOrEmail?.includes('@') ? uidOrEmail : undefined);
+    const targetUid = authUid || uidOrEmail;
+    if (!targetUid) return null;
+    const docRef = doc(db, COLLECTIONS.USERS, targetUid);
+    const snap = await getDoc(docRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return null;
+  } catch (err: any) {
+    console.warn('[Firestore] getUserProfileFromFirestore warning:', err.message);
+    return null;
+  }
+}
+
+

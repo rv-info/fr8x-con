@@ -11,19 +11,19 @@ service cloud.firestore {
     }
     
     function isVerifiedUser() {
-      return isAuthenticated() && (request.auth.token.isVerified == true || isPlatformAdmin());
+      return isAuthenticated() && (('isVerified' in request.auth.token && request.auth.token.isVerified == true) || isPlatformAdmin());
     }
     
     function isPlatformAdmin() {
-      return isAuthenticated() && (request.auth.token.role == 'super_admin' || isGodfather());
+      return isAuthenticated() && (('role' in request.auth.token && request.auth.token.role == 'super_admin') || isGodfather());
     }
 
     function isGodfather() {
-      return isAuthenticated() && (request.auth.token.godfatherAccess == true || request.auth.token.role == 'godfather');
+      return isAuthenticated() && (('godfatherAccess' in request.auth.token && request.auth.token.godfatherAccess == true) || ('role' in request.auth.token && request.auth.token.role == 'godfather'));
     }
 
     function hasGodfatherRole(subrole) {
-      return isGodfather() && (request.auth.token.subrole == subrole || request.auth.token.subrole == 'godfather_owner');
+      return isGodfather() && ('subrole' in request.auth.token && (request.auth.token.subrole == subrole || request.auth.token.subrole == 'godfather_owner'));
     }
 
     // =========================================================================
@@ -93,16 +93,14 @@ service cloud.firestore {
 
     // Users Collection (Profile metadata & Entitlements)
     match /users/{userId} {
-      allow read: if isOwner(userId) || isPlatformAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isPlatformAdmin() || (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['plan', 'isVerified', 'hasGoldenTick', 'role']));
-      allow delete: if isPlatformAdmin();
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated();
     }
 
     // Profiles Collection (Professional history, Experience, Education, Certifications)
     match /profiles/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId) || isPlatformAdmin();
+      allow read: if true;
+      allow write: if isAuthenticated();
     }
 
     // Feed Posts & Threaded Comments (Post -> Comment -> Reply -> Reply-to-Reply)

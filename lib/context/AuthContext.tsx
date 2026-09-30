@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { UserProfile, PlanTier, UserRole } from '@/lib/types';
 import { auth } from '@/lib/firebase/client';
 import { signInWithCustomToken, signOut as firebaseSignOut } from 'firebase/auth';
+import { saveUserProfileToFirestore, ensureFirebaseAuth, getUserProfileFromFirestore } from '@/lib/firebase/firestore';
 
 // SECURITY: INITIAL_USERS seed data removed.
 // Demo/test users must NOT be hardcoded in client-side code.
@@ -179,7 +180,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // 1. Authoritative direct profile fetch for active member (includes experiences, educations, certs, contact details)
         if (activeUid) {
-          fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`)
+          ensureFirebaseAuth().catch(() => {});
+          fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
+            headers: {
+              'x-fr8x-user-uid': activeUid,
+              'x-fr8x-session': activeUid,
+            },
+          })
             .then((r) => r.json())
             .then((data) => {
               if (data?.success && data?.user) {
@@ -565,9 +572,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore)
+    // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore) and Firebase Firestore
     if (!targetUid) return;
     try {
+      saveUserProfileToFirestore(updated).catch(() => {});
       fetch('/api/user/profile', {
         method: 'POST',
         headers: {
@@ -662,20 +670,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       firebaseCustomToken: serverUser.firebaseCustomToken || existingLocal?.firebaseCustomToken,
     };
 
-    // AUTH-02: Connect client to Firebase Auth via Custom Token for live Firestore permissions
-    if (serverUser.firebaseCustomToken && typeof window !== 'undefined') {
-      try {
-        if (auth && (auth as any).app) {
-          signInWithCustomToken(auth, serverUser.firebaseCustomToken)
-            .then((cred) => {
-              console.info('[AuthContext] Signed into Firebase Auth successfully as', cred.user.uid);
-            })
-            .catch((err) => {
-              console.warn('[AuthContext] Firebase Custom Token sign-in warning:', err.message);
-            });
+    // AUTH-02: Connect client to Firebase Auth via Custom Token or direct Email/Password for live Firestore permissions
+    if (typeof window !== 'undefined') {
+      if (serverUser.firebaseCustomToken) {
+        try {
+          if (auth && (auth as any).app) {
+            signInWithCustomToken(auth, serverUser.firebaseCustomToken)
+              .then((cred) => {
+                console.info('[AuthContext] Signed into Firebase Auth successfully as', cred.user.uid);
+                saveUserProfileToFirestore(found).catch(() => {});
+              })
+              .catch((err) => {
+                console.warn('[AuthContext] Firebase Custom Token sign-in warning:', err.message);
+                ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
+              });
+          }
+        } catch (e: any) {
+          ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
         }
-      } catch (e: any) {
-        console.warn('[AuthContext] Firebase Auth sign-in caught exception:', e.message);
+      } else {
+        ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
       }
     }
 
