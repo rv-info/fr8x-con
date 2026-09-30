@@ -20,7 +20,7 @@ export const GUEST_USER: UserProfile = {
   email: '',
   firstName: '',
   lastName: '',
-  displayName: '',
+  displayName: 'Guest',
   designation: 'Guest User',
   company: '',
   companyId: '',
@@ -531,7 +531,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUser = (updatedFields: Partial<UserProfile>) => {
     const base = currentUser || GUEST_USER;
-    const updated = { ...base, ...updatedFields };
+    const merged = { ...base, ...updatedFields };
+    // Safety: these two fields must never be null/undefined — they are called
+    // without null-guards in multiple render paths (e.g. .split(), .toUpperCase())
+    const updated: UserProfile = {
+      ...merged,
+      displayName: merged.displayName || `${merged.firstName || ''} ${merged.lastName || ''}`.trim() || merged.email || 'Member',
+      plan: merged.plan || 'trial',
+    };
     setCurrentUser(updated);
     setAllUsers((list) => {
       const exists = list.some((u) => u.uid === updated.uid);

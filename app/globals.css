@@ -17,7 +17,7 @@
      #1e293b: Primary dark text across all body, headers, cards, tables
      #475569: Secondary muted text
      ========================================================================== */
-  --fr8x-outline: #c5c3c6;
+  --fr8x-outline: #dde1e4;
   --fr8x-container: #e8ebec;
   --fr8x-input: #f1f3f4;
   --fr8x-background: #ffffff;
@@ -30,8 +30,8 @@
   --ink-secondary: #334155;
   --mut: #475569;
   --faint: #64748b;
-  --line: #c5c3c6;
-  --line-light: #c5c3c6;
+  --line: #dde1e4;
+  --line-light: #e8ebed;
   
   /* Brand Structure - #1985a1 */
   --brand: #1985a1;
@@ -44,7 +44,7 @@
   /* Navigation Surfaces */
   --nav: #ffffff;
   --navhi: #f1f3f4;
-  --nav-border: #c5c3c6;
+  --nav-border: #dde1e4;
 
   /* Monochromatic Status Indicators */
   --green: #059669;

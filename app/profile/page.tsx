@@ -1912,7 +1912,7 @@ export default function ProfilePage() {
                       fontWeight: 800,
                     }}
                   >
-                    {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+                    {((firstName && lastName) ? `${firstName} ${lastName}` : (user.displayName || user.email || 'U')).split(' ').map((p: string) => p[0] || '').join('').substring(0, 2).toUpperCase()}
                   </div>
                 )}
 
@@ -2085,7 +2085,7 @@ export default function ProfilePage() {
                   <ShieldCheck size={11} /> VERIFIED B2B
                 </span>
                 <span className="badge" style={{ fontSize: '10px' }}>
-                  <Sparkles size={10} /> {user.plan.toUpperCase()} PLAN
+                  <Sparkles size={10} /> {(user.plan || 'free').toUpperCase()} PLAN
                 </span>
               </div>
 
