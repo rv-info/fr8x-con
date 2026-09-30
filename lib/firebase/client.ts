@@ -5,18 +5,17 @@ import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics';
 
 export const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "",
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || ""
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCTFPoToXBfIk4BFTc13a3x5geBTZlWwjk",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "fr8x-con.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "fr8x-con",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "fr8x-con.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "238702195734",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:238702195734:web:3f41aafdea91007747f137",
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-PCFCQCEVSF"
 };
 
 /**
  * Validates that essential Firebase client configuration is present.
- * In development, emits descriptive warnings to assist local setup.
  */
 export function validateFirebaseClientConfig(): boolean {
   const missing = Object.entries(firebaseConfig)
@@ -29,27 +28,12 @@ export function validateFirebaseClientConfig(): boolean {
   return missing.length === 0;
 }
 
-// Initialize Firebase client instance safely across Next.js SSR / SSG / Browser
+// Exactly ONE canonical Firebase client instance
 let app: FirebaseApp;
-try {
-  if (getApps().length > 0) {
-    app = getApp();
-  } else if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-    app = initializeApp(firebaseConfig);
-  } else {
-    // Graceful fallback for build-time static generation without runtime crash
-    app = initializeApp({
-      apiKey: "build-placeholder-key",
-      projectId: "fr8x-con",
-      appId: "build-placeholder-app-id"
-    }, "BUILD_FALLBACK");
-  }
-} catch {
-  app = getApps()[0] || initializeApp({
-    apiKey: "build-placeholder-key",
-    projectId: "fr8x-con",
-    appId: "build-placeholder-app-id"
-  });
+if (getApps().length > 0) {
+  app = getApp();
+} else {
+  app = initializeApp(firebaseConfig);
 }
 
 let authInstance: Auth;
@@ -76,6 +60,15 @@ try {
 export const auth: Auth = authInstance;
 export const db: Firestore = dbInstance;
 export const storage: FirebaseStorage = storageInstance;
+
+// Configure browser auth persistence safely in browser environment
+if (typeof window !== 'undefined' && authInstance && typeof authInstance.onAuthStateChanged === 'function') {
+  import('firebase/auth').then(({ setPersistence, browserLocalPersistence }) => {
+    setPersistence(authInstance, browserLocalPersistence).catch((err) => {
+      console.warn('[FR8X Firebase Auth] Persistence setup error:', err?.message || err);
+    });
+  }).catch(() => {});
+}
 
 // Auto-connect to Firebase emulators if configured
 import('./emulator').then(({ connectFirebaseEmulators }) => {

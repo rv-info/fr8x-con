@@ -120,8 +120,13 @@ export interface UserProfile {
   city: string;
   state: string;
   country: string;
+  district?: string;
+  area?: string;
+  address?: string;
   postalCode?: string;
   formattedAddress?: string;
+  position?: string;
+  department?: string;
   coordinates?: Coordinates;
   mobile: string;
   alternateMobile?: string;

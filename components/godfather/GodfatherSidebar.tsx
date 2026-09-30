@@ -51,6 +51,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Security & Auth',
     items: [
       { label: 'Authentication Security', href: '/godfather/security', icon: Lock },
+      { label: 'Auth ↔ Firestore Health', href: '/godfather/security/data-health', icon: Database },
       { label: 'Blocked Accounts', href: '/godfather/security/blocked-accounts', icon: UserX },
       { label: 'Password Reset Requests', href: '/godfather/security/password-resets', icon: KeyRound },
       { label: 'OTP Activity & Limits', href: '/godfather/security/otp-activity', icon: Smartphone },

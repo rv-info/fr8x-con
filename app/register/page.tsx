@@ -876,34 +876,35 @@ export default function RegisterPage() {
     }
 
     setIsSubmitting(true);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
-
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        signal: controller.signal,
-        body: JSON.stringify({
+      const regResult = await register(
+        {
           firstName: firstName.trim(),
           lastName: lastName.trim(),
           email: cleanEmail,
-          password: password || 'Password@123',
           company: companyName.trim(),
           companyId,
           mobile: fullMobile,
-          designation,
+          designation: designation || 'Freight Procurement Manager',
+          position: designation || 'Manager',
+          department: 'Logistics & Supply Chain',
+          country: country || 'India',
+          state: state || '',
+          district: state || '',
+          city: (isCustomCity ? customCity : city) || 'Mumbai',
+          area: (isCustomCity ? customCity : city) || '',
+          postalCode: postalCode || '',
+          address: `${(isCustomCity ? customCity : city) || ''}, ${state || ''}, ${country || 'India'}`.trim().replace(/^,\s*|,\s*$/g, ''),
           role: 'company_admin',
           plan: isFreePlatformMode ? 'premium' : selectedPlan,
-        }),
-      });
-      clearTimeout(timeoutId);
+        },
+        password || 'Password@123'
+      );
 
-      const data = await res.json();
       setIsSubmitting(false);
 
-      if (!res.ok || !data.success) {
-        setErrorMessage(data.error || 'Registration failed. Please check your details.');
+      if (!regResult.success) {
+        setErrorMessage(regResult.error || 'Registration failed. Please check your details.');
         return;
       }
 
@@ -912,15 +913,10 @@ export default function RegisterPage() {
       setResendCooldown(60);
       setResendMessage(null);
       setResendError(null);
-      toast(data.message || `Verification email dispatched to ${cleanEmail}.`);
+      toast(`Account successfully registered in Firebase & Cloud Firestore for ${cleanEmail}!`);
     } catch (err: any) {
-      clearTimeout(timeoutId);
       setIsSubmitting(false);
-      if (err.name === 'AbortError') {
-        setErrorMessage('Network request timed out. Please check your connectivity and try again — your details are saved.');
-      } else {
-        setErrorMessage('Network connection slow or unavailable. Please try again.');
-      }
+      setErrorMessage(err.message || 'Registration failed. Please try again.');
     }
   };
 

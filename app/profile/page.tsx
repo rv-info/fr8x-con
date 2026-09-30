@@ -26,7 +26,13 @@ import {
   maskStatutory,
 } from '@/lib/connections';
 import { normalizeAssociationName } from '@/lib/utils/associations';
-import { upsertKYCDossierInDB, saveUserProfileToFirestore } from '@/lib/firebase/firestore';
+import {
+  upsertKYCDossierInDB,
+  saveUserProfileToFirestore,
+  updateCanonicalUserProfile,
+  getCanonicalUserProfile,
+  submitUserKYC,
+} from '@/lib/firebase/firestore';
 import {
   getStatutoryProfile,
   evaluateCompliance,
@@ -228,6 +234,27 @@ export default function ProfilePage() {
   const [associationId, setAssociationId] = useState((user as any).associationId || '');
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [showKycModal, setShowKycModal] = useState(false);
+
+  // Sync form states whenever user profile is fetched / updated in AuthContext from Firestore
+  useEffect(() => {
+    if (user && user.uid) {
+      if (user.firstName) setFirstName(user.firstName);
+      if (user.lastName) setLastName(user.lastName);
+      if (user.designation) setDesignation(user.designation);
+      if (user.mobile) setMobile(user.mobile);
+      if (user.company) setCompany(user.company);
+      if (user.summary) setSummary(user.summary);
+      if (user.city) setCity(user.city);
+      if (user.state) setStateName(user.state);
+      if (user.country) setCountry(user.country);
+      if (user.formattedAddress) setFormattedAddress(user.formattedAddress);
+      if (user.timezone) setTimezone(user.timezone);
+      if (user.gstn) setGstn(user.gstn);
+      if (user.pan) setPan(user.pan);
+      if (user.iec) setIec(user.iec);
+      if (user.mto) setMto(user.mto);
+    }
+  }, [user]);
 
   // Privacy & Contact Visibility Governance State
   const [privacySettings, setPrivacySettings] = useState<UserPrivacySettings>(() => {
@@ -933,23 +960,33 @@ export default function ProfilePage() {
   const effectiveAvatarUrl = avatarUrl || user.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
   const effectiveCompanyLogoUrl = companyLogoUrl || user.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    if (!activeUid) return;
+    if (!activeUid) {
+      toast('Authentication required to save profile.');
+      return;
+    }
+
     const profilePayload = {
-      firstName,
-      lastName,
-      displayName: `${firstName} ${lastName}`.trim() || user.displayName,
-      designation,
-      company,
-      mobile,
-      summary,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      displayName: `${firstName.trim()} ${lastName.trim()}`.trim() || user.displayName,
+      designation: designation.trim(),
+      position: designation.trim() || user.position || 'Manager',
+      company: company.trim(),
+      mobile: mobile.trim(),
+      mobileNumber: mobile.trim(),
+      summary: summary.trim(),
       avatarUrl: avatarUrl ? avatarUrl : '',
       companyLogoUrl: companyLogoUrl ? companyLogoUrl : '',
-      city,
-      state: stateName,
-      country,
-      formattedAddress,
+      city: city.trim(),
+      state: stateName.trim(),
+      country: country.trim(),
+      area: (user as any).area || city.trim() || '',
+      district: (user as any).district || stateName.trim() || '',
+      address: formattedAddress.trim(),
+      formattedAddress: formattedAddress.trim(),
+      postalCode: (user as any).postalCode || '',
       coordinates: { lat, lng },
       timezone,
       experiences,
@@ -960,11 +997,12 @@ export default function ProfilePage() {
       corporateRegNumber: corporateReg,
       tradeCustomsCode: tradeCustoms,
       logisticsLicenseNumber: logisticsLicense,
-      gstn: gstn || '',
-      pan: pan || '',
-      iec: iec || '',
-      mto: mto || '',
+      gstn: gstn ? gstn.trim() : '',
+      pan: pan ? pan.trim() : '',
+      iec: iec ? iec.trim() : '',
+      mto: mto ? mto.trim() : '',
     };
+
     if (avatarUrl) {
       try {
         localStorage.setItem(`fr8x_user_avatar_${activeUid}`, avatarUrl);
@@ -977,22 +1015,41 @@ export default function ProfilePage() {
         localStorage.setItem('fr8x_user_logo', companyLogoUrl);
       } catch {}
     }
-    updateUser(profilePayload);
-    fetch('/api/user/profile', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-fr8x-user-uid': activeUid,
-        'x-fr8x-session': activeUid,
-      },
-      body: JSON.stringify({
-        uid: activeUid,
-        email: user.email,
-        updates: profilePayload,
-      }),
-    }).catch(() => {});
-    setIsEditMode(false);
-    toast('✓ Enterprise profile, contact details and professional records saved in DBMS.');
+
+    try {
+      // 1. Write to canonical Firestore document & subcollections
+      const updateResult = await updateCanonicalUserProfile(activeUid, profilePayload);
+      if (!updateResult.success) {
+        toast(`Save error: ${updateResult.error || 'Failed to update Firestore profile.'}`);
+        return;
+      }
+
+      // 2. Re-fetch saved record to confirm persisted values match
+      const verifiedProfile = await getCanonicalUserProfile(activeUid);
+
+      // 3. Update local auth state with verified values
+      updateUser(verifiedProfile || profilePayload);
+
+      // 4. Background legacy sync
+      fetch('/api/user/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fr8x-user-uid': activeUid,
+          'x-fr8x-session': activeUid,
+        },
+        body: JSON.stringify({
+          uid: activeUid,
+          email: user.email,
+          updates: profilePayload,
+        }),
+      }).catch(() => {});
+
+      setIsEditMode(false);
+      toast('✓ Enterprise profile, contact details and professional records saved in Cloud Firestore.');
+    } catch (err: any) {
+      toast(`Save error: ${err.message || 'Failed to save profile.'}`);
+    }
   };
 
   const handleOpenExpModal = (exp?: ProfileExperience) => {
@@ -3199,6 +3256,21 @@ export default function ProfilePage() {
 
                 try {
                   await upsertKYCDossierInDB(dossier);
+                  if (user && user.uid) {
+                    submitUserKYC(user.uid, {
+                      companyId: user.companyId || 'CMP-00000',
+                      legalName: user.company,
+                      panNumber: finalPan,
+                      gstNumber: finalGstn,
+                      registrationNumber: corporateReg,
+                      operatingAddress: `${city}, ${country}`,
+                      registeredAddress: formattedAddress,
+                      contactPerson: `${firstName} ${lastName}`.trim(),
+                      mobileNumber: mobile,
+                      corporateEmail: user.email,
+                      designation,
+                    }).catch(() => {});
+                  }
                 } catch {}
 
                 updateUser({

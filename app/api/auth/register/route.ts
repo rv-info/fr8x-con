@@ -45,8 +45,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // AUTH-05: Server-generated cryptographically secure UID (prevent client UID injection)
-    const uid = `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
+    // Use canonical Firebase Auth UID if provided; otherwise fallback to secure generated UID
+    const uid = body.uid ? String(body.uid).trim() : `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
     const host = req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');

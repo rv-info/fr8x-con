@@ -3,8 +3,26 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserProfile, PlanTier, UserRole } from '@/lib/types';
 import { auth } from '@/lib/firebase/client';
-import { signInWithCustomToken, signOut as firebaseSignOut } from 'firebase/auth';
-import { saveUserProfileToFirestore, ensureFirebaseAuth, getUserProfileFromFirestore } from '@/lib/firebase/firestore';
+import {
+  signInWithCustomToken,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
+  User as FirebaseUser,
+} from 'firebase/auth';
+import {
+  createCanonicalUserInFirestore,
+  getCanonicalUserProfile,
+  updateCanonicalUserProfile,
+  healOrProvisionUserInFirestore,
+  saveUserProfileToFirestore,
+  ensureFirebaseAuth,
+  getUserProfileFromFirestore,
+  logStructuredError,
+} from '@/lib/firebase/firestore';
 
 // SECURITY: INITIAL_USERS seed data removed.
 // Demo/test users must NOT be hardcoded in client-side code.
@@ -113,6 +131,11 @@ interface AuthContextType {
     remember?: boolean,
     serverVerifiedUser?: Partial<UserProfile>
   ) => boolean;
+  loginWithCredentials: (
+    email: string,
+    password: string,
+    remember?: boolean
+  ) => Promise<{ success: boolean; error?: string; user?: UserProfile }>;
   register: (
     profile: Partial<UserProfile>,
     password?: string
@@ -121,6 +144,9 @@ interface AuthContextType {
     email: string,
     otp: string,
     newPassword: string
+  ) => Promise<{ success: boolean; error?: string; message?: string }>;
+  sendPasswordReset: (
+    email: string
   ) => Promise<{ success: boolean; error?: string; message?: string }>;
   logout: (reason?: string) => void;
   /** Returns only the remembered email (never a password). */
@@ -146,202 +172,83 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const lastTrackedTimeRef = React.useRef<number>(Date.now());
 
-  // Initial load: restore active session from localStorage (profile only, never password)
+  // ─── Canonical Firebase Auth Listener + Active Session Hydration ─────────
   useEffect(() => {
+    let isSubscribed = true;
+
+    // 1. Initial cached users load for instant render
     try {
-      // 1. Load registered user profiles (no passwords, no demo seed data)
       const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
-      let usersList: UserProfile[] = [];
       if (storedUsersRaw) {
-        try {
-          const parsed = JSON.parse(storedUsersRaw);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            // Deduplicate by normalized email
-            const seenEmails = new Set<string>();
-            const deduped: UserProfile[] = [];
-            for (const u of parsed) {
-              const emailKey = (u.email || '').trim().toLowerCase();
-              // Filter out any legacy seeded demo users by their known UIDs
-              const isDemoUser = ['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david'].includes(u.uid);
-              if (emailKey && !seenEmails.has(emailKey) && !isDemoUser) {
-                seenEmails.add(emailKey);
-                deduped.push(u);
-              }
-            }
-            usersList = deduped;
-          }
-        } catch {}
+        const parsed = JSON.parse(storedUsersRaw);
+        if (Array.isArray(parsed)) setAllUsers(parsed);
       }
-      setAllUsers(usersList);
+    } catch {}
 
-      // Sync registered members and active user directly from authoritative server DBMS API
-      if (typeof window !== 'undefined') {
-        const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
-
-        // 1. Authoritative direct profile fetch for active member (includes experiences, educations, certs, contact details)
-        if (activeUid) {
-          ensureFirebaseAuth().catch(() => {});
-          fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
-            headers: {
-              'x-fr8x-user-uid': activeUid,
-              'x-fr8x-session': activeUid,
-            },
-          })
-            .then((r) => r.json())
-            .then((data) => {
-              if (data?.success && data?.user) {
-                const u = data.user;
-                setCurrentUser((prev) => {
-                  if (!prev) return u;
-                  return {
-                    ...prev,
-                    ...u,
-                    avatarUrl: u.avatarUrl || prev.avatarUrl || '',
-                    companyLogoUrl: u.companyLogoUrl || prev.companyLogoUrl || '',
-                    experiences: (u.experiences && u.experiences.length > 0) ? u.experiences : (prev.experiences || []),
-                    educations: (u.educations && u.educations.length > 0) ? u.educations : (prev.educations || []),
-                    certifications: (u.certifications && u.certifications.length > 0) ? u.certifications : (prev.certifications || []),
-                    designation: u.designation || prev.designation || '',
-                    city: u.city || prev.city || '',
-                    state: u.state || prev.state || '',
-                    country: u.country || prev.country || '',
-                    formattedAddress: u.formattedAddress || prev.formattedAddress || '',
-                    mobile: u.mobile || prev.mobile || '',
-                    company: u.company || prev.company || '',
-                    summary: u.summary || prev.summary || '',
-                  };
-                });
-                setAllUsers((list) => {
-                  const exists = list.some((item) => item.uid === u.uid);
-                  const next = exists ? list.map((item) => (item.uid === u.uid ? { ...item, ...u, avatarUrl: u.avatarUrl || item.avatarUrl, companyLogoUrl: u.companyLogoUrl || item.companyLogoUrl } : item)) : [u, ...list];
-                  try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
-                  return next;
-                });
-              }
-            })
-            .catch(() => {});
+    // 2. Fetch network members roster for search / directory features
+    fetch('/api/members')
+      .then((r) => r.json())
+      .then((data) => {
+        if (isSubscribed && data?.members && Array.isArray(data.members)) {
+          setAllUsers((prev) => {
+            const map = new Map<string, UserProfile>();
+            for (const u of prev) if (u.uid) map.set(u.uid, u);
+            for (const m of data.members) if (m.uid) map.set(m.uid, { ...map.get(m.uid), ...m });
+            return Array.from(map.values());
+          });
         }
+      })
+      .catch(() => {});
 
-        // 2. Members roster fetch for network features
-        fetch('/api/members', {
-          headers: activeUid
-            ? {
-                'x-fr8x-user-uid': activeUid,
-                'x-fr8x-session': activeUid,
-              }
-            : {},
-        })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data && data.members && Array.isArray(data.members)) {
-              setAllUsers((prev) => {
-                const prevMap = new Map<string, UserProfile>();
-                for (const u of prev) {
-                  if (u.uid) prevMap.set(u.uid, u);
-                }
-                const mergedList: UserProfile[] = [];
-                for (const member of data.members) {
-                  if (!member.uid) continue;
-                  const existingLocal = prevMap.get(member.uid);
-                  if (existingLocal) {
-                    mergedList.push({
-                      ...existingLocal,
-                      ...member,
-                      avatarUrl: member.avatarUrl || existingLocal.avatarUrl || '',
-                      companyLogoUrl: member.companyLogoUrl || existingLocal.companyLogoUrl || '',
-                      experiences: (member.experiences && member.experiences.length > 0) ? member.experiences : (existingLocal.experiences || []),
-                      educations: (member.educations && member.educations.length > 0) ? member.educations : (existingLocal.educations || []),
-                      certifications: (member.certifications && member.certifications.length > 0) ? member.certifications : (existingLocal.certifications || []),
-                      designation: member.designation || existingLocal.designation || '',
-                      city: member.city || existingLocal.city || '',
-                      state: member.state || existingLocal.state || '',
-                      country: member.country || existingLocal.country || '',
-                      formattedAddress: member.formattedAddress || existingLocal.formattedAddress || '',
-                      mobile: member.mobile || existingLocal.mobile || '',
-                      gstn: member.gstn || existingLocal.gstn || '',
-                      pan: member.pan || existingLocal.pan || '',
-                    });
-                    prevMap.delete(member.uid);
-                  } else {
-                    mergedList.push(member);
-                  }
-                }
-                for (const remaining of prevMap.values()) {
-                  mergedList.push(remaining);
-                }
-                try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(mergedList)); } catch {}
-                return mergedList;
-              });
+    // 3. True Authority: Firebase onAuthStateChanged listener
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (!isSubscribed) return;
 
-              // Synchronize currentUser with authoritative server-side DBMS record
-              const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
-              if (activeUid) {
-                const serverRecord = data.members.find((m: any) => m.uid === activeUid || (m.email && m.email.toLowerCase() === activeUid.toLowerCase()));
-                if (serverRecord) {
-                  setCurrentUser((prev) => {
-                    if (!prev) return serverRecord;
-                    return {
-                      ...prev,
-                      ...serverRecord,
-                      avatarUrl: serverRecord.avatarUrl || prev.avatarUrl || '',
-                      companyLogoUrl: serverRecord.companyLogoUrl || prev.companyLogoUrl || '',
-                      experiences: (serverRecord.experiences && serverRecord.experiences.length > 0) ? serverRecord.experiences : (prev.experiences || []),
-                      educations: (serverRecord.educations && serverRecord.educations.length > 0) ? serverRecord.educations : (prev.educations || []),
-                      certifications: (serverRecord.certifications && serverRecord.certifications.length > 0) ? serverRecord.certifications : (prev.certifications || []),
-                      designation: serverRecord.designation || prev.designation || '',
-                      city: serverRecord.city || prev.city || '',
-                      state: serverRecord.state || prev.state || '',
-                      country: serverRecord.country || prev.country || '',
-                      formattedAddress: serverRecord.formattedAddress || prev.formattedAddress || '',
-                      mobile: serverRecord.mobile || prev.mobile || '',
-                      company: serverRecord.company || prev.company || '',
-                      summary: serverRecord.summary || prev.summary || '',
-                    };
-                  });
-                }
-              }
-            }
-          })
-          .catch(() => {});
-      }
-
-      // SECURITY: No password loading from localStorage.
-      // Passwords are validated exclusively server-side via /api/auth/login.
-      // Clear any legacy password store that may exist from previous versions.
-      try { localStorage.removeItem('fr8x_user_passwords_v2'); } catch {}
-
-      // 2. Restore active session ONLY if explicitly saved and NOT expired
-      const savedUid = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null;
-      if (savedUid) {
-        const isExpired = checkIsSessionExpired();
-        if (isExpired) {
-          localStorage.removeItem(ACTIVE_SESSION_KEY);
-          localStorage.removeItem(SESSION_START_KEY);
-          localStorage.removeItem(LAST_ACTIVITY_KEY);
-          setCurrentUser(null);
-          setUserStatusState('offline');
-        } else {
-          const found = usersList.find((u) => u.uid === savedUid || (u.email && u.email.toLowerCase() === savedUid.toLowerCase()));
-          if (found) {
-            setCurrentUser(found);
-            const savedStatus = (localStorage.getItem(STATUS_KEY) as UserStatus) || 'available';
-            setUserStatusState(savedStatus);
-            try { localStorage.setItem(LAST_ACTIVITY_KEY, Date.now().toString()); } catch {}
-          } else {
-            setCurrentUser(null);
-            setUserStatusState('offline');
+      if (firebaseUser) {
+        try {
+          setIsLoading(true);
+          let profile = await getCanonicalUserProfile(firebaseUser.uid);
+          if (!profile) {
+            // Self-heal or provision canonical record if missing (prevents stranded accounts)
+            profile = await healOrProvisionUserInFirestore(firebaseUser);
           }
+          if (isSubscribed && profile) {
+            setCurrentUser(profile);
+            setUserStatusState('available');
+            try {
+              localStorage.setItem(ACTIVE_SESSION_KEY, profile.uid);
+              localStorage.setItem(STATUS_KEY, 'available');
+              const now = Date.now().toString();
+              localStorage.setItem(LAST_ACTIVITY_KEY, now);
+              localStorage.setItem(SESSION_START_KEY, now);
+            } catch {}
+            setAllUsers((prev) => {
+              const exists = prev.some((u) => u.uid === profile!.uid);
+              const next = exists
+                ? prev.map((u) => (u.uid === profile!.uid ? { ...u, ...profile } : u))
+                : [profile!, ...prev];
+              try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+              return next;
+            });
+          }
+        } catch (err: any) {
+          logStructuredError('onAuthStateChanged:profileFetch', err, firebaseUser.uid);
+        } finally {
+          if (isSubscribed) setIsLoading(false);
         }
       } else {
-        setCurrentUser(null);
-        setUserStatusState('offline');
+        if (isSubscribed) {
+          setCurrentUser(null);
+          setUserStatusState('offline');
+          setIsLoading(false);
+        }
       }
-    } catch {
-      setCurrentUser(null);
-      setUserStatusState('offline');
-    } finally {
-      setIsLoading(false);
-    }
+    });
+
+    return () => {
+      isSubscribed = false;
+      unsubscribe();
+    };
   }, []);
 
   // Cross-tab synchronization: broadcast & listen for login, logout, and user switch
@@ -444,25 +351,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const performSessionCheck = async () => {
       if (!currentUserRef.current) return;
-
-      if (checkIsSessionExpired()) {
-        // Inactivity or max session duration exceeded
-        setCurrentUser(null);
-        setUserStatusState('offline');
-        clearRememberedEmail();
-        try {
-          localStorage.removeItem(ACTIVE_SESSION_KEY);
-          localStorage.removeItem(SESSION_START_KEY);
-          localStorage.removeItem(LAST_ACTIVITY_KEY);
-          localStorage.removeItem('fr8x_device_session_id');
-          localStorage.setItem(STATUS_KEY, 'offline');
-        } catch {}
-
-        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-          window.location.href = '/login?reason=session_expired';
-        }
-        return;
-      }
 
       // Check single active device enforcement via server heartbeat
       const deviceSessionId = localStorage.getItem('fr8x_device_session_id');
@@ -579,10 +467,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Authoritative Server DBMS Persistence (Users.json & ServerSecurityStore) and Firebase Firestore
+    // Authoritative Firestore Persistence & Background Server API Sync
     if (!targetUid) return;
     try {
-      saveUserProfileToFirestore(updated).catch(() => {});
+      updateCanonicalUserProfile(targetUid, updatedFields).catch((err) => {
+        logStructuredError('updateUser:canonicalUpdate', err, targetUid);
+      });
       fetch('/api/user/profile', {
         method: 'POST',
         headers: {
@@ -747,125 +637,223 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadRememberedEmailFn = React.useCallback(() => loadRememberedEmail(), []);
 
   /**
-   * Register a new freight organization and user account.
-   * Enforces strict One User, One Login policy: rejects duplicate accounts across same or different organizations.
+   * Register a new freight organization and user account atomically.
+   * Step 1: Create Firebase Auth user
+   * Step 2: Obtain canonical UID
+   * Step 3: Write required Firestore records with read-back verification
+   * Step 4: Complete registration only on verified success
    */
   const register = async (
-    profile: Partial<UserProfile>,
+    profile: Partial<UserProfile> & {
+      position?: string;
+      department?: string;
+      area?: string;
+      district?: string;
+      postalCode?: string;
+      formattedAddress?: string;
+      address?: string;
+    },
     password = 'Password@123'
   ): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
     const cleanEmail = (profile.email || '').trim().toLowerCase();
     const cleanCompany = (profile.company || '').trim();
     const cleanMobile = (profile.mobile || '').replace(/[^0-9+]/g, '');
 
-    // 1. One User, One Login check: duplicate email across same or different orgs (only verified accounts block)
-    const existingByEmail = allUsers.find(
-      (u) => u.email.trim().toLowerCase() === cleanEmail && u.isVerified
-    );
-    if (existingByEmail) {
-      const isSameOrg = existingByEmail.company.trim().toLowerCase() === cleanCompany.toLowerCase();
-      if (isSameOrg) {
-        return {
-          success: false,
-          error: `An account with this corporate email (${profile.email}) is already registered and verified in ${existingByEmail.company}. Multi-accounting in the same organization is prohibited under the One User, One Login policy. Please sign in instead.`,
-        };
-      } else {
-        return {
-          success: false,
-          error: `This corporate email (${profile.email}) is already associated with another verified organization (${existingByEmail.company}). Multi-accounting across different organizations is strictly prohibited (One User, One Login policy). Each user is permitted only one active account.`,
-        };
-      }
+    if (!cleanEmail || !password) {
+      return { success: false, error: 'Email and password are required for registration.' };
     }
 
-    // 2. One User, One Login check: duplicate mobile phone number (only verified accounts block)
-    if (cleanMobile && cleanMobile.length >= 8) {
-      const existingByMobile = allUsers.find(
-        (u) => u.mobile && u.mobile.replace(/[^0-9+]/g, '') === cleanMobile && u.isVerified && u.email.trim().toLowerCase() !== cleanEmail
-      );
-      if (existingByMobile) {
-        return {
-          success: false,
-          error: `This mobile phone number (${profile.mobile}) is already associated with an active account (${existingByMobile.email}). Multi-accounting is prohibited under the One User, One Login policy.`,
-        };
-      }
-    }
-
-    const newUid = `u-${Date.now()}`;
-    const newUser: UserProfile = {
-      uid: newUid,
-      email: cleanEmail,
-      firstName: profile.firstName || 'User',
-      lastName: profile.lastName || '',
-      displayName: `${profile.firstName || 'User'} ${profile.lastName || ''}`.trim(),
-      designation: profile.designation || 'Freight Procurement Manager',
-      company: cleanCompany || 'Enterprise Logistics Co.',
-      companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
-      city: profile.city || 'Mumbai',
-      state: profile.state || '',
-      country: profile.country || 'India',
-      mobile: profile.mobile || '+91 90000 00000',
-      timezone: profile.timezone || 'Asia/Kolkata',
-      preferredContactMethod: profile.preferredContactMethod || 'tradeChat',
-      contactAvailability: profile.contactAvailability || '09:00 - 18:00',
-      plan: profile.plan || 'trial',
-      hasGoldenTick: profile.plan === 'premium',
-      isVerified: false,
-      email_verified: false,
-      role: 'company_admin',
-      ...profile,
-    };
-
-    // 3. Register with server API to ensure server-side auth sync
-    let isVerificationRequired = false;
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...newUser,
-          password,
-        }),
+      setIsLoading(true);
+
+      // 1. Create Firebase Auth user
+      const cred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+      const uid = cred.user.uid;
+
+      // 2. Set Firebase Auth displayName
+      const displayName =
+        profile.displayName ||
+        `${profile.firstName || ''} ${profile.lastName || ''}`.trim() ||
+        cleanEmail;
+      try {
+        await updateProfile(cred.user, { displayName });
+      } catch {}
+
+      // 3. Atomically create canonical Firestore document & subcollections
+      const createRes = await createCanonicalUserInFirestore({
+        uid,
+        email: cleanEmail,
+        displayName,
+        firstName: profile.firstName || displayName.split(' ')[0] || '',
+        lastName: profile.lastName || displayName.split(' ').slice(1).join(' ') || '',
+        mobile: cleanMobile || profile.mobile || '',
+        companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
+        companyName: cleanCompany || 'Enterprise Logistics Co.',
+        designation: profile.designation || 'Freight Procurement Manager',
+        position: profile.position || profile.designation || 'Manager',
+        department: profile.department || 'Logistics & Supply Chain',
+        country: profile.country || 'India',
+        state: profile.state || '',
+        district: profile.district || '',
+        city: profile.city || 'Mumbai',
+        area: profile.area || '',
+        address: profile.address || profile.formattedAddress || '',
+        postalCode: profile.postalCode || '',
+        role: profile.role === 'user' ? 'user' : 'company_admin',
+        plan: profile.plan || 'trial',
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        return {
-          success: false,
-          error: json.error || 'Server rejected registration under the One User, One Login policy.',
-        };
+      if (!createRes.success) {
+        return { success: false, error: createRes.error || 'Failed to initialize Firestore user profile.' };
       }
-      isVerificationRequired = Boolean(json.isVerificationRequired);
-    } catch (err) {
-      console.warn('[Auth] Server register request skipped, using client registry:', err);
+
+      let canonicalUser = await getCanonicalUserProfile(uid);
+      if (!canonicalUser) {
+        canonicalUser = (await healOrProvisionUserInFirestore(cred.user))!;
+      }
+
+      // 4. Update local state
+      setCurrentUser(canonicalUser);
+      setUserStatus('available');
+      setAllUsers((prev) => {
+        const next = [canonicalUser!, ...prev.filter((u) => u.uid !== uid)];
+        try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+        return next;
+      });
+
+      try {
+        localStorage.setItem(ACTIVE_SESSION_KEY, uid);
+        localStorage.setItem(STATUS_KEY, 'available');
+      } catch {}
+
+      // 5. Background sync for legacy API compatibility
+      fetch('/api/auth/register-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(canonicalUser),
+      }).catch(() => {});
+
+      return { success: true, user: canonicalUser };
+    } catch (err: any) {
+      logStructuredError('register', err, undefined, { email: cleanEmail });
+      let message = 'Registration failed. Please check your details.';
+      if (err.code === 'auth/email-already-in-use') {
+        message = `An account with this email (${cleanEmail}) already exists. Please sign in instead.`;
+      } else if (err.code === 'auth/weak-password') {
+        message = 'The password is too weak. Please use at least 8 characters with letters, numbers, and symbols.';
+      } else if (err.code === 'auth/invalid-email') {
+        message = 'The email address is invalid.';
+      } else if (err.message) {
+        message = err.message;
+      }
+      return { success: false, error: message };
+    } finally {
+      setIsLoading(false);
     }
-
-    if (isVerificationRequired) {
-      // Do not auto-login unverified accounts
-      return { success: true, user: newUser };
-    }
-
-    // 4. Save profile only to local storage — never password
-    const nextUsers = [newUser, ...allUsers.filter((u) => u.email.trim().toLowerCase() !== cleanEmail)];
-    setAllUsers(nextUsers);
-
-    // SECURITY: Password is NOT stored client-side.
-    const now = Date.now().toString();
-    try {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(nextUsers));
-      localStorage.setItem(ACTIVE_SESSION_KEY, newUid);
-      localStorage.setItem(STATUS_KEY, 'available');
-      localStorage.setItem(SESSION_START_KEY, now);
-      localStorage.setItem(LAST_ACTIVITY_KEY, now);
-    } catch {}
-
-    setCurrentUser(newUser);
-    setUserStatus('available');
-
-    return { success: true, user: newUser };
   };
 
   /**
-   * Verify server-issued OTP and reset account password
+   * Direct Firebase Authentication with Email & Password.
+   * Fetches canonical Firestore user and heals if missing.
+   */
+  const loginWithCredentials = async (
+    email: string,
+    password: string,
+    remember = false
+  ): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
+    try {
+      setIsLoading(true);
+      const cleanEmail = email.trim().toLowerCase();
+      const cred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+      const uid = cred.user.uid;
+
+      // Fetch canonical profile
+      let profile = await getCanonicalUserProfile(uid);
+      if (!profile) {
+        // Self-heal or provision canonical record without deleting auth user
+        profile = await healOrProvisionUserInFirestore(cred.user);
+      }
+
+      if (profile) {
+        setCurrentUser(profile);
+        setUserStatus('available');
+        setAllUsers((prev) => {
+          const next = [profile!, ...prev.filter((u) => u.uid !== profile!.uid)];
+          try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+          return next;
+        });
+      }
+
+      if (remember) {
+        saveRememberedEmail(cleanEmail);
+      } else {
+        clearRememberedEmail();
+      }
+
+      try {
+        localStorage.setItem(ACTIVE_SESSION_KEY, uid);
+        localStorage.setItem(STATUS_KEY, 'available');
+      } catch {}
+
+      return { success: true, user: profile || undefined };
+    } catch (err: any) {
+      logStructuredError('loginWithCredentials', err, undefined, { email });
+      let message = 'Failed to sign in. Please verify your email and password.';
+      if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password'
+      ) {
+        message = 'Invalid corporate email or password. Please verify your credentials.';
+      } else if (err.code === 'auth/too-many-requests') {
+        message = 'Too many failed login attempts. Please reset your password or try again later.';
+      } else if (err.code === 'auth/user-disabled') {
+        message = 'This account has been suspended or disabled. Please contact support.';
+      } else if (err.message) {
+        message = err.message;
+      }
+      return { success: false, error: message };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  /**
+   * Send Firebase password reset email.
+   */
+  const sendPasswordReset = async (
+    email: string
+  ): Promise<{ success: boolean; error?: string; message?: string }> => {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      return { success: false, error: 'Please enter your corporate email address.' };
+    }
+    try {
+      await sendPasswordResetEmail(auth, cleanEmail);
+      return {
+        success: true,
+        message: `Password reset link has been dispatched to ${cleanEmail} via Firebase Authentication.`,
+      };
+    } catch (err: any) {
+      logStructuredError('sendPasswordReset', err, undefined, { email: cleanEmail });
+      let msg = 'Failed to dispatch password reset email. Please try again.';
+      if (err.code === 'auth/user-not-found') {
+        // Controlled message to protect user privacy
+        return {
+          success: true,
+          message: `If an account is associated with ${cleanEmail}, a password reset link has been sent.`,
+        };
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Please enter a valid corporate email address.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      return { success: false, error: msg };
+    }
+  };
+
+  /**
+   * Verify server-issued OTP and reset account password (backward compatibility)
    */
   const resetPasswordWithOtp = async (
     email: string,
@@ -889,9 +877,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: json.error || 'Password reset failed.' };
       }
 
-      // SECURITY: Client-side password store removed.
-      // Server has updated the password. No client-side action needed.
-
       return { success: true, message: json.message || 'Password successfully reset.' };
     } catch (err: any) {
       return { success: false, error: err.message || 'Failed to connect to password reset service.' };
@@ -899,9 +884,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Explicit Logout: destroys the session and sets user to null (unauthenticated).
+   * Explicit Logout: destroys the session and signs out from Firebase Authentication.
    */
-  const logout = (reason?: string) => {
+  const logout = async (reason?: string) => {
+    try {
+      if (auth && auth.currentUser) {
+        await firebaseSignOut(auth);
+      }
+    } catch (err) {
+      console.warn('[AuthContext] Firebase signOut warning:', err);
+    }
     setCurrentUser(null);
     setUserStatusState('offline');
     clearRememberedEmail();
@@ -913,16 +905,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(STATUS_KEY, 'offline');
       if (typeof window !== 'undefined') {
         fetch('/api/auth/login', { method: 'DELETE' }).catch(() => {});
-        if (auth && (auth as any).app && auth.currentUser) {
-          firebaseSignOut(auth).catch(() => {});
+        if ('BroadcastChannel' in window) {
+          const bc = new BroadcastChannel('fr8x_auth_sync');
+          bc.postMessage({ type: 'LOGOUT' });
+          bc.close();
         }
-        try {
-          if ('BroadcastChannel' in window) {
-            const bc = new BroadcastChannel('fr8x_auth_sync');
-            bc.postMessage({ type: 'LOGOUT' });
-            bc.close();
-          }
-        } catch {}
       }
     } catch {}
 
@@ -949,8 +936,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateUser,
       upgradePlan,
       login,
+      loginWithCredentials,
       register,
       resetPasswordWithOtp,
+      sendPasswordReset,
       logout,
       loadRememberedEmail: loadRememberedEmailFn,
       loadRemembered: loadRememberedEmailFn,

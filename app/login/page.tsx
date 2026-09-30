@@ -91,7 +91,7 @@ function LiveClockPanel() {
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
-  const { login, loadRememberedEmail, userStatus, resetPasswordWithOtp } = auth;
+  const { login, loginWithCredentials, sendPasswordReset, loadRememberedEmail, userStatus, resetPasswordWithOtp } = auth;
   const { toast } = useToast();
 
   const [identifier, setIdentifier] = useState(''); // uid or email
@@ -198,7 +198,18 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // Server-side authentication & attempt limiter
+      // 1. Direct Firebase Authentication with Email & Password
+      if (id.includes('@')) {
+        const authRes = await loginWithCredentials(id, password, remember);
+        if (authRes.success) {
+          setIsLoading(false);
+          toast(`Logged in successfully to FR8X Workspace as ${authRes.user?.displayName || id}.`);
+          router.push('/feeds');
+          return;
+        }
+      }
+
+      // 2. Server-side authentication & attempt limiter (for Knox/legacy accounts or user IDs)
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -343,24 +354,16 @@ export default function LoginPage() {
     setResetError('');
     setIsResetSubmitting(true);
     try {
-      const res = await fetch('/api/auth/reset-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail.trim(), action: 'request' }),
-      });
-
-      const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.success) {
-        setResetError(json.error || 'Failed to dispatch verification code. Please try again.');
-        setIsResetSubmitting(false);
+      const fbReset = await sendPasswordReset(resetEmail.trim());
+      if (fbReset.success) {
+        toast(fbReset.message || `Password reset link dispatched to ${resetEmail}.`);
+        setIsForgotModalOpen(false);
+        setSessionNotice(`Password reset instructions have been sent to ${resetEmail}. Please check your email to create a new password.`);
         return;
       }
-
-      toast(json.message || 'If an account matches this email, password reset instructions have been dispatched.');
-      setResetStep('otp');
-      setResetResendCooldown(60);
+      setResetError(fbReset.error || 'Failed to dispatch password reset email.');
     } catch (err: any) {
-      setResetError(err.message || 'Unable to contact authentication server. Please check your connection.');
+      setResetError(err.message || 'Unable to contact authentication service.');
     } finally {
       setIsResetSubmitting(false);
     }

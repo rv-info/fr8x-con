@@ -44,6 +44,13 @@ import {
 import { useGodfatherAuth } from './GodfatherAuthContext';
 import { createAuditRecord, calculateDiff } from '../utils/audit';
 import { formatAuctionDetailTable } from '../utils/templateBuilder';
+import {
+  getAllCanonicalUsers,
+  getAllCanonicalCompanies,
+  approveUserRegistration,
+  rejectUserRegistration,
+  appendCompanyAudit,
+} from '@/lib/firebase/firestore';
 
 // Comprehensive Seed Data for GODFATHER console
 
@@ -2027,17 +2034,28 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     } catch {}
   }, []);
 
-  // Sync registered live members from DBMS store
+  // Sync registered live members from canonical Firestore + DBMS store
   useEffect(() => {
     let isMounted = true;
     async function syncLiveMembers() {
       try {
-        const res = await fetch('/api/members');
-        if (res.ok && isMounted) {
-          const data = await res.json();
-          if (Array.isArray(data.members)) {
-            setUsers(data.members);
+        const canonicalUsers = await getAllCanonicalUsers();
+        let members: UserProfile[] = canonicalUsers;
+        try {
+          const res = await fetch('/api/members');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.members)) {
+              const map = new Map<string, UserProfile>();
+              for (const u of data.members) if (u.uid) map.set(u.uid, u);
+              for (const c of canonicalUsers) if (c.uid) map.set(c.uid, { ...map.get(c.uid), ...c });
+              members = Array.from(map.values());
+            }
           }
+        } catch {}
+
+        if (isMounted && members.length > 0) {
+          setUsers(members);
         }
       } catch (err) {
         console.error('[GodfatherData] Failed to sync live members:', err);
@@ -2049,37 +2067,69 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Sync companies from authoritative DBMS Master Registry
+  // Sync companies from canonical Firestore + authoritative Master Registry
   useEffect(() => {
     let isMounted = true;
     async function syncLiveCompanies() {
       try {
-        const res = await fetch('/api/godfather/companies');
-        if (res.ok && isMounted) {
-          const data = await res.json();
-          if (Array.isArray(data.companies)) {
-            const mapped: CompanyVerificationItem[] = data.companies.map((c: any) => ({
-              companyId: c.id,
-              legalName: c.legalName,
-              tradeName: c.tradeName || c.legalName,
-              country: c.country,
-              city: c.city,
-              gstn: c.gstn,
-              pan: c.pan,
-              iec: c.iec,
-              mto: c.mto,
-              status: c.status || (c.verified ? 'verified' : 'pending'),
-              phone: c.primaryContactPhone,
-              submittedAt: c.createdAt || new Date().toISOString(),
-              reviewedAt: c.updatedAt,
-              adminNotes: c.adminNotes || [],
-              documents: c.documents || [],
-              primaryContactName: c.primaryContactName || '',
-              primaryContactEmail: c.primaryContactEmail || '',
-              primaryContactPhone: c.primaryContactPhone || '',
-            }));
-            setCompanies(mapped);
+        const canonicalCompanies = await getAllCanonicalCompanies();
+        const mappedCanonical: CompanyVerificationItem[] = canonicalCompanies.map((c) => ({
+          companyId: c.companyId,
+          legalName: c.companyName,
+          tradeName: c.companyName,
+          country: c.country || 'India',
+          city: c.city || 'Mumbai',
+          gstn: c.gstn,
+          pan: c.pan,
+          status: c.approvalStatus === 'APPROVED' ? 'verified' : c.approvalStatus === 'REJECTED' ? 'rejected' : 'pending',
+          submittedAt: c.createdAt,
+          reviewedAt: c.updatedAt,
+          adminNotes: [],
+          documents: [],
+          primaryContactName: '',
+          primaryContactEmail: c.corporateEmail || '',
+          primaryContactPhone: '',
+        }));
+
+        try {
+          const res = await fetch('/api/godfather/companies');
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.companies)) {
+              const map = new Map<string, CompanyVerificationItem>();
+              for (const c of data.companies) {
+                map.set(c.id, {
+                  companyId: c.id,
+                  legalName: c.legalName,
+                  tradeName: c.tradeName || c.legalName,
+                  country: c.country,
+                  city: c.city,
+                  gstn: c.gstn,
+                  pan: c.pan,
+                  iec: c.iec,
+                  mto: c.mto,
+                  status: c.status || (c.verified ? 'verified' : 'pending'),
+                  phone: c.primaryContactPhone,
+                  submittedAt: c.createdAt || new Date().toISOString(),
+                  reviewedAt: c.updatedAt,
+                  adminNotes: c.adminNotes || [],
+                  documents: c.documents || [],
+                  primaryContactName: c.primaryContactName || '',
+                  primaryContactEmail: c.primaryContactEmail || '',
+                  primaryContactPhone: c.primaryContactPhone || '',
+                });
+              }
+              for (const c of mappedCanonical) {
+                map.set(c.companyId, { ...map.get(c.companyId), ...c });
+              }
+              if (isMounted) setCompanies(Array.from(map.values()));
+              return;
+            }
           }
+        } catch {}
+
+        if (isMounted && mappedCanonical.length > 0) {
+          setCompanies(mappedCanonical);
         }
       } catch (err) {
         console.error('[GodfatherData] Failed to sync live companies:', err);
@@ -2150,6 +2200,20 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       } catch {}
       return updated;
     });
+
+    // Write immutable audit log to Cloud Firestore
+    if (params.targetType === 'company') {
+      appendCompanyAudit(params.targetId, {
+        action: params.actionType,
+        actorUid: operator.uid,
+        actorRole: operator.role,
+        targetUid: '',
+        targetCompanyId: params.targetId,
+        previousStatus: JSON.stringify(params.beforeSnapshot || {}),
+        newStatus: JSON.stringify(params.afterSnapshot || {}),
+        reason: params.reason,
+      }).catch(() => {});
+    }
 
     return { success: true, correlationId: record.correlationId };
   };
@@ -2307,6 +2371,17 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     const before = { status: comp.status };
     const after = { status: 'verified', reviewedBy: operator.uid, reviewedAt: new Date().toISOString() };
 
+    // Persist approval to canonical Firestore records
+    approveUserRegistration({
+      actorUid: operator.uid,
+      actorRole: operator.role,
+      targetUid: '',
+      targetCompanyId: companyId,
+      notes: reason,
+    }).catch((err) => {
+      console.warn('[Godfather] Firestore approveUserRegistration warning:', err);
+    });
+
     await executeAction({
       targetType: 'company',
       targetId: companyId,
@@ -2330,6 +2405,17 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
 
     const before = { status: comp.status };
     const after = { status: 'rejected', reviewedBy: operator.uid, reviewedAt: new Date().toISOString() };
+
+    // Persist rejection to canonical Firestore records
+    rejectUserRegistration({
+      actorUid: operator.uid,
+      actorRole: operator.role,
+      targetUid: '',
+      targetCompanyId: companyId,
+      reason,
+    }).catch((err) => {
+      console.warn('[Godfather] Firestore rejectUserRegistration warning:', err);
+    });
 
     await executeAction({
       targetType: 'company',

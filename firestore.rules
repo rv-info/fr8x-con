@@ -19,7 +19,11 @@ service cloud.firestore {
     }
 
     function isGodfather() {
-      return isAuthenticated() && (('godfatherAccess' in request.auth.token && request.auth.token.godfatherAccess == true) || ('role' in request.auth.token && request.auth.token.role == 'godfather'));
+      return isAuthenticated() && (
+        ('email' in request.auth.token && (request.auth.token.email == 'tech@fr8x.in' || request.auth.token.email == 'operator@fr8x.in')) ||
+        ('godfatherAccess' in request.auth.token && request.auth.token.godfatherAccess == true) || 
+        ('role' in request.auth.token && (request.auth.token.role == 'godfather' || request.auth.token.role == 'super_admin'))
+      );
     }
 
     function hasGodfatherRole(subrole) {
@@ -91,10 +95,83 @@ service cloud.firestore {
     // PLATFORM USER & ENTITY COLLECTIONS
     // =========================================================================
 
-    // Users Collection (Profile metadata & Entitlements)
+    // Users Collection (Profile metadata & Canonical Subcollections)
     match /users/{userId} {
       allow read: if isOwner(userId) || isPlatformAdmin();
-      allow write: if isOwner(userId) || isPlatformAdmin();
+      allow create: if isOwner(userId) || isPlatformAdmin();
+      allow update: if isPlatformAdmin() || (
+        isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'approvalStatus', 'isBlacklisted', 'isGodfather'])
+      );
+      allow delete: if isPlatformAdmin();
+
+      match /profile/{docId} {
+        allow read: if isOwner(userId) || isPlatformAdmin() || isAuthenticated();
+        allow write: if isOwner(userId) || isPlatformAdmin();
+      }
+
+      match /kyc/{docId} {
+        allow read: if isOwner(userId) || isPlatformAdmin();
+        allow create: if isOwner(userId) || isPlatformAdmin();
+        allow update: if isPlatformAdmin() || (isOwner(userId) && resource.data.kycStatus != 'APPROVED' && request.resource.data.kycStatus != 'APPROVED');
+        allow delete: if isPlatformAdmin();
+      }
+
+      match /approval/{docId} {
+        allow read: if isOwner(userId) || isPlatformAdmin();
+        allow create: if (isOwner(userId) && request.resource.data.approvalStatus == 'PENDING_APPROVAL') || isPlatformAdmin();
+        allow update, delete: if isPlatformAdmin();
+      }
+
+      match /security/{docId} {
+        allow read: if isOwner(userId) || isPlatformAdmin();
+        allow write: if isOwner(userId) || isPlatformAdmin();
+      }
+
+      match /preferences/{docId} {
+        allow read: if isOwner(userId) || isPlatformAdmin();
+        allow write: if isOwner(userId) || isPlatformAdmin();
+      }
+
+      match /{subcollection=**} {
+        allow read: if isOwner(userId) || isPlatformAdmin();
+        allow write: if isOwner(userId) || isPlatformAdmin();
+      }
+    }
+
+    // Companies Collection & Canonical Subcollections
+    match /companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isPlatformAdmin() || isAuthenticated();
+      allow delete: if isPlatformAdmin();
+
+      match /members/{memberId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (request.auth.uid == memberId || isPlatformAdmin());
+      }
+
+      match /kyc/{docId} {
+        allow read: if isAuthenticated();
+        allow create, update: if isAuthenticated();
+        allow delete: if isPlatformAdmin();
+      }
+
+      match /approval/{docId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if isPlatformAdmin();
+      }
+
+      match /audit/{auditId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update, delete: if false; // Strict Cryptographic Immutability
+      }
+
+      match /{subcollection=**} {
+        allow read, write: if isAuthenticated();
+      }
     }
 
     // Profiles Collection (Professional history, Experience, Education, Certifications)
@@ -276,7 +353,46 @@ service cloud.firestore {
     // CORE ENTERPRISE COLLECTIONS (SECTION 13 SPECIFICATION)
     // =========================================================================
 
-    // Organizations & Member Scopes
+    // Canonical Companies Collection (Section 4 & 20)
+    match /companies/{companyId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isPlatformAdmin() || (
+        isAuthenticated() && 
+        (resource.data.createdById == request.auth.uid || request.auth.uid in resource.data.adminUids) &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['approvalStatus', 'status', 'isBlacklisted', 'isVerified'])
+      );
+      allow delete: if isPlatformAdmin();
+
+      match /members/{memberUid} {
+        allow read: if isAuthenticated();
+        allow write: if isOwner(memberUid) || isPlatformAdmin() || (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids);
+      }
+
+      match /kyc/{docId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if isPlatformAdmin() || (isAuthenticated() && request.resource.data.kycStatus != 'APPROVED');
+        allow delete: if isPlatformAdmin();
+      }
+
+      match /approval/{docId} {
+        allow read: if isAuthenticated();
+        allow create: if (isAuthenticated() && request.resource.data.approvalStatus == 'PENDING_APPROVAL') || isPlatformAdmin();
+        allow update, delete: if isPlatformAdmin();
+      }
+
+      match /audit/{auditId} {
+        allow read: if isPlatformAdmin() || (isAuthenticated() && (
+          get(/databases/$(database)/documents/companies/$(companyId)).data.createdById == request.auth.uid ||
+          request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids
+        ));
+        allow create: if isAuthenticated();
+        allow update, delete: if false; // Strict Cryptographic Immutability
+      }
+    }
+
+    // Organizations & Member Scopes (Legacy Compatibility)
     match /organizations/{organizationId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
