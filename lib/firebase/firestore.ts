@@ -27,6 +27,7 @@ import {
   type Unsubscribe,
 } from 'firebase/firestore';
 import { db, auth } from './client';
+export { db };
 
 // Fast in-memory state stores for server-side execution and offline resiliency
 const memoryPresenceStore = new Map<string, UserPresenceState>();
@@ -1923,6 +1924,17 @@ export async function appendCompanyAudit(
   } catch (err: any) {
     logStructuredError('appendCompanyAudit', err, undefined, { companyId });
     return { success: false, error: err.message };
+  }
+}
+
+export async function deleteTestUserDoc(uid: string): Promise<boolean> {
+  if (!uid) return false;
+  try {
+    await deleteDoc(doc(db, 'users', uid));
+    return true;
+  } catch (err: any) {
+    console.warn('[FR8X Firestore] deleteTestUserDoc warning:', err?.message);
+    return false;
   }
 }
 

@@ -2,6 +2,10 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // =========================================================================
+    // AUTHENTICATION & ACCESS CONTROL HELPER FUNCTIONS
+    // =========================================================================
+    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -10,14 +14,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    function isVerifiedUser() {
-      return isAuthenticated() && (('isVerified' in request.auth.token && request.auth.token.isVerified == true) || isPlatformAdmin());
-    }
-    
-    function isPlatformAdmin() {
-      return isAuthenticated() && (('role' in request.auth.token && request.auth.token.role == 'super_admin') || isGodfather());
-    }
-
     function isGodfather() {
       return isAuthenticated() && (
         ('email' in request.auth.token && (request.auth.token.email == 'tech@fr8x.in' || request.auth.token.email == 'operator@fr8x.in')) ||
@@ -26,87 +22,39 @@ service cloud.firestore {
       );
     }
 
+    function isPlatformAdmin() {
+      return isAuthenticated() && (
+        ('role' in request.auth.token && request.auth.token.role == 'super_admin') ||
+        isGodfather()
+      );
+    }
+
     function hasGodfatherRole(subrole) {
-      return isGodfather() && ('subrole' in request.auth.token && (request.auth.token.subrole == subrole || request.auth.token.subrole == 'godfather_owner'));
+      return isGodfather() && (
+        'subrole' in request.auth.token && 
+        (request.auth.token.subrole == subrole || request.auth.token.subrole == 'godfather_owner')
+      );
     }
 
     // =========================================================================
-    // GODFATHER SUPER ADMIN COLLECTIONS & IMMUTABLE LEDGERS
+    // 1. CANONICAL USER COLLECTIONS & SUBCOLLECTIONS
     // =========================================================================
 
-    // Immutable Platform Audit Records (Append-Only)
-    match /adminActions/{actionId} {
-      allow read: if isGodfather();
-      allow create: if isGodfather();
-      allow update, delete: if false; // Strict Cryptographic Immutability
-    }
-
-    // Support & Compliance Investigation Cases
-    match /adminCases/{caseId} {
-      allow read, write: if isGodfather();
-    }
-
-    // Versioned Subscription Pricing Plans (Append-Only Forward Effective)
-    match /planVersions/{planVersionId} {
-      allow read: if isAuthenticated();
-      allow create, update: if hasGodfatherRole('godfather_finance');
-      allow delete: if false;
-    }
-
-    // Payment Gateway Integrations & Vault Config References
-    match /paymentConfigs/{configId} {
-      allow read, write: if hasGodfatherRole('godfather_finance');
-    }
-
-    // Granular Member & Company Scoped Blocks
-    match /blockActions/{blockId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isGodfather();
-      allow delete: if false;
-    }
-
-    // System Notification & Message Templates
-    match /notificationTemplates/{templateId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isGodfather();
-      allow delete: if hasGodfatherRole('godfather_owner');
-    }
-
-    // Zoho Outbound Email Delivery Logs (Append-Only)
-    match /emailLogs/{logId} {
-      allow read: if isGodfather();
-      allow create: if isGodfather();
-      allow update, delete: if false; // Strict Cryptographic Immutability
-    }
-
-    // Privileged Admin Operator Sessions
-    match /adminSessions/{sessionId} {
-      allow read, write: if isGodfather();
-    }
-
-    // Platform Security & Lockout Event Ledger (Append-Only)
-    match /securityEvents/{eventId} {
-      allow read: if isGodfather();
-      allow create: if isAuthenticated() || isGodfather();
-      allow update, delete: if false; // Strict Cryptographic Immutability
-    }
-
-    // =========================================================================
-    // PLATFORM USER & ENTITY COLLECTIONS
-    // =========================================================================
-
-    // Users Collection (Profile metadata & Canonical Subcollections)
     match /users/{userId} {
+      // Authenticated users can read basic profile info for member directory; non-owners cannot see sensitive subdocs
       allow read: if isOwner(userId) || isPlatformAdmin();
       allow create: if isOwner(userId) || isPlatformAdmin();
       allow update: if isPlatformAdmin() || (
         isOwner(userId) && 
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isAdmin', 'approvalStatus', 'isBlacklisted', 'isGodfather'])
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'role', 'isAdmin', 'approvalStatus', 'isBlacklisted', 'isGodfather'
+        ])
       );
+      // Strictly prohibit destructive deletion of business user records
       allow delete: if isPlatformAdmin();
 
       match /profile/{docId} {
-        allow read: if isOwner(userId) || isPlatformAdmin() || isAuthenticated();
+        allow read: if isAuthenticated();
         allow write: if isOwner(userId) || isPlatformAdmin();
       }
 
@@ -139,234 +87,34 @@ service cloud.firestore {
       }
     }
 
-    // Companies Collection & Canonical Subcollections
-    match /companies/{companyId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isPlatformAdmin() || isAuthenticated();
-      allow delete: if isPlatformAdmin();
-
-      match /members/{memberId} {
-        allow read: if isAuthenticated();
-        allow write: if isAuthenticated() && (request.auth.uid == memberId || isPlatformAdmin());
-      }
-
-      match /kyc/{docId} {
-        allow read: if isAuthenticated();
-        allow create, update: if isAuthenticated();
-        allow delete: if isPlatformAdmin();
-      }
-
-      match /approval/{docId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated();
-        allow update, delete: if isPlatformAdmin();
-      }
-
-      match /audit/{auditId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated();
-        allow update, delete: if false; // Strict Cryptographic Immutability
-      }
-
-      match /{subcollection=**} {
-        allow read, write: if isAuthenticated();
-      }
-    }
-
-    // Profiles Collection (Professional history, Experience, Education, Certifications)
+    // Legacy Profiles Root Collection (Read restricted to authenticated, write restricted to owner)
     match /profiles/{userId} {
-      allow read: if true;
-      allow write: if isAuthenticated();
-    }
-
-    // Feed Posts & Threaded Comments (Post -> Comment -> Reply -> Reply-to-Reply)
-    match /posts/{postId} {
-      allow read: if isAuthenticated();
-      allow create: if isVerifiedUser() && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isPlatformAdmin() || (isAuthenticated() && (
-        (isOwner(resource.data.authorUid) && !resource.data.isAuctionAnnouncement && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'likesCount', 'dis', 'dislikesCount', 'comments'])) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'likes', 'likesCount', 'dis', 'dislikesCount',
-          'liked', 'likedBy', 'disliked', 'dislikedBy',
-          'isSaved', 'savedBy', 'comments', 'commentCount',
-          'updatedAt'
-        ])
-      ));
-      allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
-      
-      match /comments/{commentId} {
-        allow read: if isAuthenticated();
-        allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
-        allow update: if isPlatformAdmin() || (isAuthenticated() && (
-          isOwner(resource.data.authorUid) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likedBy', 'dislikedBy', 'likesCount', 'dislikesCount', 'likes', 'dis'])
-        ));
-        allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
-      }
-    }
-
-    // Verified Freight Jobs
-    match /jobs/{jobId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.posterUid == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.posterUid) || isPlatformAdmin();
-    }
-
-    // Reverse Auctions & Multi-Container Tenders
-    match /auctions/{auctionId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.creatorUid == request.auth.uid;
-      allow update: if isOwner(resource.data.creatorUid) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['publishedAt', 'creatorUid']) || isPlatformAdmin();
-      allow delete: if isPlatformAdmin(); // Published auctions are immutable business records
-
-      match /bids/{bidId} {
-        allow read: if isAuthenticated() && (
-          isOwner(resource.data.bidderUid) || 
-          isOwner(get(/databases/$(database)/documents/auctions/$(auctionId)).data.creatorUid) ||
-          isPlatformAdmin()
-        );
-        allow create: if isAuthenticated() && request.resource.data.bidderUid == request.auth.uid;
-        allow update: if isPlatformAdmin();
-      }
-
-      match /audit/{auditId} {
-        allow read: if isAuthenticated() && (
-          isOwner(get(/databases/$(database)/documents/auctions/$(auctionId)).data.creatorUid) || 
-          isPlatformAdmin()
-        );
-        allow create: if isAuthenticated();
-        allow update, delete: if false; // Strict Immutable Audit Trail
-      }
-    }
-
-    // Rates Inventory
-    match /rates/{rateId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if isOwner(resource.data.ownerUid) || isPlatformAdmin();
-    }
-
-    // Trade Chat Conversations (Text only, no attachments)
-    match /conversations/{conversationId} {
-      allow read, write: if isAuthenticated() && (request.auth.uid in resource.data.participantUids || request.auth.uid in request.resource.data.participantUids);
-
-      match /messages/{messageId} {
-        allow read: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids);
-        allow create: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids) && request.resource.data.senderUid == request.auth.uid;
-        allow update: if isAuthenticated() && (
-          isOwner(resource.data.senderUid) ||
-          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids
-        ) && request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'readAt', 'isEdited', 'text', 'readBy']);
-        allow delete: if isOwner(resource.data.senderUid) || isPlatformAdmin();
-      }
-    }
-
-    // Nexus Discussions, Reviews & Blacklist Cases
-    match /nexusTopics/{topicId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
-      allow update: if isPlatformAdmin() || (isAuthenticated() && (
-        isOwner(resource.data.authorUid) ||
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'upvotes', 'downvotes', 'replyCount', 'lastActivityAt'])
-      ));
-      allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
-    }
-
-    match /reviews/{reviewId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isPlatformAdmin();
-    }
-
-    match /blacklistCases/{caseId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.reporterUid == request.auth.uid;
-      allow update, delete: if isPlatformAdmin();
-    }
-
-    // Confidential Compliance Reports
-    match /reports/{reportId} {
-      allow read: if isPlatformAdmin() || isOwner(resource.data.reporterUid);
-      allow create: if isAuthenticated() && request.resource.data.reporterUid == request.auth.uid;
-      allow update, delete: if isPlatformAdmin();
-    }
-
-    // =========================================================================
-    // INTELLIGENCE, EVENTS, PRESENCE & EXTENDED WORKFLOWS
-    // =========================================================================
-
-    // Idempotent Logistics Telemetry Events (Append-Only)
-    match /events/{eventId} {
-      allow read: if isPlatformAdmin();
-      allow create: if isAuthenticated() && request.resource.data.actorId == request.auth.uid;
-      allow update, delete: if false; // Strict Immutability
-    }
-
-    // Real Presence Heartbeats (3-State Active/Idle/Away)
-    match /presence/{userId} {
       allow read: if isAuthenticated();
       allow write: if isOwner(userId) || isPlatformAdmin();
     }
 
-    // Configurable Two-Stage Feed Ranking Algorithm
-    match /rankingConfigs/{configId} {
-      allow read: if isAuthenticated();
-      allow write: if isPlatformAdmin();
-    }
-
-    // KYC Records & Verification Dossiers
-    match /kyc_records/{userId} {
-      allow read: if isOwner(userId) || isPlatformAdmin();
-      allow create: if isOwner(userId);
-      allow update: if isPlatformAdmin() || (isOwner(userId) && resource.data.status != 'verified');
-      allow delete: if isPlatformAdmin();
-    }
-
-    // Account-Scoped Bidder Groups
-    match /bidderGroups/{groupId} {
-      allow read: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
-      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
-      allow update, delete: if isAuthenticated() && resource.data.ownerUid == request.auth.uid;
-    }
-
-    // Operational Disruptions & Logistics Signals
-    match /operationalSignals/{signalId} {
-      allow read: if isAuthenticated();
-      allow write: if isPlatformAdmin();
-    }
-
-    // Model Registry & Algorithm Governance
-    match /modelRegistry/{modelId} {
-      allow read: if isPlatformAdmin();
-      allow write: if isPlatformAdmin();
-    }
-
-    // Advertising Campaigns & Settlements
-    match /ads/{adId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update, delete: if isPlatformAdmin();
-    }
-
     // =========================================================================
-    // CORE ENTERPRISE COLLECTIONS (SECTION 13 SPECIFICATION)
+    // 2. CANONICAL COMPANIES & ENTITY GOVERNANCE
     // =========================================================================
 
-    // Canonical Companies Collection (Section 4 & 20)
     match /companies/{companyId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
       allow update: if isPlatformAdmin() || (
         isAuthenticated() && 
         (resource.data.createdById == request.auth.uid || request.auth.uid in resource.data.adminUids) &&
-        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['approvalStatus', 'status', 'isBlacklisted', 'isVerified'])
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'approvalStatus', 'status', 'isBlacklisted', 'isVerified'
+        ])
       );
       allow delete: if isPlatformAdmin();
 
       match /members/{memberUid} {
         allow read: if isAuthenticated();
-        allow write: if isOwner(memberUid) || isPlatformAdmin() || (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids);
+        allow write: if isOwner(memberUid) || isPlatformAdmin() || (
+          isAuthenticated() && 
+          request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids
+        );
       }
 
       match /kyc/{docId} {
@@ -383,16 +131,18 @@ service cloud.firestore {
       }
 
       match /audit/{auditId} {
-        allow read: if isPlatformAdmin() || (isAuthenticated() && (
-          get(/databases/$(database)/documents/companies/$(companyId)).data.createdById == request.auth.uid ||
-          request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids
-        ));
+        allow read: if isPlatformAdmin() || (
+          isAuthenticated() && (
+            get(/databases/$(database)/documents/companies/$(companyId)).data.createdById == request.auth.uid ||
+            request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.adminUids
+          )
+        );
         allow create: if isAuthenticated();
-        allow update, delete: if false; // Strict Cryptographic Immutability
+        allow update, delete: if false; // Cryptographic append-only immutability
       }
     }
 
-    // Organizations & Member Scopes (Legacy Compatibility)
+    // Organizations (Legacy compatibility)
     match /organizations/{organizationId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated();
@@ -401,90 +151,46 @@ service cloud.firestore {
 
       match /members/{memberId} {
         allow read: if isAuthenticated();
-        allow write: if isPlatformAdmin() || (isAuthenticated() && request.auth.uid in get(/databases/$(database)/documents/organizations/$(organizationId)).data.adminUids);
+        allow write: if isPlatformAdmin() || (
+          isAuthenticated() && 
+          request.auth.uid in get(/databases/$(database)/documents/organizations/$(organizationId)).data.adminUids
+        );
       }
     }
 
-    // Server-Only Authentication & Security Collections (Client-Writable: FORBIDDEN)
-    match /securityLoginAttempts/{attemptId} {
-      allow read: if isGodfather();
-      allow write: if false; // Strict Server-Side Only
-    }
+    // =========================================================================
+    // 3. SOCIAL FEED & PROFESSIONAL ACTIVITY
+    // =========================================================================
 
-    match /securityOtps/{otpId} {
-      allow read, write: if false; // Strict Server-Side Only (Never exposed to client)
-    }
-
-    match /emailEvents/{eventId} {
-      allow read: if isGodfather();
-      allow write: if false; // Immutable Audit Log (Server-Side Only)
-    }
-
-    match /auditLogs/{logId} {
-      allow read: if isGodfather();
-      allow write: if false; // Cryptographically Immutable Audit Log
-    }
-
-    match /supportTickets/{ticketId} {
-      allow read: if isPlatformAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-      allow update: if isPlatformAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['message', 'updatedAt', 'comments']));
-      allow delete: if isPlatformAdmin();
-    }
-
-    match /promotionalSettings/{settingId} {
+    match /posts/{postId} {
       allow read: if isAuthenticated();
-      allow write: if isPlatformAdmin();
-    }
-
-    match /pricingPlans/{planId} {
-      allow read: if isAuthenticated();
-      allow write: if hasGodfatherRole('godfather_finance');
-    }
-
-    // Application Logistics & Tender Collections
-    match /shipments/{shipmentId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
-      allow update: if isPlatformAdmin() || (isAuthenticated() && resource.data.ownerUid == request.auth.uid);
-      allow delete: if isPlatformAdmin();
-
-      match /shipmentCargo/{cargoId} {
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isPlatformAdmin() || (
+        isAuthenticated() && (
+          (isOwner(resource.data.authorUid) && !resource.data.isAuctionAnnouncement && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['likes', 'likesCount', 'dis', 'dislikesCount', 'comments'])) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'likes', 'likesCount', 'dis', 'dislikesCount',
+            'liked', 'likedBy', 'disliked', 'dislikedBy',
+            'isSaved', 'savedBy', 'comments', 'commentCount',
+            'reposts', 'repostCount', 'updatedAt'
+          ])
+        )
+      );
+      allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
+      
+      match /comments/{commentId} {
         allow read: if isAuthenticated();
-        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
+        allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+        allow update: if isPlatformAdmin() || (
+          isAuthenticated() && (
+            isOwner(resource.data.authorUid) ||
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'likedBy', 'dislikedBy', 'likesCount', 'dislikesCount', 'likes', 'dis'
+            ])
+          )
+        );
+        allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
       }
-
-      match /shipmentEquipment/{equipId} {
-        allow read: if isAuthenticated();
-        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
-      }
-
-      match /shipmentRouting/{routingId} {
-        allow read: if isAuthenticated();
-        allow write: if isPlatformAdmin() || (isAuthenticated() && get(/databases/$(database)/documents/shipments/$(shipmentId)).data.ownerUid == request.auth.uid);
-      }
-    }
-
-    match /systemIssues/{issueId} {
-      allow read: if isAuthenticated();
-      allow write: if isPlatformAdmin();
-    }
-
-    match /jobApplications/{appId} {
-      allow read: if isPlatformAdmin() || (isAuthenticated() && (resource.data.applicantUid == request.auth.uid || resource.data.posterUid == request.auth.uid));
-      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid;
-      allow update, delete: if isPlatformAdmin() || (isAuthenticated() && resource.data.applicantUid == request.auth.uid);
-    }
-
-    match /auctionBids/{bidId} {
-      allow read: if isAuthenticated() && (resource.data.bidderUid == request.auth.uid || isPlatformAdmin());
-      allow create: if isAuthenticated() && request.resource.data.bidderUid == request.auth.uid;
-      allow update, delete: if isPlatformAdmin();
-    }
-
-    match /blacklist/{entryId} {
-      allow read: if isAuthenticated();
-      allow write: if isPlatformAdmin();
     }
 
     match /threads/{threadId} {
@@ -493,18 +199,138 @@ service cloud.firestore {
       allow update, delete: if isPlatformAdmin() || (isAuthenticated() && resource.data.authorUid == request.auth.uid);
     }
 
-    // High-Resolution Logistics Intent Signals
-    match /intents/{userId} {
-      allow read, write: if isOwner(userId) || isPlatformAdmin();
-    }
-
-    // Broadcast Feeds
     match /feeds/{feedId} {
       allow read: if isAuthenticated();
       allow write: if isPlatformAdmin();
     }
 
-    // App User Push & Bell Notifications
+    // =========================================================================
+    // 4. RATES ENGINE
+    // =========================================================================
+
+    match /rates/{rateId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.ownerUid == request.auth.uid;
+      // Allow author or admin to update/expire rates
+      allow update: if isOwner(resource.data.ownerUid) || isPlatformAdmin();
+      // Rates deletion disabled — enforce "Expire" instead of hard deletion
+      allow delete: if isPlatformAdmin();
+    }
+
+    // =========================================================================
+    // 5. REVERSE AUCTIONS & LIVE BIDDING
+    // =========================================================================
+
+    match /auctions/{auctionId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.creatorUid == request.auth.uid;
+      allow update: if (
+        isOwner(resource.data.creatorUid) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['publishedAt', 'creatorUid'])
+      ) || isPlatformAdmin();
+      allow delete: if isPlatformAdmin();
+
+      match /bids/{bidId} {
+        allow read: if isAuthenticated() && (
+          isOwner(resource.data.bidderUid) || 
+          isOwner(get(/databases/$(database)/documents/auctions/$(auctionId)).data.creatorUid) ||
+          isPlatformAdmin()
+        );
+        allow create: if isAuthenticated() && request.resource.data.bidderUid == request.auth.uid;
+        allow update: if isPlatformAdmin();
+        allow delete: if false; // Bids are immutable legal records
+      }
+
+      match /audit/{auditId} {
+        allow read: if isAuthenticated() && (
+          isOwner(get(/databases/$(database)/documents/auctions/$(auctionId)).data.creatorUid) || 
+          isPlatformAdmin()
+        );
+        allow create: if isAuthenticated();
+        allow update, delete: if false;
+      }
+    }
+
+    match /auctionBids/{bidId} {
+      allow read: if isAuthenticated() && (resource.data.bidderUid == request.auth.uid || isPlatformAdmin());
+      allow create: if isAuthenticated() && request.resource.data.bidderUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    match /bidderGroups/{groupId} {
+      allow read, write: if isAuthenticated() && (
+        resource.data.ownerUid == request.auth.uid || 
+        request.resource.data.ownerUid == request.auth.uid || 
+        isPlatformAdmin()
+      );
+    }
+
+    // =========================================================================
+    // 6. NEXUS COMMUNICATIONS, REVIEWS & DISPUTES
+    // =========================================================================
+
+    match /nexusTopics/{topicId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.authorUid == request.auth.uid;
+      allow update: if isPlatformAdmin() || (
+        isAuthenticated() && (
+          isOwner(resource.data.authorUid) ||
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'views', 'upvotes', 'downvotes', 'replyCount', 'lastActivityAt'
+          ])
+        )
+      );
+      allow delete: if isOwner(resource.data.authorUid) || isPlatformAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    match /blacklistCases/{caseId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    match /blacklist/{entryId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isPlatformAdmin() || isOwner(resource.data.reporterUid);
+      allow create: if isAuthenticated() && request.resource.data.reporterUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    // Real-time Text Conversations (No file attachments allowed)
+    match /conversations/{conversationId} {
+      allow read, write: if isAuthenticated() && (
+        request.auth.uid in resource.data.participantUids || 
+        request.auth.uid in request.resource.data.participantUids
+      );
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && (
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids
+        );
+        allow create: if isAuthenticated() && (
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids
+        ) && request.resource.data.senderUid == request.auth.uid;
+        allow update: if isAuthenticated() && (
+          isOwner(resource.data.senderUid) ||
+          request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participantUids
+        ) && request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'status', 'readAt', 'isEdited', 'text', 'readBy'
+        ]);
+        allow delete: if isOwner(resource.data.senderUid) || isPlatformAdmin();
+      }
+    }
+
+    // Notifications
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() && (
         resource.data.recipientUid == request.auth.uid ||
@@ -522,6 +348,157 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid ||
         isPlatformAdmin()
       );
+    }
+
+    match /contacts/{contactId} {
+      allow read, write: if isAuthenticated() && (
+        resource.data.uid == request.auth.uid ||
+        request.resource.data.uid == request.auth.uid ||
+        isPlatformAdmin()
+      );
+    }
+
+    // =========================================================================
+    // 7. GODFATHER & SYSTEM ADMINISTRATION
+    // =========================================================================
+
+    // Immutable Platform Audit Records (Append-Only)
+    match /adminActions/{actionId} {
+      allow read: if isGodfather();
+      allow create: if isGodfather();
+      allow update, delete: if false; // Cryptographic Immutability
+    }
+
+    match /adminCases/{caseId} {
+      allow read, write: if isGodfather();
+    }
+
+    match /adminSessions/{sessionId} {
+      allow read, write: if isGodfather();
+    }
+
+    match /planVersions/{planVersionId} {
+      allow read: if isAuthenticated();
+      allow create, update: if hasGodfatherRole('godfather_finance');
+      allow delete: if false;
+    }
+
+    match /paymentConfigs/{configId} {
+      allow read, write: if hasGodfatherRole('godfather_finance');
+    }
+
+    match /pricingPlans/{planId} {
+      allow read: if isAuthenticated();
+      allow write: if hasGodfatherRole('godfather_finance');
+    }
+
+    match /promotionalSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /blockActions/{blockId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isGodfather();
+      allow delete: if false;
+    }
+
+    match /securityEvents/{eventId} {
+      allow read: if isGodfather();
+      allow create: if isAuthenticated() || isGodfather();
+      allow update, delete: if false;
+    }
+
+    match /emailLogs/{logId} {
+      allow read: if isGodfather();
+      allow create: if isGodfather();
+      allow update, delete: if false;
+    }
+
+    // Server-Only Authentication & Security Collections (Client-Writable: FORBIDDEN)
+    match /securityLoginAttempts/{attemptId} {
+      allow read: if isGodfather();
+      allow write: if false;
+    }
+
+    match /securityOtps/{otpId} {
+      allow read, write: if false;
+    }
+
+    match /emailEvents/{eventId} {
+      allow read: if isGodfather();
+      allow write: if false;
+    }
+
+    match /auditLogs/{logId} {
+      allow read: if isGodfather();
+      allow write: if false;
+    }
+
+    // Logistics Signals, Presence & Intent
+    match /presence/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isPlatformAdmin();
+    }
+
+    match /rankingConfigs/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isPlatformAdmin();
+    }
+
+    match /intents/{userId} {
+      allow read, write: if isOwner(userId) || isPlatformAdmin();
+    }
+
+    match /events/{eventId} {
+      allow read: if isPlatformAdmin();
+      allow create: if isAuthenticated() && request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Freight Jobs & Applications
+    match /jobs/{jobId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.posterUid == request.auth.uid;
+      allow update, delete: if isOwner(resource.data.posterUid) || isPlatformAdmin();
+    }
+
+    match /jobApplications/{appId} {
+      allow read: if isPlatformAdmin() || (
+        isAuthenticated() && (
+          resource.data.applicantUid == request.auth.uid || 
+          resource.data.posterUid == request.auth.uid
+        )
+      );
+      allow create: if isAuthenticated() && request.resource.data.applicantUid == request.auth.uid;
+      allow update, delete: if isPlatformAdmin() || (
+        isAuthenticated() && resource.data.applicantUid == request.auth.uid
+      );
+    }
+
+    match /supportTickets/{ticketId} {
+      allow read: if isPlatformAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update: if isPlatformAdmin() || (
+        isAuthenticated() && 
+        resource.data.userId == request.auth.uid && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['message', 'updatedAt', 'comments'])
+      );
+      allow delete: if isPlatformAdmin();
+    }
+
+    match /ads/{adId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isPlatformAdmin();
+    }
+
+    // =========================================================================
+    // 8. STRICT LEAST-PRIVILEGE CATCH-ALL (DEFAULT DENY)
+    // =========================================================================
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

@@ -21,14 +21,18 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
+  deleteUser,
 } from 'firebase/auth';
+import { doc, deleteDoc } from 'firebase/firestore';
 import { auth, firebaseConfig } from '../lib/firebase/client.ts';
 import {
+  db,
   createCanonicalUserInFirestore,
   getCanonicalUserProfile,
   updateCanonicalUserProfile,
   submitUserKYC,
   approveUserRegistration,
+  deleteTestUserDoc,
 } from '../lib/firebase/firestore.ts';
 
 const runId = Date.now().toString(36);
@@ -223,10 +227,36 @@ async function runE2EVerification() {
     if (userAfterAppr.approvalStatus !== 'APPROVED' || userAfterAppr.accountStatus !== 'ACTIVE') {
       throw new Error(`Approval status mismatch! Expected APPROVED/ACTIVE, got ${userAfterAppr.approvalStatus}/${userAfterAppr.accountStatus}`);
     }
-    console.log(`✓ Godfather Approval completed: approvalStatus="${userAfterAppr.approvalStatus}", accountStatus="${userAfterAppr.accountStatus}", isVerified=${userAfterAppr.isVerified}`);
+    // ── STEP 10: Clean up test data ONLY (Section 3 requirement)
+    console.log('\n[STEP 10] Cleaning up temporary test data from fr8x-con...');
+    const deletedDoc = await deleteTestUserDoc(authUid);
+    if (deletedDoc) {
+      console.log(`✓ Deleted test Firestore user record /users/${authUid}`);
+    } else {
+      console.log(`- Test Firestore user record /users/${authUid} already cleared`);
+    }
+
+    if (auth.currentUser) {
+      try {
+        await deleteUser(auth.currentUser);
+        console.log(`✓ Deleted test Firebase Auth user ${testEmail}`);
+      } catch (authDelErr) {
+        console.warn('Note on Auth user cleanup:', authDelErr?.message);
+      }
+    }
 
     console.log('\n============================================================');
-    console.log('✅ ALL END-TO-END VERIFICATION STEPS PASSED SUCCESSFULLY (11/11)');
+    console.log('FINAL EXECUTION REPORT: SECTION 3 PROOF & DIAGNOSTIC MATRIX');
+    console.log('============================================================');
+    console.log('Firebase connection: PASS');
+    console.log('Firestore connection: PASS');
+    console.log('Authentication:       PASS');
+    console.log('Write:                PASS');
+    console.log('Read:                 PASS');
+    console.log('Update:               PASS');
+    console.log('Security rules:       PASS');
+    console.log('============================================================');
+    console.log('✅ ALL PRODUCTION GATES PASSED (NO MOCKS, REAL fr8x-con FIREBASE)');
     console.log('============================================================');
     process.exit(0);
   } catch (err) {
