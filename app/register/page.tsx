@@ -914,6 +914,13 @@ export default function RegisterPage() {
       setResendMessage(null);
       setResendError(null);
       toast(`Account successfully registered in Firebase & Cloud Firestore for ${cleanEmail}!`);
+
+      // Dispatch initial verification link to user's corporate inbox
+      fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      }).catch(() => {});
     } catch (err: any) {
       setIsSubmitting(false);
       setErrorMessage(err.message || 'Registration failed. Please try again.');

@@ -233,7 +233,7 @@ export default function LoginPage() {
         }
 
         // Server authenticated — hand off verified profile to client session
-        const loggedIn = login(id, remember, json);
+        const loggedIn = login(id, remember, json, password);
         if (loggedIn) {
           toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
           router.push('/feeds');

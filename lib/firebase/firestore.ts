@@ -1305,6 +1305,21 @@ export async function healOrProvisionUserInFirestore(authUser: {
   if (!authUser.uid) return null;
   const email = (authUser.email || '').trim().toLowerCase();
 
+  try {
+    // Check if the user document already exists in Firestore to avoid clobbering existing custom fields
+    const userDocRef = doc(db, 'users', authUser.uid);
+    const existingSnap = await getDoc(userDocRef);
+    if (existingSnap.exists()) {
+      const existingData = existingSnap.data();
+      // If document already contains profile data, return it without overwriting
+      if (existingData && existingData.email) {
+        return await getCanonicalUserProfile(authUser.uid);
+      }
+    }
+  } catch (checkErr) {
+    console.warn('[FR8X Firestore] Warning checking existing user document:', checkErr);
+  }
+
   const createResult = await createCanonicalUserInFirestore({
     uid: authUser.uid,
     email,
@@ -1319,6 +1334,7 @@ export async function healOrProvisionUserInFirestore(authUser: {
   }
   return null;
 }
+
 
 /**
  * Updates user profile fields in Firestore with merge protection.

@@ -490,6 +490,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // 2. Adaptive revalidation against live Firestore
     async function revalidateLiveFirestore() {
+      // Guard: only query live Firestore when authenticated (user.uid is non-empty)
+      if (!user?.uid) return;
       try {
         const batchSize = isLowBandwidth ? 12 : 40;
 

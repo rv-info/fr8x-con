@@ -129,7 +129,8 @@ interface AuthContextType {
   login: (
     identifier: string,
     remember?: boolean,
-    serverVerifiedUser?: Partial<UserProfile>
+    serverVerifiedUser?: Partial<UserProfile>,
+    password?: string
   ) => boolean;
   loginWithCredentials: (
     email: string,
@@ -508,7 +509,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = (
     identifier: string,
     remember = false,
-    serverVerifiedUser?: Partial<UserProfile>
+    serverVerifiedUser?: Partial<UserProfile>,
+    password?: string
   ): boolean => {
     if (!serverVerifiedUser || !serverVerifiedUser.uid) {
       console.error('[Auth] login() called without server-verified user. Refusing to authenticate.');
@@ -579,14 +581,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               })
               .catch((err) => {
                 console.warn('[AuthContext] Firebase Custom Token sign-in warning:', err.message);
-                ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
+                ensureFirebaseAuth(found.email, password).then(() => saveUserProfileToFirestore(found)).catch(() => {});
               });
           }
         } catch (e: any) {
-          ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
+          ensureFirebaseAuth(found.email, password).then(() => saveUserProfileToFirestore(found)).catch(() => {});
         }
       } else {
-        ensureFirebaseAuth(found.email).then(() => saveUserProfileToFirestore(found)).catch(() => {});
+        ensureFirebaseAuth(found.email, password).then(() => saveUserProfileToFirestore(found)).catch(() => {});
       }
     }
 
@@ -704,6 +706,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (!createRes.success) {
+        // Rollback created Firebase Auth user so account is not left stranded without Firestore
+        try {
+          const { deleteUser } = await import('firebase/auth');
+          await deleteUser(cred.user);
+        } catch (delErr) {
+          console.warn('[AuthContext] Rollback of stranded auth user failed:', delErr);
+        }
         return { success: false, error: createRes.error || 'Failed to initialize Firestore user profile.' };
       }
 
@@ -738,6 +747,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logStructuredError('register', err, undefined, { email: cleanEmail });
       let message = 'Registration failed. Please check your details.';
       if (err.code === 'auth/email-already-in-use') {
+        // Self-healing recovery: if user already exists in Firebase Auth but has no Firestore document, attempt recovery
+        try {
+          const signCred = await signInWithEmailAndPassword(auth, cleanEmail, password);
+          const existingProfile = await getCanonicalUserProfile(signCred.user.uid);
+          if (!existingProfile) {
+            const healRes = await createCanonicalUserInFirestore({
+              uid: signCred.user.uid,
+              email: cleanEmail,
+              displayName: profile.displayName || `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || cleanEmail,
+              firstName: profile.firstName || '',
+              lastName: profile.lastName || '',
+              mobile: cleanMobile || profile.mobile || '',
+              companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
+              companyName: cleanCompany || 'Enterprise Logistics Co.',
+              designation: profile.designation || 'Freight Procurement Manager',
+              position: profile.position || profile.designation || 'Manager',
+              department: profile.department || 'Logistics & Supply Chain',
+              country: profile.country || 'India',
+              state: profile.state || '',
+              district: profile.district || '',
+              city: profile.city || 'Mumbai',
+              area: profile.area || '',
+              address: profile.address || profile.formattedAddress || '',
+              postalCode: profile.postalCode || '',
+              role: profile.role === 'user' ? 'user' : 'company_admin',
+              plan: profile.plan || 'trial',
+            });
+            if (healRes.success) {
+              const healedUser = await getCanonicalUserProfile(signCred.user.uid);
+              if (healedUser) {
+                setCurrentUser(healedUser);
+                setUserStatus('available');
+                return { success: true, user: healedUser };
+              }
+            }
+          }
+        } catch (recoverErr) {
+          console.warn('[AuthContext] Recovery of existing auth user note:', recoverErr);
+        }
         message = `An account with this email (${cleanEmail}) already exists. Please sign in instead.`;
       } else if (err.code === 'auth/weak-password') {
         message = 'The password is too weak. Please use at least 8 characters with letters, numbers, and symbols.';
