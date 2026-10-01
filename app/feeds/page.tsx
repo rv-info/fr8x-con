@@ -1384,65 +1384,33 @@ export default function FeedsPage() {
               <div style={{ fontSize: '10.5px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
                 Contact &amp; Trade Connect
               </div>
-              <button
-                type="button"
-                onClick={handleOpenQuickContactModal}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--brand)',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                  padding: '2px 6px',
-                  borderRadius: '3px',
-                  backgroundColor: 'rgba(0, 163, 196, 0.08)',
-                }}
-                title="Edit Phone Number, Email & Terminal Location (Saves to DBMS)"
-              >
-                <Edit2 size={10} /> Edit
-              </button>
             </div>
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
-              onClick={handleOpenQuickContactModal}
-              title="Click to edit contact email"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}
+              title={user.email}
             >
               <Mail size={12} style={{ flexShrink: 0, color: 'var(--fr8x-text)' }} />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.email}>
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {user.email}
               </span>
             </div>
             <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
-              onClick={handleOpenQuickContactModal}
-              title="Click to edit phone number in DBMS"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--fr8x-text)' }}
+              title={user.mobile || (user as any).phone || 'Not configured'}
             >
               <PhoneCall size={12} style={{ flexShrink: 0, color: '#16a34a' }} />
-              <span>{user.mobile || (user as any).phone || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_user_mobile') : null) || (user.email === 'rajat.rai@cogoport.com' ? '+91 9620012345' : null) || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
+              <span>{user.mobile || (user as any).phone || <span style={{ color: 'var(--fr8x-muted)' }}>Not configured</span>}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
               <div
-                style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1, cursor: 'pointer' }}
-                onClick={handleOpenQuickContactModal}
-                title="Click to edit freight terminal in DBMS"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}
+                title={user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
               >
                 <MapPin size={12} style={{ flexShrink: 0, color: 'var(--fr8x-muted)' }} />
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={user.formattedAddress || user.city}>
-                  {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || (user.email === 'rajat.rai@cogoport.com' ? 'Mumbai, Maharashtra, India' : 'Location not set')))}
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {user.formattedAddress || (user.city && user.country ? `${user.city}, ${user.country}` : (user.city || user.country || 'Location not set'))}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={handleOpenQuickContactModal}
-                style={{ color: 'var(--brand)', background: 'rgba(0, 163, 196, 0.1)', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px', fontSize: '10px', padding: '1px 5px', borderRadius: '3px', cursor: 'pointer', flexShrink: 0 }}
-                title="Edit Freight Terminal / Address in DBMS"
-              >
-                <Edit2 size={10} /> Edit
-              </button>
             </div>
 
             <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>

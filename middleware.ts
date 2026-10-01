@@ -142,6 +142,27 @@ export function middleware(request: NextRequest) {
       return applySecurityHeaders(res);
     }
 
+    // Check 2-hour session expiration window
+    if (sessionCookie.value.includes('.')) {
+      try {
+        const payloadB64 = sessionCookie.value.split('.')[0];
+        // Safe base64url decode compatible with edge and node runtimes
+        const binary = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+        const payload = JSON.parse(binary);
+        const now = Date.now();
+        const issuedAt = Number(payload.issuedAt) || 0;
+        const expiresAt = Number(payload.expiresAt) || (issuedAt + 2 * 60 * 60 * 1000);
+
+        if (issuedAt > 0 && (now > expiresAt || now - issuedAt > 2 * 60 * 60 * 1000)) {
+          const loginUrl = new URL('/login', request.url);
+          loginUrl.searchParams.set('reason', 'session_expired');
+          const res = NextResponse.redirect(loginUrl);
+          res.cookies.delete('fr8x_session');
+          return applySecurityHeaders(res);
+        }
+      } catch {}
+    }
+
     return forward();
   }
 

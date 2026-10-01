@@ -4,6 +4,8 @@ import { verifySignedSessionToken } from '@/lib/crypto';
 
 export const dynamic = 'force-dynamic';
 
+const SESSION_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours strictly
+
 export async function POST(req: NextRequest) {
   try {
     let body: any = {};
@@ -14,34 +16,57 @@ export async function POST(req: NextRequest) {
     const sessionCookie = req.cookies.get('fr8x_session')?.value;
     let cookieUid: string | undefined;
     let cookieSessionId: string | undefined;
+    let cookieDeviceId: string | undefined;
+    let issuedAt: number | undefined;
 
     if (sessionCookie) {
       const verified = verifySignedSessionToken<any>(sessionCookie);
       if (verified.valid && verified.payload) {
         cookieUid = verified.payload.uid;
         cookieSessionId = verified.payload.sessionId;
+        cookieDeviceId = verified.payload.deviceId;
+        issuedAt = verified.payload.issuedAt;
       }
     }
 
-    if (!cookieUid || !cookieSessionId) {
+    const uid = body.uid || cookieUid;
+    const sessionId = body.sessionId || cookieSessionId;
+    const clientDeviceId = body.deviceId || cookieDeviceId;
+
+    if (!uid) {
       return NextResponse.json(
-        { valid: false, reason: 'missing_credentials', message: 'No active authenticated session cookie provided.' },
+        { valid: false, reason: 'missing_credentials', message: 'No active authenticated user session provided.' },
         { status: 401 }
       );
     }
 
-    // Prevent body mismatch attacks
-    if ((body.uid && body.uid !== cookieUid) || (body.sessionId && body.sessionId !== cookieSessionId)) {
-      return NextResponse.json(
-        { valid: false, reason: 'session_mismatch', message: 'Session credential mismatch.' },
+    // 1. Check 2-hour session expiration window
+    const now = Date.now();
+    if (issuedAt && (now - issuedAt > SESSION_MAX_AGE_MS)) {
+      const res = NextResponse.json(
+        {
+          valid: false,
+          reason: 'session_expired',
+          message: 'Your 2-hour session has expired. Please sign in again to continue.',
+        },
         { status: 401 }
       );
+      res.cookies.delete('fr8x_session');
+      return res;
     }
 
-    const uid = cookieUid;
-    const sessionId = cookieSessionId;
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+      req.headers.get('x-real-ip') ||
+      '127.0.0.1';
 
-    const result = serverSecurityStore.validateActiveSession(uid, sessionId);
+    // 2. Validate against server store (checks same device vs actual device change)
+    const result = serverSecurityStore.validateActiveSession(
+      uid,
+      sessionId || '',
+      clientDeviceId,
+      ip
+    );
 
     if (!result.valid) {
       const res = NextResponse.json(
@@ -50,11 +75,13 @@ export async function POST(req: NextRequest) {
           reason: result.reason || 'session_invalid',
           message:
             result.message ||
-            "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
+            (result.reason === 'concurrent_device_login'
+              ? "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out."
+              : 'Your session has expired. Please sign in again to continue.'),
         },
         { status: 401 }
       );
-      // Remove cookie on old device
+      // Remove cookie on superseded device or expired session
       res.cookies.delete('fr8x_session');
       return res;
     }

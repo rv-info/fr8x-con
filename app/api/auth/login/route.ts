@@ -9,7 +9,8 @@ import { createSignedSessionToken } from '@/lib/crypto';
  */
 export async function POST(req: NextRequest) {
   try {
-    const { identifier, password } = await req.json();
+    const body = await req.json();
+    const { identifier, password, deviceId } = body || {};
 
     if (!identifier || !password) {
       return NextResponse.json(
@@ -90,7 +91,8 @@ export async function POST(req: NextRequest) {
     // Generate unique session ID for single-device login enforcement
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
-    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
+    const clientDeviceId = body.deviceId ? String(body.deviceId).trim() : `dev_${Date.now()}`;
+    serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent, deviceId: clientDeviceId });
 
     // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
     let firebaseCustomToken: string | null = null;
@@ -107,10 +109,15 @@ export async function POST(req: NextRequest) {
       console.warn('[LoginAPI] Firebase custom token generation warning:', fbErr.message);
     }
 
+    const now = Date.now();
+    const expiresAt = now + 2 * 60 * 60 * 1000; // 2 hours
+
     const res = NextResponse.json({
       success: true,
       uid: user.uid,
       sessionId,
+      deviceId: clientDeviceId,
+      expiresAt,
       firebaseCustomToken,
       email: user.email,
       displayName: user.displayName,
@@ -134,21 +141,23 @@ export async function POST(req: NextRequest) {
       certifications: (user as any).certifications || [],
     });
 
-    // Cryptographically signed httpOnly session cookie with bound sessionId
+    // Cryptographically signed httpOnly session cookie with bound sessionId and 2-hour duration
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,
       role: user.role,
       companyId: user.companyId,
       sessionId,
-      issuedAt: Date.now(),
+      deviceId: clientDeviceId,
+      issuedAt: now,
+      expiresAt,
     });
 
     res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 8, // 8 hours
+      maxAge: 2 * 60 * 60, // 2 hours strictly
       path: '/',
     });
 

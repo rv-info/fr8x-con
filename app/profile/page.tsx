@@ -2175,10 +2175,10 @@ export default function ProfilePage() {
                     <span>{user.email || editEmail}</span>
                   </span>
                 )}
-                {(mobile || user.mobile || (user as any).phone || (user.email === 'rajat.rai@cogoport.com' ? '+91 9620012345' : null)) && (
+                {(mobile || user.mobile || (user as any).phone) && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
                     <Phone size={12} color="var(--brand)" />
-                    <span>{mobile || user.mobile || (user as any).phone || '+91 9620012345'}</span>
+                    <span>{mobile || user.mobile || (user as any).phone}</span>
                     {editWhatsapp && (
                       <span style={{ color: '#15803d', fontWeight: 700, fontSize: '10px', background: '#dcfce7', border: '1px solid #bbf7d0', padding: '1px 5px', borderRadius: '3px', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                         WhatsApp ✓
@@ -2192,7 +2192,7 @@ export default function ProfilePage() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <MapPin size={12} color="var(--fr8x-outline)" />
-                  {[city || user.city || (user.email === 'rajat.rai@cogoport.com' ? 'Mumbai' : ''), stateName || user.state || (user.email === 'rajat.rai@cogoport.com' ? 'Maharashtra' : ''), country || user.country || 'India'].filter(Boolean).join(', ') || 'Location not configured'}
+                  {[city || user.city, stateName || user.state, country || user.country].filter(Boolean).join(', ') || 'Location not configured'}
                 </span>
                 <LocalTimeBadge timezone={timezone || 'Asia/Kolkata'} />
                 {(iataCode || mto) && (

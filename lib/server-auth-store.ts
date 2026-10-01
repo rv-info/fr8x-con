@@ -153,12 +153,14 @@ export interface ServerUserRecord {
   transferSubmittedAt?: string;
   contacts?: string[];
   activeSessionId?: string;
+  activeDeviceId?: string;
   activeDevice?: {
     deviceId?: string;
     userAgent?: string;
     ip?: string;
     loggedInAt: string;
     lastActiveAt: string;
+    expiresAt?: string;
   };
   failedLoginAttempts: number;
   lastFailedAttemptAt?: string;
@@ -964,6 +966,7 @@ class ServerSecurityStore {
   /**
    * Registers an active device session for a user, enforcing strict
    * One User, One Active Device policy. Any prior device session is superseded.
+   * Bound session is valid for 2 hours on the same device.
    */
   public setActiveSession(
     identifier: string,
@@ -975,14 +978,21 @@ class ServerSecurityStore {
     const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
     if (!user) return false;
 
-    const now = new Date().toISOString();
+    const now = Date.now();
+    const nowIso = new Date(now).toISOString();
+    // Valid for 2 hours on the same device and browser
+    const expiresAt = new Date(now + 2 * 60 * 60 * 1000).toISOString();
+    const deviceId = deviceMeta?.deviceId || user.activeDeviceId || `dev_${now}`;
+
     user.activeSessionId = sessionId;
+    user.activeDeviceId = deviceId;
     user.activeDevice = {
-      deviceId: deviceMeta?.deviceId || `dev_${Date.now()}`,
+      deviceId,
       userAgent: deviceMeta?.userAgent || 'Browser Client',
       ip: deviceMeta?.ip || '127.0.0.1',
-      loggedInAt: now,
-      lastActiveAt: now,
+      loggedInAt: nowIso,
+      lastActiveAt: nowIso,
+      expiresAt,
     };
 
     const cleanUid = user.uid.toLowerCase();
@@ -1001,7 +1011,7 @@ class ServerSecurityStore {
       userEmail: user.email,
       uid: user.uid,
       company: user.company,
-      details: `Active device session bound. Session ID: ${sessionId.slice(0, 10)}... (Concurrent sessions on other devices terminated).`,
+      details: `Active device session bound (2-hour validity). Session ID: ${sessionId.slice(0, 10)}... Device ID: ${deviceId.slice(0, 10)}...`,
       ipAddress: deviceMeta?.ip,
     });
 
@@ -1010,11 +1020,16 @@ class ServerSecurityStore {
 
   /**
    * Validates whether a device's session matches the active session in DBMS.
-   * If a newer device logged in, this session is rejected.
+   * 1. Validates 2-hour expiration window.
+   * 2. Confirms same device vs device change:
+   *    'concurrent_device_login' is ONLY returned when an ACTUAL device change occurs.
+   *    Requests from the same device (matching deviceId) are NEVER rejected as concurrent logins.
    */
   public validateActiveSession(
     identifier: string,
-    sessionId: string
+    sessionId: string,
+    clientDeviceId?: string,
+    clientIp?: string
   ): { valid: boolean; reason?: string; message?: string } {
     if (!identifier || !sessionId) {
       return { valid: false, reason: 'missing_session', message: 'No session credentials provided.' };
@@ -1025,21 +1040,48 @@ class ServerSecurityStore {
       return { valid: false, reason: 'user_not_found', message: 'User record not found in DBMS.' };
     }
 
-    // If an activeSessionId exists on user, enforce strict equality
-    if (user.activeSessionId && user.activeSessionId !== sessionId) {
+    // 1. Enforce 2-hour session expiration policy
+    if (user.activeDevice?.expiresAt) {
+      const expiresTime = new Date(user.activeDevice.expiresAt).getTime();
+      if (Date.now() > expiresTime) {
+        return {
+          valid: false,
+          reason: 'session_expired',
+          message: 'Your 2-hour session has expired. Please sign in again to continue.',
+        };
+      }
+    }
+
+    // 2. Strict single-device policy:
+    // Only return 'concurrent_device_login' if the user account is actively assigned
+    // to a DIFFERENT device (clientDeviceId does not match activeDeviceId).
+    // On the SAME device, page refresh or multiple tabs must NEVER trigger this error.
+    const currentActiveDeviceId = user.activeDeviceId || user.activeDevice?.deviceId;
+    if (
+      currentActiveDeviceId &&
+      clientDeviceId &&
+      currentActiveDeviceId !== clientDeviceId
+    ) {
       return {
         valid: false,
         reason: 'concurrent_device_login',
-        message: "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
+        message:
+          "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out. If this wasn't you, please reset your password immediately.",
       };
     }
 
-    // If session was not previously recorded, bind it now
+    // 3. Same-device continuity: adopt or update active session
     if (!user.activeSessionId) {
       user.activeSessionId = sessionId;
+      if (clientDeviceId) user.activeDeviceId = clientDeviceId;
       try { savePersistedUser(user as any); } catch {}
-    } else if (user.activeDevice) {
-      user.activeDevice.lastActiveAt = new Date().toISOString();
+    } else {
+      if (user.activeDevice) {
+        user.activeDevice.lastActiveAt = new Date().toISOString();
+        if (clientDeviceId && !user.activeDeviceId) {
+          user.activeDeviceId = clientDeviceId;
+        }
+      }
     }
 
     return { valid: true };

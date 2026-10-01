@@ -69,19 +69,35 @@ const SESSION_START_KEY = 'fr8x_session_start_time';
 const LAST_ACTIVITY_KEY = 'fr8x_last_activity_time';
 
 // ─── Session Expiration & Inactivity Limits ─────────────────────────────────
-// Inactivity timeout: 30 minutes of no interaction / browser backgrounded
-export const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
-// Maximum absolute session duration: 12 hours
-export const MAX_SESSION_DURATION_MS = 12 * 60 * 60 * 1000;
+// Session validity strictly 2 hours (120 minutes) on the same device/browser
+export const INACTIVITY_TIMEOUT_MS = 2 * 60 * 60 * 1000;
+// Maximum absolute session duration: 2 hours (Requirement 4)
+export const MAX_SESSION_DURATION_MS = 2 * 60 * 60 * 1000;
+
+export function getOrCreateDeviceId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    let deviceId = localStorage.getItem('fr8x_device_id');
+    if (!deviceId) {
+      deviceId = `dev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem('fr8x_device_id', deviceId);
+    }
+    return deviceId;
+  } catch {
+    return 'dev_fallback';
+  }
+}
 
 function checkIsSessionExpired(): boolean {
   try {
     const lastActivity = localStorage.getItem(LAST_ACTIVITY_KEY);
     const sessionStart = localStorage.getItem(SESSION_START_KEY);
-    if (!lastActivity) return false;
+    if (!lastActivity && !sessionStart) return false;
     const now = Date.now();
-    const idleTime = now - Number(lastActivity);
-    if (idleTime > INACTIVITY_TIMEOUT_MS) return true;
+    if (lastActivity) {
+      const idleTime = now - Number(lastActivity);
+      if (idleTime > INACTIVITY_TIMEOUT_MS) return true;
+    }
     if (sessionStart && now - Number(sessionStart) > MAX_SESSION_DURATION_MS) return true;
     return false;
   } catch {
@@ -221,8 +237,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem(STATUS_KEY, 'available');
               const now = Date.now().toString();
               localStorage.setItem(LAST_ACTIVITY_KEY, now);
-              localStorage.setItem(SESSION_START_KEY, now);
+              if (!localStorage.getItem(SESSION_START_KEY)) {
+                localStorage.setItem(SESSION_START_KEY, now);
+              }
             } catch {}
+
+            // Ensure server session and 2-hour httpOnly cookie are bound so page refresh never causes logout
+            try {
+              const currentDevSessionId = typeof window !== 'undefined' ? localStorage.getItem('fr8x_device_session_id') : null;
+              const devId = getOrCreateDeviceId();
+              const sessRes = await fetch('/api/auth/session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  uid: profile.uid,
+                  email: profile.email,
+                  deviceId: devId,
+                  sessionId: currentDevSessionId || undefined,
+                }),
+              });
+              if (sessRes.ok) {
+                const sessData = await sessRes.json();
+                if (sessData.sessionId) {
+                  localStorage.setItem('fr8x_device_session_id', sessData.sessionId);
+                }
+              }
+            } catch (sessErr) {
+              console.warn('[AuthContext] Session sync error:', sessErr);
+            }
             setAllUsers((prev) => {
               const exists = prev.some((u) => u.uid === profile!.uid);
               const next = exists
@@ -353,21 +395,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const performSessionCheck = async () => {
       if (!currentUserRef.current) return;
 
+      if (checkIsSessionExpired()) {
+        setCurrentUser(null);
+        setUserStatusState('offline');
+        try {
+          localStorage.removeItem(ACTIVE_SESSION_KEY);
+          localStorage.removeItem(SESSION_START_KEY);
+          localStorage.removeItem(LAST_ACTIVITY_KEY);
+          localStorage.removeItem('fr8x_device_session_id');
+          localStorage.setItem(STATUS_KEY, 'offline');
+        } catch {}
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+          window.location.href = '/login?reason=session_expired';
+        }
+        return;
+      }
+
       // Check single active device enforcement via server heartbeat
       const deviceSessionId = localStorage.getItem('fr8x_device_session_id');
-      if (deviceSessionId && currentUserRef.current?.uid) {
+      const deviceId = getOrCreateDeviceId();
+      if (currentUserRef.current?.uid) {
         try {
           const res = await fetch('/api/auth/session-heartbeat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               uid: currentUserRef.current.uid,
-              sessionId: deviceSessionId,
+              sessionId: deviceSessionId || '',
+              deviceId: deviceId,
             }),
           });
           const data = await res.json();
-          if (!data.valid && data.reason === 'concurrent_device_login') {
-            // Concurrent device logged in! Terminate this device session immediately.
+          if (!data.valid) {
             setCurrentUser(null);
             setUserStatusState('offline');
             try {
@@ -379,8 +438,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             } catch {}
 
             if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-              window.location.href = '/login?reason=concurrent_device_login';
+              const redirectReason = data.reason === 'concurrent_device_login' ? 'concurrent_device_login' : 'session_expired';
+              window.location.href = `/login?reason=${redirectReason}`;
             }
+          } else if (data.sessionId && !deviceSessionId) {
+            localStorage.setItem('fr8x_device_session_id', data.sessionId);
           }
         } catch {}
       }
@@ -838,10 +900,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearRememberedEmail();
       }
 
+      const now = Date.now().toString();
       try {
         localStorage.setItem(ACTIVE_SESSION_KEY, uid);
         localStorage.setItem(STATUS_KEY, 'available');
+        localStorage.setItem(SESSION_START_KEY, now);
+        localStorage.setItem(LAST_ACTIVITY_KEY, now);
       } catch {}
+
+      // Establish authoritative server session and 2-hour httpOnly cookie
+      try {
+        const devId = getOrCreateDeviceId();
+        const sessRes = await fetch('/api/auth/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            uid,
+            email: cleanEmail,
+            deviceId: devId,
+          }),
+        });
+        if (sessRes.ok) {
+          const sessData = await sessRes.json();
+          if (sessData.sessionId) {
+            localStorage.setItem('fr8x_device_session_id', sessData.sessionId);
+          }
+        }
+      } catch (sessErr) {
+        console.warn('[AuthContext] Session binding error:', sessErr);
+      }
 
       return { success: true, user: profile || undefined };
     } catch (err: any) {
