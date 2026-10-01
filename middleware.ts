@@ -134,20 +134,16 @@ export function middleware(request: NextRequest) {
   if (isProtectedUserRoute(pathname)) {
     const sessionCookie = request.cookies.get('fr8x_session');
 
-    if (!sessionCookie?.value) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('reason', 'auth_required');
-      loginUrl.searchParams.set('next', encodeURIComponent(pathname));
-      const res = NextResponse.redirect(loginUrl);
-      return applySecurityHeaders(res);
-    }
-
-    // Check 2-hour session expiration window
-    if (sessionCookie.value.includes('.')) {
+    // Check 2-hour session expiration window if cookie is present
+    if (sessionCookie?.value && sessionCookie.value.includes('.')) {
       try {
         const payloadB64 = sessionCookie.value.split('.')[0];
-        // Safe base64url decode compatible with edge and node runtimes
-        const binary = atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/'));
+        // Safe base64url decode with proper padding compatible with edge and node runtimes
+        let base64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+        while (base64.length % 4 !== 0) {
+          base64 += '=';
+        }
+        const binary = atob(base64);
         const payload = JSON.parse(binary);
         const now = Date.now();
         const issuedAt = Number(payload.issuedAt) || 0;

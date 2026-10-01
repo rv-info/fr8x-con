@@ -153,9 +153,10 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
+    const isHttps = req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
     res.cookies.set('fr8x_session', userSessionToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: 2 * 60 * 60, // 2 hours strictly
       path: '/',

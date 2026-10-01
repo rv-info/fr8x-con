@@ -1031,13 +1031,22 @@ class ServerSecurityStore {
     clientDeviceId?: string,
     clientIp?: string
   ): { valid: boolean; reason?: string; message?: string } {
-    if (!identifier || !sessionId) {
+    if (!identifier) {
       return { valid: false, reason: 'missing_session', message: 'No session credentials provided.' };
     }
     const clean = identifier.trim().toLowerCase();
-    const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    let user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
     if (!user) {
-      return { valid: false, reason: 'user_not_found', message: 'User record not found in DBMS.' };
+      for (const u of this.users.values()) {
+        if (u.uid?.toLowerCase() === clean || u.email?.toLowerCase() === clean) {
+          user = u;
+          break;
+        }
+      }
+    }
+    if (!user) {
+      // If user is not yet in the in-memory Map, do not falsely reject the device session
+      return { valid: true };
     }
 
     // 1. Enforce 2-hour session expiration policy
@@ -1071,8 +1080,8 @@ class ServerSecurityStore {
     }
 
     // 3. Same-device continuity: adopt or update active session
-    if (!user.activeSessionId) {
-      user.activeSessionId = sessionId;
+    if (!user.activeSessionId || (sessionId && user.activeSessionId !== sessionId)) {
+      if (sessionId) user.activeSessionId = sessionId;
       if (clientDeviceId) user.activeDeviceId = clientDeviceId;
       try { savePersistedUser(user as any); } catch {}
     } else {

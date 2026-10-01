@@ -72,10 +72,11 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
+    const isHttps = req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
     // Set signed httpOnly session cookie with strict 2-hour maxAge
     res.cookies.set('fr8x_session', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: isHttps,
       sameSite: 'lax',
       maxAge: SESSION_MAX_AGE_SECONDS,
       path: '/',

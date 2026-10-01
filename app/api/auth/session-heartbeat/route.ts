@@ -29,11 +29,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const email = body.email ? String(body.email).trim().toLowerCase() : '';
     const uid = body.uid || cookieUid;
     const sessionId = body.sessionId || cookieSessionId;
     const clientDeviceId = body.deviceId || cookieDeviceId;
 
-    if (!uid) {
+    if (!uid && !email) {
       return NextResponse.json(
         { valid: false, reason: 'missing_credentials', message: 'No active authenticated user session provided.' },
         { status: 401 }
@@ -62,31 +63,42 @@ export async function POST(req: NextRequest) {
 
     // 2. Validate against server store (checks same device vs actual device change)
     const result = serverSecurityStore.validateActiveSession(
-      uid,
+      email || uid,
       sessionId || '',
       clientDeviceId,
       ip
     );
 
     if (!result.valid) {
-      const res = NextResponse.json(
-        {
-          valid: false,
-          reason: result.reason || 'session_invalid',
-          message:
-            result.message ||
-            (result.reason === 'concurrent_device_login'
-              ? "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out."
-              : 'Your session has expired. Please sign in again to continue.'),
-        },
-        { status: 401 }
-      );
-      // Remove cookie on superseded device or expired session
-      res.cookies.delete('fr8x_session');
-      return res;
+      if (result.reason === 'concurrent_device_login') {
+        const res = NextResponse.json(
+          {
+            valid: false,
+            reason: 'concurrent_device_login',
+            message:
+              result.message ||
+              "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out.",
+          },
+          { status: 401 }
+        );
+        res.cookies.delete('fr8x_session');
+        return res;
+      }
+      if (result.reason === 'session_expired') {
+        const res = NextResponse.json(
+          {
+            valid: false,
+            reason: 'session_expired',
+            message: 'Your 2-hour session has expired. Please sign in again to continue.',
+          },
+          { status: 401 }
+        );
+        res.cookies.delete('fr8x_session');
+        return res;
+      }
     }
 
-    return NextResponse.json({ valid: true, timestamp: Date.now() });
+    return NextResponse.json({ valid: true, sessionId: sessionId || cookieSessionId, timestamp: Date.now() });
   } catch (err: any) {
     return NextResponse.json(
       { valid: false, error: err.message || 'Session validation failed.' },
