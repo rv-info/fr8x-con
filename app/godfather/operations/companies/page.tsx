@@ -94,7 +94,12 @@ function CompaniesKYCContent() {
   const fetchDbmsCompanies = async () => {
     setIsLoadingDbms(true);
     try {
-      const res = await fetch('/api/godfather/companies');
+      const res = await fetch('/api/godfather/companies', {
+        headers: {
+          'x-godfather-operator-uid': 'gf-op-godfather',
+          'x-godfather-operator-email': 'tech@fr8x.in',
+        },
+      });
       const data = await res.json();
       if (data.success && Array.isArray(data.companies)) {
         setDbmsCompanies(data.companies);
@@ -117,7 +122,11 @@ function CompaniesKYCContent() {
     } else if (tabParam === 'kyc') {
       setActiveTab('kyc');
     }
-  }, [tabParam]);
+    const statusParam = searchParams?.get('status');
+    if (statusParam) {
+      setStatusFilter(statusParam.toUpperCase());
+    }
+  }, [tabParam, searchParams]);
 
   const handleTabChange = (tab: 'kyc' | 'master_dbms') => {
     setActiveTab(tab);
@@ -154,7 +163,11 @@ function CompaniesKYCContent() {
     try {
       const res = await fetch('/api/godfather/companies', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-godfather-operator-uid': 'gf-op-godfather',
+          'x-godfather-operator-email': 'tech@fr8x.in',
+        },
         body: JSON.stringify({
           canonicalId: mergeModal.targetCompanyId,
           duplicateId: mergeModal.sourceCompany.id,
@@ -183,7 +196,11 @@ function CompaniesKYCContent() {
     try {
       const res = await fetch('/api/godfather/companies', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-godfather-operator-uid': 'gf-op-godfather',
+          'x-godfather-operator-email': 'tech@fr8x.in',
+        },
         body: JSON.stringify(editModal.company),
       });
       const data = await res.json();
@@ -219,7 +236,11 @@ function CompaniesKYCContent() {
       };
       const res = await fetch('/api/godfather/companies', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-godfather-operator-uid': 'gf-op-godfather',
+          'x-godfather-operator-email': 'tech@fr8x.in',
+        },
         body: JSON.stringify(updated),
       });
       const data = await res.json();

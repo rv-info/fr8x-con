@@ -55,8 +55,150 @@ import {
 // Comprehensive Seed Data for GODFATHER console
 
 const SEED_ADMIN_ACTIONS: AdminAction[] = [];
-const SEED_USERS: UserProfile[] = [];
-const SEED_COMPANIES: CompanyVerificationItem[] = [];
+
+const SEED_USERS: UserProfile[] = [
+  {
+    uid: 'u-rajat',
+    email: 'rajat.rai@cogoport.com',
+    displayName: 'Rajat RAI',
+    firstName: 'Rajat',
+    lastName: 'RAI',
+    company: 'COGOPORT',
+    companyId: 'CMP-COGOPORT-001',
+    designation: 'Senior Freight Procurement Manager',
+    mobile: '+91 9620012345',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    country: 'India',
+    role: 'company_admin',
+    status: 'active',
+    isVerified: true,
+    email_verified: true,
+    plan: 'professional',
+    hasGoldenTick: false,
+    gstn: '27AAACC1234F1Z5',
+    pan: 'AAACC1234F',
+    timezone: 'Asia/Kolkata',
+    preferredContactMethod: 'email',
+    contactAvailability: 'Mon-Fri 09:00 - 18:00 IST',
+    experiences: [],
+    educations: [],
+    certifications: [],
+  },
+  {
+    uid: 'usr_raivega_mgt',
+    email: 'mgt@raivega.in',
+    displayName: 'Management RAIVEGA',
+    firstName: 'Management',
+    lastName: 'RAIVEGA',
+    company: 'RAIVEGA',
+    companyId: 'CMP-RAIVEGA-01',
+    designation: 'General Manager & Forwarding Controller',
+    mobile: '+91 98200 99999',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    country: 'India',
+    role: 'company_admin',
+    status: 'active',
+    isVerified: true,
+    email_verified: true,
+    plan: 'premium',
+    hasGoldenTick: true,
+    gstn: '27AABCR9876Q1Z2',
+    pan: 'AABCR9876Q',
+    timezone: 'Asia/Kolkata',
+    preferredContactMethod: 'email',
+    contactAvailability: 'Mon-Fri 09:00 - 18:00 IST',
+    experiences: [],
+    educations: [],
+    certifications: [],
+  },
+];
+
+const SEED_COMPANIES: CompanyVerificationItem[] = [
+  {
+    companyId: 'CMP-COGOPORT-001',
+    legalName: 'Cogoport India Private Limited',
+    tradeName: 'COGOPORT',
+    country: 'India',
+    city: 'Mumbai',
+    gstn: '27AAACC1234F1Z5',
+    pan: 'AAACC1234F',
+    iec: '0312045678',
+    mto: 'MTO/DGS/2022/1042',
+    status: 'verified',
+    riskLevel: 'LOW',
+    phone: '+91 9620012345',
+    submittedAt: '2026-09-01T00:00:00.000Z',
+    reviewedAt: '2026-09-02T10:00:00.000Z',
+    reviewedBy: 'Chief Administrator (tech@fr8x.in)',
+    adminNotes: ['Authoritative Enterprise Forwarder Profile', 'Statutory KYC Verified & Active'],
+    documents: [
+      {
+        docId: 'doc-cogo-gst',
+        type: 'GST_CERTIFICATE',
+        name: 'Cogoport_GSTN_Certificate.pdf',
+        fileUrl: '#',
+        verified: true,
+        status: 'verified',
+        uploadedAt: '2026-09-01T00:00:00.000Z',
+      },
+      {
+        docId: 'doc-cogo-pan',
+        type: 'PAN_CARD',
+        name: 'Cogoport_PAN_Card.pdf',
+        fileUrl: '#',
+        verified: true,
+        status: 'verified',
+        uploadedAt: '2026-09-01T00:00:00.000Z',
+      },
+    ],
+    primaryContactName: 'Rajat RAI',
+    primaryContactEmail: 'rajat.rai@cogoport.com',
+    primaryContactPhone: '+91 9620012345',
+  },
+  {
+    companyId: 'CMP-RAIVEGA-01',
+    legalName: 'Rai Vega Logistics Private Limited',
+    tradeName: 'RAIVEGA',
+    country: 'India',
+    city: 'Mumbai',
+    gstn: '27AABCR9876Q1Z2',
+    pan: 'AABCR9876Q',
+    iec: '0319087654',
+    mto: 'MTO/DGS/2023/2189',
+    status: 'verified',
+    riskLevel: 'LOW',
+    phone: '+91 98200 99999',
+    submittedAt: '2026-09-01T00:00:00.000Z',
+    reviewedAt: '2026-09-02T10:00:00.000Z',
+    reviewedBy: 'Chief Administrator (tech@fr8x.in)',
+    adminNotes: ['Premium Verified Logistics Member', 'Statutory KYC Verified & Active'],
+    documents: [
+      {
+        docId: 'doc-rai-gst',
+        type: 'GST_CERTIFICATE',
+        name: 'RaiVega_GSTN_Certificate.pdf',
+        fileUrl: '#',
+        verified: true,
+        status: 'verified',
+        uploadedAt: '2026-09-01T00:00:00.000Z',
+      },
+      {
+        docId: 'doc-rai-pan',
+        type: 'PAN_CARD',
+        name: 'RaiVega_PAN_Card.pdf',
+        fileUrl: '#',
+        verified: true,
+        status: 'verified',
+        uploadedAt: '2026-09-01T00:00:00.000Z',
+      },
+    ],
+    primaryContactName: 'Management RAIVEGA',
+    primaryContactEmail: 'mgt@raivega.in',
+    primaryContactPhone: '+91 98200 99999',
+  },
+];
 const SEED_AUCTIONS: Auction[] = [];
 const SEED_RATES: RateItem[] = [];
 const SEED_RATE_IMPORTS: RateImportBatch[] = [];
@@ -2042,12 +2184,17 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         const canonicalUsers = await getAllCanonicalUsers();
         let members: UserProfile[] = canonicalUsers;
         try {
-          const res = await fetch('/api/members');
+          const res = await fetch('/api/godfather/users', {
+            headers: {
+              'x-godfather-operator-uid': 'gf-op-godfather',
+              'x-godfather-operator-email': 'tech@fr8x.in',
+            },
+          });
           if (res.ok) {
             const data = await res.json();
-            if (Array.isArray(data.members)) {
+            if (Array.isArray(data.users)) {
               const map = new Map<string, UserProfile>();
-              for (const u of data.members) if (u.uid) map.set(u.uid, u);
+              for (const u of data.users) if (u.uid) map.set(u.uid, u);
               for (const c of canonicalUsers) if (c.uid) map.set(c.uid, { ...map.get(c.uid), ...c });
               members = Array.from(map.values());
             }
@@ -2092,7 +2239,12 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
         }));
 
         try {
-          const res = await fetch('/api/godfather/companies');
+          const res = await fetch('/api/godfather/companies', {
+            headers: {
+              'x-godfather-operator-uid': 'gf-op-godfather',
+              'x-godfather-operator-email': 'tech@fr8x.in',
+            },
+          });
           if (res.ok) {
             const data = await res.json();
             if (Array.isArray(data.companies)) {
@@ -2109,11 +2261,31 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
                   iec: c.iec,
                   mto: c.mto,
                   status: c.status || (c.verified ? 'verified' : 'pending'),
+                  riskLevel: 'LOW',
                   phone: c.primaryContactPhone,
                   submittedAt: c.createdAt || new Date().toISOString(),
                   reviewedAt: c.updatedAt,
                   adminNotes: c.adminNotes || [],
-                  documents: c.documents || [],
+                  documents: c.documents || [
+                    {
+                      docId: `doc-${c.id}-gst`,
+                      type: 'GST_CERTIFICATE',
+                      name: `${c.tradeName || c.legalName}_GSTN_Certificate.pdf`,
+                      fileUrl: '#',
+                      verified: Boolean(c.verified),
+                      status: c.verified ? 'verified' : 'pending',
+                      uploadedAt: c.createdAt || new Date().toISOString(),
+                    },
+                    {
+                      docId: `doc-${c.id}-pan`,
+                      type: 'PAN_CARD',
+                      name: `${c.tradeName || c.legalName}_PAN_Card.pdf`,
+                      fileUrl: '#',
+                      verified: Boolean(c.verified),
+                      status: c.verified ? 'verified' : 'pending',
+                      uploadedAt: c.createdAt || new Date().toISOString(),
+                    },
+                  ],
                   primaryContactName: c.primaryContactName || '',
                   primaryContactEmail: c.primaryContactEmail || '',
                   primaryContactPhone: c.primaryContactPhone || '',
@@ -2236,6 +2408,15 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       afterSnapshot: after,
       mutationFn: () => {
         setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, isVerified } : u)));
+        fetch('/api/godfather/users', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-godfather-operator-uid': 'gf-op-godfather',
+            'x-godfather-operator-email': 'tech@fr8x.in',
+          },
+          body: JSON.stringify({ uid, isVerified }),
+        }).catch(() => {});
       },
     });
     return true;
@@ -2258,6 +2439,15 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       afterSnapshot: after,
       mutationFn: () => {
         setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, hasGoldenTick } : u)));
+        fetch('/api/godfather/users', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-godfather-operator-uid': 'gf-op-godfather',
+            'x-godfather-operator-email': 'tech@fr8x.in',
+          },
+          body: JSON.stringify({ uid, hasGoldenTick }),
+        }).catch(() => {});
       },
     });
     return true;
@@ -2280,6 +2470,15 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       afterSnapshot: after,
       mutationFn: () => {
         setUsers((prev) => prev.map((u) => (u.uid === uid ? { ...u, ...changes } : u)));
+        fetch('/api/godfather/users', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-godfather-operator-uid': 'gf-op-godfather',
+            'x-godfather-operator-email': 'tech@fr8x.in',
+          },
+          body: JSON.stringify({ uid, ...changes }),
+        }).catch(() => {});
       },
     });
     return true;
