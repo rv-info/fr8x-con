@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       clientReference: String(raw.client_reference || raw.clientReference || '').trim() || undefined,
     };
 
-    // 1. Authoritative persistence in Knox DBMS (.knox/dbms/email_delivery_events.json)
+    // 1. Authoritative persistence in FR8X DBMS (.data/dbms/email_delivery_events.json)
     try {
       savePersistedEmailDeliveryEvent({
         eventId: event.eventId,

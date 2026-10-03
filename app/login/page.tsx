@@ -159,6 +159,10 @@ export default function LoginPage() {
       } else if (reason === 'unauthorized') {
         setSessionNotice('Authentication required. Please sign in with your enterprise credentials.');
       }
+      const emailParam = params.get('email');
+      if (emailParam) {
+        setIdentifier(emailParam.trim());
+      }
     }
   }, []);
 
@@ -209,7 +213,7 @@ export default function LoginPage() {
         }
       }
 
-      // 2. Server-side authentication & attempt limiter (for Knox/legacy accounts or user IDs)
+      // 2. Server-side authentication & attempt limiter (for server DBMS accounts or user IDs)
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -356,9 +360,9 @@ export default function LoginPage() {
     try {
       const fbReset = await sendPasswordReset(resetEmail.trim());
       if (fbReset.success) {
-        toast(fbReset.message || `Password reset link dispatched to ${resetEmail}.`);
-        setIsForgotModalOpen(false);
-        setSessionNotice(`Password reset instructions have been sent to ${resetEmail}. Please check your email to create a new password.`);
+        toast(fbReset.message || `Password reset instructions dispatched to ${resetEmail}.`);
+        setResetStep('otp');
+        setResetResendCooldown(60);
         return;
       }
       setResetError(fbReset.error || 'Failed to dispatch password reset email.');

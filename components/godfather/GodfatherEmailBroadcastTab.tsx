@@ -119,7 +119,7 @@ What's New in this Release:
 1. Live Device Time & Calendar: Synchronized live operations clock on both desktop and mobile views.
 2. Direct Registration & Instant Verification: Frictionless corporate registration with instant email magic links.
 3. Enhanced Rate Filter: Filter global shipping lanes and reverse auction bids by corridor with 0ms latency.
-4. Knox Encrypted Security: Military-grade AES-256-GCM data encryption protecting your confidential commercial records.
+4. Enterprise Data Security: Multi-layer data encryption protecting your confidential commercial records.
 
 Your feedback drives our continuous innovation. Sign in today to experience the updated capabilities.`,
     actionLabel: 'Open Updated Workspace',

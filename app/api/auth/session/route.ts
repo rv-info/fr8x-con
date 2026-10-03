@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
     const email = body.email ? String(body.email).trim().toLowerCase() : '';
     const role = body.role || 'user';
     const companyId = body.companyId || 'CMP-00000';
-    const clientDeviceId = body.deviceId ? String(body.deviceId).trim() : `dev_${Date.now()}`;
+    const cookieDeviceId = req.cookies.get('fr8x_device_id')?.value;
+    const clientDeviceId = (body.deviceId ? String(body.deviceId).trim() : '') || cookieDeviceId || `dev_${Date.now()}`;
 
     if (!uid && !email) {
       return NextResponse.json(
@@ -81,6 +82,13 @@ export async function POST(req: NextRequest) {
       maxAge: SESSION_MAX_AGE_SECONDS,
       path: '/',
     });
+    res.cookies.set('fr8x_device_id', clientDeviceId, {
+      httpOnly: false,
+      secure: isHttps,
+      sameSite: 'lax',
+      maxAge: 365 * 24 * 60 * 60,
+      path: '/',
+    });
 
     return res;
   } catch (err: any) {
@@ -118,9 +126,39 @@ export async function GET(req: NextRequest) {
       return res;
     }
 
+    let userData = verified.payload;
+    try {
+      const latestUser = serverSecurityStore.getUser(verified.payload.uid) || serverSecurityStore.getUserByEmailOrUid(verified.payload.uid);
+      if (latestUser) {
+        const u = latestUser as any;
+        userData = {
+          ...verified.payload,
+          displayName: u.displayName || verified.payload.displayName,
+          firstName: u.firstName || verified.payload.firstName,
+          lastName: u.lastName || verified.payload.lastName,
+          company: u.company || verified.payload.company,
+          companyId: u.companyId || verified.payload.companyId,
+          role: u.role || verified.payload.role,
+          mobile: u.mobile || u.phone || '',
+          phone: u.mobile || u.phone || '',
+          designation: u.designation || '',
+          location: u.location || [u.city, u.state, u.country].filter(Boolean).join(', ') || u.formattedAddress || u.address || '',
+          formattedAddress: u.formattedAddress || u.address || '',
+          address: u.formattedAddress || u.address || '',
+          city: u.city || '',
+          state: u.state || '',
+          country: u.country || '',
+          plan: u.plan || verified.payload.plan,
+          avatarUrl: u.avatarUrl || verified.payload.avatarUrl,
+          hasGoldenTick: u.hasGoldenTick,
+          status: u.status,
+        };
+      }
+    } catch {}
+
     return NextResponse.json({
       authenticated: true,
-      user: verified.payload,
+      user: userData,
       expiresInSeconds: Math.max(0, Math.floor((expiresAt - now) / 1000)),
     });
   } catch (err: any) {

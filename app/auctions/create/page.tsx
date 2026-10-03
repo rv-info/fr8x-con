@@ -406,6 +406,69 @@ export default function CreateReverseAuctionPage() {
     });
   };
 
+  const handleSaveDraft = () => {
+    if (!title.trim() && !pol.trim() && !pod.trim()) {
+      toast('Please enter an Auction Title or Route before saving as Draft.');
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (startDate < todayStr) {
+      toast('Back-dated bidding is strictly forbidden. Please select today or a future date for the auction start date.');
+      return;
+    }
+
+    const selectedBiddersData = availableBidders.filter((b) =>
+      assignedBidders.has(b.id)
+    );
+
+    const draftAuctionId = addAuction({
+      title: title.trim() || `${pol || 'Origin'} to ${pod || 'Destination'} Spot Bidding (Draft)`,
+      rfqId,
+      auctionType,
+      startDate: startDate >= todayStr ? startDate : todayStr,
+      startTime,
+      durationMinutes: Number(durationMinutes),
+      endDateTime,
+      timezone,
+      status: 'Draft',
+      isPublished: false,
+      paymentStatus: 'unpaid',
+      shipment: {
+        por: por || pol || 'Origin Port',
+        pol: pol || 'Origin Port',
+        pod: pod || 'Destination Port',
+        finalDestination: finalDest || pod || 'Destination Port',
+        cargoReadyDate: cargoReadyDate >= todayStr ? cargoReadyDate : todayStr,
+        shipmentType,
+        incoterm,
+        rateCurrency,
+        commodity: commodity || 'General Cargo',
+        hsCode: hsCode || '8400.00',
+        weightKg: Number(grossWeight) || 20000,
+        cbm: Number(cbm) || 60,
+      },
+      containers,
+      selectedBidders: selectedBiddersData,
+      blockedBidders: Array.from(blockedBidders),
+      rules: {
+        autoExtension,
+        rankingVisible,
+        hideCompetitorNames,
+        bidderAnonymity,
+        bidLimit: Number(bidLimit),
+        askContainerNo,
+        showCompetitionCeiling,
+      },
+      askContainerNo,
+      showCompetitionCeiling,
+      competitionCeiling: showCompetitionCeiling ? Number(competitionCeilingAmount || 2850) : 0,
+    });
+
+    toast(`Auction ${draftAuctionId} saved as Draft. You can resume or publish anytime.`);
+    router.push('/auctions?tab=drafts');
+  };
+
   // Validate & Publish
   const handlePublish = (paymentDetails?: {
     paymentStatus?: 'paid' | 'pending_verification' | 'waived_promotional' | 'unpaid';
@@ -413,6 +476,15 @@ export default function CreateReverseAuctionPage() {
     paymentMethod?: string;
     paymentReference?: string;
   }) => {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (startDate < todayStr) {
+      toast('Back-dated bidding is strictly forbidden. Please select today or a future date for the auction start date.');
+      return;
+    }
+    if (cargoReadyDate < todayStr) {
+      toast('Cargo-ready date cannot be in the past. Please select today or a future date.');
+      return;
+    }
     if (!title.trim()) {
       toast('Please enter Auction Title.');
       return;
@@ -673,12 +745,14 @@ export default function CreateReverseAuctionPage() {
               </div>
 
               <div className="field">
-                <label>Start Date</label>
+                <label>Start Date <span className="req">*</span></label>
                 <input
                   type="date"
                   className="input"
+                  min={new Date().toISOString().slice(0, 10)}
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  required
                 />
               </div>
 
@@ -808,12 +882,14 @@ export default function CreateReverseAuctionPage() {
               </div>
 
               <div className="field">
-                <label>Cargo-Ready Date</label>
+                <label>Cargo-Ready Date <span className="req">*</span></label>
                 <input
                   type="date"
                   className="input"
+                  min={new Date().toISOString().slice(0, 10)}
                   value={cargoReadyDate}
                   onChange={(e) => setCargoReadyDate(e.target.value)}
+                  required
                 />
               </div>
 
@@ -1858,11 +1934,45 @@ export default function CreateReverseAuctionPage() {
         {/* Sticky Publication Action Bar */}
         <div className="actionbar">
           <small>
-            Draft auto-saved · Assigned NVOCCs &amp; Freight Forwarders receive structured reverse auction room upon publication.
+            Structured RFQ details auto-saved · Assigned NVOCCs &amp; Freight Forwarders receive verified reverse auction room upon publication.
           </small>
-          <div className="actions">
-            <button type="submit" className="btn primary" onClick={(e) => { e.preventDefault(); setShowPaymentModal(true); }}>
-              <Rocket size={14} /> Pay &amp; Publish Auction
+          <div className="actions" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn secondary"
+              style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              onClick={handleSaveDraft}
+              title="Save current details as draft to edit or publish later"
+            >
+              <FileCheck size={14} /> Save as Draft
+            </button>
+            <button
+              type="submit"
+              className="btn primary"
+              style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              onClick={(e) => {
+                e.preventDefault();
+                const todayStr = new Date().toISOString().slice(0, 10);
+                if (startDate < todayStr) {
+                  toast('Back-dated bidding is strictly forbidden. Please select today or a future date for the auction start date.');
+                  return;
+                }
+                if (cargoReadyDate < todayStr) {
+                  toast('Cargo-ready date cannot be in the past. Please select today or a future date.');
+                  return;
+                }
+                if (!title.trim()) {
+                  toast('Please enter Auction Title.');
+                  return;
+                }
+                if (!pol.trim() || !pod.trim()) {
+                  toast('Port of Loading (POL) and Port of Discharge (POD) are required.');
+                  return;
+                }
+                setShowPaymentModal(true);
+              }}
+            >
+              <Rocket size={14} /> Final Publish
             </button>
           </div>
         </div>

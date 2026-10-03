@@ -37,7 +37,7 @@ async function runTests() {
     assert(content.includes('node_modules'), '.dockerignore excludes host node_modules directory');
     assert(content.includes('.git'), '.dockerignore excludes .git repository metadata');
     assert(content.includes('.next'), '.dockerignore excludes .next build cache');
-    assert(content.includes('.knox'), '.dockerignore excludes local .knox DBMS store');
+    assert(content.includes('.data'), '.dockerignore excludes local .data DBMS store');
     assert(content.includes('*.apk'), '.dockerignore excludes compiled mobile APK binaries');
   }
 

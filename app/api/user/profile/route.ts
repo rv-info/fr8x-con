@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * Requires authenticated session; users can access their own full profile or public profile for others.
  */
 export async function GET(req: NextRequest) {
-  const userAuth = authenticateUserSession(req);
+  const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
   if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     const user = serverSecurityStore.getUser(targetUid) || serverSecurityStore.getUserByEmailOrUid(targetUid);
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'User record not found in DBMS.' },
+        { success: false, error: 'User record not found.' },
         { status: 404 }
       );
     }
@@ -131,6 +131,16 @@ export async function GET(req: NextRequest) {
 
     // Owner or Operator view: sanitize internal cryptographic credentials
     const { passwordHash, salt, ...safeUser } = user;
+    const ownerU = user as any;
+    safeUser.mobile = ownerU.mobile || ownerU.phone || '';
+    safeUser.phone = ownerU.mobile || ownerU.phone || '';
+    safeUser.formattedAddress = ownerU.formattedAddress || ownerU.address || '';
+    safeUser.address = ownerU.formattedAddress || ownerU.address || '';
+    safeUser.designation = ownerU.designation || '';
+    safeUser.city = ownerU.city || '';
+    safeUser.state = ownerU.state || '';
+    safeUser.country = ownerU.country || '';
+    safeUser.location = ownerU.location || [ownerU.city, ownerU.state, ownerU.country].filter(Boolean).join(', ') || safeUser.formattedAddress;
     return NextResponse.json({ success: true, user: safeUser });
   } catch (err: any) {
     console.error('[API/User/Profile] GET error:', err);
@@ -146,10 +156,10 @@ export async function GET(req: NextRequest) {
  * Updates contact number, locations, experiences, educations, company affiliation, etc.
  * Enforces strict authentication: users can only update their own profile; Godfather operators
  * can update any profile with audited reason.
- * Persists immediately to authoritative DBMS.
+ * Persists immediately to authoritative DBMS and synchronizes with Firestore.
  */
 export async function POST(req: NextRequest) {
-  const userAuth = authenticateUserSession(req);
+  const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
   if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
@@ -181,19 +191,66 @@ export async function POST(req: NextRequest) {
     // Don't accidentally overwrite uid or passwordHash from unrestricted fields
     const { uid: _u, passwordHash: _p, salt: _s, role: _r, plan: _pl, status: _st, ...cleanUpdates } = rawUpdates;
 
+    // Field-name mapping normalization (mobile/phone, formattedAddress/address)
+    if (cleanUpdates.phone && !cleanUpdates.mobile) cleanUpdates.mobile = cleanUpdates.phone;
+    if (cleanUpdates.mobile && !cleanUpdates.phone) cleanUpdates.phone = cleanUpdates.mobile;
+    if (cleanUpdates.address && !cleanUpdates.formattedAddress) cleanUpdates.formattedAddress = cleanUpdates.address;
+    if (cleanUpdates.formattedAddress && !cleanUpdates.address) cleanUpdates.address = cleanUpdates.formattedAddress;
+
     const result = serverSecurityStore.updateUserProfile(targetUid, cleanUpdates);
     if (!result.success || !result.user) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Failed to update user profile in DBMS.' },
+        { success: false, error: result.error || 'Failed to update user profile.' },
         { status: 400 }
       );
     }
 
+    // Server-side Firestore synchronization via Admin SDK if initialized
+    let firestoreSynced = false;
+    let firestoreError: string | undefined;
+    try {
+      const { getAdminDb } = await import('@/lib/firebase/admin');
+      const adminDb = getAdminDb();
+      if (adminDb && typeof adminDb.collection === 'function') {
+        const docRef = adminDb.collection('users').doc(targetUid);
+        await docRef.set({
+          ...cleanUpdates,
+          mobile: cleanUpdates.mobile || cleanUpdates.phone,
+          phone: cleanUpdates.mobile || cleanUpdates.phone,
+          formattedAddress: cleanUpdates.formattedAddress || cleanUpdates.address,
+          address: cleanUpdates.formattedAddress || cleanUpdates.address,
+          designation: cleanUpdates.designation,
+          city: cleanUpdates.city,
+          state: cleanUpdates.state,
+          country: cleanUpdates.country,
+          location: cleanUpdates.location || [cleanUpdates.city, cleanUpdates.state, cleanUpdates.country].filter(Boolean).join(', '),
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+        firestoreSynced = true;
+      }
+    } catch (fbErr: any) {
+      firestoreError = fbErr?.message;
+      console.warn('[API/User/Profile] Firestore server sync warning:', fbErr?.message);
+    }
+
     const { passwordHash, salt, ...safeUser } = result.user;
+    const u = result.user as any;
+    safeUser.mobile = u.mobile || u.phone || '';
+    safeUser.phone = u.mobile || u.phone || '';
+    safeUser.formattedAddress = u.formattedAddress || u.address || '';
+    safeUser.address = u.formattedAddress || u.address || '';
+    safeUser.designation = u.designation || '';
+    safeUser.city = u.city || '';
+    safeUser.state = u.state || '';
+    safeUser.country = u.country || '';
+    safeUser.location = u.location || [u.city, u.state, u.country].filter(Boolean).join(', ') || safeUser.formattedAddress;
+
     return NextResponse.json({
       success: true,
-      message: 'Profile, contact details, and location saved in DBMS successfully.',
+      message: 'Profile, contact details, and location updated successfully.',
       user: safeUser,
+      firestoreSynced,
+      firestoreError,
     });
   } catch (err: any) {
     console.error('[API/User/Profile] POST error:', err);
@@ -206,4 +263,67 @@ export async function POST(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   return POST(req);
+}
+
+export async function DELETE(req: NextRequest) {
+  const userAuth = authenticateUserSession(req, { allowUnverified: true });
+  const gfAuth = authenticateGodfatherOperator(req);
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
+    return (userAuth.errorResponse || gfAuth.errorResponse)!;
+  }
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const body = await req.json().catch(() => ({}));
+    const action = (searchParams.get('action') || body.action || 'permanent') as 'schedule_5_days' | 'cancel_deletion' | 'permanent';
+    const reason = body.reason || searchParams.get('reason') || 'User profile deletion requested';
+    const targetUid = (gfAuth.authenticated && (body.uid || searchParams.get('uid')))
+      ? (body.uid || searchParams.get('uid'))
+      : (userAuth.user?.uid || body.uid || searchParams.get('uid'));
+
+    if (!targetUid) {
+      return NextResponse.json({ success: false, error: 'Target UID required.' }, { status: 400 });
+    }
+
+    if (action === 'schedule_5_days') {
+      const result = serverSecurityStore.scheduleAccountDeletion(targetUid, reason);
+      if (!result.success || !result.user) {
+        return NextResponse.json({ success: false, error: result.error || 'Failed to schedule deletion.' }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: true,
+        action: 'schedule_5_days',
+        message: 'Profile deactivation successful. Account scheduled for permanent deletion in 5 days.',
+        deletionScheduledAt: result.user.deletionScheduledAt,
+        deletionEffectiveAt: result.user.deletionEffectiveAt,
+      });
+    }
+
+    if (action === 'cancel_deletion') {
+      const result = serverSecurityStore.cancelAccountDeletion(targetUid);
+      return NextResponse.json({
+        success: Boolean(result.success),
+        action: 'cancel_deletion',
+        message: 'Account deletion cancelled. Profile is active.',
+      });
+    }
+
+    const result = serverSecurityStore.permanentlyDeleteAccount(targetUid, reason);
+    if (!result.success) {
+      return NextResponse.json({ success: false, error: result.error || 'Failed to permanently delete profile.' }, { status: 400 });
+    }
+
+    const res = NextResponse.json({
+      success: true,
+      action: 'permanent',
+      message: 'Profile and account permanently purged from FR8X.',
+    });
+    res.cookies.delete('fr8x_session');
+    res.cookies.delete('__Secure-FR8X-Session');
+    res.cookies.delete('fr8x_active_user_uid');
+    return res;
+  } catch (err: any) {
+    console.error('[API/User/Profile] DELETE error:', err);
+    return NextResponse.json({ success: false, error: err.message || 'Profile deletion error.' }, { status: 500 });
+  }
 }

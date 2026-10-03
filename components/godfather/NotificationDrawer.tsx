@@ -17,7 +17,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
       id: 'alt-1',
       type: 'dbms',
       title: 'DBMS Master Registry Synchronized',
-      desc: 'Authoritative company & user stores linked with Knox AES-256 encrypted persistence.',
+      desc: 'Authoritative company & user stores linked with FR8X Cloud persistence.',
       time: 'Live',
       link: '/godfather/operations/companies',
       icon: Building,

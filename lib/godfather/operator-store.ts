@@ -25,7 +25,7 @@ const CANONICAL_FALLBACK_SALT = '2294f348728987c1fc5e5fe97d89802eee53e3100f1364d
 const CANONICAL_FALLBACK_HASH = '494b74c2625bd8766170cc05c5274c401da8de4198d750e3157f19f880d4c6354ab0e2a5dd2e246203326c8de807495759c9391cdfb8c21e5b9f6c63b81012c0';
 
 function getGodfatherOperatorFile(): string {
-  const primaryFile = path.join(process.cwd(), '.knox', 'dbms', 'godfather_operator.json');
+  const primaryFile = path.join(process.cwd(), '.data', 'dbms', 'godfather_operator.json');
   const primaryDir = path.dirname(primaryFile);
 
   let isPrimaryWritable = false;
@@ -45,7 +45,7 @@ function getGodfatherOperatorFile(): string {
     return primaryFile;
   }
 
-  const tmpFile = path.join(process.env.TMPDIR || '/tmp', 'fr8x-knox', 'dbms', 'godfather_operator.json');
+  const tmpFile = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms', 'godfather_operator.json');
   try {
     const tmpDir = path.dirname(tmpFile);
     if (!fs.existsSync(tmpDir)) {
@@ -68,7 +68,7 @@ function getDbmsOperatorRecord(): { email?: string; salt?: string; hash?: string
       const raw = fs.readFileSync(GODFATHER_OPERATOR_FILE, 'utf8');
       return JSON.parse(raw);
     }
-    const primaryFile = path.join(process.cwd(), '.knox', 'dbms', 'godfather_operator.json');
+    const primaryFile = path.join(process.cwd(), '.data', 'dbms', 'godfather_operator.json');
     if (fs.existsSync(primaryFile)) {
       const raw = fs.readFileSync(primaryFile, 'utf8');
       return JSON.parse(raw);
@@ -133,7 +133,7 @@ export function getAuthorizedOperatorEmail(): string {
 /**
  * Validates candidate password using multi-layer verification:
  * 1. Runtime-updated credentials (from recent password reset)
- * 2. Authoritative DBMS store (.knox/dbms/godfather_operator.json)
+ * 2. Authoritative DBMS store (.data/dbms/godfather_operator.json)
  * 3. Environment variables GODFATHER_OPERATOR_PASSWORD_HASH & SALT (if set)
  * 4. Canonical fallback credentials
  */
@@ -151,7 +151,7 @@ export function verifyOperatorPassword(candidatePassword: string): boolean {
     }
   }
 
-  // 2. Authoritative DBMS store check (.knox/dbms/godfather_operator.json)
+  // 2. Authoritative DBMS store check (.data/dbms/godfather_operator.json)
   const dbmsRec = getDbmsOperatorRecord();
   if (dbmsRec && dbmsRec.salt && dbmsRec.hash) {
     try {

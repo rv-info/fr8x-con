@@ -20,7 +20,8 @@ dist/
 .env.production
 .env.development
 
-# Knox local DBMS store & logs
+# Local DBMS store & logs
+.data/
 .knox/
 *.log
 npm-debug.log*

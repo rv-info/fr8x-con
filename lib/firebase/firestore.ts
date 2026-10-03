@@ -1954,6 +1954,55 @@ export async function deleteTestUserDoc(uid: string): Promise<boolean> {
   }
 }
 
+export async function deleteCanonicalUserDoc(uid: string): Promise<boolean> {
+  if (!uid) return false;
+  try {
+    await deleteDoc(doc(db, 'users', uid));
+    return true;
+  } catch (err: any) {
+    console.warn('[FR8X Firestore] deleteCanonicalUserDoc error:', err?.message);
+    return false;
+  }
+}
+
+export async function scheduleCanonicalUserDeletion(
+  uid: string,
+  effectiveAt: string,
+  reason?: string
+): Promise<boolean> {
+  if (!uid) return false;
+  try {
+    const res = await updateCanonicalUserProfile(uid, {
+      accountStatus: 'pending_deletion',
+      deletionScheduledAt: new Date().toISOString(),
+      deletionEffectiveAt: effectiveAt,
+      deletionType: 'five_day_grace',
+      deletionReason: reason || 'User requested 5-day account deactivation & deletion',
+    });
+    return res.success;
+  } catch (err: any) {
+    console.warn('[FR8X Firestore] scheduleCanonicalUserDeletion warning:', err?.message);
+    return false;
+  }
+}
+
+export async function cancelCanonicalUserDeletion(uid: string): Promise<boolean> {
+  if (!uid) return false;
+  try {
+    const res = await updateCanonicalUserProfile(uid, {
+      accountStatus: 'active',
+      deletionScheduledAt: null,
+      deletionEffectiveAt: null,
+      deletionType: null,
+      deletionReason: null,
+    });
+    return res.success;
+  } catch (err: any) {
+    console.warn('[FR8X Firestore] cancelCanonicalUserDeletion warning:', err?.message);
+    return false;
+  }
+}
+
 
 
 

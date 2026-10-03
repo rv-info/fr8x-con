@@ -333,6 +333,7 @@ export default function FeedsPage() {
   const [quickDesignation, setQuickDesignation] = useState('');
   const [quickCompany, setQuickCompany] = useState('');
   const [isSavingQuickContact, setIsSavingQuickContact] = useState(false);
+  const [isPostingFeed, setIsPostingFeed] = useState(false);
 
   const handleOpenQuickContactModal = () => {
     setQuickMobile(user.mobile || '');
@@ -381,10 +382,10 @@ export default function FeedsPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast('✓ Contact credentials & terminal location updated in DBMS.');
+        toast('✓ Contact credentials & terminal location updated successfully.');
         setShowQuickContactModal(false);
       } else {
-        toast(data.error || 'Failed to update contact in DBMS.');
+        toast(data.error || 'Failed to update contact details.');
       }
     } catch (err: any) {
       toast('Network error saving contact details.');
@@ -717,12 +718,23 @@ export default function FeedsPage() {
     );
   }, [contactRailSearch, workspaceContacts]);
 
-  // 1. Two-Stage Candidate Retrieval & Personalized Hybrid Ranking
+  // 1. Two-Stage Candidate Retrieval & Personalized Hybrid Ranking with strict deduplication
   const rankedFeedPosts = React.useMemo(() => {
-    return feedRankingEngine.rankFeed(posts, {
+    const ranked = feedRankingEngine.rankFeed(posts, {
       viewer: user,
       surface: activeSurface,
     });
+
+    // Deduplicate posts: strictly filter out identical posts by the same author/text
+    const seenSignatures = new Set<string>();
+    const deduplicated: FeedPost[] = [];
+    for (const p of ranked) {
+      const sig = `${p.authorUid || p.author}::${(p.text || '').trim().toLowerCase()}`;
+      if (seenSignatures.has(sig)) continue;
+      seenSignatures.add(sig);
+      deduplicated.push(p);
+    }
+    return deduplicated;
   }, [posts, user, activeSurface]);
 
   // 2. Filter posts based on post type and universal search
@@ -746,9 +758,14 @@ export default function FeedsPage() {
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!postText.trim()) return;
-    addPost(postText, composerPostType);
-    setPostText('');
+    if (isPostingFeed || !postText.trim()) return;
+    setIsPostingFeed(true);
+    try {
+      addPost(postText.trim(), composerPostType);
+      setPostText('');
+    } finally {
+      setTimeout(() => setIsPostingFeed(false), 800);
+    }
   };
 
   const handleEditSave = (postId: string | number) => {
@@ -1828,8 +1845,8 @@ export default function FeedsPage() {
             />
             <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
 
-              <button type="submit" className="btn primary" disabled={!postText.trim()} style={{ padding: '0 16px', height: '32px' }}>
-                <Send size={13} /> Post Update
+              <button type="submit" className="btn primary" disabled={isPostingFeed || !postText.trim()} style={{ padding: '0 16px', height: '32px' }}>
+                {isPostingFeed ? 'Posting...' : <><Send size={13} /> Post Update</>}
               </button>
             </div>
           </form>
@@ -3564,12 +3581,12 @@ export default function FeedsPage() {
         <Modal
           isOpen={showQuickContactModal}
           onClose={() => setShowQuickContactModal(false)}
-          title="Edit Contact & Terminal Location (Authoritative DBMS)"
+          title="Edit Contact & Terminal Location"
           maxWidth="540px"
         >
           <form onSubmit={handleSaveQuickContact} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div style={{ background: '#f8fafc', padding: '10px 12px', border: '1px solid var(--fr8x-outline, #e2e8f0)', fontSize: '11.5px', color: 'var(--fr8x-muted)' }}>
-              Changes made here are persisted directly to the authoritative database (<code>.knox/dbms/users.json</code>) and synchronize instantly across Feeds, Profile, and B2B Networking.
+              Changes made here are saved to your verified profile and synchronize instantly across Feeds, Profile, and B2B Networking across all your devices.
             </div>
 
             <div className="grid g2">
@@ -3662,7 +3679,7 @@ export default function FeedsPage() {
                 className="btn primary"
                 disabled={isSavingQuickContact}
               >
-                {isSavingQuickContact ? 'Saving to DBMS...' : '✓ Save to DBMS'}
+                {isSavingQuickContact ? 'Saving Changes...' : '✓ Save Changes'}
               </button>
             </div>
           </form>

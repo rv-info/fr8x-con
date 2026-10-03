@@ -1072,11 +1072,24 @@ export default function RegisterPage() {
               marginBottom: '14px',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: '10px',
             }}
           >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{errorMessage}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '220px' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+            {errorMessage.includes('Please sign in instead') && (
+              <Link
+                href={`/login?email=${encodeURIComponent(email || '')}`}
+                className="btn primary sm"
+                style={{ flexShrink: 0, textDecoration: 'none', fontSize: '11px', padding: '5px 12px' }}
+              >
+                Sign In Now →
+              </Link>
+            )}
           </div>
         )}
 
@@ -1523,7 +1536,7 @@ export default function RegisterPage() {
                             alignItems: 'center',
                           }}
                         >
-                          <span>Registered Entities in DBMS (Select with Location)</span>
+                          <span>Verified Registered Entities (Select with Location)</span>
                           <button
                             type="button"
                             onClick={() => setIsCompanyDropdownOpen(false)}

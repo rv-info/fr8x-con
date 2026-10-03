@@ -18,6 +18,10 @@ export async function POST(req: NextRequest) {
     const cleanEmail = user.email.trim().toLowerCase();
     const cleanUid = user.uid.trim();
 
+    const userPassword = (user.password && String(user.password).trim().length >= 6)
+      ? String(user.password).trim()
+      : 'Password@123';
+
     // Check if user already exists
     const existing = serverSecurityStore.getUser(cleanUid) || serverSecurityStore.getUser(cleanEmail);
     if (!existing) {
@@ -25,7 +29,7 @@ export async function POST(req: NextRequest) {
         {
           uid: cleanUid,
           email: cleanEmail,
-          password: 'FirebaseVerifiedSession@2026',
+          password: userPassword,
           displayName: user.displayName || cleanEmail,
           company: user.company || user.companyName || 'Enterprise Member',
           companyId: user.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -34,6 +38,8 @@ export async function POST(req: NextRequest) {
         },
         { skipVerification: true, firstLoginCompleted: true }
       );
+    } else if (user.password && user.password !== 'FirebaseVerifiedSession@2026') {
+      serverSecurityStore.updateUserPassword(cleanEmail, user.password);
     }
 
     return NextResponse.json({ success: true, uid: cleanUid });

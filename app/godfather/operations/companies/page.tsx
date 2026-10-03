@@ -1018,7 +1018,7 @@ function CompaniesKYCContent() {
                         <div className="font-bold text-slate-700 text-xs">No Master Entities Found</div>
                         <div className="text-[9px]">
                           {isLoadingDbms
-                            ? 'Loading DBMS Master Registry from .knox/dbms/companies.json...'
+                            ? 'Loading DBMS Master Registry from .data/dbms/companies.json...'
                             : 'Zero company records matching the applied search or filter query.'}
                         </div>
                       </td>
@@ -1175,7 +1175,7 @@ function CompaniesKYCContent() {
                 </tbody>
               </table>
               <div className="gf-excel-status-bar">
-                <span>● DBMS MASTER COMPANY REPOSITORY (.knox/dbms/companies.json)</span>
+                <span>● DBMS MASTER COMPANY REPOSITORY (.data/dbms/companies.json)</span>
                 <span>Showing {filteredDbmsCompanies.length} of {dbmsCompanies.length} Master Entities</span>
               </div>
             </div>

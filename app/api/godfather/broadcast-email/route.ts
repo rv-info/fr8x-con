@@ -7,7 +7,7 @@ import { BroadcastEmailTemplateParams } from '@/lib/email-templates';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 function getHistoryFilePath(): string {
-  const dir = path.join(process.cwd(), '.knox');
+  const dir = path.join(process.cwd(), '.data');
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }

@@ -32,7 +32,8 @@ export async function POST(req: NextRequest) {
     const email = body.email ? String(body.email).trim().toLowerCase() : '';
     const uid = body.uid || cookieUid;
     const sessionId = body.sessionId || cookieSessionId;
-    const clientDeviceId = body.deviceId || cookieDeviceId;
+    const explicitCookieDeviceId = req.cookies.get('fr8x_device_id')?.value;
+    const clientDeviceId = body.deviceId || cookieDeviceId || explicitCookieDeviceId;
 
     if (!uid && !email) {
       return NextResponse.json(

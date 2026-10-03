@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
-import { RateItem, FeedPost, UserPresenceState, IdempotentEvent, LogisticsIntent } from '@/lib/types';
+import { RateItem, FeedPost, UserPresenceState, IdempotentEvent, LogisticsIntent, Auction } from '@/lib/types';
 
 function initDbmsDir(): string {
-  const primaryDir = path.join(process.cwd(), '.knox', 'dbms');
+  const primaryDir = path.join(process.cwd(), '.data', 'dbms');
   try {
     if (!fs.existsSync(primaryDir)) {
       fs.mkdirSync(primaryDir, { recursive: true });
@@ -14,7 +14,7 @@ function initDbmsDir(): string {
     return primaryDir;
   } catch {
     // Read-only filesystem (e.g. Vercel serverless / AWS Lambda)
-    const tmpDir = path.join(process.env.TMPDIR || '/tmp', 'fr8x-knox', 'dbms');
+    const tmpDir = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms');
     try {
       if (!fs.existsSync(tmpDir)) {
         fs.mkdirSync(tmpDir, { recursive: true });
@@ -23,6 +23,7 @@ function initDbmsDir(): string {
       const files = [
         'rates.json',
         'posts.json',
+        'auctions.json',
         'users.json',
         'verifications.json',
         'verification_audit.json',
@@ -32,6 +33,7 @@ function initDbmsDir(): string {
         'intents.json',
         'transactions.json',
         'email_delivery_events.json',
+        'godfather_operator.json',
       ];
       for (const file of files) {
         const src = path.join(primaryDir, file);
@@ -52,6 +54,7 @@ function initDbmsDir(): string {
 const DBMS_DIR = initDbmsDir();
 const RATES_FILE = path.join(DBMS_DIR, 'rates.json');
 const POSTS_FILE = path.join(DBMS_DIR, 'posts.json');
+const AUCTIONS_FILE = path.join(DBMS_DIR, 'auctions.json');
 const USERS_FILE = path.join(DBMS_DIR, 'users.json');
 const VERIFICATIONS_FILE = path.join(DBMS_DIR, 'verifications.json');
 const VERIFICATION_AUDIT_FILE = path.join(DBMS_DIR, 'verification_audit.json');
@@ -227,6 +230,80 @@ export function deletePersistedPost(postId: string | number): boolean {
   } catch (err) {
     console.error('[DBMS] Error deleting persisted post:', err);
     return false;
+  }
+}
+
+// ─── AUCTIONS REPOSITORY ─────────────────────────────────────────────────────
+
+export function getPersistedAuctions(): Auction[] {
+  return safeReadJsonFile<Auction[]>(AUCTIONS_FILE, []);
+}
+
+export function savePersistedAuction(auction: Auction): Auction {
+  try {
+    const existing = getPersistedAuctions();
+    const idx = existing.findIndex((a) => a.id === auction.id);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...auction, updatedAt: new Date().toISOString() };
+    } else {
+      existing.unshift({ ...auction, createdAt: (auction as any).createdAt || new Date().toISOString() });
+    }
+    atomicWriteJsonFile(AUCTIONS_FILE, existing);
+    return auction;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted auction:', err);
+    return auction;
+  }
+}
+
+export function cancelPersistedAuction(auctionId: string): boolean {
+  try {
+    const existing = getPersistedAuctions();
+    const idx = existing.findIndex((a) => a.id === auctionId);
+    if (idx >= 0) {
+      existing[idx] = {
+        ...existing[idx],
+        status: 'Cancelled' as any,
+        isActive: false,
+        cancelledAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      atomicWriteJsonFile(AUCTIONS_FILE, existing);
+      return true;
+    }
+    return false;
+  } catch (err) {
+    console.error('[DBMS] Error cancelling persisted auction:', err);
+    return false;
+  }
+}
+
+export function deletePersistedAuction(auctionId: string): boolean {
+  // Deleting an auction marks it inactive and status: 'Cancelled' (audit preserved)
+  return cancelPersistedAuction(auctionId);
+}
+
+export function bulkSavePersistedAuctions(auctions: Auction[]): Auction[] {
+  try {
+    const existing = getPersistedAuctions();
+    const map = new Map<string, Auction>();
+    for (const a of existing) {
+      map.set(a.id, a);
+    }
+    for (const a of auctions) {
+      const prev = map.get(a.id);
+      map.set(a.id, {
+        ...(prev || {}),
+        ...a,
+        updatedAt: new Date().toISOString(),
+      });
+    }
+    const merged = Array.from(map.values());
+    atomicWriteJsonFile(AUCTIONS_FILE, merged);
+    return auctions;
+  } catch (err) {
+    console.error('[DBMS] Error bulk saving persisted auctions:', err);
+    return auctions;
   }
 }
 

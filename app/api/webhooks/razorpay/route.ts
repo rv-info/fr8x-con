@@ -9,7 +9,7 @@ import { EmailService } from '@/lib/email-service';
  * Razorpay Webhook Receiver
  * Handles incoming events: payment.captured, order.paid, payment.failed
  * Supports constant-time HMAC SHA256 signature verification, automatic plan entitlement
- * provisioning, authoritative Knox DBMS financial ledger recording, and transactional email dispatch.
+ * provisioning, authoritative FR8X DBMS financial ledger recording, and transactional email dispatch.
  */
 export async function POST(req: NextRequest) {
   try {

@@ -35,6 +35,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# Knox / IDE
+# Local data / IDE
+.data/
 .knox/
 .agents/

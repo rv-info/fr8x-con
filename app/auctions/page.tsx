@@ -40,7 +40,7 @@ import { Auction, SubmittedBid } from '@/lib/types';
 import { formatNumber } from '@/lib/utils';
 
 export default function AuctionsPage() {
-  const { auctions, mySubmittedBids, updateAuctionStatus } = useData();
+  const { auctions, mySubmittedBids, updateAuctionStatus, cancelAuction } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -52,19 +52,38 @@ export default function AuctionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedAuctionModal, setSelectedAuctionModal] = useState<Auction | null>(null);
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
+  const [cancellingAuction, setCancellingAuction] = useState<Auction | null>(null);
+
+  // Deduplicate auctions and filter out any dummy records
+  const cleanAuctions = React.useMemo(() => {
+    const seenSigs = new Set<string>();
+    const result: Auction[] = [];
+    for (const a of auctions) {
+      if (!a || !a.id) continue;
+      // Filter dummy seed IDs
+      if (['RA-2026-0842', 'GB-2026-0311', 'RA-2026-0901', 'RA-2026-0788'].includes(a.id)) {
+        continue;
+      }
+      const sig = `${a.creatorUid}_${a.shipment?.pol}_${a.shipment?.pod}_${a.shipment?.commodity}_${a.containers?.[0]?.equipmentType}_${a.startDate}`;
+      if (seenSigs.has(sig)) continue;
+      seenSigs.add(sig);
+      result.push(a);
+    }
+    return result;
+  }, [auctions]);
 
   // Derived filtered lists
-  const liveAuctions = auctions.filter((a) => a.status === 'Live');
-  const postedAuctions = auctions.filter((a) => a.creatorUid === user.uid);
-  const participatedAuctions = auctions.filter(
+  const liveAuctions = cleanAuctions.filter((a) => a.status === 'Live');
+  const postedAuctions = cleanAuctions.filter((a) => a.creatorUid === user.uid);
+  const participatedAuctions = cleanAuctions.filter(
     (a) =>
       mySubmittedBids.some((b) => b.auctionId === a.id) ||
       a.bids?.some((b) => b.bidderUid === user.uid || b.bidderCompany === user.company)
   );
-  const draftAuctions = auctions.filter((a) => a.status === 'Draft');
-  const closedAuctions = auctions.filter((a) => a.status === 'Closed');
-  const awardedAuctions = auctions.filter((a) => a.status === 'Awarded');
-  const expiredAuctions = auctions.filter((a) => a.status === 'Expired');
+  const draftAuctions = cleanAuctions.filter((a) => a.status === 'Draft');
+  const closedAuctions = cleanAuctions.filter((a) => a.status === 'Closed');
+  const awardedAuctions = cleanAuctions.filter((a) => a.status === 'Awarded');
+  const expiredAuctions = cleanAuctions.filter((a) => a.status === 'Expired');
 
   // Filter with search
   const matchesSearch = (a: Auction) => {
@@ -109,7 +128,7 @@ export default function AuctionsPage() {
       case 'expired':
         return expiredAuctions.filter(matchesSearch);
       default:
-        return auctions.filter(matchesSearch);
+        return cleanAuctions.filter(matchesSearch);
     }
   };
 
@@ -310,6 +329,50 @@ export default function AuctionsPage() {
                   <Gavel size={13} /> Enter Live Bidding Room
                 </Link>
               )}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Cancel Bidding Confirmation Modal */}
+      {cancellingAuction && (
+        <Modal
+          isOpen={Boolean(cancellingAuction)}
+          onClose={() => setCancellingAuction(null)}
+          title={`Cancel & Deactivate Bidding: ${cancellingAuction.id}`}
+          maxWidth="520px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ padding: '12px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', fontSize: '12.5px', color: '#991b1b', lineHeight: 1.5 }}>
+              <b>⚠️ Governance & Inactive Status Notice:</b>
+              <p style={{ margin: '6px 0 0' }}>
+                Are you sure you want to cancel reverse auction <b>{cancellingAuction.id}</b> ({cancellingAuction.shipment?.pol?.split('(')[0]} → {cancellingAuction.shipment?.pod?.split('(')[0]})?
+              </p>
+              <p style={{ margin: '6px 0 0', fontSize: '11.5px', color: '#b91c1c' }}>
+                Per FR8X Professional Trade Standards, deleting this auction marks the bidding room <b>INACTIVE</b> and sets the record status to <b>CANCELLED</b>. The audit history is preserved transparently.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', borderTop: '1px solid var(--line)', paddingTop: '10px' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                onClick={() => setCancellingAuction(null)}
+              >
+                Keep Active
+              </button>
+              <button
+                type="button"
+                className="btn primary"
+                style={{ background: '#dc2626', borderColor: '#dc2626' }}
+                onClick={async () => {
+                  const targetId = cancellingAuction.id;
+                  setCancellingAuction(null);
+                  await cancelAuction(targetId);
+                }}
+              >
+                Confirm Cancellation (Mark Inactive)
+              </button>
             </div>
           </div>
         </Modal>
@@ -717,7 +780,8 @@ export default function AuctionsPage() {
                   </tr>
                 ) : (
                   currentTabAuctions().map((auction) => {
-                    const isPostingParty = auction.creatorUid === user.uid;
+                    const isPostingParty = auction.creatorUid === user?.uid;
+                    const canCancel = auction.status !== 'Cancelled' && (isPostingParty || (user as any)?.role === 'super_admin' || (user as any)?.role === 'company_admin');
                     return (
                     <tr key={auction.id}>
                       <td>
@@ -793,6 +857,17 @@ export default function AuctionsPage() {
                               Resume
                             </Link>
                           )}
+                          {canCancel && (
+                            <button
+                              type="button"
+                              className="btn secondary sm"
+                              style={{ color: '#dc2626', borderColor: '#fca5a5' }}
+                              onClick={() => setCancellingAuction(auction)}
+                              title="Delete / Cancel Bidding Room (Marks Inactive)"
+                            >
+                              <XCircle size={12} /> Cancel
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -822,6 +897,8 @@ export default function AuctionsPage() {
               </div>
             ) : (
               currentTabAuctions().map((auction) => {
+                const isPostingParty = auction.creatorUid === user?.uid;
+                const canCancel = auction.status !== 'Cancelled' && (isPostingParty || (user as any)?.role === 'super_admin' || (user as any)?.role === 'company_admin');
                 return (
                   <div key={`mob-auc-${auction.id}`} className="auction-mobile-card">
                     {/* Top Row: ID, Status Badge & Time/Date */}
@@ -893,7 +970,7 @@ export default function AuctionsPage() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', borderTop: '1px solid #f1f5f9', paddingTop: '8px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
                         className="btn secondary sm"
@@ -919,6 +996,17 @@ export default function AuctionsPage() {
                         >
                           Resume Draft
                         </Link>
+                      )}
+                      {canCancel && (
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          style={{ fontSize: '11px', padding: '5px 8px', color: '#dc2626', borderColor: '#fca5a5' }}
+                          onClick={() => setCancellingAuction(auction)}
+                          title="Delete / Cancel Bidding Room"
+                        >
+                          <XCircle size={11} /> Cancel
+                        </button>
                       )}
                     </div>
                   </div>

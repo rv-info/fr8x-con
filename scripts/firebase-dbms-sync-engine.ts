@@ -6,7 +6,7 @@
  * Purpose:
  * - Establishes resilient, long-term, production-grade connection to Firebase.
  * - Authenticates foundation accounts via Firebase Auth (Email/Password & REST).
- * - Synchronizes authoritative DBMS records (.knox/dbms/users.json) into Firestore
+ * - Synchronizes authoritative DBMS records (.data/dbms/users.json) into Firestore
  *   collections (`users` and `profiles`).
  * - Performs bidirectional health audit, read-back verification, and schema validation.
  * - Works completely within Firebase Spark (free tier) with zero third-party costs.
@@ -122,10 +122,10 @@ export class FirebaseSyncEngine {
   }
 
   /**
-   * Reads all authoritative records from local DBMS (.knox/dbms/users.json).
+   * Reads all authoritative records from local DBMS (.data/dbms/users.json).
    */
   public loadDBMSUsers(): any[] {
-    const dbmsPath = path.resolve(process.cwd(), '.knox', 'dbms', 'users.json');
+    const dbmsPath = path.resolve(process.cwd(), '.data', 'dbms', 'users.json');
     if (!fs.existsSync(dbmsPath)) {
       return [];
     }
@@ -174,7 +174,7 @@ export class FirebaseSyncEngine {
       console.log(`   ✓ Authenticated as: ${result.authenticatedEmail} (UID: ${result.authenticatedUid})`);
 
       // Step 2: Load DBMS users
-      console.log('📁 Step 2: Reading authoritative users from DBMS (.knox/dbms/users.json)...');
+      console.log('📁 Step 2: Reading authoritative users from DBMS (.data/dbms/users.json)...');
       const dbmsUsers = this.loadDBMSUsers();
       console.log(`   ✓ Loaded ${dbmsUsers.length} user records from local DBMS.`);
 

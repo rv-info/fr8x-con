@@ -244,6 +244,7 @@ interface DataContextType {
   auctions: Auction[];
   addAuction: (auctionData: Partial<Auction>) => string;
   updateAuctionStatus: (auctionId: string, status: Auction['status']) => void;
+  cancelAuction: (auctionId: string) => Promise<boolean>;
   verifyAuctionPayment: (auctionId: string, verifiedBy?: string) => void;
   submitBid: (auctionId: string, charges: any[], grandTotalUSD: number, evidenceMetadata?: any) => boolean;
   mySubmittedBids: SubmittedBid[];
@@ -586,8 +587,40 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
           }
 
-          // 3. Revalidate from authoritative server-side DBMS (.knox/dbms)
-          fetch('/api/rates')
+          // 3. Revalidate from authoritative server-side DBMS (.data/dbms)
+          const activeUid = user?.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+          const authHeaders: Record<string, string> = activeUid
+            ? {
+                'x-fr8x-user-uid': activeUid,
+                'x-fr8x-session': activeUid,
+              }
+            : {};
+
+          // Sync Reverse Auctions across devices
+          fetch('/api/auctions', { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.success && Array.isArray(data.auctions)) {
+                const apiAuctions = data.auctions.filter((a: Auction) => !isDummyAuction(a));
+                setAuctions((prev) => {
+                  const merged = new Map<string, Auction>();
+                  const seenSig = new Set<string>();
+                  // Deduplicate identical records
+                  for (const a of [...apiAuctions, ...prev.filter((p) => !isDummyAuction(p))]) {
+                    const sig = `${a.creatorUid}_${a.shipment?.pol}_${a.shipment?.pod}_${a.shipment?.commodity}_${a.containers?.[0]?.equipmentType}_${a.startDate}`;
+                    if (seenSig.has(sig)) continue;
+                    seenSig.add(sig);
+                    merged.set(a.id, a);
+                  }
+                  const result = Array.from(merged.values());
+                  try { localStorage.setItem('fr8x_auctions', JSON.stringify(result)); } catch {}
+                  return result;
+                });
+              }
+            })
+            .catch(() => {});
+
+          fetch('/api/rates', { headers: authHeaders })
             .then((res) => res.json())
             .then((data) => {
               if (data?.success && Array.isArray(data.rates)) {
@@ -613,7 +646,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             })
             .catch(() => {});
 
-          fetch('/api/feed')
+          fetch('/api/feed', { headers: authHeaders })
             .then((res) => res.json())
             .then((data) => {
               if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
@@ -624,12 +657,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 });
                 setPosts((prev) => {
                   const map = new Map<string, FeedPost>();
-                  apiPosts.forEach((p: FeedPost) => map.set(String(p.id), p));
-                  prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author))).forEach((p) => {
-                    if (!map.has(String(p.id))) {
-                      map.set(String(p.id), p);
-                    }
-                  });
+                  const seenSig = new Set<string>();
+                  for (const p of [...apiPosts, ...prev]) {
+                    const sig = `${p.authorUid || p.author}::${(p.text || '').trim().toLowerCase()}::${(p.createdAt || '').slice(0, 16)}`;
+                    if (seenSig.has(sig)) continue;
+                    seenSig.add(sig);
+                    map.set(String(p.id), p);
+                  }
                   const merged = Array.from(map.values());
                   try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
                   return merged;
@@ -680,6 +714,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Feed Actions
   const addPost = (text: string, postType: FeedPost['postType'] = 'general') => {
     if (!text.trim()) return;
+
+    // Prevent immediate duplicate post submission
+    const trimmed = text.trim();
+    const isDup = posts.some((p) => {
+      const isSameAuthor = p.authorUid === user.uid || p.author === user.displayName;
+      const isSameText = (p.text || '').trim().toLowerCase() === trimmed.toLowerCase();
+      const timeDiff = Date.now() - new Date(p.createdAt || 0).getTime();
+      return isSameAuthor && isSameText && timeDiff < 60000;
+    });
+    if (isDup) {
+      toast('Identical post was recently submitted. Auto-duplicate prevented.');
+      return;
+    }
+
     const now = new Date().toISOString();
     const newPost: FeedPost = {
       id: `post-${Date.now()}`,
@@ -690,7 +738,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       authorTimezone: user.timezone,
       hasGoldenTick: user.hasGoldenTick,
       time: 'Just now',
-      text: text.trim(),
+      text: trimmed,
       postType,
       likes: 0,
       dis: 0,
@@ -717,11 +765,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Offline queueing + server DBMS sync + live cloud sync
+    // Offline queueing + server persistence + live cloud sync
     queueAction('create_post', newPost, user.uid);
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     fetch('/api/feed', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
       body: JSON.stringify(newPost),
     }).catch(() => {});
     upsertPostInDB(newPost).catch(() => {});
@@ -1431,8 +1483,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Reverse Auctions Workflow
   const addAuction = (auctionData: Partial<Auction>): string => {
-    const id = `RA-2026-${String(Math.floor(1000 + Math.random() * 9000))}`;
-    const rfqId = `RFQ-${String(Math.floor(10000 + Math.random() * 90000))}`;
+    // Check if an identical draft auction already exists for this user/route to prevent duplicate records
+    const existingDraft = auctions.find((a) =>
+      a.creatorUid === user.uid &&
+      a.status === 'Draft' &&
+      a.shipment?.pol === (auctionData.shipment?.pol || 'Nhava Sheva (INNSA), India') &&
+      a.shipment?.pod === (auctionData.shipment?.pod || 'Rotterdam (NLRTM), Netherlands')
+    );
+
+    const id = existingDraft ? existingDraft.id : (auctionData.id || `RA-2026-${String(Math.floor(1000 + Math.random() * 9000))}`);
+    const rfqId = existingDraft?.rfqId || auctionData.rfqId || `RFQ-${String(Math.floor(10000 + Math.random() * 90000))}`;
 
     const isPaidOrWaived = auctionData.paymentStatus === 'paid' || auctionData.paymentStatus === 'waived_promotional';
 
@@ -1523,10 +1583,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
 
     setAuctions((prev) => {
-      const next = [newAuction, ...prev];
+      const filtered = prev.filter((a) => a.id !== id);
+      const next = [newAuction, ...filtered];
       try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    // Server-side persistence across devices
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch('/api/auctions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+      body: JSON.stringify(newAuction),
+    }).catch((err) => console.warn('[DataContext] Auction server save error:', err));
+
     queueAction('create_auction', newAuction, user.uid);
     upsertAuctionInDB(newAuction).catch(() => {});
     eventBus.recordEvent({
@@ -1537,31 +1610,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
       immediate: true,
     });
 
-    // Also post an immutable announcement in the feed
-    const feedAnnouncement: FeedPost = {
-      id: `post-auc-${Date.now()}`,
-      authorUid: user.uid,
-      author: user.displayName,
-      authorRole: `${user.designation} · ${user.city}`,
-      authorCompany: user.company,
-      authorTimezone: user.timezone,
-      hasGoldenTick: user.hasGoldenTick,
-      time: 'Just now',
-      text: `📢 **Reverse Auction Published: ${newAuction.title}**\n- **Route**: ${newAuction.shipment.pol} → ${newAuction.shipment.pod}\n- **Incoterm**: ${newAuction.shipment.incoterm}\n- **Containers**: ${newAuction.containers.map((c) => `${c.quantity}x ${c.equipmentType}`).join(', ')}\n- **Status**: Live\n\n*This is an immutable auction record.*`,
-      likes: 0,
-      dis: 0,
-      liked: false,
-      disliked: false,
-      isSaved: false,
-      isAuctionAnnouncement: true,
-      auctionRefId: id,
-      comments: [],
-      createdAt: new Date().toISOString(),
-      status: 'active',
-      schemaVersion: 2,
-    };
-    setPosts((prev) => [feedAnnouncement, ...prev]);
-    upsertPostInDB(feedAnnouncement).catch(() => {});
+    // If published live, post announcement
+    if (newAuction.status === 'Live') {
+      const feedAnnouncement: FeedPost = {
+        id: `post-auc-${Date.now()}`,
+        authorUid: user.uid,
+        author: user.displayName,
+        authorRole: `${user.designation} · ${user.city}`,
+        authorCompany: user.company,
+        authorTimezone: user.timezone,
+        hasGoldenTick: user.hasGoldenTick,
+        time: 'Just now',
+        text: `📢 **Reverse Auction Published: ${newAuction.title}**\n- **Route**: ${newAuction.shipment.pol} → ${newAuction.shipment.pod}\n- **Incoterm**: ${newAuction.shipment.incoterm}\n- **Containers**: ${newAuction.containers.map((c) => `${c.quantity}x ${c.equipmentType}`).join(', ')}\n- **Status**: Live\n\n*This is an immutable auction record.*`,
+        likes: 0,
+        dis: 0,
+        liked: false,
+        disliked: false,
+        isSaved: false,
+        isAuctionAnnouncement: true,
+        auctionRefId: id,
+        comments: [],
+        createdAt: new Date().toISOString(),
+        status: 'active',
+        schemaVersion: 2,
+      };
+      setPosts((prev) => [feedAnnouncement, ...prev]);
+      upsertPostInDB(feedAnnouncement).catch(() => {});
+    }
 
     if (newAuction.selectedBidders.length > 0) {
       newAuction.selectedBidders.forEach((b) => {
@@ -1569,7 +1644,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    toast(`Reverse Auction ${id} published successfully.`);
+    toast(newAuction.status === 'Draft' ? `Auction ${id} saved as Draft.` : `Reverse Auction ${id} published successfully.`);
     return id;
   };
 
@@ -1579,7 +1654,40 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
       return next;
     });
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch('/api/auctions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+      body: JSON.stringify({ id: auctionId, status }),
+    }).catch(() => {});
     toast(`Auction ${auctionId} status changed to ${status}.`);
+  };
+
+  const cancelAuction = async (auctionId: string): Promise<boolean> => {
+    const now = new Date().toISOString();
+    setAuctions((prev) => {
+      const next = prev.map((a) =>
+        a.id === auctionId
+          ? { ...a, status: 'Cancelled' as const, isActive: false, cancelledAt: now }
+          : a
+      );
+      try { localStorage.setItem('fr8x_auctions', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    try {
+      await fetch(`/api/auctions?id=${encodeURIComponent(auctionId)}`, {
+        method: 'DELETE',
+        headers: activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {},
+      });
+    } catch {}
+
+    toast(`Reverse Auction ${auctionId} cancelled and deactivated.`);
+    return true;
   };
 
   const verifyAuctionPayment = (auctionId: string, verifiedBy: string = 'Godfather Platform Tech') => {
@@ -1742,10 +1850,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server DBMS persistence
+    // Server persistence across devices
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     fetch('/api/rates', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
       body: JSON.stringify(newRate),
     }).catch(() => {});
 
@@ -1775,10 +1887,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server DBMS update
+    // Server update
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     fetch('/api/rates', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
       body: JSON.stringify({ id: rateId, ...updates, updatedAt: now }),
     }).catch(() => {});
 
@@ -1800,9 +1916,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server DBMS deletion
+    // Server deletion
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     fetch(`/api/rates?id=${encodeURIComponent(rateId)}`, {
       method: 'DELETE',
+      headers: activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {},
     }).catch(() => {});
 
     // Cloud Firestore deletion + offline outbox queue
@@ -2006,6 +2124,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       auctions,
       addAuction,
       updateAuctionStatus,
+      cancelAuction,
       verifyAuctionPayment,
       submitBid,
       mySubmittedBids,

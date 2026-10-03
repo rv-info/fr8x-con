@@ -125,10 +125,13 @@ export interface UserProfile {
   address?: string;
   postalCode?: string;
   formattedAddress?: string;
+  location?: string;
   position?: string;
   department?: string;
   coordinates?: Coordinates;
   mobile: string;
+  phone?: string;
+  isdCode?: string;
   alternateMobile?: string;
   whatsappSameAsMobile?: boolean;
   timezone: string; // IANA string e.g. "Asia/Kolkata", "Europe/Rotterdam", "America/New_York"
@@ -195,6 +198,12 @@ export interface UserProfile {
   // Privacy & Contact Visibility Configuration
   privacySettings?: UserPrivacySettings;
   contacts?: string[]; // Array of connected user UIDs
+  // Account Lifecycle & Deletion Governance
+  accountStatus?: 'active' | 'pending_deletion' | 'deleted' | 'suspended';
+  deletionScheduledAt?: string;
+  deletionEffectiveAt?: string;
+  deletionType?: 'five_day_grace' | 'permanent';
+  deletionReason?: string;
 }
 
 export interface NestedReply {
@@ -523,6 +532,8 @@ export interface Auction {
   endDateTime: string;
   timezone: string;
   status: 'Live' | 'Closed' | 'Draft' | 'Awarded' | 'Cancelled' | 'Expired';
+  isActive?: boolean;
+  cancelledAt?: string;
   rank?: string;
   timeLeft?: string;
   bidCount?: number;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySignedSessionToken, verifyCsrfToken } from '@/lib/crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { getPersistedUserByIdentifier } from '@/lib/dbms/server-dbms';
 
 export interface AuthenticatedGodfatherOperator {
   sessionId: string;
@@ -110,7 +111,10 @@ export function authenticateGodfatherOperator(req: NextRequest): {
 /**
  * Validates that an incoming NextRequest possesses a valid enterprise user session.
  */
-export function authenticateUserSession(req: NextRequest): {
+export function authenticateUserSession(
+  req: NextRequest,
+  options?: { allowUnverified?: boolean }
+): {
   authenticated: boolean;
   user?: AuthenticatedUserSession;
   errorResponse?: NextResponse;
@@ -176,7 +180,34 @@ export function authenticateUserSession(req: NextRequest): {
     }
   }
 
-  const userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
+  let userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
+  if (!userRecord) {
+    serverSecurityStore.loadPersistedState();
+    userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
+  }
+  if (!userRecord) {
+    const dbmsUser = getPersistedUserByIdentifier(uid);
+    if (dbmsUser) {
+      serverSecurityStore.updateUserProfile(dbmsUser.uid || uid, dbmsUser as any);
+      userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
+    }
+  }
+  if (!userRecord && isSignedTokenCandidate) {
+    const verified = verifySignedSessionToken<{ uid: string; email: string; role: string; companyId?: string; displayName?: string }>(token);
+    if (verified.valid && verified.payload?.uid) {
+      const email = verified.payload.email || `${verified.payload.uid}@enterprise.local`;
+      const updateRes = serverSecurityStore.updateUserProfile(verified.payload.uid, {
+        uid: verified.payload.uid,
+        email,
+        displayName: verified.payload.displayName || email.split('@')[0] || 'Enterprise Member',
+        company: verified.payload.companyId || 'Enterprise Legal Entity',
+        role: (verified.payload.role as any) || 'user',
+        status: 'active',
+      });
+      userRecord = updateRes.user;
+    }
+  }
+
   if (!userRecord || userRecord.status === 'blocked') {
     return {
       authenticated: false,
@@ -191,8 +222,8 @@ export function authenticateUserSession(req: NextRequest): {
     };
   }
 
-  // Feature Guard: Unverified users cannot access protected features
-  if (userRecord.email_verified === false || userRecord.status === 'pending_verification') {
+  // Feature Guard: Unverified users cannot access protected features (unless allowUnverified is specified)
+  if (!options?.allowUnverified && (userRecord.email_verified === false || userRecord.status === 'pending_verification')) {
     return {
       authenticated: false,
       errorResponse: NextResponse.json(

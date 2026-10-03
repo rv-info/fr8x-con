@@ -22,6 +22,9 @@ import {
   ensureFirebaseAuth,
   getUserProfileFromFirestore,
   logStructuredError,
+  deleteCanonicalUserDoc,
+  scheduleCanonicalUserDeletion,
+  cancelCanonicalUserDeletion,
 } from '@/lib/firebase/firestore';
 
 // SECURITY: INITIAL_USERS seed data removed.
@@ -79,9 +82,19 @@ export function getOrCreateDeviceId(): string {
   try {
     let deviceId = localStorage.getItem('fr8x_device_id');
     if (!deviceId) {
+      const match = document.cookie.match(/(?:^|;\s*)fr8x_device_id=([^;]+)/);
+      if (match && match[1]) {
+        deviceId = match[1];
+        localStorage.setItem('fr8x_device_id', deviceId);
+      }
+    }
+    if (!deviceId) {
       deviceId = `dev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
       localStorage.setItem('fr8x_device_id', deviceId);
     }
+    try {
+      document.cookie = `fr8x_device_id=${deviceId}; path=/; max-age=31536000; SameSite=Lax`;
+    } catch {}
     return deviceId;
   } catch {
     return 'dev_fallback';
@@ -172,6 +185,11 @@ interface AuthContextType {
   loadRemembered: () => string | null;
   bidPostingFee: number;
   bidDiscountPercentage: number;
+  deleteAccount: (
+    type: 'five_day_grace' | 'permanent',
+    reason?: string
+  ) => Promise<{ success: boolean; error?: string; message?: string }>;
+  cancelAccountDeletion: () => Promise<{ success: boolean; error?: string; message?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -223,6 +241,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(LAST_ACTIVITY_KEY, now);
         } catch {}
       }
+
+      // PDF Requirement 3: Make sure all the live data should be fetched live
+      fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
+        headers: {
+          'x-fr8x-user-uid': activeUid,
+          'x-fr8x-session': activeUid,
+        },
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (isSubscribed && data?.success && data?.user) {
+            const liveUser: UserProfile = data.user;
+            setCurrentUser(liveUser);
+            currentUserRef.current = liveUser;
+            setUserStatusState('available');
+            setIsLoading(false);
+            setAllUsers((prev) => {
+              const next = [liveUser, ...prev.filter((u) => u.uid !== liveUser.uid)];
+              try { localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(next)); } catch {}
+              return next;
+            });
+          }
+        })
+        .catch(() => {});
     }
 
     // 2. Fetch network members roster for search / directory features
@@ -609,6 +651,153 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     updateUser({ plan, hasGoldenTick });
   };
 
+  const deleteAccount = async (
+    type: 'five_day_grace' | 'permanent',
+    reason?: string
+  ): Promise<{ success: boolean; error?: string; message?: string }> => {
+    const targetUid = currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null);
+    if (!targetUid) {
+      return { success: false, error: 'No active session found.' };
+    }
+
+    try {
+      if (type === 'five_day_grace') {
+        const now = new Date();
+        const effectiveAt = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000).toISOString();
+
+        // 1. Update DBMS via API
+        const apiRes = await fetch('/api/user/delete-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-fr8x-user-uid': targetUid,
+            'x-fr8x-session': targetUid,
+          },
+          body: JSON.stringify({
+            action: 'schedule_5_days',
+            uid: targetUid,
+            reason: reason || 'User requested 5-day account deactivation & deletion',
+          }),
+        });
+        await apiRes.json().catch(() => ({}));
+
+        // 2. Update Firestore
+        scheduleCanonicalUserDeletion(targetUid, effectiveAt, reason).catch(() => {});
+
+        // 3. Update client state
+        const updatedProfile: Partial<UserProfile> = {
+          accountStatus: 'pending_deletion',
+          deletionScheduledAt: now.toISOString(),
+          deletionEffectiveAt: effectiveAt,
+          deletionType: 'five_day_grace',
+          deletionReason: reason,
+        };
+        updateUser(updatedProfile);
+
+        return {
+          success: true,
+          message: 'Account scheduled for deletion in 5 days. You can cancel anytime before it expires.',
+        };
+      }
+
+      if (type === 'permanent') {
+        // 1. Call API for immediate purge
+        await fetch('/api/user/delete-account', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-fr8x-user-uid': targetUid,
+            'x-fr8x-session': targetUid,
+          },
+          body: JSON.stringify({
+            action: 'permanent',
+            uid: targetUid,
+            reason: reason || 'User requested permanent account purge',
+          }),
+        }).catch(() => {});
+
+        // 2. Delete Firestore doc
+        deleteCanonicalUserDoc(targetUid).catch(() => {});
+
+        // 3. Try Firebase Auth deletion if currentUser matches
+        if (auth && auth.currentUser) {
+          try {
+            const { deleteUser } = await import('firebase/auth');
+            await deleteUser(auth.currentUser);
+          } catch (e) {
+            console.warn('[AuthContext] Firebase auth user delete warning:', e);
+          }
+        }
+
+        // 4. Wipe local caches
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem(`fr8x_user_avatar_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_logo_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_city_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_state_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_country_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_address_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_timezone_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_exp_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_edu_${targetUid}`);
+            localStorage.removeItem(`fr8x_user_cert_${targetUid}`);
+          } catch {}
+        }
+
+        setAllUsers((prev) => prev.filter((u) => u.uid !== targetUid));
+        logout('Account permanently purged.');
+        return { success: true, message: 'Account permanently deleted.' };
+      }
+
+      return { success: false, error: 'Invalid deletion type specified.' };
+    } catch (err: any) {
+      console.error('[AuthContext] deleteAccount error:', err);
+      return { success: false, error: err.message || 'Failed to process account deletion.' };
+    }
+  };
+
+  const cancelAccountDeletion = async (): Promise<{ success: boolean; error?: string; message?: string }> => {
+    const targetUid = currentUser?.uid || (typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_SESSION_KEY) : null);
+    if (!targetUid) {
+      return { success: false, error: 'No active session found.' };
+    }
+
+    try {
+      // 1. Call API
+      const apiRes = await fetch('/api/user/delete-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fr8x-user-uid': targetUid,
+          'x-fr8x-session': targetUid,
+        },
+        body: JSON.stringify({
+          action: 'cancel_deletion',
+          uid: targetUid,
+        }),
+      });
+      await apiRes.json().catch(() => ({}));
+
+      // 2. Cancel Firestore
+      cancelCanonicalUserDeletion(targetUid).catch(() => {});
+
+      // 3. Update client state
+      updateUser({
+        accountStatus: 'active',
+        deletionScheduledAt: undefined,
+        deletionEffectiveAt: undefined,
+        deletionType: undefined,
+        deletionReason: undefined,
+      });
+
+      return { success: true, message: 'Scheduled account deletion cancelled. Account restored to active status.' };
+    } catch (err: any) {
+      console.error('[AuthContext] cancelAccountDeletion error:', err);
+      return { success: false, error: err.message || 'Failed to cancel account deletion.' };
+    }
+  };
+
   /**
    * Finalises client-side session after server authentication succeeds.
    *
@@ -894,11 +1083,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.warn('[AuthContext] Session binding error:', sessErr);
       }
 
-      // 5. Background sync for legacy API compatibility
+      // 5. Background sync for server storage & API compatibility
       fetch('/api/auth/register-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(canonicalUser),
+        body: JSON.stringify({ ...canonicalUser, password }),
       }).catch(() => {});
 
       return { success: true, user: canonicalUser };
@@ -1061,26 +1250,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: 'Please enter your corporate email address.' };
     }
     try {
-      await sendPasswordResetEmail(auth, cleanEmail);
+      // 1. Authoritative password reset dispatch via Zoho ZeptoMail relay (password@fr8x.in)
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        return { success: false, error: data.error || 'Failed to dispatch password reset email.' };
+      }
+
+      // 2. Also trigger Firebase client reset as background secondary if available
+      try {
+        if (auth && (auth as any).app) {
+          sendPasswordResetEmail(auth, cleanEmail).catch(() => {});
+        }
+      } catch {}
+
       return {
         success: true,
-        message: `Password reset link has been dispatched to ${cleanEmail} via Firebase Authentication.`,
+        message: data.message || `Password reset instructions have been dispatched to ${cleanEmail}. Please check your inbox and spam folder.`,
       };
     } catch (err: any) {
       logStructuredError('sendPasswordReset', err, undefined, { email: cleanEmail });
-      let msg = 'Failed to dispatch password reset email. Please try again.';
-      if (err.code === 'auth/user-not-found') {
-        // Controlled message to protect user privacy
-        return {
-          success: true,
-          message: `If an account is associated with ${cleanEmail}, a password reset link has been sent.`,
-        };
-      } else if (err.code === 'auth/invalid-email') {
-        msg = 'Please enter a valid corporate email address.';
-      } else if (err.message) {
-        msg = err.message;
-      }
-      return { success: false, error: msg };
+      return { success: false, error: err.message || 'Failed to dispatch password reset email. Please try again.' };
     }
   };
 
@@ -1177,6 +1371,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loadRemembered: loadRememberedEmailFn,
       bidPostingFee,
       bidDiscountPercentage,
+      deleteAccount,
+      cancelAccountDeletion,
     }),
     // Intentional: Context value is memoized on identity & auth state; handlers reference latest state
     // eslint-disable-next-line react-hooks/exhaustive-deps

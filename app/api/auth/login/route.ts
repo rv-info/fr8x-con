@@ -91,7 +91,8 @@ export async function POST(req: NextRequest) {
     // Generate unique session ID for single-device login enforcement
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
-    const clientDeviceId = body.deviceId ? String(body.deviceId).trim() : `dev_${Date.now()}`;
+    const cookieDeviceId = req.cookies.get('fr8x_device_id')?.value;
+    const clientDeviceId = (body.deviceId ? String(body.deviceId).trim() : '') || cookieDeviceId || `dev_${Date.now()}`;
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent, deviceId: clientDeviceId });
 
     // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
@@ -159,6 +160,13 @@ export async function POST(req: NextRequest) {
       secure: isHttps,
       sameSite: 'lax',
       maxAge: 2 * 60 * 60, // 2 hours strictly
+      path: '/',
+    });
+    res.cookies.set('fr8x_device_id', clientDeviceId, {
+      httpOnly: false,
+      secure: isHttps,
+      sameSite: 'lax',
+      maxAge: 365 * 24 * 60 * 60,
       path: '/',
     });
 

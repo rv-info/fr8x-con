@@ -52,9 +52,9 @@ async function runTests() {
     assert(globalContent.includes('reset()'), 'app/global-error.tsx provides reset trigger');
   }
 
-  // TEST SUITE 3: Crash-Safe Atomic Knox DBMS Engine
-  console.log('\n─── TEST SUITE 3: Crash-Safe Atomic Knox DBMS Engine ───');
-  const testDbFile = path.join(rootDir, '.knox', 'dbms', '.unit_test_atomic.json');
+  // TEST SUITE 3: Crash-Safe Atomic DBMS Engine
+  console.log('\n─── TEST SUITE 3: Crash-Safe Atomic DBMS Engine ───');
+  const testDbFile = path.join(rootDir, '.data', 'dbms', '.unit_test_atomic.json');
   const sampleData = { testId: 'atomic_001', value: 42, timestamp: new Date().toISOString() };
 
   try {
@@ -65,7 +65,7 @@ async function runTests() {
     assert(readData !== null && readData.testId === 'atomic_001' && readData.value === 42, 'safeReadJsonFile accurately deserializes written data');
 
     // Test resilience against empty or corrupt file
-    const corruptFile = path.join(rootDir, '.knox', 'dbms', '.unit_test_corrupt.json');
+    const corruptFile = path.join(rootDir, '.data', 'dbms', '.unit_test_corrupt.json');
     fs.writeFileSync(corruptFile, '{ invalid json syntax !!!', 'utf8');
     const fallbackData = safeReadJsonFile<any[]>(corruptFile, []);
     assert(Array.isArray(fallbackData) && fallbackData.length === 0, 'safeReadJsonFile safely returns fallback default on corrupt JSON without throwing');

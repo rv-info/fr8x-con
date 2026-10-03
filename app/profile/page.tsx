@@ -98,10 +98,11 @@ import {
   AlertTriangle,
   Search,
   Users,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function ProfilePage() {
-  const { user, updateUser, upgradePlan } = useAuth();
+  const { user, updateUser, upgradePlan, deleteAccount, cancelAccountDeletion } = useAuth();
   const { toast } = useToast();
 
   // Mode: View vs Edit
@@ -116,10 +117,41 @@ export default function ProfilePage() {
   // Basic Profile State
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [designation, setDesignation] = useState(user.designation || 'Senior Freight Procurement Manager');
+  const [designation, setDesignation] = useState(user.designation || '');
   const [mobile, setMobile] = useState(user.mobile || '');
   const [company, setCompany] = useState(user.company || '');
   const [summary, setSummary] = useState(user.summary || '');
+
+  // Account Deletion & Deactivation State (5 Days Grace Period / Permanent)
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [deleteMode, setDeleteMode] = useState<'five_day_grace' | 'permanent'>('five_day_grace');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteReason, setDeleteReason] = useState('Personal reasons / closing freight operation');
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isCancellingDeletion, setIsCancellingDeletion] = useState(false);
+
+  // Identity Issue Reporting State (Mobile, Designation, Location Issue Resolution with Professionals)
+  const [showIssueModal, setShowIssueModal] = useState(false);
+  const [issueCategory, setIssueCategory] = useState<'mobile_number' | 'designation' | 'location' | 'general_identity'>('mobile_number');
+  const [issueCurrentValue, setIssueCurrentValue] = useState('');
+  const [issueRequestedValue, setIssueRequestedValue] = useState('');
+  const [issueDescription, setIssueDescription] = useState('');
+  const [isSubmittingIssue, setIsSubmittingIssue] = useState(false);
+  const [lastSubmittedTicket, setLastSubmittedTicket] = useState<string | null>(null);
+
+  const handleOpenIssueModal = (category: 'mobile_number' | 'designation' | 'location', currentVal?: string) => {
+    setIssueCategory(category);
+    let val = currentVal || '';
+    if (!val) {
+      if (category === 'mobile_number') val = mobile || user.mobile || '';
+      else if (category === 'designation') val = designation || user.designation || '';
+      else if (category === 'location') val = [city || user.city, stateName || user.state, country || user.country].filter(Boolean).join(', ');
+    }
+    setIssueCurrentValue(val);
+    setIssueRequestedValue('');
+    setIssueDescription('');
+    setShowIssueModal(true);
+  };
 
   // Persistent storage key helper
   const userStorageKey = user.uid || user.email || 'guest';
@@ -306,7 +338,7 @@ export default function ProfilePage() {
   const [editPhoneNum, setEditPhoneNum] = useState(parsedMobile.phoneNum);
   const [editMobile, setEditMobile] = useState(user.mobile || '');
   const [editWhatsapp, setEditWhatsapp] = useState((user as any).whatsappSameAsMobile !== false);
-  const [editDesignation, setEditDesignation] = useState(user.designation || 'Senior Freight Procurement Manager');
+  const [editDesignation, setEditDesignation] = useState(user.designation || designation || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
   const [editCity, setEditCity] = useState(user.city || city || '');
@@ -318,7 +350,64 @@ export default function ProfilePage() {
   const [transferTargetCompany, setTransferTargetCompany] = useState('');
   const [transferTargetEmail, setTransferTargetEmail] = useState('');
   const [transferMethod, setTransferMethod] = useState<'self' | 'godfather'>('self');
-  const [transferReason, setTransferReason] = useState('Change of Employer / Corporate Reorganization');
+  const [isSavingIdentity, setIsSavingIdentity] = useState(false);
+
+  const handleOpenEditIdentityModal = () => {
+    setEditFirstName(user.firstName || firstName || '');
+    setEditLastName(user.lastName || lastName || '');
+    setEditEmail(user.email || '');
+    setEditPersonId(user.uid || '');
+    setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
+    const initMobile = user.mobile || mobile || (user as any).phone || '';
+    const parsedInit = parseISD(initMobile);
+    setEditIsdCode(parsedInit.isdCode);
+    setEditPhoneNum(parsedInit.phoneNum);
+    setEditMobile(initMobile);
+    setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
+    setEditDesignation(user.designation || designation || '');
+    setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
+    setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
+    setEditCity(city || user.city || '');
+    setEditState(stateName || user.state || '');
+    setEditCountry(country || user.country || 'India');
+    setEditFormattedAddress(formattedAddress || user.formattedAddress || (user as any).address || '');
+    setEditTimezone(timezone || user.timezone || 'Asia/Kolkata');
+    setIsChangingCompany(false);
+    setTransferTargetCompany('');
+    setTransferTargetEmail('');
+    setShowEditIdentityModal(true);
+  };
+
+  // PDF Requirement 3: Live data should be fetched fresh on mount/refresh
+  useEffect(() => {
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    if (!activeUid) return;
+    fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
+      headers: {
+        'x-fr8x-user-uid': activeUid,
+        'x-fr8x-session': activeUid,
+      },
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && data?.user) {
+          const u = data.user;
+          if (u.mobile || u.phone) setMobile(u.mobile || u.phone);
+          if (u.designation) setDesignation(u.designation);
+          if (u.city) setCity(u.city);
+          if (u.state) setStateName(u.state);
+          if (u.country) setCountry(u.country);
+          if (u.formattedAddress || u.address) setFormattedAddress(u.formattedAddress || u.address);
+          if (u.timezone) setTimezone(u.timezone);
+          if (u.firstName) setFirstName(u.firstName);
+          if (u.lastName) setLastName(u.lastName);
+          if (u.avatarUrl) setAvatarUrl(u.avatarUrl);
+          if (u.companyLogoUrl) setCompanyLogoUrl(u.companyLogoUrl);
+          if (u.company) setCompany(u.company);
+        }
+      })
+      .catch(() => {});
+  }, [user.uid]);
 
   // Company Transfer Autocomplete & Duplicate Prevention State
   const [profileCompanySearchResults, setProfileCompanySearchResults] = useState<any[]>([]);
@@ -1821,36 +1910,6 @@ export default function ProfilePage() {
           <button className="btn secondary" onClick={handleShareProfile} title="Share Company Reference Link">
             <Share2 size={14} /> Share
           </button>
-          <button
-            className="btn primary"
-            onClick={() => {
-              setEditFirstName(user.firstName || firstName || '');
-              setEditLastName(user.lastName || lastName || '');
-              setEditEmail(user.email || '');
-              setEditPersonId(user.uid || '');
-              setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
-              const initMobile = user.mobile || mobile || '';
-              const parsedInit = parseISD(initMobile);
-              setEditIsdCode(parsedInit.isdCode);
-              setEditPhoneNum(parsedInit.phoneNum);
-              setEditMobile(initMobile);
-              setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
-              setEditDesignation(user.designation || designation || 'Senior Freight Procurement Manager');
-              setEditAvatarUrl(avatarUrl || user.avatarUrl || null);
-              setEditCompanyLogoUrl(companyLogoUrl || user.companyLogoUrl || null);
-              setEditCity(city || user.city || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_city_${user.uid}`) || localStorage.getItem('fr8x_user_city')) : '') || '');
-              setEditState(stateName || user.state || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_state_${user.uid}`) || localStorage.getItem('fr8x_user_state')) : '') || '');
-              setEditCountry(country || user.country || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_country_${user.uid}`) || localStorage.getItem('fr8x_user_country')) : '') || 'India');
-              setEditFormattedAddress(formattedAddress || user.formattedAddress || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_address_${user.uid}`) || localStorage.getItem('fr8x_user_address')) : '') || '');
-              setEditTimezone(timezone || user.timezone || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_timezone_${user.uid}`) || localStorage.getItem('fr8x_user_timezone')) : '') || 'Asia/Kolkata');
-              setIsChangingCompany(false);
-              setTransferTargetCompany('');
-              setTransferTargetEmail('');
-              setShowEditIdentityModal(true);
-            }}
-          >
-            <Edit2 size={14} /> Edit Identity & Location
-          </button>
         </div>
       </div>
 
@@ -1859,6 +1918,45 @@ export default function ProfilePage() {
         isOpen={showPassportPreview}
         onClose={() => setShowPassportPreview(false)}
       />
+
+      {/* 5-Day Scheduled Deletion Alert Banner */}
+      {user.accountStatus === 'pending_deletion' && (
+        <div style={{ background: '#fff7ed', border: '1.5px solid #fdba74', borderRadius: '8px', padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#ffedd5', border: '1px solid #fdba74', display: 'grid', placeItems: 'center' }}>
+              <Clock size={20} color="#ea580c" />
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 800, color: '#9a3412', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>Account Scheduled for Permanent Deletion (5-Day Grace Period Active)</span>
+                <span className="badge amber" style={{ fontSize: '9px' }}>DEACTIVATION PENDING</span>
+              </div>
+              <div style={{ fontSize: '11.5px', color: '#c2410c', marginTop: '2px' }}>
+                Your account is scheduled for permanent purge on <b>{user.deletionEffectiveAt ? new Date(user.deletionEffectiveAt).toLocaleDateString(undefined, { dateStyle: 'full' }) : 'in 5 days'}</b>. You can cancel this deletion anytime before the period expires.
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn"
+            disabled={isCancellingDeletion}
+            onClick={async () => {
+              setIsCancellingDeletion(true);
+              const res = await cancelAccountDeletion();
+              setIsCancellingDeletion(false);
+              if (res.success) {
+                toast('✓ Account restored to active status! Scheduled deletion cancelled.');
+              } else {
+                toast(res.error || 'Failed to cancel deletion.');
+              }
+            }}
+            style={{ background: '#16a34a', color: '#fff', borderColor: '#16a34a', fontWeight: 700, fontSize: '11.5px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+          >
+            {isCancellingDeletion ? <Loader2 size={13} className="spin" /> : <CheckCircle2 size={13} />}
+            Cancel Deletion & Restore Account
+          </button>
+        </div>
+      )}
 
       {/* Corporate Transfer Status Banner if Pending Godfather Review */}
       {user.companyTransferStatus === 'pending_godfather_approval' && (
@@ -2149,11 +2247,31 @@ export default function ProfilePage() {
                 <span className="badge" style={{ fontSize: '10px' }}>
                   <Sparkles size={10} /> {(user.plan || 'free').toUpperCase()} PLAN
                 </span>
+                <button
+                  type="button"
+                  onClick={handleOpenEditIdentityModal}
+                  className="btn secondary sm"
+                  style={{
+                    fontSize: '11.5px',
+                    padding: '3px 10px',
+                    borderRadius: '4px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontWeight: 700,
+                    borderColor: 'var(--brand)',
+                    color: 'var(--brand)',
+                    background: '#f0f9ff',
+                  }}
+                  title="Edit Mobile Number, Designation, Location & Visual Identity"
+                >
+                  <Edit2 size={12} /> Edit Profile Details
+                </button>
               </div>
 
               {/* Designation & Company */}
               <div style={{ fontSize: '13px', color: 'var(--fr8x-text)', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--fr8x-text)' }}>{designation || user.designation || 'Senior Freight Procurement Manager'}</span>
+                <span style={{ color: 'var(--fr8x-text)' }}>{designation || user.designation || 'Logistics Professional'}</span>
                 <span style={{ color: 'var(--fr8x-muted)' }}>at</span>
                 <span style={{ fontWeight: 700, color: 'var(--brand)', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
                   {effectiveCompanyLogoUrl && (
@@ -2202,6 +2320,62 @@ export default function ProfilePage() {
                     {mto ? <>MTO: <b>{mto}</b></> : null}
                   </span>
                 )}
+              </div>
+
+              {/* Compliance & Identity Resolution Prompt for Mobile, Designation & Location */}
+              <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <ShieldCheck size={12} color="#0284c7" />
+                  <span>Statutory KYC Attributes:</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleOpenIssueModal('mobile_number')}
+                  className="badge"
+                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                  title="Check Mobile Number issue with professionals"
+                >
+                  <Phone size={10} color="#0284c7" /> Mobile Issue
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenIssueModal('designation')}
+                  className="badge"
+                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                  title="Check Job Designation issue with professionals"
+                >
+                  <Briefcase size={10} color="#0284c7" /> Designation Issue
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenIssueModal('location')}
+                  className="badge"
+                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
+                  title="Check Location/Port Hub issue with professionals"
+                >
+                  <MapPin size={10} color="#0284c7" /> Location Issue
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenIssueModal('mobile_number')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    fontSize: '11px',
+                    color: 'var(--brand)',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginLeft: 'auto',
+                  }}
+                  title="Report an issue or request resolution for Mobile, Designation or Location with compliance professionals"
+                >
+                  <AlertCircle size={11} /> Check with professionals to resolve it
+                </button>
               </div>
             </div>
 
@@ -3149,6 +3323,99 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* SECTION 6: Danger Zone — Account Deactivation & Deletion (5-Day Grace Period / Permanent) */}
+        <div
+          id="account-deletion-zone"
+          className="card"
+          style={{
+            padding: '22px 24px',
+            borderRadius: '12px',
+            border: '1.5px solid #fee2e2',
+            background: user.accountStatus === 'pending_deletion' ? '#fff7ed' : '#ffffff',
+            boxShadow: 'var(--sh)',
+            marginTop: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ maxWidth: '640px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                <Trash2 size={16} color="#dc2626" />
+                <b style={{ fontSize: '15px', color: '#dc2626' }}>
+                  {user.accountStatus === 'pending_deletion' ? 'Account Scheduled for Deletion' : 'Delete Profile & Account on FR8X'}
+                </b>
+                {user.accountStatus === 'pending_deletion' ? (
+                  <span className="badge amber" style={{ fontSize: '10px' }}>5-Day Grace Period Active</span>
+                ) : (
+                  <span className="badge red" style={{ fontSize: '10px' }}>Danger Zone</span>
+                )}
+              </div>
+
+              {user.accountStatus === 'pending_deletion' ? (
+                <div>
+                  <p style={{ fontSize: '12px', color: '#9a3412', margin: '4px 0 8px 0', lineHeight: 1.4 }}>
+                    Your FR8X account is currently deactivated and scheduled for <b>permanent deletion on {user.deletionEffectiveAt ? new Date(user.deletionEffectiveAt).toLocaleDateString(undefined, { dateStyle: 'full' }) : '5 days from request'}</b>. Your profile, company links, and quotations are hidden from the platform. You can cancel this deletion at any time during the 5-day grace period.
+                  </p>
+                  <div style={{ fontSize: '11px', color: '#c2410c', background: '#ffedd5', padding: '6px 10px', borderRadius: '4px', border: '1px solid #fed7aa', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <Clock size={12} />
+                    <span>Scheduled on: {user.deletionScheduledAt ? new Date(user.deletionScheduledAt).toLocaleString() : 'Recently'}</span>
+                  </div>
+                </div>
+              ) : (
+                <p style={{ fontSize: '12px', color: 'var(--mut)', margin: 0, lineHeight: 1.45 }}>
+                  Manage the termination and lifecycle of your FR8X account. You can choose to <b>deactivate your account with a 5-day grace period</b> (recommended if you may return or need time to reconsider), or <b>permanently delete your account immediately</b> to irreversibly wipe all personal data, sessions, and company affiliations.
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {user.accountStatus === 'pending_deletion' ? (
+                <button
+                  type="button"
+                  className="btn primary"
+                  disabled={isCancellingDeletion}
+                  onClick={async () => {
+                    setIsCancellingDeletion(true);
+                    const res = await cancelAccountDeletion();
+                    setIsCancellingDeletion(false);
+                    if (res.success) {
+                      toast('✓ Account restored to active status! Scheduled deletion cancelled.');
+                    } else {
+                      toast(res.error || 'Failed to cancel deletion.');
+                    }
+                  }}
+                  style={{ background: '#16a34a', borderColor: '#16a34a' }}
+                >
+                  {isCancellingDeletion ? <Loader2 size={13} className="spin" /> : <CheckCircle2 size={13} />}
+                  Cancel Deletion & Restore Account
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn secondary"
+                  onClick={() => {
+                    setDeleteMode('five_day_grace');
+                    setDeleteConfirmText('');
+                    setShowDeleteAccountModal(true);
+                  }}
+                  style={{
+                    color: '#dc2626',
+                    borderColor: '#fca5a5',
+                    background: '#fff5f5',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  <Trash2 size={13} color="#dc2626" />
+                  Delete Profile / Account
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* KYC Edit Modal — Address & Multi-Jurisdiction Adaptive */}
@@ -3614,72 +3881,24 @@ export default function ProfilePage() {
                 }
               }
 
+              setIsSavingIdentity(true);
+
               // Update local state
               const cleanPhone = editPhoneNum.trim();
               const finalMobile = cleanPhone ? `${editIsdCode.trim()} ${cleanPhone}`.trim() : (editMobile.trim() || '');
 
-              const finalDesig = editDesignation.trim() || user.designation || 'Senior Freight Procurement Manager';
-              setFirstName(editFirstName);
-              setLastName(editLastName);
-              setMobile(finalMobile);
-              setDesignation(finalDesig);
-              setCity(editCity);
-              setStateName(editState);
-              setCountry(editCountry);
-              setFormattedAddress(editFormattedAddress);
-              setTimezone(editTimezone);
-              setAvatarUrl(editAvatarUrl || null);
-              setCompanyLogoUrl(editCompanyLogoUrl || null);
-
-              // Persist visual assets and location to dedicated local cache immediately
-              if (typeof window !== 'undefined') {
-                try {
-                  if (editCity) {
-                    localStorage.setItem(`fr8x_user_city_${finalUid}`, editCity);
-                    localStorage.setItem('fr8x_user_city', editCity);
-                  }
-                  if (editState) {
-                    localStorage.setItem(`fr8x_user_state_${finalUid}`, editState);
-                    localStorage.setItem('fr8x_user_state', editState);
-                  }
-                  if (editCountry) {
-                    localStorage.setItem(`fr8x_user_country_${finalUid}`, editCountry);
-                    localStorage.setItem('fr8x_user_country', editCountry);
-                  }
-                  if (editFormattedAddress) {
-                    localStorage.setItem(`fr8x_user_address_${finalUid}`, editFormattedAddress);
-                    localStorage.setItem('fr8x_user_address', editFormattedAddress);
-                  }
-                  if (editTimezone) {
-                    localStorage.setItem(`fr8x_user_timezone_${finalUid}`, editTimezone);
-                    localStorage.setItem('fr8x_user_timezone', editTimezone);
-                  }
-                  if (editAvatarUrl) {
-                    localStorage.setItem(`fr8x_user_avatar_${finalUid}`, editAvatarUrl);
-                    localStorage.setItem('fr8x_user_avatar', editAvatarUrl);
-                  } else {
-                    localStorage.removeItem(`fr8x_user_avatar_${finalUid}`);
-                    localStorage.removeItem('fr8x_user_avatar');
-                  }
-                  if (editCompanyLogoUrl) {
-                    localStorage.setItem(`fr8x_user_logo_${finalUid}`, editCompanyLogoUrl);
-                    localStorage.setItem('fr8x_user_logo', editCompanyLogoUrl);
-                  } else {
-                    localStorage.removeItem(`fr8x_user_logo_${finalUid}`);
-                    localStorage.removeItem('fr8x_user_logo');
-                  }
-                } catch (e) {
-                  console.warn('[Profile] Failed to cache assets/location:', e);
-                }
-              }
+              const finalDesig = editDesignation.trim() || user.designation || '';
+              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
 
               const profilePayload = {
-                uid: finalUid,
+                uid: targetUid,
+                id: targetUid,
                 firstName: editFirstName,
                 lastName: editLastName,
                 displayName: `${editFirstName} ${editLastName}`.trim(),
                 email: finalEmail,
                 mobile: finalMobile,
+                phone: finalMobile,
                 isdCode: editIsdCode.trim(),
                 whatsappSameAsMobile: editWhatsapp,
                 designation: finalDesig,
@@ -3689,6 +3908,7 @@ export default function ProfilePage() {
                 state: editState,
                 country: editCountry,
                 formattedAddress: editFormattedAddress,
+                address: editFormattedAddress,
                 timezone: editTimezone,
                 avatarUrl: editAvatarUrl || '',
                 companyLogoUrl: editCompanyLogoUrl || '',
@@ -3699,17 +3919,14 @@ export default function ProfilePage() {
                 transferSubmittedAt: isChangingCompany ? new Date().toISOString() : user.transferSubmittedAt,
               };
 
-              updateUser(profilePayload);
-              saveUserProfileToFirestore({
-                ...profilePayload,
-                experiences,
-                educations,
-                certifications,
-              }).catch(() => {});
-
-              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-              if (!targetUid) return;
               try {
+                if (!targetUid) {
+                  toast('Error: User session UID not found.');
+                  setIsSavingIdentity(false);
+                  return;
+                }
+
+                // 1. Authoritative DBMS Save
                 const res = await fetch('/api/user/profile', {
                   method: 'POST',
                   headers: {
@@ -3729,9 +3946,64 @@ export default function ProfilePage() {
                   }),
                 });
                 const data = await res.json();
-                if (data.success) {
+                if (!data.success) {
+                  toast(data.error || 'Failed to save profile changes.');
+                  setIsSavingIdentity(false);
+                  return;
+                }
+
+                // 2. Client Firestore write sync
+                try {
+                  await saveUserProfileToFirestore({
+                    ...profilePayload,
+                    experiences,
+                    educations,
+                    certifications,
+                  });
+                } catch (fsErr: any) {
+                  console.warn('[Profile] Client Firestore sync notice:', fsErr?.message);
+                }
+
+                // 3. Confirm & update client state with confirmed data
+                const confirmedUser = data.user || profilePayload;
+                updateUser(confirmedUser);
+
+                setFirstName(confirmedUser.firstName || editFirstName);
+                setLastName(confirmedUser.lastName || editLastName);
+                setMobile(confirmedUser.mobile || confirmedUser.phone || finalMobile);
+                setDesignation(confirmedUser.designation || finalDesig);
+                setCity(confirmedUser.city || editCity);
+                setStateName(confirmedUser.state || editState);
+                setCountry(confirmedUser.country || editCountry);
+                setFormattedAddress(confirmedUser.formattedAddress || confirmedUser.address || editFormattedAddress);
+                setTimezone(confirmedUser.timezone || editTimezone);
+                setAvatarUrl(confirmedUser.avatarUrl || editAvatarUrl || null);
+                setCompanyLogoUrl(confirmedUser.companyLogoUrl || editCompanyLogoUrl || null);
+
+                // Persist visual assets and location to dedicated local cache
+                if (typeof window !== 'undefined') {
                   try {
                     localStorage.setItem('fr8x_active_user_uid', targetUid);
+                    if (editCity) {
+                      localStorage.setItem(`fr8x_user_city_${targetUid}`, editCity);
+                      localStorage.setItem('fr8x_user_city', editCity);
+                    }
+                    if (editState) {
+                      localStorage.setItem(`fr8x_user_state_${targetUid}`, editState);
+                      localStorage.setItem('fr8x_user_state', editState);
+                    }
+                    if (editCountry) {
+                      localStorage.setItem(`fr8x_user_country_${targetUid}`, editCountry);
+                      localStorage.setItem('fr8x_user_country', editCountry);
+                    }
+                    if (editFormattedAddress) {
+                      localStorage.setItem(`fr8x_user_address_${targetUid}`, editFormattedAddress);
+                      localStorage.setItem('fr8x_user_address', editFormattedAddress);
+                    }
+                    if (editTimezone) {
+                      localStorage.setItem(`fr8x_user_timezone_${targetUid}`, editTimezone);
+                      localStorage.setItem('fr8x_user_timezone', editTimezone);
+                    }
                     if (editAvatarUrl) {
                       localStorage.setItem(`fr8x_user_avatar_${targetUid}`, editAvatarUrl);
                       localStorage.setItem('fr8x_user_avatar', editAvatarUrl);
@@ -3740,14 +4012,19 @@ export default function ProfilePage() {
                       localStorage.setItem(`fr8x_user_logo_${targetUid}`, editCompanyLogoUrl);
                       localStorage.setItem('fr8x_user_logo', editCompanyLogoUrl);
                     }
-                  } catch {}
-                  toast('✓ Contact credentials, location and corporate affiliation saved in DBMS successfully.');
+                  } catch (cacheErr) {
+                    console.warn('[Profile] Failed to cache assets/location:', cacheErr);
+                  }
                 }
-              } catch (err) {
-                console.warn('[Profile] DBMS update call error:', err);
-              }
 
-              setShowEditIdentityModal(false);
+                toast('✓ Profile details, mobile number, designation and location saved successfully.');
+                setShowEditIdentityModal(false);
+              } catch (err: any) {
+                console.error('[Profile] Profile save error:', err);
+                toast('Network error saving profile changes. Please try again.');
+              } finally {
+                setIsSavingIdentity(false);
+              }
             }}
             style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
           >
@@ -3924,7 +4201,41 @@ export default function ProfilePage() {
 
               <div className="field">
                 <label>Job Designation / Role</label>
-                <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="Senior Freight Procurement Manager" />
+                <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="e.g. Senior Freight Procurement Manager" />
+              </div>
+
+              {/* Compliance & Identity Resolution Action in Edit Modal */}
+              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ fontSize: '11px', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <AlertCircle size={14} color="#2563eb" style={{ flexShrink: 0 }} />
+                  <span>Issue updating Mobile, Designation, or Location? Check with professionals:</span>
+                </div>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenIssueModal('mobile_number')}
+                    className="btn secondary sm"
+                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
+                  >
+                    Mobile Issue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenIssueModal('designation')}
+                    className="btn secondary sm"
+                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
+                  >
+                    Designation Issue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenIssueModal('location')}
+                    className="btn secondary sm"
+                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
+                  >
+                    Location Issue
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -4126,7 +4437,7 @@ export default function ProfilePage() {
                     4. Enterprise Company Link & Login Affiliation
                   </span>
                   <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '2px' }}>
-                    <b>Governance Architecture:</b> Company Profile is fixed and verified in DBMS, whereas Person ID, Employee Code & affiliation can be updated.
+                    <b>Governance Architecture:</b> Company Profile is verified in the Master Registry, whereas Person ID, Employee Code & affiliation can be updated.
                   </div>
                 </div>
                 <button
@@ -4149,7 +4460,7 @@ export default function ProfilePage() {
                     </span>
                   </div>
                   <span className="badge green" style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <ShieldCheck size={10} /> FIXED IN DBMS
+                    <ShieldCheck size={10} /> VERIFIED REGISTRY
                   </span>
                 </div>
 
@@ -4299,7 +4610,7 @@ export default function ProfilePage() {
                               justifyContent: 'space-between',
                             }}
                           >
-                            <span>Registered Companies in DBMS (with Location)</span>
+                            <span>Verified Registered Companies (with Location)</span>
                             <button
                               type="button"
                               onClick={() => setIsProfileCompanyDropdownOpen(false)}
@@ -4410,11 +4721,303 @@ export default function ProfilePage() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowEditIdentityModal(false)}>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={isSavingIdentity}
+                onClick={() => setShowEditIdentityModal(false)}
+              >
                 Cancel
               </button>
-              <button type="submit" className="btn primary">
-                <Check size={13} /> Save Identity, Location & Credentials
+              <button
+                type="submit"
+                className="btn primary"
+                disabled={isSavingIdentity}
+              >
+                {isSavingIdentity ? (
+                  <><Loader2 size={13} className="spin" /> Saving Details…</>
+                ) : (
+                  <><Check size={13} /> Save Identity, Location & Credentials</>
+                )}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* MODAL: DELETE PROFILE & ACCOUNT ON FR8X (5-Day Grace / Permanent) */}
+      {showDeleteAccountModal && (
+        <Modal
+          isOpen={showDeleteAccountModal}
+          onClose={() => !isDeletingAccount && setShowDeleteAccountModal(false)}
+          title="Delete Account & Profile on FR8X"
+          maxWidth="560px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', padding: '12px 14px', borderRadius: '6px', display: 'flex', gap: '10px' }}>
+              <AlertTriangle size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <div style={{ fontSize: '12px', color: '#991b1b', lineHeight: 1.4 }}>
+                <b>Important Notice:</b> Deleting your FR8X account will affect your company linkages, freight rate quotations, active shipments, and KYC listings.
+              </div>
+            </div>
+
+            <div>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)', display: 'block', marginBottom: '8px' }}>
+                Select Deletion Option:
+              </label>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {/* Option 1: 5 Days Scheduled Deletion */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '12px',
+                    border: deleteMode === 'five_day_grace' ? '2px solid #ea580c' : '1px solid var(--line-light)',
+                    borderRadius: '8px',
+                    background: deleteMode === 'five_day_grace' ? '#fff7ed' : '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="deleteOption"
+                    checked={deleteMode === 'five_day_grace'}
+                    onChange={() => setDeleteMode('five_day_grace')}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#9a3412', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>Option 1: 5 Days Grace Period (Deactivate & Schedule Deletion)</span>
+                      <span className="badge amber" style={{ fontSize: '9px' }}>RECOMMENDED</span>
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#78350f', marginTop: '3px', lineHeight: 1.4 }}>
+                      Your profile and bids will be hidden immediately. Your data remains safe for <b>5 days</b>. If you change your mind, simply log in within 5 days to cancel and restore your profile. After 5 days, your account is permanently purged.
+                    </div>
+                  </div>
+                </label>
+
+                {/* Option 2: Permanently Delete Immediately */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '10px',
+                    padding: '12px',
+                    border: deleteMode === 'permanent' ? '2px solid #dc2626' : '1px solid var(--line-light)',
+                    borderRadius: '8px',
+                    background: deleteMode === 'permanent' ? '#fff5f5' : '#ffffff',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="radio"
+                    name="deleteOption"
+                    checked={deleteMode === 'permanent'}
+                    onChange={() => setDeleteMode('permanent')}
+                    style={{ marginTop: '3px' }}
+                  />
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 800, color: '#b91c1c' }}>
+                      Option 2: Permanently Delete Immediately
+                    </div>
+                    <div style={{ fontSize: '11.5px', color: '#991b1b', marginTop: '3px', lineHeight: 1.4 }}>
+                      Irreversible and instantaneous. All personal data, login credentials, sessions, and company association on FR8X will be permanently purged right now. <b>This cannot be undone.</b>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <div className="field">
+              <label style={{ fontSize: '11.5px', fontWeight: 600 }}>Reason for Deleting Account (Optional)</label>
+              <select
+                className="input"
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                style={{ fontSize: '12px' }}
+              >
+                <option>Personal reasons / closing freight operation</option>
+                <option>Switching to a different freight portal</option>
+                <option>Company restructuring / changed employer</option>
+                <option>Temporary break from logistics</option>
+                <option>Need to reset account credentials</option>
+              </select>
+            </div>
+
+            {deleteMode === 'permanent' && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fecaca', padding: '10px 12px', borderRadius: '6px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#991b1b', display: 'block', marginBottom: '4px' }}>
+                  To confirm permanent deletion, type &quot;DELETE&quot; below:
+                </label>
+                <input
+                  className="input"
+                  placeholder="DELETE"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  style={{ textTransform: 'uppercase', borderColor: '#f87171' }}
+                />
+              </div>
+            )}
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '8px' }}>
+              <button
+                type="button"
+                className="btn secondary"
+                disabled={isDeletingAccount}
+                onClick={() => setShowDeleteAccountModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={isDeletingAccount || (deleteMode === 'permanent' && deleteConfirmText.trim().toUpperCase() !== 'DELETE')}
+                onClick={async () => {
+                  setIsDeletingAccount(true);
+                  const res = await deleteAccount(deleteMode, deleteReason);
+                  setIsDeletingAccount(false);
+                  if (res.success) {
+                    setShowDeleteAccountModal(false);
+                    if (deleteMode === 'five_day_grace') {
+                      toast('✓ Account scheduled for deletion in 5 days. You can cancel anytime before then.');
+                    } else {
+                      toast('Account permanently deleted. Logging out…');
+                    }
+                  } else {
+                    toast(res.error || 'Failed to delete account.');
+                  }
+                }}
+                style={{
+                  background: deleteMode === 'permanent' ? '#dc2626' : '#ea580c',
+                  color: '#fff',
+                  borderColor: deleteMode === 'permanent' ? '#dc2626' : '#ea580c',
+                  fontWeight: 700,
+                }}
+              >
+                {isDeletingAccount ? (
+                  <><Loader2 size={13} className="spin" /> Processing…</>
+                ) : deleteMode === 'permanent' ? (
+                  <><Trash2 size={13} /> Confirm Permanent Deletion</>
+                ) : (
+                  <><Clock size={13} /> Schedule Deletion in 5 Days</>
+                )}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* MODAL: COMPLIANCE ISSUE RESOLUTION (Mobile, Designation, Location) */}
+      {showIssueModal && (
+        <Modal
+          isOpen={showIssueModal}
+          onClose={() => !isSubmittingIssue && setShowIssueModal(false)}
+          title="Identity & Credential Issue Resolution"
+          maxWidth="560px"
+        >
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setIsSubmittingIssue(true);
+              try {
+                const res = await fetch('/api/user/issue-report', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'x-fr8x-user-uid': user.uid,
+                    'x-fr8x-session': user.uid,
+                  },
+                  body: JSON.stringify({
+                    category: issueCategory,
+                    currentValue: issueCurrentValue,
+                    requestedValue: issueRequestedValue,
+                    description: issueDescription,
+                    userName: `${firstName} ${lastName}`.trim() || user.displayName,
+                  }),
+                });
+                const data = await res.json();
+                setIsSubmittingIssue(false);
+                if (data.success) {
+                  setLastSubmittedTicket(data.ticketNumber);
+                  toast(`✓ Ticket ${data.ticketNumber} logged! Our Compliance Professionals will verify and resolve your details.`);
+                  setShowIssueModal(false);
+                } else {
+                  toast(data.error || 'Failed to submit issue.');
+                }
+              } catch {
+                setIsSubmittingIssue(false);
+                toast('Network error submitting issue to professionals.');
+              }
+            }}
+            style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}
+          >
+            <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', padding: '10px 12px', borderRadius: '6px', fontSize: '11.5px', color: '#0369a1', lineHeight: 1.4 }}>
+              <b>Compliance Verification Notice:</b> Mobile number, official job designation, and terminal operating hub are KYC-audited identity attributes under FR8X multimodal freight rules. If you have an issue with your current details or need corrections, our Compliance Professionals will verify and resolve it.
+            </div>
+
+            <div className="field">
+              <label>Select Attribute with Issue <span className="req">*</span></label>
+              <select
+                className="input"
+                value={issueCategory}
+                onChange={(e) => {
+                  const cat = e.target.value as any;
+                  setIssueCategory(cat);
+                  if (cat === 'mobile_number') setIssueCurrentValue(mobile || user.mobile || '');
+                  else if (cat === 'designation') setIssueCurrentValue(designation || user.designation || '');
+                  else if (cat === 'location') setIssueCurrentValue([city || user.city, stateName || user.state, country || user.country].filter(Boolean).join(', '));
+                }}
+              >
+                <option value="mobile_number">Mobile Number / WhatsApp</option>
+                <option value="designation">Job Designation / Role at Company</option>
+                <option value="location">Geographic Location / Port Hub</option>
+                <option value="general_identity">General Identity Discrepancy</option>
+              </select>
+            </div>
+
+            <div className="field">
+              <label>Current Value in System</label>
+              <input
+                className="input"
+                value={issueCurrentValue}
+                onChange={(e) => setIssueCurrentValue(e.target.value)}
+                placeholder="Current mobile, designation, or location"
+              />
+            </div>
+
+            <div className="field">
+              <label>Requested / Correct Value</label>
+              <input
+                className="input"
+                value={issueRequestedValue}
+                onChange={(e) => setIssueRequestedValue(e.target.value)}
+                placeholder="e.g. +91 9876543210, Head of Ocean Logistics, or Nhava Sheva Port, Mumbai"
+                required
+              />
+            </div>
+
+            <div className="field">
+              <label>Reason / Issue Description for Professionals <span className="req">*</span></label>
+              <textarea
+                className="input"
+                rows={3}
+                value={issueDescription}
+                onChange={(e) => setIssueDescription(e.target.value)}
+                placeholder="Describe the issue (e.g. corporate SIM changed, promoted to new role, transferred to new terminal branch)"
+                required
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button type="button" className="btn secondary" onClick={() => setShowIssueModal(false)} disabled={isSubmittingIssue}>
+                Cancel
+              </button>
+              <button type="submit" className="btn primary" disabled={isSubmittingIssue}>
+                {isSubmittingIssue ? <Loader2 size={13} className="spin" /> : <ShieldCheck size={13} />}
+                Submit Issue to Compliance Professionals
               </button>
             </div>
           </form>
