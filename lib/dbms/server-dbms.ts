@@ -510,7 +510,11 @@ export function getPersistedUserByIdentifier(identifier: string): DbmsUserRecord
   const clean = identifier.trim().toLowerCase();
   const users = getPersistedUsers();
   return users.find(
-    (u) => (u.email && u.email.toLowerCase() === clean) || (u.uid && u.uid.toLowerCase() === clean)
+    (u) =>
+      (u.email && u.email.toLowerCase() === clean) ||
+      (u.uid && u.uid.toLowerCase() === clean) ||
+      (u.firebaseUid && String(u.firebaseUid).toLowerCase() === clean) ||
+      (u.canonicalUid && String(u.canonicalUid).toLowerCase() === clean)
   );
 }
 
@@ -523,12 +527,14 @@ export function savePersistedUser(user: DbmsUserRecord): DbmsUserRecord {
     const existing = getPersistedUsers();
     const cleanEmail = (user.email || '').trim().toLowerCase();
     const cleanUid = (user.uid || '').trim().toLowerCase();
+    const cleanFirebaseUid = (user.firebaseUid || '').trim().toLowerCase();
     const now = new Date().toISOString();
 
     const idx = existing.findIndex(
       (u) =>
         (cleanUid && u.uid && u.uid.toLowerCase() === cleanUid) ||
-        (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail)
+        (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail) ||
+        (cleanFirebaseUid && u.firebaseUid && String(u.firebaseUid).toLowerCase() === cleanFirebaseUid)
     );
 
     const recordToSave = {
@@ -730,20 +736,173 @@ export interface DbmsCompanyRecord {
   updatedAt: string;
 }
 
-const DEFAULT_SEED_COMPANIES: DbmsCompanyRecord[] = [];
+export const DEFAULT_SEED_COMPANIES: DbmsCompanyRecord[] = [
+  {
+    id: 'CMP-COGOPORT-001',
+    legalName: 'Cogoport India Private Limited',
+    tradeName: 'COGOPORT',
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    postalCode: '400069',
+    registeredAddress: 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069, India',
+    gstn: '27AAACC1234F1Z5',
+    pan: 'AAACC1234F',
+    iec: '0312045678',
+    mto: 'MTO/DGS/2022/1042',
+    status: 'verified',
+    verified: true,
+    memberCount: 1,
+    primaryContactName: 'Rajat RAI',
+    primaryContactEmail: 'rajat.rai@cogoport.com',
+    primaryContactPhone: '+91 9620012345',
+    adminNotes: ['Authoritative Enterprise Forwarder Profile', 'Statutory KYC Verified & Active'],
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'CMP-RAIVEGA-01',
+    legalName: 'Rai Vega Logistics Private Limited',
+    tradeName: 'RAIVEGA',
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    postalCode: '400021',
+    registeredAddress: 'Rai Vega House, Nariman Point, Mumbai 400021, India',
+    gstn: '27AABCR9876Q1Z2',
+    pan: 'AABCR9876Q',
+    iec: '0319087654',
+    mto: 'MTO/DGS/2023/2189',
+    status: 'verified',
+    verified: true,
+    memberCount: 1,
+    primaryContactName: 'Management RAIVEGA',
+    primaryContactEmail: 'mgt@raivega.in',
+    primaryContactPhone: '+91 98200 99999',
+    adminNotes: ['Premium Verified Logistics Member', 'Statutory KYC Verified & Active'],
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'comp_oceanic_01',
+    legalName: 'Oceanic Forwarders Private Limited',
+    tradeName: 'Oceanic Forwarders Ltd',
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    postalCode: '400001',
+    registeredAddress: 'Oceanic Tower, Ballard Estate, Fort, Mumbai 400001',
+    gstn: '27AABCO5555M1Z1',
+    pan: 'AABCO5555M',
+    status: 'verified',
+    verified: true,
+    memberCount: 12,
+    primaryContactName: 'Ocean Freight Operator',
+    primaryContactEmail: 'trader_1790855848254@oceanfreight.net',
+    adminNotes: ['High volume trade lane operator'],
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'comp_forwarder_01',
+    legalName: 'Forwarder Group International Private Limited',
+    tradeName: 'Forwarder Group Ltd',
+    country: 'India',
+    state: 'Maharashtra',
+    city: 'Mumbai',
+    postalCode: '400001',
+    registeredAddress: 'Forwarder Plaza, Nariman Point, Mumbai 400021',
+    gstn: '27AABCF1111N1Z3',
+    pan: 'AABCF1111N',
+    status: 'verified',
+    verified: true,
+    memberCount: 11,
+    primaryContactName: 'Chief Compliance Officer',
+    primaryContactEmail: 'officer_1790855845116@forwardergroup.com',
+    adminNotes: ['Regulatory compliance verified'],
+    createdAt: '2026-09-01T00:00:00.000Z',
+    updatedAt: new Date().toISOString(),
+  },
+];
 
 export function getPersistedCompanies(): DbmsCompanyRecord[] {
   ensureDirExists();
   try {
-    if (!fs.existsSync(COMPANIES_FILE)) {
-      return [];
+    let list: DbmsCompanyRecord[] = [];
+    if (fs.existsSync(COMPANIES_FILE)) {
+      const raw = fs.readFileSync(COMPANIES_FILE, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) list = parsed;
     }
-    const raw = fs.readFileSync(COMPANIES_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+
+    let modified = false;
+
+    // 1. Ensure foundation seed companies (Cogoport, Raivega, Oceanic, Forwarder Group) are present
+    for (const seed of DEFAULT_SEED_COMPANIES) {
+      const exists = list.some(
+        (c) =>
+          c.id === seed.id ||
+          (c.tradeName && seed.tradeName && c.tradeName.toUpperCase() === seed.tradeName.toUpperCase()) ||
+          c.legalName.toUpperCase() === seed.legalName.toUpperCase()
+      );
+      if (!exists) {
+        list.push({ ...seed });
+        modified = true;
+      }
+    }
+
+    // 2. Dynamic reconciliation: ensure companies referenced by registered users exist in Master Registry
+    try {
+      const users = getPersistedUsers();
+      for (const u of users) {
+        if (!u.company) continue;
+        const cName = u.company.trim();
+        const cId = u.companyId || `CMP-${cName.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8)}`;
+        const exists = list.some(
+          (c) =>
+            c.id === cId ||
+            (c.tradeName && c.tradeName.toUpperCase() === cName.toUpperCase()) ||
+            c.legalName.toUpperCase().includes(cName.toUpperCase())
+        );
+        if (!exists) {
+          list.push({
+            id: cId,
+            legalName: `${cName} Private Limited`,
+            tradeName: cName,
+            country: u.country || 'India',
+            state: u.state || 'Maharashtra',
+            city: u.city || 'Mumbai',
+            postalCode: u.postalCode || '400001',
+            registeredAddress: u.formattedAddress || `${cName} Operations Center, Mumbai, India`,
+            gstn: u.gstn || '',
+            pan: u.pan || '',
+            status: u.isVerified || u.email_verified ? 'verified' : 'pending',
+            verified: Boolean(u.isVerified || u.email_verified),
+            memberCount: 1,
+            primaryContactName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+            primaryContactEmail: u.email,
+            primaryContactPhone: u.mobile || u.phone || '',
+            adminNotes: ['Auto-reconciled from registered member profile'],
+            createdAt: u.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+          modified = true;
+        }
+      }
+    } catch (reconcileErr) {
+      console.warn('[DBMS] Company reconciliation error:', reconcileErr);
+    }
+
+    if (modified) {
+      try {
+        atomicWriteJsonFile(COMPANIES_FILE, list);
+      } catch {}
+    }
+
+    return list;
   } catch (err) {
     console.error('[DBMS] Error reading persisted companies:', err);
-    return [];
+    return DEFAULT_SEED_COMPANIES;
   }
 }
 

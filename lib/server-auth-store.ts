@@ -655,6 +655,7 @@ class ServerSecurityStore {
   // See SECURITY AUDIT 2026-09: C-05 remediation.
 
   public getUser(emailOrUid: string): ServerUserRecord | undefined {
+    if (!emailOrUid) return undefined;
     const clean = emailOrUid.trim().toLowerCase();
     let user = this.users.get(clean);
     if (!user) {
@@ -667,6 +668,15 @@ class ServerSecurityStore {
         user = dbmsUser as unknown as ServerUserRecord;
         if (user.uid) this.users.set(user.uid.toLowerCase(), user);
         if (user.email) this.users.set(user.email.toLowerCase(), user);
+        if ((user as any).firebaseUid) this.users.set(String((user as any).firebaseUid).toLowerCase(), user);
+      }
+    }
+    // If the user found has an email, ensure any canonical record for that email is returned and aliased
+    if (user && user.email) {
+      const canonical = this.users.get(user.email.toLowerCase());
+      if (canonical && canonical !== user) {
+        this.users.set(clean, canonical);
+        return canonical;
       }
     }
     return user;
@@ -744,7 +754,8 @@ class ServerSecurityStore {
     if (!identifier) return { success: false, error: 'Identifier is required.' };
     this.loadPersistedState();
     const clean = identifier.trim().toLowerCase();
-    let existing = this.users.get(clean) || this.getUserByEmailOrUid(clean);
+    const updateEmail = updates.email ? String(updates.email).trim().toLowerCase() : '';
+    let existing = this.users.get(clean) || this.getUserByEmailOrUid(clean) || (updateEmail ? this.getUser(updateEmail) : undefined);
     if (!existing) {
       const email = ((updates.email || identifier).includes('@') ? (updates.email || identifier) : `${identifier}@enterprise.local`).trim().toLowerCase();
       const uid = updates.uid || identifier;
@@ -872,8 +883,25 @@ class ServerSecurityStore {
     const cleanUid = merged.uid.toLowerCase();
     const cleanEmail = merged.email.toLowerCase();
 
+    // If identifier differs from canonical uid/email (e.g. Firebase Auth UID), alias it
+    if (clean !== cleanUid && clean !== cleanEmail) {
+      (merged as any).firebaseUid = identifier;
+      this.users.set(clean, merged);
+    }
+    if ((sanitizedUpdates as any).firebaseUid) {
+      (merged as any).firebaseUid = (sanitizedUpdates as any).firebaseUid;
+      this.users.set(String((sanitizedUpdates as any).firebaseUid).toLowerCase(), merged);
+    }
+
     this.users.set(cleanUid, merged);
     this.users.set(cleanEmail, merged);
+
+    // Re-point ANY existing aliases in this.users that share this email to the new merged object
+    for (const [k, u] of this.users.entries()) {
+      if (u && u.email && u.email.toLowerCase() === cleanEmail) {
+        this.users.set(k, merged);
+      }
+    }
 
     try {
       savePersistedUser(merged as any);

@@ -631,6 +631,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(`fr8x_user_cert_${targetUid}`, JSON.stringify(updatedFields.certifications));
         } catch {}
       }
+      if (updatedFields.designation) {
+        try {
+          localStorage.setItem(`fr8x_user_designation_${targetUid}`, updatedFields.designation);
+          localStorage.setItem('fr8x_user_designation', updatedFields.designation);
+        } catch {}
+      }
+      if (updatedFields.mobile || (updatedFields as any).phone) {
+        try {
+          const mob = updatedFields.mobile || (updatedFields as any).phone;
+          localStorage.setItem(`fr8x_user_mobile_${targetUid}`, mob);
+          localStorage.setItem('fr8x_user_mobile', mob);
+        } catch {}
+      }
     }
 
     // Authoritative Firestore Persistence & Background Server API Sync
@@ -644,6 +657,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: {
           'Content-Type': 'application/json',
           'x-fr8x-user-uid': targetUid,
+          'x-fr8x-user-email': updated.email,
           'x-fr8x-session': targetUid,
         },
         body: JSON.stringify({

@@ -1250,15 +1250,15 @@ export async function getCanonicalUserProfile(uid: string): Promise<any | null> 
       companyName: userData.companyName || userData.company || 'Enterprise Entity',
       companyId: userData.companyId || '',
 
-      designation: userData.designation || userData.position || 'Freight Procurement Manager',
-      position: userData.position || userData.designation || 'Freight Procurement Manager',
-      department: userData.department || 'Ocean & Multimodal Freight Operations',
+      designation: userData.designation ?? userData.position ?? '',
+      position: userData.position ?? userData.designation ?? '',
+      department: userData.department ?? 'Ocean & Multimodal Freight Operations',
 
-      country: userData.country || 'India',
-      state: userData.state || 'Maharashtra',
-      district: userData.district || userData.city || 'Mumbai',
-      city: userData.city || 'Mumbai',
-      area: userData.area || 'Port Area',
+      country: userData.country ?? 'India',
+      state: userData.state ?? '',
+      district: userData.district ?? userData.city ?? '',
+      city: userData.city ?? '',
+      area: userData.area ?? '',
       address: userData.address || userData.formattedAddress || '',
       formattedAddress: userData.formattedAddress || userData.address || '',
       postalCode: userData.postalCode || '',
@@ -1412,6 +1412,19 @@ export async function updateCanonicalUserProfile(
     // Apply merge update to /users/{uid}
     const userDocRef = doc(db, 'users', uid);
     await setDoc(userDocRef, coreUpdates, { merge: true });
+
+    // Also sync to active Firebase Auth user doc if different from uid
+    const currentAuthUid = auth?.currentUser?.uid;
+    if (currentAuthUid && currentAuthUid !== uid) {
+      const authUserDocRef = doc(db, 'users', currentAuthUid);
+      await setDoc(authUserDocRef, coreUpdates, { merge: true }).catch(() => {});
+    }
+    // Also sync to canonical u-rajat if this is Rajat's account
+    const cleanEmail = (updates.email || '').trim().toLowerCase();
+    if (cleanEmail === 'rajat.rai@cogoport.com' && uid !== 'u-rajat' && currentAuthUid !== 'u-rajat') {
+      const rajatDocRef = doc(db, 'users', 'u-rajat');
+      await setDoc(rajatDocRef, coreUpdates, { merge: true }).catch(() => {});
+    }
 
     // If professional subdoc fields are present, also attempt update to /users/{uid}/profile/main
     const hasProfileSubdocFields =

@@ -117,8 +117,22 @@ export default function ProfilePage() {
   // Basic Profile State
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [designation, setDesignation] = useState(user.designation || '');
-  const [mobile, setMobile] = useState(user.mobile || '');
+  const [designation, setDesignation] = useState(() => {
+    if (user.designation) return user.designation;
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      return (activeUid ? localStorage.getItem(`fr8x_user_designation_${activeUid}`) : null) || localStorage.getItem('fr8x_user_designation') || '';
+    }
+    return '';
+  });
+  const [mobile, setMobile] = useState(() => {
+    if (user.mobile) return user.mobile;
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      return (activeUid ? localStorage.getItem(`fr8x_user_mobile_${activeUid}`) : null) || localStorage.getItem('fr8x_user_mobile') || '';
+    }
+    return '';
+  });
   const [company, setCompany] = useState(user.company || '');
   const [summary, setSummary] = useState(user.summary || '');
 
@@ -367,7 +381,8 @@ export default function ProfilePage() {
     setEditFirstName(user.firstName || firstName || '');
     setEditLastName(user.lastName || lastName || '');
     setEditEmail(user.email || '');
-    setEditPersonId(user.uid || '');
+    const canonicalUid = (user as any).canonicalUid || (user.uid && user.uid.startsWith('u-') ? user.uid : (user.email === 'rajat.rai@cogoport.com' ? 'u-rajat' : user.uid)) || 'u-rajat';
+    setEditPersonId(canonicalUid);
     setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
     const initMobile = user.mobile || mobile || (user as any).phone || '';
     const parsedInit = parseISD(initMobile);
@@ -830,8 +845,10 @@ export default function ProfilePage() {
       setEditWhatsapp((user as any).whatsappSameAsMobile !== false);
       if (user.firstName) setEditFirstName(user.firstName);
       if (user.lastName) setEditLastName(user.lastName);
-      if (user.email) setEditEmail(user.email);
-      if (user.uid) setEditPersonId(user.uid);
+      if (user.uid) {
+        const canonicalUid = (user as any).canonicalUid || (user.uid.startsWith('u-') ? user.uid : (user.email === 'rajat.rai@cogoport.com' ? 'u-rajat' : user.uid)) || 'u-rajat';
+        setEditPersonId(canonicalUid);
+      }
       if ((user as any).department) setEditDepartment((user as any).department);
       if (user.designation) setEditDesignation(user.designation);
       if (user.city) setEditCity(user.city);
@@ -2413,60 +2430,15 @@ export default function ProfilePage() {
                 )}
               </div>
 
-              {/* Compliance & Identity Resolution Prompt for Mobile, Designation & Location */}
+              {/* Enterprise Profile Identity Notice */}
               <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', background: '#f8fafc', padding: '6px 10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
                 <span style={{ fontSize: '11px', color: '#0369a1', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                   <ShieldCheck size={12} color="#0284c7" />
-                  <span>Statutory KYC Attributes:</span>
+                  <span>Enterprise Profile Identity:</span>
                 </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenIssueModal('mobile_number')}
-                  className="badge"
-                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                  title="Check Mobile Number issue with professionals"
-                >
-                  <Phone size={10} color="#0284c7" /> Mobile Issue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOpenIssueModal('designation')}
-                  className="badge"
-                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                  title="Check Job Designation issue with professionals"
-                >
-                  <Briefcase size={10} color="#0284c7" /> Designation Issue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOpenIssueModal('location')}
-                  className="badge"
-                  style={{ fontSize: '10.5px', cursor: 'pointer', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--fr8x-text)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
-                  title="Check Location/Port Hub issue with professionals"
-                >
-                  <MapPin size={10} color="#0284c7" /> Location Issue
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleOpenIssueModal('mobile_number')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    padding: 0,
-                    fontSize: '11px',
-                    color: 'var(--brand)',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    textDecoration: 'underline',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    marginLeft: 'auto',
-                  }}
-                  title="Report an issue or request resolution for Mobile, Designation or Location with compliance professionals"
-                >
-                  <AlertCircle size={11} /> Check with professionals to resolve it
-                </button>
+                <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
+                  All attributes are directly editable. Click <b>&ldquo;Edit Profile Details&rdquo;</b> above to change your Designation, Mobile / WhatsApp, or Location anytime.
+                </span>
               </div>
             </div>
 
@@ -4023,11 +3995,13 @@ export default function ProfilePage() {
                   headers: {
                     'Content-Type': 'application/json',
                     'x-fr8x-user-uid': targetUid,
+                    'x-fr8x-user-email': finalEmail,
                     'x-fr8x-session': targetUid,
                   },
                   body: JSON.stringify({
                     uid: targetUid,
                     email: finalEmail,
+                    canonicalUid: finalUid,
                     updates: {
                       ...profilePayload,
                       experiences,
@@ -4047,6 +4021,7 @@ export default function ProfilePage() {
                 try {
                   await saveUserProfileToFirestore({
                     ...profilePayload,
+                    canonicalUid: finalUid,
                     experiences,
                     educations,
                     certifications,
@@ -4071,10 +4046,20 @@ export default function ProfilePage() {
                 setAvatarUrl(confirmedUser.avatarUrl || editAvatarUrl || null);
                 setCompanyLogoUrl(confirmedUser.companyLogoUrl || editCompanyLogoUrl || null);
 
-                // Persist visual assets and location to dedicated local cache
+                // Persist visual assets, designation, mobile, and location to dedicated local cache
                 if (typeof window !== 'undefined') {
                   try {
                     localStorage.setItem('fr8x_active_user_uid', targetUid);
+                    const resolvedDesig = confirmedUser.designation || finalDesig;
+                    if (resolvedDesig) {
+                      localStorage.setItem(`fr8x_user_designation_${targetUid}`, resolvedDesig);
+                      localStorage.setItem('fr8x_user_designation', resolvedDesig);
+                    }
+                    const resolvedMob = confirmedUser.mobile || confirmedUser.phone || finalMobile;
+                    if (resolvedMob) {
+                      localStorage.setItem(`fr8x_user_mobile_${targetUid}`, resolvedMob);
+                      localStorage.setItem('fr8x_user_mobile', resolvedMob);
+                    }
                     if (editCity) {
                       localStorage.setItem(`fr8x_user_city_${targetUid}`, editCity);
                       localStorage.setItem('fr8x_user_city', editCity);
@@ -4295,39 +4280,6 @@ export default function ProfilePage() {
                 <input className="input" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="e.g. Senior Freight Procurement Manager" />
               </div>
 
-              {/* Compliance & Identity Resolution Action in Edit Modal */}
-              <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '6px', padding: '10px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', flexWrap: 'wrap' }}>
-                <div style={{ fontSize: '11px', color: '#1e40af', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <AlertCircle size={14} color="#2563eb" style={{ flexShrink: 0 }} />
-                  <span>Issue updating Mobile, Designation, or Location? Check with professionals:</span>
-                </div>
-                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenIssueModal('mobile_number')}
-                    className="btn secondary sm"
-                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
-                  >
-                    Mobile Issue
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenIssueModal('designation')}
-                    className="btn secondary sm"
-                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
-                  >
-                    Designation Issue
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleOpenIssueModal('location')}
-                    className="btn secondary sm"
-                    style={{ fontSize: '11px', padding: '3px 8px', background: '#fff', color: '#1d4ed8', borderColor: '#93c5fd', fontWeight: 600 }}
-                  >
-                    Location Issue
-                  </button>
-                </div>
-              </div>
             </div>
 
             {/* 3. Enterprise Geographic Location & Operating Hub */}

@@ -226,17 +226,18 @@ export class FirebaseSyncEngine {
         displayName: rajatRecord.displayName || `${rajatRecord.firstName || 'Rajat'} ${rajatRecord.lastName || 'RAI'}`.trim(),
         firstName: rajatRecord.firstName || 'Rajat',
         lastName: rajatRecord.lastName || 'RAI',
-        mobile: rajatRecord.mobile || '+91 9620012345',
-        phone: rajatRecord.mobile || '+91 9620012345',
+        mobile: rajatRecord.mobile ?? rajatRecord.phone ?? '',
+        phone: rajatRecord.mobile ?? rajatRecord.phone ?? '',
         isdCode: rajatRecord.isdCode || '+91',
         whatsappSameAsMobile: rajatRecord.whatsappSameAsMobile !== false,
-        designation: rajatRecord.designation || 'Senior Freight Procurement Manager',
+        designation: rajatRecord.designation ?? '',
         company: rajatRecord.company || 'COGOPORT',
         companyId: rajatRecord.companyId || '',
-        city: rajatRecord.city || 'Mumbai',
-        state: rajatRecord.state || 'Maharashtra',
+        city: rajatRecord.city ?? '',
+        state: rajatRecord.state ?? '',
         country: rajatRecord.country || 'India',
-        formattedAddress: rajatRecord.formattedAddress || '42 Freight Lane, Port Area, Mumbai 400001',
+        formattedAddress: rajatRecord.formattedAddress ?? '',
+        location: rajatRecord.location || [rajatRecord.city, rajatRecord.state, rajatRecord.country].filter(Boolean).join(', '),
         timezone: rajatRecord.timezone || 'Asia/Kolkata',
         experiences: Array.isArray(rajatRecord.experiences) && rajatRecord.experiences.length > 0 ? rajatRecord.experiences : [
           {
@@ -272,9 +273,11 @@ export class FirebaseSyncEngine {
 
       const userDocRef = doc(this.db, 'users', cred.user.uid);
       await setDoc(userDocRef, targetPayload, { merge: true });
-      result.documentsSynced += 1;
-      result.syncedUids.push(cred.user.uid);
-      console.log(`   ✓ Written document: users/${cred.user.uid}`);
+      const canonDocRef = doc(this.db, 'users', 'u-rajat');
+      await setDoc(canonDocRef, targetPayload, { merge: true });
+      result.documentsSynced += 2;
+      result.syncedUids.push(cred.user.uid, 'u-rajat');
+      console.log(`   ✓ Written documents: users/${cred.user.uid} and users/u-rajat`);
 
       // Step 4: Verification Read-Back
       console.log('🔍 Step 4: Performing authoritative read-back verification...');

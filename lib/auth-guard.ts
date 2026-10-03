@@ -188,8 +188,19 @@ export function authenticateUserSession(
   if (!userRecord) {
     const dbmsUser = getPersistedUserByIdentifier(uid);
     if (dbmsUser) {
-      serverSecurityStore.updateUserProfile(dbmsUser.uid || uid, dbmsUser as any);
+      serverSecurityStore.updateUserProfile(dbmsUser.uid || uid, { ...(dbmsUser as any), firebaseUid: uid });
       userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
+    }
+  }
+  if (!userRecord) {
+    const userEmailHeader = req.headers.get('x-fr8x-user-email') || req.headers.get('x-user-email');
+    if (userEmailHeader) {
+      const cleanEmail = userEmailHeader.trim().toLowerCase();
+      const emailMatch = serverSecurityStore.getUser(cleanEmail) || getPersistedUserByIdentifier(cleanEmail);
+      if (emailMatch) {
+        serverSecurityStore.updateUserProfile(emailMatch.uid || uid, { ...(emailMatch as any), firebaseUid: uid });
+        userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUser(cleanEmail) || serverSecurityStore.getUserByEmailOrUid(uid);
+      }
     }
   }
   if (!userRecord && isSignedTokenCandidate) {

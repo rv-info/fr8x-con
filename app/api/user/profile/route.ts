@@ -33,7 +33,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const user = serverSecurityStore.getUser(targetUid) || serverSecurityStore.getUserByEmailOrUid(targetUid);
+    const requestedEmail = searchParams.get('email') || userAuth.user?.email;
+    let user = serverSecurityStore.getUser(targetUid) || serverSecurityStore.getUserByEmailOrUid(targetUid);
+    if (!user && requestedEmail) {
+      user = serverSecurityStore.getUser(requestedEmail.trim().toLowerCase());
+    }
     if (!user) {
       return NextResponse.json(
         { success: false, error: 'User record not found.' },
@@ -188,6 +192,7 @@ export async function POST(req: NextRequest) {
 
     // Updates payload can be passed either inside `updates` or at the top level
     const rawUpdates = body.updates || body;
+    const bodyEmail = (body.email || rawUpdates.email || userAuth.user?.email || '').trim().toLowerCase();
     // Don't accidentally overwrite uid or passwordHash from unrestricted fields
     const { uid: _u, passwordHash: _p, salt: _s, role: _r, plan: _pl, status: _st, ...cleanUpdates } = rawUpdates;
 
@@ -196,8 +201,19 @@ export async function POST(req: NextRequest) {
     if (cleanUpdates.mobile && !cleanUpdates.phone) cleanUpdates.phone = cleanUpdates.mobile;
     if (cleanUpdates.address && !cleanUpdates.formattedAddress) cleanUpdates.formattedAddress = cleanUpdates.address;
     if (cleanUpdates.formattedAddress && !cleanUpdates.address) cleanUpdates.address = cleanUpdates.formattedAddress;
+    if (bodyEmail && !cleanUpdates.email) cleanUpdates.email = bodyEmail;
 
-    const result = serverSecurityStore.updateUserProfile(targetUid, cleanUpdates);
+    // Resolve canonical user UID (e.g. u-rajat when client passes Firebase UID)
+    let canonicalUser = serverSecurityStore.getUser(targetUid);
+    if (!canonicalUser && bodyEmail) {
+      canonicalUser = serverSecurityStore.getUser(bodyEmail);
+    }
+    const resolvedTargetUid = canonicalUser ? canonicalUser.uid : targetUid;
+    if (targetUid !== resolvedTargetUid) {
+      cleanUpdates.firebaseUid = targetUid;
+    }
+
+    const result = serverSecurityStore.updateUserProfile(resolvedTargetUid, cleanUpdates);
     if (!result.success || !result.user) {
       return NextResponse.json(
         { success: false, error: result.error || 'Failed to update user profile.' },
@@ -212,8 +228,7 @@ export async function POST(req: NextRequest) {
       const { getAdminDb } = await import('@/lib/firebase/admin');
       const adminDb = getAdminDb();
       if (adminDb && typeof adminDb.collection === 'function') {
-        const docRef = adminDb.collection('users').doc(targetUid);
-        await docRef.set({
+        const payloadToSync = {
           ...cleanUpdates,
           mobile: cleanUpdates.mobile || cleanUpdates.phone,
           phone: cleanUpdates.mobile || cleanUpdates.phone,
@@ -225,7 +240,16 @@ export async function POST(req: NextRequest) {
           country: cleanUpdates.country,
           location: cleanUpdates.location || [cleanUpdates.city, cleanUpdates.state, cleanUpdates.country].filter(Boolean).join(', '),
           updatedAt: new Date().toISOString(),
-        }, { merge: true });
+        };
+
+        const uidsToSync = new Set<string>([resolvedTargetUid, targetUid]);
+        if (canonicalUser?.uid) uidsToSync.add(canonicalUser.uid);
+        if ((canonicalUser as any)?.firebaseUid) uidsToSync.add((canonicalUser as any).firebaseUid);
+
+        for (const syncUid of uidsToSync) {
+          if (!syncUid) continue;
+          await adminDb.collection('users').doc(syncUid).set(payloadToSync, { merge: true }).catch(() => {});
+        }
         firestoreSynced = true;
       }
     } catch (fbErr: any) {
