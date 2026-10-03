@@ -307,6 +307,154 @@ export function bulkSavePersistedAuctions(auctions: Auction[]): Auction[] {
   }
 }
 
+// ─── JOBS REPOSITORY ─────────────────────────────────────────────────────────
+
+const JOBS_FILE = path.join(DBMS_DIR, 'jobs.json');
+
+export function getPersistedJobs(): any[] {
+  return safeReadJsonFile<any[]>(JOBS_FILE, []);
+}
+
+export function savePersistedJob(job: any): any {
+  try {
+    const existing = getPersistedJobs();
+    const idx = existing.findIndex((j) => j.id === job.id);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...job, updatedAt: new Date().toISOString() };
+    } else {
+      existing.unshift({ ...job, createdAt: job.createdAt || new Date().toISOString() });
+    }
+    atomicWriteJsonFile(JOBS_FILE, existing);
+    return job;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted job:', err);
+    return job;
+  }
+}
+
+export function deletePersistedJob(jobId: string): boolean {
+  try {
+    const existing = getPersistedJobs();
+    const filtered = existing.filter((j) => j.id !== jobId);
+    atomicWriteJsonFile(JOBS_FILE, filtered);
+    return true;
+  } catch (err) {
+    console.error('[DBMS] Error deleting persisted job:', err);
+    return false;
+  }
+}
+
+// ─── NEXUS TOPICS REPOSITORY ──────────────────────────────────────────────────
+
+const TOPICS_FILE = path.join(DBMS_DIR, 'topics.json');
+
+export function getPersistedTopics(): any[] {
+  return safeReadJsonFile<any[]>(TOPICS_FILE, []);
+}
+
+export function savePersistedTopic(topic: any): any {
+  try {
+    const existing = getPersistedTopics();
+    const idx = existing.findIndex((t) => t.id === topic.id);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...topic, updatedAt: new Date().toISOString() };
+    } else {
+      existing.unshift({ ...topic, createdAt: topic.createdAt || new Date().toISOString() });
+    }
+    atomicWriteJsonFile(TOPICS_FILE, existing);
+    return topic;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted topic:', err);
+    return topic;
+  }
+}
+
+export function deletePersistedTopic(topicId: string): boolean {
+  try {
+    const existing = getPersistedTopics();
+    const filtered = existing.filter((t) => t.id !== topicId);
+    atomicWriteJsonFile(TOPICS_FILE, filtered);
+    return true;
+  } catch (err) {
+    console.error('[DBMS] Error deleting persisted topic:', err);
+    return false;
+  }
+}
+
+// ─── NEXUS REVIEWS REPOSITORY ─────────────────────────────────────────────────
+
+const REVIEWS_FILE = path.join(DBMS_DIR, 'reviews.json');
+
+export function getPersistedReviews(): any[] {
+  return safeReadJsonFile<any[]>(REVIEWS_FILE, []);
+}
+
+export function savePersistedReview(review: any): any {
+  try {
+    const existing = getPersistedReviews();
+    const idx = existing.findIndex((r) => r.id === review.id);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...review, updatedAt: new Date().toISOString() };
+    } else {
+      existing.unshift({ ...review, createdAt: review.createdAt || new Date().toISOString() });
+    }
+    atomicWriteJsonFile(REVIEWS_FILE, existing);
+    return review;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted review:', err);
+    return review;
+  }
+}
+
+export function deletePersistedReview(reviewId: string): boolean {
+  try {
+    const existing = getPersistedReviews();
+    const filtered = existing.filter((r) => r.id !== reviewId);
+    atomicWriteJsonFile(REVIEWS_FILE, filtered);
+    return true;
+  } catch (err) {
+    console.error('[DBMS] Error deleting persisted review:', err);
+    return false;
+  }
+}
+
+// ─── NEXUS BLACKLIST CASES REPOSITORY ─────────────────────────────────────────
+
+const CASES_FILE = path.join(DBMS_DIR, 'cases.json');
+
+export function getPersistedCases(): any[] {
+  return safeReadJsonFile<any[]>(CASES_FILE, []);
+}
+
+export function savePersistedCase(bCase: any): any {
+  try {
+    const existing = getPersistedCases();
+    const idx = existing.findIndex((c) => c.id === bCase.id);
+    if (idx >= 0) {
+      existing[idx] = { ...existing[idx], ...bCase, updatedAt: new Date().toISOString() };
+    } else {
+      existing.unshift({ ...bCase, createdAt: bCase.createdAt || new Date().toISOString() });
+    }
+    atomicWriteJsonFile(CASES_FILE, existing);
+    return bCase;
+  } catch (err) {
+    console.error('[DBMS] Error saving persisted case:', err);
+    return bCase;
+  }
+}
+
+export function deletePersistedCase(caseId: string): boolean {
+  try {
+    const existing = getPersistedCases();
+    const filtered = existing.filter((c) => c.id !== caseId);
+    atomicWriteJsonFile(CASES_FILE, filtered);
+    return true;
+  } catch (err) {
+    console.error('[DBMS] Error deleting persisted case:', err);
+    return false;
+  }
+}
+
 // ─── USERS REPOSITORY ────────────────────────────────────────────────────────
 
 export interface DbmsUserRecord {

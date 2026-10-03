@@ -44,6 +44,7 @@ import {
   NexusTopic,
   CompanyReview,
   BlacklistCase,
+  JobPost,
   AppNotification,
   IdempotentEvent,
   UserPresenceState,
@@ -182,11 +183,16 @@ export async function deletePostInDB(postId: string): Promise<void> {
 
 // ─── AUCTIONS REPOSITORY ─────────────────────────────────────────────────────
 export async function getAuctionsFromDB(limitCount: number = 30): Promise<Auction[]> {
-  if (typeof window === 'undefined' || !auth?.currentUser) return [];
+  if (typeof window === 'undefined') return [];
   try {
     const coll = collection(db, COLLECTIONS.AUCTIONS);
-    const q = query(coll, orderBy('startDate', 'desc'), firestoreLimit(limitCount));
-    const snap = await getDocs(q);
+    let snap;
+    try {
+      const q = query(coll, orderBy('startDate', 'desc'), firestoreLimit(limitCount));
+      snap = await getDocs(q);
+    } catch {
+      snap = await getDocs(query(coll, firestoreLimit(limitCount)));
+    }
     return snap.docs.map((d) => ({
       id: d.id,
       ...(d.data() as Omit<Auction, 'id'>),
@@ -417,7 +423,7 @@ export function subscribeToMessages(
 
 // ─── RATES REPOSITORY ────────────────────────────────────────────────────────
 export async function getRatesFromDB(ownerUid?: string, limitCount: number = 40): Promise<RateItem[]> {
-  if (typeof window === 'undefined' || !auth?.currentUser) {
+  if (typeof window === 'undefined') {
     return [];
   }
   try {
@@ -2002,6 +2008,170 @@ export async function cancelCanonicalUserDeletion(uid: string): Promise<boolean>
     return false;
   }
 }
+
+// ─── NEXUS TOPICS REPOSITORY ─────────────────────────────────────────────────
+export async function getNexusTopicsFromDB(limitCount: number = 50): Promise<NexusTopic[]> {
+  if (typeof window === 'undefined') return [];
+  try {
+    const coll = collection(db, COLLECTIONS.TOPICS);
+    let snap;
+    try {
+      const q = query(coll, orderBy('lastActivityAt', 'desc'), firestoreLimit(limitCount));
+      snap = await getDocs(q);
+    } catch {
+      snap = await getDocs(query(coll, firestoreLimit(limitCount)));
+    }
+    return snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<NexusTopic, 'id'>),
+    }));
+  } catch (err) {
+    console.warn('[Firestore] Error fetching topics:', err);
+    return [];
+  }
+}
+
+export async function upsertNexusTopicInDB(topic: NexusTopic): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.TOPICS, topic.id);
+    await setDoc(docRef, topic, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore] Error upserting topic:', err);
+  }
+}
+
+export async function deleteNexusTopicInDB(topicId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.TOPICS, topicId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore] Error deleting topic:', err);
+  }
+}
+
+// ─── NEXUS REVIEWS REPOSITORY ────────────────────────────────────────────────
+export async function getReviewsFromDB(limitCount: number = 50): Promise<CompanyReview[]> {
+  if (typeof window === 'undefined') return [];
+  try {
+    const coll = collection(db, COLLECTIONS.REVIEWS);
+    const snap = await getDocs(query(coll, firestoreLimit(limitCount)));
+    return snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<CompanyReview, 'id'>),
+    }));
+  } catch (err) {
+    console.warn('[Firestore] Error fetching reviews:', err);
+    return [];
+  }
+}
+
+export async function upsertReviewInDB(review: CompanyReview): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.REVIEWS, review.id);
+    await setDoc(docRef, review, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore] Error upserting review:', err);
+  }
+}
+
+export async function deleteReviewInDB(reviewId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.REVIEWS, reviewId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore] Error deleting review:', err);
+  }
+}
+
+// ─── NEXUS BLACKLIST CASES REPOSITORY ────────────────────────────────────────
+export async function getBlacklistCasesFromDB(limitCount: number = 50): Promise<BlacklistCase[]> {
+  if (typeof window === 'undefined') return [];
+  try {
+    const coll = collection(db, COLLECTIONS.CASES);
+    const snap = await getDocs(query(coll, firestoreLimit(limitCount)));
+    return snap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<BlacklistCase, 'id'>),
+    }));
+  } catch (err) {
+    console.warn('[Firestore] Error fetching cases:', err);
+    return [];
+  }
+}
+
+export async function upsertBlacklistCaseInDB(bCase: BlacklistCase): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.CASES, bCase.id);
+    await setDoc(docRef, bCase, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore] Error upserting case:', err);
+  }
+}
+
+export async function deleteBlacklistCaseInDB(caseId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.CASES, caseId);
+    await deleteDoc(docRef);
+  } catch (err) {
+    console.warn('[Firestore] Error deleting case:', err);
+  }
+}
+
+// ─── JOBS REPOSITORY ─────────────────────────────────────────────────────────
+export async function getJobsFromDB(limitCount: number = 50): Promise<JobPost[]> {
+  if (typeof window === 'undefined') return [];
+  try {
+    const coll = collection(db, COLLECTIONS.JOBS);
+    let snap;
+    try {
+      const q = query(coll, orderBy('createdAt', 'desc'), firestoreLimit(limitCount));
+      snap = await getDocs(q);
+    } catch {
+      snap = await getDocs(query(coll, firestoreLimit(limitCount)));
+    }
+    return snap.docs
+      .map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<JobPost, 'id'>),
+      }))
+      .filter((j) => (j as any).status !== 'deleted');
+  } catch (err) {
+    console.warn('[Firestore] Error fetching jobs:', err);
+    return [];
+  }
+}
+
+export async function upsertJobInDB(job: JobPost): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.JOBS, job.id);
+    await setDoc(docRef, job, { merge: true });
+  } catch (err) {
+    console.warn('[Firestore] Error upserting job:', err);
+  }
+}
+
+export async function deleteJobInDB(jobId: string): Promise<void> {
+  if (typeof window === 'undefined') return;
+  try {
+    const docRef = doc(db, COLLECTIONS.JOBS, jobId);
+    await updateDoc(docRef, { status: 'deleted', updatedAt: new Date().toISOString() });
+  } catch {
+    try {
+      const docRef = doc(db, COLLECTIONS.JOBS, jobId);
+      await deleteDoc(docRef);
+    } catch (err) {
+      console.warn('[Firestore] Error deleting job:', err);
+    }
+  }
+}
+
 
 
 

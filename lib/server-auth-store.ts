@@ -820,14 +820,16 @@ class ServerSecurityStore {
     if (sanitizedUpdates.company !== undefined) merged.company = sanitizedUpdates.company;
     if (sanitizedUpdates.companyId !== undefined) merged.companyId = sanitizedUpdates.companyId;
     if (sanitizedUpdates.avatarUrl !== undefined) {
-      if (sanitizedUpdates.avatarUrl === null) {
+      // Treat null OR empty string as an explicit remove
+      if (sanitizedUpdates.avatarUrl === null || sanitizedUpdates.avatarUrl === '') {
         merged.avatarUrl = '';
       } else if (sanitizedUpdates.avatarUrl) {
         merged.avatarUrl = sanitizedUpdates.avatarUrl;
       }
     }
     if (sanitizedUpdates.companyLogoUrl !== undefined) {
-      if (sanitizedUpdates.companyLogoUrl === null) {
+      // Treat null OR empty string as an explicit remove
+      if (sanitizedUpdates.companyLogoUrl === null || sanitizedUpdates.companyLogoUrl === '') {
         merged.companyLogoUrl = '';
       } else if (sanitizedUpdates.companyLogoUrl) {
         merged.companyLogoUrl = sanitizedUpdates.companyLogoUrl;

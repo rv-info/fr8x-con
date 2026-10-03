@@ -156,9 +156,13 @@ export default function ProfilePage() {
   // Persistent storage key helper
   const userStorageKey = user.uid || user.email || 'guest';
 
+  // Explicit removal flags — prevent useEffect from re-hydrating images the user just deleted
+  const [avatarRemoved, setAvatarRemoved] = React.useState(false);
+  const [logoRemoved, setLogoRemoved] = React.useState(false);
+
   // Profile Image & Company Logo State with robust local storage fallback
   const [avatarUrl, setAvatarUrl] = useState<string | null>(() => {
-    if (user.avatarUrl) return user.avatarUrl;
+    if (typeof user.avatarUrl === 'string') return user.avatarUrl || null;
     if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
       if (activeUid) {
@@ -168,7 +172,7 @@ export default function ProfilePage() {
     return null;
   });
   const [companyLogoUrl, setCompanyLogoUrl] = useState<string | null>(() => {
-    if (user.companyLogoUrl) return user.companyLogoUrl;
+    if (typeof user.companyLogoUrl === 'string') return user.companyLogoUrl || null;
     if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
       if (activeUid) {
@@ -178,11 +182,14 @@ export default function ProfilePage() {
     return null;
   });
 
-  // Sync avatar and logo state whenever user object in AuthContext updates,
-  // without allowing empty server responses to wipe out locally stored images
+  // Sync avatar state when server profile updates — skip if user explicitly removed
   useEffect(() => {
-    if (user.avatarUrl) {
-      setAvatarUrl(user.avatarUrl);
+    if (avatarRemoved) {
+      setAvatarUrl(null);
+      return;
+    }
+    if (typeof user.avatarUrl === 'string') {
+      setAvatarUrl(user.avatarUrl || null);
     } else if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
       if (activeUid) {
@@ -190,11 +197,15 @@ export default function ProfilePage() {
         if (cached) setAvatarUrl(cached);
       }
     }
-  }, [user.avatarUrl, user.uid]);
+  }, [user.avatarUrl, user.uid, avatarRemoved]);
 
   useEffect(() => {
-    if (user.companyLogoUrl) {
-      setCompanyLogoUrl(user.companyLogoUrl);
+    if (logoRemoved) {
+      setCompanyLogoUrl(null);
+      return;
+    }
+    if (typeof user.companyLogoUrl === 'string') {
+      setCompanyLogoUrl(user.companyLogoUrl || null);
     } else if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
       if (activeUid) {
@@ -202,7 +213,7 @@ export default function ProfilePage() {
         if (cached) setCompanyLogoUrl(cached);
       }
     }
-  }, [user.companyLogoUrl, user.uid]);
+  }, [user.companyLogoUrl, user.uid, logoRemoved]);
 
   // Address & Google Maps State with local storage fallback
   const [city, setCity] = useState(() => {
@@ -744,10 +755,22 @@ export default function ProfilePage() {
           if (u.avatarUrl) {
             setAvatarUrl(u.avatarUrl);
             try { localStorage.setItem(`fr8x_user_avatar_${storageKey}`, u.avatarUrl); } catch {}
+          } else if (u.avatarUrl === '') {
+            setAvatarUrl(null);
+            try {
+              localStorage.removeItem(`fr8x_user_avatar_${storageKey}`);
+              localStorage.removeItem('fr8x_user_avatar');
+            } catch {}
           }
           if (u.companyLogoUrl) {
             setCompanyLogoUrl(u.companyLogoUrl);
             try { localStorage.setItem(`fr8x_user_logo_${storageKey}`, u.companyLogoUrl); } catch {}
+          } else if (u.companyLogoUrl === '') {
+            setCompanyLogoUrl(null);
+            try {
+              localStorage.removeItem(`fr8x_user_logo_${storageKey}`);
+              localStorage.removeItem('fr8x_user_logo');
+            } catch {}
           }
           if (u.firstName) setFirstName(u.firstName);
           if (u.lastName) setLastName(u.lastName);
@@ -769,8 +792,8 @@ export default function ProfilePage() {
             country: u.country || user.country || country || 'India',
             formattedAddress: u.formattedAddress || user.formattedAddress || formattedAddress || '',
             timezone: u.timezone || user.timezone || timezone || 'Asia/Kolkata',
-            avatarUrl: u.avatarUrl || currentStoredAvatar,
-            companyLogoUrl: u.companyLogoUrl || currentStoredLogo,
+            avatarUrl: typeof u.avatarUrl === 'string' ? u.avatarUrl : (avatarRemoved ? '' : currentStoredAvatar),
+            companyLogoUrl: typeof u.companyLogoUrl === 'string' ? u.companyLogoUrl : (logoRemoved ? '' : currentStoredLogo),
             experiences: (u.experiences && u.experiences.length > 0) ? u.experiences : (experiences.length > 0 ? experiences : (user.experiences || [])),
             educations: (u.educations && u.educations.length > 0) ? u.educations : (educations.length > 0 ? educations : (user.educations || [])),
             certifications: (u.certifications && u.certifications.length > 0) ? u.certifications : (certifications.length > 0 ? certifications : (user.certifications || [])),
@@ -1046,8 +1069,8 @@ export default function ProfilePage() {
   };
 
   const completeness = calculateCompleteness();
-  const effectiveAvatarUrl = avatarUrl || user.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
-  const effectiveCompanyLogoUrl = companyLogoUrl || user.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
+  const effectiveAvatarUrl = avatarRemoved ? null : (avatarUrl !== null ? avatarUrl : (typeof user.avatarUrl === 'string' ? (user.avatarUrl || null) : (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null)));
+  const effectiveCompanyLogoUrl = logoRemoved ? null : (companyLogoUrl !== null ? companyLogoUrl : (typeof user.companyLogoUrl === 'string' ? (user.companyLogoUrl || null) : (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null)));
 
   const handleSaveProfile = async () => {
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
@@ -1066,8 +1089,8 @@ export default function ProfilePage() {
       mobile: mobile.trim(),
       mobileNumber: mobile.trim(),
       summary: summary.trim(),
-      avatarUrl: avatarUrl ? avatarUrl : '',
-      companyLogoUrl: companyLogoUrl ? companyLogoUrl : '',
+      avatarUrl: (avatarRemoved || !avatarUrl) ? '' : avatarUrl,
+      companyLogoUrl: (logoRemoved || !companyLogoUrl) ? '' : companyLogoUrl,
       city: city.trim(),
       state: stateName.trim(),
       country: country.trim(),
@@ -1092,16 +1115,26 @@ export default function ProfilePage() {
       mto: mto ? mto.trim() : '',
     };
 
-    if (avatarUrl) {
+    if (avatarUrl && !avatarRemoved) {
       try {
         localStorage.setItem(`fr8x_user_avatar_${activeUid}`, avatarUrl);
         localStorage.setItem('fr8x_user_avatar', avatarUrl);
       } catch {}
+    } else {
+      try {
+        localStorage.removeItem(`fr8x_user_avatar_${activeUid}`);
+        localStorage.removeItem('fr8x_user_avatar');
+      } catch {}
     }
-    if (companyLogoUrl) {
+    if (companyLogoUrl && !logoRemoved) {
       try {
         localStorage.setItem(`fr8x_user_logo_${activeUid}`, companyLogoUrl);
         localStorage.setItem('fr8x_user_logo', companyLogoUrl);
+      } catch {}
+    } else {
+      try {
+        localStorage.removeItem(`fr8x_user_logo_${activeUid}`);
+        localStorage.removeItem('fr8x_user_logo');
       } catch {}
     }
 
@@ -2119,8 +2152,9 @@ export default function ProfilePage() {
                 {effectiveAvatarUrl && (
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={async () => {
                       setAvatarUrl(null);
+                      setAvatarRemoved(true);
                       const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
                       if (activeUid) {
                         try {
@@ -2130,16 +2164,20 @@ export default function ProfilePage() {
                       }
                       updateUser({ avatarUrl: '' });
                       if (activeUid) {
-                        fetch('/api/user/profile', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'x-fr8x-user-uid': activeUid,
-                          },
-                          body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
-                        }).catch(() => {});
+                        try {
+                          await fetch('/api/user/profile', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'x-fr8x-user-uid': activeUid,
+                              'x-fr8x-session': activeUid,
+                            },
+                            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
+                          });
+                          await updateCanonicalUserProfile(activeUid, { avatarUrl: '' });
+                        } catch {}
                       }
-                      toast('Profile photo removed.');
+                      toast('Profile photo removed successfully.');
                     }}
                     style={{
                       position: 'absolute',
@@ -2229,6 +2267,59 @@ export default function ProfilePage() {
                       <Upload size={7} />
                       <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
                     </label>
+                    {/* Remove company logo trigger (if logo exists) */}
+                    {effectiveCompanyLogoUrl && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setCompanyLogoUrl(null);
+                          setLogoRemoved(true);
+                          const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+                          if (activeUid) {
+                            try {
+                              localStorage.removeItem(`fr8x_user_logo_${activeUid}`);
+                              localStorage.removeItem('fr8x_user_logo');
+                            } catch {}
+                          }
+                          updateUser({ companyLogoUrl: '' });
+                          if (activeUid) {
+                            try {
+                              await fetch('/api/user/profile', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                  'x-fr8x-user-uid': activeUid,
+                                  'x-fr8x-session': activeUid,
+                                },
+                                body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: '' } }),
+                              });
+                              await updateCanonicalUserProfile(activeUid, { companyLogoUrl: '' });
+                            } catch {}
+                          }
+                          toast('Company logo removed successfully.');
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '-4px',
+                          left: '-4px',
+                          background: '#dc2626',
+                          color: '#fff',
+                          borderRadius: '50%',
+                          width: '14px',
+                          height: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          border: '1px solid #fff',
+                          padding: 0,
+                          zIndex: 6,
+                        }}
+                        title="Remove company logo"
+                      >
+                        <Trash2 size={7} />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

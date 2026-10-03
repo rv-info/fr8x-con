@@ -87,6 +87,16 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = savePersistedAuction(body);
+
+    // Best-effort Firestore sync if Admin SDK configured
+    try {
+      const { getAdminDb } = await import('@/lib/firebase/admin');
+      const adminDb = getAdminDb();
+      if (adminDb && typeof adminDb.collection === 'function') {
+        await adminDb.collection('auctions').doc(saved.id).set(saved, { merge: true });
+      }
+    } catch {}
+
     return NextResponse.json({ success: true, auction: saved }, { status: 200 });
   } catch (err: any) {
     return NextResponse.json(
@@ -129,6 +139,14 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    try {
+      const { getAdminDb } = await import('@/lib/firebase/admin');
+      const adminDb = getAdminDb();
+      if (adminDb && typeof adminDb.collection === 'function') {
+        await adminDb.collection('auctions').doc(id).update({ status: 'Cancelled', updatedAt: new Date().toISOString() });
+      }
+    } catch {}
 
     return NextResponse.json(
       {

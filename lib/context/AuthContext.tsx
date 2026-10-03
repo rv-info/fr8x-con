@@ -598,11 +598,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.setItem(`fr8x_user_avatar_${targetUid}`, updatedFields.avatarUrl);
           localStorage.setItem('fr8x_user_avatar', updatedFields.avatarUrl);
         } catch {}
+      } else if (updatedFields.avatarUrl === '' || updatedFields.avatarUrl === null) {
+        try {
+          localStorage.removeItem(`fr8x_user_avatar_${targetUid}`);
+          localStorage.removeItem('fr8x_user_avatar');
+        } catch {}
       }
+
       if (updatedFields.companyLogoUrl) {
         try {
           localStorage.setItem(`fr8x_user_logo_${targetUid}`, updatedFields.companyLogoUrl);
           localStorage.setItem('fr8x_user_logo', updatedFields.companyLogoUrl);
+        } catch {}
+      } else if (updatedFields.companyLogoUrl === '' || updatedFields.companyLogoUrl === null) {
+        try {
+          localStorage.removeItem(`fr8x_user_logo_${targetUid}`);
+          localStorage.removeItem('fr8x_user_logo');
         } catch {}
       }
       if (Array.isArray(updatedFields.experiences) && updatedFields.experiences.length > 0) {
@@ -857,8 +868,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isVerified: serverUser.isVerified ?? serverUser.email_verified ?? existingLocal?.isVerified ?? true,
       email_verified: serverUser.email_verified ?? serverUser.isVerified ?? existingLocal?.email_verified ?? true,
       role: serverUser.role || existingLocal?.role || 'user',
-      avatarUrl: (serverUser as any).avatarUrl || existingLocal?.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${serverUser.uid}`) || localStorage.getItem('fr8x_user_avatar') || '') : ''),
-      companyLogoUrl: (serverUser as any).companyLogoUrl || existingLocal?.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${serverUser.uid}`) || localStorage.getItem('fr8x_user_logo') || '') : ''),
+      avatarUrl: typeof (serverUser as any).avatarUrl === 'string'
+        ? (serverUser as any).avatarUrl
+        : (existingLocal?.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${serverUser.uid}`) || localStorage.getItem('fr8x_user_avatar') || '') : '')),
+      companyLogoUrl: typeof (serverUser as any).companyLogoUrl === 'string'
+        ? (serverUser as any).companyLogoUrl
+        : (existingLocal?.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${serverUser.uid}`) || localStorage.getItem('fr8x_user_logo') || '') : '')),
       summary: (serverUser as any).summary || existingLocal?.summary || '',
       gstn: (serverUser as any).gstn || existingLocal?.gstn || '',
       pan: (serverUser as any).pan || existingLocal?.pan || '',

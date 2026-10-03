@@ -48,6 +48,18 @@ import {
   deleteRateInDB,
   batchUpsertRatesInDB,
   batchUpdateRatesInDB,
+  getJobsFromDB,
+  upsertJobInDB,
+  deleteJobInDB,
+  getNexusTopicsFromDB,
+  upsertNexusTopicInDB,
+  deleteNexusTopicInDB,
+  getReviewsFromDB,
+  upsertReviewInDB,
+  deleteReviewInDB,
+  getBlacklistCasesFromDB,
+  upsertBlacklistCaseInDB,
+  deleteBlacklistCaseInDB,
 } from '@/lib/firebase/firestore';
 import { eventBus } from '@/lib/intelligence/events';
 import { presenceService } from '@/lib/presence/presenceService';
@@ -523,14 +535,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Secondary data queries (auctions and rates)
+        // Secondary data queries (auctions, rates, jobs, nexus)
         const fetchSecondary = async () => {
           if (!isMounted) return;
           const auctionLimit = isLowBandwidth ? 12 : 30;
           const rateLimit = isLowBandwidth ? 20 : 50;
-          const [auctionsRes, ratesRes] = await Promise.allSettled([
+          const [auctionsRes, ratesRes, jobsRes, topicsRes, reviewsRes, casesRes] = await Promise.allSettled([
             getAuctionsFromDB(auctionLimit),
             getRatesFromDB(undefined, rateLimit),
+            getJobsFromDB(30),
+            getNexusTopicsFromDB(30),
+            getReviewsFromDB(30),
+            getBlacklistCasesFromDB(30),
           ]);
 
           if (!isMounted) return;
@@ -583,6 +599,62 @@ export function DataProvider({ children }: { children: ReactNode }) {
               try {
                 localStorage.setItem('fr8x_my_rates', JSON.stringify(merged));
               } catch {}
+              return merged;
+            });
+          }
+
+          if (jobsRes.status === 'fulfilled' && Array.isArray(jobsRes.value) && jobsRes.value.length > 0) {
+            const cleanCloudJobs = jobsRes.value.filter((j) => !isDummyJob(j));
+            setJobs((prev) => {
+              const map = new Map<string, JobPost>();
+              cleanCloudJobs.forEach((j) => map.set(j.id, j));
+              prev.filter((j) => !isDummyJob(j)).forEach((j) => {
+                if (!map.has(j.id)) map.set(j.id, j);
+              });
+              const merged = Array.from(map.values());
+              try { localStorage.setItem('fr8x_jobs', JSON.stringify(merged)); } catch {}
+              return merged;
+            });
+          }
+
+          if (topicsRes.status === 'fulfilled' && Array.isArray(topicsRes.value) && topicsRes.value.length > 0) {
+            const cleanCloudTopics = topicsRes.value.filter((t) => !isDummyNexusTopic(t));
+            setTopics((prev) => {
+              const map = new Map<string, NexusTopic>();
+              cleanCloudTopics.forEach((t) => map.set(t.id, t));
+              prev.filter((t) => !isDummyNexusTopic(t)).forEach((t) => {
+                if (!map.has(t.id)) map.set(t.id, t);
+              });
+              const merged = Array.from(map.values());
+              try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(merged)); } catch {}
+              return merged;
+            });
+          }
+
+          if (reviewsRes.status === 'fulfilled' && Array.isArray(reviewsRes.value) && reviewsRes.value.length > 0) {
+            const cleanCloudReviews = reviewsRes.value.filter((r) => !isDummyCompanyReview(r));
+            setReviews((prev) => {
+              const map = new Map<string, CompanyReview>();
+              cleanCloudReviews.forEach((r) => map.set(r.id, r));
+              prev.filter((r) => !isDummyCompanyReview(r)).forEach((r) => {
+                if (!map.has(r.id)) map.set(r.id, r);
+              });
+              const merged = Array.from(map.values());
+              try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(merged)); } catch {}
+              return merged;
+            });
+          }
+
+          if (casesRes.status === 'fulfilled' && Array.isArray(casesRes.value) && casesRes.value.length > 0) {
+            const cleanCloudCases = casesRes.value.filter((c) => !isDummyBlacklistCase(c));
+            setCases((prev) => {
+              const map = new Map<string, BlacklistCase>();
+              cleanCloudCases.forEach((c) => map.set(c.id, c));
+              prev.filter((c) => !isDummyBlacklistCase(c)).forEach((c) => {
+                if (!map.has(c.id)) map.set(c.id, c);
+              });
+              const merged = Array.from(map.values());
+              try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(merged)); } catch {}
               return merged;
             });
           }
@@ -667,6 +739,64 @@ export function DataProvider({ children }: { children: ReactNode }) {
                   try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
                   return merged;
                 });
+              }
+            })
+            .catch(() => {});
+
+          fetch('/api/jobs', { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.success && Array.isArray(data.jobs) && data.jobs.length > 0) {
+                const apiJobs = data.jobs.filter((j: JobPost) => !isDummyJob(j));
+                setJobs((prev) => {
+                  const map = new Map<string, JobPost>();
+                  prev.filter((j) => !isDummyJob(j)).forEach((j) => map.set(j.id, j));
+                  apiJobs.forEach((j: JobPost) => map.set(j.id, j));
+                  const merged = Array.from(map.values());
+                  try { localStorage.setItem('fr8x_jobs', JSON.stringify(merged)); } catch {}
+                  return merged;
+                });
+              }
+            })
+            .catch(() => {});
+
+          fetch('/api/nexus', { headers: authHeaders })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data?.success) {
+                if (Array.isArray(data.topics) && data.topics.length > 0) {
+                  const apiTopics = data.topics.filter((t: NexusTopic) => !isDummyNexusTopic(t));
+                  setTopics((prev) => {
+                    const map = new Map<string, NexusTopic>();
+                    prev.filter((t) => !isDummyNexusTopic(t)).forEach((t) => map.set(t.id, t));
+                    apiTopics.forEach((t: NexusTopic) => map.set(t.id, t));
+                    const merged = Array.from(map.values());
+                    try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(merged)); } catch {}
+                    return merged;
+                  });
+                }
+                if (Array.isArray(data.reviews) && data.reviews.length > 0) {
+                  const apiReviews = data.reviews.filter((r: CompanyReview) => !isDummyCompanyReview(r));
+                  setReviews((prev) => {
+                    const map = new Map<string, CompanyReview>();
+                    prev.filter((r) => !isDummyCompanyReview(r)).forEach((r) => map.set(r.id, r));
+                    apiReviews.forEach((r: CompanyReview) => map.set(r.id, r));
+                    const merged = Array.from(map.values());
+                    try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(merged)); } catch {}
+                    return merged;
+                  });
+                }
+                if (Array.isArray(data.cases) && data.cases.length > 0) {
+                  const apiCases = data.cases.filter((c: BlacklistCase) => !isDummyBlacklistCase(c));
+                  setCases((prev) => {
+                    const map = new Map<string, BlacklistCase>();
+                    prev.filter((c) => !isDummyBlacklistCase(c)).forEach((c) => map.set(c.id, c));
+                    apiCases.forEach((c: BlacklistCase) => map.set(c.id, c));
+                    const merged = Array.from(map.values());
+                    try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(merged)); } catch {}
+                    return merged;
+                  });
+                }
               }
             })
             .catch(() => {});
@@ -1134,6 +1264,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch('/api/jobs', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+      body: JSON.stringify(newJob),
+    }).catch(() => {});
+    upsertJobInDB(newJob).catch(() => {});
+
     if (isPaidOrWaived) {
       toast(`Job opportunity '${newJob.title}' posted successfully.`);
     } else {
@@ -1142,22 +1284,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const verifyJobPayment = (jobId: string, verifiedBy: string = 'Godfather Platform Tech') => {
+    let updatedJob: JobPost | undefined;
     setJobs((prev) => {
       const next = prev.map((j) => {
         if (j.id === jobId) {
-          return {
+          const u: JobPost = {
             ...j,
             status: 'active' as const,
             paymentStatus: 'paid' as const,
             paymentVerifiedAt: new Date().toISOString(),
             paymentVerifiedBy: verifiedBy,
           };
+          updatedJob = u;
+          return u;
         }
         return j;
       });
       try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedJob) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify(updatedJob),
+      }).catch(() => {});
+      upsertJobInDB(updatedJob).catch(() => {});
+    }
+
     toast(`Job listing ${jobId} payment verified & activated live.`);
   };
 
@@ -1167,6 +1326,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_jobs', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch(`/api/jobs?id=${encodeURIComponent(jobId)}`, {
+      method: 'DELETE',
+      headers: {
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+    }).catch(() => {});
+    deleteJobInDB(jobId).catch(() => {});
+
     toast('Job listing removed.');
   };
 
@@ -1194,15 +1363,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch('/api/nexus', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+      body: JSON.stringify({ type: 'topic', topic: newTopic }),
+    }).catch(() => {});
+    upsertNexusTopicInDB(newTopic).catch(() => {});
+
     toast('Discussion topic published to Nexus Community.');
   };
 
   const updateTopic = (topicId: string, title: string, category: string, text: string) => {
     if (!title.trim() || !text.trim()) return;
+    let updatedTopic: NexusTopic | undefined;
     setTopics((prev) => {
       const next = prev.map((t) => {
         if (t.id !== topicId) return t;
-        return {
+        const u = {
           ...t,
           title: title.trim(),
           category: category || t.category,
@@ -1210,10 +1392,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
           isEdited: true,
           updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
+        updatedTopic = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedTopic) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'topic', topic: updatedTopic }),
+      }).catch(() => {});
+      upsertNexusTopicInDB(updatedTopic).catch(() => {});
+    }
+
     toast('Topic successfully updated.');
   };
 
@@ -1223,6 +1421,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch(`/api/nexus?type=topic&id=${encodeURIComponent(topicId)}`, {
+      method: 'DELETE',
+      headers: {
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+    }).catch(() => {});
+    deleteNexusTopicInDB(topicId).catch(() => {});
+
     toast('Discussion topic deleted.');
   };
 
@@ -1236,38 +1444,73 @@ export function DataProvider({ children }: { children: ReactNode }) {
       time: 'Just now',
       hasGoldenTick: user.hasGoldenTick,
     };
+    let updatedTopic: NexusTopic | undefined;
     setTopics((prev) => {
       const next = prev.map((t) => {
         if (t.id !== topicId) return t;
-        return {
+        const u = {
           ...t,
           commentsCount: t.commentsCount + 1,
           replies: [...t.replies, newReply],
         };
+        updatedTopic = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedTopic) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'topic', topic: updatedTopic }),
+      }).catch(() => {});
+      upsertNexusTopicInDB(updatedTopic).catch(() => {});
+    }
+
     toast('Discussion response submitted.');
   };
 
   const deleteTopicReply = (topicId: string, replyId: string) => {
+    let updatedTopic: NexusTopic | undefined;
     setTopics((prev) => {
       const next = prev.map((t) => {
         if (t.id !== topicId) return t;
-        return {
+        const u = {
           ...t,
           commentsCount: Math.max(0, t.commentsCount - 1),
           replies: t.replies.filter((r) => r.id !== replyId),
         };
+        updatedTopic = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedTopic) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'topic', topic: updatedTopic }),
+      }).catch(() => {});
+      upsertNexusTopicInDB(updatedTopic).catch(() => {});
+    }
+
     toast('Reply removed.');
   };
 
   const reactTopic = (topicId: string, reaction: 'like' | 'dis') => {
+    let updatedTopic: NexusTopic | undefined;
     setTopics((prev) => {
       const next = prev.map((t) => {
         if (t.id !== topicId) return t;
@@ -1275,18 +1518,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
         const disliked = reaction === 'dis' ? !t.disliked : false;
         const likes = (t.likes || 0) + (liked ? 1 : t.liked ? -1 : 0);
         const dis = (t.dis || 0) + (disliked ? 1 : t.disliked ? -1 : 0);
-        return { ...t, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
+        const u = { ...t, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
+        updatedTopic = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedTopic) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'topic', topic: updatedTopic }),
+      }).catch(() => {});
+      upsertNexusTopicInDB(updatedTopic).catch(() => {});
+    }
   };
 
   const reactTopicReply = (topicId: string, replyId: string, reaction: 'like' | 'dis') => {
+    let updatedTopic: NexusTopic | undefined;
     setTopics((prev) => {
       const next = prev.map((t) => {
         if (t.id !== topicId) return t;
-        return {
+        const u = {
           ...t,
           replies: (t.replies || []).map((r) => {
             if (r.id !== replyId) return r;
@@ -1297,10 +1556,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
             return { ...r, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
           }),
         };
+        updatedTopic = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (updatedTopic) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'topic', topic: updatedTopic }),
+      }).catch(() => {});
+      upsertNexusTopicInDB(updatedTopic).catch(() => {});
+    }
   };
 
   const addReview = (companyName: string, location: string, rating: number, text: string) => {
@@ -1315,41 +1589,59 @@ export function DataProvider({ children }: { children: ReactNode }) {
       verified: true,
     };
 
+    let targetReviewDoc: CompanyReview | undefined;
     setReviews((prev) => {
       const existing = prev.find((r) => r.companyName.toLowerCase() === companyName.toLowerCase());
       let next: CompanyReview[];
       if (existing) {
-        next = prev.map((r) =>
-          r.id === existing.id
-            ? {
-                ...r,
-                totalReviews: r.totalReviews + 1,
-                recentReviews: [newReviewItem, ...r.recentReviews],
-              }
-            : r
-        );
+        next = prev.map((r) => {
+          if (r.id === existing.id) {
+            const u = {
+              ...r,
+              totalReviews: r.totalReviews + 1,
+              recentReviews: [newReviewItem, ...r.recentReviews],
+            };
+            targetReviewDoc = u;
+            return u;
+          }
+          return r;
+        });
       } else {
-        next = [
-          {
-            id: `cr-${Date.now()}`,
-            companyName: companyName.trim(),
-            location: location.trim() || 'Global',
-            ratingAverage: rating,
-            totalReviews: 1,
-            starDistribution: [1, 0, 0, 0, 0],
-            recentReviews: [newReviewItem],
-          },
-          ...prev,
-        ];
+        const created: CompanyReview = {
+          id: `cr-${Date.now()}`,
+          companyName: companyName.trim(),
+          location: location.trim() || 'Global',
+          ratingAverage: rating,
+          totalReviews: 1,
+          starDistribution: [1, 0, 0, 0, 0],
+          recentReviews: [newReviewItem],
+        };
+        targetReviewDoc = created;
+        next = [created, ...prev];
       }
       try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (targetReviewDoc) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'review', review: targetReviewDoc }),
+      }).catch(() => {});
+      upsertReviewInDB(targetReviewDoc).catch(() => {});
+    }
+
     toast(`Verified review for ${companyName} submitted.`);
   };
 
   const updateReviewRemark = (companyId: string, remarkId: string, rating: number, text: string) => {
     if (!text.trim()) return;
+    let targetReviewDoc: CompanyReview | undefined;
     setReviews((prev) => {
       const next = prev.map((comp) => {
         if (comp.id !== companyId && comp.companyName.toLowerCase() !== companyId.toLowerCase()) return comp;
@@ -1376,24 +1668,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
           dist[5 - starIndex] = (dist[5 - starIndex] || 0) + 1;
         });
 
-        return {
+        const updatedComp = {
           ...comp,
           ratingAverage: avg,
           starDistribution: dist,
           recentReviews: updatedRecent,
         };
+        targetReviewDoc = updatedComp;
+        return updatedComp;
       });
       try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (targetReviewDoc) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'review', review: targetReviewDoc }),
+      }).catch(() => {});
+      upsertReviewInDB(targetReviewDoc).catch(() => {});
+    }
+
     toast('Your verified peer remark has been updated.');
   };
 
   const reactReviewRemark = (companyId: string, reviewId: string, action: 'like' | 'dis') => {
+    let targetReviewDoc: CompanyReview | undefined;
     setReviews((prev) => {
       const next = prev.map((comp) => {
         if (comp.id !== companyId) return comp;
-        return {
+        const u = {
           ...comp,
           recentReviews: comp.recentReviews.map((r) => {
             if (r.id !== reviewId) return r;
@@ -1404,10 +1713,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
             return { ...r, liked, disliked, likes: Math.max(0, likes), dis: Math.max(0, dis) };
           }),
         };
+        targetReviewDoc = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (targetReviewDoc) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'review', review: targetReviewDoc }),
+      }).catch(() => {});
+      upsertReviewInDB(targetReviewDoc).catch(() => {});
+    }
   };
 
   const addCase = (
@@ -1431,23 +1755,52 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+    fetch('/api/nexus', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+      },
+      body: JSON.stringify({ type: 'case', case: newCase }),
+    }).catch(() => {});
+    upsertBlacklistCaseInDB(newCase).catch(() => {});
+
     toast(`Compliance report for ${newCase.companyName} submitted for verification.`);
   };
 
   const agreeCase = (caseId: string) => {
+    let targetCase: BlacklistCase | undefined;
     setCases((prev) => {
       const next = prev.map((c) => {
         if (c.id !== caseId) return c;
         const willAgree = !c.userAgreed;
-        return {
+        const u = {
           ...c,
           userAgreed: willAgree,
           agreedCount: Math.max(0, (c.agreedCount || 0) + (willAgree ? 1 : -1)),
         };
+        targetCase = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (targetCase) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'case', case: targetCase }),
+      }).catch(() => {});
+      upsertBlacklistCaseInDB(targetCase).catch(() => {});
+    }
+
     toast('Recorded your agreement with this blacklist default record.');
   };
 
@@ -1464,19 +1817,36 @@ export function DataProvider({ children }: { children: ReactNode }) {
       status: 'under_review',
     };
 
+    let targetCase: BlacklistCase | undefined;
     setCases((prev) => {
       const next = prev.map((c) => {
         if (c.id !== caseId) return c;
-        return {
+        const u = {
           ...c,
           userDisputed: true,
           disputeCount: (c.disputeCount || 0) + 1,
           disputes: [newDispute, ...(c.disputes || [])],
         };
+        targetCase = u;
+        return u;
       });
       try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(next)); } catch {}
       return next;
     });
+
+    if (targetCase) {
+      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+      fetch('/api/nexus', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ type: 'case', case: targetCase }),
+      }).catch(() => {});
+      upsertBlacklistCaseInDB(targetCase).catch(() => {});
+    }
+
     toast('Counter-dispute statement and evidence docket submitted for arbitration.');
   };
 
