@@ -507,14 +507,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
             const author = String(p.author || '');
             return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
           });
+          // Firestore merge: use post ID as single dedup key — server is authoritative
           setPosts((prev) => {
             const map = new Map<string, FeedPost>();
+            // Local optimistic posts first (so new posts not yet on server survive)
+            prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
+              .forEach((p) => map.set(String(p.id), p));
+            // Server data wins for existing IDs
             validCloudPosts.forEach((p) => map.set(String(p.id), p));
-            prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author))).forEach((p) => {
-              if (!map.has(String(p.id))) {
-                map.set(String(p.id), p);
-              }
-            });
             const merged = Array.from(map.values());
             try {
               localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged));
@@ -655,15 +655,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
                   const author = String(p.author || '');
                   return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
                 });
+                // Server API merge: ID-based dedup only — server data is authoritative
                 setPosts((prev) => {
                   const map = new Map<string, FeedPost>();
-                  const seenSig = new Set<string>();
-                  for (const p of [...apiPosts, ...prev]) {
-                    const sig = `${p.authorUid || p.author}::${(p.text || '').trim().toLowerCase()}::${(p.createdAt || '').slice(0, 16)}`;
-                    if (seenSig.has(sig)) continue;
-                    seenSig.add(sig);
-                    map.set(String(p.id), p);
-                  }
+                  // Keep local optimistic posts first
+                  prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
+                    .forEach((p) => map.set(String(p.id), p));
+                  // Server wins for matching IDs
+                  apiPosts.forEach((p: FeedPost) => map.set(String(p.id), p));
                   const merged = Array.from(map.values());
                   try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
                   return merged;
@@ -765,7 +764,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Offline queueing + server persistence + live cloud sync
+    // Persist exclusively via server API (which handles Firestore sync server-side).
+    // Do NOT call upsertPostInDB here — that creates a second copy pulled back by SWR.
     queueAction('create_post', newPost, user.uid);
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     fetch('/api/feed', {
@@ -776,7 +776,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       },
       body: JSON.stringify(newPost),
     }).catch(() => {});
-    upsertPostInDB(newPost).catch(() => {});
     eventBus.recordEvent({
       eventType: 'post_create',
       actorId: user.uid,

@@ -303,7 +303,7 @@ export default function FeedsPage() {
   const { toast } = useToast();
   const { openChatWith } = useChat();
 
-  // Hydrate user profile authoritatively from DBMS on feeds mount
+  // Hydrate user profile from server on feeds mount
   React.useEffect(() => {
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
     if (!activeUid) return;
@@ -320,7 +320,7 @@ export default function FeedsPage() {
           updateUser(data.user);
         }
       })
-      .catch((err) => console.warn('[Feeds] Profile DBMS sync warning:', err));
+      .catch((err) => console.warn('[Feeds] Profile sync warning:', err));
   }, [user.uid]);
 
   // Quick Edit Contact & Terminal Modal State
@@ -3576,7 +3576,7 @@ export default function FeedsPage() {
         />
       )}
 
-      {/* Quick Edit Contact & Terminal Modal (Linked directly with DBMS) */}
+      {/* Quick Edit Contact & Terminal Modal */}
       {showQuickContactModal && (
         <Modal
           isOpen={showQuickContactModal}

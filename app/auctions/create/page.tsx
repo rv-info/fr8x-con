@@ -1940,6 +1940,18 @@ export default function CreateReverseAuctionPage() {
             <button
               type="button"
               className="btn secondary"
+              style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#dc2626', borderColor: '#fecaca' }}
+              onClick={() => {
+                deleteDraftAction('auction_create_draft').catch(() => {});
+                router.push('/auctions');
+              }}
+              title="Discard this form and return to Auctions — no record will be created"
+            >
+              <Ban size={14} /> Discard
+            </button>
+            <button
+              type="button"
+              className="btn secondary"
               style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               onClick={handleSaveDraft}
               title="Save current details as draft to edit or publish later"
