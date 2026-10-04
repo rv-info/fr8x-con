@@ -31,6 +31,7 @@ import {
   saveUserProfileToFirestore,
   updateCanonicalUserProfile,
   getCanonicalUserProfile,
+  updateUserProfile,
   submitUserKYC,
 } from '@/lib/firebase/firestore';
 import {
@@ -121,15 +122,16 @@ export default function ProfilePage() {
     if (user.designation) return user.designation;
     if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
-      return (activeUid ? localStorage.getItem(`fr8x_user_designation_${activeUid}`) : null) || localStorage.getItem('fr8x_user_designation') || '';
+      return (activeUid ? localStorage.getItem(`fr8x_user_designation_${activeUid}`) : null) || '';
     }
     return '';
   });
   const [mobile, setMobile] = useState(() => {
-    if (user.mobile) return user.mobile;
+    const canonicalMobile = user.mobile || (user as any).phone;
+    if (canonicalMobile) return canonicalMobile;
     if (typeof window !== 'undefined') {
       const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
-      return (activeUid ? localStorage.getItem(`fr8x_user_mobile_${activeUid}`) : null) || localStorage.getItem('fr8x_user_mobile') || '';
+      return (activeUid ? localStorage.getItem(`fr8x_user_mobile_${activeUid}`) : null) || '';
     }
     return '';
   });
@@ -298,13 +300,13 @@ export default function ProfilePage() {
       if (user.firstName) setFirstName(user.firstName);
       if (user.lastName) setLastName(user.lastName);
       if (user.designation) setDesignation(user.designation);
-      if (user.mobile) setMobile(user.mobile);
+      if (user.mobile || (user as any).phone) setMobile(user.mobile || (user as any).phone);
       if (user.company) setCompany(user.company);
       if (user.summary) setSummary(user.summary);
       if (user.city) setCity(user.city);
       if (user.state) setStateName(user.state);
       if (user.country) setCountry(user.country);
-      if (user.formattedAddress) setFormattedAddress(user.formattedAddress);
+      if (user.formattedAddress || (user as any).address) setFormattedAddress(user.formattedAddress || (user as any).address);
       if (user.timezone) setTimezone(user.timezone);
       if (user.gstn) setGstn(user.gstn);
       if (user.pan) setPan(user.pan);
@@ -381,8 +383,7 @@ export default function ProfilePage() {
     setEditFirstName(user.firstName || firstName || '');
     setEditLastName(user.lastName || lastName || '');
     setEditEmail(user.email || '');
-    const canonicalUid = (user as any).canonicalUid || (user.uid && user.uid.startsWith('u-') ? user.uid : (user.email === 'rajat.rai@cogoport.com' ? 'u-rajat' : user.uid)) || 'u-rajat';
-    setEditPersonId(canonicalUid);
+    setEditPersonId(user.uid || '');
     setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
     const initMobile = user.mobile || mobile || (user as any).phone || '';
     const parsedInit = parseISD(initMobile);
@@ -1156,33 +1157,25 @@ export default function ProfilePage() {
     }
 
     try {
-      // 1. Write to canonical Firestore document & subcollections
-      const updateResult = await updateCanonicalUserProfile(activeUid, profilePayload);
-      if (!updateResult.success) {
+      // 1. Authoritative write to canonical profile & database read-back confirmation
+      const updateResult = await updateUserProfile(profilePayload);
+      if (!updateResult.success || !updateResult.user) {
         toast(`Save error: ${updateResult.error || 'Failed to update Firestore profile.'}`);
         return;
       }
 
-      // 2. Re-fetch saved record to confirm persisted values match
-      const verifiedProfile = await getCanonicalUserProfile(activeUid);
+      // 2. Update local state strictly from confirmed database values
+      const confirmedUser = updateResult.user;
+      updateUser(confirmedUser);
 
-      // 3. Update local auth state with verified values
-      updateUser(verifiedProfile || profilePayload);
-
-      // 4. Background legacy sync
-      fetch('/api/user/profile', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-fr8x-user-uid': activeUid,
-          'x-fr8x-session': activeUid,
-        },
-        body: JSON.stringify({
-          uid: activeUid,
-          email: user.email,
-          updates: profilePayload,
-        }),
-      }).catch(() => {});
+      setFirstName(confirmedUser.firstName || firstName);
+      setLastName(confirmedUser.lastName || lastName);
+      setMobile(confirmedUser.mobile || confirmedUser.phone || mobile);
+      setDesignation(confirmedUser.designation || designation);
+      setCity(confirmedUser.city || city);
+      setStateName(confirmedUser.state || stateName);
+      setCountry(confirmedUser.country || country);
+      setFormattedAddress(confirmedUser.formattedAddress || confirmedUser.address || formattedAddress);
 
       setIsEditMode(false);
       toast('✓ Enterprise profile, contact details and professional records saved in Cloud Firestore.');
@@ -3951,27 +3944,27 @@ export default function ProfilePage() {
               const finalMobile = cleanPhone ? `${editIsdCode.trim()} ${cleanPhone}`.trim() : (editMobile.trim() || '');
 
               const finalDesig = editDesignation.trim() || user.designation || '';
-              const targetUid = finalUid || user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+              const targetUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
 
               const profilePayload = {
-                uid: targetUid,
-                id: targetUid,
-                firstName: editFirstName,
-                lastName: editLastName,
-                displayName: `${editFirstName} ${editLastName}`.trim(),
+                firstName: editFirstName.trim(),
+                lastName: editLastName.trim(),
+                displayName: `${editFirstName.trim()} ${editLastName.trim()}`.trim() || user.displayName,
                 email: finalEmail,
                 mobile: finalMobile,
                 phone: finalMobile,
                 isdCode: editIsdCode.trim(),
                 whatsappSameAsMobile: editWhatsapp,
                 designation: finalDesig,
+                position: finalDesig,
                 company: finalCompany,
                 department: editDepartment,
-                city: editCity,
-                state: editState,
-                country: editCountry,
-                formattedAddress: editFormattedAddress,
-                address: editFormattedAddress,
+                city: editCity.trim(),
+                state: editState.trim(),
+                country: editCountry.trim(),
+                formattedAddress: editFormattedAddress.trim(),
+                address: editFormattedAddress.trim(),
+                location: [editCity.trim(), editState.trim(), editCountry.trim()].filter(Boolean).join(', ') || editFormattedAddress.trim(),
                 timezone: editTimezone,
                 avatarUrl: editAvatarUrl || '',
                 companyLogoUrl: editCompanyLogoUrl || '',
@@ -3980,6 +3973,9 @@ export default function ProfilePage() {
                 pendingEmail: newPendingEmail,
                 transferRequestId: newTransferRequestId,
                 transferSubmittedAt: isChangingCompany ? new Date().toISOString() : user.transferSubmittedAt,
+                experiences,
+                educations,
+                certifications,
               };
 
               try {
@@ -3989,49 +3985,16 @@ export default function ProfilePage() {
                   return;
                 }
 
-                // 1. Authoritative DBMS Save
-                const res = await fetch('/api/user/profile', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'x-fr8x-user-uid': targetUid,
-                    'x-fr8x-user-email': finalEmail,
-                    'x-fr8x-session': targetUid,
-                  },
-                  body: JSON.stringify({
-                    uid: targetUid,
-                    email: finalEmail,
-                    canonicalUid: finalUid,
-                    updates: {
-                      ...profilePayload,
-                      experiences,
-                      educations,
-                      certifications,
-                    },
-                  }),
-                });
-                const data = await res.json();
-                if (!data.success) {
-                  toast(data.error || 'Failed to save profile changes.');
+                // Authoritative write to canonical profile & database read-back confirmation
+                const updateResult = await updateUserProfile(profilePayload);
+                if (!updateResult.success || !updateResult.user) {
+                  toast(`Save error: ${updateResult.error || 'Failed to update profile.'}`);
                   setIsSavingIdentity(false);
                   return;
                 }
 
-                // 2. Client Firestore write sync
-                try {
-                  await saveUserProfileToFirestore({
-                    ...profilePayload,
-                    canonicalUid: finalUid,
-                    experiences,
-                    educations,
-                    certifications,
-                  });
-                } catch (fsErr: any) {
-                  console.warn('[Profile] Client Firestore sync notice:', fsErr?.message);
-                }
-
-                // 3. Confirm & update client state with confirmed data
-                const confirmedUser = data.user || profilePayload;
+                // Update UI state strictly from confirmed database values
+                const confirmedUser = updateResult.user;
                 updateUser(confirmedUser);
 
                 setFirstName(confirmedUser.firstName || editFirstName);
@@ -4046,50 +4009,14 @@ export default function ProfilePage() {
                 setAvatarUrl(confirmedUser.avatarUrl || editAvatarUrl || null);
                 setCompanyLogoUrl(confirmedUser.companyLogoUrl || editCompanyLogoUrl || null);
 
-                // Persist visual assets, designation, mobile, and location to dedicated local cache
+                // Cache visual assets namespaced to this specific user UID only
                 if (typeof window !== 'undefined') {
                   try {
                     localStorage.setItem('fr8x_active_user_uid', targetUid);
-                    const resolvedDesig = confirmedUser.designation || finalDesig;
-                    if (resolvedDesig) {
-                      localStorage.setItem(`fr8x_user_designation_${targetUid}`, resolvedDesig);
-                      localStorage.setItem('fr8x_user_designation', resolvedDesig);
-                    }
-                    const resolvedMob = confirmedUser.mobile || confirmedUser.phone || finalMobile;
-                    if (resolvedMob) {
-                      localStorage.setItem(`fr8x_user_mobile_${targetUid}`, resolvedMob);
-                      localStorage.setItem('fr8x_user_mobile', resolvedMob);
-                    }
-                    if (editCity) {
-                      localStorage.setItem(`fr8x_user_city_${targetUid}`, editCity);
-                      localStorage.setItem('fr8x_user_city', editCity);
-                    }
-                    if (editState) {
-                      localStorage.setItem(`fr8x_user_state_${targetUid}`, editState);
-                      localStorage.setItem('fr8x_user_state', editState);
-                    }
-                    if (editCountry) {
-                      localStorage.setItem(`fr8x_user_country_${targetUid}`, editCountry);
-                      localStorage.setItem('fr8x_user_country', editCountry);
-                    }
-                    if (editFormattedAddress) {
-                      localStorage.setItem(`fr8x_user_address_${targetUid}`, editFormattedAddress);
-                      localStorage.setItem('fr8x_user_address', editFormattedAddress);
-                    }
-                    if (editTimezone) {
-                      localStorage.setItem(`fr8x_user_timezone_${targetUid}`, editTimezone);
-                      localStorage.setItem('fr8x_user_timezone', editTimezone);
-                    }
-                    if (editAvatarUrl) {
-                      localStorage.setItem(`fr8x_user_avatar_${targetUid}`, editAvatarUrl);
-                      localStorage.setItem('fr8x_user_avatar', editAvatarUrl);
-                    }
-                    if (editCompanyLogoUrl) {
-                      localStorage.setItem(`fr8x_user_logo_${targetUid}`, editCompanyLogoUrl);
-                      localStorage.setItem('fr8x_user_logo', editCompanyLogoUrl);
-                    }
+                    if (editAvatarUrl) localStorage.setItem(`fr8x_user_avatar_${targetUid}`, editAvatarUrl);
+                    if (editCompanyLogoUrl) localStorage.setItem(`fr8x_user_logo_${targetUid}`, editCompanyLogoUrl);
                   } catch (cacheErr) {
-                    console.warn('[Profile] Failed to cache assets/location:', cacheErr);
+                    console.warn('[Profile] Failed to cache assets:', cacheErr);
                   }
                 }
 

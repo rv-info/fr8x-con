@@ -295,6 +295,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             profile = await healOrProvisionUserInFirestore(firebaseUser);
           }
           if (isSubscribed && profile) {
+            // Guard against stale overwrites if in-memory user was updated more recently
+            const inMem = currentUserRef.current;
+            if (inMem && inMem.uid === profile.uid && (inMem as any).updatedAt && (profile as any).updatedAt) {
+              const inMemTime = new Date((inMem as any).updatedAt).getTime();
+              const profileTime = new Date((profile as any).updatedAt).getTime();
+              if (inMemTime > profileTime) {
+                profile = { ...profile, ...inMem };
+              }
+            }
             setCurrentUser(profile);
             currentUserRef.current = profile;
             setUserStatusState('available');
@@ -596,24 +605,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updatedFields.avatarUrl) {
         try {
           localStorage.setItem(`fr8x_user_avatar_${targetUid}`, updatedFields.avatarUrl);
-          localStorage.setItem('fr8x_user_avatar', updatedFields.avatarUrl);
         } catch {}
       } else if (updatedFields.avatarUrl === '' || updatedFields.avatarUrl === null) {
         try {
           localStorage.removeItem(`fr8x_user_avatar_${targetUid}`);
-          localStorage.removeItem('fr8x_user_avatar');
         } catch {}
       }
 
       if (updatedFields.companyLogoUrl) {
         try {
           localStorage.setItem(`fr8x_user_logo_${targetUid}`, updatedFields.companyLogoUrl);
-          localStorage.setItem('fr8x_user_logo', updatedFields.companyLogoUrl);
         } catch {}
       } else if (updatedFields.companyLogoUrl === '' || updatedFields.companyLogoUrl === null) {
         try {
           localStorage.removeItem(`fr8x_user_logo_${targetUid}`);
-          localStorage.removeItem('fr8x_user_logo');
         } catch {}
       }
       if (Array.isArray(updatedFields.experiences) && updatedFields.experiences.length > 0) {
@@ -634,14 +639,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (updatedFields.designation) {
         try {
           localStorage.setItem(`fr8x_user_designation_${targetUid}`, updatedFields.designation);
-          localStorage.setItem('fr8x_user_designation', updatedFields.designation);
         } catch {}
       }
       if (updatedFields.mobile || (updatedFields as any).phone) {
         try {
           const mob = updatedFields.mobile || (updatedFields as any).phone;
           localStorage.setItem(`fr8x_user_mobile_${targetUid}`, mob);
-          localStorage.setItem('fr8x_user_mobile', mob);
         } catch {}
       }
     }
@@ -1119,7 +1122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ ...canonicalUser, password }),
       }).catch(() => {});
 
-      return { success: true, user: canonicalUser };
+      return { success: true, user: canonicalUser || undefined };
     } catch (err: any) {
       logStructuredError('register', err, undefined, { email: cleanEmail });
       let message = 'Registration failed. Please check your details.';

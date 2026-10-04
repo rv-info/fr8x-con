@@ -210,6 +210,10 @@ export default function LoginPage() {
           toast(`Logged in successfully to FR8X Workspace as ${authRes.user?.displayName || id}.`);
           router.push('/feeds');
           return;
+        } else {
+          setIsLoading(false);
+          setErrorMessage(authRes.error || 'Invalid corporate email or password. Please verify your credentials.');
+          return;
         }
       }
 

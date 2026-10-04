@@ -109,6 +109,7 @@ export interface ProfileCertification {
 
 export interface UserProfile {
   uid: string;
+  canonicalUid?: string;
   email: string;
   firstName: string;
   middleName?: string;
@@ -116,6 +117,7 @@ export interface UserProfile {
   displayName: string;
   designation: string;
   company: string;
+  companyName?: string;
   companyId: string;
   city: string;
   state: string;
@@ -130,6 +132,7 @@ export interface UserProfile {
   department?: string;
   coordinates?: Coordinates;
   mobile: string;
+  mobileNumber?: string;
   phone?: string;
   isdCode?: string;
   alternateMobile?: string;
@@ -144,6 +147,7 @@ export interface UserProfile {
   firebaseCustomToken?: string;
   role: UserRole;
   avatarUrl?: string;
+  photoURL?: string;
   companyLogoUrl?: string;
   bio?: string;
   summary?: string;
@@ -199,11 +203,19 @@ export interface UserProfile {
   privacySettings?: UserPrivacySettings;
   contacts?: string[]; // Array of connected user UIDs
   // Account Lifecycle & Deletion Governance
+  id?: string;
+  status?: string;
+  isActive?: boolean;
+  registrationStatus?: string;
+  approvalStatus?: string;
   accountStatus?: 'active' | 'pending_deletion' | 'deleted' | 'suspended';
   deletionScheduledAt?: string;
   deletionEffectiveAt?: string;
   deletionType?: 'five_day_grace' | 'permanent';
   deletionReason?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastLoginAt?: string;
 }
 
 export interface NestedReply {

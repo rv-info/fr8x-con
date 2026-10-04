@@ -52,6 +52,7 @@ import {
   LogisticsIntent,
   KYCDossier,
   BidderGroup,
+  UserProfile,
 } from '@/lib/types';
 
 // ─── COLLECTIONS ─────────────────────────────────────────────────────────────
@@ -1201,48 +1202,69 @@ export async function createCanonicalUserInFirestore(params: {
  * Retrieves the full canonical user profile from Firestore, including
  * user document, profile subcollection, KYC status, and approval status.
  */
-export async function getCanonicalUserProfile(uid: string): Promise<any | null> {
+export async function getCanonicalUserProfile(uid: string): Promise<UserProfile | null> {
   if (!uid) return null;
-
   try {
     const userDocRef = doc(db, 'users', uid);
-    const userSnap = await getDoc(userDocRef);
+    const userDocSnap = await getDoc(userDocRef);
 
-    if (!userSnap.exists()) {
+    if (!userDocSnap.exists()) {
       return null;
     }
 
-    const userData = userSnap.data() as CanonicalUserDocument;
+    const userData = userDocSnap.data() || {};
 
-    // Concurrently fetch profile, KYC, and approval subdocuments
-    let profileData: Partial<CanonicalUserProfileSubdoc> = {};
-    let kycData: Partial<CanonicalKYCDocument> = {};
-    let approvalData: Partial<CanonicalApprovalDocument> = {};
-
+    // Attempt to fetch profile subdocument /users/{uid}/profile/main
+    let profileData: Record<string, any> = {};
     try {
-      const [pSnap, kSnap, aSnap] = await Promise.all([
-        getDoc(doc(db, 'users', uid, 'profile', 'main')).catch(() => null),
-        getDoc(doc(db, 'users', uid, 'kyc', 'main')).catch(() => null),
-        getDoc(doc(db, 'users', uid, 'approval', 'main')).catch(() => null),
-      ]);
-      if (pSnap && pSnap.exists()) profileData = pSnap.data() as CanonicalUserProfileSubdoc;
-      if (kSnap && kSnap.exists()) kycData = kSnap.data() as CanonicalKYCDocument;
-      if (aSnap && aSnap.exists()) approvalData = aSnap.data() as CanonicalApprovalDocument;
-    } catch (subErr) {
-      // Subdoc fetch is non-fatal: user document remains primary source of truth
-    }
+      const profileDocRef = doc(db, 'users', uid, 'profile', 'main');
+      const profileDocSnap = await getDoc(profileDocRef);
+      if (profileDocSnap.exists()) {
+        profileData = profileDocSnap.data() || {};
+      }
+    } catch {}
+
+    // Attempt to fetch KYC subdocument /users/{uid}/kyc/main
+    let kycData: Record<string, any> = {};
+    try {
+      const kycDocRef = doc(db, 'users', uid, 'kyc', 'main');
+      const kycDocSnap = await getDoc(kycDocRef);
+      if (kycDocSnap.exists()) {
+        kycData = kycDocSnap.data() || {};
+      }
+    } catch {}
+
+    // Attempt to fetch approvals subdocument /users/{uid}/approvals/main
+    let approvalData: Record<string, any> = {};
+    try {
+      const approvalDocRef = doc(db, 'users', uid, 'approvals', 'main');
+      const approvalDocSnap = await getDoc(approvalDocRef);
+      if (approvalDocSnap.exists()) {
+        approvalData = approvalDocSnap.data() || {};
+      }
+    } catch {}
 
     // Compose cohesive user profile object with full backward compatibility
+    const resolvedMobile = userData.mobile || userData.mobileNumber || (userData as any).phone || '';
+    const resolvedDesignation = userData.designation ?? userData.position ?? '';
+    const resolvedCity = userData.city || '';
+    const resolvedState = userData.state || '';
+    const resolvedCountry = userData.country || 'India';
+    const resolvedAddress = userData.formattedAddress || userData.address || '';
+    const resolvedLocation = userData.location || [resolvedCity, resolvedState, resolvedCountry].filter(Boolean).join(', ') || resolvedAddress;
+
     return {
-      uid: userData.uid,
-      id: userData.uid,
+      uid, // Strictly use the authenticated UID / document key passed in
+      id: uid,
+      canonicalUid: userData.canonicalUid || (userData.uid && userData.uid !== uid ? userData.uid : undefined),
       email: userData.email,
-      emailVerified: userData.emailVerified ?? false,
+      email_verified: userData.email_verified ?? userData.emailVerified ?? false,
       displayName: userData.displayName || `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email,
       firstName: userData.firstName || userData.displayName?.split(' ')[0] || '',
       lastName: userData.lastName || userData.displayName?.split(' ').slice(1).join(' ') || '',
-      mobile: userData.mobileNumber || userData.mobile || '',
-      mobileNumber: userData.mobileNumber || userData.mobile || '',
+      mobile: resolvedMobile,
+      mobileNumber: resolvedMobile,
+      phone: resolvedMobile,
       avatarUrl: userData.avatarUrl || userData.photoURL || '',
       photoURL: userData.photoURL || userData.avatarUrl || '',
 
@@ -1250,19 +1272,22 @@ export async function getCanonicalUserProfile(uid: string): Promise<any | null> 
       companyName: userData.companyName || userData.company || 'Enterprise Entity',
       companyId: userData.companyId || '',
 
-      designation: userData.designation ?? userData.position ?? '',
-      position: userData.position ?? userData.designation ?? '',
+      designation: resolvedDesignation,
+      position: resolvedDesignation,
       department: userData.department ?? 'Ocean & Multimodal Freight Operations',
 
-      country: userData.country ?? 'India',
-      state: userData.state ?? '',
-      district: userData.district ?? userData.city ?? '',
-      city: userData.city ?? '',
+      country: resolvedCountry,
+      state: resolvedState,
+      district: userData.district ?? resolvedCity,
+      city: resolvedCity,
       area: userData.area ?? '',
-      address: userData.address || userData.formattedAddress || '',
-      formattedAddress: userData.formattedAddress || userData.address || '',
+      address: resolvedAddress,
+      formattedAddress: resolvedAddress,
+      location: resolvedLocation,
       postalCode: userData.postalCode || '',
       timezone: userData.timezone || 'Asia/Kolkata',
+      preferredContactMethod: userData.preferredContactMethod || 'email',
+      contactAvailability: userData.contactAvailability || 'Mon-Fri 09:00 - 18:00 IST',
 
       accountStatus: userData.accountStatus || 'ACTIVE',
       registrationStatus: userData.registrationStatus || 'COMPLETED',
@@ -1338,19 +1363,23 @@ export async function healOrProvisionUserInFirestore(authUser: {
     console.info(`[FR8X Firestore] Successfully healed/provisioned missing user document for UID: ${authUser.uid}`);
     return await getCanonicalUserProfile(authUser.uid);
   }
+
   return null;
 }
 
-
 /**
  * Updates user profile fields in Firestore with merge protection.
+ * Always targets the authenticated user's canonical document.
  * Never overwrites existing fields with undefined/null.
  */
 export async function updateCanonicalUserProfile(
   uid: string,
   updates: Record<string, any>
 ): Promise<{ success: boolean; error?: string; updatedUser?: any }> {
-  if (!uid) {
+  const currentAuthUid = auth?.currentUser?.uid;
+  // Authoritative identity resolution: client writes must target the authenticated user's document
+  const targetUid = (currentAuthUid && uid !== currentAuthUid && !uid.includes('-')) ? currentAuthUid : (uid || currentAuthUid);
+  if (!targetUid) {
     return { success: false, error: 'User UID is required for profile updates.' };
   }
 
@@ -1359,44 +1388,69 @@ export async function updateCanonicalUserProfile(
   try {
     // Separate core user fields from subdoc profile fields
     const coreUpdates: Partial<CanonicalUserDocument> & Record<string, any> = {
+      uid: targetUid,
       updatedAt: now,
     };
 
     if (updates.displayName !== undefined) coreUpdates.displayName = updates.displayName;
     if (updates.firstName !== undefined) coreUpdates.firstName = updates.firstName;
     if (updates.lastName !== undefined) coreUpdates.lastName = updates.lastName;
-    if (updates.mobile !== undefined || updates.mobileNumber !== undefined) {
-      const mob = updates.mobileNumber || updates.mobile;
-      coreUpdates.mobile = mob;
-      coreUpdates.mobileNumber = mob;
+
+    // Unify all phone/mobile fields so they are 100% synchronized
+    if (updates.mobile !== undefined || updates.mobileNumber !== undefined || updates.phone !== undefined) {
+      const mob = (updates.mobile !== undefined ? updates.mobile : (updates.phone !== undefined ? updates.phone : updates.mobileNumber)) || '';
+      const cleanMob = String(mob).trim();
+      coreUpdates.mobile = cleanMob;
+      coreUpdates.mobileNumber = cleanMob;
+      coreUpdates.phone = cleanMob;
     }
+
     if (updates.avatarUrl !== undefined || updates.photoURL !== undefined) {
       const photo = updates.avatarUrl || updates.photoURL;
       coreUpdates.avatarUrl = photo;
       coreUpdates.photoURL = photo;
     }
+    if (updates.companyLogoUrl !== undefined) coreUpdates.companyLogoUrl = updates.companyLogoUrl;
     if (updates.company !== undefined || updates.companyName !== undefined) {
       const comp = updates.companyName || updates.company;
       coreUpdates.company = comp;
       coreUpdates.companyName = comp;
     }
-    if (updates.designation !== undefined) coreUpdates.designation = updates.designation;
-    if (updates.position !== undefined) coreUpdates.position = updates.position;
+
+    // Unify designation and position fields
+    if (updates.designation !== undefined || updates.position !== undefined) {
+      const desig = (updates.designation !== undefined ? updates.designation : updates.position) || '';
+      const cleanDesig = String(desig).trim();
+      coreUpdates.designation = cleanDesig;
+      coreUpdates.position = cleanDesig;
+    }
+
     if (updates.department !== undefined) coreUpdates.department = updates.department;
     if (updates.country !== undefined) coreUpdates.country = updates.country;
     if (updates.state !== undefined) coreUpdates.state = updates.state;
     if (updates.district !== undefined) coreUpdates.district = updates.district;
     if (updates.city !== undefined) coreUpdates.city = updates.city;
     if (updates.area !== undefined) coreUpdates.area = updates.area;
+
+    // Unify formattedAddress and address fields
     if (updates.address !== undefined || updates.formattedAddress !== undefined) {
-      const addr = updates.address || updates.formattedAddress;
-      coreUpdates.address = addr;
-      coreUpdates.formattedAddress = addr;
+      const addr = (updates.formattedAddress !== undefined ? updates.formattedAddress : updates.address) || '';
+      const cleanAddr = String(addr).trim();
+      coreUpdates.address = cleanAddr;
+      coreUpdates.formattedAddress = cleanAddr;
     }
+
+    // Unify location field
+    if (updates.location !== undefined) {
+      coreUpdates.location = String(updates.location).trim();
+    } else if (coreUpdates.city !== undefined || coreUpdates.state !== undefined || coreUpdates.country !== undefined) {
+      coreUpdates.location = [coreUpdates.city, coreUpdates.state, coreUpdates.country].filter(Boolean).join(', ');
+    }
+
     if (updates.postalCode !== undefined) coreUpdates.postalCode = updates.postalCode;
     if (updates.timezone !== undefined) coreUpdates.timezone = updates.timezone;
 
-    // Also persist statutory/profile fields on users/{uid} root document
+    // Also persist statutory/profile fields on users/{targetUid} root document
     if (updates.summary !== undefined) coreUpdates.summary = updates.summary;
     if (updates.bio !== undefined) coreUpdates.bio = updates.bio;
     if (updates.skills !== undefined) coreUpdates.skills = updates.skills;
@@ -1409,24 +1463,11 @@ export async function updateCanonicalUserProfile(
     if (updates.iec !== undefined) coreUpdates.iec = updates.iec;
     if (updates.mto !== undefined) coreUpdates.mto = updates.mto;
 
-    // Apply merge update to /users/{uid}
-    const userDocRef = doc(db, 'users', uid);
+    // Apply merge update to canonical document /users/{targetUid}
+    const userDocRef = doc(db, 'users', targetUid);
     await setDoc(userDocRef, coreUpdates, { merge: true });
 
-    // Also sync to active Firebase Auth user doc if different from uid
-    const currentAuthUid = auth?.currentUser?.uid;
-    if (currentAuthUid && currentAuthUid !== uid) {
-      const authUserDocRef = doc(db, 'users', currentAuthUid);
-      await setDoc(authUserDocRef, coreUpdates, { merge: true }).catch(() => {});
-    }
-    // Also sync to canonical u-rajat if this is Rajat's account
-    const cleanEmail = (updates.email || '').trim().toLowerCase();
-    if (cleanEmail === 'rajat.rai@cogoport.com' && uid !== 'u-rajat' && currentAuthUid !== 'u-rajat') {
-      const rajatDocRef = doc(db, 'users', 'u-rajat');
-      await setDoc(rajatDocRef, coreUpdates, { merge: true }).catch(() => {});
-    }
-
-    // If professional subdoc fields are present, also attempt update to /users/{uid}/profile/main
+    // If professional subdoc fields are present, also attempt update to /users/{targetUid}/profile/main
     const hasProfileSubdocFields =
       updates.experiences !== undefined ||
       updates.educations !== undefined ||
@@ -1452,20 +1493,72 @@ export async function updateCanonicalUserProfile(
       if (updates.iec !== undefined) profileUpdates.iec = updates.iec;
       if (updates.mto !== undefined) profileUpdates.mto = updates.mto;
 
-      const profileDocRef = doc(db, 'users', uid, 'profile', 'main');
+      const profileDocRef = doc(db, 'users', targetUid, 'profile', 'main');
       await setDoc(profileDocRef, profileUpdates, { merge: true }).catch((err) => {
         console.warn('[FR8X Firestore] Subdoc profile update deferred:', err?.message);
       });
     }
 
+    if (coreUpdates.mobile || coreUpdates.designation) {
+      const kycSubDocRef = doc(db, 'users', targetUid, 'kyc', 'main');
+      const kycSubPayload: Record<string, any> = { updatedAt: now };
+      if (coreUpdates.mobile) kycSubPayload.mobileNumber = coreUpdates.mobile;
+      if (coreUpdates.designation) kycSubPayload.designation = coreUpdates.designation;
+      await setDoc(kycSubDocRef, kycSubPayload, { merge: true }).catch(() => {});
+    }
+
     // Read back to confirm persisted values match
-    const refreshed = await getCanonicalUserProfile(uid);
+    const refreshed = await getCanonicalUserProfile(targetUid);
     return { success: true, updatedUser: refreshed };
   } catch (err: any) {
-    logStructuredError('updateCanonicalUserProfile', err, uid);
+    logStructuredError('updateCanonicalUserProfile', err, targetUid);
     return { success: false, error: 'Failed to persist profile changes to Firestore. Please try again.' };
   }
 }
+
+/**
+ * Centralized Authoritative Profile Update Service.
+ * Resolves authenticated Firebase Auth UID, validates fields,
+ * writes to canonical Firestore document, verifies read-back,
+ * and synchronizes with server DBMS.
+ */
+export async function updateUserProfile(
+  updates: Record<string, any>
+): Promise<{ success: boolean; error?: string; user?: any }> {
+  const currentAuthUid = auth?.currentUser?.uid;
+  if (!currentAuthUid) {
+    return { success: false, error: 'Authentication required: No active user session.' };
+  }
+
+  const result = await updateCanonicalUserProfile(currentAuthUid, updates);
+  if (!result.success || !result.updatedUser) {
+    return { success: false, error: result.error || 'Failed to update database profile.' };
+  }
+
+  // Synchronize server DBMS via /api/user/profile in browser environment
+  if (typeof window !== 'undefined') {
+    try {
+      await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-fr8x-user-uid': currentAuthUid,
+          'x-fr8x-session': currentAuthUid,
+        },
+        body: JSON.stringify({
+          uid: currentAuthUid,
+          email: result.updatedUser.email,
+          updates,
+        }),
+      });
+    } catch (apiErr: any) {
+      console.warn('[updateUserProfile] Background server DBMS sync notice:', apiErr?.message);
+    }
+  }
+
+  return { success: true, user: result.updatedUser };
+}
+
 
 /**
  * Submits user statutory KYC documentation and synchronizes status into Firestore.

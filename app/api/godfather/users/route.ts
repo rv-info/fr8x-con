@@ -35,18 +35,8 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
   const hasGoldenTick = Boolean(u.hasGoldenTick || isRaivega);
   const plan = u.plan || (isRaivega ? 'premium' : isCogoport ? 'professional' : 'trial');
 
-  const mobile =
-    u.mobile ||
-    u.phone ||
-    (isCogoport ? '+91 9620012345' : isRaivega ? '+91 98200 99999' : '+91 98000 00000');
-
-  const designation =
-    u.designation ||
-    (isCogoport
-      ? 'Senior Freight Procurement Manager'
-      : isRaivega
-      ? 'General Manager & Forwarding Controller'
-      : 'Freight Forwarding Specialist');
+  const mobile = u.mobile || u.phone || '';
+  const designation = u.designation || '';
 
   const city = u.city || 'Mumbai';
   const state = u.state || 'Maharashtra';
@@ -253,14 +243,14 @@ export async function PUT(req: NextRequest) {
       company,
     });
 
-    if (!updated) {
-      return NextResponse.json({ success: false, error: 'User account not found.' }, { status: 404 });
+    if (!updated || !updated.success || !updated.user) {
+      return NextResponse.json({ success: false, error: updated?.error || 'User account not found.' }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      message: `User ${updated.displayName || identifier} updated successfully by Godfather.`,
-      user: mapToGodfatherUserProfile(updated),
+      message: `User ${updated.user.displayName || identifier} updated successfully by Godfather.`,
+      user: mapToGodfatherUserProfile(updated.user),
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

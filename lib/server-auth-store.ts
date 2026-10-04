@@ -319,54 +319,7 @@ class ServerSecurityStore {
       this.blockedAccounts.delete(d);
     }
 
-    const defaultAccounts = [
-      {
-        uid: 'u-rajat',
-        email: 'rajat.rai@cogoport.com',
-        passwordPlain: 'QWERTY@123a',
-        displayName: 'Rajat RAI',
-        firstName: 'Rajat',
-        lastName: 'RAI',
-        company: 'COGOPORT',
-        companyId: '',
-        role: 'company_admin' as const,
-        status: 'active' as const,
-        mobile: '+91 9620012345',
-        designation: 'Senior Freight Procurement Manager',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        country: 'India',
-        postalCode: '400001',
-        formattedAddress: '42 Freight Lane, Port Area, Mumbai 400001',
-        timezone: 'Asia/Kolkata',
-        experiences: [
-          {
-            id: 'exp-1',
-            title: 'ASM',
-            company: 'COGOPORT',
-            location: 'Gurugram (Sikanderpur), India',
-            type: 'Full-time' as const,
-            period: 'Jan 2022 - Present',
-            description: 'Forwarding career milestones, freight volume managed, and liner contract leadership.',
-            skills: ['Ocean Freight', 'Reverse Auctions', 'Container Logistics'],
-          },
-        ],
-        educations: [],
-        certifications: [],
-        failedLoginAttempts: 0,
-        firstLoginCompleted: true,
-        createdAt: '2026-09-12T15:37:00.000Z',
-        privacySettings: {
-          emailVisibility: 'public' as const,
-          phoneVisibility: 'public' as const,
-          statutoryVisibility: 'public' as const,
-          companyVisibility: 'public' as const,
-          tradeLanesVisibility: 'public' as const,
-          bioVisibility: 'public' as const,
-          allowConnectionRequests: true,
-        },
-      },
-    ];
+    const defaultAccounts: any[] = [];
 
     for (const acc of defaultAccounts) {
       const cleanUid = acc.uid.toLowerCase();
