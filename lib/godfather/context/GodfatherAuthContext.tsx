@@ -3,8 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { GodfatherOperator, GodfatherRole } from '../types';
 import { ROLE_PERMISSIONS } from '../utils/audit';
-import { auth } from '@/lib/firebase/client';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { createClient } from '@/lib/supabase/client';
 
 // ─── SINGLE AUTHORISED OPERATOR ──────────────────────────────────────────────
 // GODFATHER access is strictly limited to this one operator.
@@ -167,9 +166,6 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem(GF_SESSION_START_KEY, nowStr);
             }
           } catch {}
-          if (auth && (!auth.currentUser || !['tech@fr8x.in', 'operator@fr8x.in'].includes(auth.currentUser.email || ''))) {
-            signInWithEmailAndPassword(auth, 'operator@fr8x.in', 'Operator@2026').catch(() => {});
-          }
         } else {
           const res = await fetch('/api/godfather/session');
           const data = await res.json().catch(() => ({}));
@@ -183,9 +179,6 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
                 localStorage.setItem(GF_SESSION_START_KEY, nowStr);
               }
             } catch {}
-            if (auth && (!auth.currentUser || !['tech@fr8x.in', 'operator@fr8x.in'].includes(auth.currentUser.email || ''))) {
-              signInWithEmailAndPassword(auth, 'operator@fr8x.in', 'Operator@2026').catch(() => {});
-            }
           }
         }
         const savedEnv = localStorage.getItem('fr8x_godfather_env') as PlatformEnvironment;
@@ -323,23 +316,15 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(GF_LAST_ACTIVITY_KEY, now);
     } catch {}
 
-    // Connect client Firebase Auth session with operator credentials for live Firestore admin access
-    if (typeof window !== 'undefined' && auth && pass) {
+    // Connect client Supabase Auth session with operator credentials
+    if (typeof window !== 'undefined' && pass) {
       const cleanEmail = email.trim().toLowerCase();
-      signInWithEmailAndPassword(auth, cleanEmail, pass)
-        .then((cred) => {
-          console.info('[GodfatherAuth] Connected operator to live Firebase Auth:', cred.user.email);
+      const supabase = createClient();
+      supabase.auth.signInWithPassword({ email: cleanEmail, password: pass })
+        .then(() => {
+          console.info('[GodfatherAuth] Connected operator to live Supabase Auth:', cleanEmail);
         })
-        .catch((err) => {
-          // If custom password fails, fallback to platform operator credentials
-          if (cleanEmail === 'operator@fr8x.in' || cleanEmail === 'tech@fr8x.in') {
-            signInWithEmailAndPassword(auth, 'operator@fr8x.in', 'Operator@2026')
-              .then((c) => console.info('[GodfatherAuth] Connected operator fallback session:', c.user.email))
-              .catch((e) => console.warn('[GodfatherAuth] Operator fallback connect error:', e.message));
-          } else {
-            console.warn('[GodfatherAuth] Firebase Auth operator connect warning:', err.code, err.message);
-          }
-        });
+        .catch(() => {});
     }
 
     return { success: true };
@@ -355,8 +340,9 @@ export function GodfatherAuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem(GF_LAST_ACTIVITY_KEY);
     } catch {}
 
-    if (typeof window !== 'undefined' && auth) {
-      signOut(auth).catch(() => {});
+    if (typeof window !== 'undefined') {
+      const supabase = createClient();
+      supabase.auth.signOut().catch(() => {});
     }
   };
 

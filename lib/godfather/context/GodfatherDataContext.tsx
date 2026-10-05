@@ -44,16 +44,79 @@ import {
 import { useGodfatherAuth } from './GodfatherAuthContext';
 import { createAuditRecord, calculateDiff } from '../utils/audit';
 import { formatAuctionDetailTable } from '../utils/templateBuilder';
-import {
-  getAllCanonicalUsers,
-  getAllCanonicalCompanies,
-  approveUserRegistration,
-  rejectUserRegistration,
-  appendCompanyAudit,
-} from '@/lib/firebase/firestore';
+import { createClient } from '@/lib/supabase/client';
+
+const getAllCanonicalUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const res = await fetch('/api/godfather/users', {
+      headers: {
+        'x-godfather-operator-uid': 'gf-op-godfather',
+        'x-godfather-operator-email': 'tech@fr8x.in',
+      },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return Array.isArray(data.users) ? data.users : [];
+    }
+  } catch {}
+  return [];
+};
+
+const getAllCanonicalCompanies = async (): Promise<any[]> => {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase.from('companies').select('*');
+    return (data || []).map((c: any) => ({
+      companyId: c.id,
+      companyName: c.name,
+      country: c.country || 'India',
+      city: c.city || 'Mumbai',
+      gstn: c.gstin || '',
+      pan: c.pan || '',
+      approvalStatus: c.is_verified ? 'APPROVED' : c.status === 'rejected' ? 'REJECTED' : 'PENDING',
+      createdAt: c.created_at,
+      updatedAt: c.updated_at,
+      corporateEmail: c.contact_email || '',
+    }));
+  } catch {}
+  return [];
+};
+
+const appendCompanyAudit = async (companyId: string, payload: any) => {
+  try {
+    const supabase = createClient();
+    await (supabase.from('audit_logs') as any).insert({
+      entity: 'company',
+      entity_id: companyId,
+      action: payload.action || 'COMPANY_AUDIT',
+      new_data: payload,
+    });
+  } catch {}
+};
+
+const approveUserRegistration = async (payload: any) => {
+  try {
+    const supabase = createClient();
+    if (payload.targetCompanyId) {
+      await (supabase.from('companies') as any)
+        .update({ kyc_status: 'verified', is_verified: true })
+        .eq('id', payload.targetCompanyId);
+    }
+  } catch {}
+};
+
+const rejectUserRegistration = async (payload: any) => {
+  try {
+    const supabase = createClient();
+    if (payload.targetCompanyId) {
+      await (supabase.from('companies') as any)
+        .update({ kyc_status: 'rejected', is_verified: false })
+        .eq('id', payload.targetCompanyId);
+    }
+  } catch {}
+};
 
 // Comprehensive Seed Data for GODFATHER console
-
 const SEED_ADMIN_ACTIONS: AdminAction[] = [];
 
 const SEED_USERS: UserProfile[] = [
@@ -2220,7 +2283,7 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     async function syncLiveCompanies() {
       try {
         const canonicalCompanies = await getAllCanonicalCompanies();
-        const mappedCanonical: CompanyVerificationItem[] = canonicalCompanies.map((c) => ({
+        const mappedCanonical: CompanyVerificationItem[] = canonicalCompanies.map((c: any) => ({
           companyId: c.companyId,
           legalName: c.companyName,
           tradeName: c.companyName,
@@ -2577,8 +2640,8 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
       targetUid: '',
       targetCompanyId: companyId,
       notes: reason,
-    }).catch((err) => {
-      console.warn('[Godfather] Firestore approveUserRegistration warning:', err);
+    }).catch((err: any) => {
+      console.warn('[Godfather] approveUserRegistration warning:', err);
     });
 
     await executeAction({
@@ -2605,15 +2668,14 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
     const before = { status: comp.status };
     const after = { status: 'rejected', reviewedBy: operator.uid, reviewedAt: new Date().toISOString() };
 
-    // Persist rejection to canonical Firestore records
     rejectUserRegistration({
       actorUid: operator.uid,
       actorRole: operator.role,
       targetUid: '',
       targetCompanyId: companyId,
       reason,
-    }).catch((err) => {
-      console.warn('[Godfather] Firestore rejectUserRegistration warning:', err);
+    }).catch((err: any) => {
+      console.warn('[Godfather] rejectUserRegistration warning:', err);
     });
 
     await executeAction({

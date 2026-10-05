@@ -64,13 +64,10 @@ export async function POST(req: NextRequest) {
 
     const saved = savePersistedRate(body);
 
-    // Best-effort Firestore sync if Admin SDK configured
+    // Authoritative Supabase PostgreSQL sync
     try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('rates').doc(saved.id).set(saved, { merge: true });
-      }
+      const { rateDbService } = await import('@/lib/supabase/db');
+      await rateDbService.upsertRate(saved);
     } catch {}
 
     return NextResponse.json({ success: true, rate: saved }, { status: 200 });
@@ -119,11 +116,8 @@ export async function DELETE(req: NextRequest) {
     const deleted = deletePersistedRate(id);
 
     try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('rates').doc(id).delete();
-      }
+      const { rateDbService } = await import('@/lib/supabase/db');
+      await rateDbService.deleteRate(id);
     } catch {}
 
     return NextResponse.json({ success: deleted }, { status: 200 });

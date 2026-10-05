@@ -55,14 +55,7 @@ export async function POST(req: NextRequest) {
 
     const saved = savePersistedJob(body);
 
-    // Best-effort Firestore sync if Admin SDK configured
-    try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('jobs').doc(saved.id).set(saved, { merge: true });
-      }
-    } catch {}
+
 
     return NextResponse.json({ success: true, job: saved }, { status: 200 });
   } catch (err: any) {
@@ -105,13 +98,7 @@ export async function DELETE(req: NextRequest) {
 
     const deleted = deletePersistedJob(id);
 
-    try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('jobs').doc(id).delete();
-      }
-    } catch {}
+
 
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {

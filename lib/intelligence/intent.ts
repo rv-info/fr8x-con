@@ -4,7 +4,28 @@
  */
 
 import { LogisticsIntent } from '@/lib/types';
-import { getUserIntentFromDB, saveUserIntentInDB } from '@/lib/firebase/firestore';
+
+// Client/Server cache for intent store
+const intentStore = new Map<string, LogisticsIntent>();
+
+async function getUserIntentFromDB(userId: string): Promise<LogisticsIntent | null> {
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem(`fr8x_intent_${userId}`);
+      if (stored) return JSON.parse(stored);
+    } catch {}
+  }
+  return intentStore.get(userId) || null;
+}
+
+async function saveUserIntentInDB(intent: LogisticsIntent): Promise<void> {
+  intentStore.set(intent.userId, intent);
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem(`fr8x_intent_${intent.userId}`, JSON.stringify(intent));
+    } catch {}
+  }
+}
 
 const INTENT_TTL_DAYS = 7;
 
@@ -105,7 +126,7 @@ export class IntentEngine {
 
     // 3. Commodity match
     for (const tag of postTags) {
-      if (intent.followedCommodities.some((c) => c.toLowerCase() === tag.toLowerCase())) {
+      if (intent.followedCommodities.some((c: string) => c.toLowerCase() === tag.toLowerCase())) {
         return {
           multiplier: 1.20,
           explanation: `Relevant to your followed commodity: ${tag}`,

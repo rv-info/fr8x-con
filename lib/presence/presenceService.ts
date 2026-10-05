@@ -5,7 +5,9 @@
  */
 
 import { PresenceStatus, UserPresenceState } from '@/lib/types';
-import { updateUserPresenceInDB, getUserPresenceFromDB } from '@/lib/firebase/firestore';
+
+// In-memory presence cache for local client
+const localPresenceCache = new Map<string, UserPresenceState>();
 
 const HEARTBEAT_INTERVAL_MS = 90_000;  // 90 seconds throttled heartbeat
 const PRESENCE_TTL_SECONDS = 300;      // 5 minutes TTL
@@ -322,10 +324,10 @@ class PresenceService {
       deviceType: typeof window !== 'undefined' && window.innerWidth < 768 ? 'mobile' : 'desktop',
     };
 
-    // 1. Update in-memory / Firestore
-    updateUserPresenceInDB(presence).catch(() => {});
+    // 1. Update in-memory local cache
+    localPresenceCache.set(this.currentUserId, presence);
 
-    // 2. Synchronize to authoritative Server DBMS via /api/presence
+    // 2. Synchronize to Server via /api/presence
     if (typeof window !== 'undefined') {
       fetch('/api/presence', {
         method: 'POST',
@@ -337,8 +339,8 @@ class PresenceService {
   }
 
   public async getContactPresence(userId: string): Promise<PresenceStatus> {
-    // 1. Check client Firestore cache
-    const presence = await getUserPresenceFromDB(userId);
+    // 1. Check client local cache
+    const presence = localPresenceCache.get(userId);
     if (presence?.status) return presence.status;
 
     // 2. Fallback to /api/presence
@@ -348,6 +350,7 @@ class PresenceService {
         if (res.ok) {
           const data = await res.json();
           if (data.presence?.status) {
+            localPresenceCache.set(userId, data.presence);
             return data.presence.status;
           }
         }

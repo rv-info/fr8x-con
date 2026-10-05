@@ -3,17 +3,11 @@
  * Domain Service for Freight Rates Management
  *
  * Implements authoritative rate fetching, validation, and cloud synchronization
- * per Directive Section 10 & 42.
+ * via Supabase PostgreSQL per Directive Section 10 & 42.
  */
 
 import { RateItem, RateVersion } from '@/lib/types';
-import {
-  getRatesFromDB,
-  upsertRateInDB,
-  deleteRateInDB,
-  batchUpsertRatesInDB,
-  batchUpdateRatesInDB,
-} from '@/lib/firebase/firestore';
+import { rateDbService } from '@/lib/supabase/db';
 
 export const DUMMY_RATE_IDS = new Set([
   'RT-884210', 'RT-992144', 'RT-773190', 'RT-662810', 'RT-551940', 'RT-448201', 'RT-339105', 'RT-227490',
@@ -31,12 +25,13 @@ export function isDummyRate(r: any): boolean {
 
 export const rateService = {
   /**
-   * Fetches rates from Firestore with optional user filter and limit.
+   * Fetches rates from Supabase with optional user filter and limit.
    */
   async getRates(ownerUid?: string, limitCount = 50): Promise<RateItem[]> {
     try {
-      const rates = await getRatesFromDB(ownerUid, limitCount);
-      return rates.filter((r) => !isDummyRate(r));
+      const rates = await rateDbService.getRates();
+      const filtered = ownerUid ? rates.filter((r) => r.ownerUid === ownerUid) : rates;
+      return filtered.slice(0, limitCount).filter((r) => !isDummyRate(r));
     } catch (err) {
       console.warn('[RateService] Error fetching rates:', err);
       return [];
@@ -62,18 +57,18 @@ export const rateService = {
   },
 
   /**
-   * Persists a rate to Firestore and local storage.
+   * Persists a rate to Supabase PostgreSQL.
    */
   async saveRate(rate: RateItem): Promise<void> {
     if (isDummyRate(rate)) return;
-    await upsertRateInDB(rate);
+    await rateDbService.upsertRate(rate);
   },
 
   /**
-   * Deletes a rate in Firestore.
+   * Deletes a rate in Supabase PostgreSQL.
    */
   async deleteRate(rateId: string): Promise<void> {
-    await deleteRateInDB(rateId);
+    await rateDbService.deleteRate(rateId);
   },
 
   /**
@@ -82,7 +77,9 @@ export const rateService = {
   async batchUpdate(
     updates: { id: string; updates: Partial<RateItem>; revision?: RateVersion }[]
   ): Promise<void> {
-    await batchUpdateRatesInDB(updates);
+    for (const item of updates) {
+      await rateDbService.upsertRate({ id: item.id, ...item.updates });
+    }
   },
 
   /**

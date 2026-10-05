@@ -11,14 +11,13 @@
     "test": "npx -y tsx scripts/verify-all-gates.ts",
     "test:auth-email": "npx -y tsx scripts/test-auth-email-system.ts",
     "test:email": "npx -y tsx scripts/test-email-config.ts",
-    "sync:firebase": "npx -y tsx scripts/firebase-dbms-sync-engine.ts",
     "build:apk": "node fr8x-android-app/tools/build-official-apk.js"
   },
   "dependencies": {
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
-    "firebase": "^12.18.0",
-    "firebase-admin": "^14.5.0",
     "idb": "^8.0.3",
     "lucide-react": "^0.475.0",
     "next": "^14.2.24",

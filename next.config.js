@@ -1,9 +1,53 @@
+require('./scripts/patch-fs-fat32.js');
+
+class Fat32ReadlinkPlugin {
+  apply(compiler) {
+    const patchFs = (fsObj) => {
+      if (!fsObj || !fsObj.readlink || fsObj.__fat32_patched) return;
+      fsObj.__fat32_patched = true;
+      const orig = fsObj.readlink.bind(fsObj);
+      fsObj.readlink = function (path, ...args) {
+        const callback = args[args.length - 1];
+        if (typeof callback === 'function') {
+          args[args.length - 1] = function (err, result) {
+            if (err && (err.code === 'EISDIR' || err.code === 'EINVAL')) {
+              const einval = new Error(`EINVAL: invalid argument, readlink '${path}'`);
+              einval.code = 'EINVAL';
+              return callback(einval);
+            }
+            return callback(err, result);
+          };
+        }
+        return orig(path, ...args);
+      };
+      if (fsObj._fs && fsObj._fs.readlink) {
+        patchFs(fsObj._fs);
+      }
+    };
+
+    compiler.hooks.environment.tap('Fat32ReadlinkPlugin', () => {
+      patchFs(compiler.inputFileSystem);
+    });
+    compiler.hooks.compilation.tap('Fat32ReadlinkPlugin', (compilation) => {
+      patchFs(compilation.inputFileSystem);
+    });
+  }
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  experimental: {
+    webpackBuildWorker: false,
+  },
+  webpack: (config) => {
+    config.resolve.symlinks = false;
+    config.cache = false;
+    config.plugins.push(new Fat32ReadlinkPlugin());
+    return config;
+  },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -96,20 +140,20 @@ const nextConfig = {
           },
           {
             // Content Security Policy — blocks XSS injection.
-            // Configured for Firebase, Google Fonts, Vercel, and ZeptoMail REST (server-side only).
+            // Configured for Supabase, Google Fonts, Vercel, and Razorpay.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // Scripts: self + Firebase + Vercel analytics + Razorpay checkout
-              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://www.gstatic.com https://www.google.com https://apis.google.com https://va.vercel-scripts.com https://checkout.razorpay.com`,
+              // Scripts: self + Vercel analytics + Razorpay checkout
+              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://va.vercel-scripts.com https://checkout.razorpay.com`,
               // Styles: self + Google Fonts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Fonts
               "font-src 'self' https://fonts.gstatic.com",
-              // Images: self + Firebase Storage + data URIs
-              "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://lh3.googleusercontent.com",
-              // XHR/fetch: self + Firebase + Google APIs + Razorpay
-              "connect-src 'self' https://*.firebaseio.com wss://*.firebaseio.com https://*.googleapis.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://fcmregistrations.googleapis.com https://api.razorpay.com https://lumberjack.razorpay.com",
+              // Images: self + Supabase Storage + data URIs
+              "img-src 'self' data: blob: https://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co",
+              // XHR/fetch: self + Supabase + Razorpay
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co wss://haarbaqeuuirwkhmefev.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com",
               // Frames: Razorpay checkout modal
               "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
               // Objects: none

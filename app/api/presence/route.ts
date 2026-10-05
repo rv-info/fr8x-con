@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { updateUserPresenceInDB, getUserPresenceFromDB } from '@/lib/firebase/firestore';
 import { savePersistedPresence, getPersistedUserPresence } from '@/lib/dbms/server-dbms';
 import { UserPresenceState } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
@@ -27,9 +26,6 @@ export async function POST(req: NextRequest) {
     // 1. Authoritative persistence in server-side DBMS
     savePersistedPresence(data);
 
-    // 2. Sync to in-memory store & Firestore if active
-    await updateUserPresenceInDB(data).catch(() => {});
-
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err?.message || 'Error' }, { status: 500 });
@@ -48,13 +44,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'userId is required' }, { status: 400 });
     }
 
-    // 1. Check server DBMS persistence first
-    let presence = getPersistedUserPresence(userId);
-
-    // 2. Fallback to Firestore / in-memory store
-    if (!presence) {
-      presence = await getUserPresenceFromDB(userId);
-    }
+    // 1. Check server DBMS persistence
+    const presence = getPersistedUserPresence(userId);
 
     return NextResponse.json({
       success: true,

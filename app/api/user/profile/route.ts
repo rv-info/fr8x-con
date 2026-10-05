@@ -221,40 +221,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Server-side Firestore synchronization via Admin SDK if initialized
-    let firestoreSynced = false;
-    let firestoreError: string | undefined;
+    // Server-side Supabase synchronization
+    let supabaseSynced = false;
+    let supabaseError: string | undefined;
     try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        const payloadToSync = {
-          ...cleanUpdates,
-          mobile: cleanUpdates.mobile || cleanUpdates.phone,
-          phone: cleanUpdates.mobile || cleanUpdates.phone,
-          formattedAddress: cleanUpdates.formattedAddress || cleanUpdates.address,
-          address: cleanUpdates.formattedAddress || cleanUpdates.address,
-          designation: cleanUpdates.designation,
-          city: cleanUpdates.city,
-          state: cleanUpdates.state,
-          country: cleanUpdates.country,
-          location: cleanUpdates.location || [cleanUpdates.city, cleanUpdates.state, cleanUpdates.country].filter(Boolean).join(', '),
-          updatedAt: new Date().toISOString(),
-        };
+      const { createClient } = await import('@/lib/supabase/server');
+      const supabase = createClient();
+      const { mapProfileToRow } = await import('@/lib/supabase/db');
+      const rowUpdates = mapProfileToRow(cleanUpdates);
 
-        const uidsToSync = new Set<string>([resolvedTargetUid, targetUid]);
-        if (canonicalUser?.uid) uidsToSync.add(canonicalUser.uid);
-        if ((canonicalUser as any)?.firebaseUid) uidsToSync.add((canonicalUser as any).firebaseUid);
+      const { error } = await supabase
+        .from('profiles')
+        .update(rowUpdates)
+        .or(`id.eq.${resolvedTargetUid},email.eq.${canonicalUser?.email || resolvedTargetUid}`);
 
-        for (const syncUid of uidsToSync) {
-          if (!syncUid) continue;
-          await adminDb.collection('users').doc(syncUid).set(payloadToSync, { merge: true }).catch(() => {});
-        }
-        firestoreSynced = true;
+      if (!error) {
+        supabaseSynced = true;
+      } else {
+        supabaseError = error.message;
       }
-    } catch (fbErr: any) {
-      firestoreError = fbErr?.message;
-      console.warn('[API/User/Profile] Firestore server sync warning:', fbErr?.message);
+    } catch (sbErr: any) {
+      supabaseError = sbErr?.message;
+      console.warn('[API/User/Profile] Supabase sync warning:', sbErr?.message);
     }
 
     const { passwordHash, salt, ...safeUser } = result.user;
@@ -273,8 +261,8 @@ export async function POST(req: NextRequest) {
       success: true,
       message: 'Profile, contact details, and location updated successfully.',
       user: safeUser,
-      firestoreSynced,
-      firestoreError,
+      supabaseSynced,
+      supabaseError,
     });
   } catch (err: any) {
     console.error('[API/User/Profile] POST error:', err);

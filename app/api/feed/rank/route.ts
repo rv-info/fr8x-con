@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPostsFromDB, getRankingConfigFromDB, getUserIntentFromDB } from '@/lib/firebase/firestore';
+import { postDbService } from '@/lib/supabase/db';
 import { feedRankingEngine } from '@/lib/ranking/engine';
 import { DEFAULT_RANKING_CONFIG } from '@/lib/ranking/config';
 import { FeedSurface } from '@/lib/types';
@@ -12,24 +12,23 @@ export async function POST(req: NextRequest) {
   // ───────────────────────────────────────────────────────────────────────
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const surface: FeedSurface = body.surface || 'home';
     const viewer = { ...(body.viewer || {}), uid: user.uid, role: user.role };
     const limitCount = Math.min(Number(body.limit || 25), 100);
 
-    // 1. Fetch raw candidate posts
-    const { posts } = await getPostsFromDB({ limitCount: 100 });
+    // 1. Fetch raw candidate posts from Supabase PostgreSQL
+    const posts = await postDbService.getPosts();
 
-    // 2. Fetch ranking config and user intent
-    const config = (await getRankingConfigFromDB()) || DEFAULT_RANKING_CONFIG;
-    const intent = await getUserIntentFromDB(user.uid);
+    // 2. Fetch ranking config
+    const config = DEFAULT_RANKING_CONFIG;
 
     // 3. Execute two-stage ranking
     const rankedPosts = feedRankingEngine.rankFeed(posts, {
       viewer,
       surface,
       config,
-      activeIntent: intent,
+      activeIntent: null,
       recentlyViewedPostIds: body.recentlyViewedPostIds || [],
       reportedPostIds: body.reportedPostIds || [],
       blockedAuthorUids: body.blockedAuthorUids || [],
@@ -53,4 +52,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-

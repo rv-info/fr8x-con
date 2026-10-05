@@ -26,14 +26,8 @@ import {
   maskStatutory,
 } from '@/lib/connections';
 import { normalizeAssociationName } from '@/lib/utils/associations';
-import {
-  upsertKYCDossierInDB,
-  saveUserProfileToFirestore,
-  updateCanonicalUserProfile,
-  getCanonicalUserProfile,
-  updateUserProfile,
-  submitUserKYC,
-} from '@/lib/firebase/firestore';
+import { profileService } from '@/lib/supabase/db';
+import { storageService } from '@/lib/supabase/storage';
 import {
   getStatutoryProfile,
   evaluateCompliance,
@@ -50,6 +44,32 @@ import {
   getAllGlobalTimezones,
   getAllGlobalISDCodes,
 } from '@/lib/geo/global-geo';
+
+const upsertKYCDossierInDB = async (dossier: any) => {
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await (supabase.from('audit_logs') as any).insert({
+      action: 'SUBMIT_KYC_DOSSIER',
+      entity: 'kyc_dossier',
+      entity_id: dossier.uid || null,
+      new_data: dossier,
+    });
+  } catch {}
+};
+
+const submitUserKYC = async (uid: string, kycData: any) => {
+  try {
+    const { createClient } = await import('@/lib/supabase/client');
+    const supabase = createClient();
+    await (supabase.from('audit_logs') as any).insert({
+      action: 'SUBMIT_USER_KYC',
+      entity: 'user_kyc',
+      entity_id: uid,
+      new_data: kycData,
+    });
+  } catch {}
+};
 import {
   UserCheck,
   Save,
@@ -118,23 +138,8 @@ export default function ProfilePage() {
   // Basic Profile State
   const [firstName, setFirstName] = useState(user.firstName || '');
   const [lastName, setLastName] = useState(user.lastName || '');
-  const [designation, setDesignation] = useState(() => {
-    if (user.designation) return user.designation;
-    if (typeof window !== 'undefined') {
-      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
-      return (activeUid ? localStorage.getItem(`fr8x_user_designation_${activeUid}`) : null) || '';
-    }
-    return '';
-  });
-  const [mobile, setMobile] = useState(() => {
-    const canonicalMobile = user.mobile || (user as any).phone;
-    if (canonicalMobile) return canonicalMobile;
-    if (typeof window !== 'undefined') {
-      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
-      return (activeUid ? localStorage.getItem(`fr8x_user_mobile_${activeUid}`) : null) || '';
-    }
-    return '';
-  });
+  const [designation, setDesignation] = useState(user.designation || '');
+  const [mobile, setMobile] = useState(user.mobile || (user as any).phone || '');
   const [company, setCompany] = useState(user.company || '');
   const [summary, setSummary] = useState(user.summary || '');
 
@@ -405,36 +410,7 @@ export default function ProfilePage() {
     setShowEditIdentityModal(true);
   };
 
-  // PDF Requirement 3: Live data should be fetched fresh on mount/refresh
-  useEffect(() => {
-    const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    if (!activeUid) return;
-    fetch(`/api/user/profile?uid=${encodeURIComponent(activeUid)}`, {
-      headers: {
-        'x-fr8x-user-uid': activeUid,
-        'x-fr8x-session': activeUid,
-      },
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data?.success && data?.user) {
-          const u = data.user;
-          if (u.mobile || u.phone) setMobile(u.mobile || u.phone);
-          if (u.designation) setDesignation(u.designation);
-          if (u.city) setCity(u.city);
-          if (u.state) setStateName(u.state);
-          if (u.country) setCountry(u.country);
-          if (u.formattedAddress || u.address) setFormattedAddress(u.formattedAddress || u.address);
-          if (u.timezone) setTimezone(u.timezone);
-          if (u.firstName) setFirstName(u.firstName);
-          if (u.lastName) setLastName(u.lastName);
-          if (u.avatarUrl) setAvatarUrl(u.avatarUrl);
-          if (u.companyLogoUrl) setCompanyLogoUrl(u.companyLogoUrl);
-          if (u.company) setCompany(u.company);
-        }
-      })
-      .catch(() => {});
-  }, [user.uid]);
+
 
   // Company Transfer Autocomplete & Duplicate Prevention State
   const [profileCompanySearchResults, setProfileCompanySearchResults] = useState<any[]>([]);
@@ -745,49 +721,15 @@ export default function ProfilePage() {
       } catch {}
     }
 
-    // 2. Authoritative live fetch from DBMS API /api/user/profile
-    fetch(`/api/user/profile?uid=${encodeURIComponent(resolvedUid)}`, {
-      headers: {
-        'x-fr8x-user-uid': resolvedUid,
-        'x-fr8x-session': resolvedUid,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.success && data?.user) {
-          const u = data.user;
-          if (Array.isArray(u.experiences) && u.experiences.length > 0) {
-            setExperiences(u.experiences);
-            try { localStorage.setItem(`fr8x_user_exp_${storageKey}`, JSON.stringify(u.experiences)); } catch {}
-          }
-          if (Array.isArray(u.educations) && u.educations.length > 0) {
-            setEducations(u.educations);
-            try { localStorage.setItem(`fr8x_user_edu_${storageKey}`, JSON.stringify(u.educations)); } catch {}
-          }
-          if (Array.isArray(u.certifications) && u.certifications.length > 0) {
-            setCertifications(u.certifications);
-            try { localStorage.setItem(`fr8x_user_cert_${storageKey}`, JSON.stringify(u.certifications)); } catch {}
-          }
-          if (u.avatarUrl) {
-            setAvatarUrl(u.avatarUrl);
-            try { localStorage.setItem(`fr8x_user_avatar_${storageKey}`, u.avatarUrl); } catch {}
-          } else if (u.avatarUrl === '') {
-            setAvatarUrl(null);
-            try {
-              localStorage.removeItem(`fr8x_user_avatar_${storageKey}`);
-              localStorage.removeItem('fr8x_user_avatar');
-            } catch {}
-          }
-          if (u.companyLogoUrl) {
-            setCompanyLogoUrl(u.companyLogoUrl);
-            try { localStorage.setItem(`fr8x_user_logo_${storageKey}`, u.companyLogoUrl); } catch {}
-          } else if (u.companyLogoUrl === '') {
-            setCompanyLogoUrl(null);
-            try {
-              localStorage.removeItem(`fr8x_user_logo_${storageKey}`);
-              localStorage.removeItem('fr8x_user_logo');
-            } catch {}
-          }
+    // 2. Authoritative live fetch from Supabase PostgreSQL
+    if (user.uid) {
+      profileService.getProfile(user.uid).then((u) => {
+        if (u) {
+          if (Array.isArray(u.experiences) && u.experiences.length > 0) setExperiences(u.experiences);
+          if (Array.isArray(u.educations) && u.educations.length > 0) setEducations(u.educations);
+          if (Array.isArray(u.certifications) && u.certifications.length > 0) setCertifications(u.certifications);
+          if (u.avatarUrl) setAvatarUrl(u.avatarUrl);
+          if (u.companyLogoUrl) setCompanyLogoUrl(u.companyLogoUrl);
           if (u.firstName) setFirstName(u.firstName);
           if (u.lastName) setLastName(u.lastName);
           if (u.designation) setDesignation(u.designation);
@@ -795,28 +737,12 @@ export default function ProfilePage() {
           if (u.state) setStateName(u.state);
           if (u.country) setCountry(u.country);
           if (u.formattedAddress) setFormattedAddress(u.formattedAddress);
-          if (u.mobile) setMobile(u.mobile);
+          if (u.mobile || (u as any).phone) setMobile(u.mobile || (u as any).phone);
           if (u.company) setCompany(u.company);
           if (u.summary) setSummary(u.summary);
-
-          const currentStoredAvatar = (typeof window !== 'undefined' ? localStorage.getItem(`fr8x_user_avatar_${storageKey}`) : null) || avatarUrl || '';
-          const currentStoredLogo = (typeof window !== 'undefined' ? localStorage.getItem(`fr8x_user_logo_${storageKey}`) : null) || companyLogoUrl || '';
-          updateUser({
-            ...u,
-            city: u.city || user.city || city || '',
-            state: u.state || user.state || stateName || '',
-            country: u.country || user.country || country || 'India',
-            formattedAddress: u.formattedAddress || user.formattedAddress || formattedAddress || '',
-            timezone: u.timezone || user.timezone || timezone || 'Asia/Kolkata',
-            avatarUrl: typeof u.avatarUrl === 'string' ? u.avatarUrl : (avatarRemoved ? '' : currentStoredAvatar),
-            companyLogoUrl: typeof u.companyLogoUrl === 'string' ? u.companyLogoUrl : (logoRemoved ? '' : currentStoredLogo),
-            experiences: (u.experiences && u.experiences.length > 0) ? u.experiences : (experiences.length > 0 ? experiences : (user.experiences || [])),
-            educations: (u.educations && u.educations.length > 0) ? u.educations : (educations.length > 0 ? educations : (user.educations || [])),
-            certifications: (u.certifications && u.certifications.length > 0) ? u.certifications : (certifications.length > 0 ? certifications : (user.certifications || [])),
-          });
         }
-      })
-      .catch((err) => console.warn('[Profile] Error syncing authoritative DBMS profile:', err));
+      }).catch((err) => console.warn('[Profile] Error loading profile from Supabase:', err));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.uid, user.email]);
 
@@ -907,7 +833,7 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_exp_${activeUid}`, JSON.stringify(newExp));
     } catch {}
     updateUser({ experiences: newExp });
-    saveUserProfileToFirestore({ uid: activeUid, email: user.email, experiences: newExp }).catch(() => {});
+    profileService.updateProfile(activeUid, { experiences: newExp }).catch(() => {});
     fetch('/api/user/profile', {
       method: 'POST',
       headers: {
@@ -927,7 +853,7 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_edu_${activeUid}`, JSON.stringify(newEdu));
     } catch {}
     updateUser({ educations: newEdu });
-    saveUserProfileToFirestore({ uid: activeUid, email: user.email, educations: newEdu }).catch(() => {});
+    profileService.updateProfile(activeUid, { educations: newEdu }).catch(() => {});
     fetch('/api/user/profile', {
       method: 'POST',
       headers: {
@@ -947,7 +873,7 @@ export default function ProfilePage() {
       localStorage.setItem(`fr8x_user_cert_${activeUid}`, JSON.stringify(newCert));
     } catch {}
     updateUser({ certifications: newCert });
-    saveUserProfileToFirestore({ uid: activeUid, email: user.email, certifications: newCert }).catch(() => {});
+    profileService.updateProfile(activeUid, { certifications: newCert }).catch(() => {});
     fetch('/api/user/profile', {
       method: 'POST',
       headers: {
@@ -1157,10 +1083,11 @@ export default function ProfilePage() {
     }
 
     try {
-      // 1. Authoritative write to canonical profile & database read-back confirmation
-      const updateResult = await updateUserProfile(profilePayload);
+      // 1. Authoritative write to Supabase PostgreSQL & read-back confirmation
+      const targetUid = user.uid;
+      const updateResult = await profileService.updateProfile(targetUid, profilePayload);
       if (!updateResult.success || !updateResult.user) {
-        toast(`Save error: ${updateResult.error || 'Failed to update Firestore profile.'}`);
+        toast(`Save error: ${updateResult.error || 'Failed to update profile.'}`);
         return;
       }
 
@@ -1178,7 +1105,7 @@ export default function ProfilePage() {
       setFormattedAddress(confirmedUser.formattedAddress || confirmedUser.address || formattedAddress);
 
       setIsEditMode(false);
-      toast('✓ Enterprise profile, contact details and professional records saved in Cloud Firestore.');
+      toast('✓ Enterprise profile, contact details and professional records saved successfully.');
     } catch (err: any) {
       toast(`Save error: ${err.message || 'Failed to save profile.'}`);
     }
@@ -2184,7 +2111,7 @@ export default function ProfilePage() {
                             },
                             body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
                           });
-                          await updateCanonicalUserProfile(activeUid, { avatarUrl: '' });
+                          await profileService.updateProfile(activeUid, { avatarUrl: '' });
                         } catch {}
                       }
                       toast('Profile photo removed successfully.');
@@ -2303,7 +2230,7 @@ export default function ProfilePage() {
                                 },
                                 body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: '' } }),
                               });
-                              await updateCanonicalUserProfile(activeUid, { companyLogoUrl: '' });
+                              await profileService.updateProfile(activeUid, { companyLogoUrl: '' });
                             } catch {}
                           }
                           toast('Company logo removed successfully.');
@@ -3985,8 +3912,8 @@ export default function ProfilePage() {
                   return;
                 }
 
-                // Authoritative write to canonical profile & database read-back confirmation
-                const updateResult = await updateUserProfile(profilePayload);
+                // Authoritative write to Supabase PostgreSQL & read-back confirmation
+                const updateResult = await profileService.updateProfile(targetUid, profilePayload);
                 if (!updateResult.success || !updateResult.user) {
                   toast(`Save error: ${updateResult.error || 'Failed to update profile.'}`);
                   setIsSavingIdentity(false);

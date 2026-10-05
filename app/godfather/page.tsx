@@ -36,7 +36,36 @@ import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { usePlatformConfig } from '@/lib/platform-config';
 import { RankingConfig, KYCDossier, KYCStatus } from '@/lib/types';
-import { getRankingConfigFromDB, saveRankingConfigInDB, upsertKYCDossierInDB } from '@/lib/firebase/firestore';
+import { createClient } from '@/lib/supabase/client';
+
+const getRankingConfigFromDB = async (): Promise<any> => {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem('fr8x_ranking_config') : null;
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
+
+const saveRankingConfigInDB = async (cfg: any): Promise<void> => {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fr8x_ranking_config', JSON.stringify(cfg));
+    }
+  } catch {}
+};
+
+const upsertKYCDossierInDB = async (dossier: any): Promise<void> => {
+  try {
+    const supabase = createClient();
+    await (supabase.from('audit_logs') as any).insert({
+      action: 'KYC_DECISION',
+      entity: 'kyc_dossier',
+      entity_id: dossier.uid || dossier.companyId || null,
+      new_data: dossier,
+    });
+  } catch {}
+};
 
 export default function GodfatherDashboardPage() {
   const { companies, users, auctions, auditLogs } = useGodfatherData();

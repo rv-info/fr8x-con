@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use canonical Firebase Auth UID if provided; otherwise fallback to secure generated UID
+    // Use canonical Supabase Auth UID if provided; otherwise fallback to secure generated UID
     const uid = body.uid ? String(body.uid).trim() : `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
     const host = req.headers.get('host');

@@ -88,13 +88,10 @@ export async function POST(req: NextRequest) {
 
     const saved = savePersistedAuction(body);
 
-    // Best-effort Firestore sync if Admin SDK configured
+    // Authoritative Supabase PostgreSQL sync
     try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('auctions').doc(saved.id).set(saved, { merge: true });
-      }
+      const { auctionDbService } = await import('@/lib/supabase/db');
+      await auctionDbService.upsertAuction(saved);
     } catch {}
 
     return NextResponse.json({ success: true, auction: saved }, { status: 200 });
@@ -141,11 +138,9 @@ export async function DELETE(req: NextRequest) {
     }
 
     try {
-      const { getAdminDb } = await import('@/lib/firebase/admin');
-      const adminDb = getAdminDb();
-      if (adminDb && typeof adminDb.collection === 'function') {
-        await adminDb.collection('auctions').doc(id).update({ status: 'Cancelled', updatedAt: new Date().toISOString() });
-      }
+      const { createClient } = await import('@/lib/supabase/server');
+      const supabase = createClient();
+      await supabase.from('auctions').update({ status: 'Cancelled', updated_at: new Date().toISOString() }).eq('id', id);
     } catch {}
 
     return NextResponse.json(

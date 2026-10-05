@@ -45,10 +45,37 @@ interface VerifiedBidderCandidate {
   hasGoldenTick?: boolean;
 }
 
-import { BidderGroup } from '@/lib/types';
-import { getBidderGroupsFromDB, saveBidderGroupInDB } from '@/lib/firebase/firestore';
+
 
 const INITIAL_BIDDER_POOL: VerifiedBidderCandidate[] = [];
+
+export interface BidderGroup {
+  id: string;
+  ownerUid: string;
+  name: string;
+  bidders: VerifiedBidderCandidate[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+async function getBidderGroupsFromDB(uid: string): Promise<BidderGroup[]> {
+  try {
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(`fr8x_bidder_groups_${uid}`) : null;
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveBidderGroupInDB(group: BidderGroup): Promise<void> {
+  try {
+    if (typeof window !== 'undefined') {
+      const current = await getBidderGroupsFromDB(group.ownerUid);
+      const updated = [group, ...current.filter((g) => g.id !== group.id)];
+      localStorage.setItem(`fr8x_bidder_groups_${group.ownerUid}`, JSON.stringify(updated));
+    }
+  } catch {}
+}
 
 export default function CreateReverseAuctionPage() {
   const router = useRouter();
@@ -1643,7 +1670,7 @@ export default function CreateReverseAuctionPage() {
                         onChange={(e) => {
                           const grp = savedBidderGroups.find(g => g.id === e.target.value);
                           if (grp) {
-                            setAssignedBidders(new Set(grp.bidders.map((b) => b.id)));
+                            setAssignedBidders(new Set(grp.bidders.map((b: any) => b.id)));
                             toast(`Loaded group "${grp.name}" (${grp.bidders.length} bidders).`);
                           }
                         }}

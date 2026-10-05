@@ -47,7 +47,7 @@ import {
   FileCheck,
 } from 'lucide-react';
 import { formatNumber } from '@/lib/utils';
-import { subscribeToAuction, subscribeToAuctionBids } from '@/lib/firebase/firestore';
+import { createClient } from '@/lib/supabase/client';
 import { Auction, SubmittedBid } from '@/lib/types';
 
 interface ChargeRow {
@@ -91,35 +91,54 @@ export default function BidRoomPage() {
     }
   }, [initialAuction]);
 
-  // Subscribe to real-time updates from Firestore
+  // Subscribe to real-time updates from Supabase Realtime
   useEffect(() => {
     if (!auctionId) return;
 
-    const unsubAuction = subscribeToAuction(
-      auctionId,
-      (updated) => {
-        if (updated) {
-          setLiveAuction(updated);
-          setIsLiveConnected(true);
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`auction_${auctionId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'auctions', filter: `id=eq.${auctionId}` },
+        (payload: any) => {
+          if (payload.new) {
+            setLiveAuction((prev) => ({ ...prev, ...(payload.new as any) }));
+            setIsLiveConnected(true);
+          }
         }
-      },
-      () => setIsLiveConnected(false)
-    );
-
-    const unsubBids = subscribeToAuctionBids(
-      auctionId,
-      (bids) => {
-        if (Array.isArray(bids) && bids.length > 0) {
-          setLiveBids(bids);
-          setIsLiveConnected(true);
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'auction_bids', filter: `auction_id=eq.${auctionId}` },
+        (payload: any) => {
+          if (payload.new) {
+            const b = payload.new as any;
+            const newBid: SubmittedBid = {
+              id: b.id,
+              auctionId,
+              bidderUid: b.bidder_uid || '',
+              bidderName: b.bidder_name || '',
+              bidderCompany: b.bidder_company || '',
+              bidderHasGoldenTick: false,
+              charges: [],
+              grandTotalUSD: Number(b.grand_total_usd || b.amount || 0),
+              rank: 1,
+              feePaid: 0,
+              currency: b.currency || 'USD',
+              submittedAt: b.created_at || new Date().toISOString(),
+              status: 'active',
+            };
+            setLiveBids((prev) => [newBid, ...prev]);
+          }
         }
-      },
-      () => setIsLiveConnected(false)
-    );
+      )
+      .subscribe((status: any) => {
+        setIsLiveConnected(status === 'SUBSCRIBED');
+      });
 
     return () => {
-      unsubAuction();
-      unsubBids();
+      supabase.removeChannel(channel);
     };
   }, [auctionId]);
 

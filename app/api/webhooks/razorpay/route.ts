@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { recordIdempotentEventsBatchInDB } from '@/lib/firebase/firestore';
+
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { savePersistedTransaction } from '@/lib/dbms/server-dbms';
 import { EmailService } from '@/lib/email-service';
@@ -158,29 +158,23 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. Idempotent audit recording in Firestore
+    // 4. Idempotent audit recording in Supabase PostgreSQL
     try {
-      await recordIdempotentEventsBatchInDB([
-        {
-          eventId: `rzp_evt_${payload.id || paymentId}`,
-          eventType: status === 'failed' ? 'payment_failed' : 'payment_captured',
-          actorId: userEmail || 'system',
-          targetId: paymentId,
-          targetType: 'razorpay_payment',
-          sourceSurface: 'godfather',
-          correlationId: `corr_rzp_${paymentId}`,
-          rankingVersion: 'v2',
-          timestamp: new Date().toISOString(),
-          metadata: {
-            paymentId,
-            orderId,
-            amount,
-            status,
-            planId,
-            signatureVerified: Boolean(isSignatureValid),
-          },
+      const { createServerSupabaseClient } = await import('@/lib/supabase/server');
+      const supabase = createServerSupabaseClient();
+      await (supabase.from('audit_logs') as any).insert({
+        action: status === 'failed' ? 'PAYMENT_FAILED' : 'PAYMENT_CAPTURED',
+        entity: 'razorpay_payment',
+        entity_id: paymentId,
+        new_data: {
+          paymentId,
+          orderId,
+          amount,
+          status,
+          planId,
+          signatureVerified: Boolean(isSignatureValid),
         },
-      ]);
+      });
     } catch (auditErr: any) {
       console.warn('[Razorpay Webhook] Non-blocking audit recording notice:', auditErr?.message);
     }

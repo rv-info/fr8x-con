@@ -65,27 +65,13 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
 
-    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
-    let firebaseCustomToken: string | null = null;
-    try {
-      const { createCustomToken } = await import('@/lib/firebase/admin');
-      firebaseCustomToken = await createCustomToken(user.uid, {
-        role: user.role,
-        companyId: user.companyId,
-        isVerified: true,
-        plan: (user as any).plan || 'trial',
-        hasGoldenTick: Boolean((user as any).hasGoldenTick),
-      });
-    } catch (fbErr: any) {
-      console.warn('[VerifyEmailAPI] Firebase custom token generation warning:', fbErr.message);
-    }
+
 
     const res = NextResponse.json({
       success: true,
       message: result.message || 'Email verified successfully!',
       welcomeEmailSent: true,
       sessionId,
-      firebaseCustomToken,
       user: {
         uid: user.uid,
         email: user.email,
@@ -180,27 +166,10 @@ export async function GET(req: NextRequest) {
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
 
-    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
-    let firebaseCustomToken: string | null = null;
-    try {
-      const { createCustomToken } = await import('@/lib/firebase/admin');
-      firebaseCustomToken = await createCustomToken(user.uid, {
-        role: user.role,
-        companyId: user.companyId,
-        isVerified: true,
-        plan: (user as any).plan || 'trial',
-        hasGoldenTick: Boolean((user as any).hasGoldenTick),
-      });
-    } catch (fbErr: any) {
-      console.warn('[VerifyEmailAPI-GET] Firebase custom token generation warning:', fbErr.message);
-    }
-
     const res = NextResponse.json({
       success: true,
-      alreadyVerified: result.code === 'ALREADY_VERIFIED',
       message: result.message || 'Email verified successfully!',
       sessionId,
-      firebaseCustomToken,
       user: {
         uid: user.uid,
         email: user.email,

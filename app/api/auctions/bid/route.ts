@@ -1,26 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAdminDb, authenticateRequest, unauthorizedResponse, forbiddenResponse } from '@/lib/firebase/admin';
+import { createClient } from '@/lib/supabase/server';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
-import { FieldValue } from 'firebase-admin/firestore';
 
 export const runtime = 'nodejs';
 
 /**
  * POST /api/auctions/bid
- * ─────────────────────────────────────────────────────────────────────────────
- * World-class transactional bid submission engine with zero-race-condition
- * guarantees and cryptographic audit logging on Firebase Admin SDK.
- * ─────────────────────────────────────────────────────────────────────────────
+ * Authoritative Supabase PostgreSQL bid submission engine
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. Dual-channel Authentication: Firebase ID Token or Enterprise Session Cookie
-    const decodedToken = await authenticateRequest(req);
     const sessionAuth = authenticateUserSession(req);
     const gfAuth = authenticateGodfatherOperator(req);
 
-    const callerUid = decodedToken?.uid || sessionAuth.user?.uid || gfAuth.operator?.uid;
-    const callerEmail = decodedToken?.email || sessionAuth.user?.email || gfAuth.operator?.email || '';
+    const callerUid = sessionAuth.user?.uid || gfAuth.operator?.uid;
+    const callerEmail = sessionAuth.user?.email || gfAuth.operator?.email || '';
 
     if (!callerUid) {
       return NextResponse.json(
@@ -29,7 +23,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Parse and Validate Request Payload
     const body = await req.json().catch(() => null);
     if (!body || !body.auctionId || !body.bid || !body.bid.id) {
       return NextResponse.json(
@@ -48,120 +41,68 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const db = getAdminDb();
-    const auctionRef = db.collection('auctions').doc(auctionId);
-    const bidRef = auctionRef.collection('bids').doc(bid.id);
-    const auditRef = auctionRef.collection('audit').doc();
+    const supabase = createClient();
 
-    const nowIso = new Date().toISOString();
+    // Verify auction exists
+    const { data: auction, error: auctionError } = await supabase
+      .from('auctions')
+      .select('*')
+      .eq('id', auctionId)
+      .maybeSingle();
 
-    // 3. Execute Atomic Firestore Transaction
-    const result = await db.runTransaction(async (tx: any) => {
-      const auctionSnap = await tx.get(auctionRef);
-      if (!auctionSnap.exists) {
-        throw new Error('AUCTION_NOT_FOUND');
-      }
-
-      const auctionData = auctionSnap.data()!;
-      if (auctionData.status !== 'active' && auctionData.status !== 'Live') {
-        throw new Error(`AUCTION_INACTIVE:${auctionData.status}`);
-      }
-
-      // Check deadline
-      if (auctionData.endDateTime && new Date(auctionData.endDateTime).getTime() < Date.now()) {
-        throw new Error('AUCTION_EXPIRED');
-      }
-
-      // Fetch all existing bids for this auction to calculate true rank
-      const existingBidsSnap = await tx.get(auctionRef.collection('bids'));
-      const existingBids = existingBidsSnap.docs.map((d: any) => d.data());
-
-      // Lower amount receives higher rank in reverse auction
-      const betterBids = existingBids.filter((b: any) => {
-        const amt = Number(b.grandTotalUSD || b.amount || 0);
-        return amt > 0 && amt < bidAmount;
-      });
-      const calculatedRank = betterBids.length + 1;
-
-      const currentLowest = Number(auctionData.currentLowestBid || Infinity);
-      const isNewLowest = bidAmount < currentLowest;
-
-      const bidDoc = {
-        ...bid,
-        bidderUid: callerUid,
-        bidderEmail: callerEmail,
-        rank: calculatedRank,
-        submittedAt: nowIso,
-        serverCreatedAt: FieldValue.serverTimestamp(),
-      };
-
-      // Set bid document atomically
-      tx.set(bidRef, bidDoc);
-
-      // Update auction metadata atomically
-      const auctionUpdates: Record<string, any> = {
-        bidCount: FieldValue.increment(1),
-        lastBidAt: nowIso,
-        updatedAt: nowIso,
-      };
-      if (isNewLowest) {
-        auctionUpdates.currentLowestBid = bidAmount;
-      }
-      tx.update(auctionRef, auctionUpdates);
-
-      // Append immutable cryptographic audit entry
-      tx.set(auditRef, {
-        action: 'BID_SUBMITTED',
-        bidId: bid.id,
-        bidderUid: callerUid,
-        amountUSD: bidAmount,
-        rank: calculatedRank,
-        isLowest: isNewLowest,
-        timestamp: nowIso,
-        serverTimestamp: FieldValue.serverTimestamp(),
-      });
-
-      return {
-        rank: calculatedRank,
-        isLowest: isNewLowest,
-        bidCount: (auctionData.bidCount || 0) + 1,
-      };
-    });
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: 'Bid accepted and atomically recorded.',
-        rank: result.rank,
-        isLowest: result.isLowest,
-        bidCount: result.bidCount,
-        auctionId,
-        bidId: bid.id,
-      },
-      { status: 200 }
-    );
-  } catch (err: any) {
-    console.error('[API /api/auctions/bid Error]:', err);
-
-    if (err.message === 'AUCTION_NOT_FOUND') {
+    if (auctionError || !auction) {
       return NextResponse.json({ success: false, error: 'Auction not found' }, { status: 404 });
     }
-    if (err.message?.startsWith('AUCTION_INACTIVE')) {
-      return NextResponse.json(
-        { success: false, error: 'Auction is no longer active for bidding' },
-        { status: 409 }
-      );
-    }
-    if (err.message === 'AUCTION_EXPIRED') {
-      return NextResponse.json(
-        { success: false, error: 'Auction bidding window has closed' },
-        { status: 410 }
-      );
+
+    // Insert bid into auction_bids
+    const { data: insertedBid, error: bidError } = await supabase
+      .from('auction_bids')
+      .insert({
+        id: bid.id,
+        auction_id: auctionId,
+        bidder_uid: callerUid,
+        bidder_name: (sessionAuth.user as any)?.displayName || callerEmail,
+        bidder_company: (sessionAuth.user as any)?.company || sessionAuth.user?.companyId || '',
+        grand_total_usd: bidAmount,
+        currency: bid.currency || 'USD',
+        charges: bid.charges || [],
+        notes: bid.notes || '',
+      })
+      .select()
+      .single();
+
+    if (bidError) {
+      return NextResponse.json({ success: false, error: bidError.message }, { status: 500 });
     }
 
-    return NextResponse.json(
-      { success: false, error: err.message || 'Internal server error while processing bid.' },
-      { status: 500 }
-    );
+    // Increment bids_submitted_count
+    await supabase
+      .from('auctions')
+      .update({
+        bids_submitted_count: (auction.bids_submitted_count || 0) + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', auctionId);
+
+    // Insert audit log
+    await supabase.from('audit_logs').insert({
+      action: 'BID_SUBMITTED',
+      target_id: bid.id,
+      actor_id: callerUid,
+      actor_email: callerEmail,
+      details: {
+        auctionId,
+        bidAmount,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'Bid accepted and recorded in Supabase PostgreSQL.',
+      bidId: bid.id,
+      auctionId,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

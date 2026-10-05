@@ -144,7 +144,6 @@ export interface UserProfile {
   hasGoldenTick: boolean;
   isVerified: boolean;
   email_verified?: boolean;
-  firebaseCustomToken?: string;
   role: UserRole;
   avatarUrl?: string;
   photoURL?: string;
@@ -162,6 +161,7 @@ export interface UserProfile {
   // Professional business information & Multi-Jurisdiction Statutory Filings
   gstn?: string;
   pan?: string;
+  cin?: string;
   iec?: string;
   mto?: string;
   kycCountry?: string;

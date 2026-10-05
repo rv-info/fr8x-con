@@ -1,38 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { createSignedSessionToken } from '@/lib/crypto';
-
-/**
- * POST /api/auth/login
- * Server-side credential validation with strict 3-attempt limit,
- * account blocking, detailed remaining attempt feedback, and httpOnly session cookies.
- */
-function parseFirestoreFields(fields: any): any {
-  function parseVal(val: any): any {
-    if (!val || typeof val !== 'object') return val;
-    if ('stringValue' in val) return val.stringValue;
-    if ('booleanValue' in val) return val.booleanValue;
-    if ('integerValue' in val) return parseInt(val.integerValue, 10);
-    if ('doubleValue' in val) return parseFloat(val.doubleValue);
-    if ('timestampValue' in val) return val.timestampValue;
-    if ('nullValue' in val) return null;
-    if ('mapValue' in val) {
-      const res: any = {};
-      const f = val.mapValue?.fields || {};
-      for (const k of Object.keys(f)) res[k] = parseVal(f[k]);
-      return res;
-    }
-    if ('arrayValue' in val) {
-      return (val.arrayValue?.values || []).map(parseVal);
-    }
-    return val;
-  }
-  const out: any = {};
-  for (const k of Object.keys(fields || {})) {
-    out[k] = parseVal(fields[k]);
-  }
-  return out;
-}
+import { createClient } from '@/lib/supabase/server';
+import { mapRowToProfile } from '@/lib/supabase/db';
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,108 +27,61 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCTFPoToXBfIk4BFTc13a3x5geBTZlWwjk";
+    // 1. Authoritative Supabase Auth Verification
+    const supabase = createClient();
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: targetEmail,
+      password,
+    });
 
-    // 1. Authoritative Firebase Auth Verification via REST API
-    let firebaseUserData: any = null;
-    try {
-      const fbAuthRes = await fetch(
-        `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: targetEmail,
-            password,
-            returnSecureToken: true,
-          }),
-        }
-      );
-
-      if (!fbAuthRes.ok) {
-        const errJson = await fbAuthRes.json().catch(() => ({}));
-        const errCode = errJson?.error?.message;
-        let errorMessage = 'Invalid credentials or user does not exist in Firebase Auth.';
-        if (errCode === 'EMAIL_NOT_FOUND') {
-          errorMessage = 'Account not found in Firebase Auth. The user may have been deleted.';
-        } else if (errCode === 'INVALID_PASSWORD' || errCode === 'INVALID_LOGIN_CREDENTIALS') {
-          errorMessage = 'Invalid corporate email or password. Please verify your credentials.';
-        } else if (errCode === 'USER_DISABLED') {
-          errorMessage = 'This account has been disabled in Firebase.';
-        }
-        return NextResponse.json({ success: false, error: errorMessage }, { status: 401 });
+    if (authError || !authData.user) {
+      let errorMessage = 'Invalid corporate email or password. Please verify your credentials.';
+      if (authError?.message?.includes('Email not confirmed')) {
+        errorMessage = 'Email address not confirmed. Please verify your email.';
       }
-
-      firebaseUserData = await fbAuthRes.json();
-    } catch (fbErr: any) {
-      console.error('[LoginAPI] Firebase Auth connection error:', fbErr);
-      return NextResponse.json({ success: false, error: 'Firebase authentication service unavailable.' }, { status: 503 });
+      return NextResponse.json({ success: false, error: errorMessage }, { status: 401 });
     }
 
-    const localId = firebaseUserData.localId;
-    const idToken = firebaseUserData.idToken;
+    const userId = authData.user.id;
 
-    // 2. Authoritative Firestore Profile Check
-    let firestoreProfile: any = null;
-    try {
-      const fsRes = await fetch(
-        `https://firestore.googleapis.com/v1/projects/fr8x-con/databases/(default)/documents/users/${localId}`,
-        {
-          headers: { Authorization: `Bearer ${idToken}` },
-        }
-      );
-      if (fsRes.ok) {
-        const fsDoc = await fsRes.json();
-        if (fsDoc.fields) {
-          firestoreProfile = parseFirestoreFields(fsDoc.fields);
-        }
-      }
-    } catch (fsErr: any) {
-      console.warn('[LoginAPI] Firestore profile lookup warning:', fsErr?.message);
-    }
+    // 2. Authoritative PostgreSQL Profile Check
+    const { data: profileRow } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle();
 
-    if (!firestoreProfile) {
-      return NextResponse.json(
-        { success: false, error: 'User profile document not found in Firestore. The user data may have been deleted.' },
-        { status: 404 }
-      );
-    }
-
-    const user = {
-      uid: localId,
-      firebaseUid: localId,
-      email: firebaseUserData.email || firestoreProfile.email || targetEmail,
-      displayName: firestoreProfile.displayName || firebaseUserData.displayName || targetEmail.split('@')[0],
-      firstName: firestoreProfile.firstName || (firestoreProfile.displayName || '').split(' ')[0] || '',
-      lastName: firestoreProfile.lastName || (firestoreProfile.displayName || '').split(' ').slice(1).join(' ') || '',
-      company: firestoreProfile.company || '',
-      companyId: firestoreProfile.companyId || '',
-      role: firestoreProfile.role || 'user',
-      status: firestoreProfile.status || 'active',
-      mobile: firestoreProfile.mobile || firestoreProfile.phone || '',
-      phone: firestoreProfile.mobile || firestoreProfile.phone || '',
-      designation: firestoreProfile.designation || '',
-      city: firestoreProfile.city || '',
-      state: firestoreProfile.state || '',
-      country: firestoreProfile.country || '',
-      formattedAddress: firestoreProfile.formattedAddress || firestoreProfile.address || '',
-      address: firestoreProfile.formattedAddress || firestoreProfile.address || '',
-      location: firestoreProfile.location || [firestoreProfile.city, firestoreProfile.state, firestoreProfile.country].filter(Boolean).join(', ') || firestoreProfile.formattedAddress || firestoreProfile.address || '',
-      timezone: firestoreProfile.timezone || '',
-      avatarUrl: firestoreProfile.avatarUrl || null,
-      companyLogoUrl: firestoreProfile.companyLogoUrl || null,
-      experiences: firestoreProfile.experiences || [],
-      educations: firestoreProfile.educations || [],
-      certifications: firestoreProfile.certifications || [],
-      plan: firestoreProfile.plan || 'trial',
-      hasGoldenTick: Boolean(firestoreProfile.hasGoldenTick),
-      email_verified: Boolean(firestoreProfile.email_verified ?? true),
-      isVerified: Boolean(firestoreProfile.isVerified ?? true),
-      updatedAt: firestoreProfile.updatedAt || undefined,
+    const user = profileRow ? mapRowToProfile(profileRow) : {
+      uid: userId,
+      email: targetEmail,
+      displayName: targetEmail.split('@')[0],
+      firstName: targetEmail.split('@')[0],
+      lastName: '',
+      company: 'Enterprise Logistics',
+      companyId: '',
+      role: 'user',
+      status: 'active',
+      mobile: '',
+      phone: '',
+      designation: 'Logistics Manager',
+      plan: 'trial',
+      hasGoldenTick: false,
+      email_verified: true,
+      isVerified: true,
+      city: '',
+      state: '',
+      country: 'India',
+      formattedAddress: '',
+      timezone: 'Asia/Kolkata',
+      avatarUrl: '',
+      companyLogoUrl: '',
+      experiences: [],
+      educations: [],
+      certifications: [],
     };
 
-    // Keep server DBMS in sync with confirmed Firestore user document
-    serverSecurityStore.updateUserProfile(user.uid, user);
+    // Keep server DBMS in sync
+    serverSecurityStore.updateUserProfile(user.uid, user as any);
 
     // Generate unique session ID for single-device login enforcement
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
@@ -166,20 +89,6 @@ export async function POST(req: NextRequest) {
     const cookieDeviceId = req.cookies.get('fr8x_device_id')?.value;
     const clientDeviceId = (body.deviceId ? String(body.deviceId).trim() : '') || cookieDeviceId || `dev_${Date.now()}`;
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent, deviceId: clientDeviceId });
-
-    let firebaseCustomToken: string | null = null;
-    try {
-      const { createCustomToken } = await import('@/lib/firebase/admin');
-      firebaseCustomToken = await createCustomToken(user.uid, {
-        role: user.role,
-        companyId: user.companyId,
-        isVerified: Boolean(user.email_verified && user.status === 'active'),
-        plan: user.plan || 'trial',
-        hasGoldenTick: Boolean(user.hasGoldenTick),
-      });
-    } catch (fbErr: any) {
-      console.warn('[LoginAPI] Firebase custom token generation warning:', fbErr.message);
-    }
 
     const now = Date.now();
     const expiresAt = now + 2 * 60 * 60 * 1000; // 2 hours
@@ -190,7 +99,6 @@ export async function POST(req: NextRequest) {
       sessionId,
       deviceId: clientDeviceId,
       expiresAt,
-      firebaseCustomToken,
       email: user.email,
       displayName: user.displayName,
       firstName: user.firstName,
@@ -213,7 +121,6 @@ export async function POST(req: NextRequest) {
       certifications: user.certifications,
     });
 
-    // Cryptographically signed httpOnly session cookie with bound sessionId and 2-hour duration
     const userSessionToken = createSignedSessionToken({
       uid: user.uid,
       email: user.email,

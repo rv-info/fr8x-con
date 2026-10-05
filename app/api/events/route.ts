@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordIdempotentEventsBatchInDB, saveUserIntentInDB, getUserIntentFromDB } from '@/lib/firebase/firestore';
 import { recordPersistedEvents, savePersistedUserIntent, getPersistedUserIntent } from '@/lib/dbms/server-dbms';
 import { IdempotentEvent, LogisticsIntent } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
@@ -31,9 +30,6 @@ export async function POST(req: NextRequest) {
     // 1. Authoritative persistence in server-side DBMS
     const diskInserted = recordPersistedEvents(events);
 
-    // 2. Persist events idempotently in memory / Firestore
-    const count = await recordIdempotentEventsBatchInDB(events);
-
     // Extract logistics intent from search, rate-view, and auction events
     for (const evt of events) {
       if (
@@ -52,10 +48,9 @@ export async function POST(req: NextRequest) {
           const now = Date.now();
           const expiresAt = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days TTL
 
-          // Fetch or initialize intent (Server DBMS first, fallback to Firestore/Memory)
+          // Fetch or initialize intent from server DBMS
           const existing =
-            getPersistedUserIntent(evt.actorId) ||
-            (await getUserIntentFromDB(evt.actorId)) || {
+            getPersistedUserIntent(evt.actorId) || {
               userId: evt.actorId,
               recentSearchedPorts: [],
               viewedRates: [],
@@ -83,12 +78,11 @@ export async function POST(req: NextRequest) {
           existing.expiresAt = expiresAt;
 
           savePersistedUserIntent(existing);
-          await saveUserIntentInDB(existing).catch(() => {});
         }
       }
     }
 
-    return NextResponse.json({ success: true, count });
+    return NextResponse.json({ success: true, count: events.length });
   } catch (err: any) {
     console.error('[API/events] Error handling telemetry events:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Internal error' }, { status: 500 });

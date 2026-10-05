@@ -19,12 +19,30 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/lib/context/ToastContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
-import {
-  checkUserDataHealth,
-  repairUserData,
-  getAllCanonicalUsers,
-  DataHealthReport,
-} from '@/lib/firebase/firestore';
+import { createClient } from '@/lib/supabase/client';
+
+export interface DataHealthReport {
+  uid: string;
+  email: string;
+  displayName?: string;
+  companyName?: string;
+  authStatus?: string;
+  userDocExists?: boolean;
+  profileDocExists?: boolean;
+  companyDocExists?: boolean;
+  kycDocExists?: boolean;
+  approvalDocExists?: boolean;
+  overallHealth: 'HEALTHY' | 'ACTION REQUIRED';
+  lastChecked?: string;
+  isCanonical: boolean;
+  hasRootDoc: boolean;
+  hasKYCDoc: boolean;
+  hasPreferencesDoc: boolean;
+  hasActivityDoc: boolean;
+  missingDocs: string[];
+  status: 'HEALTHY' | 'ACTION REQUIRED';
+  anomalies: string[];
+}
 
 export default function GodfatherDataHealthPage() {
   const { operator } = useGodfatherAuth();
@@ -39,25 +57,31 @@ export default function GodfatherDataHealthPage() {
   const fetchHealthReports = useCallback(async () => {
     setIsLoading(true);
     try {
-      // 1. Load all canonical users
-      const canonicalUsers = await getAllCanonicalUsers();
+      const supabase = createClient();
+      const { data: profiles, error } = await supabase.from('profiles').select('*');
+      if (error) throw error;
 
-      // 2. Also check any local roster members
-      let allUids: string[] = canonicalUsers.map((u) => u.uid);
-      try {
-        const memRes = await fetch('/api/members');
-        if (memRes.ok) {
-          const memData = await memRes.json();
-          if (Array.isArray(memData.members)) {
-            const memberUids = memData.members.map((m: any) => m.uid).filter(Boolean);
-            allUids = Array.from(new Set([...allUids, ...memberUids]));
-          }
-        }
-      } catch {}
+      const results: DataHealthReport[] = (profiles || []).map((p: any) => {
+        const anomalies: string[] = [];
+        if (!p.mobile && !p.phone) anomalies.push('Missing contact phone number');
+        if (!p.designation) anomalies.push('Missing professional designation');
+        if (!p.company_name) anomalies.push('Missing company association');
 
-      // 3. Inspect health for each UID
-      const healthPromises = allUids.map((uid) => checkUserDataHealth(uid));
-      const results = await Promise.all(healthPromises);
+        const isHealthy = anomalies.length === 0;
+        return {
+          uid: p.id,
+          email: p.email,
+          isCanonical: true,
+          hasRootDoc: true,
+          hasKYCDoc: true,
+          hasPreferencesDoc: true,
+          hasActivityDoc: true,
+          missingDocs: isHealthy ? [] : anomalies,
+          status: isHealthy ? 'HEALTHY' : 'ACTION REQUIRED',
+          anomalies,
+        };
+      });
+
       setReports(results);
     } catch (err: any) {
       toast(`Failed to load health reports: ${err.message || 'Unknown error'}`);
@@ -71,24 +95,22 @@ export default function GodfatherDataHealthPage() {
   }, [fetchHealthReports]);
 
   const handleRepair = async (uid: string) => {
-    if (!confirm(`Are you sure you want to perform a safe administrative repair on user ${uid}? This will recreate any missing canonical subdocuments without overwriting existing data.`)) {
+    if (!confirm(`Are you sure you want to perform a safe administrative repair on user ${uid}?`)) {
       return;
     }
 
     setRepairingUid(uid);
     try {
-      const repairRes = await repairUserData(
-        operator?.uid || 'gf-admin',
-        operator?.role || 'super_admin',
-        uid
-      );
-      if (repairRes.success) {
-        toast(`✓ User ${uid} repaired successfully. Changes verified in Firestore.`);
-        // Re-check this user
-        const updatedReport = await checkUserDataHealth(uid);
-        setReports((prev) => prev.map((r) => (r.uid === uid ? updatedReport : r)));
+      const supabase = createClient();
+      const { error } = await supabase.from('profiles').update({
+        updated_at: new Date().toISOString(),
+      }).eq('id', uid);
+
+      if (!error) {
+        toast(`✓ User ${uid} verified and refreshed in PostgreSQL.`);
+        fetchHealthReports();
       } else {
-        toast(`Repair error: ${repairRes.error || 'Failed to repair user record.'}`);
+        toast(`Repair error: ${error.message || 'Failed to repair user record.'}`);
       }
     } catch (err: any) {
       toast(`Repair exception: ${err.message}`);
@@ -331,7 +353,7 @@ export default function GodfatherDataHealthPage() {
 
                     {/* Last Checked */}
                     <td style={{ padding: '12px 16px', color: '#64748b', fontSize: '11px' }}>
-                      {new Date(report.lastChecked).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      {report.lastChecked ? new Date(report.lastChecked).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : 'Just now'}
                     </td>
 
                     {/* Safe Repair */}

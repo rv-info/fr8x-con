@@ -33,27 +33,11 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent') || 'Browser Client';
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent });
 
-    // AUTH-02: Mint Firebase Custom Token for client-side Firebase Auth synchronization
-    let firebaseCustomToken: string | null = null;
-    try {
-      const { createCustomToken } = await import('@/lib/firebase/admin');
-      firebaseCustomToken = await createCustomToken(user.uid, {
-        role: user.role,
-        companyId: user.companyId,
-        isVerified: Boolean(user.email_verified && user.status === 'active'),
-        plan: (user as any).plan || 'trial',
-        hasGoldenTick: Boolean((user as any).hasGoldenTick),
-      });
-    } catch (fbErr: any) {
-      console.warn('[VerifyFirstLoginAPI] Firebase custom token generation warning:', fbErr.message);
-    }
-
     const res = NextResponse.json({
       success: true,
       message: 'First-time login verified. Session created.',
       uid: user.uid,
       sessionId,
-      firebaseCustomToken,
       email: user.email,
       displayName: user.displayName,
       company: user.company,

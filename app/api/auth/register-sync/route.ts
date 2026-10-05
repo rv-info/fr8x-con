@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST /api/auth/register-sync
- * Synchronizes newly registered Firebase Authentication users into the server store
+ * Synchronizes newly registered Supabase Authentication users into the server store
  * so that member directories, Godfather views, and legacy APIs share the identical UID.
  */
 export async function POST(req: NextRequest) {
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
         },
         { skipVerification: true, firstLoginCompleted: true }
       );
-    } else if (user.password && user.password !== 'FirebaseVerifiedSession@2026') {
+    } else if (user.password && user.password !== 'SupabaseVerifiedSession@2026') {
       serverSecurityStore.updateUserPassword(cleanEmail, user.password);
     }
 

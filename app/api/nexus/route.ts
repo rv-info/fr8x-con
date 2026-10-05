@@ -91,14 +91,7 @@ export async function POST(req: NextRequest) {
       }
       const saved = savePersistedTopic(topicData);
 
-      // Best-effort Firestore sync if Admin SDK configured
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('nexusTopics').doc(saved.id).set(saved, { merge: true });
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: true, topic: saved }, { status: 200 });
     }
@@ -117,14 +110,7 @@ export async function POST(req: NextRequest) {
       }
       const saved = savePersistedReview(reviewData);
 
-      // Best-effort Firestore sync if Admin SDK configured
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('reviews').doc(saved.id).set(saved, { merge: true });
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: true, review: saved }, { status: 200 });
     }
@@ -143,14 +129,7 @@ export async function POST(req: NextRequest) {
       }
       const saved = savePersistedCase(caseData);
 
-      // Best-effort Firestore sync if Admin SDK configured
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('blacklistCases').doc(saved.id).set(saved, { merge: true });
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: true, case: saved }, { status: 200 });
     }
@@ -200,13 +179,7 @@ export async function DELETE(req: NextRequest) {
       }
       const deleted = deletePersistedTopic(id);
 
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('nexusTopics').doc(id).delete();
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: deleted }, { status: 200 });
     }
@@ -214,13 +187,7 @@ export async function DELETE(req: NextRequest) {
     if (type === 'review') {
       const deleted = deletePersistedReview(id);
 
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('reviews').doc(id).delete();
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: deleted }, { status: 200 });
     }
@@ -228,13 +195,7 @@ export async function DELETE(req: NextRequest) {
     if (type === 'case') {
       const deleted = deletePersistedCase(id);
 
-      try {
-        const { getAdminDb } = await import('@/lib/firebase/admin');
-        const adminDb = getAdminDb();
-        if (adminDb && typeof adminDb.collection === 'function') {
-          await adminDb.collection('blacklistCases').doc(id).delete();
-        }
-      } catch {}
+
 
       return NextResponse.json({ success: deleted }, { status: 200 });
     }

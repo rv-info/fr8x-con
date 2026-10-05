@@ -37,30 +37,11 @@ import {
 import { useAuth } from './AuthContext';
 import { useToast } from './ToastContext';
 import {
-  getPostsFromDB,
-  upsertPostInDB,
-  deletePostInDB,
-  getAuctionsFromDB,
-  upsertAuctionInDB,
-  submitBidInDB,
-  getRatesFromDB,
-  upsertRateInDB,
-  deleteRateInDB,
-  batchUpsertRatesInDB,
-  batchUpdateRatesInDB,
-  getJobsFromDB,
-  upsertJobInDB,
-  deleteJobInDB,
-  getNexusTopicsFromDB,
-  upsertNexusTopicInDB,
-  deleteNexusTopicInDB,
-  getReviewsFromDB,
-  upsertReviewInDB,
-  deleteReviewInDB,
-  getBlacklistCasesFromDB,
-  upsertBlacklistCaseInDB,
-  deleteBlacklistCaseInDB,
-} from '@/lib/firebase/firestore';
+  postDbService,
+  auctionDbService,
+  rateDbService,
+} from '@/lib/supabase/db';
+import { createClient } from '@/lib/supabase/client';
 import { eventBus } from '@/lib/intelligence/events';
 import { presenceService } from '@/lib/presence/presenceService';
 import { useNetwork } from './NetworkContext';
@@ -73,6 +54,41 @@ import {
   recordRecentlyViewed,
   getRecentlyViewed,
 } from '@/lib/cache/indexedDBCache';
+
+// Supabase DBMS Bridge Functions replacing legacy Firestore helpers
+const upsertPostInDB = (post: Partial<FeedPost>) => postDbService.upsertPost(post);
+const deletePostInDB = (id: string) => postDbService.deletePost(id);
+const upsertRateInDB = (rate: Partial<RateItem>) => rateDbService.upsertRate(rate);
+const deleteRateInDB = (id: string) => rateDbService.deleteRate(id);
+const batchUpdateRatesInDB = async (items: { id: string; updates: Partial<RateItem> }[]) => {
+  for (const item of items) {
+    await rateDbService.upsertRate({ id: item.id, ...item.updates });
+  }
+};
+const batchUpsertRatesInDB = async (rates: RateItem[]) => {
+  for (const r of rates) {
+    await rateDbService.upsertRate(r);
+  }
+};
+const upsertAuctionInDB = (auction: Partial<Auction>) => auctionDbService.upsertAuction(auction);
+const upsertJobInDB = async (job: JobPost) => {
+  fetch('/api/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(job) }).catch(() => {});
+};
+const deleteJobInDB = async (id: string) => {
+  fetch(`/api/jobs?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+};
+const upsertNexusTopicInDB = async (topic: NexusTopic) => {
+  fetch('/api/nexus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(topic) }).catch(() => {});
+};
+const deleteNexusTopicInDB = async (id: string) => {
+  fetch(`/api/nexus?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+};
+const upsertReviewInDB = async (review: CompanyReview) => {
+  fetch('/api/nexus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'review', ...review }) }).catch(() => {});
+};
+const upsertBlacklistCaseInDB = async (bCase: BlacklistCase) => {
+  fetch('/api/nexus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'case', ...bCase }) }).catch(() => {});
+};
 
 // Clean Datasets — Production strict mode: only real, verified, user-created data is presented
 const SEED_NOTIFICATIONS: AppNotification[] = [];
@@ -501,31 +517,27 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (savedCars) setMasterCarriers(JSON.parse(savedCars));
     } catch {}
 
-    // 2. Adaptive revalidation against live Firestore
+    // 2. Adaptive revalidation against live Supabase PostgreSQL
     async function revalidateLiveFirestore() {
-      // Guard: only query live Firestore when authenticated (user.uid is non-empty)
+      // Guard: only query live DB when authenticated (user.uid is non-empty)
       if (!user?.uid) return;
       try {
-        const batchSize = isLowBandwidth ? 12 : 40;
-
-        // Fetch feed posts first with adaptive limit to keep mobile radio usage minimal
-        const postsRes = await getPostsFromDB({ limitCount: batchSize }).catch(() => null);
+        // Fetch feed posts from Supabase PostgreSQL
+        const cloudPosts = await postDbService.getPosts().catch(() => []);
 
         if (!isMounted) return;
 
-        if (postsRes && Array.isArray(postsRes.posts) && postsRes.posts.length > 0) {
-          const validCloudPosts = postsRes.posts.filter((p) => {
+        if (Array.isArray(cloudPosts) && cloudPosts.length > 0) {
+          const validCloudPosts = cloudPosts.filter((p) => {
             const id = String(p.id || '');
-            const author = String(p.author || '');
+            const author = String(p.author || (p as any).authorName || '');
             return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
           });
-          // Firestore merge: use post ID as single dedup key — server is authoritative
+          // Merge: use post ID as single dedup key — server is authoritative
           setPosts((prev) => {
             const map = new Map<string, FeedPost>();
-            // Local optimistic posts first (so new posts not yet on server survive)
             prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
               .forEach((p) => map.set(String(p.id), p));
-            // Server data wins for existing IDs
             validCloudPosts.forEach((p) => map.set(String(p.id), p));
             const merged = Array.from(map.values());
             try {
@@ -535,18 +547,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
           });
         }
 
-        // Secondary data queries (auctions, rates, jobs, nexus)
+        // Secondary data queries (auctions, rates)
         const fetchSecondary = async () => {
           if (!isMounted) return;
-          const auctionLimit = isLowBandwidth ? 12 : 30;
-          const rateLimit = isLowBandwidth ? 20 : 50;
-          const [auctionsRes, ratesRes, jobsRes, topicsRes, reviewsRes, casesRes] = await Promise.allSettled([
-            getAuctionsFromDB(auctionLimit),
-            getRatesFromDB(undefined, rateLimit),
-            getJobsFromDB(30),
-            getNexusTopicsFromDB(30),
-            getReviewsFromDB(30),
-            getBlacklistCasesFromDB(30),
+          const [auctionsRes, ratesRes] = await Promise.allSettled([
+            auctionDbService.getAuctions(),
+            rateDbService.getRates(),
           ]);
 
           if (!isMounted) return;
@@ -599,62 +605,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
               try {
                 localStorage.setItem('fr8x_my_rates', JSON.stringify(merged));
               } catch {}
-              return merged;
-            });
-          }
-
-          if (jobsRes.status === 'fulfilled' && Array.isArray(jobsRes.value) && jobsRes.value.length > 0) {
-            const cleanCloudJobs = jobsRes.value.filter((j) => !isDummyJob(j));
-            setJobs((prev) => {
-              const map = new Map<string, JobPost>();
-              cleanCloudJobs.forEach((j) => map.set(j.id, j));
-              prev.filter((j) => !isDummyJob(j)).forEach((j) => {
-                if (!map.has(j.id)) map.set(j.id, j);
-              });
-              const merged = Array.from(map.values());
-              try { localStorage.setItem('fr8x_jobs', JSON.stringify(merged)); } catch {}
-              return merged;
-            });
-          }
-
-          if (topicsRes.status === 'fulfilled' && Array.isArray(topicsRes.value) && topicsRes.value.length > 0) {
-            const cleanCloudTopics = topicsRes.value.filter((t) => !isDummyNexusTopic(t));
-            setTopics((prev) => {
-              const map = new Map<string, NexusTopic>();
-              cleanCloudTopics.forEach((t) => map.set(t.id, t));
-              prev.filter((t) => !isDummyNexusTopic(t)).forEach((t) => {
-                if (!map.has(t.id)) map.set(t.id, t);
-              });
-              const merged = Array.from(map.values());
-              try { localStorage.setItem('fr8x_nexus_topics', JSON.stringify(merged)); } catch {}
-              return merged;
-            });
-          }
-
-          if (reviewsRes.status === 'fulfilled' && Array.isArray(reviewsRes.value) && reviewsRes.value.length > 0) {
-            const cleanCloudReviews = reviewsRes.value.filter((r) => !isDummyCompanyReview(r));
-            setReviews((prev) => {
-              const map = new Map<string, CompanyReview>();
-              cleanCloudReviews.forEach((r) => map.set(r.id, r));
-              prev.filter((r) => !isDummyCompanyReview(r)).forEach((r) => {
-                if (!map.has(r.id)) map.set(r.id, r);
-              });
-              const merged = Array.from(map.values());
-              try { localStorage.setItem('fr8x_nexus_reviews', JSON.stringify(merged)); } catch {}
-              return merged;
-            });
-          }
-
-          if (casesRes.status === 'fulfilled' && Array.isArray(casesRes.value) && casesRes.value.length > 0) {
-            const cleanCloudCases = casesRes.value.filter((c) => !isDummyBlacklistCase(c));
-            setCases((prev) => {
-              const map = new Map<string, BlacklistCase>();
-              cleanCloudCases.forEach((c) => map.set(c.id, c));
-              prev.filter((c) => !isDummyBlacklistCase(c)).forEach((c) => {
-                if (!map.has(c.id)) map.set(c.id, c);
-              });
-              const merged = Array.from(map.values());
-              try { localStorage.setItem('fr8x_nexus_cases', JSON.stringify(merged)); } catch {}
               return merged;
             });
           }
@@ -2153,25 +2103,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    submitBidInDB(auctionId, newBid).catch(() => {});
+    auctionDbService.submitBid({ ...newBid, auctionId }).catch(() => {});
     queueAction('submit_bid', { auctionId, bid: newBid }, user.uid);
 
-    // Save evidence docket directly into Firestore bid_audit_logs collection for Godfather
+    // Save evidence docket directly into audit_logs in Supabase for Godfather
     try {
-      import('@/lib/firebase/client').then(({ db }) => {
-        if (db) {
-          import('firebase/firestore').then(({ doc, setDoc }) => {
-            const auditRef = doc(db, 'bid_audit_logs', evidenceDocket.docketRef);
-            setDoc(auditRef, {
-              ...evidenceDocket,
-              auctionId,
-              grandTotalUSD,
-              createdAt: new Date().toISOString(),
-              status: 'VERIFIED_LEGAL_EVIDENCE',
-            }, { merge: true }).catch(() => {});
-          });
-        }
-      }).catch(() => {});
+      const supabase = createClient();
+      supabase.from('audit_logs').insert({
+        action: 'SUBMIT_BID_EVIDENCE',
+        target_id: evidenceDocket.docketRef,
+        details: {
+          ...evidenceDocket,
+          auctionId,
+          grandTotalUSD,
+          status: 'VERIFIED_LEGAL_EVIDENCE',
+        },
+      }).then(() => {}).catch(() => {});
     } catch {}
 
     eventBus.recordEvent({
