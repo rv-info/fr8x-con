@@ -269,8 +269,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       channel.onmessage = (e) => handleSync(e.data);
     }
 
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'fr8x_auth_sync' || e.key === 'fr8x_active_user_uid') {
+        if (!e.newValue) {
+          handleSync({ type: 'LOGOUT' });
+        } else {
+          handleSync({ type: 'LOGIN', uid: e.newValue });
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
     return () => {
       if (channel) channel.close();
+      window.removeEventListener('storage', onStorage);
     };
   }, []);
 

@@ -39,6 +39,8 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   compress: true,
+  // Container deployment standalone build optimization
+  ...(process.env.DOCKER_BUILD === 'true' ? { output: 'standalone' } : {}),
   experimental: {
     webpackBuildWorker: false,
   },

@@ -6,11 +6,16 @@
 
 ---
 
-## 1. Executive Summary & Objective
+## 1. Executive Summary & Core Objective
 
-FR8X has transitioned completely from Google Cloud Firebase (Authentication, Cloud Firestore, Cloud Storage) to **Supabase** as the single authoritative backend.
+FR8X has completed the full migration from Google Cloud Firebase (Authentication, Cloud Firestore, Cloud Storage) and local `.data/dbms/*.json` files to **Supabase PostgreSQL** as the **sole single source of truth** for all production data.
 
-This document serves as the **mandatory architectural contract** for all backend engineering, database operations, security policies, and AI coding agents working on the FR8X codebase.
+### Mandates:
+1. **Supabase PostgreSQL as Sole Production Store:** All production queries, mutations, auth lookups, and session management route through Supabase.
+2. **Elimination of Local JSON Databases:** The local JSON files (`.data/dbms/users.json`, `companies.json`, `rates.json`, `auctions.json`, etc.) and ephemeral serverless `/tmp/fr8x-dbms/` files are completely decommissioned from production workflows.
+3. **Zero Secret Leaks:** Privileged keys (`SUPABASE_SERVICE_ROLE_KEY`) are kept exclusively on the server. The client bundle only receives `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
+4. **Deterministic Profile Persistence:** User profile updates (Phone Number, Designation, Location, Company, KYC) persist directly to `public.profiles` in PostgreSQL and do not revert on reload or deployment.
+5. **No Silent Failures:** Real database errors are logged on the server and returned safely to clients without masked fallback responses.
 
 ---
 
@@ -23,51 +28,51 @@ This document serves as the **mandatory architectural contract** for all backend
 
 2. **Immutable Identity Reference:**
    - Always link records to the authenticated Supabase user UUID (`auth.uid()`).
-   - Never use email addresses or client-generated random IDs as foreign keys or primary keys.
+   - Legacy alphanumeric UIDs (e.g., `u-rajat`) are indexed in the `uid TEXT` column for backwards-compatible lookups without foreign key ambiguity.
 
 3. **Database-Enforced Security:**
    - Row Level Security (RLS) is enabled on **100% of tables**.
    - Client requests are authenticated by Supabase session tokens, and PostgreSQL evaluates `auth.uid()` directly. Client-provided user IDs in request bodies are never trusted for authorization.
 
 4. **Deterministic CRUD & Domain Flow:**
-   - Standard CRUD operations utilize `lib/supabase/crud.ts`.
    - Domain operations follow the pipeline:  
-     `Client UI → Domain Mutation → Validation/Normalization → PostgreSQL Write → Audit Log → Confirmed DB Result → UI Update`.
-   - The UI updates **only** from the confirmed database response. Optimistic updates without confirmation are forbidden on sensitive profile or financial fields.
+     `Client UI → API Route / Server Action → Centralized lib/db/ Module → Supabase PostgreSQL → Confirmed Result → UI State`.
+   - The UI updates **only** from the confirmed database response.
 
 ---
 
-## 3. Critical Bug Diagnosis & Fix: Profile Persistence Rollback
+## 3. Root Cause Analysis & Profile Persistence Rectification
 
 ### The Problem
-Users experienced an issue where changes to **Phone Number**, **Designation**, or **Location** appeared to save temporarily, but later reverted to old values upon page reload, navigation, or re-authentication.
+Previously, user profile updates (phone, designation, location) appeared to revert upon page refresh or navigation.
 
-### Root Cause Analysis
-A deep forensic investigation revealed four compounding defects in the previous architecture:
-1. **UID Dichotomy:** The application maintained three competing identity representations: Firebase random UIDs (`4k8...`), local DBMS canonical IDs (`u-rajat`), and email strings. When an update was made, it wrote to one ID key while subsequent reads fetched from another.
-2. **Ephemeral Serverless `/tmp` Storage:** Server API routes wrote to `/tmp/fr8x-dbms/` on Vercel lambda instances. In serverless environments, `/tmp` instances are ephemeral and unshared, causing subsequent requests hitting different lambda instances to read stale default data.
-3. **Stale `localStorage` Hydration on Mount:** In `app/profile/page.tsx`, component state was initialized from stale browser `localStorage` keys (`fr8x_user_phone_${uid}`, `fr8x_user_designation_${uid}`).
-4. **Accidental Write-Back Race Conditions:** `app/profile/page.tsx` had multiple `useEffect` hooks triggering `updateUser()` on mount. If network latency delayed the cloud fetch, the initial mount effect wrote the stale `localStorage` values back to the server, permanently clobbering the user's fresh database edits.
+### The Forensic Diagnosis
+1. **Type Mismatch in Query:** `app/api/user/profile/route.ts` executed `.or(\`id.eq.${targetUid}\`)`. Because `targetUid` was a string such as `"u-rajat"` while `id` in PostgreSQL was `UUID`, the query failed with `invalid input syntax for type uuid`.
+2. **Swallowed Catch Block:** The error was caught in a try/catch block and fell back to writing to `/tmp/fr8x-dbms/dbms/users.json`.
+3. **Ephemeral Lambdas:** In Vercel serverless functions, `/tmp` storage is ephemeral per container. Subsequent requests hit different containers with stale default data.
+4. **Client Hydration Overwrites:** Client components re-hydrated from unvalidated `localStorage` values and sent write-backs on mount.
 
 ### The Rectification
-1. **Single Source of Truth:** `public.profiles` in Supabase PostgreSQL is the sole authoritative record for all profile fields.
-2. **Strict Normalized Updates:** `lib/supabase/mutations.ts` (`DomainMutations.updateProfile`) normalizes inputs via `lib/supabase/validation.ts`, updates `public.profiles` using `WHERE id = auth.uid()`, confirms the write, logs the change to `public.audit_logs`, and returns the confirmed row.
-3. **Elimination of Destructive Mount Effects:** Removed automatic `updateUser()` write-back effects on page mount.
-4. **Fresh Session Hydration:** Profile state on page load is fetched directly from Supabase via `profileService.getProfile(user.id)`, completely bypassing stale browser caches.
+1. **Identifier Resolver (`getUserByIdentifier`):** In `lib/db/users.ts`, incoming identifiers are matched against `email`, `uid` (string column), and `id` (UUID column).
+2. **Confirmed UUID Mutation:** All updates execute `WHERE id = existing.id` (strictly UUID).
+3. **No Fallbacks:** Database failures throw real errors rather than faking success.
 
 ---
 
-## 4. PostgreSQL Relational Schema
+## 4. PostgreSQL Relational Schema & Migrations
 
-Migrations are located in `supabase/migrations/`:
-- `20261005000000_fr8x_initial_schema.sql` (Tables, Constraints, Indexes, Functions, RLS)
-- `20261005000001_seed_production_data.sql` (Authoritative Production Seed Data)
+All migrations reside in `supabase/migrations/` and are fully reproducible:
 
-### Entity Architecture
+- **`20261005000000_fr8x_initial_schema.sql`**: Core tables (`profiles`, `companies`, `rates`, `auctions`, `auction_bids`, `posts`, `comments`, `audit_logs`), constraints, foreign keys, triggers, and RLS policies.
+- **`20261005000001_seed_production_data.sql`**: Enterprise foundation accounts and reference entities.
+- **`20261005000002_complete_production_schema.sql`**: Expanded tables for complete marketplace operations (`jobs`, `cases`, `transactions`, `reviews`, `events`, `intents`, `presence`, `verifications`, and `profiles.uid` index).
+- **`20261005000003_seed_legacy_dbms_data.sql`**: Data migration generated by `scripts/migrate-dbms-to-supabase.ts`, importing legacy records into normalized relational tables with conflict handling.
+
+### Entity Relationship Diagram
 ```
 auth.users (Supabase Auth)
   │
-  ├── 1:1 ── public.profiles (User details, KYC, contacts)
+  ├── 1:1 ── public.profiles (User details, KYC, contacts, legacy uid)
   │            │
   │            └── N:1 ── public.companies (Enterprise KYC, PAN, GSTIN)
   │
@@ -81,71 +86,122 @@ auth.users (Supabase Auth)
   │            │
   │            └── 1:N ── public.comments (Discussions, replies)
   │
-  └── 1:N ── public.audit_logs (Immutable audit trail, before/after snapshots)
+  ├── 1:N ── public.jobs (Logistics recruitment, requisitions)
+  │
+  ├── 1:N ── public.cases (Nexus corporate dispute resolution)
+  │
+  ├── 1:N ── public.transactions (Razorpay financial ledger, credits/debits)
+  │
+  ├── 1:N ── public.reviews (Enterprise ratings & carrier reviews)
+  │
+  ├── 1:N ── public.events (Telemetry event ledger, deduplicated)
+  │
+  ├── 1:N ── public.intents (Logistics search intent)
+  │
+  ├── 1:1 ── public.presence (Real-time online/away state)
+  │
+  ├── 1:N ── public.verifications (Cryptographic token hashes, email OTPs)
+  │
+  └── 1:N ── public.audit_logs (Immutable audit trail)
 ```
 
 ---
 
-## 5. Row Level Security (RLS) Matrix
+## 5. Centralized Data Access Layer (`lib/db/`)
+
+Every domain entity has a dedicated, strongly-typed module in `lib/db/`:
+
+| Module | Table | Purpose |
+|---|---|---|
+| `lib/db/users.ts` | `profiles` | User profiles, identity resolution, KYC updates |
+| `lib/db/companies.ts` | `companies` | Corporate registry, GSTIN/PAN search, verification |
+| `lib/db/rates.ts` | `rates` | Freight rate card CRUD, search, bulk upsert |
+| `lib/db/auctions.ts` | `auctions`, `auction_bids` | Reverse auctions, spot bids, status lifecycle |
+| `lib/db/posts.ts` | `posts`, `comments` | Community feed, market discussions |
+| `lib/db/jobs.ts` | `jobs` | Job board postings, applicant tracking |
+| `lib/db/cases.ts` | `cases` | Nexus disputes, arbitration records |
+| `lib/db/transactions.ts` | `transactions` | Payment transactions, ledger balance |
+| `lib/db/reviews.ts` | `reviews` | Counterparty ratings and company reviews |
+| `lib/db/events.ts` | `events` | Platform telemetry and email delivery events |
+| `lib/db/intents.ts` | `intents` | Buyer/seller shipping intent tracking |
+| `lib/db/presence.ts` | `presence` | Real-time user status with TTL expiry |
+| `lib/db/verifications.ts` | `verifications` | SHA-256 hashed verification tokens |
+
+---
+
+## 6. Client & Server Supabase Client Helpers
+
+- **Browser Client (`lib/supabase/client.ts`):**  
+  Uses `@supabase/ssr` `createBrowserClient` with public anon key. Strictly used in client components for authenticated session token management and real-time subscriptions.
+- **Server Client (`lib/supabase/server.ts`):**  
+  - `createClient()`: Server-side client using cookies for Next.js Server Components, Server Actions, and Route Handlers.
+  - `getSupabaseAdminClient()`: Service Role client for administrative actions (only accessible server-side).
+  - `getDbClient()`: Automatically provides the optimal client for server-side database operations.
+
+---
+
+## 7. Row Level Security (RLS) Policy Matrix
 
 | Table | SELECT | INSERT | UPDATE | DELETE |
 |---|---|---|---|---|
-| `public.profiles` | Public (authenticated & directory lookups) | Owner (`auth.uid() = id`) or Trigger | Owner (`auth.uid() = id`) | Admin only |
-| `public.companies` | All authenticated users | Authenticated users | Company members / Admin | Admin only |
-| `public.rates` | All active (`is_active = true`) | Rate owner (`auth.uid() = created_by`) | Rate owner (`auth.uid() = created_by`) | Rate owner (`auth.uid() = created_by`) |
-| `public.auctions` | All active auctions | Verified members | Auction creator (`auth.uid() = creator_id`) | Auction creator |
-| `public.auction_bids` | Auction participants & creator | Verified bidders (`auth.uid() = bidder_id`) | Bidder (prior to close) | Admin only |
-| `public.posts` | Public published posts | Authenticated author (`auth.uid() = author_id`) | Author | Author or Admin |
-| `public.comments` | Public on published posts | Authenticated author | Author | Author or Admin |
-| `public.audit_logs` | User's own logs & Admins | System / Authenticated | Read-only (FORBIDDEN) | Read-only (FORBIDDEN) |
+| `profiles` | Public / Authenticated | Owner (`auth.uid() = id`) | Owner (`auth.uid() = id`) | Admin only |
+| `companies` | Authenticated | Authenticated | Members / Admin | Admin only |
+| `rates` | Active (`is_active = true`) | Rate Owner (`auth.uid() = created_by`) | Rate Owner | Rate Owner |
+| `auctions` | All active auctions | Verified Members | Creator (`auth.uid() = creator_id`) | Creator |
+| `auction_bids`| Participants & Creator | Verified Bidders | Bidder (before close) | Admin only |
+| `posts` | Published posts | Author (`auth.uid() = author_id`) | Author | Author / Admin |
+| `jobs` | Active jobs | Employer (`auth.uid() = poster_id`) | Employer | Employer / Admin |
+| `cases` | Involved parties | Parties (`created_by = auth.uid()`) | Parties / Admin | Admin only |
+| `transactions`| Account holder | System / User | System only | Forbidden |
+| `verifications`| System only | System / Registration | System only | System only |
+| `audit_logs` | User's own logs & Admins | System / Authenticated | Forbidden | Forbidden |
 
 ---
 
-## 6. Supabase Storage Architecture
+## 8. Environment Variable Configuration
 
-Storage buckets are configured with strict RLS policies in `lib/supabase/storage.ts`:
+```bash
+# Public Client Variables (Safe for browser bundle)
+NEXT_PUBLIC_SUPABASE_URL="https://haarbaqeuuirwkhmefev.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOi..."
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOi..."
+NEXT_PUBLIC_APP_URL="https://con.fr8x.in"
 
-1. **`avatars` (Public Read, Owner Write):**
-   - Max file size: 5MB
-   - MIME types: `image/jpeg`, `image/png`, `image/webp`
-   - Path convention: `${userId}/avatar.${ext}`
-2. **`company-logos` (Public Read, Verified Member Write):**
-   - Max file size: 5MB
-   - MIME types: `image/jpeg`, `image/png`, `image/webp`, `image/svg+xml`
-   - Path convention: `${companyId}/logo.${ext}`
-3. **`documents` (Private, Strict Participant Access):**
-   - Max file size: 25MB
-   - MIME types: `application/pdf`, `image/jpeg`, `image/png`
-   - Access via signed URLs with 15-minute expiration.
-
----
-
-## 7. Client & Service Module Map
-
-All Supabase integration files reside in `lib/supabase/`:
-
-- **`client.ts`**: Browser client singleton (`createBrowserClient` from `@supabase/ssr`).
-- **`server.ts`**: Server-side client (`createServerClient`) and Service Role admin client (`getSupabaseAdminClient`).
-- **`crud.ts`**: Type-safe generic repository (`CrudRepository<T>`) for standard CRUD operations.
-- **`types.ts`**: Authoritative TypeScript types matching PostgreSQL tables (`ProfileRow`, `RateRow`, `AuctionRow`, etc.).
-- **`errors.ts`**: Centralized error hierarchy (`ValidationError`, `AuthenticationError`, `AuthorizationError`, `DatabaseError`).
-- **`validation.ts`**: Normalization and validation for phone, designation, and location.
-- **`authorization.ts`**: Identity verification and role assertion helpers (`requireUser`, `requireOwnership`, `requireRole`).
-- **`queries.ts`**: Centralized read domain queries (`DomainQueries`).
-- **`mutations.ts`**: Centralized write domain mutations (`DomainMutations`).
-- **`pagination.ts`**: Offset and cursor pagination helpers (`getPaginationRange`, `buildPaginatedResult`).
-- **`retry.ts`**: Exponential backoff retry handler (`withRetry`) for transient network errors.
-- **`cache.ts`**: In-memory cache (`referenceCache`) strictly reserved for static lookup tables (never used for mutable profiles).
-- **`audit.ts`**: Structured audit trail logger (`AuditLogger.log`, `AuditLogger.logProfileChange`).
-- **`transactions.ts`**: Multi-step transaction and stored procedure invoker (`TransactionManager.executeRpc`).
-- **`db.ts`**: Domain services (`profileService`, `rateDbService`, `auctionDbService`, `postDbService`).
-- **`storage.ts`**: Cloud storage upload/download service (`storageService`).
+# Privileged Server-Only Variables (NEVER exposed to browser)
+SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOi..."
+DATABASE_URL="postgresql://postgres:[PASSWORD]@db.haarbaqeuuirwkhmefev.supabase.co:5432/postgres"
+RAZORPAY_KEY_SECRET="..."
+RAZORPAY_WEBHOOK_SECRET="..."
+```
 
 ---
 
-## 8. Development & AI Agent Guidelines
+## 9. Migration & Legacy Data Ingestion Procedure
 
-1. **No Raw Queries in React Components:** Never instantiate `createClient()` directly inside JSX components to run ad-hoc queries. Always route through domain services (`profileService`, `rateDbService`, etc.) or `lib/supabase/crud.ts`.
-2. **Never Expose Secrets:** Only `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are allowed in browser code. `SUPABASE_SERVICE_ROLE_KEY` must only exist in server-side API routes or background functions.
-3. **Check confirmed results:** Every database write must inspect the returned record or error. Never display a "Saved" toast notification without confirming the PostgreSQL response.
-4. **No Firebase Imports:** Any attempt to re-introduce `firebase`, `firebase-admin`, `getFirestore`, or `onSnapshot` violates the architecture.
+To migrate historical data from local JSON backups:
+```bash
+# 1. Run migration parser to generate reproducible SQL
+npx tsx scripts/migrate-dbms-to-supabase.ts
+
+# 2. Review generated migration file:
+#    supabase/migrations/20261005000003_seed_legacy_dbms_data.sql
+
+# 3. Apply via Supabase CLI:
+npx supabase db push
+```
+
+---
+
+## 10. Quality Gate Verification
+
+All architectural changes must pass the master verification suite:
+```bash
+# TypeScript compilation check
+npm run type-check
+
+# Master Architectural Quality Gates (Phases 7 - 12)
+npm test
+
+# Production Build
+npm run build
+```

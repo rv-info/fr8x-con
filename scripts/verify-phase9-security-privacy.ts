@@ -285,43 +285,35 @@ async function runTests() {
     'serverSecurityStore.updateUserProfile persists statutory GSTN in DBMS'
   );
 
-  // TEST SUITE 4: Firestore Security Rules Tenancy & Data Isolation (SEC-04)
-  console.log('\n─── TEST SUITE 4: Firestore Rules Tenancy & Data Isolation (SEC-04) ───');
-  const firestoreRulesPath = path.resolve(process.cwd(), 'firestore.rules');
-  const rulesContent = fs.readFileSync(firestoreRulesPath, 'utf8');
+  // TEST SUITE 4: Supabase PostgreSQL Row Level Security (RLS) Tenancy & Data Isolation (SEC-04)
+  console.log('\n─── TEST SUITE 4: Supabase PostgreSQL RLS Tenancy & Data Isolation (SEC-04) ───');
+  const schemaPath = path.resolve(process.cwd(), 'supabase', 'migrations', '20261005000000_fr8x_initial_schema.sql');
+  const completeSchemaPath = path.resolve(process.cwd(), 'supabase', 'migrations', '20261005000002_complete_production_schema.sql');
+  const schemaContent = fs.readFileSync(schemaPath, 'utf8') + '\n' + fs.readFileSync(completeSchemaPath, 'utf8');
 
-  // Verify users collection rule
-  const usersRuleMatch = rulesContent.match(/match\s+\/users\/\{userId\}\s*\{([\s\S]*?)\}/);
   assert(
-    usersRuleMatch !== null,
-    'firestore.rules contains match rule for /users/{userId}'
+    schemaContent.includes('ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;'),
+    'profiles table enables Row Level Security'
   );
-  if (usersRuleMatch) {
-    const ruleBody = usersRuleMatch[1];
-    assert(
-      ruleBody.includes('allow read: if isOwner(userId) || isPlatformAdmin();'),
-      '/users/{userId} restricts direct read to isOwner(userId) || isPlatformAdmin()',
-      ruleBody.trim()
-    );
-  }
-
-  // Verify security collections forbid client writes
-  const forbiddenWrites = [
-    'match /securityLoginAttempts/{attemptId}',
-    'match /securityOtps/{otpId}',
-    'match /emailEvents/{eventId}',
-    'match /auditLogs/{logId}',
-  ];
-  for (const coll of forbiddenWrites) {
-    assert(
-      rulesContent.includes(coll),
-      `firestore.rules contains strict rule block for ${coll}`
-    );
-  }
   assert(
-    rulesContent.includes('match /securityOtps/{otpId} {\r\n      allow read, write: if false;') ||
-    rulesContent.includes('match /securityOtps/{otpId} {\n      allow read, write: if false;'),
-    'Security OTP collection strictly forbids client read and write operations'
+    schemaContent.includes('ALTER TABLE public.rates ENABLE ROW LEVEL SECURITY;'),
+    'rates table enables Row Level Security'
+  );
+  assert(
+    schemaContent.includes('ALTER TABLE public.auctions ENABLE ROW LEVEL SECURITY;'),
+    'auctions table enables Row Level Security'
+  );
+  assert(
+    schemaContent.includes('ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;'),
+    'transactions table enables Row Level Security'
+  );
+  assert(
+    schemaContent.includes('ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;'),
+    'verifications table enables Row Level Security'
+  );
+  assert(
+    schemaContent.includes('auth.uid() = id') || schemaContent.includes('auth.uid() = user_id'),
+    'RLS policies enforce auth.uid() ownership isolation'
   );
 
   // TEST SUITE 5: Corporate KYC Regulatory Compliance (SEC-05)

@@ -1184,6 +1184,7 @@ class ServerSecurityStore {
       company: user.company,
       companyId: user.companyId,
       role: user.role || 'company_admin',
+      plan: 'trial',
       status: initialStatus,
       email_verified: emailVerified,
       mobile: user.mobile,

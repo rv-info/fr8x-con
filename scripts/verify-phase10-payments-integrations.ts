@@ -118,17 +118,14 @@ async function runTests() {
   const userUid = `usr_commerce_${Date.now()}`;
   const userEmail = `trader_${Date.now()}@oceanfreight.net`;
 
-  savePersistedUser({
+  serverSecurityStore.registerUser({
     uid: userUid,
     email: userEmail,
     displayName: 'Ocean Freight Operator',
     company: 'Oceanic Forwarders Ltd',
     companyId: 'comp_oceanic_01',
     role: 'user',
-    status: 'active',
-    plan: 'trial',
-    email_verified: true,
-    createdAt: new Date().toISOString(),
+    password: 'Password@123!',
   });
 
   const seededUser = serverSecurityStore.getUser(userUid);
