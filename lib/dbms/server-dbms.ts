@@ -513,7 +513,6 @@ export function getPersistedUserByIdentifier(identifier: string): DbmsUserRecord
     (u) =>
       (u.email && u.email.toLowerCase() === clean) ||
       (u.uid && u.uid.toLowerCase() === clean) ||
-      (u.firebaseUid && String(u.firebaseUid).toLowerCase() === clean) ||
       (u.canonicalUid && String(u.canonicalUid).toLowerCase() === clean)
   );
 }
@@ -527,14 +526,12 @@ export function savePersistedUser(user: DbmsUserRecord): DbmsUserRecord {
     const existing = getPersistedUsers();
     const cleanEmail = (user.email || '').trim().toLowerCase();
     const cleanUid = (user.uid || '').trim().toLowerCase();
-    const cleanFirebaseUid = (user.firebaseUid || '').trim().toLowerCase();
     const now = new Date().toISOString();
 
     const idx = existing.findIndex(
       (u) =>
         (cleanUid && u.uid && u.uid.toLowerCase() === cleanUid) ||
-        (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail) ||
-        (cleanFirebaseUid && u.firebaseUid && String(u.firebaseUid).toLowerCase() === cleanFirebaseUid)
+        (cleanEmail && u.email && u.email.toLowerCase() === cleanEmail)
     );
 
     const recordToSave = {

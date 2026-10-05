@@ -609,7 +609,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             });
           }
 
-          // 3. Revalidate from authoritative server-side DBMS (.data/dbms)
+          // 3. Revalidate from authoritative server-side PostgreSQL database
           const activeUid = user?.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
           const authHeaders: Record<string, string> = activeUid
             ? {

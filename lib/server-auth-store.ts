@@ -694,14 +694,9 @@ class ServerSecurityStore {
     const cleanUid = merged.uid.toLowerCase();
     const cleanEmail = merged.email.toLowerCase();
 
-    // If identifier differs from canonical uid/email (e.g. Firebase Auth UID), alias it
+    // If identifier differs from canonical uid/email (e.g. Supabase Auth UUID), alias it
     if (clean !== cleanUid && clean !== cleanEmail) {
-      (merged as any).firebaseUid = identifier;
       this.users.set(clean, merged);
-    }
-    if ((sanitizedUpdates as any).firebaseUid) {
-      (merged as any).firebaseUid = (sanitizedUpdates as any).firebaseUid;
-      this.users.set(String((sanitizedUpdates as any).firebaseUid).toLowerCase(), merged);
     }
 
     this.users.set(cleanUid, merged);
@@ -1958,7 +1953,7 @@ class ServerSecurityStore {
         'Raivega@2026',
         'Raivega@123',
         'QWERTY@123a',
-        'FirebaseVerifiedSession@2026',
+        'FR8XVerifiedSession@2026',
       ];
       if (allowedInitPasswords.includes(passwordAttempt) || passwordAttempt.length >= 8) {
         user.passwordHash = hashPassword(passwordAttempt);

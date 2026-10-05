@@ -190,7 +190,7 @@ export default function AccessControlPage() {
             <span>Authorized Super-Admin Operator Profiles</span>
           </div>
           <span className="text-xs text-slate-500 font-mono font-bold bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-            ENFORCED VIA FIREBASE CUSTOM CLAIMS
+            ENFORCED VIA SUPABASE RBAC & RLS
           </span>
         </div>
 
@@ -355,7 +355,7 @@ export default function AccessControlPage() {
                     {isAddModalOpen ? 'Provision New Operator Account' : `Edit Operator: ${operatorForm.displayName}`}
                   </h3>
                   <p className="gf-modal-subtitle font-mono">
-                    Firebase Custom Claims · Least-Privilege Role Assignment
+                    Supabase RBAC · Least-Privilege Role Assignment
                   </p>
                 </div>
               </div>

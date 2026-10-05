@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
  * - Uses FR8X_PRODUCTION Agent
  * - Uses password@fr8x.in sender identity
  * - Sends a simple test message via server-side ZeptoMail REST API
- * - Never returns API keys, SMTP passwords, or Firebase credentials
+ * - Never returns API keys, SMTP passwords, or backend credentials
  * - Returns only safe provider status information
  */
 async function handleTestEmail(req: NextRequest) {

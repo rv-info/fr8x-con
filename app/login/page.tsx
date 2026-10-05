@@ -202,7 +202,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. Direct Firebase Authentication with Email & Password
+      // 1. Direct Supabase Authentication with Email & Password
       if (id.includes('@')) {
         const authRes = await loginWithCredentials(id, password, remember);
         if (authRes.success) {

@@ -139,14 +139,14 @@ export default function GodfatherDataHealthPage() {
             <span>/</span>
             <Link href="/godfather/security" style={{ color: '#64748b', textDecoration: 'none' }}>Security</Link>
             <span>/</span>
-            <span style={{ color: '#0f172a', fontWeight: 600 }}>AUTH ↔ FIRESTORE HEALTH</span>
+            <span style={{ color: '#0f172a', fontWeight: 600 }}>AUTH ↔ POSTGRESQL HEALTH</span>
           </div>
           <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0f172a', margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Database size={24} color="#0284c7" />
-            Auth ↔ Firestore Identity & Data Health
+            Auth ↔ PostgreSQL Identity & Data Health
           </h1>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>
-            Authoritative production identity audit across Firebase Authentication, Cloud Firestore canonical records, KYC, and Godfather approvals.
+            Authoritative production identity audit across Supabase Authentication, PostgreSQL canonical records, KYC, and Godfather approvals.
           </p>
         </div>
 
@@ -253,7 +253,7 @@ export default function GodfatherDataHealthPage() {
                 <tr>
                   <td colSpan={10} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                     <RefreshCw size={24} className="animate-spin" style={{ margin: '0 auto 10px', color: '#0284c7' }} />
-                    Auditing Firebase Auth & Firestore live records…
+                    Auditing Supabase Auth &amp; PostgreSQL live records…
                   </td>
                 </tr>
               ) : filteredReports.length === 0 ? (

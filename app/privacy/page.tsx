@@ -222,9 +222,9 @@ export default function PrivacyPolicyPage() {
             <li className="flex items-start gap-3 p-3 rounded-lg bg-slate-900/60 border border-slate-800/80">
               <span className="text-emerald-400 font-bold shrink-0">✓</span>
               <div>
-                <strong className="text-white">Google Cloud Platform &amp; Firebase:</strong>
+                <strong className="text-white">Supabase &amp; Cloud Infrastructure:</strong>
                 <span className="text-xs text-slate-400 block mt-0.5">
-                  Cloud hosting, encrypted Firestore storage, and secure authentication tokens. Data centers located in compliant regional infrastructure.
+                  Managed PostgreSQL database, Row Level Security (RLS) enforcement, and secure authentication tokens.
                 </span>
               </div>
             </li>

@@ -42,16 +42,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
-  # ── Firebase Emulators (dev / local only — comment out for prod) ────────────
-  # firebase-emulators:
-  #   image: spine3/firebase-tools:latest
-  #   ports:
-  #     - "4000:4000"
-  #     - "8080:8080"
-  #     - "9099:9099"
-  #     - "9199:9199"
-  #     - "5001:5001"
-  #   volumes:
-  #     - ./:/app
-  #   command: firebase emulators:start --project=fr8x-local

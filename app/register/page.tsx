@@ -913,7 +913,7 @@ export default function RegisterPage() {
       setResendCooldown(60);
       setResendMessage(null);
       setResendError(null);
-      toast(`Account successfully registered in Firebase & Cloud Firestore for ${cleanEmail}!`);
+      toast(`Account successfully registered for ${cleanEmail}!`);
 
       // Dispatch initial verification link to user's corporate inbox
       fetch('/api/auth/resend-verification', {

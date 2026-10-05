@@ -92,7 +92,9 @@ export function applySecurityHeaders(res: NextResponse, requestId?: string): Nex
   return res;
 }
 
-export function middleware(request: NextRequest) {
+import { updateSession } from '@/lib/supabase/middleware';
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Correlation ID for distributed end-to-end request tracing
@@ -102,9 +104,12 @@ export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-request-id', requestId);
 
+  // Refresh Supabase auth session
+  const { supabaseResponse, user } = await updateSession(request);
+
   const forward = () => {
-    const res = NextResponse.next({ request: { headers: requestHeaders } });
-    return applySecurityHeaders(res, requestId);
+    applySecurityHeaders(supabaseResponse, requestId);
+    return supabaseResponse;
   };
 
   // ── Allow public routes through without any auth check ───────────────────────
@@ -134,6 +139,15 @@ export function middleware(request: NextRequest) {
   if (isProtectedUserRoute(pathname)) {
     const sessionCookie = request.cookies.get('fr8x_session');
 
+    // Check session validity: either valid fr8x_session cookie or active Supabase Auth user
+    if (!sessionCookie && !user) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('reason', 'auth_required');
+      loginUrl.searchParams.set('next', encodeURIComponent(pathname));
+      const res = NextResponse.redirect(loginUrl);
+      return applySecurityHeaders(res);
+    }
+
     // Check 2-hour session expiration window if cookie is present
     if (sessionCookie?.value && sessionCookie.value.includes('.')) {
       try {
@@ -150,11 +164,13 @@ export function middleware(request: NextRequest) {
         const expiresAt = Number(payload.expiresAt) || (issuedAt + 2 * 60 * 60 * 1000);
 
         if (issuedAt > 0 && (now > expiresAt || now - issuedAt > 2 * 60 * 60 * 1000)) {
-          const loginUrl = new URL('/login', request.url);
-          loginUrl.searchParams.set('reason', 'session_expired');
-          const res = NextResponse.redirect(loginUrl);
-          res.cookies.delete('fr8x_session');
-          return applySecurityHeaders(res);
+          if (!user) {
+            const loginUrl = new URL('/login', request.url);
+            loginUrl.searchParams.set('reason', 'session_expired');
+            const res = NextResponse.redirect(loginUrl);
+            res.cookies.delete('fr8x_session');
+            return applySecurityHeaders(res);
+          }
         }
       } catch {}
     }

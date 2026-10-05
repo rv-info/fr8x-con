@@ -2,7 +2,7 @@
  * lib/supabase/storage.ts
  * ─────────────────────────────────────────────────────────────────────────────
  * Supabase Storage Integration for FR8X.
- * Replaces Firebase Storage with structured buckets and RLS policies:
+ * Manages structured cloud storage buckets and RLS policies:
  * - avatars (Public)
  * - company-logos (Public)
  * - documents (Private, owner/admin only)
