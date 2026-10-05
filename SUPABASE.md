@@ -205,3 +205,36 @@ npm test
 # Production Build
 npm run build
 ```
+
+---
+
+## 11. Backup, Rollback & Disaster Recovery Procedure
+
+### Automated Supabase Backups
+1. **Daily Automated Snapshots:** Supabase automatically creates daily WAL-based physical backups with point-in-time recovery (PITR) enabled.
+2. **Pre-Deployment Logical Dump:** Before major schema migrations, execute a logical export via pg_dump:
+   ```bash
+   pg_dump "$DATABASE_URL" --format=custom --no-owner --no-privileges -f "backup_$(date +%Y%m%d_%H%M%S).dump"
+   ```
+
+### Rollback Procedure
+If a migration or bad deployment needs to be reverted:
+1. **Application Rollback:** Redeploy previous stable Git commit on Vercel:
+   ```bash
+   git checkout <stable-commit-hash>
+   vercel --prod
+   ```
+2. **Database Rollback:** Apply down migrations or restore point-in-time recovery to the timestamp before migration via the Supabase Dashboard (`Database -> Backups -> Point in Time Recovery`).
+
+---
+
+## 12. Troubleshooting & Diagnostics
+
+| Symptom | Probable Cause | Diagnostic & Resolution |
+|---|---|---|
+| `auth/api-key-not-valid` | Stale browser bundle calling Firebase | Completely eliminated. Ensure cache is purged and build bundle has 0 Firebase imports. |
+| `PGRST116: JSON object requested, multiple (or no) rows returned` | Using `.single()` when 0 rows exist | Replace `.single()` with `.maybeSingle()` in queries where entity existence is optional. |
+| `invalid input syntax for type uuid` | Passing non-UUID string (e.g. `u-rajat`) to UUID column | Use `getUserByIdentifier(id)` which matches `email`, `uid` (string), and `id` (UUID). |
+| Profile updates not persisting | Client overwriting database from stale localStorage | UI must only update from confirmed database response returned by `profileService.updateProfile()`. |
+| 401 Unauthorized on protected routes | Expired or missing `sb-*-auth-token` cookie | Middleware automatically invokes `supabase.auth.getUser()` to refresh session cookies. Check `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. |
+

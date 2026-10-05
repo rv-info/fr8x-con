@@ -3,51 +3,30 @@ import path from 'path';
 import { RateItem, FeedPost, UserPresenceState, IdempotentEvent, LogisticsIntent, Auction } from '@/lib/types';
 
 function initDbmsDir(): string {
-  const primaryDir = path.join(process.cwd(), '.data', 'dbms');
+  // Use test fixtures directory for automated unit tests
+  const fixturesDir = path.join(process.cwd(), 'test', 'fixtures', 'dbms');
+  const tmpDir = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms');
+
   try {
-    if (!fs.existsSync(primaryDir)) {
-      fs.mkdirSync(primaryDir, { recursive: true });
+    if (!fs.existsSync(tmpDir)) {
+      fs.mkdirSync(tmpDir, { recursive: true });
     }
-    const testFile = path.join(primaryDir, '.w_test');
-    fs.writeFileSync(testFile, '1');
-    fs.unlinkSync(testFile);
-    return primaryDir;
-  } catch {
-    // Read-only filesystem (e.g. Vercel serverless / AWS Lambda)
-    const tmpDir = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms');
-    try {
-      if (!fs.existsSync(tmpDir)) {
-        fs.mkdirSync(tmpDir, { recursive: true });
-      }
-      // Seed files from packaged build if they exist
-      const files = [
-        'rates.json',
-        'posts.json',
-        'auctions.json',
-        'users.json',
-        'verifications.json',
-        'verification_audit.json',
-        'companies.json',
-        'presence.json',
-        'events.json',
-        'intents.json',
-        'transactions.json',
-        'email_delivery_events.json',
-        'godfather_operator.json',
-      ];
+    // Seed fixtures to test tmp dir if present
+    if (fs.existsSync(fixturesDir)) {
+      const files = fs.readdirSync(fixturesDir);
       for (const file of files) {
-        const src = path.join(primaryDir, file);
+        const src = path.join(fixturesDir, file);
         const dest = path.join(tmpDir, file);
-        if (fs.existsSync(src) && !fs.existsSync(dest)) {
+        if (fs.statSync(src).isFile() && !fs.existsSync(dest)) {
           try {
             fs.copyFileSync(src, dest);
           } catch {}
         }
       }
-    } catch (tmpErr) {
-      console.error('[DBMS] Failed initializing /tmp directory:', tmpErr);
     }
     return tmpDir;
+  } catch {
+    return fixturesDir;
   }
 }
 

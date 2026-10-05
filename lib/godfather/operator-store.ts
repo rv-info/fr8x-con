@@ -25,39 +25,22 @@ const CANONICAL_FALLBACK_SALT = '2294f348728987c1fc5e5fe97d89802eee53e3100f1364d
 const CANONICAL_FALLBACK_HASH = '494b74c2625bd8766170cc05c5274c401da8de4198d750e3157f19f880d4c6354ab0e2a5dd2e246203326c8de807495759c9391cdfb8c21e5b9f6c63b81012c0';
 
 function getGodfatherOperatorFile(): string {
-  const primaryFile = path.join(process.cwd(), '.data', 'dbms', 'godfather_operator.json');
-  const primaryDir = path.dirname(primaryFile);
-
-  let isPrimaryWritable = false;
-  try {
-    if (!fs.existsSync(primaryDir)) {
-      fs.mkdirSync(primaryDir, { recursive: true });
-    }
-    const testFile = path.join(primaryDir, '.w_test');
-    fs.writeFileSync(testFile, '1');
-    fs.unlinkSync(testFile);
-    isPrimaryWritable = true;
-  } catch {
-    isPrimaryWritable = false;
-  }
-
-  if (isPrimaryWritable) {
-    return primaryFile;
-  }
-
+  const fixturesFile = path.join(process.cwd(), 'test', 'fixtures', 'dbms', 'godfather_operator.json');
   const tmpFile = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms', 'godfather_operator.json');
   try {
     const tmpDir = path.dirname(tmpFile);
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
-    if (!fs.existsSync(tmpFile) && fs.existsSync(primaryFile)) {
+    if (!fs.existsSync(tmpFile) && fs.existsSync(fixturesFile)) {
       try {
-        fs.copyFileSync(primaryFile, tmpFile);
+        fs.copyFileSync(fixturesFile, tmpFile);
       } catch {}
     }
-  } catch {}
-  return tmpFile;
+    return tmpFile;
+  } catch {
+    return fixturesFile;
+  }
 }
 
 const GODFATHER_OPERATOR_FILE = getGodfatherOperatorFile();
@@ -68,9 +51,9 @@ function getDbmsOperatorRecord(): { email?: string; salt?: string; hash?: string
       const raw = fs.readFileSync(GODFATHER_OPERATOR_FILE, 'utf8');
       return JSON.parse(raw);
     }
-    const primaryFile = path.join(process.cwd(), '.data', 'dbms', 'godfather_operator.json');
-    if (fs.existsSync(primaryFile)) {
-      const raw = fs.readFileSync(primaryFile, 'utf8');
+    const fixturesFile = path.join(process.cwd(), 'test', 'fixtures', 'dbms', 'godfather_operator.json');
+    if (fs.existsSync(fixturesFile)) {
+      const raw = fs.readFileSync(fixturesFile, 'utf8');
       return JSON.parse(raw);
     }
   } catch {}
@@ -133,7 +116,7 @@ export function getAuthorizedOperatorEmail(): string {
 /**
  * Validates candidate password using multi-layer verification:
  * 1. Runtime-updated credentials (from recent password reset)
- * 2. Authoritative DBMS store (.data/dbms/godfather_operator.json)
+ * 2. Secondary offline credentials store (godfather_operator.json)
  * 3. Environment variables GODFATHER_OPERATOR_PASSWORD_HASH & SALT (if set)
  * 4. Canonical fallback credentials
  */
@@ -151,7 +134,7 @@ export function verifyOperatorPassword(candidatePassword: string): boolean {
     }
   }
 
-  // 2. Authoritative DBMS store check (.data/dbms/godfather_operator.json)
+  // 2. Secondary offline store check (godfather_operator.json)
   const dbmsRec = getDbmsOperatorRecord();
   if (dbmsRec && dbmsRec.salt && dbmsRec.hash) {
     try {

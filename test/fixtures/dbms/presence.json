@@ -1,0 +1,289 @@
+{
+  "test-user-1790660934810": {
+    "userId": "test-user-1790660934810",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T05:48:54.810Z",
+    "ttlExpiry": 1790661234,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790660934813": {
+    "userId": "test-expired-1790660934813",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T05:38:54.810Z",
+    "ttlExpiry": 1790660834,
+    "deviceType": "desktop"
+  },
+  "test-user-1790661005359": {
+    "userId": "test-user-1790661005359",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T05:50:05.359Z",
+    "ttlExpiry": 1790661305,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790661005363": {
+    "userId": "test-expired-1790661005363",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T05:40:05.359Z",
+    "ttlExpiry": 1790660905,
+    "deviceType": "desktop"
+  },
+  "test-user-1790662270011": {
+    "userId": "test-user-1790662270011",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T06:11:10.011Z",
+    "ttlExpiry": 1790662570,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790662270016": {
+    "userId": "test-expired-1790662270016",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T06:01:10.011Z",
+    "ttlExpiry": 1790662170,
+    "deviceType": "desktop"
+  },
+  "test-user-1790666066460": {
+    "userId": "test-user-1790666066460",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T07:14:26.460Z",
+    "ttlExpiry": 1790666366,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790666066464": {
+    "userId": "test-expired-1790666066464",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T07:04:26.460Z",
+    "ttlExpiry": 1790665966,
+    "deviceType": "desktop"
+  },
+  "test-user-1790667077414": {
+    "userId": "test-user-1790667077414",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T07:31:17.414Z",
+    "ttlExpiry": 1790667377,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790667077417": {
+    "userId": "test-expired-1790667077417",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T07:21:17.414Z",
+    "ttlExpiry": 1790666977,
+    "deviceType": "desktop"
+  },
+  "test-user-1790670677220": {
+    "userId": "test-user-1790670677220",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:31:17.220Z",
+    "ttlExpiry": 1790670977,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790670677228": {
+    "userId": "test-expired-1790670677228",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:21:17.220Z",
+    "ttlExpiry": 1790670577,
+    "deviceType": "desktop"
+  },
+  "test-user-1790670808859": {
+    "userId": "test-user-1790670808859",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:33:28.859Z",
+    "ttlExpiry": 1790671108,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790670808864": {
+    "userId": "test-expired-1790670808864",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:23:28.859Z",
+    "ttlExpiry": 1790670708,
+    "deviceType": "desktop"
+  },
+  "test-user-1790670878111": {
+    "userId": "test-user-1790670878111",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:34:38.111Z",
+    "ttlExpiry": 1790671178,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790670878115": {
+    "userId": "test-expired-1790670878115",
+    "status": "active",
+    "lastHeartbeat": "2026-09-29T08:24:38.111Z",
+    "ttlExpiry": 1790670778,
+    "deviceType": "desktop"
+  },
+  "test-user-1790772724113": {
+    "userId": "test-user-1790772724113",
+    "status": "active",
+    "lastHeartbeat": "2026-09-30T12:52:04.113Z",
+    "ttlExpiry": 1790773024,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790772724122": {
+    "userId": "test-expired-1790772724122",
+    "status": "active",
+    "lastHeartbeat": "2026-09-30T12:42:04.113Z",
+    "ttlExpiry": 1790772624,
+    "deviceType": "desktop"
+  },
+  "test-user-1790772805182": {
+    "userId": "test-user-1790772805182",
+    "status": "active",
+    "lastHeartbeat": "2026-09-30T12:53:25.182Z",
+    "ttlExpiry": 1790773105,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790772805188": {
+    "userId": "test-expired-1790772805188",
+    "status": "active",
+    "lastHeartbeat": "2026-09-30T12:43:25.182Z",
+    "ttlExpiry": 1790772705,
+    "deviceType": "desktop"
+  },
+  "test-user-1790814516202": {
+    "userId": "test-user-1790814516202",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:28:36.202Z",
+    "ttlExpiry": 1790814816,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790814516207": {
+    "userId": "test-expired-1790814516207",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:18:36.202Z",
+    "ttlExpiry": 1790814416,
+    "deviceType": "desktop"
+  },
+  "test-user-1790814662433": {
+    "userId": "test-user-1790814662433",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:31:02.433Z",
+    "ttlExpiry": 1790814962,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790814662438": {
+    "userId": "test-expired-1790814662438",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:21:02.433Z",
+    "ttlExpiry": 1790814562,
+    "deviceType": "desktop"
+  },
+  "test-user-1790814698125": {
+    "userId": "test-user-1790814698125",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:31:38.125Z",
+    "ttlExpiry": 1790814998,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790814698130": {
+    "userId": "test-expired-1790814698130",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:21:38.125Z",
+    "ttlExpiry": 1790814598,
+    "deviceType": "desktop"
+  },
+  "test-user-1790814997782": {
+    "userId": "test-user-1790814997782",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:36:37.782Z",
+    "ttlExpiry": 1790815297,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790814997787": {
+    "userId": "test-expired-1790814997787",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T00:26:37.782Z",
+    "ttlExpiry": 1790814897,
+    "deviceType": "desktop"
+  },
+  "test-user-1790855467568": {
+    "userId": "test-user-1790855467568",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T11:51:07.568Z",
+    "ttlExpiry": 1790855767,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790855467574": {
+    "userId": "test-expired-1790855467574",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T11:41:07.568Z",
+    "ttlExpiry": 1790855367,
+    "deviceType": "desktop"
+  },
+  "test-user-1790855841390": {
+    "userId": "test-user-1790855841390",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T11:57:21.390Z",
+    "ttlExpiry": 1790856141,
+    "deviceType": "desktop"
+  },
+  "test-expired-1790855841397": {
+    "userId": "test-expired-1790855841397",
+    "status": "active",
+    "lastHeartbeat": "2026-10-01T11:47:21.390Z",
+    "ttlExpiry": 1790855741,
+    "deviceType": "desktop"
+  },
+  "e0spoSdD7JV0lqg0kEsEZxBxGJh1": {
+    "userId": "e0spoSdD7JV0lqg0kEsEZxBxGJh1",
+    "status": "active",
+    "lastHeartbeat": "2026-10-03T09:03:20.531Z",
+    "ttlExpiry": 1791018500,
+    "deviceType": "desktop"
+  },
+  "test-user-1791198678311": {
+    "userId": "test-user-1791198678311",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:11:18.311Z",
+    "ttlExpiry": 1791198978,
+    "deviceType": "desktop"
+  },
+  "test-expired-1791198678417": {
+    "userId": "test-expired-1791198678417",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:01:18.311Z",
+    "ttlExpiry": 1791198578,
+    "deviceType": "desktop"
+  },
+  "test-user-1791198809707": {
+    "userId": "test-user-1791198809707",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:13:29.707Z",
+    "ttlExpiry": 1791199109,
+    "deviceType": "desktop"
+  },
+  "test-expired-1791198809809": {
+    "userId": "test-expired-1791198809809",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:03:29.707Z",
+    "ttlExpiry": 1791198709,
+    "deviceType": "desktop"
+  },
+  "test-user-1791198913120": {
+    "userId": "test-user-1791198913120",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:15:13.120Z",
+    "ttlExpiry": 1791199213,
+    "deviceType": "desktop"
+  },
+  "test-expired-1791198913220": {
+    "userId": "test-expired-1791198913220",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:05:13.120Z",
+    "ttlExpiry": 1791198813,
+    "deviceType": "desktop"
+  },
+  "test-user-1791200212031": {
+    "userId": "test-user-1791200212031",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:36:52.031Z",
+    "ttlExpiry": 1791200512,
+    "deviceType": "desktop"
+  },
+  "test-expired-1791200212129": {
+    "userId": "test-expired-1791200212129",
+    "status": "active",
+    "lastHeartbeat": "2026-10-05T11:26:52.031Z",
+    "ttlExpiry": 1791200112,
+    "deviceType": "desktop"
+  }
+}

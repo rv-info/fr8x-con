@@ -1,0 +1,26 @@
+[
+  {
+    "id": "COG-1710-0001",
+    "sp": "COGOPORT",
+    "line": "MAERSK",
+    "por": "Mundra (INMUN)",
+    "pol": "Mundra (INMUN)",
+    "pod": "TASKENT",
+    "fpod": "TASKENT",
+    "rate20": 10000,
+    "rate40": 14000,
+    "rate40hc": 14000,
+    "currency": "USD",
+    "type": "Direct Spot",
+    "ft": 14,
+    "validity": "2026-10-17",
+    "transitTime": "60",
+    "ownerUid": "u-rajat",
+    "createdBy": "u-rajat",
+    "isOwner": true,
+    "isSelfPosted": true,
+    "status": "active",
+    "createdAt": "2026-10-02T10:00:00.000Z",
+    "updatedAt": "2026-10-02T10:00:00.000Z"
+  }
+]

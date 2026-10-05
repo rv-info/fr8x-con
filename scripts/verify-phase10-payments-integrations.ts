@@ -256,7 +256,7 @@ async function runTests() {
   const events = getPersistedEmailDeliveryEvents();
   assert(
     events.some((e) => e.eventId === testDeliveryEvent.eventId && e.status === 'delivered'),
-    'Email delivery event is persisted to DBMS (.data/dbms/email_delivery_events.json)'
+    'Email delivery event is persisted to test store (email_delivery_events.json)'
   );
 
   // Test Hard Bounce Recording

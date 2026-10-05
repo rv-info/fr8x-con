@@ -1,0 +1,628 @@
+[
+  {
+    "eventId": "evt_test_1791200212212_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1791200212031",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-05T11:36:52.212Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1791200212212",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1791200212212_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1791200212031",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-05T11:36:52.212Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1791200212212",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198913315_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1791198913120",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-05T11:15:13.315Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1791198913315",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198913315_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1791198913120",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-05T11:15:13.315Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1791198913315",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198809910_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1791198809707",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-05T11:13:29.910Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1791198809910",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198809910_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1791198809707",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-05T11:13:29.910Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1791198809910",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198678523_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1791198678311",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-05T11:11:18.523Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1791198678523",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1791198678523_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1791198678311",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-05T11:11:18.523Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1791198678523",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "err_1791018177858_b0mc9",
+    "eventType": "system_error",
+    "actorId": "e0spoSdD7JV0lqg0kEsEZxBxGJh1",
+    "targetId": "/feeds",
+    "timestamp": "2026-10-03T09:02:57.858Z",
+    "metadata": {
+      "message": "Cannot read properties of undefined (reading 'length')",
+      "stack": "TypeError: Cannot read properties of undefined (reading 'length')\n    at FeedRankingEngine.rankPost (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:84:58)\n    at eval (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:155:59)\n    at Array.map (<anonymous>)\n    at FeedRankingEngine.rankFeed (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:155:42)\n    at eval (webpack-internal:///(app-pages-browser)/./app/feeds/page.tsx:686:92)\n    at mountMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:12600:19)\n    at Object.useMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:13305:16)\n    at Object.useMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js:2537:21)\n    at FeedsPage (webpack-internal:///(app-pages-browser)/./app/feeds/page.tsx:685:74)\n    at rende",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "url": "http://localhost:3000/feeds"
+    }
+  },
+  {
+    "eventId": "err_1791018177812_u33lz",
+    "eventType": "system_error",
+    "actorId": "e0spoSdD7JV0lqg0kEsEZxBxGJh1",
+    "targetId": "/feeds",
+    "timestamp": "2026-10-03T09:02:57.812Z",
+    "metadata": {
+      "message": "Cannot read properties of undefined (reading 'length')",
+      "stack": "TypeError: Cannot read properties of undefined (reading 'length')\n    at FeedRankingEngine.rankPost (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:84:58)\n    at eval (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:155:59)\n    at Array.map (<anonymous>)\n    at FeedRankingEngine.rankFeed (webpack-internal:///(app-pages-browser)/./lib/ranking/engine.ts:155:42)\n    at eval (webpack-internal:///(app-pages-browser)/./app/feeds/page.tsx:686:92)\n    at mountMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:12600:19)\n    at Object.useMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react-dom/cjs/react-dom.development.js:13305:16)\n    at Object.useMemo (webpack-internal:///(app-pages-browser)/./node_modules/next/dist/compiled/react/cjs/react.development.js:2537:21)\n    at FeedsPage (webpack-internal:///(app-pages-browser)/./app/feeds/page.tsx:685:74)\n    at rende",
+      "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36",
+      "url": "http://localhost:3000/feeds"
+    }
+  },
+  {
+    "eventId": "evt_test_1790855841405_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790855841390",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T11:57:21.406Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790855841406",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790855841405_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790855841390",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T11:57:21.405Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790855841405",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790855467578_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790855467568",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T11:51:07.578Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790855467578",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790855467578_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790855467568",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T11:51:07.578Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790855467578",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814997793_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790814997782",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T00:36:37.793Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790814997793",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814997793_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790814997782",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T00:36:37.793Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790814997793",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814698134_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790814698125",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T00:31:38.134Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790814698134",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814698134_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790814698125",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T00:31:38.134Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790814698134",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814662442_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790814662433",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T00:31:02.442Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790814662442",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814662442_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790814662433",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T00:31:02.442Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790814662442",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814516212_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790814516202",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-10-01T00:28:36.212Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790814516212",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790814516212_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790814516202",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-10-01T00:28:36.212Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790814516212",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790772805192_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790772805182",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-30T12:53:25.192Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790772805192",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790772805192_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790772805182",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-30T12:53:25.192Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790772805192",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790772724128_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790772724113",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-30T12:52:04.128Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790772724128",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790772724128_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790772724113",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-30T12:52:04.128Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790772724128",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670878119_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790670878111",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T08:34:38.119Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790670878119",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670878119_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790670878111",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T08:34:38.119Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790670878119",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670808869_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790670808859",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T08:33:28.869Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790670808869",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670808869_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790670808859",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T08:33:28.869Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790670808869",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670677232_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790670677220",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T08:31:17.232Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790670677232",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790670677232_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790670677220",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T08:31:17.232Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790670677232",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790667077421_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790667077414",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T07:31:17.421Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790667077421",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790667077421_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790667077414",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T07:31:17.421Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790667077421",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790666066469_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790666066460",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T07:14:26.469Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790666066469",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790666066469_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790666066460",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T07:14:26.469Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790666066469",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790662270025_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790662270011",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T06:11:10.025Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790662270025",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790662270025_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790662270011",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T06:11:10.025Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790662270025",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790661005366_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790661005359",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T05:50:05.366Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790661005366",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790661005366_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790661005359",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T05:50:05.366Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790661005366",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  },
+  {
+    "eventId": "evt_test_1790660934817_2",
+    "eventType": "auction_bid",
+    "actorId": "test-user-1790660934810",
+    "targetId": "auc_mock_001",
+    "targetType": "auction",
+    "timestamp": "2026-09-29T05:48:54.817Z",
+    "sourceSurface": "auctions",
+    "correlationId": "corr_1790660934817",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "carrier": "MSC"
+    }
+  },
+  {
+    "eventId": "evt_test_1790660934817_1",
+    "eventType": "rate_view",
+    "actorId": "test-user-1790660934810",
+    "targetId": "rate_mock_001",
+    "targetType": "rate",
+    "timestamp": "2026-09-29T05:48:54.817Z",
+    "sourceSurface": "rates",
+    "correlationId": "corr_1790660934817",
+    "rankingVersion": "v2.1",
+    "metadata": {
+      "port": "INNSA",
+      "tradeLane": "INNSA-AEJEA"
+    }
+  }
+]

@@ -1,0 +1,150 @@
+[
+  {
+    "id": "RA-2026-9083",
+    "title": "Nhava Sheva to Rotterdam Spot Bidding",
+    "rfqId": "RFQ-2026-9083",
+    "creatorUid": "u-rajat",
+    "creatorName": "Rajat RAI",
+    "creatorCompany": "COGOPORT",
+    "auctionType": "Specific bidder",
+    "startDate": "2026-10-05",
+    "startTime": "10:00",
+    "durationMinutes": 120,
+    "endDateTime": "2026-10-05 12:00",
+    "timezone": "Asia/Kolkata",
+    "status": "Draft",
+    "rank": "Pending",
+    "timeLeft": "120m",
+    "isPublished": false,
+    "publishedAt": "2026-10-02T10:30:00.000Z",
+    "competitionCeiling": 2800,
+    "bidsSubmittedCount": 0,
+    "paymentStatus": "unpaid",
+    "postingFeeINR": 300,
+    "shipment": {
+      "por": "Nhava Sheva (INNSA), India",
+      "pol": "Nhava Sheva (INNSA), India",
+      "pod": "Rotterdam (NLRTM), Netherlands",
+      "finalDestination": "Rotterdam (NLRTM), Netherlands",
+      "cargoReadyDate": "2026-10-05",
+      "shipmentType": "FCL",
+      "incoterm": "FOB - Free on Board",
+      "rateCurrency": "USD",
+      "commodity": "Engineering Goods",
+      "hsCode": "8471.30",
+      "weightKg": 24000,
+      "cbm": 68
+    },
+    "containers": [
+      {
+        "id": "c-1",
+        "equipmentType": "40' High Cube (40HC)",
+        "containerType": "Standard",
+        "quantity": 1,
+        "pickupLocation": "Nhava Sheva CFS",
+        "emptyReturnLocation": "Rotterdam ECT",
+        "isSpecial": false,
+        "commodity": "Engineering Goods",
+        "hsCode": "8471.30",
+        "grossWeight": 24000,
+        "weightUnit": "KG"
+      }
+    ],
+    "originCharges": {
+      "transportation": false,
+      "clearance": false,
+      "carrierLocal": true
+    },
+    "destinationCharges": {
+      "transportation": false,
+      "clearance": false,
+      "carrierLocal": true
+    },
+    "selectedBidders": [],
+    "blockedBidders": [],
+    "rules": {
+      "autoExtension": true,
+      "rankingVisible": true,
+      "hideCompetitorNames": true,
+      "bidderAnonymity": true,
+      "bidLimit": 5
+    },
+    "bids": [],
+    "createdAt": "2026-10-02T10:30:00.000Z",
+    "updatedAt": "2026-10-02T10:30:00.000Z"
+  },
+  {
+    "id": "RA-2026-7977",
+    "title": "Mundra to Hamburg Spot Bidding",
+    "rfqId": "RFQ-2026-7977",
+    "creatorUid": "u-rajat",
+    "creatorName": "Rajat RAI",
+    "creatorCompany": "COGOPORT",
+    "auctionType": "Specific bidder",
+    "startDate": "2026-10-05",
+    "startTime": "11:00",
+    "durationMinutes": 120,
+    "endDateTime": "2026-10-05 13:00",
+    "timezone": "Asia/Kolkata",
+    "status": "Draft",
+    "rank": "Pending",
+    "timeLeft": "120m",
+    "isPublished": false,
+    "publishedAt": "2026-10-02T10:35:00.000Z",
+    "competitionCeiling": 2800,
+    "bidsSubmittedCount": 0,
+    "paymentStatus": "unpaid",
+    "postingFeeINR": 300,
+    "shipment": {
+      "por": "Mundra (INMUN), India",
+      "pol": "Mundra (INMUN), India",
+      "pod": "Hamburg (DEHAM), Germany",
+      "finalDestination": "Hamburg (DEHAM), Germany",
+      "cargoReadyDate": "2026-10-05",
+      "shipmentType": "FCL",
+      "incoterm": "CIF - Cost, Insurance and Freight",
+      "rateCurrency": "USD",
+      "commodity": "Engineering Goods",
+      "hsCode": "8471.30",
+      "weightKg": 24000,
+      "cbm": 68
+    },
+    "containers": [
+      {
+        "id": "c-1",
+        "equipmentType": "40' High Cube (40HC)",
+        "containerType": "Standard",
+        "quantity": 1,
+        "pickupLocation": "Mundra CFS",
+        "emptyReturnLocation": "Hamburg CTA",
+        "isSpecial": false,
+        "commodity": "Engineering Goods",
+        "hsCode": "8471.30",
+        "grossWeight": 24000,
+        "weightUnit": "KG"
+      }
+    ],
+    "originCharges": {
+      "transportation": false,
+      "clearance": false,
+      "carrierLocal": true
+    },
+    "destinationCharges": {
+      "transportation": false,
+      "clearance": false,
+      "carrierLocal": true
+    },
+    "selectedBidders": [],
+    "blockedBidders": [],
+    "rules": {
+      "autoExtension": true,
+      "rankingVisible": true,
+      "hideCompetitorNames": true,
+      "bidderAnonymity": true,
+      "bidLimit": 5
+    },
+    "bids": [],
+    "createdAt": "2026-10-02T10:35:00.000Z",
+    "updatedAt": "2026-10-02T10:35:00.000Z"
+  }
+]

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "CMP-COGOPORT-001",
+    "legalName": "Cogoport India Private Limited",
+    "tradeName": "COGOPORT",
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "postalCode": "400069",
+    "registeredAddress": "Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069, India",
+    "gstn": "27AAACC1234F1Z5",
+    "pan": "AAACC1234F",
+    "iec": "0312045678",
+    "mto": "MTO/DGS/2022/1042",
+    "status": "verified",
+    "verified": true,
+    "memberCount": 1,
+    "primaryContactName": "Rajat RAI",
+    "primaryContactEmail": "rajat.rai@cogoport.com",
+    "primaryContactPhone": "+91 9620012345",
+    "adminNotes": [
+      "Authoritative Enterprise Forwarder Profile",
+      "Statutory KYC Verified & Active"
+    ],
+    "createdAt": "2026-09-01T00:00:00.000Z",
+    "updatedAt": "2026-10-03T09:53:28.778Z"
+  },
+  {
+    "id": "CMP-RAIVEGA-01",
+    "legalName": "Rai Vega Logistics Private Limited",
+    "tradeName": "RAIVEGA",
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "postalCode": "400021",
+    "registeredAddress": "Rai Vega House, Nariman Point, Mumbai 400021, India",
+    "gstn": "27AABCR9876Q1Z2",
+    "pan": "AABCR9876Q",
+    "iec": "0319087654",
+    "mto": "MTO/DGS/2023/2189",
+    "status": "verified",
+    "verified": true,
+    "memberCount": 1,
+    "primaryContactName": "Management RAIVEGA",
+    "primaryContactEmail": "mgt@raivega.in",
+    "primaryContactPhone": "+91 98200 99999",
+    "adminNotes": [
+      "Premium Verified Logistics Member",
+      "Statutory KYC Verified & Active"
+    ],
+    "createdAt": "2026-09-01T00:00:00.000Z",
+    "updatedAt": "2026-10-03T09:53:28.778Z"
+  },
+  {
+    "id": "comp_oceanic_01",
+    "legalName": "Oceanic Forwarders Private Limited",
+    "tradeName": "Oceanic Forwarders Ltd",
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "postalCode": "400001",
+    "registeredAddress": "Oceanic Tower, Ballard Estate, Fort, Mumbai 400001",
+    "gstn": "27AABCO5555M1Z1",
+    "pan": "AABCO5555M",
+    "status": "verified",
+    "verified": true,
+    "memberCount": 12,
+    "primaryContactName": "Ocean Freight Operator",
+    "primaryContactEmail": "trader_1790855848254@oceanfreight.net",
+    "adminNotes": [
+      "High volume trade lane operator"
+    ],
+    "createdAt": "2026-09-01T00:00:00.000Z",
+    "updatedAt": "2026-10-03T09:53:28.778Z"
+  },
+  {
+    "id": "comp_forwarder_01",
+    "legalName": "Forwarder Group International Private Limited",
+    "tradeName": "Forwarder Group Ltd",
+    "country": "India",
+    "state": "Maharashtra",
+    "city": "Mumbai",
+    "postalCode": "400001",
+    "registeredAddress": "Forwarder Plaza, Nariman Point, Mumbai 400021",
+    "gstn": "27AABCF1111N1Z3",
+    "pan": "AABCF1111N",
+    "status": "verified",
+    "verified": true,
+    "memberCount": 11,
+    "primaryContactName": "Chief Compliance Officer",
+    "primaryContactEmail": "officer_1790855845116@forwardergroup.com",
+    "adminNotes": [
+      "Regulatory compliance verified"
+    ],
+    "createdAt": "2026-09-01T00:00:00.000Z",
+    "updatedAt": "2026-10-03T09:53:28.778Z"
+  }
+]

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "va-1790636419274-3s3m5",
+    "timestamp": "2026-09-28T23:00:19.274Z",
+    "email": "single-use-1790636419120@freightforwarders.com",
+    "uid": "u-su-1790636419120",
+    "company": "Freight Forwarders International",
+    "method": "otp",
+    "status": "SUCCESS",
+    "details": "Account email successfully verified via 6-digit verification code."
+  },
+  {
+    "id": "va-1790631828304-rnj78",
+    "timestamp": "2026-09-28T21:43:48.304Z",
+    "email": "single-use-1790631828195@freightforwarders.com",
+    "uid": "u-su-1790631828195",
+    "company": "Freight Forwarders International",
+    "method": "otp",
+    "status": "SUCCESS",
+    "details": "Account email successfully verified via 6-digit verification code."
+  },
+  {
+    "id": "va-1790631768091-m5c70",
+    "timestamp": "2026-09-28T21:42:48.091Z",
+    "email": "single-use-1790631767882@freightforwarders.com",
+    "uid": "u-su-1790631767882",
+    "company": "Freight Forwarders International",
+    "method": "otp",
+    "status": "SUCCESS",
+    "details": "Account email successfully verified via 6-digit verification code."
+  }
+]
