@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersistedRates,
-  savePersistedRate,
-  deletePersistedRate,
-} from '@/lib/dbms/server-dbms';
+import { getRates, getRateById, saveRate, deleteRate } from '@/lib/db/rates';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function GET(req: NextRequest) {
@@ -16,9 +12,16 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const rates = getPersistedRates();
+    const { searchParams } = new URL(req.url);
+    const pol = searchParams.get('pol') || undefined;
+    const pod = searchParams.get('pod') || undefined;
+    const sp = searchParams.get('sp') || undefined;
+    const ownerUid = searchParams.get('ownerUid') || undefined;
+
+    const rates = await getRates({ pol, pod, sp, ownerUid });
     return NextResponse.json({ success: true, rates }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/rates] GET error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to fetch rates' },
       { status: 500 }
@@ -46,11 +49,11 @@ export async function POST(req: NextRequest) {
 
     // Ownership & Impersonation Prevention
     if (userAuth.authenticated && !gfAuth.authenticated) {
-      const existing = getPersistedRates().find((r) => r.id === body.id);
+      const existing = await getRateById(body.id);
       if (existing) {
         const isOwner =
-          existing.createdBy === userAuth.user!.uid ||
-          existing.ownerUid === userAuth.user!.uid;
+          existing.created_by === userAuth.user!.uid ||
+          (existing as any).owner_uid === userAuth.user!.uid;
         if (!isOwner) {
           return NextResponse.json(
             { success: false, error: 'Forbidden: You cannot modify another enterprise’s rate card.' },
@@ -62,16 +65,10 @@ export async function POST(req: NextRequest) {
       body.ownerUid = userAuth.user!.uid;
     }
 
-    const saved = savePersistedRate(body);
-
-    // Authoritative Supabase PostgreSQL sync
-    try {
-      const { rateDbService } = await import('@/lib/supabase/db');
-      await rateDbService.upsertRate(saved);
-    } catch {}
-
+    const saved = await saveRate(body);
     return NextResponse.json({ success: true, rate: saved }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/rates] POST error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to save rate' },
       { status: 500 }
@@ -99,11 +96,11 @@ export async function DELETE(req: NextRequest) {
 
     // Ownership check for non-operator callers
     if (userAuth.authenticated && !gfAuth.authenticated) {
-      const existing = getPersistedRates().find((r) => r.id === id);
+      const existing = await getRateById(id);
       if (existing) {
         const isOwner =
-          existing.createdBy === userAuth.user!.uid ||
-          existing.ownerUid === userAuth.user!.uid;
+          existing.created_by === userAuth.user!.uid ||
+          (existing as any).owner_uid === userAuth.user!.uid;
         if (!isOwner) {
           return NextResponse.json(
             { success: false, error: 'Forbidden: You do not have permission to delete this rate.' },
@@ -113,15 +110,10 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    const deleted = deletePersistedRate(id);
-
-    try {
-      const { rateDbService } = await import('@/lib/supabase/db');
-      await rateDbService.deleteRate(id);
-    } catch {}
-
+    const deleted = await deleteRate(id);
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/rates] DELETE error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to delete rate' },
       { status: 500 }

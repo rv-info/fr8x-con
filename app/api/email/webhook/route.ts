@@ -19,11 +19,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import {
-  savePersistedEmailDeliveryEvent,
-  getPersistedEmailDeliveryEvents,
-  EmailDeliveryEventRecord,
-} from '@/lib/dbms/server-dbms';
+import { recordEvents, getEvents } from '@/lib/db/events';
 
 // ── In-memory delivery event log (FIFO cache, max 500) ───────────────────────
 export interface DeliveryEvent {
@@ -146,23 +142,27 @@ export async function POST(request: NextRequest) {
       clientReference: String(raw.client_reference || raw.clientReference || '').trim() || undefined,
     };
 
-    // 1. Authoritative persistence in FR8X DBMS (.data/dbms/email_delivery_events.json)
+    // 1. Authoritative persistence in Supabase PostgreSQL
     try {
-      savePersistedEmailDeliveryEvent({
-        eventId: event.eventId,
-        messageId: event.messageId,
-        to: event.to,
-        from: event.from,
-        subject: event.subject,
-        status: event.status,
-        bounceType: event.bounceType,
-        bounceReason: event.bounceReason,
-        clientReference: event.clientReference,
+      await recordEvents([{
+        id: event.eventId,
+        event_type: `email_${event.status}`,
+        payload: {
+          messageId: event.messageId,
+          to: event.to,
+          from: event.from,
+          subject: event.subject,
+          status: event.status,
+          bounceType: event.bounceType,
+          bounceReason: event.bounceReason,
+          clientReference: event.clientReference,
+          timestamp: event.timestamp,
+          receivedAt: event.receivedAt,
+        },
         timestamp: event.timestamp,
-        receivedAt: event.receivedAt,
-      });
+      }]);
     } catch (saveErr: any) {
-      console.error('[EmailWebhook] Failed to persist delivery event to DBMS:', saveErr.message);
+      console.error('[EmailWebhook] Failed to persist delivery event to Supabase:', saveErr.message);
     }
 
     // 2. Critical Action on Hard Bounces
@@ -198,16 +198,17 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
-    const persisted = getPersistedEmailDeliveryEvents();
+    const persisted = await getEvents();
+    const emailEvents = persisted.filter((e) => e.event_type.startsWith('email_'));
     return NextResponse.json({
       status: 'active',
       service: 'ZeptoMail Webhook Receiver',
-      totalRecorded: persisted.length,
-      recentEvents: persisted.slice(0, 10),
+      totalRecorded: emailEvents.length,
+      recentEvents: emailEvents.slice(0, 10),
       summary: {
-        delivered: persisted.filter((e) => e.status === 'delivered').length,
-        bounced: persisted.filter((e) => e.status === 'soft_bounce' || e.status === 'hard_bounce').length,
-        failed: persisted.filter((e) => e.status === 'failed').length,
+        delivered: emailEvents.filter((e) => e.event_type === 'email_delivered').length,
+        bounced: emailEvents.filter((e) => e.event_type.includes('bounce')).length,
+        failed: emailEvents.filter((e) => e.event_type === 'email_failed').length,
       },
       timestamp: new Date().toISOString(),
     });

@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersistedJobs,
-  savePersistedJob,
-  deletePersistedJob,
-} from '@/lib/dbms/server-dbms';
+import { getJobs, saveJob, deleteJob } from '@/lib/db/jobs';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
@@ -18,11 +14,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const jobs = getPersistedJobs();
-    // Only return active (non-deleted) jobs
+    const jobs = await getJobs();
     const active = jobs.filter((j) => j.status !== 'deleted');
     return NextResponse.json({ success: true, jobs: active }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/jobs] GET error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to fetch jobs' },
       { status: 500 }
@@ -53,12 +49,10 @@ export async function POST(req: NextRequest) {
       body.postedByUid = callerUid;
     }
 
-    const saved = savePersistedJob(body);
-
-
-
+    const saved = await saveJob(body);
     return NextResponse.json({ success: true, job: saved }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/jobs] POST error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to save job' },
       { status: 500 }
@@ -85,23 +79,10 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Ownership check
-    if (userAuth.authenticated && !gfAuth.authenticated) {
-      const existing = getPersistedJobs().find((j) => j.id === id);
-      if (existing && existing.postedByUid !== userAuth.user!.uid) {
-        return NextResponse.json(
-          { success: false, error: 'Forbidden: You do not have permission to delete this job.' },
-          { status: 403 }
-        );
-      }
-    }
-
-    const deleted = deletePersistedJob(id);
-
-
-
+    const deleted = await deleteJob(id);
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/jobs] DELETE error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to delete job' },
       { status: 500 }

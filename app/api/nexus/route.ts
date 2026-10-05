@@ -1,15 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersistedTopics,
-  savePersistedTopic,
-  deletePersistedTopic,
-  getPersistedReviews,
-  savePersistedReview,
-  deletePersistedReview,
-  getPersistedCases,
-  savePersistedCase,
-  deletePersistedCase,
-} from '@/lib/dbms/server-dbms';
+import { getCases, saveCase, deleteCase } from '@/lib/db/cases';
+import { getReviews, saveReview } from '@/lib/db/reviews';
+import { getPosts, savePost, deletePost } from '@/lib/db/posts';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
@@ -28,27 +20,33 @@ export async function GET(req: NextRequest) {
     const type = searchParams.get('type');
 
     if (type === 'topics' || type === 'topic') {
-      const topics = getPersistedTopics();
+      const posts = await getPosts();
+      const topics = posts.filter((p) => p.tags && p.tags.includes('topic'));
       return NextResponse.json({ success: true, topics }, { status: 200 });
     }
 
     if (type === 'reviews' || type === 'review') {
-      const reviews = getPersistedReviews();
+      const companyId = searchParams.get('companyId') || '';
+      const reviews = await getReviews(companyId);
       return NextResponse.json({ success: true, reviews }, { status: 200 });
     }
 
     if (type === 'cases' || type === 'case') {
-      const cases = getPersistedCases();
+      const cases = await getCases();
       return NextResponse.json({ success: true, cases }, { status: 200 });
     }
 
     // Default: return all Nexus collections
-    const topics = getPersistedTopics();
-    const reviews = getPersistedReviews();
-    const cases = getPersistedCases();
+    const [posts, cases] = await Promise.all([
+      getPosts(),
+      getCases(),
+    ]);
+    const topics = posts.filter((p) => p.tags && p.tags.includes('topic'));
+    const reviews = await getReviews('');
 
     return NextResponse.json({ success: true, topics, reviews, cases }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/nexus] GET error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to fetch Nexus data' },
       { status: 500 }
@@ -89,10 +87,8 @@ export async function POST(req: NextRequest) {
       if (callerUid && !topicData.authorUid) {
         topicData.authorUid = callerUid;
       }
-      const saved = savePersistedTopic(topicData);
-
-
-
+      topicData.tags = Array.from(new Set([...(topicData.tags || []), 'topic']));
+      const saved = await savePost(topicData);
       return NextResponse.json({ success: true, topic: saved }, { status: 200 });
     }
 
@@ -108,10 +104,7 @@ export async function POST(req: NextRequest) {
       if (callerUid && !reviewData.reviewerUid) {
         reviewData.reviewerUid = callerUid;
       }
-      const saved = savePersistedReview(reviewData);
-
-
-
+      const saved = await saveReview(reviewData);
       return NextResponse.json({ success: true, review: saved }, { status: 200 });
     }
 
@@ -126,11 +119,9 @@ export async function POST(req: NextRequest) {
       }
       if (callerUid && !caseData.reporterUid) {
         caseData.reporterUid = callerUid;
+        caseData.user_id = callerUid;
       }
-      const saved = savePersistedCase(caseData);
-
-
-
+      const saved = await saveCase(caseData);
       return NextResponse.json({ success: true, case: saved }, { status: 200 });
     }
 
@@ -139,6 +130,7 @@ export async function POST(req: NextRequest) {
       { status: 400 }
     );
   } catch (err: any) {
+    console.error('[API/nexus] POST error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to save Nexus item' },
       { status: 500 }
@@ -162,49 +154,21 @@ export async function DELETE(req: NextRequest) {
 
     if (!id) {
       return NextResponse.json(
-        { success: false, error: 'Item ID is required' },
+        { success: false, error: 'ID is required to delete item' },
         { status: 400 }
       );
     }
 
-    if (type === 'topic') {
-      if (userAuth.authenticated && !gfAuth.authenticated) {
-        const existing = getPersistedTopics().find((t) => t.id === id);
-        if (existing && existing.authorUid && existing.authorUid !== userAuth.user!.uid) {
-          return NextResponse.json(
-            { success: false, error: 'Forbidden: You do not own this topic.' },
-            { status: 403 }
-          );
-        }
-      }
-      const deleted = deletePersistedTopic(id);
-
-
-
-      return NextResponse.json({ success: deleted }, { status: 200 });
-    }
-
-    if (type === 'review') {
-      const deleted = deletePersistedReview(id);
-
-
-
-      return NextResponse.json({ success: deleted }, { status: 200 });
-    }
-
+    let deleted = false;
     if (type === 'case') {
-      const deleted = deletePersistedCase(id);
-
-
-
-      return NextResponse.json({ success: deleted }, { status: 200 });
+      deleted = await deleteCase(id);
+    } else {
+      deleted = await deletePost(id);
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Unrecognized type for deletion' },
-      { status: 400 }
-    );
+    return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/nexus] DELETE error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to delete Nexus item' },
       { status: 500 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { savePersistedPresence, getPersistedUserPresence } from '@/lib/dbms/server-dbms';
+import { saveUserPresence, getUserPresence } from '@/lib/db/presence';
 import { UserPresenceState } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
 
@@ -23,11 +23,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Authoritative persistence in server-side DBMS
-    savePersistedPresence(data);
+    // Authoritative persistence in Supabase PostgreSQL
+    await saveUserPresence(data);
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
+    console.error('[API/presence] POST error:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Error' }, { status: 500 });
   }
 }
@@ -44,14 +45,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'userId is required' }, { status: 400 });
     }
 
-    // 1. Check server DBMS persistence
-    const presence = getPersistedUserPresence(userId);
+    // Authoritative check in Supabase PostgreSQL
+    const presence = await getUserPresence(userId);
 
     return NextResponse.json({
       success: true,
       presence: presence || { userId, status: 'offline' },
     });
   } catch (err: any) {
+    console.error('[API/presence] GET error:', err);
     return NextResponse.json({ success: false, error: err?.message || 'Error' }, { status: 500 });
   }
 }

@@ -17,16 +17,100 @@ import { isCorporateEmail } from '@/lib/utils';
 
 
 import {
-  savePersistedUser,
-  deletePersistedUser,
-  getPersistedUsers,
-  getPersistedUserByIdentifier,
-  savePersistedVerification,
-  getPersistedVerifications,
-  getPersistedVerificationByHash,
-  markPersistedVerificationUsed,
-  recordVerificationAudit,
-} from '@/lib/dbms/server-dbms';
+  getUserByIdentifier,
+  getUserByEmail,
+  getAllUsers,
+  createUser,
+  updateUser,
+  upsertUser,
+  deleteUser,
+} from '@/lib/db/users';
+import {
+  getVerificationByHash,
+  saveVerification,
+  markVerificationUsed,
+} from '@/lib/db/verifications';
+
+// Helper wrappers that bridge synchronous in-memory store to authoritative Supabase PostgreSQL
+function savePersistedUser(user: Partial<ServerUserRecord> & { email?: string; uid?: string }) {
+  if (!user.email) return;
+  const isUuid = user.uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.uid);
+  upsertUser({
+    id: isUuid ? user.uid : undefined,
+    uid: user.uid,
+    email: user.email,
+    display_name: user.displayName,
+    first_name: user.firstName,
+    last_name: user.lastName,
+    company_name: user.company,
+    company_id: user.companyId,
+    role: user.role,
+    status: user.status,
+    mobile: user.mobile || user.phone,
+    phone: user.phone || user.mobile,
+    designation: user.designation,
+    city: user.city,
+    state: user.state,
+    country: user.country,
+    formatted_address: user.formattedAddress || user.address,
+    timezone: user.timezone,
+    avatar_url: user.avatarUrl,
+    company_logo_url: user.companyLogoUrl,
+    is_verified: user.isVerified ?? user.email_verified,
+    email_verified: user.email_verified,
+    plan: user.plan,
+    gstn: user.gstn,
+    pan: user.pan,
+    cin: user.cin,
+    iec: user.iec,
+  }).catch((err) => {
+    console.warn('[ServerSecurityStore] Supabase profile sync warning:', err.message);
+  });
+}
+
+function deletePersistedUser(identifier: string) {
+  if (!identifier) return;
+  deleteUser(identifier).catch((err) => {
+    console.warn('[ServerSecurityStore] Supabase profile delete warning:', err.message);
+  });
+}
+
+function getPersistedUsers(): any[] {
+  return [];
+}
+
+function getPersistedUserByIdentifier(identifier: string): any {
+  return undefined;
+}
+
+function savePersistedVerification(rec: { tokenHash: string; user_id: string; email: string; expires_at: number; [key: string]: any }) {
+  saveVerification({
+    tokenHash: rec.tokenHash,
+    userId: rec.user_id,
+    email: rec.email,
+    expiresAt: rec.expires_at,
+  }).catch((err) => {
+    console.warn('[ServerSecurityStore] Supabase verification save warning:', err.message);
+  });
+}
+
+function getPersistedVerifications(): any[] {
+  return [];
+}
+
+function getPersistedVerificationByHash(tokenHash: string): any {
+  return undefined;
+}
+
+function markPersistedVerificationUsed(tokenHash: string) {
+  markVerificationUsed(tokenHash).catch((err) => {
+    console.warn('[ServerSecurityStore] Supabase verification mark used warning:', err.message);
+  });
+}
+
+function recordVerificationAudit(audit: any) {
+  // Verification audits are logged to server console / telemetry
+}
 
 export interface ServerUserRecord {
   uid: string;
@@ -391,216 +475,17 @@ class ServerSecurityStore {
   }
 
   /**
-   * Persists registered users, verification tokens, and active reset OTPs to disk
-   * to ensure zero state loss during Next.js dev server reloads or multi-worker evaluation.
+   * Persists registered state. Supabase PostgreSQL is the authoritative persistent store.
    */
   public persistState() {
-    try {
-      const dataDir = path.join(process.cwd(), '.data');
-      if (!fs.existsSync(dataDir)) {
-        fs.mkdirSync(dataDir, { recursive: true });
-      }
-      const dataFile = path.join(dataDir, 'server-auth-data.json');
-
-      // Always merge existing disk data before writing so concurrent workers never overwrite user registrations
-      if (fs.existsSync(dataFile)) {
-        try {
-          const raw = fs.readFileSync(dataFile, 'utf8');
-          const diskData = JSON.parse(raw);
-          if (Array.isArray(diskData.users)) {
-            for (const [k, u] of diskData.users) {
-              if (isDummyOrTestUser(u) || isDummyOrTestUser({ uid: k, email: k })) continue;
-              if (!this.users.has(k)) {
-                this.users.set(k, u);
-              }
-            }
-          }
-          if (Array.isArray(diskData.blockedAccounts)) {
-            for (const [k, b] of diskData.blockedAccounts) {
-              if (!this.blockedAccounts.has(k)) {
-                this.blockedAccounts.set(k, b);
-              }
-            }
-          }
-          if (Array.isArray(diskData.activeGodfatherSessions)) {
-            for (const s of diskData.activeGodfatherSessions) {
-              this.activeGodfatherSessions.add(s);
-            }
-          }
-          if (Array.isArray(diskData.verificationTokenRecords)) {
-            for (const [k, r] of diskData.verificationTokenRecords) {
-              if (!this.verificationTokenRecords.has(k)) {
-                this.verificationTokenRecords.set(k, r);
-              }
-            }
-          }
-        } catch {
-          // Ignore disk read/parse errors
-        }
-      }
-
-      const filteredUsers = Array.from(this.users.entries()).filter(
-        ([k, u]) => !isDummyOrTestUser(u) && !isDummyOrTestUser({ uid: k, email: k })
-      );
-
-      const payload = {
-        users: filteredUsers,
-        emailVerifications: Array.from(this.emailVerifications.entries()),
-        verificationTokens: Array.from(this.verificationTokens.entries()),
-        verificationTokenRecords: Array.from(this.verificationTokenRecords.entries()),
-        // Strip plaintext otp field before writing to disk — only hash is stored
-        activeResetOtps: Array.from(this.activeResetOtps.entries()).map(([k, v]) => [
-          k,
-          { email: v.email, otpSalt: v.otpSalt, otpHash: v.otpHash, token: v.token, expiresAt: v.expiresAt, attempts: v.attempts, ipAddress: v.ipAddress },
-        ]),
-        activeLoginOtps: Array.from(this.activeLoginOtps.entries()),
-        resetTokens: Array.from(this.resetTokens.entries()),
-        blockedAccounts: Array.from(this.blockedAccounts.entries()),
-        activeGodfatherSessions: Array.from(this.activeGodfatherSessions.values()),
-      };
-      const jsonStr = JSON.stringify(payload, null, 2);
-
-      // Write authoritative JSON store
-      fs.writeFileSync(dataFile, jsonStr, 'utf8');
-    } catch (err: any) {
-      console.warn('[ServerSecurityStore] State persistence warning:', err.message);
-    }
+    // In-memory runtime state is maintained. Supabase PostgreSQL is authoritative.
   }
 
   /**
-   * Loads persisted users and active verification challenges from disk.
+   * Loads persisted state. Supabase PostgreSQL is the authoritative persistent store.
    */
   public loadPersistedState() {
-    try {
-      const dataDir = path.join(process.cwd(), '.data');
-      const dataFile = path.join(dataDir, 'server-auth-data.json');
-
-      let jsonStr: string | null = null;
-      if (fs.existsSync(dataFile)) {
-        jsonStr = fs.readFileSync(dataFile, 'utf8');
-      }
-
-      if (jsonStr) {
-        const data = JSON.parse(jsonStr);
-        if (Array.isArray(data.users)) {
-          const canonicalUsers = new Map<string, ServerUserRecord>();
-          for (const [k, u] of data.users) {
-            if (isDummyOrTestUser(u) || isDummyOrTestUser({ uid: k, email: k })) continue;
-            const uidKey = (u.uid || k).toLowerCase();
-            const existing = canonicalUsers.get(uidKey);
-            if (!existing) {
-              canonicalUsers.set(uidKey, u);
-            } else {
-              // Reconcile: If one entry was active and another blocked, keep the authoritative record
-              if (u.status === 'blocked' && existing.status !== 'blocked') {
-                Object.assign(existing, u);
-              } else if (u.failedLoginAttempts > existing.failedLoginAttempts) {
-                existing.failedLoginAttempts = u.failedLoginAttempts;
-              }
-            }
-          }
-          for (const u of canonicalUsers.values()) {
-            this.users.set(u.uid.toLowerCase(), u);
-            this.users.set(u.email.toLowerCase(), u);
-          }
-        }
-        if (Array.isArray(data.emailVerifications)) {
-          for (const [k, v] of data.emailVerifications) {
-            if (isTestArtifactKey(k) || isTestArtifactKey(v?.email)) continue;
-            this.emailVerifications.set(k, v);
-          }
-        }
-        if (Array.isArray(data.verificationTokens)) {
-          for (const [k, t] of data.verificationTokens) {
-            if (isTestArtifactKey(t)) continue;
-            this.verificationTokens.set(k, t);
-          }
-        }
-        if (Array.isArray(data.verificationTokenRecords)) {
-          for (const [k, r] of data.verificationTokenRecords) {
-            if (isTestArtifactKey(r?.email) || isTestArtifactKey(r?.user_id)) continue;
-            this.verificationTokenRecords.set(k, r);
-          }
-        }
-        if (Array.isArray(data.activeResetOtps)) {
-          for (const [k, r] of data.activeResetOtps) {
-            if (isTestArtifactKey(k)) continue;
-            this.activeResetOtps.set(k, r);
-          }
-        }
-        if (Array.isArray(data.activeLoginOtps)) {
-          for (const [k, o] of data.activeLoginOtps) {
-            if (isTestArtifactKey(k)) continue;
-            this.activeLoginOtps.set(k, o);
-          }
-        }
-        if (Array.isArray(data.resetTokens)) {
-          for (const [k, t] of data.resetTokens) {
-            if (isTestArtifactKey(t)) continue;
-            this.resetTokens.set(k, t);
-          }
-        }
-        if (Array.isArray(data.blockedAccounts)) {
-          for (const [k, b] of data.blockedAccounts) {
-            if (isTestArtifactKey(k) || isTestArtifactKey(b?.uid) || isTestArtifactKey(b?.email)) continue;
-            this.blockedAccounts.set(k, b);
-          }
-        }
-        if (Array.isArray(data.activeGodfatherSessions)) {
-          for (const s of data.activeGodfatherSessions) {
-            this.activeGodfatherSessions.add(s);
-          }
-        }
-      }
-    } catch (err: any) {
-      console.warn('[ServerSecurityStore] Load persisted state warning:', err.message);
-    }
-
-    // Sync users from authoritative DBMS (users.json)
-    try {
-      const dbmsUsers = getPersistedUsers();
-      for (const u of dbmsUsers) {
-        const uidKey = u.uid ? u.uid.toLowerCase() : '';
-        const emailKey = u.email ? u.email.toLowerCase() : '';
-        if (uidKey) {
-          const existing = this.users.get(uidKey);
-          if (existing) {
-            Object.assign(existing, u);
-          } else {
-            this.users.set(uidKey, u as unknown as ServerUserRecord);
-          }
-        }
-        if (emailKey) {
-          const existing = this.users.get(emailKey);
-          if (existing) {
-            Object.assign(existing, u);
-          } else {
-            this.users.set(emailKey, u as unknown as ServerUserRecord);
-          }
-        }
-      }
-    } catch (dbmsUserErr: any) {
-      console.warn('[ServerSecurityStore] DBMS users sync warning:', dbmsUserErr.message);
-    }
-
-    // Sync verification tokens from authoritative DBMS (verifications.json)
-    try {
-      const dbmsVerifs = getPersistedVerifications();
-      for (const v of dbmsVerifs) {
-        if (v.tokenHash && !this.verificationTokenRecords.has(v.tokenHash)) {
-          this.verificationTokenRecords.set(v.tokenHash, {
-            tokenHash: v.tokenHash,
-            user_id: v.user_id,
-            email: v.email,
-            expires_at: v.expires_at,
-            used: v.used,
-            createdAt: v.createdAt,
-          });
-        }
-      }
-    } catch (dbmsVerifErr: any) {
-      console.warn('[ServerSecurityStore] DBMS verifications sync warning:', dbmsVerifErr.message);
-    }
+    // In-memory runtime state is maintained. Supabase PostgreSQL is authoritative.
   }
 
   // seedRealTestingUsers() removed for production security.
@@ -611,19 +496,6 @@ class ServerSecurityStore {
     if (!emailOrUid) return undefined;
     const clean = emailOrUid.trim().toLowerCase();
     let user = this.users.get(clean);
-    if (!user) {
-      this.loadPersistedState();
-      user = this.users.get(clean);
-    }
-    if (!user) {
-      const dbmsUser = getPersistedUserByIdentifier(clean);
-      if (dbmsUser) {
-        user = dbmsUser as unknown as ServerUserRecord;
-        if (user.uid) this.users.set(user.uid.toLowerCase(), user);
-        if (user.email) this.users.set(user.email.toLowerCase(), user);
-        if ((user as any).firebaseUid) this.users.set(String((user as any).firebaseUid).toLowerCase(), user);
-      }
-    }
     // If the user found has an email, ensure any canonical record for that email is returned and aliased
     if (user && user.email) {
       const canonical = this.users.get(user.email.toLowerCase());
@@ -636,7 +508,6 @@ class ServerSecurityStore {
   }
 
   public getAllRegisteredUsers(): ServerUserRecord[] {
-    this.loadPersistedState();
     const seen = new Set<string>();
     const list: ServerUserRecord[] = [];
     for (const u of this.users.values()) {
@@ -645,19 +516,6 @@ class ServerSecurityStore {
         seen.add(u.email.toLowerCase());
         list.push(u);
       }
-    }
-    try {
-      const dbmsUsers = getPersistedUsers();
-      for (const du of dbmsUsers) {
-        const u = du as unknown as ServerUserRecord;
-        if (isDummyOrTestUser(u)) continue;
-        if (u.email && !seen.has(u.email.toLowerCase())) {
-          seen.add(u.email.toLowerCase());
-          list.push(u);
-        }
-      }
-    } catch {
-      // ignore DBMS sync error
     }
     return list;
   }

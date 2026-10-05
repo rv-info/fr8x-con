@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySignedSessionToken, verifyCsrfToken } from '@/lib/crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
-import { getPersistedUserByIdentifier } from '@/lib/dbms/server-dbms';
 
 export interface AuthenticatedGodfatherOperator {
   sessionId: string;
@@ -238,19 +237,11 @@ export function authenticateUserSession(
     userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
   }
   if (!userRecord) {
-    const dbmsUser = getPersistedUserByIdentifier(uid);
-    if (dbmsUser) {
-      serverSecurityStore.updateUserProfile(dbmsUser.uid || uid, { ...(dbmsUser as any), firebaseUid: uid });
-      userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
-    }
-  }
-  if (!userRecord) {
     const userEmailHeader = req.headers.get('x-fr8x-user-email') || req.headers.get('x-user-email');
     if (userEmailHeader) {
       const cleanEmail = userEmailHeader.trim().toLowerCase();
-      const emailMatch = serverSecurityStore.getUser(cleanEmail) || getPersistedUserByIdentifier(cleanEmail);
+      const emailMatch = serverSecurityStore.getUser(cleanEmail);
       if (emailMatch) {
-        serverSecurityStore.updateUserProfile(emailMatch.uid || uid, { ...(emailMatch as any), firebaseUid: uid });
         userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUser(cleanEmail) || serverSecurityStore.getUserByEmailOrUid(uid);
       }
     }

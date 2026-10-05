@@ -43,3 +43,20 @@ export function createAdminClient() {
 export const createServerSupabaseClient = createClient;
 export const getSupabaseAdminClient = createAdminClient;
 
+/**
+ * Returns the best available server-side Supabase client for database operations.
+ * Prefers admin client with service role key if available, otherwise cookie-based server client,
+ * or direct client.
+ */
+export function getDbClient() {
+  const admin = createAdminClient();
+  if (admin) return admin;
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
+  return createSupabaseClient(url, anonKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+}
+

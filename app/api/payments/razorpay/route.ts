@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
-import { savePersistedTransaction } from '@/lib/dbms/server-dbms';
+import { saveTransaction } from '@/lib/db/transactions';
 
 const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
   trial: { amountINR: 0, title: 'Trial Plan' },
@@ -9,16 +9,11 @@ const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
   enterprise: { amountINR: 9999, title: 'Enterprise Custom Plan' },
 };
 
-/**
- * Razorpay Payment API & Automation Diagnostics
- * Provides gateway metadata, automation status, and test handshake endpoint
- */
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
 
   if (action === 'test-handshake') {
-    // Simulate real-time API handshake with Razorpay servers
     return NextResponse.json({
       success: true,
       status: 'active',
@@ -50,7 +45,6 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Authentication Guard
   const userAuth = authenticateUserSession(req);
   const gfAuth = authenticateGodfatherOperator(req);
   if (!userAuth.authenticated && !gfAuth.authenticated) {
@@ -63,7 +57,6 @@ export async function POST(req: NextRequest) {
     const callerEmail = userAuth.user?.email || gfAuth.operator?.email || '';
     const callerUid = userAuth.user?.uid || gfAuth.operator?.uid || '';
 
-    // Enforce server-side pricing catalog to prevent client price tampering
     let authoritativeAmount = 1500;
     let authoritativeTitle = 'FR8X Plan';
 
@@ -72,7 +65,6 @@ export async function POST(req: NextRequest) {
       authoritativeAmount = PLAN_CATALOG[normalizedPlan].amountINR;
       authoritativeTitle = PLAN_CATALOG[normalizedPlan].title;
     } else if (typeof body.amount === 'number' && gfAuth.authenticated) {
-      // Only Godfather operators can specify arbitrary custom transaction amounts
       authoritativeAmount = body.amount;
       authoritativeTitle = body.itemTitle || 'Custom Payment';
     } else if (planId && !PLAN_CATALOG[normalizedPlan]) {
@@ -85,7 +77,6 @@ export async function POST(req: NextRequest) {
     const keyId = process.env.RAZORPAY_KEY_ID;
     const keySecret = process.env.RAZORPAY_KEY_SECRET;
 
-    // Live Razorpay order creation when credentials are configured
     if (keyId && keySecret) {
       try {
         const authHeader = 'Basic ' + Buffer.from(`${keyId}:${keySecret}`).toString('base64');
@@ -96,7 +87,7 @@ export async function POST(req: NextRequest) {
             Authorization: authHeader,
           },
           body: JSON.stringify({
-            amount: Math.round(authoritativeAmount * 100), // amount in paisa
+            amount: Math.round(authoritativeAmount * 100),
             currency: currency || 'INR',
             receipt: `rcpt_${Date.now().toString(36)}`,
             notes: {
@@ -111,30 +102,20 @@ export async function POST(req: NextRequest) {
 
         if (rzpRes.ok) {
           const rzpOrder = await rzpRes.json();
-          // Record live created order in authoritative DBMS
-          try {
-            savePersistedTransaction({
-              id: `tx_${rzpOrder.id}`,
-              orderId: rzpOrder.id,
-              userId: callerUid,
-              userEmail: callerEmail,
-              amount: authoritativeAmount,
-              currency: rzpOrder.currency || currency,
-              planId: normalizedPlan,
-              itemType,
-              itemTitle: authoritativeTitle,
-              status: 'created',
-              gateway: 'Razorpay',
-              metadata: {
-                live: true,
-                keyId,
-                status: rzpOrder.status,
-              },
-              createdAt: new Date().toISOString(),
-            });
-          } catch (txErr: any) {
-            console.error('[Razorpay API] Failed to persist live order in DBMS:', txErr.message);
-          }
+          await saveTransaction({
+            id: `tx_${rzpOrder.id}`,
+            orderId: rzpOrder.id,
+            userId: callerUid,
+            userEmail: callerEmail,
+            amount: authoritativeAmount,
+            currency: rzpOrder.currency || currency,
+            planId: normalizedPlan,
+            itemType,
+            itemTitle: authoritativeTitle,
+            status: 'created',
+            gateway: 'Razorpay',
+            raw_payload: { live: true, keyId, status: rzpOrder.status },
+          });
 
           return NextResponse.json({
             success: true,
@@ -149,41 +130,30 @@ export async function POST(req: NextRequest) {
             status: rzpOrder.status || 'created',
             timestamp: new Date().toISOString(),
           });
-        } else {
-          console.warn('[Razorpay API] Live order creation error, falling back to sandbox mode:', await rzpRes.text());
         }
       } catch (rzpErr: any) {
-        console.warn('[Razorpay API] Network error during order creation:', rzpErr.message);
+        console.warn('[Razorpay API] Network error during live order creation:', rzpErr.message);
       }
     }
 
-    // Deterministic simulated order reference for sandbox/testing without keys
     const orderId = `order_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
     const paymentReference = `RZP-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-    // Record sandbox created order in authoritative DBMS
-    try {
-      savePersistedTransaction({
-        id: `tx_${orderId}`,
-        orderId,
-        userId: callerUid,
-        userEmail: callerEmail,
-        amount: authoritativeAmount,
-        currency,
-        planId: normalizedPlan,
-        itemType,
-        itemTitle: authoritativeTitle,
-        status: 'created',
-        gateway: 'Razorpay',
-        metadata: {
-          live: false,
-          paymentReference,
-        },
-        createdAt: new Date().toISOString(),
-      });
-    } catch (txErr: any) {
-      console.error('[Razorpay API] Failed to persist sandbox order in DBMS:', txErr.message);
-    }
+    // Record order in Supabase PostgreSQL
+    await saveTransaction({
+      id: `tx_${orderId}`,
+      orderId,
+      userId: callerUid,
+      userEmail: callerEmail,
+      amount: authoritativeAmount,
+      currency,
+      planId: normalizedPlan,
+      itemType,
+      itemTitle: authoritativeTitle,
+      status: 'created',
+      gateway: 'Razorpay',
+      raw_payload: { live: false, paymentReference },
+    });
 
     return NextResponse.json({
       success: true,
@@ -198,6 +168,7 @@ export async function POST(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {
+    console.error('[API/payments/razorpay] Error:', err);
     return NextResponse.json(
       { success: false, error: err?.message || 'Invalid order request' },
       { status: 400 }

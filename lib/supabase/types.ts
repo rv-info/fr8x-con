@@ -58,6 +58,46 @@ export interface Database {
         Insert: AuditLogInsert;
         Update: AuditLogUpdate;
       };
+      jobs: {
+        Row: JobRow;
+        Insert: JobInsert;
+        Update: JobUpdate;
+      };
+      cases: {
+        Row: CaseRow;
+        Insert: CaseInsert;
+        Update: CaseUpdate;
+      };
+      transactions: {
+        Row: TransactionRow;
+        Insert: TransactionInsert;
+        Update: TransactionUpdate;
+      };
+      reviews: {
+        Row: ReviewRow;
+        Insert: ReviewInsert;
+        Update: ReviewUpdate;
+      };
+      events: {
+        Row: EventRow;
+        Insert: EventInsert;
+        Update: EventUpdate;
+      };
+      intents: {
+        Row: IntentRow;
+        Insert: IntentInsert;
+        Update: IntentUpdate;
+      };
+      presence: {
+        Row: PresenceRow;
+        Insert: PresenceInsert;
+        Update: PresenceUpdate;
+      };
+      verifications: {
+        Row: VerificationRow;
+        Insert: VerificationInsert;
+        Update: VerificationUpdate;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -67,6 +107,7 @@ export interface Database {
 
 export interface ProfileRow {
   id: string; // UUID references auth.users(id)
+  uid?: string | null; // Legacy user identifier e.g. u-rajat
   email: string;
   first_name: string | null;
   last_name: string | null;
@@ -285,3 +326,117 @@ export type AuditLogInsert = Partial<AuditLogRow> & {
   entity: string;
 };
 export type AuditLogUpdate = Partial<AuditLogRow>;
+
+export interface JobRow {
+  id: string;
+  title: string;
+  company_id: string | null;
+  company_name: string | null;
+  location: string | null;
+  job_type: string | null;
+  description: string | null;
+  requirements: string | null;
+  salary_range: string | null;
+  status: string | null;
+  created_at: string;
+  updated_at: string;
+}
+export type JobInsert = Partial<JobRow> & { id: string; title: string };
+export type JobUpdate = Partial<JobRow>;
+
+export interface CaseRow {
+  id: string;
+  title: string;
+  description: string | null;
+  user_id: string | null;
+  company_id: string | null;
+  category: string | null;
+  priority: string | null;
+  status: string | null;
+  metadata: Json | null;
+  created_at: string;
+  updated_at: string;
+}
+export type CaseInsert = Partial<CaseRow> & { id: string; title: string };
+export type CaseUpdate = Partial<CaseRow>;
+
+export interface TransactionRow {
+  id: string;
+  order_id: string;
+  payment_id: string | null;
+  user_id: string | null;
+  user_email: string | null;
+  amount: number;
+  currency: string | null;
+  plan_id: string | null;
+  item_type: string | null;
+  item_title: string | null;
+  status: string | null;
+  gateway: string | null;
+  raw_payload: Json | null;
+  created_at: string;
+  updated_at: string;
+}
+export type TransactionInsert = Partial<TransactionRow> & { id: string; order_id: string; amount: number };
+export type TransactionUpdate = Partial<TransactionRow>;
+
+export interface ReviewRow {
+  id: string;
+  target_company_id: string;
+  reviewer_id: string | null;
+  reviewer_name: string | null;
+  reviewer_company: string | null;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+export type ReviewInsert = Partial<ReviewRow> & { id: string; target_company_id: string; rating: number };
+export type ReviewUpdate = Partial<ReviewRow>;
+
+export interface EventRow {
+  id: string;
+  event_type: string;
+  user_id: string | null;
+  session_id: string | null;
+  payload: Json | null;
+  timestamp: string;
+}
+export type EventInsert = Partial<EventRow> & { id: string; event_type: string };
+export type EventUpdate = Partial<EventRow>;
+
+export interface IntentRow {
+  user_id: string;
+  recent_searched_ports: Json | null;
+  viewed_rates: Json | null;
+  active_auction_routes: Json | null;
+  saved_trade_lanes: Json | null;
+  followed_commodities: Json | null;
+  carrier_searches: Json | null;
+  last_active_at: string;
+  expires_at: string | null;
+}
+export type IntentInsert = Partial<IntentRow> & { user_id: string };
+export type IntentUpdate = Partial<IntentRow>;
+
+export interface PresenceRow {
+  user_id: string;
+  online: boolean;
+  last_seen: string;
+  active_device: Json | null;
+  status: string;
+  updated_at: string;
+}
+export type PresenceInsert = Partial<PresenceRow> & { user_id: string };
+export type PresenceUpdate = Partial<PresenceRow>;
+
+export interface VerificationRow {
+  id: string;
+  token_hash: string;
+  user_id: string;
+  email: string;
+  expires_at: string;
+  used: boolean;
+  created_at: string;
+}
+export type VerificationInsert = Partial<VerificationRow> & { token_hash: string; user_id: string; email: string; expires_at: string };
+export type VerificationUpdate = Partial<VerificationRow>;

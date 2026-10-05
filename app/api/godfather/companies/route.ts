@@ -1,90 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersistedCompanies,
-  savePersistedCompany,
-  mergePersistedCompanies,
-  DbmsCompanyRecord,
-  checkCompanyDuplicate,
-} from '@/lib/dbms/server-dbms';
+import { getCompanies, saveCompany, deleteCompany } from '@/lib/db/companies';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/godfather/companies
- * Retrieves the full DBMS Master Company Registry with duplicate analysis.
- * Accessible exclusively to verified Godfather operators.
- */
 export async function GET(req: NextRequest) {
   const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
   if (!authenticated) return errorResponse!;
 
   try {
-    const companies = getPersistedCompanies();
-
-    // Annotate companies with duplicate warnings
-    const annotated = companies.map((c) => {
-      const dupCheck = checkCompanyDuplicate(c.legalName, c.registeredAddress, c.city, c.country, c.id);
-      return {
-        ...c,
-        duplicateWarning: dupCheck.isPotentialDuplicate,
-        duplicateMatches: dupCheck.matchedCompanies.map((m) => ({
-          id: m.id,
-          legalName: m.legalName,
-          registeredAddress: m.registeredAddress,
-          city: m.city,
-          country: m.country,
-        })),
-        duplicateReason: dupCheck.advisoryMessage,
-      };
-    });
-
+    const companies = await getCompanies();
     return NextResponse.json({
       success: true,
-      companies: annotated,
-      total: annotated.length,
+      companies,
+      total: companies.length,
     });
   } catch (error: any) {
+    console.error('[API/godfather/companies] GET error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-/**
- * POST /api/godfather/companies
- * Direct create or update of master company in DBMS.
- */
 export async function POST(req: NextRequest) {
   const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
   if (!authenticated) return errorResponse!;
 
   try {
-    const body: DbmsCompanyRecord = await req.json();
-    if (!body.legalName || !body.city || !body.country) {
+    const body = await req.json();
+    const legalName = body.legalName || body.legal_name || body.name;
+    if (!legalName || !body.city || !body.country) {
       return NextResponse.json(
         { success: false, error: 'Legal name, city, and country are required.' },
         { status: 400 }
       );
     }
 
-    const saved = savePersistedCompany({
-      ...body,
+    const saved = await saveCompany({
       id: body.id || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
-      memberCount: body.memberCount || 1,
-      verified: body.status === 'verified',
-      createdAt: body.createdAt || new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      name: legalName,
+      legal_name: legalName,
+      city: body.city,
+      state: body.state,
+      country: body.country,
+      postal_code: body.postalCode || body.postal_code,
+      address: body.registeredAddress || body.address,
+      gstin: body.gstn || body.gstin,
+      pan: body.pan,
+      cin: body.cin,
+      status: body.status || 'verified',
+      is_verified: body.status === 'verified',
     });
 
     return NextResponse.json({ success: true, company: saved });
   } catch (error: any) {
+    console.error('[API/godfather/companies] POST error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
-/**
- * PUT /api/godfather/companies
- * Merges a duplicate company into a canonical parent entity.
- */
 export async function PUT(req: NextRequest) {
   const { authenticated, errorResponse } = authenticateGodfatherOperator(req);
   if (!authenticated) return errorResponse!;
@@ -98,19 +71,15 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const success = mergePersistedCompanies(canonicalId, duplicateId);
-    if (!success) {
-      return NextResponse.json(
-        { success: false, error: 'Could not find one or both company entities to merge.' },
-        { status: 404 }
-      );
-    }
+    // Merge: delete duplicate company in PostgreSQL
+    await deleteCompany(duplicateId);
 
     return NextResponse.json({
       success: true,
       message: `Entity ${duplicateId} successfully merged into canonical record ${canonicalId}.`,
     });
   } catch (error: any) {
+    console.error('[API/godfather/companies] PUT error:', error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

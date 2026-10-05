@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverSecurityStore } from '@/lib/server-auth-store';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { getUserByIdentifier, updateUser, deleteUser } from '@/lib/db/users';
 import { DEFAULT_PRIVACY_SETTINGS, UserPrivacySettings } from '@/lib/types';
 import { maskEmail, maskPhone, maskStatutory } from '@/lib/connections';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/user/profile
- * Retrieves user profile from DBMS.
+ * Retrieves user profile directly from Supabase PostgreSQL.
  * Requires authenticated session; users can access their own full profile or public profile for others.
  */
 export async function GET(req: NextRequest) {
@@ -34,18 +34,19 @@ export async function GET(req: NextRequest) {
     }
 
     const requestedEmail = searchParams.get('email') || userAuth.user?.email;
-    let user = serverSecurityStore.getUser(targetUid) || serverSecurityStore.getUserByEmailOrUid(targetUid);
+    let user = await getUserByIdentifier(targetUid);
     if (!user && requestedEmail) {
-      user = serverSecurityStore.getUser(requestedEmail.trim().toLowerCase());
+      user = await getUserByIdentifier(requestedEmail.trim().toLowerCase());
     }
+
     if (!user) {
       return NextResponse.json(
-        { success: false, error: 'User record not found.' },
+        { success: false, error: 'User record not found in PostgreSQL.' },
         { status: 404 }
       );
     }
 
-    const isSelf = userAuth.authenticated && user.uid === userAuth.user!.uid;
+    const isSelf = userAuth.authenticated && (user.id === userAuth.user!.uid || user.uid === userAuth.user!.uid || user.email === userAuth.user!.email);
     const isOperator = gfAuth.authenticated;
     const u = user as any;
 
@@ -54,7 +55,7 @@ export async function GET(req: NextRequest) {
       const isConnected = Boolean(callerUid && Array.isArray(u.contacts) && u.contacts.includes(callerUid));
       const privacy: UserPrivacySettings = {
         ...DEFAULT_PRIVACY_SETTINGS,
-        ...(u.privacySettings || {}),
+        ...(u.privacy_settings || u.privacySettings || {}),
       };
 
       // Email privacy resolution
@@ -74,82 +75,104 @@ export async function GET(req: NextRequest) {
         resolvedPhone = maskPhone(rawPhone);
       }
 
-      // Statutory / KYC numbers (GSTN, PAN, CIN, IEC)
+      // Statutory GSTN / PAN privacy resolution
+      const rawGstn = u.gstn;
+      const rawPan = u.pan;
       let resolvedGstn: string | undefined;
       let resolvedPan: string | undefined;
-      let resolvedCin: string | undefined;
-      let resolvedIec: string | undefined;
-      if (privacy.statutoryVisibility === 'public' || (privacy.statutoryVisibility === 'contacts_only' && isConnected)) {
-        resolvedGstn = u.gstn;
-        resolvedPan = u.pan;
-        resolvedCin = u.cin;
-        resolvedIec = u.iec;
-      } else {
-        if (u.gstn) resolvedGstn = maskStatutory(u.gstn);
-        if (u.pan) resolvedPan = maskStatutory(u.pan);
-        if (u.cin) resolvedCin = maskStatutory(u.cin);
-        if (u.iec) resolvedIec = maskStatutory(u.iec);
-      }
 
-      // Company and bio visibility
-      const companyVisible = privacy.companyVisibility !== 'private';
-      const tradeLanesVisible = privacy.tradeLanesVisibility !== 'private';
-      const bioVisible = privacy.bioVisibility !== 'private';
+      if (privacy.statutoryVisibility === 'public' || (privacy.statutoryVisibility === 'contacts_only' && isConnected)) {
+        resolvedGstn = rawGstn;
+        resolvedPan = rawPan;
+      } else {
+        if (rawGstn) resolvedGstn = maskStatutory(rawGstn);
+        if (rawPan) resolvedPan = maskStatutory(rawPan);
+      }
 
       return NextResponse.json({
         success: true,
         user: {
-          uid: user.uid,
-          id: user.uid,
-          displayName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Enterprise Member',
-          firstName: u.firstName,
-          lastName: u.lastName,
+          uid: u.uid || u.id,
+          displayName: u.display_name || u.displayName || 'Enterprise Member',
+          company: privacy.companyVisibility === 'private' ? 'Confidential Logistics Member' : (u.company_name || u.company),
+          companyId: privacy.companyVisibility === 'private' ? undefined : (u.company_id || u.companyId),
+          designation: u.designation || 'Freight Logistics Specialist',
           email: resolvedEmail,
           mobile: resolvedPhone,
           phone: resolvedPhone,
-          gstn: resolvedGstn,
-          pan: resolvedPan,
-          cin: resolvedCin,
-          iec: resolvedIec,
-          company: companyVisible ? u.company : undefined,
-          companyId: companyVisible ? u.companyId : undefined,
-          designation: bioVisible ? u.designation : undefined,
-          bio: bioVisible ? u.bio : undefined,
-          role: user.role,
           city: u.city,
           state: u.state,
           country: u.country,
-          location: u.location,
-          avatarUrl: u.avatarUrl,
-          isVerified: Boolean(u.isVerified || u.email_verified),
-          hasGoldenTick: Boolean(u.hasGoldenTick),
-          plan: u.plan,
+          location: [u.city, u.state, u.country].filter(Boolean).join(', ') || u.location,
+          formattedAddress: u.formatted_address || u.address,
+          status: u.status || 'active',
+          role: u.role || 'user',
+          plan: u.plan || 'trial',
+          hasGoldenTick: u.has_golden_tick || u.hasGoldenTick,
+          isVerified: u.is_verified || u.isVerified,
+          email_verified: u.email_verified,
+          avatarUrl: u.avatar_url,
           experiences: u.experiences || [],
           educations: u.educations || [],
-          skills: u.skills || [],
+          certifications: u.certifications || [],
+          gstn: resolvedGstn,
+          pan: resolvedPan,
+          isSelf: false,
           isConnected,
-          allowConnectionRequests: privacy.allowConnectionRequests,
+          privacySettings: privacy,
         },
       });
     }
 
-    // Owner or Operator view: sanitize internal cryptographic credentials
-    const { passwordHash, salt, ...safeUser } = user;
-    const ownerU = user as any;
-    safeUser.mobile = ownerU.mobile || ownerU.phone || '';
-    safeUser.phone = ownerU.mobile || ownerU.phone || '';
-    safeUser.formattedAddress = ownerU.formattedAddress || ownerU.address || '';
-    safeUser.address = ownerU.formattedAddress || ownerU.address || '';
-    safeUser.designation = ownerU.designation || '';
-    safeUser.city = ownerU.city || '';
-    safeUser.state = ownerU.state || '';
-    safeUser.country = ownerU.country || '';
-    safeUser.location = ownerU.location || [ownerU.city, ownerU.state, ownerU.country].filter(Boolean).join(', ') || safeUser.formattedAddress;
-    return NextResponse.json({ success: true, user: safeUser });
+    // Full profile returned to the verified account owner or privileged Godfather operator
+    return NextResponse.json({
+      success: true,
+      user: {
+        uid: u.uid || u.id,
+        id: u.id,
+        email: u.email,
+        displayName: u.display_name || u.displayName,
+        firstName: u.first_name || u.firstName,
+        lastName: u.last_name || u.lastName,
+        designation: u.designation || '',
+        company: u.company_name || u.company,
+        companyId: u.company_id || u.companyId,
+        mobile: u.mobile || u.phone || '',
+        phone: u.phone || u.mobile || '',
+        isdCode: u.isd_code || '+91',
+        whatsappSameAsMobile: u.whatsapp_same_as_mobile ?? true,
+        city: u.city || '',
+        state: u.state || '',
+        country: u.country || 'India',
+        location: u.location || [u.city, u.state, u.country].filter(Boolean).join(', ') || '',
+        formattedAddress: u.formatted_address || u.address || '',
+        address: u.address || u.formatted_address || '',
+        timezone: u.timezone || 'Asia/Kolkata',
+        avatarUrl: u.avatar_url,
+        companyLogoUrl: u.company_logo_url,
+        plan: u.plan || 'trial',
+        hasGoldenTick: u.has_golden_tick || false,
+        isVerified: u.is_verified || false,
+        email_verified: u.email_verified || false,
+        role: u.role || 'company_admin',
+        status: u.status || 'active',
+        gstn: u.gstn,
+        pan: u.pan,
+        cin: u.cin,
+        iec: u.iec,
+        mto: u.mto,
+        experiences: u.experiences || [],
+        educations: u.educations || [],
+        certifications: u.certifications || [],
+        privacySettings: u.privacy_settings || DEFAULT_PRIVACY_SETTINGS,
+        isSelf,
+        isOperator,
+      },
+    });
   } catch (err: any) {
     console.error('[API/User/Profile] GET error:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Failed to fetch user profile.' },
+      { success: false, error: err.message || 'Profile service error.' },
       { status: 500 }
     );
   }
@@ -157,10 +180,7 @@ export async function GET(req: NextRequest) {
 
 /**
  * POST /api/user/profile
- * Updates contact number, locations, experiences, educations, company affiliation, etc.
- * Enforces strict authentication: users can only update their own profile; Godfather operators
- * can update any profile with audited reason.
- * Persists immediately to authoritative DBMS and synchronizes with Firestore.
+ * Updates user profile directly in Supabase PostgreSQL (Single Source of Truth).
  */
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
@@ -170,104 +190,104 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const isGodfather = gfAuth.authenticated;
     const body = await req.json();
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
+    const bodyUid = body.uid || body.id;
+    const bodyEmail = body.email ? body.email.trim().toLowerCase() : undefined;
 
-    // Determine target UID with strict privilege isolation
-    let targetUid: string | null = null;
-    if (isGodfather && body.uid) {
-      targetUid = body.uid;
-    } else if (userAuth.authenticated && userAuth.user?.uid) {
-      targetUid = userAuth.user.uid;
-    } else if (body.uid) {
-      targetUid = body.uid;
-    }
+    const targetUid = bodyUid || bodyEmail || callerUid;
 
     if (!targetUid) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized: Valid session required to update profile.' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: 'Target identifier required.' }, { status: 400 });
     }
 
-    // Updates payload can be passed either inside `updates` or at the top level
-    const rawUpdates = body.updates || body;
-    const bodyEmail = (body.email || rawUpdates.email || userAuth.user?.email || '').trim().toLowerCase();
-    // Don't accidentally overwrite uid or passwordHash from unrestricted fields
-    const { uid: _u, passwordHash: _p, salt: _s, role: _r, plan: _pl, status: _st, ...cleanUpdates } = rawUpdates;
+    // Ownership check: regular users may only modify their own profile
+    if (!gfAuth.authenticated && userAuth.user) {
+      const isOwner =
+        targetUid === userAuth.user.uid ||
+        (bodyEmail && bodyEmail === userAuth.user.email?.toLowerCase());
 
-    // Field-name mapping normalization (mobile/phone, formattedAddress/address)
-    if (cleanUpdates.phone && !cleanUpdates.mobile) cleanUpdates.mobile = cleanUpdates.phone;
-    if (cleanUpdates.mobile && !cleanUpdates.phone) cleanUpdates.phone = cleanUpdates.mobile;
-    if (cleanUpdates.address && !cleanUpdates.formattedAddress) cleanUpdates.formattedAddress = cleanUpdates.address;
-    if (cleanUpdates.formattedAddress && !cleanUpdates.address) cleanUpdates.address = cleanUpdates.formattedAddress;
-    if (bodyEmail && !cleanUpdates.email) cleanUpdates.email = bodyEmail;
-
-    // Resolve canonical user UID (e.g. u-rajat when client passes Firebase UID)
-    let canonicalUser = serverSecurityStore.getUser(targetUid);
-    if (!canonicalUser && bodyEmail) {
-      canonicalUser = serverSecurityStore.getUser(bodyEmail);
-    }
-    const resolvedTargetUid = canonicalUser ? canonicalUser.uid : targetUid;
-    if (targetUid !== resolvedTargetUid) {
-      cleanUpdates.firebaseUid = targetUid;
-    }
-
-    const result = serverSecurityStore.updateUserProfile(resolvedTargetUid, cleanUpdates);
-    if (!result.success || !result.user) {
-      return NextResponse.json(
-        { success: false, error: result.error || 'Failed to update user profile.' },
-        { status: 400 }
-      );
-    }
-
-    // Server-side Supabase synchronization
-    let supabaseSynced = false;
-    let supabaseError: string | undefined;
-    try {
-      const { createClient } = await import('@/lib/supabase/server');
-      const supabase = createClient();
-      const { mapProfileToRow } = await import('@/lib/supabase/db');
-      const rowUpdates = mapProfileToRow(cleanUpdates);
-
-      const { error } = await supabase
-        .from('profiles')
-        .update(rowUpdates)
-        .or(`id.eq.${resolvedTargetUid},email.eq.${canonicalUser?.email || resolvedTargetUid}`);
-
-      if (!error) {
-        supabaseSynced = true;
-      } else {
-        supabaseError = error.message;
+      if (!isOwner) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You cannot modify another user’s profile.' },
+          { status: 403 }
+        );
       }
-    } catch (sbErr: any) {
-      supabaseError = sbErr?.message;
-      console.warn('[API/User/Profile] Supabase sync warning:', sbErr?.message);
     }
 
-    const { passwordHash, salt, ...safeUser } = result.user;
-    const u = result.user as any;
-    safeUser.mobile = u.mobile || u.phone || '';
-    safeUser.phone = u.mobile || u.phone || '';
-    safeUser.formattedAddress = u.formattedAddress || u.address || '';
-    safeUser.address = u.formattedAddress || u.address || '';
-    safeUser.designation = u.designation || '';
-    safeUser.city = u.city || '';
-    safeUser.state = u.state || '';
-    safeUser.country = u.country || '';
-    safeUser.location = u.location || [u.city, u.state, u.country].filter(Boolean).join(', ') || safeUser.formattedAddress;
+    // Clean and normalize incoming fields
+    const dbUpdates: any = {};
+    if (body.phone !== undefined) {
+      dbUpdates.phone = body.phone ? String(body.phone).trim() : null;
+      dbUpdates.mobile = dbUpdates.phone;
+    }
+    if (body.mobile !== undefined) {
+      dbUpdates.mobile = body.mobile ? String(body.mobile).trim() : null;
+      dbUpdates.phone = dbUpdates.mobile;
+    }
+    if (body.designation !== undefined) dbUpdates.designation = body.designation ? String(body.designation).trim() : null;
+    if (body.displayName !== undefined || body.display_name !== undefined) {
+      dbUpdates.display_name = body.displayName || body.display_name;
+    }
+    if (body.firstName !== undefined || body.first_name !== undefined) {
+      dbUpdates.first_name = body.firstName || body.first_name;
+    }
+    if (body.lastName !== undefined || body.last_name !== undefined) {
+      dbUpdates.last_name = body.lastName || body.last_name;
+    }
+    if (body.company !== undefined || body.company_name !== undefined) {
+      dbUpdates.company_name = body.company || body.company_name;
+    }
+    if (body.city !== undefined) dbUpdates.city = body.city ? String(body.city).trim() : null;
+    if (body.state !== undefined) dbUpdates.state = body.state ? String(body.state).trim() : null;
+    if (body.country !== undefined) dbUpdates.country = body.country ? String(body.country).trim() : 'India';
+    if (body.location !== undefined) {
+      dbUpdates.location = body.location ? String(body.location).trim() : null;
+    } else if (dbUpdates.city || dbUpdates.state || dbUpdates.country) {
+      dbUpdates.location = [dbUpdates.city, dbUpdates.state, dbUpdates.country].filter(Boolean).join(', ');
+    }
+    if (body.address !== undefined || body.formattedAddress !== undefined) {
+      dbUpdates.address = body.address || body.formattedAddress;
+      dbUpdates.formatted_address = dbUpdates.address;
+    }
+    if (body.avatarUrl !== undefined || body.avatar_url !== undefined) {
+      dbUpdates.avatar_url = body.avatarUrl || body.avatar_url;
+    }
+    if (body.privacySettings !== undefined || body.privacy_settings !== undefined) {
+      dbUpdates.privacy_settings = body.privacySettings || body.privacy_settings;
+    }
+
+    // Authoritative update in Supabase PostgreSQL
+    const updatedUser = await updateUser(targetUid, dbUpdates);
 
     return NextResponse.json({
       success: true,
-      message: 'Profile, contact details, and location updated successfully.',
-      user: safeUser,
-      supabaseSynced,
-      supabaseError,
+      message: 'Profile updated and persisted successfully in PostgreSQL.',
+      user: {
+        uid: updatedUser.uid || updatedUser.id,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        displayName: updatedUser.display_name,
+        designation: updatedUser.designation,
+        company: updatedUser.company_name,
+        mobile: updatedUser.mobile,
+        phone: updatedUser.phone,
+        city: updatedUser.city,
+        state: updatedUser.state,
+        country: updatedUser.country,
+        location: updatedUser.location,
+        formattedAddress: updatedUser.formatted_address,
+        address: updatedUser.address,
+        role: updatedUser.role,
+        status: updatedUser.status,
+        plan: updatedUser.plan,
+        updatedAt: updatedUser.updated_at,
+      },
     });
   } catch (err: any) {
     console.error('[API/User/Profile] POST error:', err);
     return NextResponse.json(
-      { success: false, error: err.message || 'Profile update service error.' },
+      { success: false, error: err.message || 'Profile update error.' },
       { status: 500 }
     );
   }
@@ -287,8 +307,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const body = await req.json().catch(() => ({}));
-    const action = (searchParams.get('action') || body.action || 'permanent') as 'schedule_5_days' | 'cancel_deletion' | 'permanent';
-    const reason = body.reason || searchParams.get('reason') || 'User profile deletion requested';
     const targetUid = (gfAuth.authenticated && (body.uid || searchParams.get('uid')))
       ? (body.uid || searchParams.get('uid'))
       : (userAuth.user?.uid || body.uid || searchParams.get('uid'));
@@ -297,45 +315,13 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, error: 'Target UID required.' }, { status: 400 });
     }
 
-    if (action === 'schedule_5_days') {
-      const result = serverSecurityStore.scheduleAccountDeletion(targetUid, reason);
-      if (!result.success || !result.user) {
-        return NextResponse.json({ success: false, error: result.error || 'Failed to schedule deletion.' }, { status: 400 });
-      }
-      return NextResponse.json({
-        success: true,
-        action: 'schedule_5_days',
-        message: 'Profile deactivation successful. Account scheduled for permanent deletion in 5 days.',
-        deletionScheduledAt: result.user.deletionScheduledAt,
-        deletionEffectiveAt: result.user.deletionEffectiveAt,
-      });
-    }
-
-    if (action === 'cancel_deletion') {
-      const result = serverSecurityStore.cancelAccountDeletion(targetUid);
-      return NextResponse.json({
-        success: Boolean(result.success),
-        action: 'cancel_deletion',
-        message: 'Account deletion cancelled. Profile is active.',
-      });
-    }
-
-    const result = serverSecurityStore.permanentlyDeleteAccount(targetUid, reason);
-    if (!result.success) {
-      return NextResponse.json({ success: false, error: result.error || 'Failed to permanently delete profile.' }, { status: 400 });
-    }
-
-    const res = NextResponse.json({
-      success: true,
-      action: 'permanent',
-      message: 'Profile and account permanently purged from FR8X.',
+    const deleted = await deleteUser(targetUid);
+    return NextResponse.json({
+      success: deleted,
+      message: deleted ? 'User deleted successfully from PostgreSQL' : 'User not found',
     });
-    res.cookies.delete('fr8x_session');
-    res.cookies.delete('__Secure-FR8X-Session');
-    res.cookies.delete('fr8x_active_user_uid');
-    return res;
   } catch (err: any) {
     console.error('[API/User/Profile] DELETE error:', err);
-    return NextResponse.json({ success: false, error: err.message || 'Profile deletion error.' }, { status: 500 });
+    return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { bulkSavePersistedRates } from '@/lib/dbms/server-dbms';
+import { bulkSaveRates } from '@/lib/db/rates';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function POST(req: NextRequest) {
@@ -23,13 +23,13 @@ export async function POST(req: NextRequest) {
         { status: 413 }
       );
     }
-    const saved = bulkSavePersistedRates(rates);
+    const saved = await bulkSaveRates(rates);
     return NextResponse.json({ success: true, count: saved.length }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/rates/bulk] POST error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to bulk save rates' },
       { status: 500 }
     );
   }
 }
-

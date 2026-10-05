@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
 import { serverSecurityStore } from '@/lib/server-auth-store';
-import { savePersistedTransaction } from '@/lib/dbms/server-dbms';
+import { saveTransaction } from '@/lib/db/transactions';
+import { updateUser } from '@/lib/db/users';
 import { EmailService } from '@/lib/email-service';
 
 /**
@@ -82,31 +83,31 @@ export async function POST(req: NextRequest) {
 
     console.log(`[Razorpay Webhook] Received event=${event}, paymentId=${paymentId}, amount=${amount}, planId=${planId}`);
 
-    // 1. Authoritative Financial Transaction Persistence in Server DBMS
+    // 1. Authoritative Financial Transaction Persistence in Supabase PostgreSQL
     try {
-      savePersistedTransaction({
+      await saveTransaction({
         id: `tx_${paymentId}`,
-        orderId: orderId || undefined,
-        paymentId,
-        userId: userId || undefined,
-        userEmail: userEmail || undefined,
+        order_id: orderId || paymentId,
+        payment_id: paymentId,
+        user_id: userId || undefined,
+        user_email: userEmail || undefined,
         amount,
         currency,
-        planId: planId || undefined,
-        itemType,
-        itemTitle,
+        plan_id: planId || undefined,
+        item_type: itemType,
+        item_title: itemTitle,
         status: status === 'failed' ? 'failed' : 'captured',
         gateway: 'Razorpay',
-        metadata: {
+        raw_payload: {
           eventId: payload.id,
           event,
           signatureVerified: Boolean(isSignatureValid),
           notes,
         },
-        createdAt: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       });
     } catch (dbmsErr: any) {
-      console.error('[Razorpay Webhook] Failed to persist transaction in DBMS:', dbmsErr.message);
+      console.error('[Razorpay Webhook] Failed to persist transaction in Supabase PostgreSQL:', dbmsErr.message);
     }
 
     // 2. Automatic User Plan Entitlement Provisioning (Finding PAY-02)

@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getPersistedAuctions,
-  savePersistedAuction,
-  cancelPersistedAuction,
-} from '@/lib/dbms/server-dbms';
+import { getAuctions, saveAuction, cancelAuction } from '@/lib/db/auctions';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
-import { Auction } from '@/lib/types';
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
@@ -17,11 +12,11 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const rawAuctions = getPersistedAuctions();
+    const rawAuctions = await getAuctions();
 
     // Deduplicate identical auctions to prevent duplicate records
     const seenSignatures = new Set<string>();
-    const deduplicated: Auction[] = [];
+    const deduplicated = [];
 
     for (const a of rawAuctions) {
       if (!a || !a.id) continue;
@@ -30,7 +25,8 @@ export async function GET(req: NextRequest) {
         continue;
       }
 
-      const sig = `${a.creatorUid || ''}_${a.shipment?.pol || ''}_${a.shipment?.pod || ''}_${a.shipment?.commodity || ''}_${a.containers?.[0]?.equipmentType || ''}_${a.startDate || ''}`;
+      const aItem: any = a;
+      const sig = `${aItem.creator_id || aItem.creator_uid || ''}_${aItem.origin_port || aItem.shipment?.pol || ''}_${aItem.destination_port || aItem.shipment?.pod || ''}_${aItem.starts_at || aItem.start_date || ''}`;
       if (seenSignatures.has(sig)) {
         continue;
       }
@@ -40,6 +36,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, auctions: deduplicated }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/auctions] GET error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to fetch reverse auctions' },
       { status: 500 }
@@ -86,16 +83,10 @@ export async function POST(req: NextRequest) {
       body.creatorUid = callerUid;
     }
 
-    const saved = savePersistedAuction(body);
-
-    // Authoritative Supabase PostgreSQL sync
-    try {
-      const { auctionDbService } = await import('@/lib/supabase/db');
-      await auctionDbService.upsertAuction(saved);
-    } catch {}
-
+    const saved = await saveAuction(body);
     return NextResponse.json({ success: true, auction: saved }, { status: 200 });
   } catch (err: any) {
+    console.error('[API/auctions] POST error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to save auction' },
       { status: 500 }
@@ -129,19 +120,7 @@ export async function DELETE(req: NextRequest) {
     }
 
     // Making bidding inactive and marked as cancelled (preserving audit record)
-    const cancelled = cancelPersistedAuction(id);
-    if (!cancelled) {
-      return NextResponse.json(
-        { success: false, error: 'Auction not found or could not be cancelled' },
-        { status: 404 }
-      );
-    }
-
-    try {
-      const { createClient } = await import('@/lib/supabase/server');
-      const supabase = createClient();
-      await supabase.from('auctions').update({ status: 'Cancelled', updated_at: new Date().toISOString() }).eq('id', id);
-    } catch {}
+    await cancelAuction(id);
 
     return NextResponse.json(
       {
@@ -153,6 +132,7 @@ export async function DELETE(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
+    console.error('[API/auctions] DELETE error:', err);
     return NextResponse.json(
       { success: false, error: err.message || 'Failed to cancel auction' },
       { status: 500 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { recordPersistedEvents, savePersistedUserIntent, getPersistedUserIntent } from '@/lib/dbms/server-dbms';
+import { recordEvents } from '@/lib/db/events';
+import { getUserIntent, saveUserIntent } from '@/lib/db/intents';
 import { IdempotentEvent, LogisticsIntent } from '@/lib/types';
 import { authenticateUserSession } from '@/lib/auth-guard';
 
@@ -27,8 +28,8 @@ export async function POST(req: NextRequest) {
     // Security: override actorId with the verified session uid — client cannot spoof a foreign actorId
     const events: IdempotentEvent[] = rawEvents.map((evt) => ({ ...evt, actorId: user.uid }));
 
-    // 1. Authoritative persistence in server-side DBMS
-    const diskInserted = recordPersistedEvents(events);
+    // Authoritative persistence in Supabase PostgreSQL
+    await recordEvents(events);
 
     // Extract logistics intent from search, rate-view, and auction events
     for (const evt of events) {
@@ -48,19 +49,19 @@ export async function POST(req: NextRequest) {
           const now = Date.now();
           const expiresAt = new Date(now + 7 * 24 * 60 * 60 * 1000).toISOString(); // 7 days TTL
 
-          // Fetch or initialize intent from server DBMS
-          const existing =
-            getPersistedUserIntent(evt.actorId) || {
-              userId: evt.actorId,
-              recentSearchedPorts: [],
-              viewedRates: [],
-              activeAuctionRoutes: [],
-              savedTradeLanes: [],
-              followedCommodities: [],
-              carrierSearches: [],
-              lastActiveAt: new Date(now).toISOString(),
-              expiresAt,
-            };
+          // Fetch or initialize intent from PostgreSQL
+          const existingRow = await getUserIntent(evt.actorId);
+          const existing: LogisticsIntent = {
+            userId: evt.actorId,
+            recentSearchedPorts: (existingRow?.recent_searched_ports as string[]) || [],
+            viewedRates: (existingRow?.viewed_rates as string[]) || [],
+            activeAuctionRoutes: (existingRow?.active_auction_routes as string[]) || [],
+            savedTradeLanes: (existingRow?.saved_trade_lanes as string[]) || [],
+            followedCommodities: (existingRow?.followed_commodities as string[]) || [],
+            carrierSearches: (existingRow?.carrier_searches as string[]) || [],
+            lastActiveAt: new Date(now).toISOString(),
+            expiresAt,
+          };
 
           if (port && !existing.recentSearchedPorts.includes(port)) {
             existing.recentSearchedPorts = [port, ...existing.recentSearchedPorts].slice(0, 10);
@@ -77,7 +78,7 @@ export async function POST(req: NextRequest) {
           existing.lastActiveAt = new Date(now).toISOString();
           existing.expiresAt = expiresAt;
 
-          savePersistedUserIntent(existing);
+          await saveUserIntent(existing);
         }
       }
     }

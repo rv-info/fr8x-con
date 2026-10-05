@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
-import { savePersistedTransaction } from '@/lib/dbms/server-dbms';
+import { saveTransaction } from '@/lib/db/transactions';
 
 export async function POST(req: NextRequest) {
   const auth = authenticateGodfatherOperator(req);
@@ -61,18 +61,18 @@ export async function POST(req: NextRequest) {
 
     const refundRef = gatewayRefundId || `ref_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-    // Authoritative financial ledger debit in DBMS
-    savePersistedTransaction({
+    // Authoritative financial ledger debit in Supabase PostgreSQL
+    await saveTransaction({
       id: refundRef,
-      orderId: invoiceId,
-      paymentId: targetPaymentId,
+      order_id: invoiceId || targetPaymentId,
+      payment_id: targetPaymentId,
       amount: -Math.abs(Number(amount)), // negative value reflects debit/refund
       currency: 'INR',
-      itemType: type === 'credit' ? 'credit_adjustment' : 'refund',
-      itemTitle: `${type === 'credit' ? 'Commercial Credit' : 'Payment Refund'}: ${reason}`,
+      item_type: type === 'credit' ? 'credit_adjustment' : 'refund',
+      item_title: `${type === 'credit' ? 'Commercial Credit' : 'Payment Refund'}: ${reason}`,
       status: type === 'credit' ? 'adjusted' : 'refunded',
       gateway: liveRefundExecuted ? 'Razorpay' : 'ManualCredit',
-      metadata: {
+      raw_payload: {
         invoiceId,
         paymentId: targetPaymentId,
         operatorUid,
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
         reason,
         liveRefundExecuted,
       },
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     });
 
     return NextResponse.json({
@@ -91,9 +91,10 @@ export async function POST(req: NextRequest) {
       liveRefundExecuted,
       operatorUid,
       correlationId,
-      message: `${type === 'credit' ? 'Commercial Credit' : 'Payment Refund'} processed successfully with immutable DBMS ledger audit`,
+      message: `${type === 'credit' ? 'Commercial Credit' : 'Payment Refund'} processed successfully with immutable PostgreSQL ledger audit`,
     });
   } catch (err: any) {
+    console.error('[API/admin/payments/refund] Error:', err);
     return NextResponse.json({ error: err.message || 'Internal error' }, { status: 500 });
   }
 }
