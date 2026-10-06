@@ -1,240 +1,183 @@
-# FR8X — Supabase Architecture & PostgreSQL Engineering Standard
-
-> **Production Domain:** `https://con.fr8x.in`  
-> **Supabase Project:** `fr8x-con` (`https://haarbaqeuuirwkhmefev.supabase.co`)  
-> **Target Architecture:** GitHub → Vercel → Next.js App Router → Supabase Auth → Supabase PostgreSQL → Supabase Storage  
-
----
-
-## 1. Executive Summary & Core Objective
-
-FR8X has completed the full migration from Google Cloud Firebase (Authentication, Cloud Firestore, Cloud Storage) and local `.data/dbms/*.json` files to **Supabase PostgreSQL** as the **sole single source of truth** for all production data.
-
-### Mandates:
-1. **Supabase PostgreSQL as Sole Production Store:** All production queries, mutations, auth lookups, and session management route through Supabase.
-2. **Elimination of Local JSON Databases:** The local JSON files (`.data/dbms/users.json`, `companies.json`, `rates.json`, `auctions.json`, etc.) and ephemeral serverless `/tmp/fr8x-dbms/` files are completely decommissioned from production workflows.
-3. **Zero Secret Leaks:** Privileged keys (`SUPABASE_SERVICE_ROLE_KEY`) are kept exclusively on the server. The client bundle only receives `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
-4. **Deterministic Profile Persistence:** User profile updates (Phone Number, Designation, Location, Company, KYC) persist directly to `public.profiles` in PostgreSQL and do not revert on reload or deployment.
-5. **No Silent Failures:** Real database errors are logged on the server and returned safely to clients without masked fallback responses.
+﻿# FR8X CON — Supabase Database Architecture
+**Last Updated:** 2026-10-05
+**Project:** `fr8x-con` (https://haarbaqeuuirwkhmefev.supabase.co)
+**Architecture:** Next.js → Supabase Auth + PostgreSQL + Supabase Storage → Vercel
 
 ---
 
-## 2. Core Architectural Principles
+## How to Apply the Schema (First-Time Setup)
 
-1. **Separation of Concerns:**
-   - **Supabase Auth (`auth.users`)**: Sole authority for identity, credentials, email verification, and session tokens.
-   - **PostgreSQL (`public.profiles`)**: Sole authority for application profile data, business fields, organization hierarchy, KYC, and settings.
-   - **No Competing Authoritative Copies**: Never store authoritative mutable profile data in JWT metadata, `localStorage`, `sessionStorage`, or in-memory caches.
+> **IMPORTANT:** The schema is applied by pasting the master migration into the Supabase SQL Editor.
 
-2. **Immutable Identity Reference:**
-   - Always link records to the authenticated Supabase user UUID (`auth.uid()`).
-   - Legacy alphanumeric UIDs (e.g., `u-rajat`) are indexed in the `uid TEXT` column for backwards-compatible lookups without foreign key ambiguity.
+### Steps
+1. Open the [Supabase Dashboard](https://app.supabase.com) → Select project `haarbaqeuuirwkhmefev`
+2. Go to **SQL Editor** → Click **New Query**
+3. Open and copy the entire contents of `supabase/migrations/20261005000010_fr8x_master_schema.sql`
+4. Paste into the SQL Editor → Click **Run**
+5. Verify: `SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;`
 
-3. **Database-Enforced Security:**
-   - Row Level Security (RLS) is enabled on **100% of tables**.
-   - Client requests are authenticated by Supabase session tokens, and PostgreSQL evaluates `auth.uid()` directly. Client-provided user IDs in request bodies are never trusted for authorization.
-
-4. **Deterministic CRUD & Domain Flow:**
-   - Domain operations follow the pipeline:  
-     `Client UI → API Route / Server Action → Centralized lib/db/ Module → Supabase PostgreSQL → Confirmed Result → UI State`.
-   - The UI updates **only** from the confirmed database response.
+**Expected:** 16 tables listed (audit_logs, auction_bids, auctions, cases, comments, companies, events, intents, jobs, posts, presence, profiles, rates, reviews, transactions, verifications).
 
 ---
 
-## 3. Root Cause Analysis & Profile Persistence Rectification
+## Table Summary
 
-### The Problem
-Previously, user profile updates (phone, designation, location) appeared to revert upon page refresh or navigation.
-
-### The Forensic Diagnosis
-1. **Type Mismatch in Query:** `app/api/user/profile/route.ts` executed `.or(\`id.eq.${targetUid}\`)`. Because `targetUid` was a string such as `"u-rajat"` while `id` in PostgreSQL was `UUID`, the query failed with `invalid input syntax for type uuid`.
-2. **Swallowed Catch Block:** The error was caught in a try/catch block and fell back to writing to `/tmp/fr8x-dbms/dbms/users.json`.
-3. **Ephemeral Lambdas:** In Vercel serverless functions, `/tmp` storage is ephemeral per container. Subsequent requests hit different containers with stale default data.
-4. **Client Hydration Overwrites:** Client components re-hydrated from unvalidated `localStorage` values and sent write-backs on mount.
-
-### The Rectification
-1. **Identifier Resolver (`getUserByIdentifier`):** In `lib/db/users.ts`, incoming identifiers are matched against `email`, `uid` (string column), and `id` (UUID column).
-2. **Confirmed UUID Mutation:** All updates execute `WHERE id = existing.id` (strictly UUID).
-3. **No Fallbacks:** Database failures throw real errors rather than faking success.
-
----
-
-## 4. PostgreSQL Relational Schema & Migrations
-
-All migrations reside in `supabase/migrations/` and are fully reproducible:
-
-- **`20261005000000_fr8x_initial_schema.sql`**: Core tables (`profiles`, `companies`, `rates`, `auctions`, `auction_bids`, `posts`, `comments`, `audit_logs`), constraints, foreign keys, triggers, and RLS policies.
-- **`20261005000001_seed_production_data.sql`**: Enterprise foundation accounts and reference entities.
-- **`20261005000002_complete_production_schema.sql`**: Expanded tables for complete marketplace operations (`jobs`, `cases`, `transactions`, `reviews`, `events`, `intents`, `presence`, `verifications`, and `profiles.uid` index).
-- **`20261005000003_seed_legacy_dbms_data.sql`**: Data migration generated by `scripts/migrate-dbms-to-supabase.ts`, importing legacy records into normalized relational tables with conflict handling.
-
-### Entity Relationship Diagram
-```
-auth.users (Supabase Auth)
-  │
-  ├── 1:1 ── public.profiles (User details, KYC, contacts, legacy uid)
-  │            │
-  │            └── N:1 ── public.companies (Enterprise KYC, PAN, GSTIN)
-  │
-  ├── 1:N ── public.rates (Freight rates, 20DV, 40HC, shipping lines)
-  │
-  ├── 1:N ── public.auctions (Spot auctions, RFQs, container volume)
-  │            │
-  │            └── 1:N ── public.auction_bids (Bids, carrier routing, charges)
-  │
-  ├── 1:N ── public.posts (Feed posts, market updates)
-  │            │
-  │            └── 1:N ── public.comments (Discussions, replies)
-  │
-  ├── 1:N ── public.jobs (Logistics recruitment, requisitions)
-  │
-  ├── 1:N ── public.cases (Nexus corporate dispute resolution)
-  │
-  ├── 1:N ── public.transactions (Razorpay financial ledger, credits/debits)
-  │
-  ├── 1:N ── public.reviews (Enterprise ratings & carrier reviews)
-  │
-  ├── 1:N ── public.events (Telemetry event ledger, deduplicated)
-  │
-  ├── 1:N ── public.intents (Logistics search intent)
-  │
-  ├── 1:1 ── public.presence (Real-time online/away state)
-  │
-  ├── 1:N ── public.verifications (Cryptographic token hashes, email OTPs)
-  │
-  └── 1:N ── public.audit_logs (Immutable audit trail)
-```
-
----
-
-## 5. Centralized Data Access Layer (`lib/db/`)
-
-Every domain entity has a dedicated, strongly-typed module in `lib/db/`:
-
-| Module | Table | Purpose |
+| # | Table | Purpose |
 |---|---|---|
-| `lib/db/users.ts` | `profiles` | User profiles, identity resolution, KYC updates |
-| `lib/db/companies.ts` | `companies` | Corporate registry, GSTIN/PAN search, verification |
-| `lib/db/rates.ts` | `rates` | Freight rate card CRUD, search, bulk upsert |
-| `lib/db/auctions.ts` | `auctions`, `auction_bids` | Reverse auctions, spot bids, status lifecycle |
-| `lib/db/posts.ts` | `posts`, `comments` | Community feed, market discussions |
-| `lib/db/jobs.ts` | `jobs` | Job board postings, applicant tracking |
-| `lib/db/cases.ts` | `cases` | Nexus disputes, arbitration records |
-| `lib/db/transactions.ts` | `transactions` | Payment transactions, ledger balance |
-| `lib/db/reviews.ts` | `reviews` | Counterparty ratings and company reviews |
-| `lib/db/events.ts` | `events` | Platform telemetry and email delivery events |
-| `lib/db/intents.ts` | `intents` | Buyer/seller shipping intent tracking |
-| `lib/db/presence.ts` | `presence` | Real-time user status with TTL expiry |
-| `lib/db/verifications.ts` | `verifications` | SHA-256 hashed verification tokens |
+| 1 | `profiles` | User identity, KYC, preferences — linked 1:1 to auth.users |
+| 2 | `companies` | Freight companies, forwarders, carriers |
+| 3 | `rates` | Spot ocean freight rate cards |
+| 4 | `auctions` | Reverse freight bidding (RFQ marketplace) |
+| 5 | `auction_bids` | Bids on reverse auctions |
+| 6 | `posts` | Social feed posts |
+| 7 | `comments` | Comments on posts |
+| 8 | `jobs` | Logistics job postings |
+| 9 | `cases` | Support & dispute tickets |
+| 10 | `transactions` | Razorpay payments & subscription invoices |
+| 11 | `reviews` | Company & partner feedback ratings |
+| 12 | `events` | Telemetry & platform activity log |
+| 13 | `intents` | User logistics search preferences |
+| 14 | `presence` | Real-time online/offline state |
+| 15 | `verifications` | Email OTP challenge tokens |
+| 16 | `audit_logs` | Immutable compliance audit trail |
 
 ---
 
-## 6. Client & Server Supabase Client Helpers
+## Authentication Architecture
 
-- **Browser Client (`lib/supabase/client.ts`):**  
-  Uses `@supabase/ssr` `createBrowserClient` with public anon key. Strictly used in client components for authenticated session token management and real-time subscriptions.
-- **Server Client (`lib/supabase/server.ts`):**  
-  - `createClient()`: Server-side client using cookies for Next.js Server Components, Server Actions, and Route Handlers.
-  - `getSupabaseAdminClient()`: Service Role client for administrative actions (only accessible server-side).
-  - `getDbClient()`: Automatically provides the optimal client for server-side database operations.
+`
+User → Supabase Auth (auth.users)
+         ↓ INSERT trigger
+    public.profiles (auto-provisioned via handle_new_auth_user())
+         ↓
+    @supabase/ssr session cookie
+         ↓
+    middleware.ts → updateSession() → validates session on every request
+         ↓
+    API routes / Server Components use auth.uid() from session
+`
 
----
-
-## 7. Row Level Security (RLS) Policy Matrix
-
-| Table | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `profiles` | Public / Authenticated | Owner (`auth.uid() = id`) | Owner (`auth.uid() = id`) | Admin only |
-| `companies` | Authenticated | Authenticated | Members / Admin | Admin only |
-| `rates` | Active (`is_active = true`) | Rate Owner (`auth.uid() = created_by`) | Rate Owner | Rate Owner |
-| `auctions` | All active auctions | Verified Members | Creator (`auth.uid() = creator_id`) | Creator |
-| `auction_bids`| Participants & Creator | Verified Bidders | Bidder (before close) | Admin only |
-| `posts` | Published posts | Author (`auth.uid() = author_id`) | Author | Author / Admin |
-| `jobs` | Active jobs | Employer (`auth.uid() = poster_id`) | Employer | Employer / Admin |
-| `cases` | Involved parties | Parties (`created_by = auth.uid()`) | Parties / Admin | Admin only |
-| `transactions`| Account holder | System / User | System only | Forbidden |
-| `verifications`| System only | System / Registration | System only | System only |
-| `audit_logs` | User's own logs & Admins | System / Authenticated | Forbidden | Forbidden |
+- No Firebase. No passwords in PostgreSQL application tables.
+- Auth credentials live exclusively in `auth.users` (Supabase-managed).
+- Profile is auto-created by the `on_auth_user_created` trigger when a user signs up.
+- Profile updates use `lib/supabase/db.ts → profileService.updateProfile()`.
 
 ---
 
-## 8. Environment Variable Configuration
+## RLS Policy Summary
 
-```bash
-# Public Client Variables (Safe for browser bundle)
-NEXT_PUBLIC_SUPABASE_URL="https://haarbaqeuuirwkhmefev.supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOi..."
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY="eyJhbGciOi..."
-NEXT_PUBLIC_APP_URL="https://con.fr8x.in"
-
-# Privileged Server-Only Variables (NEVER exposed to browser)
-SUPABASE_SERVICE_ROLE_KEY="eyJhbGciOi..."
-DATABASE_URL="postgresql://postgres:[PASSWORD]@db.haarbaqeuuirwkhmefev.supabase.co:5432/postgres"
-RAZORPAY_KEY_SECRET="..."
-RAZORPAY_WEBHOOK_SECRET="..."
-```
-
----
-
-## 9. Migration & Legacy Data Ingestion Procedure
-
-To migrate historical data from local JSON backups:
-```bash
-# 1. Run migration parser to generate reproducible SQL
-npx tsx scripts/migrate-dbms-to-supabase.ts
-
-# 2. Review generated migration file:
-#    supabase/migrations/20261005000003_seed_legacy_dbms_data.sql
-
-# 3. Apply via Supabase CLI:
-npx supabase db push
-```
+| Table | anon | authenticated | service_role |
+|---|---|---|---|
+| `profiles` | none | SELECT all; INSERT/UPDATE own | full |
+| `companies` | none | SELECT only | full |
+| `rates` | none | SELECT active+own; write own | full |
+| `auctions` | none | SELECT all; write own | full |
+| `auction_bids` | none | SELECT if bidder or creator; INSERT | full |
+| `posts` | none | SELECT all; write own | full |
+| `comments` | none | SELECT all; INSERT/DELETE own | full |
+| `jobs` | none | SELECT only | full |
+| `cases` | none | SELECT own; INSERT | full |
+| `transactions` | none | SELECT own | full |
+| `reviews` | none | SELECT all; INSERT | full |
+| `events` | INSERT (telemetry) | INSERT | full |
+| `intents` | none | ALL own | full |
+| `presence` | none | SELECT all; write own | full |
+| `verifications` | none | none (server-only) | full |
+| `audit_logs` | none | INSERT; SELECT for admins | full |
 
 ---
 
-## 10. Quality Gate Verification
+## Key Column Conventions
 
-All architectural changes must pass the master verification suite:
-```bash
-# TypeScript compilation check
-npm run type-check
-
-# Master Architectural Quality Gates (Phases 7 - 12)
-npm test
-
-# Production Build
-npm run build
-```
-
----
-
-## 11. Backup, Rollback & Disaster Recovery Procedure
-
-### Automated Supabase Backups
-1. **Daily Automated Snapshots:** Supabase automatically creates daily WAL-based physical backups with point-in-time recovery (PITR) enabled.
-2. **Pre-Deployment Logical Dump:** Before major schema migrations, execute a logical export via pg_dump:
-   ```bash
-   pg_dump "$DATABASE_URL" --format=custom --no-owner --no-privileges -f "backup_$(date +%Y%m%d_%H%M%S).dump"
-   ```
-
-### Rollback Procedure
-If a migration or bad deployment needs to be reverted:
-1. **Application Rollback:** Redeploy previous stable Git commit on Vercel:
-   ```bash
-   git checkout <stable-commit-hash>
-   vercel --prod
-   ```
-2. **Database Rollback:** Apply down migrations or restore point-in-time recovery to the timestamp before migration via the Supabase Dashboard (`Database -> Backups -> Point in Time Recovery`).
-
----
-
-## 12. Troubleshooting & Diagnostics
-
-| Symptom | Probable Cause | Diagnostic & Resolution |
+| Concept | Column | Type |
 |---|---|---|
-| `auth/api-key-not-valid` | Stale browser bundle calling Firebase | Completely eliminated. Ensure cache is purged and build bundle has 0 Firebase imports. |
-| `PGRST116: JSON object requested, multiple (or no) rows returned` | Using `.single()` when 0 rows exist | Replace `.single()` with `.maybeSingle()` in queries where entity existence is optional. |
-| `invalid input syntax for type uuid` | Passing non-UUID string (e.g. `u-rajat`) to UUID column | Use `getUserByIdentifier(id)` which matches `email`, `uid` (string), and `id` (UUID). |
-| Profile updates not persisting | Client overwriting database from stale localStorage | UI must only update from confirmed database response returned by `profileService.updateProfile()`. |
-| 401 Unauthorized on protected routes | Expired or missing `sb-*-auth-token` cookie | Middleware automatically invokes `supabase.auth.getUser()` to refresh session cookies. Check `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`. |
+| Auth user ID (FK) | `id` (profiles), `creator_uid`, `owner_uid`, `author_uid`, `bidder_uid`, `actor_uid` | UUID |
+| Legacy short ID | `uid` | TEXT nullable |
+| Freight ports | `por`, `pol`, `pod`, `fpod` | TEXT (LOCODE) |
+| Company tax ID | `gstn` (canonical) | TEXT |
+| Auto-timestamp | `created_at`, `updated_at` | TIMESTAMPTZ |
 
+**BREAKING CHANGE (fixed):** Do NOT use `origin_port`, `destination_port`, `author_id` (as FK),
+`bidder_id`, or `creator_id` — these were old mismatches that have been corrected in
+`lib/supabase/types.ts` and all `lib/db/*.ts` modules.
+
+---
+
+## Data Access Layer
+
+`
+lib/
+├── supabase/
+│   ├── client.ts       — Browser-safe client (NEXT_PUBLIC_ keys only)
+│   ├── server.ts       — Server client (cookies + service role)
+│   ├── middleware.ts   — Session refresh for Edge middleware
+│   ├── db.ts           — profileService (getProfile, updateProfile)
+│   ├── types.ts        — TypeScript interfaces matching SQL exactly
+│   └── audit.ts        — AuditLogger.log() / logProfileChange()
+└── db/
+    ├── users.ts        — getUserById, getUserByEmail, createUser, updateUser
+    ├── companies.ts    — getCompanies, searchCompanies, saveCompany
+    ├── rates.ts        — getRates, saveRate, bulkSaveRates, deleteRate
+    ├── auctions.ts     — getAuctions, saveAuction, saveBid, cancelAuction
+    ├── posts.ts        — getPosts, savePost, deletePost
+    ├── jobs.ts         — getJobs, saveJob, deleteJob
+    ├── cases.ts        — getCases, saveCase
+    ├── transactions.ts — getTransactions, saveTransaction
+    ├── reviews.ts      — getReviews, saveReview
+    ├── verifications.ts — saveVerification, markVerificationUsed
+    └── index.ts        — barrel export (usersDb, companiesDb, ratesDb …)
+`
+
+---
+
+## Environment Variables
+
+| Variable | Scope | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Client + Server | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Client + Server | Anon key (safe for browser) |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Server only** | Bypasses RLS — NEVER use NEXT_PUBLIC_ prefix |
+
+---
+
+## Storage Buckets
+
+| Bucket | Public | Max Size |
+|---|---|---|
+| `avatars` | Yes | 5 MB |
+| `company-logos` | Yes | 5 MB |
+| `documents` | No | 10 MB |
+| `ad-creatives` | Yes | 2 MB |
+
+---
+
+## Local Development
+
+`ash
+npm install
+cp .env.example .env.local   # fill NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+npm run dev
+`
+
+No local emulator required — dev connects to hosted Supabase project directly.
+
+---
+
+## Deployment (Vercel)
+
+1. Push to `main` → Vercel auto-deploys
+2. Ensure Vercel Environment Variables include all three Supabase keys
+3. `SUPABASE_SERVICE_ROLE_KEY` must be set as a **Server** (not preview/client) env var
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| "No tables in schema" | Migration not applied | Paste `20261005000010_fr8x_master_schema.sql` into SQL Editor and run |
+| 401 on API calls | Expired/missing session | Check `middleware.ts` and `@supabase/ssr` updateSession setup |
+| Profile not loading after login | profiles row missing | Verify `on_auth_user_created` trigger exists in Supabase Dashboard → Database → Functions |
+| `new row violates RLS` | Wrong owner uid | Confirm `auth.uid()` matches the record's owner column |
+| `column X does not exist` | Old column name in code | Reference `lib/supabase/types.ts` for exact column names |
+| `SUPABASE_SERVICE_ROLE_KEY missing` | Not in Vercel env | Add in Vercel → Settings → Environment Variables (Server) |

@@ -40,9 +40,11 @@ export async function getPostById(id: string): Promise<PostRow | null> {
 
 export async function savePost(post: any): Promise<PostRow> {
   const supabase = getDbClient();
+  const authorUid = post.authorUid || post.author_uid || post.authorId || post.author_id || 'u-system';
   const payload = {
     id: String(post.id || `post_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`),
-    author_id: post.authorId || post.author_id || post.authorUid || 'u-system',
+    author_uid: authorUid,                            // FK → auth.users (required)
+    author_id: authorUid,                             // Legacy alias column
     author_name: post.authorName || post.author_name || post.author || 'FR8X Member',
     author_company: post.authorCompany || post.author_company || post.company || 'Enterprise',
     author_avatar: post.authorAvatar || post.author_avatar || null,

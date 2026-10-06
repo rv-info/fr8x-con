@@ -26,6 +26,10 @@ export class AuditLogger {
       const payload: AuditLogInsert = {
         user_id: event.userId || null,
         action: event.action,
+        // Canonical column names (required by AuditLogInsert type)
+        target_entity: event.entity,
+        target_id: event.entityId || '',
+        // Legacy alias columns stored for backward-compatible queries
         entity: event.entity,
         entity_id: event.entityId || null,
         old_data: event.oldData || null,

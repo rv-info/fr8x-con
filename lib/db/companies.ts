@@ -46,7 +46,7 @@ export async function searchCompanies(queryStr: string): Promise<CompanyRow[]> {
   const { data, error } = await supabase
     .from('companies')
     .select('*')
-    .or(`name.ilike.%${q}%,legal_name.ilike.%${q}%,gstin.ilike.%${q}%,city.ilike.%${q}%`)
+    .or(`name.ilike.%${q}%,legal_name.ilike.%${q}%,gstn.ilike.%${q}%,city.ilike.%${q}%`)
     .limit(50);
 
   if (error) {
@@ -61,6 +61,7 @@ export async function saveCompany(company: Partial<CompanyRow> & { id: string; n
   const payload = {
     ...company,
     name: company.name || company.legal_name || 'Enterprise Company',
+    legal_name: company.legal_name || company.name || 'Enterprise Company',
     updated_at: new Date().toISOString(),
   };
 

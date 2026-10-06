@@ -134,7 +134,7 @@ export async function saveBid(bid: any): Promise<AuctionBidRow> {
   const payload = {
     id: bid.id || `bid_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     auction_id: bid.auctionId || bid.auction_id,
-    bidder_id: bid.bidderId || bid.bidder_id,
+    bidder_uid: bid.bidderUid || bid.bidder_uid || bid.bidderId || bid.bidder_id,
     bidder_company: bid.bidderCompany || bid.bidder_company || null,
     amount: Number(bid.amount),
     transit_days: bid.transitDays || bid.transit_days || null,
