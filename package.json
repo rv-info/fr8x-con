@@ -11,6 +11,8 @@
     "test": "npx -y tsx scripts/verify-all-gates.ts",
     "test:auth-email": "npx -y tsx scripts/test-auth-email-system.ts",
     "test:email": "npx -y tsx scripts/test-email-config.ts",
+    "db:push": "npx -y tsx scripts/push-supabase-schema.ts",
+    "db:verify": "npx -y tsx scripts/push-supabase-schema.ts --verify-only",
     "build:apk": "node fr8x-android-app/tools/build-official-apk.js"
   },
   "dependencies": {
@@ -29,11 +31,13 @@
   "devDependencies": {
     "@types/node": "^20.17.19",
     "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.23.1",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "docx": "^9.7.1",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.24",
+    "pg": "^8.23.1",
     "pngjs": "^7.0.0",
     "sharp": "^0.35.4",
     "typescript": "^5.7.3"
