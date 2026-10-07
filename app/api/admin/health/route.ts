@@ -9,7 +9,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     services: {
       authMfa: 'operational',
-      firestoreLedger: 'operational',
+      postgresLedger: 'operational',
       immutableAudit: 'operational',
       searchIndexer: 'operational',
       rateImportPipeline: 'operational',

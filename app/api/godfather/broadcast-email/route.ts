@@ -1,38 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { EmailService } from '@/lib/email-service';
 import { BroadcastEmailTemplateParams } from '@/lib/email-templates';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { getEvents, recordEvents } from '@/lib/db/events';
 
-function getHistoryFilePath(): string {
-  const dir = path.join(process.cwd(), '.data');
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+async function loadBroadcastHistory(): Promise<any[]> {
+  try {
+    const events = await getEvents();
+    return events
+      .filter((e) => e.event_type === 'broadcast_email' && e.payload)
+      .map((e) => e.payload);
+  } catch (err) {
+    console.error('[BroadcastEmailAPI] Error loading history from Supabase:', err);
+    return [];
   }
-  return path.join(dir, 'broadcast-history.json');
 }
 
-function loadBroadcastHistory(): any[] {
+async function saveBroadcastHistoryRecord(record: any) {
   try {
-    const file = getHistoryFilePath();
-    if (fs.existsSync(file)) {
-      const raw = fs.readFileSync(file, 'utf8');
-      return JSON.parse(raw);
-    }
+    await recordEvents([
+      {
+        id: record.id,
+        event_type: 'broadcast_email',
+        payload: record,
+        timestamp: record.sentAt || new Date().toISOString(),
+      },
+    ]);
   } catch (err) {
-    console.error('[BroadcastEmailAPI] Error loading history:', err);
-  }
-  return [];
-}
-
-function saveBroadcastHistory(history: any[]) {
-  try {
-    const file = getHistoryFilePath();
-    fs.writeFileSync(file, JSON.stringify(history, null, 2), 'utf8');
-  } catch (err) {
-    console.error('[BroadcastEmailAPI] Error saving history:', err);
+    console.error('[BroadcastEmailAPI] Error saving broadcast to Supabase:', err);
   }
 }
 
@@ -56,8 +52,8 @@ export async function GET(req: NextRequest) {
       createdAt: u.createdAt,
     }));
 
-    // 2. Load past broadcast campaigns
-    const history = loadBroadcastHistory();
+    // 2. Load past broadcast campaigns from Supabase events
+    const history = await loadBroadcastHistory();
 
     return NextResponse.json({
       success: true,
@@ -222,9 +218,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (!isTest) {
-      const history = loadBroadcastHistory();
-      history.unshift(broadcastRecord);
-      saveBroadcastHistory(history);
+      await saveBroadcastHistoryRecord(broadcastRecord);
     }
 
     return NextResponse.json({

@@ -50,7 +50,26 @@ export async function POST(req: NextRequest) {
     });
 
     const now = Date.now();
-    const expiresAt = now + SESSION_MAX_AGE_SECONDS * 1000;
+    // Check if refreshing an existing valid session to enforce original 2-hour login limit
+    const existingCookie = req.cookies.get('fr8x_session')?.value;
+    let issuedAt = now;
+    let expiresAt = now + SESSION_MAX_AGE_SECONDS * 1000;
+
+    if (existingCookie) {
+      const verifiedExisting = verifySignedSessionToken<any>(existingCookie);
+      if (verifiedExisting.valid && verifiedExisting.payload?.issuedAt) {
+        const origIssuedAt = Number(verifiedExisting.payload.issuedAt);
+        const origExpiresAt = Number(verifiedExisting.payload.expiresAt) || (origIssuedAt + SESSION_MAX_AGE_SECONDS * 1000);
+        if (now - origIssuedAt > SESSION_MAX_AGE_SECONDS * 1000 || now > origExpiresAt) {
+          const res = NextResponse.json({ success: false, error: 'Session expired', reason: 'session_expired' }, { status: 401 });
+          res.cookies.delete('fr8x_session');
+          return res;
+        }
+        // Preserve original login timestamp; refreshes do NOT extend the 2-hour maximum session window
+        issuedAt = origIssuedAt;
+        expiresAt = origExpiresAt;
+      }
+    }
 
     // Issue HMAC-SHA256 signed session token
     const token = createSignedSessionToken({
@@ -61,7 +80,7 @@ export async function POST(req: NextRequest) {
       sessionId,
       deviceId: clientDeviceId,
       ip,
-      issuedAt: now,
+      issuedAt,
       expiresAt,
     });
 
@@ -69,17 +88,18 @@ export async function POST(req: NextRequest) {
       success: true,
       sessionId,
       deviceId: clientDeviceId,
-      issuedAt: now,
+      issuedAt,
       expiresAt,
     });
 
     const isHttps = req.nextUrl.protocol === 'https:' || req.headers.get('x-forwarded-proto') === 'https';
-    // Set signed httpOnly session cookie with strict 2-hour maxAge
+    const remainingSeconds = Math.max(1, Math.floor((expiresAt - now) / 1000));
+    // Set signed httpOnly session cookie with remaining duration
     res.cookies.set('fr8x_session', token, {
       httpOnly: true,
       secure: isHttps,
       sameSite: 'lax',
-      maxAge: SESSION_MAX_AGE_SECONDS,
+      maxAge: remainingSeconds,
       path: '/',
     });
     res.cookies.set('fr8x_device_id', clientDeviceId, {

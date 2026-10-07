@@ -1,11 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
 
-export const metadata = {
-  title: 'Privacy Policy & Android Data Safety | FR8X Global Freight Workspace',
-  description:
-    'FR8X Enterprise Privacy Policy and Google Play Data Safety Disclosures regarding personal information, permissions, location, camera, and data deletion rights.',
-};
+import { buildRouteMetadata } from '@/config/seo';
+
+export const metadata = buildRouteMetadata('privacy');
 
 export default function PrivacyPolicyPage() {
   const lastUpdated = 'September 5, 2026';

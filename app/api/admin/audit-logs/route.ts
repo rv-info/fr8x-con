@@ -17,6 +17,6 @@ export async function GET(req: NextRequest) {
     filters: { targetType, targetId, limit },
     operatorUid: auth.operator!.uid,
     timestamp: new Date().toISOString(),
-    immutableStore: 'Google Cloud Firestore (con-fr8x-audit-vault)',
+    immutableStore: 'Supabase PostgreSQL (audit_logs)',
   });
 }

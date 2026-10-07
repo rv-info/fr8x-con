@@ -85,7 +85,7 @@ export function RecordDetailDrawer({ record, onClose }: RecordDetailDrawerProps)
           <div>
             <div className="text-xs font-bold text-mut mb-1.5 flex items-center justify-between">
               <span>Authoritative Payload Inspector</span>
-              <span className="text-[10px] text-faint font-mono">Immutable Firestore Document</span>
+              <span className="text-[10px] text-faint font-mono">Immutable Database Record</span>
             </div>
             <pre className="gf-raw-json-viewer text-xs p-3 rounded bg-slate-950 text-emerald-400 font-mono overflow-x-auto max-h-72 border border-slate-800">
               {JSON.stringify(raw, null, 2)}

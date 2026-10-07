@@ -71,8 +71,8 @@ export default function SystemConfigPage() {
             <Database className="lucide w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Firestore Cluster</div>
-            <div className="text-sm font-bold text-slate-900 font-mono truncate">asia-south1 (Mumbai)</div>
+            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">PostgreSQL Cluster</div>
+            <div className="text-sm font-bold text-slate-900 font-mono truncate">ap-south-1 (Mumbai)</div>
             <div className="text-xs text-emerald-700 font-mono font-semibold flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse" />
               P99 Latency: 14ms

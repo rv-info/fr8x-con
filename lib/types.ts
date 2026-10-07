@@ -126,6 +126,7 @@ export interface UserProfile {
   area?: string;
   address?: string;
   postalCode?: string;
+  postal_code?: string;
   formattedAddress?: string;
   location?: string;
   position?: string;

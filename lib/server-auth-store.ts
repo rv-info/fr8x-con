@@ -2,8 +2,6 @@
 // Handles credential validation, failed login attempt tracking, account blocking,
 // daily OTP limits, salted PBKDF2 password hashing, privileged session control, and audit logs.
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
 import { EmailService } from '@/lib/email-service';
 import {
   hashPassword as pbkdf2HashPassword,
@@ -915,25 +913,46 @@ class ServerSecurityStore {
   ): boolean {
     if (!identifier || !sessionId) return false;
     const clean = identifier.trim().toLowerCase();
-    const user = this.users.get(clean) || this.getUserByEmailOrUid(clean);
-    if (!user) return false;
-
+    let user: ServerUserRecord | undefined = this.users.get(clean) || this.getUserByEmailOrUid(clean);
     const now = Date.now();
     const nowIso = new Date(now).toISOString();
+    if (!user) {
+      const email = clean.includes('@') ? clean : `${clean}@fr8x.in`;
+      const uid = clean.includes('@') ? `u_${now}` : clean;
+      user = {
+        uid,
+        email,
+        passwordHash: '',
+        salt: '',
+        displayName: 'User',
+        company: 'FR8X Member',
+        companyId: 'CMP-DEFAULT',
+        role: 'user',
+        status: 'active',
+        email_verified: true,
+        isVerified: true,
+        createdAt: nowIso,
+        failedLoginAttempts: 0,
+      };
+      this.users.set(clean, user);
+      this.users.set(uid.toLowerCase(), user);
+      this.users.set(email.toLowerCase(), user);
+    }
+    const currentUser: ServerUserRecord = user;
     // Valid for 2 hours on the same device, browser, and internet (PDF Requirement 4)
     // Retain original expiration time if binding an existing valid session on the same device
     let expiresAt = new Date(now + 2 * 60 * 60 * 1000).toISOString();
-    if (user.activeDevice?.expiresAt) {
-      const existingExpiresTime = new Date(user.activeDevice.expiresAt).getTime();
-      if (existingExpiresTime > now && (!deviceMeta?.deviceId || user.activeDeviceId === deviceMeta.deviceId)) {
-        expiresAt = user.activeDevice.expiresAt;
+    if (currentUser.activeDevice?.expiresAt) {
+      const existingExpiresTime = new Date(currentUser.activeDevice.expiresAt).getTime();
+      if (existingExpiresTime > now && (!deviceMeta?.deviceId || currentUser.activeDeviceId === deviceMeta.deviceId)) {
+        expiresAt = currentUser.activeDevice.expiresAt;
       }
     }
-    const deviceId = deviceMeta?.deviceId || user.activeDeviceId || `dev_${now}`;
+    const deviceId = deviceMeta?.deviceId || currentUser.activeDeviceId || `dev_${now}`;
 
-    user.activeSessionId = sessionId;
-    user.activeDeviceId = deviceId;
-    user.activeDevice = {
+    currentUser.activeSessionId = sessionId;
+    currentUser.activeDeviceId = deviceId;
+    currentUser.activeDevice = {
       deviceId,
       userAgent: deviceMeta?.userAgent || 'Browser Client',
       ip: deviceMeta?.ip || '127.0.0.1',
@@ -942,22 +961,22 @@ class ServerSecurityStore {
       expiresAt,
     };
 
-    const cleanUid = user.uid.toLowerCase();
-    const cleanEmail = user.email.toLowerCase();
-    this.users.set(cleanUid, user);
-    this.users.set(cleanEmail, user);
+    const cleanUid = currentUser.uid.toLowerCase();
+    const cleanEmail = currentUser.email.toLowerCase();
+    this.users.set(cleanUid, currentUser);
+    this.users.set(cleanEmail, currentUser);
 
     try {
-      savePersistedUser(user as any);
+      savePersistedUser(currentUser as any);
     } catch {}
     this.persistState();
 
     this.addSecurityEvent({
       type: 'GODFATHER_LOGIN',
       severity: 'INFO',
-      userEmail: user.email,
-      uid: user.uid,
-      company: user.company,
+      userEmail: currentUser.email,
+      uid: currentUser.uid,
+      company: currentUser.company,
       details: `Active device session bound (2-hour validity). Session ID: ${sessionId.slice(0, 10)}... Device ID: ${deviceId.slice(0, 10)}...`,
       ipAddress: deviceMeta?.ip,
     });
@@ -976,7 +995,8 @@ class ServerSecurityStore {
     identifier: string,
     sessionId: string,
     clientDeviceId?: string,
-    clientIp?: string
+    clientIp?: string,
+    userAgent?: string
   ): { valid: boolean; reason?: string; message?: string } {
     if (!identifier) {
       return { valid: false, reason: 'missing_session', message: 'No session credentials provided.' };
@@ -996,7 +1016,7 @@ class ServerSecurityStore {
       return { valid: true };
     }
 
-    // 1. Enforce 2-hour session expiration policy
+    // 1. Enforce 2-hour session expiration policy from original login time
     if (user.activeDevice?.expiresAt) {
       const expiresTime = new Date(user.activeDevice.expiresAt).getTime();
       if (Date.now() > expiresTime) {
@@ -1008,42 +1028,41 @@ class ServerSecurityStore {
       }
     }
 
-    // 2. Strict single-device policy:
-    // Only return 'concurrent_device_login' if the user account is actively assigned
-    // 2. Strict single-device policy (PDF Requirements 1 & 2):
-    // "1 Note that refresh should not make the web application log-out for the particular and respective login"
-    // "2 this error is only for the device change not on the same device."
-    // "4 login once done will be valid for 2 hours on the same device and browser and same internet."
+    // 2. Explicit Network-Change vs. Genuine Device-Change Differentiation
     const currentActiveDeviceId = user.activeDeviceId || user.activeDevice?.deviceId;
+    const currentIp = user.activeDevice?.ip;
+    const currentUserAgent = user.activeDevice?.userAgent;
+
+    // Check if this is the same physical device/browser
+    const isSameDevice = Boolean(
+      (clientDeviceId && currentActiveDeviceId && clientDeviceId === currentActiveDeviceId) ||
+      (!clientDeviceId && userAgent && currentUserAgent && userAgent === currentUserAgent)
+    );
+
+    // Network Change Handling:
+    // If the device signature matches but client IP differs (e.g. WiFi -> 4G/Cellular or VPN reconnection),
+    // this is an authorized network change and must NEVER be mislabeled as a device change.
+    if (isSameDevice && clientIp && currentIp && clientIp !== currentIp) {
+      if (user.activeDevice) {
+        user.activeDevice.ip = clientIp;
+        user.activeDevice.lastActiveAt = new Date().toISOString();
+      }
+      return { valid: true };
+    }
+
+    // Genuine Device Change:
+    // Flagged whenever a different device identifier or distinct browser client accesses the active session
     if (
       currentActiveDeviceId &&
       clientDeviceId &&
       currentActiveDeviceId !== clientDeviceId
     ) {
-      const currentIp = user.activeDevice?.ip;
-      const isSameNetworkOrLocal =
-        clientIp &&
-        currentIp &&
-        (clientIp === currentIp ||
-          clientIp === '127.0.0.1' ||
-          currentIp === '127.0.0.1' ||
-          clientIp === '::1' ||
-          currentIp === '::1');
-
-      if (!isSameNetworkOrLocal) {
-        return {
-          valid: false,
-          reason: 'concurrent_device_login',
-          message:
-            "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out. If this wasn't you, please reset your password immediately.",
-        };
-      } else {
-        // Same device/network: refresh or browser restart occurred; seamlessly adopt clientDeviceId
-        user.activeDeviceId = clientDeviceId;
-        if (user.activeDevice) {
-          user.activeDevice.deviceId = clientDeviceId;
-        }
-      }
+      return {
+        valid: false,
+        reason: 'concurrent_device_login',
+        message:
+          "Your account was accessed from another device. For your security, FR8X allows only one active session per user, so this device has been signed out. If this wasn't you, please reset your password immediately.",
+      };
     }
 
     // 3. Same-device continuity: adopt or update active session

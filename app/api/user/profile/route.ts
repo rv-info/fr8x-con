@@ -105,6 +105,8 @@ export async function GET(req: NextRequest) {
           country: u.country,
           location: [u.city, u.state, u.country].filter(Boolean).join(', ') || u.location,
           formattedAddress: u.formatted_address || u.address,
+          postalCode: u.postal_code || u.postalCode || '',
+          postal_code: u.postal_code || u.postalCode || '',
           status: u.status || 'active',
           role: u.role || 'user',
           plan: u.plan || 'trial',
@@ -144,6 +146,8 @@ export async function GET(req: NextRequest) {
         city: u.city || '',
         state: u.state || '',
         country: u.country || 'India',
+        postalCode: u.postal_code || u.postalCode || '',
+        postal_code: u.postal_code || u.postalCode || '',
         location: u.location || [u.city, u.state, u.country].filter(Boolean).join(', ') || '',
         formattedAddress: u.formatted_address || u.address || '',
         address: u.address || u.formatted_address || '',
@@ -250,6 +254,10 @@ export async function POST(req: NextRequest) {
       dbUpdates.address = body.address || body.formattedAddress;
       dbUpdates.formatted_address = dbUpdates.address;
     }
+    if (body.postalCode !== undefined || body.postal_code !== undefined || body.pincode !== undefined) {
+      const postal = body.postalCode || body.postal_code || body.pincode;
+      dbUpdates.postal_code = postal ? String(postal).trim() : null;
+    }
     if (body.avatarUrl !== undefined || body.avatar_url !== undefined) {
       dbUpdates.avatar_url = body.avatarUrl || body.avatar_url;
     }
@@ -275,6 +283,8 @@ export async function POST(req: NextRequest) {
         city: updatedUser.city,
         state: updatedUser.state,
         country: updatedUser.country,
+        postalCode: updatedUser.postal_code || '',
+        postal_code: updatedUser.postal_code || '',
         location: updatedUser.location,
         formattedAddress: updatedUser.formatted_address,
         address: updatedUser.address,

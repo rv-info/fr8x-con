@@ -105,7 +105,7 @@ export default function GodfatherSearchPage() {
         <div>
           Showing <strong className="text-slate-900">{results.length}</strong> matching records for &ldquo;{query}&rdquo;
         </div>
-        <span className="font-mono text-[11px] font-bold">IMMUTABLE FIRESTORE SEARCH INDEX</span>
+        <span className="font-mono text-[11px] font-bold">IMMUTABLE DATABASE AUDIT INDEX</span>
       </div>
 
       {/* Results List */}

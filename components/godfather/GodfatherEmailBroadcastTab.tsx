@@ -117,7 +117,7 @@ Check our live corridor rate boards for real-time benchmark updates and active r
 
 What's New in this Release:
 1. Live Device Time & Calendar: Synchronized live operations clock on both desktop and mobile views.
-2. Direct Registration & Instant Verification: Frictionless corporate registration with instant email magic links.
+2. Direct Registration & Instant Verification: Frictionless corporate registration with secure email verification links.
 3. Enhanced Rate Filter: Filter global shipping lanes and reverse auction bids by corridor with 0ms latency.
 4. Enterprise Data Security: Multi-layer data encryption protecting your confidential commercial records.
 

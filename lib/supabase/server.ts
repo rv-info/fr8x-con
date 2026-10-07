@@ -4,9 +4,9 @@ import { cookies } from 'next/headers';
 export function createClient() {
   const cookieStore = cookies();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 
-  return createServerClient(url, anonKey, {
+  return createServerClient(url, publishableKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -26,16 +26,16 @@ export function createClient() {
 }
 
 /**
- * Privileged Admin Supabase Client using SUPABASE_SERVICE_ROLE_KEY.
+ * Privileged Admin Supabase Client using SUPABASE_SECRET_KEY.
  * ONLY available on the server and only when configured.
  */
 export function createAdminClient() {
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceKey) return null;
+  const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!secretKey) return null;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(url, serviceKey, {
+  return createSupabaseClient(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }
@@ -53,9 +53,9 @@ export function getDbClient() {
   if (admin) return admin;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(url, anonKey, {
+  return createSupabaseClient(url, publishableKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 }

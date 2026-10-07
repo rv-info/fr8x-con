@@ -103,7 +103,7 @@ export function ActionConfirmModal({
           <div className="gf-callout gf-callout-blue mt-3 p-2.5 rounded text-xs flex items-center gap-2">
             <Shield className="lucide w-4 h-4 text-blue-600 flex-shrink-0" />
             <span className="text-slate-600 dark:text-slate-300">
-              Action code: <strong className="font-mono text-ink">{actionType}</strong>. An immutable ledger entry with timestamp and actor correlation ID will be committed to Google Cloud Firestore.
+              Action code: <strong className="font-mono text-ink">{actionType}</strong>. An immutable ledger entry with timestamp and actor correlation ID will be committed to the database audit log.
             </span>
           </div>
 

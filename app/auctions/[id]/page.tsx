@@ -1461,7 +1461,7 @@ export default function BidRoomPage() {
                 </span>
               </div>
               <span className={`badge ${isLiveConnected ? 'green' : 'blue'}`}>
-                <Activity size={11} /> {isLiveConnected ? 'Streaming Live (Firestore)' : 'Streaming Live'}
+                <Activity size={11} /> {isLiveConnected ? 'Streaming Live (Realtime)' : 'Streaming Live'}
               </span>
             </div>
 

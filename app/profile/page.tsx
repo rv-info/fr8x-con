@@ -269,6 +269,14 @@ export default function ProfilePage() {
     }
     return '';
   });
+  const [postalCode, setPostalCode] = useState(() => {
+    if (user.postalCode || (user as any).postal_code) return user.postalCode || (user as any).postal_code;
+    if (typeof window !== 'undefined') {
+      const activeUid = user.uid || localStorage.getItem('fr8x_active_user_uid');
+      return (activeUid ? localStorage.getItem(`fr8x_user_postal_${activeUid}`) : null) || localStorage.getItem('fr8x_user_postal') || '';
+    }
+    return '';
+  });
   const [lat, setLat] = useState(user.coordinates?.lat || 19.1136);
   const [lng, setLng] = useState(user.coordinates?.lng || 72.8697);
   const [timezone, setTimezone] = useState(() => {
@@ -312,6 +320,7 @@ export default function ProfilePage() {
       if (user.state) setStateName(user.state);
       if (user.country) setCountry(user.country);
       if (user.formattedAddress || (user as any).address) setFormattedAddress(user.formattedAddress || (user as any).address);
+      if (user.postalCode || (user as any).postal_code) setPostalCode(user.postalCode || (user as any).postal_code);
       if (user.timezone) setTimezone(user.timezone);
       if (user.gstn) setGstn(user.gstn);
       if (user.pan) setPan(user.pan);
@@ -377,6 +386,7 @@ export default function ProfilePage() {
   const [editState, setEditState] = useState(user.state || stateName || '');
   const [editCountry, setEditCountry] = useState(user.country || country || 'India');
   const [editFormattedAddress, setEditFormattedAddress] = useState(user.formattedAddress || formattedAddress || '');
+  const [editPostalCode, setEditPostalCode] = useState(user.postalCode || (user as any).postal_code || postalCode || '');
   const [editTimezone, setEditTimezone] = useState(user.timezone || timezone || 'Asia/Kolkata');
   const [isChangingCompany, setIsChangingCompany] = useState(false);
   const [transferTargetCompany, setTransferTargetCompany] = useState('');
@@ -403,6 +413,7 @@ export default function ProfilePage() {
     setEditState(stateName || user.state || '');
     setEditCountry(country || user.country || 'India');
     setEditFormattedAddress(formattedAddress || user.formattedAddress || (user as any).address || '');
+    setEditPostalCode(postalCode || user.postalCode || (user as any).postal_code || '');
     setEditTimezone(timezone || user.timezone || 'Asia/Kolkata');
     setIsChangingCompany(false);
     setTransferTargetCompany('');
@@ -1042,7 +1053,8 @@ export default function ProfilePage() {
       district: (user as any).district || stateName.trim() || '',
       address: formattedAddress.trim(),
       formattedAddress: formattedAddress.trim(),
-      postalCode: (user as any).postalCode || '',
+      postalCode: (postalCode || editPostalCode || (user as any).postalCode || '').trim(),
+      postal_code: (postalCode || editPostalCode || (user as any).postal_code || '').trim(),
       coordinates: { lat, lng },
       timezone,
       experiences,
@@ -1103,6 +1115,7 @@ export default function ProfilePage() {
       setStateName(confirmedUser.state || stateName);
       setCountry(confirmedUser.country || country);
       setFormattedAddress(confirmedUser.formattedAddress || confirmedUser.address || formattedAddress);
+      setPostalCode(confirmedUser.postalCode || confirmedUser.postal_code || postalCode);
 
       setIsEditMode(false);
       toast('✓ Enterprise profile, contact details and professional records saved successfully.');
@@ -3891,6 +3904,8 @@ export default function ProfilePage() {
                 country: editCountry.trim(),
                 formattedAddress: editFormattedAddress.trim(),
                 address: editFormattedAddress.trim(),
+                postalCode: editPostalCode.trim(),
+                postal_code: editPostalCode.trim(),
                 location: [editCity.trim(), editState.trim(), editCountry.trim()].filter(Boolean).join(', ') || editFormattedAddress.trim(),
                 timezone: editTimezone,
                 avatarUrl: editAvatarUrl || '',
@@ -3932,6 +3947,7 @@ export default function ProfilePage() {
                 setStateName(confirmedUser.state || editState);
                 setCountry(confirmedUser.country || editCountry);
                 setFormattedAddress(confirmedUser.formattedAddress || confirmedUser.address || editFormattedAddress);
+                setPostalCode(confirmedUser.postalCode || confirmedUser.postal_code || editPostalCode);
                 setTimezone(confirmedUser.timezone || editTimezone);
                 setAvatarUrl(confirmedUser.avatarUrl || editAvatarUrl || null);
                 setCompanyLogoUrl(confirmedUser.companyLogoUrl || editCompanyLogoUrl || null);
@@ -4299,6 +4315,18 @@ export default function ProfilePage() {
                   placeholder="e.g. 42 Freight Lane, Port Area, Mumbai 400001"
                   style={{ height: '36px', fontSize: '13px' }}
                 />
+                <div style={{ marginTop: '10px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
+                    Postal Code / PIN Code
+                  </label>
+                  <input
+                    className="input"
+                    value={editPostalCode}
+                    onChange={(e) => setEditPostalCode(e.target.value)}
+                    placeholder="e.g. 400001"
+                    style={{ height: '36px', fontSize: '13px', width: '200px' }}
+                  />
+                </div>
                 {effectiveAddressSuggestions.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
                     <span style={{ fontSize: '10px', color: 'var(--mut)', fontWeight: 600, alignSelf: 'center' }}>Detected suggestions:</span>

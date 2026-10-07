@@ -2,19 +2,28 @@ import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { AppShell } from '@/components/layout/AppShell';
 
+import { siteMetadata } from '@/config/site-metadata';
+import { buildRouteMetadata } from '@/config/seo';
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
   viewportFit: 'cover',
-  themeColor: '#0f172a',
+  themeColor: siteMetadata.themeColor,
 };
 
-export const metadata: Metadata = {
-  title: 'FR8X | Global Freight Workspace',
-  description:
-    'Enterprise-grade digital logistics and freight forwarding workspace with reverse auctions, rate intelligence, nexus ratings, and trade chat.',
+export const metadata: Metadata = buildRouteMetadata('home', {
+  metadataBase: new URL(siteMetadata.siteUrl),
+  title: {
+    default: siteMetadata.defaultTitle,
+    template: siteMetadata.titleTemplate,
+  },
+  applicationName: siteMetadata.siteName,
+  authors: [{ name: 'FR8X Engineering', url: siteMetadata.siteUrl }],
+  creator: siteMetadata.publisher,
+  publisher: siteMetadata.publisher,
   manifest: '/manifest.json',
   icons: {
     icon: [
@@ -29,9 +38,9 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'FR8X',
+    title: siteMetadata.siteName,
   },
-};
+});
 
 export default function RootLayout({
   children,

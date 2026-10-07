@@ -518,7 +518,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch {}
 
     // 2. Adaptive revalidation against live Supabase PostgreSQL
-    async function revalidateLiveFirestore() {
+    async function revalidateLiveDatabase() {
       // Guard: only query live DB when authenticated (user.uid is non-empty)
       if (!user?.uid) return;
       try {
@@ -764,7 +764,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    revalidateLiveFirestore();
+    revalidateLiveDatabase();
 
     return () => {
       isMounted = false;
