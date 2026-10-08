@@ -1,131 +1,103 @@
--- ============================================================================
--- FR8X COMPLETE MASTER PRODUCTION SCHEMA & SEED MIGRATION
+-- =============================================================================
+-- FR8X MULTIMODAL FREIGHT PLATFORM — MASTER PRODUCTION SCHEMA
 -- Project: fr8x-con (https://haarbaqeuuirwkhmefev.supabase.co)
--- Single Source of Truth: Supabase PostgreSQL
--- ============================================================================
+-- Migration: 20261005000010_fr8x_master_schema
+-- Description:
+--   Single, idempotent, safe-to-run migration that creates the entire
+--   FR8X production PostgreSQL schema from scratch. Paste this into the
+--   Supabase Dashboard → SQL Editor and execute.
+--
+--   This migration:
+--   • Creates all production tables with correct column names matching
+--     the application's lib/db/*.ts and lib/supabase/types.ts.
+--   • Enables Row Level Security (RLS) on every table.
+--   • Creates explicit, least-privilege RLS policies.
+--   • Creates all indexes for common query patterns.
+--   • Creates updated_at trigger function + triggers.
+--   • Creates auto-provisioning trigger for new Supabase Auth users.
+--   • Creates increment_auction_bids RPC used by lib/db/auctions.ts.
+--   • Creates storage buckets and storage RLS policies.
+--   • Seeds reference companies and a sample freight rate.
+--   • Does NOT store passwords. Auth credentials live in auth.users only.
+-- =============================================================================
 
--- 0. EXTENSIONS
+-- ─── Extensions ──────────────────────────────────────────────────────────────
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
--- Automatic updated_at timestamp trigger function
+-- =============================================================================
+-- UTILITY: updated_at trigger function (shared by all tables)
+-- =============================================================================
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================================================
--- 1. COMPANIES TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.companies (
-  id TEXT PRIMARY KEY,
-  name TEXT,
-  legal_name TEXT NOT NULL,
-  trade_name TEXT,
-  country TEXT DEFAULT 'India',
-  state TEXT,
-  city TEXT,
-  postal_code TEXT,
-  registered_address TEXT,
-  operating_address TEXT,
-  address TEXT,
-  company_type TEXT,
-  registration_number TEXT,
-  gstin TEXT,
-  gstn TEXT,
-  pan TEXT,
-  cin TEXT,
-  iec TEXT,
-  mto TEXT,
-  status TEXT DEFAULT 'verified',
-  verified BOOLEAN DEFAULT TRUE,
-  is_verified BOOLEAN DEFAULT TRUE,
-  member_count INT DEFAULT 1,
-  primary_contact_name TEXT,
-  primary_contact_email TEXT,
-  primary_contact_phone TEXT,
-  admin_notes JSONB DEFAULT '[]'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_companies_status ON public.companies(status);
-CREATE INDEX IF NOT EXISTS idx_companies_city ON public.companies(city);
-
-DROP TRIGGER IF EXISTS set_companies_updated_at ON public.companies;
-CREATE TRIGGER set_companies_updated_at
-  BEFORE UPDATE ON public.companies
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
-
-ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Companies viewable by all authenticated users" ON public.companies;
-CREATE POLICY "Companies viewable by all authenticated users"
-  ON public.companies FOR SELECT
-  USING (true);
-
-DROP POLICY IF EXISTS "Companies insertable by authenticated users" ON public.companies;
-CREATE POLICY "Companies insertable by authenticated users"
-  ON public.companies FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Companies updatable by authenticated users" ON public.companies;
-CREATE POLICY "Companies updatable by authenticated users"
-  ON public.companies FOR UPDATE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Companies deletable by service role only" ON public.companies;
-CREATE POLICY "Companies deletable by service role only"
-  ON public.companies FOR DELETE
-  USING (auth.role() = 'service_role');
-
--- ============================================================================
--- 2. PROFILES TABLE (Linked 1:1 with auth.users)
--- ============================================================================
+-- =============================================================================
+-- 1. PROFILES
+--    Authoritative user identity record linked 1:1 to auth.users.
+--    Primary key = auth.users.id (UUID from Supabase Auth).
+--    No passwords stored here — authentication is fully in auth.users.
+-- =============================================================================
 CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  uid TEXT,
-  email TEXT NOT NULL UNIQUE,
-  first_name TEXT,
-  last_name TEXT,
-  display_name TEXT,
-  phone TEXT,
-  mobile TEXT,
-  isd_code TEXT DEFAULT '+91',
-  whatsapp_same_as_mobile BOOLEAN DEFAULT TRUE,
-  designation TEXT,
-  position TEXT,
-  company_name TEXT,
-  company_id TEXT REFERENCES public.companies(id) ON DELETE SET NULL,
-  department TEXT DEFAULT 'Logistics & Supply Chain',
-  city TEXT,
-  state TEXT,
-  district TEXT,
-  country TEXT DEFAULT 'India',
-  area TEXT,
-  postal_code TEXT,
-  formatted_address TEXT,
-  address TEXT,
-  location TEXT,
-  timezone TEXT DEFAULT 'Asia/Kolkata',
-  avatar_url TEXT,
-  company_logo_url TEXT,
-  role TEXT DEFAULT 'company_admin',
-  plan TEXT DEFAULT 'trial',
-  has_golden_tick BOOLEAN DEFAULT FALSE,
-  is_verified BOOLEAN DEFAULT FALSE,
-  email_verified BOOLEAN DEFAULT FALSE,
-  status TEXT DEFAULT 'active',
-  account_status TEXT DEFAULT 'active',
-  first_login_completed BOOLEAN DEFAULT FALSE,
-  failed_login_attempts INT DEFAULT 0,
-  experiences JSONB DEFAULT '[]'::jsonb,
-  educations JSONB DEFAULT '[]'::jsonb,
-  certifications JSONB DEFAULT '[]'::jsonb,
-  privacy_settings JSONB DEFAULT '{
+  -- Identity (matches auth.users.id exactly)
+  id                      UUID        PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  uid                     TEXT        UNIQUE,           -- Legacy short identifier (e.g. "u-rajat")
+
+  -- Contact
+  email                   TEXT        NOT NULL UNIQUE,
+  first_name              TEXT,
+  last_name               TEXT,
+  display_name            TEXT,
+  phone                   TEXT,
+  mobile                  TEXT,
+  isd_code                TEXT        DEFAULT '+91',
+  whatsapp_same_as_mobile BOOLEAN     DEFAULT TRUE,
+
+  -- Professional
+  designation             TEXT,
+  position                TEXT,
+  company_name            TEXT,
+  company_id              TEXT,
+  department              TEXT        DEFAULT 'Logistics & Supply Chain',
+  bio                     TEXT,
+  summary                 TEXT,
+
+  -- Location
+  city                    TEXT,
+  state                   TEXT,
+  district                TEXT,
+  country                 TEXT        DEFAULT 'India',
+  area                    TEXT,
+  postal_code             TEXT,
+  formatted_address       TEXT,
+  address                 TEXT,
+  location                TEXT,
+  timezone                TEXT        DEFAULT 'Asia/Kolkata',
+
+  -- Media
+  avatar_url              TEXT,
+  company_logo_url        TEXT,
+
+  -- Platform
+  role                    TEXT        DEFAULT 'company_admin',
+  plan                    TEXT        DEFAULT 'trial',
+  has_golden_tick         BOOLEAN     DEFAULT FALSE,
+  is_verified             BOOLEAN     DEFAULT FALSE,
+  status                  TEXT        DEFAULT 'active',
+  account_status          TEXT        DEFAULT 'active',
+  first_login_completed   BOOLEAN     DEFAULT FALSE,
+  email_verified          BOOLEAN     DEFAULT FALSE,
+  failed_login_attempts   INT         DEFAULT 0,
+
+  -- Structured data (JSONB — justified by flexible schema)
+  experiences             JSONB       DEFAULT '[]'::jsonb,
+  educations              JSONB       DEFAULT '[]'::jsonb,
+  certifications          JSONB       DEFAULT '[]'::jsonb,
+  privacy_settings        JSONB       DEFAULT '{
     "emailVisibility": "public",
     "phoneVisibility": "public",
     "statutoryVisibility": "public",
@@ -134,68 +106,99 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     "bioVisibility": "public",
     "allowConnectionRequests": true
   }'::jsonb,
-  gstn TEXT,
-  pan TEXT,
-  cin TEXT,
-  iec TEXT,
-  mto TEXT,
-  summary TEXT,
-  bio TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  last_login_at TIMESTAMPTZ
+
+  -- Statutory (KYC)
+  gstn                    TEXT,
+  pan                     TEXT,
+  cin                     TEXT,
+  iec                     TEXT,
+  mto                     TEXT,
+  kyc_status              TEXT,
+  kyc_country             TEXT,
+  tax_id                  TEXT,
+  corporate_reg_number    TEXT,
+  trade_customs_code      TEXT,
+  logistics_license_number TEXT,
+  statutory_country       TEXT,
+  iata_code               TEXT,
+  fiata_reg               TEXT,
+  fmc_number              TEXT,
+  aeo_tier                TEXT,
+  contacts                JSONB       DEFAULT '[]'::jsonb,
+  social_links            JSONB       DEFAULT '[]'::jsonb,
+
+  -- Timestamps
+  created_at              TIMESTAMPTZ DEFAULT NOW(),
+  updated_at              TIMESTAMPTZ DEFAULT NOW(),
+  last_login_at           TIMESTAMPTZ
 );
-CREATE INDEX IF NOT EXISTS idx_profiles_email ON public.profiles(email);
-CREATE INDEX IF NOT EXISTS idx_profiles_uid ON public.profiles(uid);
+
+-- Idempotent column additions for existing deployments
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS kyc_status TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS kyc_country TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tax_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS corporate_reg_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS trade_customs_code TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS logistics_license_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS statutory_country TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS iata_code TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fiata_reg TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fmc_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS aeo_tier TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contacts JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS experiences JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS educations JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS certifications JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS privacy_settings JSONB DEFAULT '{"emailVisibility": "public", "phoneVisibility": "public", "statutoryVisibility": "public", "companyVisibility": "public", "tradeLanesVisibility": "public", "bioVisibility": "public", "allowConnectionRequests": true}'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_profiles_email      ON public.profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_uid        ON public.profiles(uid) WHERE uid IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_profiles_company_id ON public.profiles(company_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_role       ON public.profiles(role);
+CREATE INDEX IF NOT EXISTS idx_profiles_status     ON public.profiles(status);
 
 DROP TRIGGER IF EXISTS set_profiles_updated_at ON public.profiles;
 CREATE TRIGGER set_profiles_updated_at
   BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
--- Automatic profile provisioner on auth.users insert
+-- Auto-provision a profile row when a new Supabase Auth user is created
 CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF EXISTS (SELECT 1 FROM public.profiles WHERE email = LOWER(NEW.email)) THEN
-    UPDATE public.profiles
-    SET
-      id = NEW.id,
-      updated_at = NOW()
-    WHERE email = LOWER(NEW.email);
-  ELSE
-    INSERT INTO public.profiles (
-      id,
-      email,
-      display_name,
-      first_name,
-      last_name,
-      phone,
-      mobile,
-      designation,
-      company_name,
-      created_at,
-      updated_at
-    ) VALUES (
-      NEW.id,
-      LOWER(NEW.email),
-      COALESCE(NEW.raw_user_meta_data->>'display_name', NEW.raw_user_meta_data->>'displayName', split_part(NEW.email, '@', 1)),
-      COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'firstName', ''),
-      COALESCE(NEW.raw_user_meta_data->>'last_name', NEW.raw_user_meta_data->>'lastName', ''),
-      COALESCE(NEW.raw_user_meta_data->>'phone', NEW.raw_user_meta_data->>'mobile', ''),
-      COALESCE(NEW.raw_user_meta_data->>'mobile', NEW.raw_user_meta_data->>'phone', ''),
-      COALESCE(NEW.raw_user_meta_data->>'designation', 'Freight Logistics Specialist'),
-      COALESCE(NEW.raw_user_meta_data->>'company', NEW.raw_user_meta_data->>'companyName', 'Enterprise Organization'),
-      NOW(),
-      NOW()
-    )
-    ON CONFLICT (id) DO UPDATE SET
-      email = EXCLUDED.email,
-      updated_at = NOW();
-  END IF;
+  INSERT INTO public.profiles (
+    id,
+    email,
+    display_name,
+    first_name,
+    last_name,
+    phone,
+    mobile,
+    designation,
+    company_name,
+    created_at,
+    updated_at
+  ) VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(
+      NEW.raw_user_meta_data->>'display_name',
+      NEW.raw_user_meta_data->>'displayName',
+      split_part(NEW.email, '@', 1)
+    ),
+    COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'firstName', ''),
+    COALESCE(NEW.raw_user_meta_data->>'last_name',  NEW.raw_user_meta_data->>'lastName',  ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone',  NEW.raw_user_meta_data->>'mobile', ''),
+    COALESCE(NEW.raw_user_meta_data->>'mobile', NEW.raw_user_meta_data->>'phone',  ''),
+    COALESCE(NEW.raw_user_meta_data->>'designation', 'Freight Logistics Specialist'),
+    COALESCE(NEW.raw_user_meta_data->>'company', NEW.raw_user_meta_data->>'companyName', ''),
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email      = EXCLUDED.email,
+    updated_at = NOW();
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -203,156 +206,153 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_auth_user();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_auth_user();
 
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Profiles are readable by authenticated users" ON public.profiles;
-CREATE POLICY "Profiles are readable by authenticated users"
-  ON public.profiles FOR SELECT
-  USING (true);
-
-DROP POLICY IF EXISTS "Users can insert their own profile" ON public.profiles;
-CREATE POLICY "Users can insert their own profile"
-  ON public.profiles FOR INSERT
-  WITH CHECK (auth.uid() = id OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
-CREATE POLICY "Users can update their own profile"
-  ON public.profiles FOR UPDATE
-  USING (auth.uid() = id OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Only service role can delete profiles" ON public.profiles;
-CREATE POLICY "Only service role can delete profiles"
-  ON public.profiles FOR DELETE
-  USING (auth.role() = 'service_role');
-
--- ============================================================================
--- 3. RATES TABLE (Freight Rate Cards & Spot Tariffs)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.rates (
-  id TEXT PRIMARY KEY,
-  sp TEXT NOT NULL,
-  line TEXT NOT NULL,
-  por TEXT NOT NULL,
-  pol TEXT NOT NULL,
-  pod TEXT NOT NULL,
-  fpod TEXT NOT NULL,
-  rate20 NUMERIC NOT NULL DEFAULT 0,
-  rate40 NUMERIC NOT NULL DEFAULT 0,
-  rate40hc NUMERIC NOT NULL DEFAULT 0,
-  currency TEXT DEFAULT 'USD',
-  type TEXT DEFAULT 'Direct Spot',
-  ft INT DEFAULT 14,
-  validity DATE NOT NULL,
-  transit_time TEXT,
-  owner_uid TEXT,
-  created_by TEXT,
-  is_owner BOOLEAN DEFAULT TRUE,
-  is_self_posted BOOLEAN DEFAULT TRUE,
-  status TEXT DEFAULT 'active',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+-- =============================================================================
+-- 2. COMPANIES
+--    Enterprise organizations (freight forwarders, carriers, LSPs).
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.companies (
+  id                      TEXT        PRIMARY KEY,
+  -- Names
+  name                    TEXT,                         -- Short / display name
+  legal_name              TEXT        NOT NULL,
+  trade_name              TEXT,
+  -- Registration & KYC
+  cin                     TEXT,
+  pan                     TEXT,
+  gstn                    TEXT,
+  gstin                   TEXT,                         -- Alias for gstn
+  iec                     TEXT,
+  mto                     TEXT,
+  entity_type             TEXT,
+  industry                TEXT,
+  -- Contact
+  website                 TEXT,
+  contact_email           TEXT,
+  contact_phone           TEXT,
+  primary_contact_name    TEXT,
+  primary_contact_email   TEXT,
+  primary_contact_phone   TEXT,
+  -- Location
+  address                 TEXT,
+  registered_address      TEXT,
+  operating_address       TEXT,
+  city                    TEXT,
+  state                   TEXT,
+  country                 TEXT        DEFAULT 'India',
+  postal_code             TEXT,
+  -- Platform
+  status                  TEXT        DEFAULT 'verified',
+  kyc_status              TEXT,
+  verified                BOOLEAN     DEFAULT TRUE,
+  is_verified             BOOLEAN     DEFAULT TRUE,
+  member_count            INT         DEFAULT 1,
+  admin_notes             JSONB       DEFAULT '[]'::jsonb,
+  -- Timestamps
+  created_at              TIMESTAMPTZ DEFAULT NOW(),
+  updated_at              TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_rates_pol_pod ON public.rates(pol, pod);
-CREATE INDEX IF NOT EXISTS idx_rates_validity ON public.rates(validity);
-CREATE INDEX IF NOT EXISTS idx_rates_status ON public.rates(status);
+
+CREATE INDEX IF NOT EXISTS idx_companies_name       ON public.companies(name);
+CREATE INDEX IF NOT EXISTS idx_companies_legal_name ON public.companies(legal_name);
+CREATE INDEX IF NOT EXISTS idx_companies_gstn       ON public.companies(gstn);
+CREATE INDEX IF NOT EXISTS idx_companies_status     ON public.companies(status);
+
+DROP TRIGGER IF EXISTS set_companies_updated_at ON public.companies;
+CREATE TRIGGER set_companies_updated_at
+  BEFORE UPDATE ON public.companies
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 3. RATES (Freight Rate Cards & Tariffs)
+--    Ocean container spot rates posted by freight forwarders.
+--    Column names match lib/db/rates.ts and application domain model.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.rates (
+  id              TEXT        PRIMARY KEY,
+  sp              TEXT        NOT NULL,          -- Service Provider (forwarder)
+  line            TEXT        NOT NULL,          -- Shipping Line (e.g. MAERSK)
+  por             TEXT        NOT NULL,          -- Place of Receipt
+  pol             TEXT        NOT NULL,          -- Port of Loading
+  pod             TEXT        NOT NULL,          -- Port of Discharge
+  fpod            TEXT        NOT NULL,          -- Final Place of Delivery
+  rate20          NUMERIC     NOT NULL DEFAULT 0,
+  rate40          NUMERIC     NOT NULL DEFAULT 0,
+  rate40hc        NUMERIC     NOT NULL DEFAULT 0,
+  currency        TEXT        DEFAULT 'USD',
+  type            TEXT        DEFAULT 'Direct Spot',
+  ft              INT         DEFAULT 14,        -- Free Time days
+  validity        DATE        NOT NULL,
+  transit_time    TEXT,
+  owner_uid       UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_by      UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  is_owner        BOOLEAN     DEFAULT TRUE,
+  is_self_posted  BOOLEAN     DEFAULT TRUE,
+  status          TEXT        DEFAULT 'active',
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rates_pol_pod    ON public.rates(pol, pod);
+CREATE INDEX IF NOT EXISTS idx_rates_owner_uid  ON public.rates(owner_uid);
+CREATE INDEX IF NOT EXISTS idx_rates_validity   ON public.rates(validity);
+CREATE INDEX IF NOT EXISTS idx_rates_status     ON public.rates(status);
+CREATE INDEX IF NOT EXISTS idx_rates_sp         ON public.rates(sp);
 
 DROP TRIGGER IF EXISTS set_rates_updated_at ON public.rates;
 CREATE TRIGGER set_rates_updated_at
   BEFORE UPDATE ON public.rates
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
-ALTER TABLE public.rates ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Active rates viewable by authenticated users" ON public.rates;
-CREATE POLICY "Active rates viewable by authenticated users"
-  ON public.rates FOR SELECT
-  USING (status = 'active' OR auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Authenticated users can create rates" ON public.rates;
-CREATE POLICY "Authenticated users can create rates"
-  ON public.rates FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Rate creators can update their rates" ON public.rates;
-CREATE POLICY "Rate creators can update their rates"
-  ON public.rates FOR UPDATE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Rate creators can delete their rates" ON public.rates;
-CREATE POLICY "Rate creators can delete their rates"
-  ON public.rates FOR DELETE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
--- ============================================================================
--- 4. AUCTIONS TABLE (Reverse Freight Bidding)
--- ============================================================================
+-- =============================================================================
+-- 4. AUCTIONS (Reverse Freight Bidding / RFQ Marketplace)
+--    Logistics buyers create auctions; forwarders submit competitive bids.
+-- =============================================================================
 CREATE TABLE IF NOT EXISTS public.auctions (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  rfq_id TEXT,
-  creator_uid TEXT,
-  creator_name TEXT,
-  creator_company TEXT,
-  auction_type TEXT DEFAULT 'Specific bidder',
-  start_date DATE,
-  start_time TEXT,
-  duration_minutes INT DEFAULT 120,
-  end_date_time TIMESTAMPTZ,
-  timezone TEXT DEFAULT 'Asia/Kolkata',
-  status TEXT DEFAULT 'Draft',
-  rank TEXT DEFAULT 'Pending',
-  time_left TEXT,
-  is_published BOOLEAN DEFAULT FALSE,
-  published_at TIMESTAMPTZ,
-  competition_ceiling NUMERIC,
-  bids_submitted_count INT DEFAULT 0,
-  payment_status TEXT DEFAULT 'unpaid',
-  posting_fee_inr NUMERIC DEFAULT 300,
-  shipment JSONB NOT NULL DEFAULT '{}'::jsonb,
-  containers JSONB NOT NULL DEFAULT '[]'::jsonb,
-  origin_charges JSONB DEFAULT '{}'::jsonb,
-  destination_charges JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  id                    TEXT        PRIMARY KEY,
+  title                 TEXT        NOT NULL,
+  rfq_id                TEXT,
+  creator_uid           UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  creator_name          TEXT,
+  creator_company       TEXT,
+  auction_type          TEXT        DEFAULT 'Specific bidder',
+  start_date            DATE,
+  start_time            TEXT,
+  duration_minutes      INT         DEFAULT 120,
+  end_date_time         TIMESTAMPTZ,
+  timezone              TEXT        DEFAULT 'Asia/Kolkata',
+  status                TEXT        DEFAULT 'Draft',
+  rank                  TEXT        DEFAULT 'Pending',
+  time_left             TEXT,
+  is_published          BOOLEAN     DEFAULT FALSE,
+  published_at          TIMESTAMPTZ,
+  competition_ceiling   NUMERIC,
+  bids_submitted_count  INT         DEFAULT 0,
+  payment_status        TEXT        DEFAULT 'unpaid',
+  posting_fee_inr       NUMERIC     DEFAULT 300,
+  -- Structured cargo/shipment data (JSONB — necessary for nested structures)
+  shipment              JSONB       NOT NULL DEFAULT '{}'::jsonb,
+  containers            JSONB       NOT NULL DEFAULT '[]'::jsonb,
+  origin_charges        JSONB       DEFAULT '{}'::jsonb,
+  destination_charges   JSONB       DEFAULT '{}'::jsonb,
+  -- Timestamps
+  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_auctions_creator ON public.auctions(creator_uid);
-CREATE INDEX IF NOT EXISTS idx_auctions_status ON public.auctions(status);
+
+CREATE INDEX IF NOT EXISTS idx_auctions_creator_uid ON public.auctions(creator_uid);
+CREATE INDEX IF NOT EXISTS idx_auctions_status      ON public.auctions(status);
+CREATE INDEX IF NOT EXISTS idx_auctions_created_at  ON public.auctions(created_at DESC);
 
 DROP TRIGGER IF EXISTS set_auctions_updated_at ON public.auctions;
 CREATE TRIGGER set_auctions_updated_at
   BEFORE UPDATE ON public.auctions
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
-ALTER TABLE public.auctions ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Auctions viewable by all users" ON public.auctions;
-CREATE POLICY "Auctions viewable by all users"
-  ON public.auctions FOR SELECT
-  USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can create auctions" ON public.auctions;
-CREATE POLICY "Authenticated users can create auctions"
-  ON public.auctions FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Auction creators can update their auctions" ON public.auctions;
-CREATE POLICY "Auction creators can update their auctions"
-  ON public.auctions FOR UPDATE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Auction creators can delete their auctions" ON public.auctions;
-CREATE POLICY "Auction creators can delete their auctions"
-  ON public.auctions FOR DELETE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
--- Helper RPC function to increment bids
+-- RPC: increment bid counter atomically
 CREATE OR REPLACE FUNCTION public.increment_auction_bids(a_id TEXT)
-RETURNS VOID AS $$
+RETURNS void AS $$
 BEGIN
   UPDATE public.auctions
   SET bids_submitted_count = bids_submitted_count + 1,
@@ -361,396 +361,907 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- ============================================================================
--- 5. AUCTION BIDS TABLE
--- ============================================================================
+-- =============================================================================
+-- 5. AUCTION BIDS
+--    Bids placed by forwarders on reverse freight auctions.
+-- =============================================================================
 CREATE TABLE IF NOT EXISTS public.auction_bids (
-  id TEXT PRIMARY KEY,
-  auction_id TEXT NOT NULL REFERENCES public.auctions(id) ON DELETE CASCADE,
-  bidder_id TEXT,
-  bidder_uid TEXT,
-  bidder_name TEXT,
+  id            TEXT        PRIMARY KEY,
+  auction_id    TEXT        NOT NULL REFERENCES public.auctions(id) ON DELETE CASCADE,
+  bidder_uid    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  bidder_name   TEXT,
   bidder_company TEXT,
-  amount NUMERIC NOT NULL,
-  currency TEXT DEFAULT 'USD',
-  transit_days INT,
-  free_days INT,
-  carrier TEXT,
-  routing TEXT,
-  remarks TEXT,
-  rank INT,
-  details JSONB DEFAULT '{}'::jsonb,
-  status TEXT DEFAULT 'active',
-  submitted_at TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  amount        NUMERIC     NOT NULL,
+  currency      TEXT        DEFAULT 'USD',
+  transit_days  INT,
+  free_days     INT,
+  carrier       TEXT,
+  routing       TEXT,
+  remarks       TEXT,
+  rank          INT,
+  status        TEXT        DEFAULT 'active',
+  details       JSONB       DEFAULT '{}'::jsonb,
+  submitted_at  TIMESTAMPTZ DEFAULT NOW(),
+  created_at    TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_auction_bids_auction_id ON public.auction_bids(auction_id);
-CREATE INDEX IF NOT EXISTS idx_auction_bids_amount ON public.auction_bids(amount);
 
-ALTER TABLE public.auction_bids ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_bids_auction_id ON public.auction_bids(auction_id);
+CREATE INDEX IF NOT EXISTS idx_bids_bidder_uid ON public.auction_bids(bidder_uid);
 
-DROP POLICY IF EXISTS "Bids viewable by authenticated users" ON public.auction_bids;
-CREATE POLICY "Bids viewable by authenticated users"
-  ON public.auction_bids FOR SELECT
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Authenticated users can place bids" ON public.auction_bids;
-CREATE POLICY "Authenticated users can place bids"
-  ON public.auction_bids FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Bidders can update their bids" ON public.auction_bids;
-CREATE POLICY "Bidders can update their bids"
-  ON public.auction_bids FOR UPDATE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
--- ============================================================================
--- 6. POSTS & COMMENTS (Feed & Professional Social Network)
--- ============================================================================
+-- =============================================================================
+-- 6. POSTS (Social Feed & Logistics Discussions)
+-- =============================================================================
 CREATE TABLE IF NOT EXISTS public.posts (
-  id TEXT PRIMARY KEY,
-  author_id TEXT,
-  author_uid TEXT,
-  author_name TEXT,
-  author_avatar TEXT,
-  author_company TEXT,
-  author_designation TEXT,
-  title TEXT,
-  content TEXT NOT NULL,
-  category TEXT DEFAULT 'general',
-  media_urls JSONB DEFAULT '[]'::jsonb,
-  attachments JSONB DEFAULT '[]'::jsonb,
-  likes_count INT DEFAULT 0,
-  comments_count INT DEFAULT 0,
-  shares_count INT DEFAULT 0,
-  status TEXT DEFAULT 'published',
-  is_pinned BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  id              TEXT        PRIMARY KEY,
+  author_uid      UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  author_id       TEXT,                           -- Legacy alias (do not use for FK joins)
+  author_name     TEXT,
+  author_company  TEXT,
+  author_avatar   TEXT,
+  content         TEXT        NOT NULL,
+  media_url       TEXT,
+  media_type      TEXT,
+  likes_count     INT         DEFAULT 0,
+  comments_count  INT         DEFAULT 0,
+  tags            TEXT[]      DEFAULT ARRAY[]::TEXT[],
+  is_published    BOOLEAN     DEFAULT TRUE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_posts_status ON public.posts(status);
+
+CREATE INDEX IF NOT EXISTS idx_posts_author_uid ON public.posts(author_uid);
 CREATE INDEX IF NOT EXISTS idx_posts_created_at ON public.posts(created_at DESC);
 
 DROP TRIGGER IF EXISTS set_posts_updated_at ON public.posts;
 CREATE TRIGGER set_posts_updated_at
   BEFORE UPDATE ON public.posts
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_updated_at();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
-ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Posts viewable by all users" ON public.posts;
-CREATE POLICY "Posts viewable by all users"
-  ON public.posts FOR SELECT
-  USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can create posts" ON public.posts;
-CREATE POLICY "Authenticated users can create posts"
-  ON public.posts FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Authors can update their posts" ON public.posts;
-CREATE POLICY "Authors can update their posts"
-  ON public.posts FOR UPDATE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Authors can delete their posts" ON public.posts;
-CREATE POLICY "Authors can delete their posts"
-  ON public.posts FOR DELETE
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
-CREATE TABLE IF NOT EXISTS public.post_comments (
-  id TEXT PRIMARY KEY,
-  post_id TEXT NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
-  author_id TEXT,
-  author_uid TEXT,
-  author_name TEXT,
-  author_avatar TEXT,
-  content TEXT NOT NULL,
-  likes_count INT DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+-- =============================================================================
+-- 7. COMMENTS
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.comments (
+  id              TEXT        PRIMARY KEY,
+  post_id         TEXT        NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
+  author_uid      UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  author_id       TEXT,                           -- Legacy alias
+  author_name     TEXT,
+  author_company  TEXT,
+  author_avatar   TEXT,
+  content         TEXT        NOT NULL,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_comments_post_id ON public.post_comments(post_id);
 
-ALTER TABLE public.post_comments ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS idx_comments_post_id    ON public.comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comments_author_uid ON public.comments(author_uid);
 
-DROP POLICY IF EXISTS "Comments viewable by all users" ON public.post_comments;
-CREATE POLICY "Comments viewable by all users"
-  ON public.post_comments FOR SELECT
-  USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can create comments" ON public.post_comments;
-CREATE POLICY "Authenticated users can create comments"
-  ON public.post_comments FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
-
--- ============================================================================
--- 7. JOBS TABLE (Logistics Recruitment & Postings)
--- ============================================================================
+-- =============================================================================
+-- 8. JOBS (Freight & Logistics Job Postings)
+-- =============================================================================
 CREATE TABLE IF NOT EXISTS public.jobs (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  company_id TEXT REFERENCES public.companies(id) ON DELETE SET NULL,
-  company_name TEXT,
-  location TEXT,
-  job_type TEXT DEFAULT 'Full-time',
-  description TEXT,
-  requirements TEXT,
-  salary_range TEXT,
-  status TEXT DEFAULT 'active',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  id            TEXT        PRIMARY KEY,
+  title         TEXT        NOT NULL,
+  company_id    TEXT        REFERENCES public.companies(id) ON DELETE SET NULL,
+  company_name  TEXT,
+  location      TEXT,
+  job_type      TEXT        DEFAULT 'Full-time',
+  description   TEXT,
+  requirements  TEXT,
+  salary_range  TEXT,
+  status        TEXT        DEFAULT 'active',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
 CREATE INDEX IF NOT EXISTS idx_jobs_company_id ON public.jobs(company_id);
-CREATE INDEX IF NOT EXISTS idx_jobs_status ON public.jobs(status);
+CREATE INDEX IF NOT EXISTS idx_jobs_status     ON public.jobs(status);
 
-ALTER TABLE public.jobs ENABLE ROW LEVEL SECURITY;
+DROP TRIGGER IF EXISTS set_jobs_updated_at ON public.jobs;
+CREATE TRIGGER set_jobs_updated_at
+  BEFORE UPDATE ON public.jobs
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
-DROP POLICY IF EXISTS "Jobs viewable by all users" ON public.jobs;
-CREATE POLICY "Jobs viewable by all users"
-  ON public.jobs FOR SELECT
+-- =============================================================================
+-- 9. CASES (Support & Dispute Tickets)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.cases (
+  id          TEXT        PRIMARY KEY,
+  title       TEXT        NOT NULL,
+  description TEXT,
+  user_id     TEXT,
+  company_id  TEXT        REFERENCES public.companies(id) ON DELETE SET NULL,
+  category    TEXT,
+  priority    TEXT        DEFAULT 'medium',
+  status      TEXT        DEFAULT 'open',
+  metadata    JSONB       DEFAULT '{}'::jsonb,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cases_user_id ON public.cases(user_id);
+CREATE INDEX IF NOT EXISTS idx_cases_status  ON public.cases(status);
+
+DROP TRIGGER IF EXISTS set_cases_updated_at ON public.cases;
+CREATE TRIGGER set_cases_updated_at
+  BEFORE UPDATE ON public.cases
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 10. TRANSACTIONS (Razorpay Payments & Subscription Invoices)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.transactions (
+  id          TEXT        PRIMARY KEY,
+  order_id    TEXT        NOT NULL,
+  payment_id  TEXT,
+  user_id     TEXT,
+  user_email  TEXT,
+  amount      NUMERIC     NOT NULL,
+  currency    TEXT        DEFAULT 'INR',
+  plan_id     TEXT,
+  item_type   TEXT,
+  item_title  TEXT,
+  status      TEXT        DEFAULT 'created',
+  gateway     TEXT        DEFAULT 'Razorpay',
+  raw_payload JSONB       DEFAULT '{}'::jsonb,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id  ON public.transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_order_id ON public.transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_status   ON public.transactions(status);
+
+DROP TRIGGER IF EXISTS set_transactions_updated_at ON public.transactions;
+CREATE TRIGGER set_transactions_updated_at
+  BEFORE UPDATE ON public.transactions
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 11. REVIEWS (Company & Partner Feedback)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.reviews (
+  id                  TEXT        PRIMARY KEY,
+  target_company_id   TEXT        REFERENCES public.companies(id) ON DELETE CASCADE,
+  reviewer_id         TEXT,
+  reviewer_name       TEXT,
+  reviewer_company    TEXT,
+  rating              INT         CHECK (rating >= 1 AND rating <= 5),
+  comment             TEXT,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reviews_company ON public.reviews(target_company_id);
+
+-- =============================================================================
+-- 12. EVENTS (Telemetry & Platform Activity Log)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.events (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  event_type  TEXT        NOT NULL,
+  user_id     TEXT,
+  session_id  TEXT,
+  payload     JSONB       DEFAULT '{}'::jsonb,
+  timestamp   TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_user_id ON public.events(user_id);
+CREATE INDEX IF NOT EXISTS idx_events_type    ON public.events(event_type);
+CREATE INDEX IF NOT EXISTS idx_events_ts      ON public.events(timestamp DESC);
+
+-- =============================================================================
+-- 13. INTENTS (User Logistics Intelligence & Search Preferences)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.intents (
+  user_id                TEXT        PRIMARY KEY,
+  recent_searched_ports  JSONB       DEFAULT '[]'::jsonb,
+  viewed_rates           JSONB       DEFAULT '[]'::jsonb,
+  active_auction_routes  JSONB       DEFAULT '[]'::jsonb,
+  saved_trade_lanes      JSONB       DEFAULT '[]'::jsonb,
+  followed_commodities   JSONB       DEFAULT '[]'::jsonb,
+  carrier_searches       JSONB       DEFAULT '[]'::jsonb,
+  last_active_at         TIMESTAMPTZ DEFAULT NOW(),
+  expires_at             TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days')
+);
+
+-- =============================================================================
+-- 14. PRESENCE (Real-time Online State)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.presence (
+  user_id       TEXT        PRIMARY KEY,
+  online        BOOLEAN     DEFAULT FALSE,
+  last_seen     TIMESTAMPTZ DEFAULT NOW(),
+  active_device JSONB       DEFAULT '{}'::jsonb,
+  status        TEXT        DEFAULT 'offline',
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS set_presence_updated_at ON public.presence;
+CREATE TRIGGER set_presence_updated_at
+  BEFORE UPDATE ON public.presence
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 15. VERIFICATIONS (Email Token & OTP Challenges)
+--     Used by lib/db/verifications.ts for email verification and OTP flow.
+--     Supabase Auth owns the real auth credentials; this table stores
+--     application-level one-time challenge tokens only.
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.verifications (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  token_hash  TEXT        NOT NULL UNIQUE,
+  user_id     TEXT        NOT NULL,
+  email       TEXT        NOT NULL,
+  expires_at  TIMESTAMPTZ NOT NULL,
+  used        BOOLEAN     DEFAULT FALSE,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_verifications_token  ON public.verifications(token_hash);
+CREATE INDEX IF NOT EXISTS idx_verifications_user   ON public.verifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_verifications_expiry ON public.verifications(expires_at);
+
+-- =============================================================================
+-- 16. AUDIT LOGS (Immutable Security & Compliance Audit Trail)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  actor_uid     UUID        REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_id       TEXT,       -- Alias for actor_uid as text (for legacy code)
+  action        TEXT        NOT NULL,
+  target_entity TEXT        NOT NULL,
+  target_id     TEXT        NOT NULL,
+  entity        TEXT,       -- Alias for target_entity (for legacy code)
+  entity_id     TEXT,       -- Alias for target_id (for legacy code)
+  old_data      JSONB,
+  new_data      JSONB,
+  metadata      JSONB       DEFAULT '{}'::jsonb,
+  ip_address    TEXT,
+  user_agent    TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_target    ON public.audit_logs(target_entity, target_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor     ON public.audit_logs(actor_uid);
+CREATE INDEX IF NOT EXISTS idx_audit_created   ON public.audit_logs(created_at DESC);
+
+-- =============================================================================
+-- 17. CONNECTIONS (Professional Network Graph)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.connections (
+  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  requester_id    TEXT        NOT NULL,
+  receiver_id     TEXT,
+  recipient_id    TEXT,
+  status          TEXT        NOT NULL DEFAULT 'pending', -- 'pending' | 'accepted' | 'rejected' | 'blocked'
+  note            TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS receiver_id TEXT;
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS recipient_id TEXT;
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS note TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_connections_requester ON public.connections(requester_id);
+CREATE INDEX IF NOT EXISTS idx_connections_receiver  ON public.connections(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_connections_recipient ON public.connections(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_connections_status    ON public.connections(status);
+
+DROP TRIGGER IF EXISTS set_connections_updated_at ON public.connections;
+CREATE TRIGGER set_connections_updated_at
+  BEFORE UPDATE ON public.connections
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 18. NOTIFICATIONS (In-app Alerts & Activity Push)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id     TEXT        NOT NULL,
+  type        TEXT        NOT NULL,
+  category    TEXT,
+  title       TEXT        NOT NULL,
+  message     TEXT,
+  description TEXT,
+  link        TEXT,
+  target_url  TEXT,
+  related_id  TEXT,
+  read        BOOLEAN     DEFAULT FALSE,
+  metadata    JSONB       DEFAULT '{}'::jsonb,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_url TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS related_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read    ON public.notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON public.notifications(created_at DESC);
+
+-- =============================================================================
+-- 19. MESSAGES (Direct Peer-to-Peer & Channel Messaging)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.messages (
+  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  conversation_id TEXT,
+  channel_id      TEXT,
+  sender_id       TEXT        NOT NULL,
+  recipient_id    TEXT        NOT NULL,
+  content         TEXT,
+  text            TEXT,
+  attachments     JSONB       DEFAULT '[]'::jsonb,
+  metadata        JSONB       DEFAULT '{}'::jsonb,
+  read            BOOLEAN     DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS conversation_id TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS channel_id TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS text TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender    ON public.messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient ON public.messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_messages_channel   ON public.messages(channel_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created   ON public.messages(created_at DESC);
+
+DROP TRIGGER IF EXISTS set_messages_updated_at ON public.messages;
+CREATE TRIGGER set_messages_updated_at
+  BEFORE UPDATE ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 20. ROW LEVEL SECURITY
+--     All tables have RLS enabled. Anonymous access is denied except for
+--     storage.objects on public buckets. Service role bypasses RLS.
+-- =============================================================================
+
+ALTER TABLE public.profiles      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.companies     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rates         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.auctions      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.auction_bids  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.posts         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.comments      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.jobs          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cases         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reviews       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.events        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.intents       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.presence      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.connections   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages      ENABLE ROW LEVEL SECURITY;
+
+-- ── PROFILES ─────────────────────────────────────────────────────────────────
+-- Any authenticated member can view the directory (member networking feature)
+DROP POLICY IF EXISTS "Profiles viewable by authenticated users" ON public.profiles;
+CREATE POLICY "Profiles viewable by authenticated users"
+  ON public.profiles FOR SELECT
+  TO authenticated
   USING (true);
 
-DROP POLICY IF EXISTS "Authenticated users can manage jobs" ON public.jobs;
-CREATE POLICY "Authenticated users can manage jobs"
+-- Users can only insert their own profile (provisioned via trigger normally)
+DROP POLICY IF EXISTS "Users can insert own profile" ON public.profiles;
+CREATE POLICY "Users can insert own profile"
+  ON public.profiles FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+-- Users can only update their own profile
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+  ON public.profiles FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- Service role has unrestricted access for admin operations
+DROP POLICY IF EXISTS "Service role full access on profiles" ON public.profiles;
+CREATE POLICY "Service role full access on profiles"
+  ON public.profiles FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── COMPANIES ────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Companies viewable by authenticated users" ON public.companies;
+CREATE POLICY "Companies viewable by authenticated users"
+  ON public.companies FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Only service role can create/modify company records (admin-mediated KYC)
+DROP POLICY IF EXISTS "Service role manages companies" ON public.companies;
+CREATE POLICY "Service role manages companies"
+  ON public.companies FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── RATES ────────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Rates viewable by authenticated users" ON public.rates;
+CREATE POLICY "Rates viewable by authenticated users"
+  ON public.rates FOR SELECT
+  TO authenticated
+  USING (status = 'active' OR auth.uid() = owner_uid);
+
+DROP POLICY IF EXISTS "Users can create rates" ON public.rates;
+CREATE POLICY "Users can create rates"
+  ON public.rates FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = owner_uid OR auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can update own rates" ON public.rates;
+CREATE POLICY "Users can update own rates"
+  ON public.rates FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = owner_uid OR auth.uid() = created_by)
+  WITH CHECK (auth.uid() = owner_uid OR auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Users can delete own rates" ON public.rates;
+CREATE POLICY "Users can delete own rates"
+  ON public.rates FOR DELETE
+  TO authenticated
+  USING (auth.uid() = owner_uid OR auth.uid() = created_by);
+
+DROP POLICY IF EXISTS "Service role manages rates" ON public.rates;
+CREATE POLICY "Service role manages rates"
+  ON public.rates FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── AUCTIONS ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Auctions viewable by authenticated users" ON public.auctions;
+CREATE POLICY "Auctions viewable by authenticated users"
+  ON public.auctions FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can create auctions" ON public.auctions;
+CREATE POLICY "Users can create auctions"
+  ON public.auctions FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = creator_uid);
+
+DROP POLICY IF EXISTS "Users can update own auctions" ON public.auctions;
+CREATE POLICY "Users can update own auctions"
+  ON public.auctions FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = creator_uid)
+  WITH CHECK (auth.uid() = creator_uid);
+
+DROP POLICY IF EXISTS "Users can delete own auctions" ON public.auctions;
+CREATE POLICY "Users can delete own auctions"
+  ON public.auctions FOR DELETE
+  TO authenticated
+  USING (auth.uid() = creator_uid);
+
+DROP POLICY IF EXISTS "Service role manages auctions" ON public.auctions;
+CREATE POLICY "Service role manages auctions"
+  ON public.auctions FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── AUCTION BIDS ─────────────────────────────────────────────────────────────
+-- Bids visible to: the bidder themselves OR the auction creator
+DROP POLICY IF EXISTS "Bids viewable by bidder or auction creator" ON public.auction_bids;
+CREATE POLICY "Bids viewable by bidder or auction creator"
+  ON public.auction_bids FOR SELECT
+  TO authenticated
+  USING (
+    auth.uid() = bidder_uid OR
+    EXISTS (
+      SELECT 1 FROM public.auctions
+      WHERE id = auction_bids.auction_id AND creator_uid = auth.uid()
+    )
+  );
+
+DROP POLICY IF EXISTS "Authenticated users can submit bids" ON public.auction_bids;
+CREATE POLICY "Authenticated users can submit bids"
+  ON public.auction_bids FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = bidder_uid);
+
+DROP POLICY IF EXISTS "Service role manages bids" ON public.auction_bids;
+CREATE POLICY "Service role manages bids"
+  ON public.auction_bids FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── POSTS ────────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Posts viewable by authenticated users" ON public.posts;
+CREATE POLICY "Posts viewable by authenticated users"
+  ON public.posts FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can create posts" ON public.posts;
+CREATE POLICY "Users can create posts"
+  ON public.posts FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = author_uid);
+
+DROP POLICY IF EXISTS "Users can update own posts" ON public.posts;
+CREATE POLICY "Users can update own posts"
+  ON public.posts FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = author_uid)
+  WITH CHECK (auth.uid() = author_uid);
+
+DROP POLICY IF EXISTS "Users can delete own posts" ON public.posts;
+CREATE POLICY "Users can delete own posts"
+  ON public.posts FOR DELETE
+  TO authenticated
+  USING (auth.uid() = author_uid);
+
+-- ── COMMENTS ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Comments viewable by authenticated users" ON public.comments;
+CREATE POLICY "Comments viewable by authenticated users"
+  ON public.comments FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Users can create comments" ON public.comments;
+CREATE POLICY "Users can create comments"
+  ON public.comments FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = author_uid);
+
+DROP POLICY IF EXISTS "Users can delete own comments" ON public.comments;
+CREATE POLICY "Users can delete own comments"
+  ON public.comments FOR DELETE
+  TO authenticated
+  USING (auth.uid() = author_uid);
+
+-- ── JOBS ─────────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Jobs viewable by authenticated users" ON public.jobs;
+CREATE POLICY "Jobs viewable by authenticated users"
+  ON public.jobs FOR SELECT
+  TO authenticated
+  USING (true);
+
+DROP POLICY IF EXISTS "Service role manages jobs" ON public.jobs;
+CREATE POLICY "Service role manages jobs"
   ON public.jobs FOR ALL
-  USING (auth.role() = 'authenticated' OR auth.role() = 'service_role');
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- ============================================================================
--- 8. CASES TABLE (Support & Dispute Tickets)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.cases (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  description TEXT,
-  user_id TEXT,
-  company_id TEXT REFERENCES public.companies(id) ON DELETE SET NULL,
-  category TEXT,
-  priority TEXT DEFAULT 'medium',
-  status TEXT DEFAULT 'open',
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_cases_user_id ON public.cases(user_id);
-CREATE INDEX IF NOT EXISTS idx_cases_status ON public.cases(status);
-
-ALTER TABLE public.cases ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Users can view their own cases" ON public.cases;
-CREATE POLICY "Users can view their own cases"
+-- ── CASES ────────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users can view own cases" ON public.cases;
+CREATE POLICY "Users can view own cases"
   ON public.cases FOR SELECT
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
+  TO authenticated
+  USING (user_id = auth.uid()::text);
 
 DROP POLICY IF EXISTS "Users can create cases" ON public.cases;
 CREATE POLICY "Users can create cases"
   ON public.cases FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
+  TO authenticated
+  WITH CHECK (true);
 
-DROP POLICY IF EXISTS "Users can update their own cases" ON public.cases;
-CREATE POLICY "Users can update their own cases"
-  ON public.cases FOR UPDATE
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
+DROP POLICY IF EXISTS "Service role manages cases" ON public.cases;
+CREATE POLICY "Service role manages cases"
+  ON public.cases FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- ============================================================================
--- 9. TRANSACTIONS TABLE (Razorpay Ledger & Invoices)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.transactions (
-  id TEXT PRIMARY KEY,
-  order_id TEXT NOT NULL,
-  payment_id TEXT,
-  user_id TEXT,
-  user_email TEXT,
-  amount NUMERIC NOT NULL,
-  currency TEXT DEFAULT 'INR',
-  plan_id TEXT,
-  item_type TEXT,
-  item_title TEXT,
-  status TEXT DEFAULT 'created',
-  gateway TEXT DEFAULT 'Razorpay',
-  raw_payload JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON public.transactions(user_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_order_id ON public.transactions(order_id);
-CREATE INDEX IF NOT EXISTS idx_transactions_status ON public.transactions(status);
-
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
-
+-- ── TRANSACTIONS ─────────────────────────────────────────────────────────────
 DROP POLICY IF EXISTS "Users can view own transactions" ON public.transactions;
 CREATE POLICY "Users can view own transactions"
   ON public.transactions FOR SELECT
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_email = (SELECT email FROM public.profiles WHERE id = auth.uid())
+  );
 
-DROP POLICY IF EXISTS "Transactions manageable by service role" ON public.transactions;
-CREATE POLICY "Transactions manageable by service role"
+DROP POLICY IF EXISTS "Service role manages transactions" ON public.transactions;
+CREATE POLICY "Service role manages transactions"
   ON public.transactions FOR ALL
-  USING (auth.role() = 'service_role');
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- ============================================================================
--- 10. REVIEWS TABLE (Counterparty & Carrier Reviews)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.reviews (
-  id TEXT PRIMARY KEY,
-  target_id TEXT NOT NULL,
-  target_type TEXT DEFAULT 'company',
-  author_id TEXT NOT NULL,
-  author_name TEXT,
-  author_company TEXT,
-  rating INT CHECK (rating >= 1 AND rating <= 5),
-  review_text TEXT,
-  status TEXT DEFAULT 'active',
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_reviews_target_id ON public.reviews(target_id);
-
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Reviews viewable by all users" ON public.reviews;
-CREATE POLICY "Reviews viewable by all users"
+-- ── REVIEWS ──────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Reviews viewable by authenticated users" ON public.reviews;
+CREATE POLICY "Reviews viewable by authenticated users"
   ON public.reviews FOR SELECT
+  TO authenticated
   USING (true);
 
 DROP POLICY IF EXISTS "Authenticated users can submit reviews" ON public.reviews;
 CREATE POLICY "Authenticated users can submit reviews"
   ON public.reviews FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated' OR auth.role() = 'service_role');
+  TO authenticated
+  WITH CHECK (true);
 
--- ============================================================================
--- 11. EVENTS TABLE (Telemetry & Security Audit Logs)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.events (
-  event_id TEXT PRIMARY KEY,
-  event_type TEXT NOT NULL,
-  user_id TEXT,
-  actor_email TEXT,
-  client_ip TEXT,
-  metadata JSONB DEFAULT '{}'::jsonb,
-  timestamp TIMESTAMPTZ DEFAULT NOW(),
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_events_type ON public.events(event_type);
-CREATE INDEX IF NOT EXISTS idx_events_created_at ON public.events(created_at DESC);
-
-ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Events managed by service role" ON public.events;
-CREATE POLICY "Events managed by service role"
-  ON public.events FOR ALL
-  USING (auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Events insertable by system" ON public.events;
-CREATE POLICY "Events insertable by system"
+-- ── EVENTS ───────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Events insertable by all" ON public.events;
+CREATE POLICY "Events insertable by all"
   ON public.events FOR INSERT
-  WITH CHECK (true);
+  WITH CHECK (true);  -- Telemetry: anonymous events allowed
 
--- ============================================================================
--- 12. INTENTS TABLE (Shipping & Matchmaking Intents)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.intents (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  intent_type TEXT NOT NULL,
-  origin TEXT,
-  destination TEXT,
-  commodity TEXT,
-  target_rate NUMERIC,
-  currency TEXT DEFAULT 'USD',
-  status TEXT DEFAULT 'open',
-  metadata JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_intents_user_id ON public.intents(user_id);
-CREATE INDEX IF NOT EXISTS idx_intents_status ON public.intents(status);
-
-ALTER TABLE public.intents ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Intents viewable by all authenticated users" ON public.intents;
-CREATE POLICY "Intents viewable by all authenticated users"
-  ON public.intents FOR SELECT
+DROP POLICY IF EXISTS "Events viewable by service role" ON public.events;
+CREATE POLICY "Events viewable by service role"
+  ON public.events FOR SELECT
+  TO service_role
   USING (true);
 
-DROP POLICY IF EXISTS "Users can manage own intents" ON public.intents;
-CREATE POLICY "Users can manage own intents"
+-- ── INTENTS ──────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users manage own intent" ON public.intents;
+CREATE POLICY "Users manage own intent"
   ON public.intents FOR ALL
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  )
+  WITH CHECK (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
 
--- ============================================================================
--- 13. PRESENCE TABLE (Real-Time Availability & Heartbeat)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.presence (
-  user_id TEXT PRIMARY KEY,
-  status TEXT DEFAULT 'offline',
-  last_active_at TIMESTAMPTZ DEFAULT NOW(),
-  device_info TEXT,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_presence_status ON public.presence(status);
+DROP POLICY IF EXISTS "Service role manages intents" ON public.intents;
+CREATE POLICY "Service role manages intents"
+  ON public.intents FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-ALTER TABLE public.presence ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Presence viewable by all users" ON public.presence;
-CREATE POLICY "Presence viewable by all users"
+-- ── PRESENCE ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Presence viewable by authenticated users" ON public.presence;
+CREATE POLICY "Presence viewable by authenticated users"
   ON public.presence FOR SELECT
+  TO authenticated
   USING (true);
 
-DROP POLICY IF EXISTS "Users can update own presence" ON public.presence;
-CREATE POLICY "Users can update own presence"
+DROP POLICY IF EXISTS "Users update own presence" ON public.presence;
+CREATE POLICY "Users update own presence"
   ON public.presence FOR ALL
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  )
+  WITH CHECK (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
 
--- ============================================================================
--- 14. VERIFICATIONS TABLE (Email OTP & Verification Tokens)
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.verifications (
-  token_hash TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  email TEXT NOT NULL,
-  expires_at TIMESTAMPTZ NOT NULL,
-  used BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-CREATE INDEX IF NOT EXISTS idx_verifications_email ON public.verifications(email);
+DROP POLICY IF EXISTS "Service role manages presence" ON public.presence;
+CREATE POLICY "Service role manages presence"
+  ON public.presence FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
-ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Verifications accessible by service role only" ON public.verifications;
-CREATE POLICY "Verifications accessible by service role only"
+-- ── VERIFICATIONS ────────────────────────────────────────────────────────────
+-- Only the service role can read/write verification tokens (server-side only)
+DROP POLICY IF EXISTS "Verifications service role only" ON public.verifications;
+CREATE POLICY "Verifications service role only"
   ON public.verifications FOR ALL
-  USING (auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Verifications insertable by registration" ON public.verifications;
-CREATE POLICY "Verifications insertable by registration"
-  ON public.verifications FOR INSERT
+  TO service_role
+  USING (true)
   WITH CHECK (true);
 
--- ============================================================================
--- 15. AUDIT LOGS TABLE
--- ============================================================================
-CREATE TABLE IF NOT EXISTS public.audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT,
-  action TEXT NOT NULL,
-  resource_type TEXT NOT NULL,
-  resource_id TEXT,
-  changes JSONB DEFAULT '{}'::jsonb,
-  ip_address TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Audit logs viewable by service role or owner" ON public.audit_logs;
-CREATE POLICY "Audit logs viewable by service role or owner"
-  ON public.audit_logs FOR SELECT
-  USING (user_id = auth.uid()::text OR auth.role() = 'service_role');
-
-DROP POLICY IF EXISTS "Audit logs insertable by system" ON public.audit_logs;
-CREATE POLICY "Audit logs insertable by system"
+-- ── AUDIT LOGS ───────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Audit logs insertable by authenticated" ON public.audit_logs;
+CREATE POLICY "Audit logs insertable by authenticated"
   ON public.audit_logs FOR INSERT
+  TO authenticated
   WITH CHECK (true);
 
--- ============================================================================
--- Schema definition complete.
--- ============================================================================
+DROP POLICY IF EXISTS "Audit logs insertable by service role" ON public.audit_logs;
+CREATE POLICY "Audit logs insertable by service role"
+  ON public.audit_logs FOR INSERT
+  TO service_role
+  WITH CHECK (true);
+
+-- Admins (godfather, super_admin) can read audit logs
+DROP POLICY IF EXISTS "Audit logs viewable by platform admins" ON public.audit_logs;
+CREATE POLICY "Audit logs viewable by platform admins"
+  ON public.audit_logs FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid()
+        AND role IN ('godfather', 'super_admin')
+    )
+  );
+
+-- ── CONNECTIONS ──────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Connections viewable by involved users" ON public.connections;
+CREATE POLICY "Connections viewable by involved users"
+  ON public.connections FOR SELECT
+  TO authenticated
+  USING (
+    requester_id = auth.uid()::text OR
+    receiver_id = auth.uid()::text OR
+    requester_id = (SELECT uid FROM public.profiles WHERE id = auth.uid()) OR
+    receiver_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users can insert connection requests" ON public.connections;
+CREATE POLICY "Users can insert connection requests"
+  ON public.connections FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    requester_id = auth.uid()::text OR
+    requester_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users can update own connections" ON public.connections;
+CREATE POLICY "Users can update own connections"
+  ON public.connections FOR UPDATE
+  TO authenticated
+  USING (
+    requester_id = auth.uid()::text OR
+    receiver_id = auth.uid()::text OR
+    receiver_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Service role manages connections" ON public.connections;
+CREATE POLICY "Service role manages connections"
+  ON public.connections FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users view own notifications" ON public.notifications;
+CREATE POLICY "Users view own notifications"
+  ON public.notifications FOR SELECT
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users update own notifications" ON public.notifications;
+CREATE POLICY "Users update own notifications"
+  ON public.notifications FOR UPDATE
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Notifications insertable by authenticated" ON public.notifications;
+CREATE POLICY "Notifications insertable by authenticated"
+  ON public.notifications FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role manages notifications" ON public.notifications;
+CREATE POLICY "Service role manages notifications"
+  ON public.notifications FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── MESSAGES ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users view own messages" ON public.messages;
+CREATE POLICY "Users view own messages"
+  ON public.messages FOR SELECT
+  TO authenticated
+  USING (
+    sender_id = auth.uid()::text OR
+    recipient_id = auth.uid()::text OR
+    sender_id = (SELECT uid FROM public.profiles WHERE id = auth.uid()) OR
+    recipient_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users insert own messages" ON public.messages;
+CREATE POLICY "Users insert own messages"
+  ON public.messages FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    sender_id = auth.uid()::text OR
+    sender_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Service role manages messages" ON public.messages;
+CREATE POLICY "Service role manages messages"
+  ON public.messages FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- =============================================================================
+-- 18. STORAGE BUCKETS
+-- =============================================================================
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES
+  ('avatars',       'avatars',       TRUE,  5242880,  ARRAY['image/jpeg','image/png','image/webp','image/gif']),
+  ('company-logos', 'company-logos', TRUE,  5242880,  ARRAY['image/jpeg','image/png','image/webp','image/gif']),
+  ('documents',     'documents',     FALSE, 10485760, ARRAY['application/pdf','image/jpeg','image/png','image/webp']),
+  ('ad-creatives',  'ad-creatives',  TRUE,  2097152,  ARRAY['image/png','image/gif','image/jpeg'])
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage RLS policies
+DROP POLICY IF EXISTS "Public Read Avatars"          ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated Upload Avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Public Read Logos"            ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated Upload Logos"   ON storage.objects;
+DROP POLICY IF EXISTS "Private Documents Owner Read" ON storage.objects;
+DROP POLICY IF EXISTS "Private Documents Owner Write" ON storage.objects;
+
+CREATE POLICY "Public Read Avatars"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'avatars');
+
+CREATE POLICY "Authenticated Upload Avatars"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Public Read Logos"
+  ON storage.objects FOR SELECT
+  USING (bucket_id = 'company-logos');
+
+CREATE POLICY "Authenticated Upload Logos"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'company-logos');
+
+CREATE POLICY "Private Documents Owner Read"
+  ON storage.objects FOR SELECT
+  TO authenticated
+  USING (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Private Documents Owner Write"
+  ON storage.objects FOR INSERT
+  TO authenticated
+  WITH CHECK (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+-- =============================================================================
+-- 19. POSTGREST ROLES & LEAST-PRIVILEGE PERMISSIONS
+-- =============================================================================
+-- Schema visibility
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+-- Anonymous users: SELECT only (always strictly filtered by table RLS policies)
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+
+-- Authenticated users: Data operations only (enforced by RLS policies)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT EXECUTE ON ALL ROUTINES IN SCHEMA public TO authenticated;
+
+-- Service role: Full administrative authority (server-side only, bypasses RLS)
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO service_role;
+
+-- Default privileges for future entities
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+
+-- Force PostgREST to reload its schema cache immediately
+NOTIFY pgrst, 'reload schema';
+
+-- =============================================================================
+-- DONE — FR8X Production Schema Applied
+-- Verify: SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
+-- =============================================================================
+

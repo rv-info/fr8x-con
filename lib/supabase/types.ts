@@ -25,6 +25,9 @@ export interface Database {
       auction_bids:  { Row: AuctionBidRow;   Insert: AuctionBidInsert;   Update: AuctionBidUpdate   };
       posts:         { Row: PostRow;         Insert: PostInsert;         Update: PostUpdate         };
       comments:      { Row: CommentRow;      Insert: CommentInsert;      Update: CommentUpdate      };
+      connections:   { Row: ConnectionRow;   Insert: ConnectionInsert;   Update: ConnectionUpdate   };
+      notifications: { Row: NotificationRow; Insert: NotificationInsert; Update: NotificationUpdate };
+      messages:      { Row: MessageRow;      Insert: MessageInsert;      Update: MessageUpdate      };
       jobs:          { Row: JobRow;          Insert: JobInsert;          Update: JobUpdate          };
       cases:         { Row: CaseRow;         Insert: CaseInsert;         Update: CaseUpdate         };
       transactions:  { Row: TransactionRow;  Insert: TransactionInsert;  Update: TransactionUpdate  };
@@ -43,59 +46,128 @@ export interface Database {
 
 // ─── PROFILES ────────────────────────────────────────────────────────────────
 export interface ProfileRow {
-  id:                      string;        // UUID — references auth.users(id)
-  uid:                     string | null; // Legacy short ID e.g. "u-rajat"
-  email:                   string;
-  first_name:              string | null;
-  last_name:               string | null;
-  display_name:            string | null;
-  phone:                   string | null;
-  mobile:                  string | null;
-  isd_code:                string | null;
-  whatsapp_same_as_mobile: boolean | null;
-  designation:             string | null;
-  position:                string | null;
-  company_name:            string | null;
-  company_id:              string | null;
-  department:              string | null;
-  bio:                     string | null;
-  summary:                 string | null;
-  city:                    string | null;
-  state:                   string | null;
-  district:                string | null;
-  country:                 string | null;
-  area:                    string | null;
-  postal_code:             string | null;
-  formatted_address:       string | null;
-  address:                 string | null;
-  location:                string | null;
-  timezone:                string | null;
-  avatar_url:              string | null;
-  company_logo_url:        string | null;
-  role:                    string | null;
-  plan:                    string | null;
-  has_golden_tick:         boolean | null;
-  is_verified:             boolean | null;
-  status:                  string | null;
-  account_status:          string | null;
-  first_login_completed:   boolean | null;
-  email_verified:          boolean | null;
-  failed_login_attempts:   number | null;
-  experiences:             Json | null;
-  educations:              Json | null;
-  certifications:          Json | null;
-  privacy_settings:        Json | null;
-  gstn:                    string | null;
-  pan:                     string | null;
-  cin:                     string | null;
-  iec:                     string | null;
-  mto:                     string | null;
-  created_at:              string;
-  updated_at:              string;
-  last_login_at:           string | null;
+  id:                        string;        // UUID — references auth.users(id)
+  uid:                       string | null; // Legacy short ID e.g. "u-rajat"
+  email:                     string;
+  first_name:                string | null;
+  last_name:                 string | null;
+  display_name:              string | null;
+  phone:                     string | null;
+  mobile:                    string | null;
+  isd_code:                  string | null;
+  whatsapp_same_as_mobile:   boolean | null;
+  designation:               string | null;
+  position:                  string | null;
+  company_name:              string | null;
+  company_id:                string | null;
+  department:                string | null;
+  bio:                       string | null;
+  summary:                   string | null;
+  city:                      string | null;
+  state:                     string | null;
+  district:                  string | null;
+  country:                   string | null;
+  area:                      string | null;
+  postal_code:               string | null;
+  formatted_address:         string | null;
+  address:                   string | null;
+  location:                  string | null;
+  timezone:                  string | null;
+  avatar_url:                string | null;
+  company_logo_url:          string | null;
+  role:                      string | null;
+  plan:                      string | null;
+  has_golden_tick:           boolean | null;
+  is_verified:               boolean | null;
+  status:                    string | null;
+  account_status:            string | null;
+  first_login_completed:     boolean | null;
+  email_verified:            boolean | null;
+  failed_login_attempts:     number | null;
+  preferred_contact_method:  string | null;
+  contact_availability:     string | null;
+  experiences:               Json | null;
+  educations:                Json | null;
+  certifications:            Json | null;
+  privacy_settings:          Json | null;
+  contacts:                  Json | null;
+  specializations:           Json | null;
+  skills:                    Json | null;
+  languages:                 Json | null;
+  key_trade_lanes:           Json | null;
+  gstn:                      string | null;
+  pan:                       string | null;
+  cin:                       string | null;
+  iec:                       string | null;
+  mto:                       string | null;
+  kyc_status:                string | null;
+  kyc_country:               string | null;
+  tax_id:                    string | null;
+  tax_id_label:              string | null;
+  corporate_reg_number:      string | null;
+  corporate_reg_label:       string | null;
+  trade_customs_code:        string | null;
+  trade_customs_label:       string | null;
+  logistics_license_number:  string | null;
+  logistics_license_label:   string | null;
+  statutory_country:         string | null;
+  iata_code:                 string | null;
+  fiata_reg:                 string | null;
+  fmc_number:                string | null;
+  aeo_tier:                  string | null;
+  association_name:          string | null;
+  association_id:            string | null;
+  created_at:                string;
+  updated_at:                string;
+  last_login_at:             string | null;
 }
 export type ProfileInsert = Partial<ProfileRow> & { id: string; email: string };
 export type ProfileUpdate  = Partial<ProfileRow>;
+
+// ─── CONNECTIONS ─────────────────────────────────────────────────────────────
+export interface ConnectionRow {
+  id:           string; // UUID
+  requester_id: string; // UUID references auth.users(id)
+  recipient_id: string; // UUID references auth.users(id)
+  status:       string; // pending | accepted | declined | blocked
+  note:         string | null;
+  created_at:   string;
+  updated_at:   string;
+}
+export type ConnectionInsert = Partial<ConnectionRow> & { requester_id: string; recipient_id: string };
+export type ConnectionUpdate = Partial<ConnectionRow>;
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+export interface NotificationRow {
+  id:          string; // UUID
+  user_id:     string; // UUID references auth.users(id)
+  type:        string;
+  category:    string;
+  title:       string;
+  description: string | null;
+  read:        boolean;
+  target_url:  string | null;
+  related_id:  string | null;
+  metadata:    Json | null;
+  created_at:  string;
+}
+export type NotificationInsert = Partial<NotificationRow> & { user_id: string; title: string };
+export type NotificationUpdate = Partial<NotificationRow>;
+
+// ─── MESSAGES ────────────────────────────────────────────────────────────────
+export interface MessageRow {
+  id:              string; // UUID
+  conversation_id: string;
+  sender_id:       string; // UUID
+  recipient_id:    string; // UUID
+  text:            string;
+  read:            boolean;
+  metadata:        Json | null;
+  created_at:      string;
+}
+export type MessageInsert = Partial<MessageRow> & { sender_id: string; recipient_id: string; text: string };
+export type MessageUpdate = Partial<MessageRow>;
+
 
 // ─── COMPANIES ───────────────────────────────────────────────────────────────
 export interface CompanyRow {

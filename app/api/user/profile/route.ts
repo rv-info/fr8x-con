@@ -3,6 +3,7 @@ import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/au
 import { getUserByIdentifier, updateUser, deleteUser } from '@/lib/db/users';
 import { DEFAULT_PRIVACY_SETTINGS, UserPrivacySettings } from '@/lib/types';
 import { maskEmail, maskPhone, maskStatutory } from '@/lib/connections';
+import { redis } from '@/lib/redis';
 
 export const dynamic = 'force-dynamic';
 
@@ -194,30 +195,32 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json();
+    const rawBody = await req.json();
+    const body = { ...rawBody, ...(rawBody.updates || {}) };
     const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
-    const bodyUid = body.uid || body.id;
-    const bodyEmail = body.email ? body.email.trim().toLowerCase() : undefined;
 
-    const targetUid = bodyUid || bodyEmail || callerUid;
-
-    if (!targetUid) {
-      return NextResponse.json({ success: false, error: 'Target identifier required.' }, { status: 400 });
+    if (!callerUid) {
+      return NextResponse.json({ success: false, error: 'Authentication required.' }, { status: 401 });
     }
 
-    // Ownership check: regular users may only modify their own profile
-    if (!gfAuth.authenticated && userAuth.user) {
-      const isOwner =
-        targetUid === userAuth.user.uid ||
-        (bodyEmail && bodyEmail === userAuth.user.email?.toLowerCase());
-
-      if (!isOwner) {
-        return NextResponse.json(
-          { success: false, error: 'Forbidden: You cannot modify another user’s profile.' },
-          { status: 403 }
-        );
-      }
+    // Rate limiting via secondary Redis layer
+    const rateLimit = await redis.checkRateLimit({
+      action: 'profile_mutation',
+      identifier: callerUid,
+      limit: 60,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many profile update requests. Please wait a moment.' },
+        { status: 429 }
+      );
     }
+
+    // Strict identity enforcement: non-operators can ONLY modify their own authenticated record
+    const targetUid = gfAuth.authenticated
+      ? (body.uid || body.id || body.email || callerUid)
+      : callerUid;
 
     // Clean and normalize incoming fields
     const dbUpdates: any = {};
@@ -261,12 +264,120 @@ export async function POST(req: NextRequest) {
     if (body.avatarUrl !== undefined || body.avatar_url !== undefined) {
       dbUpdates.avatar_url = body.avatarUrl || body.avatar_url;
     }
+    if (body.companyLogoUrl !== undefined || body.company_logo_url !== undefined) {
+      dbUpdates.company_logo_url = body.companyLogoUrl || body.company_logo_url;
+    }
     if (body.privacySettings !== undefined || body.privacy_settings !== undefined) {
       dbUpdates.privacy_settings = body.privacySettings || body.privacy_settings;
     }
 
+    // Credentials & Structured Profile Data
+    if (body.experiences !== undefined) dbUpdates.experiences = body.experiences;
+    if (body.educations !== undefined) dbUpdates.educations = body.educations;
+    if (body.certifications !== undefined) dbUpdates.certifications = body.certifications;
+
+    // Contact Preferences & Communication
+    if (body.isdCode !== undefined || body.isd_code !== undefined) {
+      dbUpdates.isd_code = body.isdCode || body.isd_code;
+    }
+    if (body.whatsappSameAsMobile !== undefined || body.whatsapp_same_as_mobile !== undefined) {
+      dbUpdates.whatsapp_same_as_mobile = body.whatsappSameAsMobile ?? body.whatsapp_same_as_mobile;
+    }
+    if (body.preferredContactMethod !== undefined || body.preferred_contact_method !== undefined) {
+      dbUpdates.preferred_contact_method = body.preferredContactMethod || body.preferred_contact_method;
+    }
+    if (body.contactAvailability !== undefined || body.contact_availability !== undefined) {
+      dbUpdates.contact_availability = body.contactAvailability || body.contact_availability;
+    }
+    if (body.department !== undefined) dbUpdates.department = body.department;
+    if (body.summary !== undefined) dbUpdates.summary = body.summary;
+    if (body.bio !== undefined) dbUpdates.bio = body.bio;
+
+    // Statutory KYC Filings & Multi-Jurisdiction Records
+    if (body.gstn !== undefined) dbUpdates.gstn = body.gstn;
+    if (body.pan !== undefined) dbUpdates.pan = body.pan;
+    if (body.cin !== undefined) dbUpdates.cin = body.cin;
+    if (body.iec !== undefined) dbUpdates.iec = body.iec;
+    if (body.mto !== undefined) dbUpdates.mto = body.mto;
+    if (body.kycCountry !== undefined || body.kyc_country !== undefined) {
+      dbUpdates.kyc_country = body.kycCountry || body.kyc_country;
+    }
+    if (body.taxId !== undefined || body.tax_id !== undefined) {
+      dbUpdates.tax_id = body.taxId || body.tax_id;
+    }
+    if (body.taxIdLabel !== undefined || body.tax_id_label !== undefined) {
+      dbUpdates.tax_id_label = body.taxIdLabel || body.tax_id_label;
+    }
+    if (body.corporateRegNumber !== undefined || body.corporate_reg_number !== undefined) {
+      dbUpdates.corporate_reg_number = body.corporateRegNumber || body.corporate_reg_number;
+    }
+    if (body.corporateRegLabel !== undefined || body.corporate_reg_label !== undefined) {
+      dbUpdates.corporate_reg_label = body.corporateRegLabel || body.corporate_reg_label;
+    }
+    if (body.tradeCustomsCode !== undefined || body.trade_customs_code !== undefined) {
+      dbUpdates.trade_customs_code = body.tradeCustomsCode || body.trade_customs_code;
+    }
+    if (body.tradeCustomsLabel !== undefined || body.trade_customs_label !== undefined) {
+      dbUpdates.trade_customs_label = body.tradeCustomsLabel || body.trade_customs_label;
+    }
+    if (body.logisticsLicenseNumber !== undefined || body.logistics_license_number !== undefined) {
+      dbUpdates.logistics_license_number = body.logisticsLicenseNumber || body.logistics_license_number;
+    }
+    if (body.logisticsLicenseLabel !== undefined || body.logistics_license_label !== undefined) {
+      dbUpdates.logistics_license_label = body.logisticsLicenseLabel || body.logistics_license_label;
+    }
+    if (body.statutoryCountry !== undefined || body.statutory_country !== undefined) {
+      dbUpdates.statutory_country = body.statutoryCountry || body.statutory_country;
+    }
+    if (body.iataCode !== undefined || body.iata_code !== undefined) {
+      dbUpdates.iata_code = body.iataCode || body.iata_code;
+    }
+    if (body.fiataReg !== undefined || body.fiata_reg !== undefined) {
+      dbUpdates.fiata_reg = body.fiataReg || body.fiata_reg;
+    }
+    if (body.fmcNumber !== undefined || body.fmc_number !== undefined) {
+      dbUpdates.fmc_number = body.fmcNumber || body.fmc_number;
+    }
+    if (body.aeoTier !== undefined || body.aeo_tier !== undefined) {
+      dbUpdates.aeo_tier = body.aeoTier || body.aeo_tier;
+    }
+    if (body.associationName !== undefined || body.association_name !== undefined) {
+      dbUpdates.association_name = body.associationName || body.association_name;
+    }
+    if (body.associationId !== undefined || body.association_id !== undefined) {
+      dbUpdates.association_id = body.associationId || body.association_id;
+    }
+    if (body.kycStatus !== undefined || body.kyc_status !== undefined) {
+      dbUpdates.kyc_status = body.kycStatus || body.kyc_status;
+    }
+
     // Authoritative update in Supabase PostgreSQL
     const updatedUser = await updateUser(targetUid, dbUpdates);
+
+    // Invalidate Redis secondary caches
+    await redis.invalidateCache('profile', targetUid).catch(() => {});
+    if (updatedUser.email) await redis.invalidateCache('profile', updatedUser.email.toLowerCase()).catch(() => {});
+    if (updatedUser.uid) await redis.invalidateCache('profile', updatedUser.uid).catch(() => {});
+
+    // Audit trail for sensitive profile/KYC/privacy changes (without leaking raw secret values)
+    const sensitiveFields = ['gstn', 'pan', 'cin', 'iec', 'mto', 'privacy_settings', 'kyc_status', 'tax_id'];
+    const changedSensitives = Object.keys(dbUpdates).filter((k) => sensitiveFields.includes(k));
+    if (changedSensitives.length > 0) {
+      try {
+        const { getDbClient } = await import('@/lib/supabase/server');
+        const db = getDbClient();
+        await db.from('audit_logs').insert({
+          action: 'PROFILE_SENSITIVE_UPDATE',
+          target_entity: 'profile',
+          target_id: updatedUser.id,
+          actor_uid: userAuth.user?.uid && /^[0-9a-f-]{36}$/i.test(userAuth.user.uid) ? userAuth.user.uid : null,
+          user_id: callerUid,
+          metadata: {
+            updated_fields: changedSensitives,
+          },
+        });
+      } catch {}
+    }
 
     return NextResponse.json({
       success: true,
@@ -276,10 +387,16 @@ export async function POST(req: NextRequest) {
         id: updatedUser.id,
         email: updatedUser.email,
         displayName: updatedUser.display_name,
+        firstName: updatedUser.first_name,
+        lastName: updatedUser.last_name,
         designation: updatedUser.designation,
         company: updatedUser.company_name,
+        companyId: updatedUser.company_id,
+        department: updatedUser.department,
         mobile: updatedUser.mobile,
         phone: updatedUser.phone,
+        isdCode: updatedUser.isd_code || '+91',
+        whatsappSameAsMobile: updatedUser.whatsapp_same_as_mobile ?? true,
         city: updatedUser.city,
         state: updatedUser.state,
         country: updatedUser.country,
@@ -288,11 +405,36 @@ export async function POST(req: NextRequest) {
         location: updatedUser.location,
         formattedAddress: updatedUser.formatted_address,
         address: updatedUser.address,
+        timezone: updatedUser.timezone || 'Asia/Kolkata',
+        avatarUrl: updatedUser.avatar_url,
+        companyLogoUrl: updatedUser.company_logo_url,
         role: updatedUser.role,
         status: updatedUser.status,
         plan: updatedUser.plan,
+        hasGoldenTick: updatedUser.has_golden_tick || false,
+        isVerified: updatedUser.is_verified || false,
+        email_verified: updatedUser.email_verified || false,
+        experiences: updatedUser.experiences || [],
+        educations: updatedUser.educations || [],
+        certifications: updatedUser.certifications || [],
+        privacySettings: updatedUser.privacy_settings || {},
+        gstn: updatedUser.gstn,
+        pan: updatedUser.pan,
+        cin: updatedUser.cin,
+        iec: updatedUser.iec,
+        mto: updatedUser.mto,
+        kycCountry: updatedUser.kyc_country,
+        taxId: updatedUser.tax_id,
+        corporateRegNumber: updatedUser.corporate_reg_number,
+        tradeCustomsCode: updatedUser.trade_customs_code,
+        logisticsLicenseNumber: updatedUser.logistics_license_number,
+        statutoryCountry: updatedUser.statutory_country,
+        kycStatus: updatedUser.kyc_status,
+        summary: updatedUser.summary,
+        bio: updatedUser.bio,
         updatedAt: updatedUser.updated_at,
       },
+
     });
   } catch (err: any) {
     console.error('[API/User/Profile] POST error:', err);

@@ -56,11 +56,33 @@ export function mapRowToProfile(row: any): UserProfile {
     educations: Array.isArray(row.educations) ? row.educations : [],
     certifications: Array.isArray(row.certifications) ? row.certifications : [],
     privacySettings: row.privacy_settings || {},
+    contacts: Array.isArray(row.contacts) ? row.contacts : [],
     gstn: row.gstn || '',
     pan: row.pan || '',
     cin: row.cin || '',
     iec: row.iec || '',
     mto: row.mto || '',
+    kycCountry: row.kyc_country || '',
+    taxId: row.tax_id || '',
+    taxIdLabel: row.tax_id_label || '',
+    corporateRegNumber: row.corporate_reg_number || '',
+    corporateRegLabel: row.corporate_reg_label || '',
+    tradeCustomsCode: row.trade_customs_code || '',
+    tradeCustomsLabel: row.trade_customs_label || '',
+    logisticsLicenseNumber: row.logistics_license_number || '',
+    logisticsLicenseLabel: row.logistics_license_label || '',
+    statutoryCountry: row.statutory_country || '',
+    iataCode: row.iata_code || '',
+    fiataReg: row.fiata_reg || '',
+    fmcNumber: row.fmc_number || '',
+    aeoTier: row.aeo_tier || '',
+    associationName: row.association_name || '',
+    associationId: row.association_id || '',
+    kycStatus: row.kyc_status || 'not_submitted',
+    specializations: Array.isArray(row.specializations) ? row.specializations : [],
+    skills: Array.isArray(row.skills) ? row.skills : [],
+    languages: Array.isArray(row.languages) ? row.languages : [],
+    keyTradeLanes: Array.isArray(row.key_trade_lanes) ? row.key_trade_lanes : [],
     summary: row.summary || '',
     bio: row.bio || '',
     createdAt: row.created_at || new Date().toISOString(),
@@ -107,6 +129,7 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   if (updates.country !== undefined) row.country = String(updates.country).trim();
   if (updates.area !== undefined) row.area = updates.area;
   if (updates.postalCode !== undefined) row.postal_code = updates.postalCode;
+  if (updates.postal_code !== undefined) row.postal_code = updates.postal_code;
 
   // Unify address and formattedAddress
   if (updates.formattedAddress !== undefined || updates.address !== undefined) {
@@ -123,6 +146,8 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   }
 
   if (updates.timezone !== undefined) row.timezone = updates.timezone;
+  if (updates.preferredContactMethod !== undefined) row.preferred_contact_method = updates.preferredContactMethod;
+  if (updates.contactAvailability !== undefined) row.contact_availability = updates.contactAvailability;
   if (updates.avatarUrl !== undefined || updates.photoURL !== undefined) {
     row.avatar_url = updates.avatarUrl !== undefined ? updates.avatarUrl : updates.photoURL;
   }
@@ -131,34 +156,71 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   if (updates.educations !== undefined) row.educations = updates.educations;
   if (updates.certifications !== undefined) row.certifications = updates.certifications;
   if (updates.privacySettings !== undefined) row.privacy_settings = updates.privacySettings;
+  if (updates.privacy_settings !== undefined) row.privacy_settings = updates.privacy_settings;
+  if (updates.contacts !== undefined) row.contacts = updates.contacts;
 
+  // Statutory & KYC fields
   if (updates.gstn !== undefined) row.gstn = updates.gstn;
   if (updates.pan !== undefined) row.pan = updates.pan;
   if (updates.cin !== undefined) row.cin = updates.cin;
   if (updates.iec !== undefined) row.iec = updates.iec;
   if (updates.mto !== undefined) row.mto = updates.mto;
+  if (updates.kycCountry !== undefined) row.kyc_country = updates.kycCountry;
+  if (updates.taxId !== undefined) row.tax_id = updates.taxId;
+  if (updates.taxIdLabel !== undefined) row.tax_id_label = updates.taxIdLabel;
+  if (updates.corporateRegNumber !== undefined) row.corporate_reg_number = updates.corporateRegNumber;
+  if (updates.corporateRegLabel !== undefined) row.corporate_reg_label = updates.corporateRegLabel;
+  if (updates.tradeCustomsCode !== undefined) row.trade_customs_code = updates.tradeCustomsCode;
+  if (updates.tradeCustomsLabel !== undefined) row.trade_customs_label = updates.tradeCustomsLabel;
+  if (updates.logisticsLicenseNumber !== undefined) row.logistics_license_number = updates.logisticsLicenseNumber;
+  if (updates.logisticsLicenseLabel !== undefined) row.logistics_license_label = updates.logisticsLicenseLabel;
+  if (updates.statutoryCountry !== undefined) row.statutory_country = updates.statutoryCountry;
+  if (updates.iataCode !== undefined) row.iata_code = updates.iataCode;
+  if (updates.fiataReg !== undefined) row.fiata_reg = updates.fiataReg;
+  if (updates.fmcNumber !== undefined) row.fmc_number = updates.fmcNumber;
+  if (updates.aeoTier !== undefined) row.aeo_tier = updates.aeoTier;
+  if (updates.associationName !== undefined) row.association_name = updates.associationName;
+  if (updates.associationId !== undefined) row.association_id = updates.associationId;
+  if (updates.kycStatus !== undefined) row.kyc_status = updates.kycStatus;
+
+  if (updates.specializations !== undefined) row.specializations = updates.specializations;
+  if (updates.skills !== undefined) row.skills = updates.skills;
+  if (updates.languages !== undefined) row.languages = updates.languages;
+  if (updates.keyTradeLanes !== undefined) row.key_trade_lanes = updates.keyTradeLanes;
+
   if (updates.summary !== undefined) row.summary = updates.summary;
   if (updates.bio !== undefined) row.bio = updates.bio;
 
   return row;
 }
 
+
 // ─── USER PROFILE SERVICE ────────────────────────────────────────────────────
 export const profileService = {
   /**
-   * Fetches profile by Supabase Auth user ID from authoritative PostgreSQL table
+   * Fetches profile by Supabase Auth user ID, legacy UID, or email from authoritative PostgreSQL table
    */
   async getProfile(userId: string): Promise<UserProfile | null> {
     if (!userId) return null;
+    const cleanId = userId.trim();
     const supabase = createClient();
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
+
+    let query = supabase.from('profiles').select('*');
+    if (cleanId.includes('@')) {
+      query = query.ilike('email', cleanId.toLowerCase());
+    } else {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
+      if (isUuid) {
+        query = query.eq('id', cleanId);
+      } else {
+        query = query.eq('uid', cleanId);
+      }
+    }
+
+    const { data, error } = await query.maybeSingle();
 
     if (error || !data) {
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== 'PGRST116' && error.code !== 'PGRST205') {
         console.warn('[profileService] getProfile error:', error.message);
       }
       return null;
@@ -169,6 +231,7 @@ export const profileService = {
   /**
    * Updates profile in PostgreSQL and returns the freshly confirmed database row.
    * Eliminates the persistence bug by directly reading back the written record.
+   * Performs an upsert if the record does not yet exist.
    */
   async updateProfile(
     userId: string,
@@ -178,29 +241,169 @@ export const profileService = {
       return { success: false, error: 'User ID is required to update profile.' };
     }
 
+    const cleanId = userId.trim();
     const supabase = createClient();
     const rowUpdates = mapProfileToRow(updates);
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(rowUpdates)
-      .eq('id', userId)
-      .select('*')
-      .single();
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanId);
 
-    if (error) {
-      console.error('[profileService] updateProfile DB error:', error);
-      return { success: false, error: error.message || 'Database update failed.' };
+    // 1. If UUID, attempt update by primary key
+    if (isUuid) {
+      let { data, error } = await supabase
+        .from('profiles')
+        .update(rowUpdates)
+        .eq('id', cleanId)
+        .select('*')
+        .maybeSingle();
+
+      if (!error && data) {
+        return { success: true, user: mapRowToProfile(data) };
+      }
+
+      // If record not found, perform upsert
+      if (!data) {
+        const payload = {
+          ...rowUpdates,
+          id: cleanId,
+          email: (updates.email || '').trim().toLowerCase() || `${cleanId}@fr8x.in`,
+        };
+        const upsertRes = await supabase
+          .from('profiles')
+          .upsert(payload, { onConflict: 'id' })
+          .select('*')
+          .maybeSingle();
+
+        if (upsertRes.data) {
+          return { success: true, user: mapRowToProfile(upsertRes.data) };
+        }
+        if (upsertRes.error) {
+          console.error('[profileService] updateProfile upsert error:', upsertRes.error);
+          return { success: false, error: upsertRes.error.message };
+        }
+      }
+
+      if (error) {
+        console.error('[profileService] updateProfile error:', error);
+        return { success: false, error: error.message };
+      }
     }
 
-    if (!data) {
-      return { success: false, error: 'Profile record not found.' };
+    // 2. Non-UUID lookup (legacy UID or email)
+    let matchQuery = supabase.from('profiles').select('id');
+    if (cleanId.includes('@')) {
+      matchQuery = matchQuery.ilike('email', cleanId.toLowerCase());
+    } else {
+      matchQuery = matchQuery.eq('uid', cleanId);
     }
 
-    const confirmedProfile = mapRowToProfile(data);
-    return { success: true, user: confirmedProfile };
+    const { data: matched } = await matchQuery.maybeSingle();
+    const targetId = matched?.id;
+
+    if (targetId) {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(rowUpdates)
+        .eq('id', targetId)
+        .select('*')
+        .single();
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+      return { success: true, user: mapRowToProfile(data) };
+    }
+
+    // 3. Fallback to API route for server-side elevated execution
+    try {
+      const apiRes = await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uid: cleanId, ...updates }),
+      });
+      if (apiRes.ok) {
+        const apiData = await apiRes.json();
+        if (apiData.success && apiData.user) {
+          return { success: true, user: apiData.user };
+        }
+      }
+    } catch {}
+
+    return { success: false, error: 'User record not found to update.' };
   },
 };
+
+// ─── CONNECTIONS SERVICE ─────────────────────────────────────────────────────
+export const connectionDbService = {
+  async getConnections(userId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('connections')
+      .select('*')
+      .or(`requester_id.eq.${userId},recipient_id.eq.${userId}`)
+      .eq('status', 'accepted');
+
+    if (error) return [];
+    return data || [];
+  },
+
+  async sendConnectionRequest(requesterId: string, recipientId: string, note?: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('connections')
+      .upsert({
+        requester_id: requesterId,
+        recipient_id: recipientId,
+        status: 'pending',
+        note: note || null,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'requester_id,recipient_id' })
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, connection: data };
+  },
+
+  async respondToRequest(connectionId: string, status: 'accepted' | 'declined') {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('connections')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', connectionId)
+      .select()
+      .single();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, connection: data };
+  },
+};
+
+// ─── NOTIFICATIONS SERVICE ───────────────────────────────────────────────────
+export const notificationDbService = {
+  async getNotifications(userId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+
+    if (error) return [];
+    return data || [];
+  },
+
+  async markAsRead(notificationId: string) {
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId);
+
+    return !error;
+  },
+};
+
 
 // ─── RATES SERVICE ───────────────────────────────────────────────────────────
 export const rateDbService = {

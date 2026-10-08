@@ -7,99 +7,104 @@
 }
 
 :root {
-  --font: 'Calibri Light', 'Calibri', 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
 
   /* ==========================================================================
-     FR8X HIGH-CONTRAST MONOCHROMATIC + #1985A1 BRAND PALETTE
-     #c5c3c6: Outlines, borders, separators across the whole web app
-     #1985a1: Brand emphasis and all primary buttons
-     #1e293b: Primary dark text across all body, headers, cards, tables
-     #475569: Secondary muted text
+     FR8X MODERN PROFESSIONAL NETWORK DESIGN SYSTEM
+     Neutral clean surfaces, subtle borders, refined elevation & controlled brand
      ========================================================================== */
-  --fr8x-outline: #dde1e4;
-  --fr8x-container: #e8ebec;
-  --fr8x-input: #f1f3f4;
-  --fr8x-background: #ffffff;
-  --fr8x-text: #1e293b;
-  --fr8x-muted: #475569;
+  --fr8x-outline: #e2e8f0;
+  --fr8x-container: #f1f5f9;
+  --fr8x-input: #f8fafc;
+  --fr8x-background: #f8fafc;
+  --fr8x-text: #0f172a;
+  --fr8x-muted: #64748b;
 
-  --bg: #f8f9fa;
-  --card: #FFFFFF;
-  --ink: #1e293b;
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --ink: #0f172a;
   --ink-secondary: #334155;
-  --mut: #475569;
-  --faint: #64748b;
-  --line: #dde1e4;
-  --line-light: #e8ebed;
+  --mut: #64748b;
+  --faint: #94a3b8;
+  --line: #e2e8f0;
+  --line-light: #f1f5f9;
   
-  /* Brand Structure - #1985a1 */
-  --brand: #1985a1;
-  --brand2: #146b82;
-  --brand-soft: #e2f4f8;
-  --teal: #1985a1;
-  --teal-soft: #e2f4f8;
-  --primary: #1985a1;
+  /* Brand Accent: Maritime Deep Blue / Teal-Blue */
+  --brand: #0284c7;
+  --brand2: #0369a1;
+  --brand-soft: #f0f9ff;
+  --teal: #0284c7;
+  --teal-soft: #f0f9ff;
+  --primary: #0284c7;
   
   /* Navigation Surfaces */
   --nav: #ffffff;
-  --navhi: #f1f3f4;
-  --nav-border: #dde1e4;
+  --navhi: #f8fafc;
+  --nav-border: #e2e8f0;
 
-  /* Monochromatic Status Indicators */
-  --green: #059669;
-  --green-soft: #d1fae5;
-  --amber: #d97706;
-  --amber-soft: #fef3c7;
-  --red: #dc2626;
-  --red-soft: #fee2e2;
-  --gold: #F59E0B;
-  --gold-gradient: linear-gradient(135deg, #F59E0B, #D97706);
+  /* Status Indicators */
+  --green: #10b981;
+  --green-soft: #ecfdf5;
+  --amber: #f59e0b;
+  --amber-soft: #fffbeb;
+  --red: #ef4444;
+  --red-soft: #fef2f2;
+  --gold: #f59e0b;
+  --gold-gradient: linear-gradient(135deg, #f59e0b, #d97706);
 
-  /* Elevation & Shape - Strict Zero Curve */
-  --r: 0px;
-  --r-sm: 0px;
-  --sh: 0 1px 2px rgba(46, 64, 83, 0.06);
-  --sh-md: 0 2px 4px rgba(46, 64, 83, 0.08);
-  --sh-lg: 0 4px 8px rgba(46, 64, 83, 0.1);
+  /* Elevation & Border Radius Scale */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --r-2xl: 20px;
+  --r-full: 9999px;
+  --r: 8px;
+  
+  --sh-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+  --sh: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
+  --sh-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
+  --sh-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
+  --sh-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 
   /* Layout Dimensions */
-  --sidebar-width: 224px;
+  --sidebar-width: 240px;
   --sidebar-collapsed-width: 64px;
-  --header-height: 44px;
+  --header-height: 56px;
 }
 
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  border-radius: 0 !important;
 }
 
 html {
-  /* 10pt = 13.33px on standard 96dpi screen */
-  font-size: 13.33px;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Mobile: scale down slightly for smaller screens */
+/* Mobile */
 @media (max-width: 767px) {
   html {
-    font-size: 12px;
+    font-size: 13.5px;
   }
 }
 
-/* Tablet: intermediate size */
+/* Tablet */
 @media (min-width: 768px) and (max-width: 1023px) {
   html {
-    font-size: 12.5px;
+    font-size: 14px;
   }
 }
 
 body {
-  background: var(--fr8x-background);
-  font: 1rem/1.45 var(--font);
-  color: var(--fr8x-text);
+  background: var(--bg);
+  font: 400 1rem/1.5 var(--font);
+  color: var(--ink);
   min-height: 100vh;
   overflow-x: hidden;
 }

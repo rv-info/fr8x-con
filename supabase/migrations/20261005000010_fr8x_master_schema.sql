@@ -113,12 +113,44 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   cin                     TEXT,
   iec                     TEXT,
   mto                     TEXT,
+  kyc_status              TEXT,
+  kyc_country             TEXT,
+  tax_id                  TEXT,
+  corporate_reg_number    TEXT,
+  trade_customs_code      TEXT,
+  logistics_license_number TEXT,
+  statutory_country       TEXT,
+  iata_code               TEXT,
+  fiata_reg               TEXT,
+  fmc_number              TEXT,
+  aeo_tier                TEXT,
+  contacts                JSONB       DEFAULT '[]'::jsonb,
+  social_links            JSONB       DEFAULT '[]'::jsonb,
 
   -- Timestamps
   created_at              TIMESTAMPTZ DEFAULT NOW(),
   updated_at              TIMESTAMPTZ DEFAULT NOW(),
   last_login_at           TIMESTAMPTZ
 );
+
+-- Idempotent column additions for existing deployments
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS kyc_status TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS kyc_country TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tax_id TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS corporate_reg_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS trade_customs_code TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS logistics_license_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS statutory_country TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS iata_code TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fiata_reg TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS fmc_number TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS aeo_tier TEXT;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS contacts JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS social_links JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS experiences JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS educations JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS certifications JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS privacy_settings JSONB DEFAULT '{"emailVisibility": "public", "phoneVisibility": "public", "statutoryVisibility": "public", "companyVisibility": "public", "tradeLanesVisibility": "public", "bioVisibility": "public", "allowConnectionRequests": true}'::jsonb;
 
 CREATE INDEX IF NOT EXISTS idx_profiles_email      ON public.profiles(email);
 CREATE INDEX IF NOT EXISTS idx_profiles_uid        ON public.profiles(uid) WHERE uid IS NOT NULL;
@@ -593,7 +625,100 @@ CREATE INDEX IF NOT EXISTS idx_audit_actor     ON public.audit_logs(actor_uid);
 CREATE INDEX IF NOT EXISTS idx_audit_created   ON public.audit_logs(created_at DESC);
 
 -- =============================================================================
--- 17. ROW LEVEL SECURITY
+-- 17. CONNECTIONS (Professional Network Graph)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.connections (
+  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  requester_id    TEXT        NOT NULL,
+  receiver_id     TEXT,
+  recipient_id    TEXT,
+  status          TEXT        NOT NULL DEFAULT 'pending', -- 'pending' | 'accepted' | 'rejected' | 'blocked'
+  note            TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS receiver_id TEXT;
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS recipient_id TEXT;
+ALTER TABLE public.connections ADD COLUMN IF NOT EXISTS note TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_connections_requester ON public.connections(requester_id);
+CREATE INDEX IF NOT EXISTS idx_connections_receiver  ON public.connections(receiver_id);
+CREATE INDEX IF NOT EXISTS idx_connections_recipient ON public.connections(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_connections_status    ON public.connections(status);
+
+DROP TRIGGER IF EXISTS set_connections_updated_at ON public.connections;
+CREATE TRIGGER set_connections_updated_at
+  BEFORE UPDATE ON public.connections
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 18. NOTIFICATIONS (In-app Alerts & Activity Push)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.notifications (
+  id          TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id     TEXT        NOT NULL,
+  type        TEXT        NOT NULL,
+  category    TEXT,
+  title       TEXT        NOT NULL,
+  message     TEXT,
+  description TEXT,
+  link        TEXT,
+  target_url  TEXT,
+  related_id  TEXT,
+  read        BOOLEAN     DEFAULT FALSE,
+  metadata    JSONB       DEFAULT '{}'::jsonb,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS category TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS message TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS target_url TEXT;
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS related_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON public.notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read    ON public.notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_created ON public.notifications(created_at DESC);
+
+-- =============================================================================
+-- 19. MESSAGES (Direct Peer-to-Peer & Channel Messaging)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.messages (
+  id              TEXT        PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  conversation_id TEXT,
+  channel_id      TEXT,
+  sender_id       TEXT        NOT NULL,
+  recipient_id    TEXT        NOT NULL,
+  content         TEXT,
+  text            TEXT,
+  attachments     JSONB       DEFAULT '[]'::jsonb,
+  metadata        JSONB       DEFAULT '{}'::jsonb,
+  read            BOOLEAN     DEFAULT FALSE,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS conversation_id TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS channel_id TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS content TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS text TEXT;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS attachments JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_messages_sender    ON public.messages(sender_id);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient ON public.messages(recipient_id);
+CREATE INDEX IF NOT EXISTS idx_messages_channel   ON public.messages(channel_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created   ON public.messages(created_at DESC);
+
+DROP TRIGGER IF EXISTS set_messages_updated_at ON public.messages;
+CREATE TRIGGER set_messages_updated_at
+  BEFORE UPDATE ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+-- =============================================================================
+-- 20. ROW LEVEL SECURITY
 --     All tables have RLS enabled. Anonymous access is denied except for
 --     storage.objects on public buckets. Service role bypasses RLS.
 -- =============================================================================
@@ -614,6 +739,9 @@ ALTER TABLE public.intents       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.presence      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.audit_logs    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.connections   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages      ENABLE ROW LEVEL SECURITY;
 
 -- ── PROFILES ─────────────────────────────────────────────────────────────────
 -- Any authenticated member can view the directory (member networking feature)
@@ -958,6 +1086,104 @@ CREATE POLICY "Audit logs viewable by platform admins"
     )
   );
 
+-- ── CONNECTIONS ──────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Connections viewable by involved users" ON public.connections;
+CREATE POLICY "Connections viewable by involved users"
+  ON public.connections FOR SELECT
+  TO authenticated
+  USING (
+    requester_id = auth.uid()::text OR
+    receiver_id = auth.uid()::text OR
+    requester_id = (SELECT uid FROM public.profiles WHERE id = auth.uid()) OR
+    receiver_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users can insert connection requests" ON public.connections;
+CREATE POLICY "Users can insert connection requests"
+  ON public.connections FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    requester_id = auth.uid()::text OR
+    requester_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users can update own connections" ON public.connections;
+CREATE POLICY "Users can update own connections"
+  ON public.connections FOR UPDATE
+  TO authenticated
+  USING (
+    requester_id = auth.uid()::text OR
+    receiver_id = auth.uid()::text OR
+    receiver_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Service role manages connections" ON public.connections;
+CREATE POLICY "Service role manages connections"
+  ON public.connections FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users view own notifications" ON public.notifications;
+CREATE POLICY "Users view own notifications"
+  ON public.notifications FOR SELECT
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users update own notifications" ON public.notifications;
+CREATE POLICY "Users update own notifications"
+  ON public.notifications FOR UPDATE
+  TO authenticated
+  USING (
+    user_id = auth.uid()::text OR
+    user_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Notifications insertable by authenticated" ON public.notifications;
+CREATE POLICY "Notifications insertable by authenticated"
+  ON public.notifications FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Service role manages notifications" ON public.notifications;
+CREATE POLICY "Service role manages notifications"
+  ON public.notifications FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+-- ── MESSAGES ─────────────────────────────────────────────────────────────────
+DROP POLICY IF EXISTS "Users view own messages" ON public.messages;
+CREATE POLICY "Users view own messages"
+  ON public.messages FOR SELECT
+  TO authenticated
+  USING (
+    sender_id = auth.uid()::text OR
+    recipient_id = auth.uid()::text OR
+    sender_id = (SELECT uid FROM public.profiles WHERE id = auth.uid()) OR
+    recipient_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Users insert own messages" ON public.messages;
+CREATE POLICY "Users insert own messages"
+  ON public.messages FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    sender_id = auth.uid()::text OR
+    sender_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+  );
+
+DROP POLICY IF EXISTS "Service role manages messages" ON public.messages;
+CREATE POLICY "Service role manages messages"
+  ON public.messages FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 -- =============================================================================
 -- 18. STORAGE BUCKETS
 -- =============================================================================
@@ -1006,6 +1232,36 @@ CREATE POLICY "Private Documents Owner Write"
   WITH CHECK (bucket_id = 'documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
 -- =============================================================================
+-- 19. POSTGREST ROLES & LEAST-PRIVILEGE PERMISSIONS
+-- =============================================================================
+-- Schema visibility
+GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
+
+-- Anonymous users: SELECT only (always strictly filtered by table RLS policies)
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+
+-- Authenticated users: Data operations only (enforced by RLS policies)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+GRANT EXECUTE ON ALL ROUTINES IN SCHEMA public TO authenticated;
+
+-- Service role: Full administrative authority (server-side only, bypasses RLS)
+GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO service_role;
+
+-- Default privileges for future entities
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+
+-- Force PostgREST to reload its schema cache immediately
+NOTIFY pgrst, 'reload schema';
+
+-- =============================================================================
 -- DONE — FR8X Production Schema Applied
 -- Verify: SELECT table_name FROM information_schema.tables WHERE table_schema = 'public';
 -- =============================================================================
+

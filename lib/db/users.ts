@@ -109,11 +109,31 @@ export async function createUser(user: ProfileInsert): Promise<ProfileRow> {
 
 export async function updateUser(identifier: string, updates: ProfileUpdate): Promise<ProfileRow> {
   const existing = await getUserByIdentifier(identifier);
+  const supabase = getDbClient();
+
   if (!existing) {
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
+    if (isUuid) {
+      // Upsert directly for authenticated user
+      const payload: ProfileInsert = {
+        ...updates,
+        id: identifier,
+        email: updates.email || `${identifier}@fr8x.in`,
+        updated_at: new Date().toISOString(),
+      };
+      const { data, error } = await supabase
+        .from('profiles')
+        .upsert(payload, { onConflict: 'id' })
+        .select()
+        .single();
+      if (error) {
+        throw new Error(`Failed to upsert user profile: ${error.message}`);
+      }
+      return data;
+    }
     throw new Error(`User not found for identifier: ${identifier}`);
   }
 
-  const supabase = getDbClient();
   const { data, error } = await supabase
     .from('profiles')
     .update({
@@ -130,6 +150,7 @@ export async function updateUser(identifier: string, updates: ProfileUpdate): Pr
   }
   return data;
 }
+
 
 export async function upsertUser(user: Partial<ProfileRow> & { email: string }): Promise<ProfileRow> {
   const supabase = getDbClient();

@@ -55,6 +55,27 @@ const upsertKYCDossierInDB = async (dossier: any) => {
       entity_id: dossier.uid || null,
       new_data: dossier,
     });
+    if (dossier.uid) {
+      await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: dossier.uid,
+          kyc_status: dossier.status || 'verified',
+          kyc_country: dossier.country,
+          tax_id: dossier.taxId,
+          corporate_reg_number: dossier.corporateRegNumber,
+          trade_customs_code: dossier.tradeCustomsCode,
+          logistics_license_number: dossier.logisticsLicenseNumber,
+          iata_code: dossier.iataCode,
+          fiata_reg: dossier.fiataReg,
+          fmc_number: dossier.fmcNumber,
+          aeo_tier: dossier.aeoTier,
+          gstn: dossier.taxId || dossier.gstn,
+          pan: dossier.pan,
+        }),
+      }).catch(() => {});
+    }
   } catch {}
 };
 
@@ -68,9 +89,21 @@ const submitUserKYC = async (uid: string, kycData: any) => {
       entity_id: uid,
       new_data: kycData,
     });
+    if (uid) {
+      await fetch('/api/user/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid,
+          kyc_status: 'pending_verification',
+          ...kycData,
+        }),
+      }).catch(() => {});
+    }
   } catch {}
 };
 import {
+  LayoutGrid,
   UserCheck,
   Save,
   MapPin,
@@ -329,6 +362,9 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  // Profile Tab Navigation State
+  const [activeProfileTab, setActiveProfileTab] = useState<'overview' | 'experience' | 'certifications' | 'kyc' | 'privacy'>('overview');
+
   // Privacy & Contact Visibility Governance State
   const [privacySettings, setPrivacySettings] = useState<UserPrivacySettings>(() => {
     return getUserPrivacySettings(user.uid, user.privacySettings);
@@ -346,6 +382,18 @@ export default function ProfilePage() {
       [key]: value,
     }));
   };
+
+  const kycProfile = useMemo(() => getStatutoryProfile(kycCountry || country || 'India'), [kycCountry, country]);
+  const complianceEval = useMemo(() => evaluateCompliance(kycCountry || country, {
+    taxId,
+    corporateReg,
+    tradeCustomsCode: tradeCustoms,
+    logisticsLicense,
+    gstn,
+    pan,
+    iec,
+    mto,
+  }), [kycCountry, country, taxId, corporateReg, tradeCustoms, logisticsLicense, gstn, pan, iec, mto]);
 
   const handleSavePrivacySettings = () => {
     setIsSavingPrivacy(true);
@@ -2395,30 +2443,196 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* 3 DEDICATED, COMPREHENSIVE SECTIONS: CARDS IN ROWS (EXPERIENCE, EDUCATION, CERTIFICATIONS) */}
+      {/* ─── PROFESSIONAL PROFILE TAB NAVIGATION ─── */}
+      <div
+        role="tablist"
+        aria-label="Profile Sections"
+        style={{
+          display: 'flex',
+          gap: '8px',
+          padding: '8px',
+          background: 'var(--card, #ffffff)',
+          borderRadius: 'var(--r-lg, 12px)',
+          border: '1px solid var(--line, #e2e8f0)',
+          boxShadow: 'var(--sh-sm)',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
+        }}
+      >
+        {[
+          { id: 'overview' as const, label: 'Overview', icon: LayoutGrid, count: null },
+          { id: 'experience' as const, label: 'Experience & Education', icon: Briefcase, count: experiences.length + educations.length },
+          { id: 'certifications' as const, label: 'Certifications & Licences', icon: Award, count: certifications.length },
+          { id: 'kyc' as const, label: 'Corporate KYC', icon: ShieldCheck, count: null },
+          { id: 'privacy' as const, label: 'Privacy & Governance', icon: Lock, count: null },
+        ].map((tab) => {
+          const isActive = activeProfileTab === tab.id;
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => setActiveProfileTab(tab.id)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '9px 16px',
+                borderRadius: 'var(--r, 8px)',
+                border: 'none',
+                background: isActive ? 'var(--brand, #0284c7)' : 'transparent',
+                color: isActive ? '#ffffff' : 'var(--muted, #64748b)',
+                fontWeight: isActive ? 600 : 500,
+                fontSize: '13px',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <Icon size={15} color={isActive ? '#ffffff' : 'currentColor'} />
+              <span>{tab.label}</span>
+              {tab.count !== null && tab.count > 0 && (
+                <span
+                  style={{
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '1px 6px',
+                    borderRadius: 'var(--r-full, 9999px)',
+                    background: isActive ? 'rgba(255, 255, 255, 0.25)' : '#f1f5f9',
+                    color: isActive ? '#ffffff' : 'var(--ink, #0f172a)',
+                  }}
+                >
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ─── TAB 1: OVERVIEW ─── */}
+      {activeProfileTab === 'overview' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Executive Summary & Professional Bio */}
+          <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <FileText size={17} color="var(--brand, #0284c7)" />
+                </div>
+                <div>
+                  <b style={{ fontSize: '15px', color: 'var(--ink)' }}>Executive Summary & Professional Bio</b>
+                  <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
+                    Commercial freight profile, trade lane focus, and multimodal logistics expertise.
+                  </span>
+                </div>
+              </div>
+              <button
+                className="btn secondary sm"
+                style={{ borderRadius: 'var(--r, 8px)' }}
+                onClick={handleOpenEditIdentityModal}
+              >
+                <Edit2 size={12} /> Edit Bio & Details
+              </button>
+            </div>
+            {summary ? (
+              <p style={{ fontSize: '13.5px', color: 'var(--ink)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-line' }}>
+                {summary}
+              </p>
+            ) : (
+              <div style={{ padding: '20px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)' }}>
+                No executive summary published yet. Click &quot;Edit Bio & Details&quot; to describe your freight capabilities and market presence.
+              </div>
+            )}
+          </div>
+
+          {/* Quick Metrics & Operational Capabilities Strip */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+              <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Corporate KYC Status
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--ink)', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ShieldCheck size={18} color="#16a34a" />
+                <span style={{ textTransform: 'capitalize' }}>{user.kycStatus || 'Verified'}</span>
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '4px' }}>
+                Jurisdiction: <b>{kycCountry || country || 'India'}</b>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+              <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Accreditation & Filings
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--ink)', marginTop: '6px' }}>
+                {iataCode ? `IATA ${iataCode}` : mto ? `MTO ${mto}` : 'Registered Forwarder'}
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '4px' }}>
+                AEO Status: <b>{aeoTier || 'Standard Non-AEO'}</b>
+              </div>
+            </div>
+
+            <div className="card" style={{ padding: '16px 18px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+              <div style={{ fontSize: '11.5px', color: 'var(--mut)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                Verified Credentials
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: 'var(--ink)', marginTop: '6px' }}>
+                {experiences.length} Experiences · {certifications.length} Licences
+              </div>
+              <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '4px' }}>
+                Academic records: <b>{educations.length} Degrees</b>
+              </div>
+            </div>
+          </div>
+
+          {/* Operational Headquarters & Association Affiliation */}
+          <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+            <b style={{ fontSize: '14.5px', color: 'var(--ink)' }}>Corporate Headquarters & Geographic Operations</b>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', marginTop: '14px' }}>
+              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Primary City & Country</span>
+                <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{[city || user.city, stateName || user.state, country || user.country].filter(Boolean).join(', ') || 'Not specified'}</b>
+              </div>
+              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Local Timezone</span>
+                <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{timezone || 'Asia/Kolkata'}</b>
+              </div>
+              <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px solid var(--line-light)' }}>
+                <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Trade Association</span>
+                <b style={{ fontSize: '13px', color: 'var(--ink)' }}>{associationName || 'Independent Multimodal Operator'}</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── TAB 2: EXPERIENCE & EDUCATION ─── */}
+      {activeProfileTab === 'experience' && (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* SECTION 1: Professional Work Experience */}
-        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Briefcase size={16} color="var(--fr8x-text)" />
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Briefcase size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>1. Work Experience</b>
-                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--ink)' }}>1. Work Experience</b>
+                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
                   Forwarding career milestones, freight volume managed, and liner contract leadership.
                 </span>
               </div>
             </div>
-            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenExpModal()}>
+            <button className="btn primary sm" style={{ borderRadius: 'var(--r, 8px)' }} onClick={() => handleOpenExpModal()}>
               <Plus size={13} /> Add Experience
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {experiences.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No experience records added yet. Click &quot;+ Add Experience&quot; to showcase your career.
               </div>
             ) : (
@@ -2426,10 +2640,11 @@ export default function ProfilePage() {
                 <div
                   key={exp.id}
                   style={{
-                    padding: '14px 16px',
+                    padding: '16px 18px',
                     background: '#ffffff',
-                    borderRadius: '0px',
-                    border: '1px solid var(--fr8x-outline)',
+                    borderRadius: 'var(--r, 8px)',
+                    border: '1px solid var(--line, #e2e8f0)',
+                    boxShadow: 'var(--sh-sm)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -2438,23 +2653,23 @@ export default function ProfilePage() {
                   <div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
                       <div>
-                        <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{exp.designation || (exp as any).title || 'Designation'}</b>
-                        <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
-                          {exp.company} · <span style={{ color: 'var(--fr8x-muted)' }}>{exp.location}</span>
+                        <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{exp.designation || (exp as any).title || 'Designation'}</b>
+                        <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, marginTop: '2px' }}>
+                          {exp.company} · <span style={{ color: 'var(--mut)' }}>{exp.location}</span>
                         </div>
                       </div>
-                      <span className="badge" style={{ fontSize: '9.5px', background: '#f1f5f9', color: 'var(--fr8x-text)', borderRadius: '0px', border: '1px solid var(--fr8x-outline)' }}>
+                      <span className="badge" style={{ fontSize: '9.5px', background: '#f1f5f9', color: 'var(--ink)', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)' }}>
                         {exp.employmentType || (exp as any).type || 'Full-time'}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--mut)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <Clock size={11} />
                       {exp.startDate ? `${exp.startDate} – ${exp.isCurrent ? 'Present' : (exp.endDate || 'Present')}` : ((exp as any).period || 'Present')}
                     </div>
 
                     {exp.description && (
-                      <p style={{ margin: '10px 0 8px', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
+                      <p style={{ margin: '10px 0 8px', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5 }}>
                         {exp.description}
                       </p>
                     )}
@@ -2471,7 +2686,7 @@ export default function ProfilePage() {
                       return (
                         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', margin: '8px 0' }}>
                           {skillsList.map((s, idx) => (
-                            <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', border: '1px solid var(--fr8x-outline)', color: 'var(--fr8x-text)' }}>
+                            <span key={idx} style={{ fontSize: '10px', background: '#f8fafc', padding: '2px 6px', borderRadius: 'var(--r-xs, 4px)', border: '1px solid var(--line, #e2e8f0)', color: 'var(--ink)' }}>
                               {s}
                             </span>
                           ))}
@@ -2480,12 +2695,12 @@ export default function ProfilePage() {
                     })()}
 
                     <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)' }}>
-                      <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenExpModal(exp)}>
+                      <button className="btn secondary sm" style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenExpModal(exp)}>
                         <Edit2 size={11} /> Edit
                       </button>
                       <button
                         className="btn secondary sm"
-                        style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
+                        style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                         onClick={() => {
                           persistExperiences(experiences.filter((i) => i.id !== exp.id));
                           toast('Experience entry removed.');
@@ -2502,27 +2717,27 @@ export default function ProfilePage() {
         </div>
 
         {/* SECTION 2: Academic & Maritime Education */}
-        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <GraduationCap size={16} color="var(--fr8x-text)" />
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <GraduationCap size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>2. Education</b>
-                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--ink)' }}>2. Education</b>
+                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
                   University degrees, supply chain specializations, and maritime research credentials.
                 </span>
               </div>
             </div>
-            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenEduModal()}>
+            <button className="btn primary sm" style={{ borderRadius: 'var(--r, 8px)' }} onClick={() => handleOpenEduModal()}>
               <Plus size={13} /> Add Education
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {educations.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No education records added yet. Click &quot;+ Add Education&quot; to add degree credentials.
               </div>
             ) : (
@@ -2530,38 +2745,39 @@ export default function ProfilePage() {
                 <div
                   key={edu.id}
                   style={{
-                    padding: '14px 16px',
+                    padding: '16px 18px',
                     background: '#ffffff',
-                    borderRadius: '0px',
-                    border: '1px solid var(--fr8x-outline)',
+                    borderRadius: 'var(--r, 8px)',
+                    border: '1px solid var(--line, #e2e8f0)',
+                    boxShadow: 'var(--sh-sm)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
                   }}
                 >
                   <div>
-                    <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
-                    <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
+                    <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{edu.qualification} in {edu.fieldOfStudy}</b>
+                    <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, marginTop: '2px' }}>
                       {edu.institution}
                     </div>
-                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '2px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
                       {edu.startYear} – {edu.endYear} {edu.grade && `· Grade: ${edu.grade}`}
                     </span>
 
                     {edu.description && (
-                      <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--fr8x-text)', lineHeight: 1.5 }}>
+                      <p style={{ margin: '8px 0 0', fontSize: '12px', color: 'var(--ink)', lineHeight: 1.5 }}>
                         {edu.description}
                       </p>
                     )}
                   </div>
 
                   <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', paddingTop: '8px', borderTop: '1px solid var(--line-light)', marginTop: '10px' }}>
-                    <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenEduModal(edu)}>
+                    <button className="btn secondary sm" style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenEduModal(edu)}>
                       <Edit2 size={11} /> Edit
                     </button>
                     <button
                       className="btn secondary sm"
-                      style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
+                      style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                       onClick={() => {
                         persistEducations(educations.filter((i) => i.id !== edu.id));
                         toast('Education record removed.');
@@ -2575,29 +2791,34 @@ export default function ProfilePage() {
             )}
           </div>
         </div>
+      </div>
+      )}
 
+      {/* ─── TAB 3: CERTIFICATIONS & LICENCES ─── */}
+      {activeProfileTab === 'certifications' && (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
         {/* SECTION 3: Industry Certifications & Licences */}
-        <div className="card" style={{ padding: '18px 20px', borderRadius: '0px', border: '1px solid var(--fr8x-outline)', background: '#ffffff' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--fr8x-outline)', paddingBottom: '12px' }}>
+        <div className="card" style={{ padding: '20px 22px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '0px', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Award size={16} color="var(--fr8x-text)" />
+              <div style={{ width: '34px', height: '34px', borderRadius: 'var(--r, 8px)', background: '#f8fafc', border: '1px solid var(--line, #e2e8f0)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Award size={16} color="var(--brand, #0284c7)" />
               </div>
               <div>
-                <b style={{ fontSize: '15px', color: 'var(--fr8x-text)' }}>3. Certifications & Licences</b>
-                <span style={{ fontSize: '12px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                <b style={{ fontSize: '15px', color: 'var(--ink)' }}>3. Certifications & Licences</b>
+                <span style={{ fontSize: '12px', color: 'var(--mut)', display: 'block' }}>
                   IATA DGR, FIATA, CSCP, and CBIC Customs Brokerage license registrations.
                 </span>
               </div>
             </div>
-            <button className="btn primary sm" style={{ borderRadius: '0px' }} onClick={() => handleOpenCertModal()}>
+            <button className="btn primary sm" style={{ borderRadius: 'var(--r, 8px)' }} onClick={() => handleOpenCertModal()}>
               <Plus size={13} /> Add Certification
             </button>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))', gap: '14px' }}>
             {certifications.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--fr8x-muted)', background: '#f8fafc', border: '1px solid var(--fr8x-outline)', gridColumn: '1 / -1' }}>
+              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', background: '#f8fafc', borderRadius: 'var(--r, 8px)', border: '1px dashed var(--line, #e2e8f0)', gridColumn: '1 / -1' }}>
                 No certifications added yet. Click &quot;+ Add Certification&quot; to add your accredited licenses.
               </div>
             ) : (
@@ -2605,10 +2826,11 @@ export default function ProfilePage() {
                 <div
                   key={cert.id}
                   style={{
-                    padding: '14px 16px',
+                    padding: '16px 18px',
                     background: '#ffffff',
-                    borderRadius: '0px',
-                    border: '1px solid var(--fr8x-outline)',
+                    borderRadius: 'var(--r, 8px)',
+                    border: '1px solid var(--line, #e2e8f0)',
+                    boxShadow: 'var(--sh-sm)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -2616,18 +2838,18 @@ export default function ProfilePage() {
                 >
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
-                      <b style={{ fontSize: '14px', color: 'var(--fr8x-text)' }}>{cert.title}</b>
-                      <span className="badge" style={{ fontSize: '9px', fontWeight: 800, background: '#f1f5f9', color: 'var(--fr8x-text)', border: '1px solid var(--fr8x-outline)', borderRadius: '0px' }}>
+                      <b style={{ fontSize: '14px', color: 'var(--ink)' }}>{cert.title}</b>
+                      <span className="badge" style={{ fontSize: '9px', fontWeight: 800, background: '#f0fdf4', color: '#16a34a', border: '1px solid #bbf7d0', borderRadius: 'var(--r-xs, 4px)' }}>
                         <CheckCircle2 size={10} /> VERIFIED
                       </span>
                     </div>
-                    <div style={{ fontSize: '12px', color: 'var(--fr8x-text)', fontWeight: 600, marginTop: '2px' }}>
+                    <div style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, marginTop: '2px' }}>
                       {cert.issuingAuthority}
                     </div>
-                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '3px' }}>
-                      License ID: <b style={{ fontFamily: 'var(--font-mono)', color: 'var(--fr8x-text)' }}>{cert.certificateNumber}</b>
+                    <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block', marginTop: '3px' }}>
+                      License ID: <b style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink)' }}>{cert.certificateNumber}</b>
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '1px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--mut)', display: 'block', marginTop: '1px' }}>
                       Issued: {cert.issueDate} {cert.expiryDate ? `· Exp: ${cert.expiryDate}` : ''}
                     </span>
                   </div>
@@ -2639,18 +2861,18 @@ export default function ProfilePage() {
                         target="_blank"
                         rel="noreferrer"
                         className="btn secondary sm"
-                        style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }}
+                        style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px' }}
                         title="Verify credential online"
                       >
                         <ExternalLink size={11} /> Verify
                       </a>
                     )}
-                    <button className="btn secondary sm" style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenCertModal(cert)}>
+                    <button className="btn secondary sm" style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px' }} onClick={() => handleOpenCertModal(cert)}>
                       <Edit2 size={11} /> Edit
                     </button>
                     <button
                       className="btn secondary sm"
-                      style={{ borderRadius: '0px', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
+                      style={{ borderRadius: 'var(--r-xs, 4px)', padding: '3px 8px', fontSize: '11px', color: '#b91c1c' }}
                       onClick={() => {
                         persistCertifications(certifications.filter((i) => i.id !== cert.id));
                         toast('Certification credential removed.');
@@ -2665,23 +2887,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Corporate KYC & Regulatory Filings Section — Address & Multi-Jurisdiction Aware */}
-      {(() => {
-        const activeProfile = getStatutoryProfile(kycCountry || country || 'India');
-        const complianceEval = evaluateCompliance(kycCountry || country, {
-          taxId,
-          corporateReg,
-          tradeCustomsCode: tradeCustoms,
-          logisticsLicense,
-          gstn,
-          pan,
-          iec,
-          mto,
-        });
-
-        return (
-          <div className="card" style={{ padding: '20px 24px', borderRadius: '12px' }}>
+      {activeProfileTab === 'kyc' && (
+        (() => {
+          const activeProfile = kycProfile;
+          return (
+            <div className="card" style={{ padding: '20px 24px', borderRadius: 'var(--r-lg, 12px)', border: '1px solid var(--line, #e2e8f0)', background: '#ffffff', boxShadow: 'var(--sh-sm)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--line-light)', paddingBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -2807,9 +3020,10 @@ export default function ProfilePage() {
             </div>
           </div>
         );
-      })()}
+      })())}
 
       {/* SECTION 5: Privacy & Contact Visibility Governance */}
+      {activeProfileTab === 'privacy' && (
       <div
         id="privacy-governance"
         className="card"
@@ -3319,8 +3533,11 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+      </div>
+      )}
 
         {/* SECTION 6: Danger Zone — Account Deactivation & Deletion (5-Day Grace Period / Permanent) */}
+        {activeProfileTab === 'overview' && (
         <div
           id="account-deletion-zone"
           className="card"
@@ -3412,7 +3629,7 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+        )}
 
       {/* KYC Edit Modal — Address & Multi-Jurisdiction Adaptive */}
       {showKycModal && (() => {

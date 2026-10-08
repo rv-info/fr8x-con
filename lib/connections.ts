@@ -394,9 +394,17 @@ export function saveUserPrivacySettings(
       }
     }
 
+    // Persist to authoritative Supabase PostgreSQL via API
+    fetch('/api/user/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ uid, privacySettings: settings }),
+    }).catch(() => {});
+
     dispatchConnectionsChanged();
   } catch {}
 }
+
 
 // ── Privacy Masking Utilities ───────────────────────────────────────────────
 
