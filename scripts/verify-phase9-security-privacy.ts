@@ -134,9 +134,9 @@ async function runTests() {
   console.log('\n─── TEST SUITE 3: Privacy Settings Resolution & Masking (SEC-03) ───');
 
   // Test pure masking functions
-  const maskedEmail = maskEmail('rajat.rai@cogoport.com');
+  const maskedEmail = maskEmail('operator.test@example.com');
   assert(
-    maskedEmail.startsWith('r') && maskedEmail.includes('••') && maskedEmail.endsWith('@cogoport.com'),
+    maskedEmail.startsWith('o') && maskedEmail.includes('••') && maskedEmail.endsWith('@example.com'),
     'maskEmail obscures local part while preserving domain and outer characters',
     `Got: ${maskedEmail}`
   );

@@ -1531,7 +1531,7 @@ function CompaniesKYCContent() {
                         company: { ...prev.company, legalName: e.target.value },
                       }))
                     }
-                    placeholder="e.g. Cogoport India Private Limited"
+                    placeholder="e.g. Acme Logistics India Private Limited"
                     className="gf-input font-bold"
                   />
                 </div>

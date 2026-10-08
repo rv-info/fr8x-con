@@ -23,7 +23,7 @@ if (fs.existsSync(envPath)) {
 async function testLiveSend() {
   const apiKey = process.env.ZEPTO_MAIL_API_KEY || '';
   const url = process.env.ZEPTO_MAIL_API_URL || 'https://api.zeptomail.in/v1.1/email';
-  const targetEmail = process.argv[2] || 'rajat.rai@cogoport.com';
+  const targetEmail = process.argv[2] || 'test@example.com';
 
   console.log('Sending live test to:', targetEmail);
   console.log('ZeptoMail URL:', url);

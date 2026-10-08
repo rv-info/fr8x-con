@@ -164,9 +164,7 @@ async function main() {
 
   // 6. User Profiles Migration Summary
   console.log('\n[4/4] Production User Accounts Identifiers for Supabase Auth Linking:');
-  const targetProductionUsers = users.filter((u: any) =>
-    ['rajat.rai@cogoport.com', 'mgt@raivega.in', 'tech@fr8x.in'].includes(u.email?.toLowerCase())
-  );
+  const targetProductionUsers = users.slice(0, 5);
 
   for (const pu of targetProductionUsers) {
     console.log(`  - Account: ${pu.email} | ${pu.displayName}`);

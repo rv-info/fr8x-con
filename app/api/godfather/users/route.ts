@@ -11,26 +11,14 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
     u.display_name ||
     u.displayName ||
     `${u.first_name || u.firstName || ''} ${u.last_name || u.lastName || ''}`.trim() ||
-    (email === 'rajat.rai@cogoport.com' ? 'Rajat RAI' : email === 'mgt@raivega.in' ? 'Management RAIVEGA' : email);
+    email;
 
-  const isCogoport = email === 'rajat.rai@cogoport.com' || u.uid === 'u-rajat';
-  const isRaivega = email === 'mgt@raivega.in' || u.uid === 'usr_raivega_mgt' || u.uid === 'user_mgt_raivega_2026';
-
-  let company = u.company_name || u.company;
-  let companyId = u.company_id || u.companyId;
-
-  if (isCogoport) {
-    company = 'COGOPORT';
-    companyId = 'CMP-COGOPORT-001';
-  } else if (isRaivega) {
-    company = 'RAIVEGA';
-    companyId = 'CMP-RAIVEGA-01';
-  }
-
-  const role = u.role || (isCogoport || isRaivega ? 'company_admin' : 'freight_forwarder');
-  const isVerified = Boolean(u.is_verified || u.email_verified || u.isVerified || isCogoport || isRaivega);
-  const hasGoldenTick = Boolean(u.has_golden_tick || u.hasGoldenTick || isRaivega);
-  const plan = u.plan || (isRaivega ? 'premium' : isCogoport ? 'professional' : 'trial');
+  const company = u.company_name || u.company || '';
+  const companyId = u.company_id || u.companyId || '';
+  const role = u.role || 'freight_forwarder';
+  const isVerified = Boolean(u.is_verified || u.email_verified || u.isVerified);
+  const hasGoldenTick = Boolean(u.has_golden_tick || u.hasGoldenTick);
+  const plan = u.plan || 'trial';
 
   const mobile = u.mobile || u.phone || '';
   const designation = u.designation || '';
@@ -41,7 +29,7 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
   const location = u.location || `${city}, ${state}, ${country}`;
 
   return {
-    uid: u.uid || u.id || (isCogoport ? 'u-rajat' : isRaivega ? 'usr_raivega_mgt' : `usr_${Date.now()}`),
+    uid: u.uid || u.id || `usr_${Date.now()}`,
     email,
     firstName: u.first_name || u.firstName || displayName.split(' ')[0] || '',
     lastName: u.last_name || u.lastName || displayName.split(' ').slice(1).join(' ') || '',
@@ -72,8 +60,8 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
     experiences: Array.isArray(u.experiences) ? u.experiences : [],
     educations: Array.isArray(u.educations) ? u.educations : [],
     certifications: Array.isArray(u.certifications) ? u.certifications : [],
-    gstn: u.gstn || (isCogoport ? '27AAACC1234F1Z5' : isRaivega ? '27AABCR9876Q1Z2' : undefined),
-    pan: u.pan || (isCogoport ? 'AAACC1234F' : isRaivega ? 'AABCR9876Q' : undefined),
+    gstn: u.gstn || u.gstin || undefined,
+    pan: u.pan || undefined,
     createdAt: u.created_at || u.createdAt || new Date().toISOString(),
     updatedAt: u.updated_at || u.updatedAt || new Date().toISOString(),
   };

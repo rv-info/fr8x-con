@@ -20,26 +20,16 @@ export interface OperatorCredential {
 // Default authorized operator email address
 export const DEFAULT_GODFATHER_OPERATOR_EMAIL = 'tech@fr8x.in';
 
-// Canonical fallback salt and hash for QWERTY@123a (PBKDF2-HMAC-SHA512 @ 200,000 rounds)
-const CANONICAL_FALLBACK_SALT = '2294f348728987c1fc5e5fe97d89802eee53e3100f1364d54e7483e97da1c842';
-const CANONICAL_FALLBACK_HASH = '494b74c2625bd8766170cc05c5274c401da8de4198d750e3157f19f880d4c6354ab0e2a5dd2e246203326c8de807495759c9391cdfb8c21e5b9f6c63b81012c0';
-
 function getGodfatherOperatorFile(): string {
-  const fixturesFile = path.join(process.cwd(), 'test', 'fixtures', 'dbms', 'godfather_operator.json');
   const tmpFile = path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms', 'godfather_operator.json');
   try {
     const tmpDir = path.dirname(tmpFile);
     if (!fs.existsSync(tmpDir)) {
       fs.mkdirSync(tmpDir, { recursive: true });
     }
-    if (!fs.existsSync(tmpFile) && fs.existsSync(fixturesFile)) {
-      try {
-        fs.copyFileSync(fixturesFile, tmpFile);
-      } catch {}
-    }
     return tmpFile;
   } catch {
-    return fixturesFile;
+    return tmpFile;
   }
 }
 
@@ -49,11 +39,6 @@ function getDbmsOperatorRecord(): { email?: string; salt?: string; hash?: string
   try {
     if (fs.existsSync(GODFATHER_OPERATOR_FILE)) {
       const raw = fs.readFileSync(GODFATHER_OPERATOR_FILE, 'utf8');
-      return JSON.parse(raw);
-    }
-    const fixturesFile = path.join(process.cwd(), 'test', 'fixtures', 'dbms', 'godfather_operator.json');
-    if (fs.existsSync(fixturesFile)) {
-      const raw = fs.readFileSync(fixturesFile, 'utf8');
       return JSON.parse(raw);
     }
   } catch {}
@@ -157,15 +142,6 @@ export function verifyOperatorPassword(candidatePassword: string): boolean {
     } catch {
       // continue
     }
-  }
-
-  // 4. Canonical fallback check (QWERTY@123a)
-  try {
-    if (verifyPassword(candidatePassword, CANONICAL_FALLBACK_SALT, CANONICAL_FALLBACK_HASH)) {
-      return true;
-    }
-  } catch {
-    // continue
   }
 
   return false;

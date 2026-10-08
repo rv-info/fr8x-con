@@ -68,7 +68,7 @@ export default function TemplatesManagementPage() {
   // Sample interpolated preview values
   const previewVars = {
     bidderName: 'Authorized Procurement Lead',
-    creatorCompany: 'Cogoport India Private Limited',
+    creatorCompany: 'Acme Freight Logistics Pvt Ltd',
     auctionId: 'RA-2026-0842',
     rfqId: 'RFQ-8842-AUTO',
     route: 'Nhava Sheva (INNSA) → Rotterdam (NLRTM)',
@@ -84,7 +84,7 @@ export default function TemplatesManagementPage() {
     carrier: 'Hapag-Lloyd Ocean Direct',
     transitTime: '26 Days Direct',
     freeTime: '14 Days Origin / 21 Days Dest',
-    creatorContact: 'Chief Administrator (tech@fr8x.in)',
+    creatorContact: 'Administrator (support@fr8x.in)',
     userName: 'Platform Member',
     targetId: 'post-088',
     violationCategory: 'Commercial Solicitation',

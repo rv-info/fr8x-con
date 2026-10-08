@@ -54,7 +54,7 @@ the updated values appear temporarily in the UI, but upon page refresh, re-login
    - There are two conflicting ID spaces: the Firebase Auth random UID (e.g., `e0spoSdD7JV0lqg0kEsEZxBxGJh1`) and the internal application UID (e.g., `u-rajat` or email).
    - In `app/profile/page.tsx`:
      ```ts
-     const canonicalUid = (user as any).canonicalUid || (user.uid.startsWith('u-') ? user.uid : (user.email === 'rajat.rai@cogoport.com' ? 'u-rajat' : user.uid)) || 'u-rajat';
+     const canonicalUid = (user as any).canonicalUid || user.uid;
      ```
    - When updating the profile, the client writes to `users/{authUid}`, while the server API `/api/user/profile` writes to `serverSecurityStore` keyed by `resolvedTargetUid` (`u-rajat`).
    - When fetching, if a query uses the Firebase Auth UID against a store expecting `u-rajat` (or vice versa), the lookup fails or falls back to default/empty values.

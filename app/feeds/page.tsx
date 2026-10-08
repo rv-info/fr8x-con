@@ -3619,7 +3619,7 @@ export default function FeedsPage() {
                 className="input"
                 value={quickAddress}
                 onChange={(e) => setQuickAddress(e.target.value)}
-                placeholder="e.g. Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069"
+                placeholder="e.g. Apex Cargo Complex, Andheri East, Mumbai, Maharashtra 400069"
               />
             </div>
 
@@ -3660,7 +3660,7 @@ export default function FeedsPage() {
                   className="input"
                   value={quickCompany}
                   onChange={(e) => setQuickCompany(e.target.value)}
-                  placeholder="COGOPORT"
+                  placeholder="Apex Global Logistics"
                 />
               </div>
             </div>

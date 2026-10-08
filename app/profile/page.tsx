@@ -784,7 +784,7 @@ export default function ProfilePage() {
       if (user.firstName) setEditFirstName(user.firstName);
       if (user.lastName) setEditLastName(user.lastName);
       if (user.uid) {
-        const canonicalUid = (user as any).canonicalUid || (user.uid.startsWith('u-') ? user.uid : (user.email === 'rajat.rai@cogoport.com' ? 'u-rajat' : user.uid)) || 'u-rajat';
+        const canonicalUid = (user as any).canonicalUid || user.uid;
         setEditPersonId(canonicalUid);
       }
       if ((user as any).department) setEditDepartment((user as any).department);
@@ -1003,8 +1003,8 @@ export default function ProfilePage() {
     if ((company || user.company) && (designation || user.designation)) score += 15;
     const currentAvatar = avatarUrl || user.avatarUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_avatar_${userStorageKey}`) || localStorage.getItem('fr8x_user_avatar')) : null);
     const currentLogo = companyLogoUrl || user.companyLogoUrl || (typeof window !== 'undefined' ? (localStorage.getItem(`fr8x_user_logo_${userStorageKey}`) || localStorage.getItem('fr8x_user_logo')) : null);
-    if (currentAvatar || user.email === 'rajat.rai@cogoport.com') score += 10;
-    if (currentLogo || user.email === 'rajat.rai@cogoport.com') score += 10;
+    if (currentAvatar) score += 10;
+    if (currentLogo) score += 10;
     if ((formattedAddress && city) || (user.formattedAddress && user.city) || (user.city || user.country)) score += 10;
     if (summary || (user as any).summary || mobile || user.mobile) score += 10;
     const complianceEval = evaluateCompliance(kycCountry || country, {
@@ -1442,7 +1442,7 @@ export default function ProfilePage() {
               </div>
               <div className="field">
                 <label>Company Name <span className="req">*</span></label>
-                <input className="input" value={expCompany} onChange={(e) => setExpCompany(e.target.value)} placeholder="COGOPORT" required />
+                <input className="input" value={expCompany} onChange={(e) => setExpCompany(e.target.value)} placeholder="Acme Global Logistics" required />
               </div>
             </div>
 
@@ -2322,7 +2322,7 @@ export default function ProfilePage() {
                       style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
                     />
                   )}
-                  {company || user.company || 'COGOPORT'}
+                  {company || user.company || 'Enterprise Member'}
                 </span>
               </div>
 
@@ -4454,7 +4454,7 @@ export default function ProfilePage() {
                       className="input"
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
-                      placeholder="e.g. rajat.rai@cogoport.com"
+                      placeholder="e.g. logistics.manager@enterprise.com"
                       required
                     />
                   </div>

@@ -972,7 +972,7 @@ export default function GodfatherPromotionsPage() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. Rajat RAI (COGOPORT)"
+                  placeholder="e.g. Rajesh Kumar (Acme Freight)"
                   value={overrideUserName}
                   onChange={(e) => setOverrideUserName(e.target.value)}
                   className="input"

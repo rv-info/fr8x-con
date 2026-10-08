@@ -1,7 +1,7 @@
 [
   {
-    "id": "COG-1710-0001",
-    "sp": "COGOPORT",
+    "id": "RATE-TEST-0001",
+    "sp": "APEX LOGISTICS",
     "line": "MAERSK",
     "por": "Mundra (INMUN)",
     "pol": "Mundra (INMUN)",
@@ -15,8 +15,8 @@
     "ft": 14,
     "validity": "2026-10-17",
     "transitTime": "60",
-    "ownerUid": "u-rajat",
-    "createdBy": "u-rajat",
+    "ownerUid": "usr_test_01",
+    "createdBy": "usr_test_01",
     "isOwner": true,
     "isSelfPosted": true,
     "status": "active",

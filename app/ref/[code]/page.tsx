@@ -32,7 +32,7 @@ export default function CompanyReferencePage() {
   const companySlug = codeParts[2] || 'CORP';
 
   const companyMap: Record<string, { name: string; city: string; country: string; lanes: string[]; teu: string; score: number }> = {
-    COGO: { name: 'Cogoport India Private Limited', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'INNSA ↔ SGSIN', 'INNSA ↔ JED'], teu: '50,000+ TEUs / yr', score: 100 },
+    PARTNER: { name: 'Verified Enterprise Logistics', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'INNSA ↔ SGSIN', 'INNSA ↔ JED'], teu: '50,000+ TEUs / yr', score: 100 },
     FR8X: { name: 'FR8X Verified Logistics Partner', city: 'Mumbai', country: 'India', lanes: ['INNSA ↔ NLRTM', 'CNSHA ↔ USLAX', 'SGSIN ↔ HAM'], teu: '25,000+ TEUs / yr', score: 99 },
   };
 

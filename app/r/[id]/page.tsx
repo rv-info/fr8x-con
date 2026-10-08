@@ -34,7 +34,7 @@ export default function SmartRatePublicPage() {
 
   const matchedRate = allRates.find((r) => r.id.toLowerCase() === rateId.toLowerCase()) || {
     id: rateId.toUpperCase(),
-    sp: 'COGOPORT',
+    sp: 'VERIFIED_PARTNER',
     carrier: 'Maersk Line',
     por: 'Nhava Sheva (INNSA)',
     pol: 'Nhava Sheva (INNSA)',
@@ -571,7 +571,7 @@ export default function SmartRatePublicPage() {
                       fontSize: '13px',
                       boxSizing: 'border-box',
                     }}
-                    placeholder="e.g. Cogoport India Private Limited"
+                    placeholder="e.g. Acme Global Logistics Pvt Ltd"
                     value={bookingShipperName}
                     onChange={(e) => setBookingShipperName(e.target.value)}
                   />

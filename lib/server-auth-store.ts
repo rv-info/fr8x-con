@@ -432,24 +432,11 @@ class ServerSecurityStore {
           });
         } catch {}
       } else {
-        // Guarantee both cleanUid and cleanEmail point to the same user instance,
-        // and purge any legacy mock/dummy professional records
+        // Guarantee both cleanUid and cleanEmail point to the same user instance
         existing.status = 'active';
         existing.email_verified = true;
         existing.failedLoginAttempts = 0;
         existing.firstLoginCompleted = true;
-        if (existing.mobile === '+91 98200 88210') existing.mobile = '';
-        if (existing.companyId === 'CMP-COGOPORT-001') existing.companyId = '';
-        if (existing.formattedAddress === 'Cogoport Headquarters, Andheri East, Mumbai, Maharashtra 400069, India') existing.formattedAddress = '';
-        if (Array.isArray(existing.experiences)) {
-          existing.experiences = existing.experiences.filter((e: any) => e.id !== 'exp-r1' && e.id !== 'exp-r2');
-        }
-        if (Array.isArray(existing.educations)) {
-          existing.educations = existing.educations.filter((e: any) => e.id !== 'edu-r1' && e.id !== 'edu-r2');
-        }
-        if (Array.isArray(existing.certifications)) {
-          existing.certifications = existing.certifications.filter((c: any) => c.id !== 'cert-r1' && c.id !== 'cert-r2');
-        }
         this.users.set(cleanUid, existing);
         this.users.set(cleanEmail, existing);
         try {

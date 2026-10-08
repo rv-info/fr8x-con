@@ -1,19 +1,18 @@
 import crypto from 'crypto';
 
-// ─── AES-256-GCM Application-Layer Encryption ────────────────────────────────
-// Key must be exactly 32 bytes (64 hex chars).
-// In production, set GODFATHER_KMS_ENCRYPTION_KEY via secrets manager (never commit).
-const DEFAULT_KEY_HEX = 'e1a3b5c7d9f2e4a6b8c0d2e4f6a8b0c2d4e6f8a0b2c4d6e8f0a2b4c6d8e0f2a4';
+// Ephemeral fallback key generated per process instance if GODFATHER_KMS_ENCRYPTION_KEY is unset.
+// This prevents hardcoding static secret keys in source code while allowing dev/test to function.
+const EPHEMERAL_KEY_HEX = crypto.randomBytes(32).toString('hex');
 if (
   process.env.NODE_ENV === 'production' &&
-  (!process.env.GODFATHER_KMS_ENCRYPTION_KEY || process.env.GODFATHER_KMS_ENCRYPTION_KEY === DEFAULT_KEY_HEX)
+  !process.env.GODFATHER_KMS_ENCRYPTION_KEY
 ) {
   console.warn(
-    '[SECURITY AUDIT ALERT] Running in production with default GODFATHER_KMS_ENCRYPTION_KEY! Generate and set a unique 64-char hex key in Vercel Environment Variables immediately.'
+    '[SECURITY AUDIT ALERT] Running in production without GODFATHER_KMS_ENCRYPTION_KEY! Set a unique 64-char hex key in production environment variables immediately.'
   );
 }
 const ENCRYPTION_KEY = Buffer.from(
-  process.env.GODFATHER_KMS_ENCRYPTION_KEY || DEFAULT_KEY_HEX,
+  process.env.GODFATHER_KMS_ENCRYPTION_KEY || EPHEMERAL_KEY_HEX,
   'hex'
 );
 
@@ -235,11 +234,15 @@ export function generateSecureToken(bytes = 32): string {
 
 // ─── HMAC-SHA256 Cryptographic Session Signing ─────────────────────────────
 
+// Ephemeral fallback secrets generated per process instance if env vars are unset
+const EPHEMERAL_SESSION_SECRET = crypto.randomBytes(32).toString('hex');
+const EPHEMERAL_CSRF_SECRET = crypto.randomBytes(32).toString('hex');
+
 function getSessionSecret(): string {
   return (
     process.env.GODFATHER_SESSION_SECRET?.trim() ||
     process.env.GODFATHER_KMS_ENCRYPTION_KEY?.trim() ||
-    'fr8x-platform-internal-session-signing-key-2026-production'
+    EPHEMERAL_SESSION_SECRET
   );
 }
 
@@ -311,7 +314,7 @@ function getCsrfSecret(): string {
     process.env.CSRF_SECRET?.trim() ||
     process.env.GODFATHER_SESSION_SECRET?.trim() ||
     process.env.GODFATHER_KMS_ENCRYPTION_KEY?.trim() ||
-    'fr8x-csrf-default-DO-NOT-USE-IN-PRODUCTION'
+    EPHEMERAL_CSRF_SECRET
   );
 }
 

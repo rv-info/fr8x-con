@@ -199,7 +199,7 @@ async function runOtpVerificationSuite() {
   // ───────────────────────────────────────────────────────────────────────────
   console.log('\n--- 9. Proof-of-Verification Single-Use Grant ---');
   const proofChallenge = engine.createChallenge({
-    subject: 'rajat.rai@cogoport.com',
+    subject: 'tester@example.com',
     purpose: 'email_verification',
   });
 
