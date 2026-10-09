@@ -125,11 +125,14 @@ export interface UserProfile {
   district?: string;
   area?: string;
   address?: string;
+  registeredAddress?: string;
   postalCode?: string;
   postal_code?: string;
   formattedAddress?: string;
   location?: string;
   position?: string;
+  iecCode?: string;
+  mtoNumber?: string;
   department?: string;
   coordinates?: Coordinates;
   mobile: string;

@@ -877,6 +877,7 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
+      const resolvedRegAddress = registeredAddress.trim() || `${(isCustomCity ? customCity : city) || ''}, ${state || ''}, ${country || 'India'}`.trim().replace(/^,\s*|,\s*$/g, '');
       const regResult = await register(
         {
           firstName: firstName.trim(),
@@ -885,6 +886,8 @@ export default function RegisterPage() {
           company: companyName.trim(),
           companyId,
           mobile: fullMobile,
+          isdCode: isdCode || '+91',
+          whatsappSameAsMobile: true,
           designation: designation || 'Freight Procurement Manager',
           position: designation || 'Manager',
           department: 'Logistics & Supply Chain',
@@ -894,7 +897,14 @@ export default function RegisterPage() {
           city: (isCustomCity ? customCity : city) || 'Mumbai',
           area: (isCustomCity ? customCity : city) || '',
           postalCode: postalCode || '',
-          address: `${(isCustomCity ? customCity : city) || ''}, ${state || ''}, ${country || 'India'}`.trim().replace(/^,\s*|,\s*$/g, ''),
+          address: resolvedRegAddress,
+          formattedAddress: resolvedRegAddress,
+          registeredAddress: registeredAddress.trim(),
+          timezone: timezone || 'Asia/Kolkata',
+          gstn: gstn.trim(),
+          pan: pan.trim(),
+          iec: iecCode.trim(),
+          mto: mtoNumber.trim(),
           role: 'company_admin',
           plan: isFreePlatformMode ? 'premium' : selectedPlan,
         },

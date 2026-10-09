@@ -27,6 +27,7 @@ import {
 } from '@/lib/connections';
 import { normalizeAssociationName } from '@/lib/utils/associations';
 import { profileService } from '@/lib/supabase/db';
+import { createClient } from '@/lib/supabase/client';
 import { storageService } from '@/lib/supabase/storage';
 import {
   getStatutoryProfile,
@@ -1147,7 +1148,12 @@ export default function ProfilePage() {
       const targetUid = user.uid;
       const updateResult = await profileService.updateProfile(targetUid, profilePayload);
       if (!updateResult.success || !updateResult.user) {
-        toast(`Save error: ${updateResult.error || 'Failed to update profile.'}`);
+        const errMsg = updateResult.error || 'Failed to update profile.';
+        if (errMsg.includes('schema cache') || errMsg.includes('public.profiles')) {
+          toast(`Database schema missing: 'public.profiles' table not found in Supabase. Please apply the schema migration.`);
+        } else {
+          toast(`Save error: ${errMsg}`);
+        }
         return;
       }
 
@@ -4144,10 +4150,34 @@ export default function ProfilePage() {
                   return;
                 }
 
+                // If user changed their login email, trigger Supabase Auth email update
+                const emailChanged = Boolean(finalEmail && user.email && finalEmail.toLowerCase() !== user.email.trim().toLowerCase());
+                if (emailChanged) {
+                  try {
+                    const supabase = createClient();
+                    const { error: authEmailErr } = await supabase.auth.updateUser({ email: finalEmail });
+                    if (authEmailErr) {
+                      toast(`Email update error: ${authEmailErr.message}`);
+                      setIsSavingIdentity(false);
+                      return;
+                    }
+                    toast(`✓ Confirmation email sent to ${finalEmail}. Please check your inbox to confirm your new login email.`);
+                  } catch (e: any) {
+                    toast(`Email update error: ${e.message}`);
+                    setIsSavingIdentity(false);
+                    return;
+                  }
+                }
+
                 // Authoritative write to Supabase PostgreSQL & read-back confirmation
                 const updateResult = await profileService.updateProfile(targetUid, profilePayload);
                 if (!updateResult.success || !updateResult.user) {
-                  toast(`Save error: ${updateResult.error || 'Failed to update profile.'}`);
+                  const errMsg = updateResult.error || 'Failed to update profile.';
+                  if (errMsg.includes('schema cache') || errMsg.includes('public.profiles')) {
+                    toast(`Database schema missing: 'public.profiles' table not found in Supabase. Please apply the schema migration.`);
+                  } else {
+                    toast(`Save error: ${errMsg}`);
+                  }
                   setIsSavingIdentity(false);
                   return;
                 }

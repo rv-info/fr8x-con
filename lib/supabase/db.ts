@@ -131,9 +131,9 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   if (updates.postalCode !== undefined) row.postal_code = updates.postalCode;
   if (updates.postal_code !== undefined) row.postal_code = updates.postal_code;
 
-  // Unify address and formattedAddress
-  if (updates.formattedAddress !== undefined || updates.address !== undefined) {
-    const addr = updates.formattedAddress !== undefined ? updates.formattedAddress : updates.address;
+  // Unify address, formattedAddress, and registeredAddress
+  if (updates.formattedAddress !== undefined || updates.address !== undefined || updates.registeredAddress !== undefined) {
+    const addr = updates.registeredAddress !== undefined ? updates.registeredAddress : (updates.formattedAddress !== undefined ? updates.formattedAddress : updates.address);
     row.formatted_address = String(addr).trim();
     row.address = String(addr).trim();
   }
@@ -163,8 +163,10 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   if (updates.gstn !== undefined) row.gstn = updates.gstn;
   if (updates.pan !== undefined) row.pan = updates.pan;
   if (updates.cin !== undefined) row.cin = updates.cin;
-  if (updates.iec !== undefined) row.iec = updates.iec;
-  if (updates.mto !== undefined) row.mto = updates.mto;
+  if (updates.iec !== undefined || updates.iecCode !== undefined) row.iec = updates.iec !== undefined ? updates.iec : updates.iecCode;
+  if (updates.mto !== undefined || updates.mtoNumber !== undefined) row.mto = updates.mto !== undefined ? updates.mto : updates.mtoNumber;
+  if (updates.role !== undefined) row.role = updates.role;
+  if (updates.plan !== undefined) row.plan = updates.plan;
   if (updates.kycCountry !== undefined) row.kyc_country = updates.kycCountry;
   if (updates.taxId !== undefined) row.tax_id = updates.taxId;
   if (updates.taxIdLabel !== undefined) row.tax_id_label = updates.taxIdLabel;
@@ -260,8 +262,16 @@ export const profileService = {
         return { success: true, user: mapRowToProfile(data) };
       }
 
+      // Check for schema error (PGRST205 or schema cache missing)
+      if (error && (error.code === 'PGRST205' || error.message?.includes('schema cache'))) {
+        return {
+          success: false,
+          error: "Could not find the table 'public.profiles' in the schema cache. The PostgreSQL schema migration needs to be applied to Supabase.",
+        };
+      }
+
       // If record not found, perform upsert
-      if (!data) {
+      if (!data && !error) {
         const payload = {
           ...rowUpdates,
           id: cleanId,
@@ -278,7 +288,10 @@ export const profileService = {
         }
         if (upsertRes.error) {
           console.error('[profileService] updateProfile upsert error:', upsertRes.error);
-          return { success: false, error: upsertRes.error.message };
+          const errMsg = (upsertRes.error.code === 'PGRST205' || upsertRes.error.message?.includes('schema cache'))
+            ? "Could not find the table 'public.profiles' in the schema cache. The PostgreSQL schema migration needs to be applied to Supabase."
+            : upsertRes.error.message;
+          return { success: false, error: errMsg };
         }
       }
 

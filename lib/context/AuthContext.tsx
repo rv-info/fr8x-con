@@ -568,6 +568,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       postalCode?: string;
       formattedAddress?: string;
       address?: string;
+      registeredAddress?: string;
+      iecCode?: string;
+      mtoNumber?: string;
     },
     password = 'Password@123'
   ): Promise<{ success: boolean; error?: string; user?: UserProfile }> => {
@@ -588,6 +591,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         `${profile.firstName || ''} ${profile.lastName || ''}`.trim() ||
         cleanEmail;
 
+      const resolvedAddress = profile.registeredAddress || profile.formattedAddress || profile.address || '';
+      const resolvedGstn = profile.gstn || '';
+      const resolvedPan = profile.pan || '';
+      const resolvedIec = profile.iec || profile.iecCode || '';
+      const resolvedMto = profile.mto || profile.mtoNumber || '';
+      const resolvedIsdCode = profile.isdCode || '+91';
+      const resolvedTimezone = profile.timezone || 'Asia/Kolkata';
+      const resolvedCity = profile.city || 'Mumbai';
+      const resolvedState = profile.state || '';
+      const resolvedCountry = profile.country || 'India';
+      const resolvedPostalCode = profile.postalCode || '';
+
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,
         password,
@@ -597,9 +612,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             firstName: profile.firstName || displayName.split(' ')[0] || '',
             lastName: profile.lastName || displayName.split(' ').slice(1).join(' ') || '',
             company: cleanCompany,
+            companyName: cleanCompany,
             companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
             mobile: cleanMobile,
+            phone: cleanMobile,
+            isdCode: resolvedIsdCode,
+            isd_code: resolvedIsdCode,
+            whatsappSameAsMobile: profile.whatsappSameAsMobile ?? true,
             designation: profile.designation || 'Freight Procurement Manager',
+            position: profile.position || profile.designation || 'Manager',
+            department: profile.department || 'Logistics & Supply Chain',
+            city: resolvedCity,
+            state: resolvedState,
+            district: profile.district || resolvedState,
+            country: resolvedCountry,
+            address: resolvedAddress,
+            formattedAddress: resolvedAddress,
+            formatted_address: resolvedAddress,
+            postalCode: resolvedPostalCode,
+            postal_code: resolvedPostalCode,
+            timezone: resolvedTimezone,
+            gstn: resolvedGstn,
+            pan: resolvedPan,
+            iec: resolvedIec,
+            mto: resolvedMto,
+            role: profile.role === 'user' ? 'user' : 'company_admin',
+            plan: profile.plan || 'trial',
           },
         },
       });
@@ -617,30 +655,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Provision profile in PostgreSQL `profiles` table
-      await profileService.updateProfile(data.user.id, {
+      const updateResult = await profileService.updateProfile(data.user.id, {
         email: cleanEmail,
         displayName,
         firstName: profile.firstName || displayName.split(' ')[0] || '',
         lastName: profile.lastName || displayName.split(' ').slice(1).join(' ') || '',
         mobile: cleanMobile,
         phone: cleanMobile,
+        isdCode: resolvedIsdCode,
+        whatsappSameAsMobile: profile.whatsappSameAsMobile ?? true,
         company: cleanCompany,
+        companyName: cleanCompany,
         companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
         designation: profile.designation || 'Freight Procurement Manager',
         position: profile.position || profile.designation || 'Manager',
         department: profile.department || 'Logistics & Supply Chain',
-        city: profile.city || 'Mumbai',
-        state: profile.state || '',
-        district: profile.district || '',
-        country: profile.country || 'India',
-        address: profile.address || profile.formattedAddress || '',
-        formattedAddress: profile.formattedAddress || profile.address || '',
-        postalCode: profile.postalCode || '',
+        city: resolvedCity,
+        state: resolvedState,
+        district: profile.district || resolvedState,
+        country: resolvedCountry,
+        address: resolvedAddress,
+        formattedAddress: resolvedAddress,
+        postalCode: resolvedPostalCode,
+        timezone: resolvedTimezone,
+        gstn: resolvedGstn,
+        pan: resolvedPan,
+        iec: resolvedIec,
+        mto: resolvedMto,
         role: profile.role === 'user' ? 'user' : 'company_admin',
         plan: profile.plan || 'trial',
       });
 
-      const confirmedProfile = await profileService.getProfile(data.user.id);
+      if (!updateResult.success) {
+        console.warn('[AuthContext] Profile write failed during registration:', updateResult.error);
+        return {
+          success: false,
+          error: `Authentication account created, but profile details failed to save: ${updateResult.error}. Please sign in to verify or complete your profile.`,
+        };
+      }
+
+      const confirmedProfile = updateResult.user || (await profileService.getProfile(data.user.id));
       if (confirmedProfile) {
         setCurrentUser(confirmedProfile);
         setUserStatusState('available');
