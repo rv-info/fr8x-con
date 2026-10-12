@@ -228,6 +228,7 @@ interface DataContextType {
   addPost: (text: string, postType?: FeedPost['postType']) => void;
   editPost: (postId: string | number, newText: string) => void;
   deletePost: (postId: string | number) => void;
+  toggleHidePost: (postId: string | number) => void;
   reactPost: (postId: string | number, reaction: 'like' | 'dis') => void;
   togglePostSupport: (postId: string | number) => void;
   togglePostCritique: (postId: string | number) => void;
@@ -913,6 +914,58 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }).catch(() => {});
     deletePostInDB(String(postId)).catch(() => {});
     toast('Post removed from feed.');
+  };
+
+  const toggleHidePost = (postId: string | number) => {
+    const target = posts.find((p) => String(p.id) === String(postId));
+    if (!target) return;
+
+    if (target.authorUid !== user.uid && user.role !== 'super_admin') {
+      toast('Permission denied: You can only hide or unhide your own posts.');
+      return;
+    }
+
+    const isCurrentlyHidden = target.status === 'hidden' || target.isHidden === true;
+    const nextStatus = isCurrentlyHidden ? 'active' : 'hidden';
+    const nextIsHidden = !isCurrentlyHidden;
+
+    setPosts((prev) => {
+      const next = prev.map((p) =>
+        String(p.id) === String(postId)
+          ? {
+              ...p,
+              status: nextStatus as any,
+              isHidden: nextIsHidden,
+              hiddenAt: nextIsHidden ? new Date().toISOString() : undefined,
+              updatedAt: new Date().toISOString(),
+            }
+          : p
+      );
+      try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(next)); } catch {}
+      return next;
+    });
+
+    const updated: FeedPost = {
+      ...target,
+      status: nextStatus as any,
+      isHidden: nextIsHidden,
+      hiddenAt: nextIsHidden ? new Date().toISOString() : undefined,
+      updatedAt: new Date().toISOString(),
+    };
+
+    queueAction('edit_post', updated, user.uid);
+    upsertPostInDB(updated).catch(() => {});
+    fetch('/api/feed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-fr8x-user-uid': user.uid },
+      body: JSON.stringify(updated),
+    }).catch(() => {});
+
+    toast(
+      nextIsHidden
+        ? 'Post hidden from feed for rectification. Only you can view it.'
+        : 'Post unhidden. Published back to feed.'
+    );
   };
 
   const reactPost = (postId: string | number, reaction: 'like' | 'dis') => {
@@ -2405,6 +2458,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       addPost,
       editPost,
       deletePost,
+      toggleHidePost,
       reactPost,
       togglePostSupport,
       togglePostCritique,

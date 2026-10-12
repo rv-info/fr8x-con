@@ -36,8 +36,15 @@ export class FeedRankingEngine {
     const blocked = new Set(context.blockedAuthorUids || []);
 
     return posts.filter((post) => {
-      // 1. Exclude deleted / moderated
-      if (post.status && post.status !== 'active') return false;
+      // 1. Exclude deleted / moderated / hidden
+      if (post.status === 'hidden' || post.isHidden) {
+        // Hidden for rectification: only the author themselves can view it
+        if (!context.viewer?.uid || post.authorUid !== context.viewer.uid) {
+          return false;
+        }
+      } else if (post.status && post.status !== 'active') {
+        return false;
+      }
 
       // 2. Exclude reported / blocked
       if (reported.has(post.id)) return false;
@@ -45,6 +52,9 @@ export class FeedRankingEngine {
 
       // 3. Surface-specific constraints
       if (context.surface === 'saved' && !post.isSaved) return false;
+      if (context.surface === 'my_posts') {
+        if (!context.viewer?.uid || post.authorUid !== context.viewer.uid) return false;
+      }
       if (context.surface === 'following') {
         // Must be authored by someone in user's company or network
         if (context.viewer?.uid && post.authorUid === context.viewer.uid) return true;

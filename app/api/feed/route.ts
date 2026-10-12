@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
     }
 
     const callerUid = userAuth.user?.uid || uidHeader || body.authorUid || body.authorId;
+    if (body.id && userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = await getPostById(body.id);
+      if (
+        existing &&
+        existing.author_id !== userAuth.user!.uid &&
+        existing.author_uid !== userAuth.user!.uid
+      ) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You do not have permission to modify this post.' },
+          { status: 403 }
+        );
+      }
+    }
     if (callerUid) {
       body.authorUid = callerUid;
       body.authorId = callerUid;
@@ -89,7 +102,11 @@ export async function DELETE(req: NextRequest) {
     // Ownership check for non-operator callers
     if (userAuth.authenticated && !gfAuth.authenticated) {
       const existing = await getPostById(id);
-      if (existing && existing.author_id !== userAuth.user!.uid) {
+      if (
+        existing &&
+        existing.author_id !== userAuth.user!.uid &&
+        existing.author_uid !== userAuth.user!.uid
+      ) {
         return NextResponse.json(
           { success: false, error: 'Forbidden: You do not have permission to delete this post.' },
           { status: 403 }

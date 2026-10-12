@@ -312,7 +312,9 @@ export interface FeedPost {
   updatedAt?: string;
   createdBy?: string;
   updatedBy?: string;
-  status?: 'active' | 'archived' | 'moderated' | 'deleted';
+  status?: 'active' | 'archived' | 'moderated' | 'deleted' | 'hidden';
+  isHidden?: boolean;
+  hiddenAt?: string;
   schemaVersion?: number;
   source?: string;
 }
@@ -1006,7 +1008,8 @@ export type FeedSurface =
   | 'trending'
   | 'following'
   | 'saved'
-  | 'latest';
+  | 'latest'
+  | 'my_posts';
 
 export interface RankingFormulaWeights {
   professionalRelevance: number; // 0.24

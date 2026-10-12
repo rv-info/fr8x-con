@@ -54,7 +54,7 @@ export async function savePost(post: any): Promise<PostRow> {
     tags: Array.isArray(post.tags) ? post.tags : [],
     likes_count: Number(post.likesCount || post.likes_count || post.likes) || 0,
     comments_count: Number(post.commentsCount || post.comments_count || post.comments) || 0,
-    is_published: post.isPublished !== false,
+    is_published: post.isPublished !== false && post.status !== 'hidden' && post.isHidden !== true,
     updated_at: new Date().toISOString(),
   };
 

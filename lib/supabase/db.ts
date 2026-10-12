@@ -610,12 +610,16 @@ export const postDbService = {
       likesCount: p.likes_count,
       commentsCount: p.comments_count,
       tags: p.tags,
+      isPublished: p.is_published !== false,
+      status: p.is_published === false ? 'hidden' : 'active',
+      isHidden: p.is_published === false,
       createdAt: p.created_at,
     }));
   },
 
   async upsertPost(post: Partial<FeedPost>): Promise<{ success: boolean; error?: string }> {
     const supabase = createClient();
+    const isHidden = post.status === 'hidden' || (post as any).isHidden === true;
     const { error } = await supabase.from('posts').upsert({
       id: post.id,
       author_uid: post.authorUid,
@@ -626,6 +630,8 @@ export const postDbService = {
       media_url: (post as any).mediaUrl || null,
       media_type: (post as any).mediaType || null,
       tags: post.tags || [],
+      is_published: !isHidden,
+      updated_at: new Date().toISOString(),
     });
     if (error) return { success: false, error: error.message };
     return { success: true };

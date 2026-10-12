@@ -30,6 +30,8 @@ import {
   Trash2,
   Edit2,
   Flag,
+  Eye,
+  EyeOff,
   Briefcase,
   ExternalLink,
   ShieldAlert,
@@ -287,6 +289,7 @@ export default function FeedsPage() {
     addPost,
     editPost,
     deletePost,
+    toggleHidePost,
     togglePostSupport,
     togglePostCritique,
     togglePostAmplify,
@@ -409,6 +412,13 @@ export default function FeedsPage() {
   const [openMenuPostId, setOpenMenuPostId] = useState<string | number | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | number | null>(null);
   const [editingPostText, setEditingPostText] = useState('');
+  const [postToDelete, setPostToDelete] = useState<string | number | null>(null);
+  const [clientHiddenPostIds, setClientHiddenPostIds] = useState<Set<string>>(() => new Set());
+
+  const handleHideFromMyFeed = (postId: string | number) => {
+    setClientHiddenPostIds((prev) => new Set([...prev, String(postId)]));
+    toast('Post hidden from your personal feed.');
+  };
 
   // Comment & Nested Reply State (Deferred until explicit user click)
   const [expandedPostComments, setExpandedPostComments] = useState<Record<string, boolean>>({});
@@ -739,6 +749,10 @@ export default function FeedsPage() {
 
   // 2. Filter posts based on post type and universal search
   const filteredPosts = rankedFeedPosts.filter((p) => {
+    if (clientHiddenPostIds.has(String(p.id))) {
+      return false;
+    }
+
     if (selectedPostType !== 'all' && (p.postType || 'general') !== selectedPostType) {
       return false;
     }
@@ -1726,6 +1740,13 @@ export default function FeedsPage() {
             </button>
             <button
               type="button"
+              className={`feed-tab-btn ${activeSurface === 'my_posts' ? 'active' : ''}`}
+              onClick={() => setActiveSurface('my_posts')}
+            >
+              My Posts ({posts.filter((p) => p.authorUid === user.uid).length})
+            </button>
+            <button
+              type="button"
               className={`feed-tab-btn ${activeSurface === 'saved' ? 'active' : ''}`}
               onClick={() => setActiveSurface('saved')}
             >
@@ -1979,15 +2000,43 @@ export default function FeedsPage() {
                             <Edit2 size={13} /> Edit Post
                           </button>
                         )}
+                        {isOwner && (
+                          <button
+                            onClick={() => {
+                              toggleHidePost(post.id);
+                              setOpenMenuPostId(null);
+                            }}
+                          >
+                            {post.status === 'hidden' || post.isHidden ? (
+                              <>
+                                <Eye size={13} /> Unhide Post
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff size={13} /> Hide Post for Rectification
+                              </>
+                            )}
+                          </button>
+                        )}
                         {(isOwner || user.role === 'super_admin') && (
                           <button
                             className="danger"
                             onClick={() => {
-                              deletePost(post.id);
+                              setPostToDelete(post.id);
                               setOpenMenuPostId(null);
                             }}
                           >
                             <Trash2 size={13} /> Delete Post
+                          </button>
+                        )}
+                        {!isOwner && (
+                          <button
+                            onClick={() => {
+                              handleHideFromMyFeed(post.id);
+                              setOpenMenuPostId(null);
+                            }}
+                          >
+                            <EyeOff size={13} /> Hide from My Feed
                           </button>
                         )}
                         {!isOwner && (
@@ -2005,6 +2054,59 @@ export default function FeedsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Rectification / Hidden Notice for Post Owner */}
+                {(post.status === 'hidden' || post.isHidden) && isOwner && (
+                  <div
+                    style={{
+                      marginBottom: '12px',
+                      padding: '10px 14px',
+                      borderRadius: '8px',
+                      background: 'rgba(245, 158, 11, 0.08)',
+                      border: '1px solid rgba(245, 158, 11, 0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '12px',
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <EyeOff size={16} color="#d97706" style={{ flexShrink: 0 }} />
+                      <div>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#b45309' }}>
+                          Hidden from Public Feed · Under Rectification
+                        </span>
+                        <span style={{ display: 'block', fontSize: '11px', color: '#78350f', marginTop: '1px' }}>
+                          Only you can view this post. Rectify content, details, or rates and click Unhide when ready.
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      {!post.isAuctionAnnouncement && (
+                        <button
+                          type="button"
+                          className="btn secondary sm"
+                          onClick={() => {
+                            setEditingPostId(post.id);
+                            setEditingPostText(post.text);
+                          }}
+                          style={{ padding: '3px 8px', fontSize: '11px', height: '26px' }}
+                        >
+                          <Edit2 size={11} /> Rectify
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="btn primary sm"
+                        onClick={() => toggleHidePost(post.id)}
+                        style={{ padding: '3px 10px', fontSize: '11px', height: '26px' }}
+                      >
+                        <Eye size={11} /> Unhide Post
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Linked Reverse Auction Banner */}
                 {post.isAuctionAnnouncement && post.auctionRefId && (
@@ -3683,6 +3785,42 @@ export default function FeedsPage() {
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Delete Post Confirmation Modal */}
+      {postToDelete && (
+        <Modal
+          isOpen={Boolean(postToDelete)}
+          onClose={() => setPostToDelete(null)}
+          title="Delete Post from Feed"
+          maxWidth="440px"
+        >
+          <div style={{ padding: '4px 0' }}>
+            <p style={{ fontSize: '13px', color: 'var(--fg, #0f172a)', lineHeight: 1.5, margin: '0 0 16px' }}>
+              Are you sure you want to permanently delete this post? This action will remove it from the trade network and cannot be undone.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+              <button
+                type="button"
+                className="btn secondary sm"
+                onClick={() => setPostToDelete(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn sm"
+                style={{ background: '#dc2626', color: '#fff', border: '1px solid #dc2626' }}
+                onClick={() => {
+                  deletePost(postToDelete);
+                  setPostToDelete(null);
+                }}
+              >
+                <Trash2 size={12} /> Delete Permanently
+              </button>
+            </div>
+          </div>
         </Modal>
       )}
     </div>
