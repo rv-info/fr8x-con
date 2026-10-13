@@ -34,7 +34,7 @@ import {
   Search,
 } from 'lucide-react';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
-import { usePlatformConfig, isAllFreeActive } from '@/lib/platform-config';
+import { usePlatformConfig, isAllFreeActive, getActiveMembershipPricing } from '@/lib/platform-config';
 import { Country as CSC_Country, State as CSC_State, City as CSC_City } from 'country-state-city';
 import {
   getAllGlobalISDCodes,
@@ -582,9 +582,10 @@ export default function RegisterPage() {
     return getStatutoryProfile(country || countryCode || 'India');
   }, [country, countryCode]);
 
-  // Platform Commerce Config & All-Free Sovereign Mode
+  // Platform Commerce Config & Dynamic Godfather Membership Pricing
   const { config } = usePlatformConfig();
-  const isFreePlatformMode = isAllFreeActive(config);
+  const membershipPricing = React.useMemo(() => getActiveMembershipPricing(config), [config]);
+  const isFreePlatformMode = membershipPricing.isFree;
   const [showCommercialBreakdown, setShowCommercialBreakdown] = useState(false);
 
   // Plan Selection
@@ -907,6 +908,9 @@ export default function RegisterPage() {
           mto: mtoNumber.trim(),
           role: 'company_admin',
           plan: isFreePlatformMode ? 'premium' : selectedPlan,
+          termsAccepted: true,
+          termsAcceptedAt: new Date().toISOString(),
+          termsVersion: 'v3.2',
         },
         password || 'Password@123'
       );
@@ -917,6 +921,52 @@ export default function RegisterPage() {
         setErrorMessage(regResult.error || 'Registration failed. Please check your details.');
         return;
       }
+
+      // Record digital legal acceptance incident in Godfather Security & Event stream
+      fetch('/api/auth/record-incident', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'TERMS_DIGITALLY_ACCEPTED',
+          userEmail: cleanEmail,
+          uid: regResult.user?.uid,
+          company: companyName.trim(),
+          details: `Digitally signed & accepted FR8X Master Terms of Service & Commercial Agreement (v3.2) during corporate registration for ${companyName.trim()}. Plan: ${isFreePlatformMode ? 'Premium (Complimentary Sovereign Access)' : selectedPlan} [Pricing Mode: ${membershipPricing.mode.toUpperCase()}${membershipPricing.isDiscounted ? ` - ${membershipPricing.discountPercent}% OFF` : ''}].`,
+          termsVersion: 'v3.2',
+          plan: isFreePlatformMode ? 'premium' : selectedPlan,
+          promotionalMode: membershipPricing.mode,
+        }),
+      }).catch(() => {});
+
+      // Record immutable entry in Godfather client audit trail
+      try {
+        const existingAudit = JSON.parse(localStorage.getItem('fr8x_gf_audit_logs') || '[]');
+        const auditEntry = {
+          actionId: `ACT-TNC-${Date.now()}`,
+          actorUid: regResult.user?.uid || cleanEmail,
+          actorEmail: cleanEmail,
+          actorName: `${firstName} ${lastName}`.trim(),
+          actorRole: 'user',
+          targetType: 'user',
+          targetId: cleanEmail,
+          targetLabel: companyName.trim(),
+          actionType: 'TERMS_DIGITALLY_ACCEPTED',
+          reason: 'Digitally accepted & agreed to FR8X Master Terms of Service (v3.2) during corporate registration',
+          beforeSnapshot: { termsAccepted: false },
+          afterSnapshot: {
+            termsAccepted: true,
+            termsAcceptedAt: new Date().toISOString(),
+            termsVersion: 'v3.2',
+            company: companyName.trim(),
+            plan: isFreePlatformMode ? 'premium' : selectedPlan,
+            promotionalMode: membershipPricing.mode,
+            discountPercent: membershipPricing.discountPercent,
+          },
+          correlationId: `GF-TNC-${Date.now()}`,
+          createdAt: new Date().toISOString(),
+        };
+        localStorage.setItem('fr8x_gf_audit_logs', JSON.stringify([auditEntry, ...existingAudit].slice(0, 500)));
+      } catch {}
 
       // Advance to Email-link verification notice screen
       setStep('verify_pending');
@@ -1783,8 +1833,8 @@ export default function RegisterPage() {
                 <span className="reg-section-title">
                   <CreditCard size={15} color="var(--brand)" /> 3. Membership & Access Tier
                 </span>
-                <span className="reg-section-sub" style={{ color: isFreePlatformMode ? '#059669' : 'var(--mut)', fontWeight: isFreePlatformMode ? 700 : 500 }}>
-                  {isFreePlatformMode ? '100% Free Platform Access Active' : 'Enterprise Membership Options'}
+                <span className="reg-section-sub" style={{ color: isFreePlatformMode ? '#059669' : membershipPricing.isDiscounted ? '#0284c7' : 'var(--mut)', fontWeight: (isFreePlatformMode || membershipPricing.isDiscounted) ? 700 : 500 }}>
+                  {isFreePlatformMode ? '100% Free Platform Access Active' : membershipPricing.isDiscounted ? `Special Promotion: ${membershipPricing.discountPercent}% Off Active` : 'Enterprise Membership Options'}
                 </span>
               </div>
               <div className="reg-section-body" style={{ position: 'relative', overflow: 'visible' }}>
@@ -1913,12 +1963,12 @@ export default function RegisterPage() {
                             </div>
                             <div className="reg-plan-price">
                               <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b' }}>₹0</span>
-                              <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard 30-Day Evaluation</small>
+                              <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard {membershipPricing.trialDays}-Day Evaluation</small>
                             </div>
                           </div>
                           <ul className="reg-plan-features">
                             <li>Standard reverse auctions</li>
-                            <li>Standard bid posting (₹300/bid)</li>
+                            <li>Standard bid posting (₹{membershipPricing.bidFee}/bid)</li>
                           </ul>
                         </div>
 
@@ -1930,14 +1980,14 @@ export default function RegisterPage() {
                               <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>100% WAIVED</span>
                             </div>
                             <div className="reg-plan-price">
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹1,500/mo</span>
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹{membershipPricing.stdPro.toLocaleString()}/mo</span>
                               <span style={{ fontSize: '15px', fontWeight: 800, color: '#15803d', marginLeft: '6px' }}>₹0</span>
                               <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>Standard rate during paid commercial cycle</small>
                             </div>
                           </div>
                           <ul className="reg-plan-features">
                             <li>Full platform & market rates access</li>
-                            <li>Standard bid posting (₹300/bid)</li>
+                            <li>Standard bid posting (₹{membershipPricing.bidFee}/bid)</li>
                           </ul>
                         </div>
 
@@ -1949,14 +1999,14 @@ export default function RegisterPage() {
                               <span style={{ fontSize: '9px', fontWeight: 800, color: '#16a34a', background: '#dcfce7', padding: '1px 6px', borderRadius: '3px' }}>ACTIVE (₹0)</span>
                             </div>
                             <div className="reg-plan-price">
-                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹3,000/mo</span>
+                              <span style={{ fontSize: '14px', fontWeight: 800, color: '#64748b', textDecoration: 'line-through' }}>₹{membershipPricing.stdPremium.toLocaleString()}/mo</span>
                               <span style={{ fontSize: '16px', fontWeight: 900, color: '#15803d', marginLeft: '6px' }}>₹0 / Free</span>
                               <small style={{ color: '#166534', fontSize: '10pt', marginTop: '2px', display: 'block', fontWeight: 600 }}>Golden Verified Tick + Zero Bid Fees Included</small>
                             </div>
                           </div>
                           <ul className="reg-plan-features">
                             <li><b>Golden Verified Partner Badge (✓)</b></li>
-                            <li><b>100% Bid Fee Waiver (₹0 vs ₹300)</b></li>
+                            <li><b>100% Bid Fee Waiver (₹0 vs ₹{membershipPricing.bidFee})</b></li>
                             <li>Priority placement on reverse RFQs</li>
                           </ul>
                         </div>
@@ -1964,101 +2014,161 @@ export default function RegisterPage() {
                     )}
                   </div>
                 ) : (
-                  /* Standard Paid Mode Plan Selection Cards */
-                  <div className="reg-plan-grid">
-                    {/* Trial */}
-                    <div
-                      onClick={() => setSelectedPlan('trial')}
-                      className="reg-plan-card"
-                      style={{
-                        border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                        background: selectedPlan === 'trial' ? '#f0f6ff' : '#ffffff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div>
-                        <div className="reg-plan-header">
-                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Tier</b>
+                  /* Standard / Promotional Plan Selection Cards */
+                  <div>
+                    {membershipPricing.isDiscounted && (
+                      <div
+                        style={{
+                          background: 'linear-gradient(135deg, #f0f9ff 0%, #ecfdf5 100%)',
+                          border: '1.5px solid #7dd3fc',
+                          borderRadius: '8px',
+                          padding: '12px 16px',
+                          marginBottom: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Sparkles size={16} color="#0284c7" />
+                          <div>
+                            <div style={{ fontSize: '12px', fontWeight: 800, color: '#0369a1' }}>
+                              {membershipPricing.campaignHeadline}
+                            </div>
+                            <div style={{ fontSize: '11px', color: '#475569' }}>
+                              {membershipPricing.campaignDescription}
+                            </div>
+                          </div>
                         </div>
-                        <div className="reg-plan-price">
-                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
-                            Free
-                          </span>
-                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
-                            30-Day Guided Access · Single trial per company
-                          </small>
-                        </div>
+                        <span
+                          style={{
+                            background: '#0284c7',
+                            color: '#ffffff',
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 800,
+                            fontSize: '10.5px',
+                            letterSpacing: '0.04em',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          {membershipPricing.promoBadgeText}
+                        </span>
                       </div>
-                      <ul className="reg-plan-features">
-                        <li>Standard reverse auctions</li>
-                        <li>Standard bid posting (₹300/bid)</li>
-                      </ul>
-                    </div>
+                    )}
 
-                    {/* Professional */}
-                    <div
-                      onClick={() => setSelectedPlan('professional')}
-                      className="reg-plan-card"
-                      style={{
-                        border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                        background: selectedPlan === 'professional' ? '#f0f6ff' : '#ffffff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div>
-                        <div className="reg-plan-header">
-                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
+                    <div className="reg-plan-grid">
+                      {/* Trial */}
+                      <div
+                        onClick={() => setSelectedPlan('trial')}
+                        className="reg-plan-card"
+                        style={{
+                          border: selectedPlan === 'trial' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                          background: selectedPlan === 'trial' ? '#f0f6ff' : '#ffffff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div>
+                          <div className="reg-plan-header">
+                            <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Trial Tier</b>
+                          </div>
+                          <div className="reg-plan-price">
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--ink)', lineHeight: '1.2' }}>
+                              Free
+                            </span>
+                            <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                              {membershipPricing.trialDays}-Day Guided Access · Single trial per company
+                            </small>
+                          </div>
                         </div>
-                        <div className="reg-plan-price">
-                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
-                            ₹1,500 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month ($27 USD)</small>
-                          </span>
-                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
-                            Inclusive of all applicable taxes
-                          </small>
-                        </div>
+                        <ul className="reg-plan-features">
+                          <li>Standard reverse auctions</li>
+                          <li>Standard bid posting (₹{membershipPricing.bidFee}/bid)</li>
+                        </ul>
                       </div>
-                      <ul className="reg-plan-features">
-                        <li>Full platform & spot tariff access</li>
-                        <li>Standard bid posting (₹300/bid)</li>
-                      </ul>
-                    </div>
 
-                    {/* Premium */}
-                    <div
-                      onClick={() => setSelectedPlan('premium')}
-                      className="reg-plan-card"
-                      style={{
-                        border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--fr8x-outline)',
-                        background: selectedPlan === 'premium' ? '#fffdf7' : '#ffffff',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div>
-                        <div className="reg-plan-header">
-                          <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium Enterprise Tier</b>
-                          <span className="badge amber" style={{ fontSize: '9pt', padding: '1px 6px', fontWeight: 700 }}>
-                            Recommended
-                          </span>
+                      {/* Professional */}
+                      <div
+                        onClick={() => setSelectedPlan('professional')}
+                        className="reg-plan-card"
+                        style={{
+                          border: selectedPlan === 'professional' ? '2px solid var(--brand)' : '1px solid var(--fr8x-outline)',
+                          background: selectedPlan === 'professional' ? '#f0f6ff' : '#ffffff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div>
+                          <div className="reg-plan-header">
+                            <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Professional Tier</b>
+                            {membershipPricing.isDiscounted && (
+                              <span style={{ fontSize: '9px', fontWeight: 800, color: '#0369a1', background: '#e0f2fe', padding: '1px 6px', borderRadius: '3px', border: '1px solid #bae6fd' }}>
+                                {membershipPricing.discountPercent}% OFF
+                              </span>
+                            )}
+                          </div>
+                          <div className="reg-plan-price">
+                            {membershipPricing.isDiscounted && (
+                              <span style={{ fontSize: '12px', color: '#94a3b8', textDecoration: 'line-through', marginRight: '6px' }}>
+                                ₹{membershipPricing.stdPro.toLocaleString()}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--brand)', lineHeight: '1.2' }}>
+                              ₹{membershipPricing.currentPro.toLocaleString()} <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month</small>
+                            </span>
+                            <small style={{ color: membershipPricing.isDiscounted ? '#0369a1' : 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                              {membershipPricing.isDiscounted ? `${membershipPricing.discountPercent}% Promotional Discount Applied` : 'Inclusive of all applicable taxes'}
+                            </small>
+                          </div>
                         </div>
-                        <div className="reg-plan-price">
-                          <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
-                            ₹3,000 <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month ($50 USD)</small>
-                          </span>
-                          <small style={{ color: 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
-                            Golden Verified Badge + 40% Bid Discount
-                          </small>
-                        </div>
+                        <ul className="reg-plan-features">
+                          <li>Full platform & spot tariff access</li>
+                          <li>Standard bid posting (₹{membershipPricing.bidFee}/bid)</li>
+                        </ul>
                       </div>
-                      <ul className="reg-plan-features">
-                        <li>
-                          <b>Golden Verified Partner Badge (✓)</b>
-                        </li>
-                        <li>
-                          <b>40% Bid Fee Discount: ₹180/bid (vs ₹300)</b>
-                        </li>
-                        <li>Priority placement on reverse RFQs</li>
-                      </ul>
+
+                      {/* Premium */}
+                      <div
+                        onClick={() => setSelectedPlan('premium')}
+                        className="reg-plan-card"
+                        style={{
+                          border: selectedPlan === 'premium' ? '2px solid var(--gold)' : '1px solid var(--fr8x-outline)',
+                          background: selectedPlan === 'premium' ? '#fffdf7' : '#ffffff',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div>
+                          <div className="reg-plan-header">
+                            <b style={{ fontSize: '11pt', fontWeight: 700, color: 'var(--ink)' }}>Premium Enterprise Tier</b>
+                            <span className="badge amber" style={{ fontSize: '9pt', padding: '1px 6px', fontWeight: 700 }}>
+                              {membershipPricing.isDiscounted ? `${membershipPricing.discountPercent}% OFF` : 'Recommended'}
+                            </span>
+                          </div>
+                          <div className="reg-plan-price">
+                            {membershipPricing.isDiscounted && (
+                              <span style={{ fontSize: '12px', color: '#94a3b8', textDecoration: 'line-through', marginRight: '6px' }}>
+                                ₹{membershipPricing.stdPremium.toLocaleString()}
+                              </span>
+                            )}
+                            <span style={{ fontSize: '16px', fontWeight: 800, color: 'var(--gold)', lineHeight: '1.2' }}>
+                              ₹{membershipPricing.currentPremium.toLocaleString()} <small style={{ fontSize: '10pt', color: 'var(--mut)', fontWeight: 500 }}>/month</small>
+                            </span>
+                            <small style={{ color: membershipPricing.isDiscounted ? '#b45309' : 'var(--mut)', fontSize: '10pt', marginTop: '2px', display: 'block' }}>
+                              {membershipPricing.isDiscounted ? `Golden Verified Badge + ${membershipPricing.discountPercent}% Discount` : 'Golden Verified Badge + 40% Bid Discount'}
+                            </small>
+                          </div>
+                        </div>
+                        <ul className="reg-plan-features">
+                          <li>
+                            <b>Golden Verified Partner Badge (✓)</b>
+                          </li>
+                          <li>
+                            <b>40% Bid Fee Discount: ₹{membershipPricing.premiumBidFee}/bid (vs ₹{membershipPricing.bidFee})</b>
+                          </li>
+                          <li>Priority placement on reverse RFQs</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 )}

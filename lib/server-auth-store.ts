@@ -269,7 +269,10 @@ export interface SecurityEventRecord {
     | 'SUSPICIOUS_LOGIN'
     | 'GODFATHER_LOGIN'
     | 'GODFATHER_LOGOUT'
-    | 'PRIVILEGED_ADMIN_ACTION';
+    | 'PRIVILEGED_ADMIN_ACTION'
+    | 'TERMS_DIGITALLY_ACCEPTED'
+    | 'USER_REGISTERED'
+    | 'USER_LOGIN';
   severity: 'INFO' | 'WARNING' | 'HIGH' | 'CRITICAL';
   userEmail: string;
   uid?: string;

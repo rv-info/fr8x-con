@@ -18,17 +18,24 @@ import {
   Globe,
   Radio,
   Zap,
+  Tag,
+  Sparkles,
+  Gift,
+  Sliders,
+  RefreshCw,
 } from 'lucide-react';
 import { useGodfatherData } from '@/lib/godfather/context/GodfatherDataContext';
 import { useGodfatherAuth } from '@/lib/godfather/context/GodfatherAuthContext';
 import { PlanVersion } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
-import { usePlatformConfig } from '@/lib/platform-config';
+import { usePlatformConfig, getActiveMembershipPricing, MembershipCampaignMode } from '@/lib/platform-config';
+import { useToast } from '@/lib/context/ToastContext';
 
 export default function PlansConfigurationPage() {
   const { plans, createPlanVersion } = useGodfatherData();
-  const { requestStepUpVerification } = useGodfatherAuth();
-  const { config, setAllFreeMode } = usePlatformConfig();
+  const { requestStepUpVerification, operator } = useGodfatherAuth();
+  const { config, setAllFreeMode, setMembershipPromotion } = usePlatformConfig();
+  const { toast } = useToast();
 
   const [selectedPlan, setSelectedPlan] = useState<PlanVersion>(plans[0] || {} as PlanVersion);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -66,6 +73,57 @@ export default function PlansConfigurationPage() {
     afterSnapshot?: any;
     onConfirm: (reason: string) => void;
   } | null>(null);
+
+  // Promotional Decision Center State
+  const [promoMode, setPromoMode] = useState<MembershipCampaignMode>(
+    config.allFreeMode ? 'all_free' : (config.membershipPromotion?.mode || 'standard')
+  );
+  const [promoDiscount, setPromoDiscount] = useState<number>(
+    config.membershipPromotion?.discountPercent || 50
+  );
+  const [promoBadge, setPromoBadge] = useState<string>(
+    config.membershipPromotion?.promoBadgeText || 'GODFATHER PROMO: 50% OFF'
+  );
+  const [promoHeadline, setPromoHeadline] = useState<string>(
+    config.membershipPromotion?.campaignHeadline || 'Special Promotional Access Active'
+  );
+  const [promoProPrice, setPromoProPrice] = useState<number>(
+    config.membershipPromotion?.proMonthlyPrice || 1500
+  );
+  const [promoPremiumPrice, setPromoPremiumPrice] = useState<number>(
+    config.membershipPromotion?.premiumMonthlyPrice || 3000
+  );
+
+  // Sync state if config updates from another tab
+  React.useEffect(() => {
+    if (config.membershipPromotion) {
+      setPromoMode(config.allFreeMode ? 'all_free' : config.membershipPromotion.mode);
+      setPromoDiscount(config.membershipPromotion.discountPercent || 50);
+      setPromoBadge(config.membershipPromotion.promoBadgeText || 'GODFATHER PROMO: 50% OFF');
+      setPromoHeadline(config.membershipPromotion.campaignHeadline || 'Special Promotional Access Active');
+      setPromoProPrice(config.membershipPromotion.proMonthlyPrice || 1500);
+      setPromoPremiumPrice(config.membershipPromotion.premiumMonthlyPrice || 3000);
+    }
+  }, [config]);
+
+  const handleApplyPromoDecision = () => {
+    setMembershipPromotion(
+      {
+        mode: promoMode,
+        discountPercent: promoMode === 'discounted' ? Number(promoDiscount) : 0,
+        promoBadgeText: promoBadge.trim() || 'LIMITED PROMO',
+        campaignHeadline: promoHeadline.trim() || 'Special Promotional Access Active',
+        campaignDescription: `Promotional pricing authorized by Godfather Sovereign Administration. ${promoMode === 'discounted' ? `${promoDiscount}% discount applied.` : promoMode === 'all_free' ? '100% complimentary access.' : 'Standard rates active.'}`,
+        proMonthlyPrice: Number(promoProPrice),
+        premiumMonthlyPrice: Number(promoPremiumPrice),
+        trialDurationDays: 30,
+        bidFeeAmount: 300,
+        premiumBidFeeAmount: 180,
+      },
+      { id: operator?.email || 'admin@fr8x.in', name: operator?.displayName || 'Godfather Administrator' }
+    );
+    toast(`Godfather Decision Published! New users will now see: ${promoMode.toUpperCase()}${promoMode === 'discounted' ? ` (${promoDiscount}% OFF)` : ''}.`);
+  };
 
   const handleOpenEdit = (p: PlanVersion) => {
     setSelectedPlan(p);
@@ -194,40 +252,340 @@ export default function PlansConfigurationPage() {
         </button>
       </div>
 
-      {/* Sovereign All-Free Platform Banner */}
-      <div className={`p-4 rounded-xl border flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-        config.allFreeMode
-          ? 'bg-emerald-50 border-emerald-300 text-emerald-950'
-          : 'bg-amber-50 border-amber-300 text-amber-950'
-      }`}>
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
-              config.allFreeMode ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'
-            }`}>
-              {config.allFreeMode ? 'ALL-FREE SOVEREIGN MODE ACTIVE' : 'COMMERCIAL CHARGES ACTIVE'}
-            </span>
-            <span className="text-xs font-bold text-slate-800">
-              {config.allFreeMode ? 'Registration Pricing Cards: WAIVED (100% Free Mode)' : 'Registration Pricing Cards: DISPLAYED (Paid Plans Active)'}
-            </span>
+      {/* Godfather Membership Pricing & Promotional Decision Center */}
+      <div className="gf-card p-6 border-2 border-sky-200 bg-gradient-to-br from-slate-50 via-white to-sky-50/30 rounded-2xl shadow-xs space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center text-sky-600">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-black text-slate-900 tracking-tight">
+                  Godfather Membership &amp; Pricing Decision Center
+                </h2>
+                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded ${
+                  promoMode === 'all_free'
+                    ? 'bg-emerald-600 text-white'
+                    : promoMode === 'discounted'
+                    ? 'bg-amber-600 text-white'
+                    : 'bg-sky-600 text-white'
+                }`}>
+                  {promoMode === 'all_free' ? '100% FREE WAIVED' : promoMode === 'discounted' ? `${promoDiscount}% PROMO ACTIVE` : 'STANDARD CHARGEABLE'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Govern what new organizations see on the public registration page (Card 3: Membership &amp; Access Tier) in real time.
+              </p>
+            </div>
           </div>
-          <p className="text-xs text-slate-600 max-w-2xl">
-            {config.allFreeMode
-              ? 'All newly registered entities receive complimentary Premium Enterprise tier at ₹0. The public registration page displays a 100% Free Access notice instead of pricing cards.'
-              : 'Public registration page displays paid plan selection cards (Trial, Professional ₹1,500, Premium ₹3,000).'}
-          </p>
+
+          <button
+            type="button"
+            onClick={handleApplyPromoDecision}
+            className="gf-btn gf-btn-primary flex items-center gap-2 px-5 py-2 text-xs font-bold shadow-sm"
+          >
+            <CheckCircle2 className="w-4 h-4" />
+            <span>Publish &amp; Enforce Decision</span>
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setAllFreeMode(!config.allFreeMode)}
-          className={`py-1.5 px-3.5 rounded-lg text-xs font-bold transition-all shadow-xs flex-shrink-0 ${
-            config.allFreeMode
-              ? 'bg-emerald-700 text-white hover:bg-emerald-800'
-              : 'bg-amber-700 text-white hover:bg-amber-800'
-          }`}
-        >
-          {config.allFreeMode ? 'Deactivate All-Free Mode' : 'Activate 100% All-Free Mode'}
-        </button>
+
+        {/* 3 Decision Mode Selector Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Option 1: 100% Free Sovereign Waiver */}
+          <div
+            onClick={() => setPromoMode('all_free')}
+            className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+              promoMode === 'all_free'
+                ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/40 shadow-xs'
+                : 'bg-white border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                  <Gift className="w-4 h-4 text-emerald-600" />
+                  100% Free Sovereign Mode
+                </span>
+                <input
+                  type="radio"
+                  name="promoDecisionMode"
+                  checked={promoMode === 'all_free'}
+                  onChange={() => setPromoMode('all_free')}
+                  className="accent-emerald-600"
+                />
+              </div>
+              <p className="text-[11.5px] text-slate-600 leading-snug">
+                Complete platform fee waiver. New users receive complimentary Premium Enterprise tier at <b>₹0</b> with zero tender bid fees.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-emerald-200/60 flex items-center justify-between text-[11px] font-bold text-emerald-700">
+              <span>Public Registration:</span>
+              <span>100% Waived Banner</span>
+            </div>
+          </div>
+
+          {/* Option 2: Promotional Discount Mode */}
+          <div
+            onClick={() => setPromoMode('discounted')}
+            className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+              promoMode === 'discounted'
+                ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/40 shadow-xs'
+                : 'bg-white border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                  <Tag className="w-4 h-4 text-amber-600" />
+                  Promotional Discount Campaign
+                </span>
+                <input
+                  type="radio"
+                  name="promoDecisionMode"
+                  checked={promoMode === 'discounted'}
+                  onChange={() => setPromoMode('discounted')}
+                  className="accent-amber-600"
+                />
+              </div>
+              <p className="text-[11.5px] text-slate-600 leading-snug">
+                Apply a promotional discount percentage. Displays original rates struck-through with live promotional discounted cards and badges.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px] font-bold text-amber-700">
+              <span>Active Discount:</span>
+              <span>{promoDiscount}% OFF</span>
+            </div>
+          </div>
+
+          {/* Option 3: Standard Chargeable Mode */}
+          <div
+            onClick={() => setPromoMode('standard')}
+            className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+              promoMode === 'standard'
+                ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-400/40 shadow-xs'
+                : 'bg-white border-slate-200 hover:border-slate-300'
+            }`}
+          >
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
+                  <DollarSign className="w-4 h-4 text-sky-600" />
+                  Standard Chargeable Mode
+                </span>
+                <input
+                  type="radio"
+                  name="promoDecisionMode"
+                  checked={promoMode === 'standard'}
+                  onChange={() => setPromoMode('standard')}
+                  className="accent-sky-600"
+                />
+              </div>
+              <p className="text-[11.5px] text-slate-600 leading-snug">
+                Standard commercial pricing schedule. Displays normal rate cards (Trial Free, Professional, Premium Enterprise) with full tariffs.
+              </p>
+            </div>
+            <div className="mt-3 pt-2 border-t border-sky-200/60 flex items-center justify-between text-[11px] font-bold text-sky-700">
+              <span>Standard Rates:</span>
+              <span>Pro ₹{promoProPrice} / Prem ₹{promoPremiumPrice}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Controls based on selected mode */}
+        {promoMode === 'discounted' && (
+          <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl space-y-4">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                <Sliders className="w-3.5 h-3.5 text-amber-600" />
+                Configure Promotional Campaign Parameters:
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-slate-500">Quick Presets:</span>
+                {[20, 30, 40, 50, 75].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => {
+                      setPromoDiscount(pct);
+                      setPromoBadge(`GODFATHER PROMO: ${pct}% OFF`);
+                    }}
+                    className={`px-2 py-0.5 rounded text-[11px] font-bold ${
+                      promoDiscount === pct
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-white border border-amber-300 text-amber-800 hover:bg-amber-100'
+                    }`}
+                  >
+                    {pct}% Off
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Discount Percentage (%)</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="99"
+                  value={promoDiscount}
+                  onChange={(e) => setPromoDiscount(Math.max(1, Math.min(99, Number(e.target.value))))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-mono font-bold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Promotional Badge Text</label>
+                <input
+                  type="text"
+                  value={promoBadge}
+                  onChange={(e) => setPromoBadge(e.target.value)}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-slate-800"
+                  placeholder="e.g. GODFATHER PROMO: 50% OFF"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Baseline Pro Rate (₹)</label>
+                <input
+                  type="number"
+                  value={promoProPrice}
+                  onChange={(e) => setPromoProPrice(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-mono font-bold text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Baseline Premium Rate (₹)</label>
+                <input
+                  type="number"
+                  value={promoPremiumPrice}
+                  onChange={(e) => setPromoPremiumPrice(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-mono font-bold text-slate-800"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-700 mb-1">Campaign Headline Banner</label>
+              <input
+                type="text"
+                value={promoHeadline}
+                onChange={(e) => setPromoHeadline(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 font-bold text-slate-800"
+                placeholder="e.g. Godfather Sovereign Promotion: 50% Off Enterprise Tiers"
+              />
+            </div>
+          </div>
+        )}
+
+        {promoMode === 'standard' && (
+          <div className="p-4 bg-sky-50/60 border border-sky-200 rounded-xl space-y-3">
+            <span className="text-xs font-bold text-sky-950 flex items-center gap-1.5">
+              <Sliders className="w-3.5 h-3.5 text-sky-600" />
+              Standard Baseline Plan Rates (Displayed to New Users):
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-3 text-xs">
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Professional Tier Monthly Rate (₹)</label>
+                <input
+                  type="number"
+                  value={promoProPrice}
+                  onChange={(e) => setPromoProPrice(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-mono font-bold text-slate-800"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-bold text-slate-700 mb-1">Premium Enterprise Tier Monthly Rate (₹)</label>
+                <input
+                  type="number"
+                  value={promoPremiumPrice}
+                  onChange={(e) => setPromoPremiumPrice(Number(e.target.value))}
+                  className="w-full bg-white border border-slate-300 rounded-lg p-2 font-mono font-bold text-slate-800"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Live Public Simulator Preview */}
+        <div className="p-4 bg-white border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              Live Public Registration Preview (Card 3: Membership &amp; Access Tier):
+            </div>
+            <span className="text-[10px] text-slate-400 font-mono">SIMULATION PREVIEW</span>
+          </div>
+
+          {promoMode === 'all_free' ? (
+            <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                  100% Free Platform Access Active
+                </span>
+                <span className="text-sm font-black text-emerald-700">₹0 / Free Access</span>
+              </div>
+              <div className="text-xs font-bold text-slate-800">Complimentary Premium Enterprise Tier Included</div>
+              <div className="text-[11px] text-slate-600 mt-1">All new users get full Premium access with zero subscription fees and ₹0 tender bid fees.</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              {/* Trial Preview */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                <div className="font-bold text-slate-900">Trial Tier</div>
+                <div className="text-sm font-extrabold text-slate-900 mt-1">Free</div>
+                <div className="text-[10px] text-slate-500">30-Day Guided Access</div>
+                <div className="text-[10px] text-slate-600 mt-2">Standard bid posting: ₹300/bid</div>
+              </div>
+
+              {/* Pro Preview */}
+              <div className="p-3 bg-sky-50/50 border border-sky-300 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-slate-900">Professional Tier</div>
+                  {promoMode === 'discounted' && (
+                    <span className="text-[9px] font-extrabold bg-sky-100 text-sky-800 px-1.5 py-0.5 rounded border border-sky-200">
+                      {promoDiscount}% OFF
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  {promoMode === 'discounted' && (
+                    <span className="text-xs text-slate-400 line-through">₹{promoProPrice.toLocaleString()}</span>
+                  )}
+                  <span className="text-sm font-extrabold text-sky-700">
+                    ₹{promoMode === 'discounted' ? Math.round(promoProPrice * (1 - promoDiscount / 100)).toLocaleString() : promoProPrice.toLocaleString()}/mo
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500">Inclusive of all taxes</div>
+                <div className="text-[10px] text-slate-600 mt-2">Standard bid posting: ₹300/bid</div>
+              </div>
+
+              {/* Premium Preview */}
+              <div className="p-3 bg-amber-50/50 border-2 border-amber-400 rounded-lg shadow-xs">
+                <div className="flex items-center justify-between">
+                  <div className="font-bold text-slate-900">Premium Enterprise</div>
+                  <span className="text-[9px] font-extrabold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded border border-amber-200">
+                    {promoMode === 'discounted' ? `${promoDiscount}% OFF` : 'Recommended'}
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  {promoMode === 'discounted' && (
+                    <span className="text-xs text-slate-400 line-through">₹{promoPremiumPrice.toLocaleString()}</span>
+                  )}
+                  <span className="text-sm font-extrabold text-amber-700">
+                    ₹{promoMode === 'discounted' ? Math.round(promoPremiumPrice * (1 - promoDiscount / 100)).toLocaleString() : promoPremiumPrice.toLocaleString()}/mo
+                  </span>
+                </div>
+                <div className="text-[10px] text-amber-800 font-semibold">Golden Verified Badge Included</div>
+                <div className="text-[10px] text-slate-600 mt-2">
+                  Bid fee: ₹{promoMode === 'discounted' ? Math.round(180 * (1 - promoDiscount / 100)) : 180}/bid (vs ₹300)
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Plan Cards Grid */}

@@ -45,6 +45,36 @@ export interface PromotionalAuditLog {
   timestamp: string;
 }
 
+export type MembershipCampaignMode = 'standard' | 'discounted' | 'all_free';
+
+export interface MembershipPromotionConfig {
+  mode: MembershipCampaignMode;
+  discountPercent: number; // e.g. 50 for 50% discount
+  promoBadgeText: string;  // e.g. 'FESTIVE 50% OFF' or 'LIMITED PROMO'
+  campaignHeadline: string; // e.g. 'Godfather Sovereign Promotion: 50% Off Enterprise Tiers'
+  campaignDescription: string;
+  trialDurationDays: number; // default 30
+  proMonthlyPrice: number;   // standard 1500 (or custom price)
+  premiumMonthlyPrice: number; // standard 3000 (or custom price)
+  bidFeeAmount: number;      // standard 300
+  premiumBidFeeAmount: number; // standard 180
+  updatedAt?: string;
+  updatedBy?: string;
+}
+
+export const DEFAULT_MEMBERSHIP_PROMOTION: MembershipPromotionConfig = {
+  mode: 'standard',
+  discountPercent: 0,
+  promoBadgeText: 'LIMITED PROMO',
+  campaignHeadline: 'Special Promotional Access Active',
+  campaignDescription: 'Special pricing authorized by Godfather Sovereign Administration for new logistics registrations.',
+  trialDurationDays: 30,
+  proMonthlyPrice: 1500,
+  premiumMonthlyPrice: 3000,
+  bidFeeAmount: 300,
+  premiumBidFeeAmount: 180,
+};
+
 export interface PlatformCommerceConfig {
   allFreeMode: boolean; // Master Sovereign Switch: When true, all registration pricing cards, paywalls, and transaction fees are 100% waived
   requirePaymentCards: boolean; // When false, login & platform payment cards are removed/bypassed
@@ -66,6 +96,7 @@ export interface PlatformCommerceConfig {
   razorpayAutoSettlement?: boolean;
   promotionalFeatures: PromotionalFeatureConfig[];
   promotionalAuditLogs: PromotionalAuditLog[];
+  membershipPromotion: MembershipPromotionConfig;
 }
 
 export const DEFAULT_PROMOTIONAL_FEATURES: PromotionalFeatureConfig[] = [
@@ -146,6 +177,7 @@ export const DEFAULT_PLATFORM_CONFIG: PlatformCommerceConfig = {
       timestamp: '2026-09-01T10:00:00.000Z',
     },
   ],
+  membershipPromotion: DEFAULT_MEMBERSHIP_PROMOTION,
 };
 
 const STORAGE_KEY = 'fr8x_platform_commerce_config_v3';
@@ -170,6 +202,7 @@ export function getStoredPlatformConfig(): PlatformCommerceConfig {
       razorpayAutoSettlement: parsed.razorpayAutoSettlement ?? DEFAULT_PLATFORM_CONFIG.razorpayAutoSettlement,
       promotionalFeatures: parsed.promotionalFeatures || DEFAULT_PROMOTIONAL_FEATURES,
       promotionalAuditLogs: parsed.promotionalAuditLogs || DEFAULT_PLATFORM_CONFIG.promotionalAuditLogs,
+      membershipPromotion: parsed.membershipPromotion || DEFAULT_MEMBERSHIP_PROMOTION,
     };
   } catch {
     return DEFAULT_PLATFORM_CONFIG;
@@ -187,11 +220,45 @@ export function saveStoredPlatformConfig(cfg: PlatformCommerceConfig) {
 }
 
 /**
+ * Computes active membership pricing dynamically based on Godfather's decision.
+ * Returns calculated prices, discount percentages, badges, and active mode (standard, discounted, all_free).
+ */
+export function getActiveMembershipPricing(config: PlatformCommerceConfig) {
+  const promo = config.membershipPromotion || DEFAULT_MEMBERSHIP_PROMOTION;
+  const isFree = config.allFreeMode === true || promo.mode === 'all_free';
+  const isDiscounted = !isFree && promo.mode === 'discounted' && (promo.discountPercent || 0) > 0;
+
+  const stdPro = promo.proMonthlyPrice || 1500;
+  const stdPremium = promo.premiumMonthlyPrice || 3000;
+  const discountRate = (100 - (promo.discountPercent || 0)) / 100;
+
+  const currentPro = isFree ? 0 : isDiscounted ? Math.round(stdPro * discountRate) : stdPro;
+  const currentPremium = isFree ? 0 : isDiscounted ? Math.round(stdPremium * discountRate) : stdPremium;
+
+  return {
+    mode: isFree ? ('all_free' as const) : isDiscounted ? ('discounted' as const) : ('standard' as const),
+    isFree,
+    isDiscounted,
+    discountPercent: promo.discountPercent || 0,
+    promoBadgeText: promo.promoBadgeText || `${promo.discountPercent}% PROMO OFF`,
+    trialDays: promo.trialDurationDays || 30,
+    stdPro,
+    stdPremium,
+    currentPro,
+    currentPremium,
+    campaignHeadline: promo.campaignHeadline || 'Special Promotional Access Active',
+    campaignDescription: promo.campaignDescription || 'Special pricing authorized by Godfather Sovereign Administration for new logistics registrations.',
+    bidFee: isFree ? 0 : (promo.bidFeeAmount || 300),
+    premiumBidFee: isFree ? 0 : isDiscounted ? Math.round((promo.premiumBidFeeAmount || 180) * discountRate) : (promo.premiumBidFeeAmount || 180),
+  };
+}
+
+/**
  * Check if the Godfather has selected "All Free" platform mode.
  * When true, registration cards, paywalls, and transaction fees are 100% waived.
  */
 export function isAllFreeActive(config: PlatformCommerceConfig): boolean {
-  return config.allFreeMode === true;
+  return config.allFreeMode === true || config.membershipPromotion?.mode === 'all_free';
 }
 
 /**
@@ -446,6 +513,40 @@ export function usePlatformConfig() {
       const next = { ...config, ...updates };
       setConfig(next);
       saveStoredPlatformConfig(next);
+    },
+    setMembershipPromotion: (
+      promo: Partial<MembershipPromotionConfig>,
+      operatorInfo?: { id: string; name: string }
+    ) => {
+      const nextPromo: MembershipPromotionConfig = {
+        ...(config.membershipPromotion || DEFAULT_MEMBERSHIP_PROMOTION),
+        ...promo,
+        updatedAt: new Date().toISOString(),
+        updatedBy: operatorInfo?.name || 'Godfather Operator',
+      };
+      const isFree = nextPromo.mode === 'all_free';
+      const auditEntry: PromotionalAuditLog = {
+        id: `AUD-PROM-${Date.now()}`,
+        operatorId: operatorInfo?.id || 'tech@fr8x.in',
+        operatorName: operatorInfo?.name || 'Godfather Operator',
+        featureKey: 'LOGIN',
+        featureLabel: 'Membership Registration & Access Pricing',
+        previousState: `MODE: ${config.membershipPromotion?.mode?.toUpperCase() || 'STANDARD'}`,
+        newState: `MODE: ${nextPromo.mode.toUpperCase()} (${nextPromo.mode === 'all_free' ? '100% Free' : nextPromo.mode === 'discounted' ? `${nextPromo.discountPercent}% OFF` : 'Standard Rates'})`,
+        pricingInfo: `Pro: ₹${nextPromo.mode === 'all_free' ? 0 : nextPromo.mode === 'discounted' ? Math.round(nextPromo.proMonthlyPrice * (1 - nextPromo.discountPercent / 100)) : nextPromo.proMonthlyPrice}/mo, Premium: ₹${nextPromo.mode === 'all_free' ? 0 : nextPromo.mode === 'discounted' ? Math.round(nextPromo.premiumMonthlyPrice * (1 - nextPromo.discountPercent / 100)) : nextPromo.premiumMonthlyPrice}/mo`,
+        scope: 'GLOBAL',
+        effectiveDate: new Date().toISOString(),
+        timestamp: new Date().toISOString(),
+      };
+
+      const nextConfig: PlatformCommerceConfig = {
+        ...config,
+        allFreeMode: isFree,
+        membershipPromotion: nextPromo,
+        promotionalAuditLogs: [auditEntry, ...(config.promotionalAuditLogs || [])],
+      };
+      setConfig(nextConfig);
+      saveStoredPlatformConfig(nextConfig);
     },
     isFeatureFree: (featureKey: PromotionalFeatureKey, userId?: string) =>
       isFeatureFreeForUser(config, featureKey, userId),

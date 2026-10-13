@@ -187,6 +187,9 @@ export interface UserProfile {
   kycStatus?: 'verified' | 'pending' | 'rejected' | 'unsubmitted';
   website?: string;
   termsAcceptance?: TermsAcceptance;
+  termsAccepted?: boolean;
+  termsAcceptedAt?: string;
+  termsVersion?: string;
   // Professional credentials lists
   experiences?: ProfileExperience[];
   educations?: ProfileEducation[];

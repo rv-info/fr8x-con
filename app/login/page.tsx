@@ -243,6 +243,33 @@ export default function LoginPage() {
         // Server authenticated — hand off verified profile to client session
         const loggedIn = login(id, remember, json, password);
         if (loggedIn) {
+          // Record login incident into Godfather client audit ledger
+          try {
+            const existingAudit = JSON.parse(localStorage.getItem('fr8x_gf_audit_logs') || '[]');
+            const auditEntry = {
+              actionId: `ACT-LOG-${Date.now()}`,
+              actorUid: json.uid || id,
+              actorEmail: json.email || id,
+              actorName: json.displayName || id,
+              actorRole: 'user',
+              targetType: 'user',
+              targetId: json.email || id,
+              targetLabel: json.company || 'Enterprise Logistics',
+              actionType: 'USER_LOGIN',
+              reason: 'User authenticated into FR8X Workspace. Master Terms & Compliance Policy binding reaffirmed.',
+              beforeSnapshot: null,
+              afterSnapshot: {
+                loginAt: new Date().toISOString(),
+                email: json.email,
+                company: json.company,
+                sessionId: json.sessionId,
+              },
+              correlationId: `GF-LOG-${Date.now()}`,
+              createdAt: new Date().toISOString(),
+            };
+            localStorage.setItem('fr8x_gf_audit_logs', JSON.stringify([auditEntry, ...existingAudit].slice(0, 500)));
+          } catch {}
+
           toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
           router.push('/feeds');
         } else {
@@ -671,6 +698,18 @@ export default function LoginPage() {
             >
               {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={15} /></>}
             </button>
+
+            <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>
+              By signing in, you confirm compliance with the{' '}
+              <Link href="/terms" target="_blank" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'underline' }}>
+                Master Terms of Service
+              </Link>
+              , One User One Login Policy, and{' '}
+              <Link href="/privacy" target="_blank" style={{ color: 'var(--brand)', fontWeight: 600, textDecoration: 'underline' }}>
+                Privacy Policy
+              </Link>
+              .
+            </div>
           </form>
         </div>
 

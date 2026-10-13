@@ -638,6 +638,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             mto: resolvedMto,
             role: profile.role === 'user' ? 'user' : 'company_admin',
             plan: profile.plan || 'trial',
+            termsAccepted: Boolean((profile as any).termsAccepted ?? true),
+            termsAcceptedAt: (profile as any).termsAcceptedAt || new Date().toISOString(),
+            termsVersion: (profile as any).termsVersion || 'v3.2',
           },
         },
       });
@@ -684,7 +687,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         mto: resolvedMto,
         role: profile.role === 'user' ? 'user' : 'company_admin',
         plan: profile.plan || 'trial',
-      });
+        termsAccepted: Boolean((profile as any).termsAccepted ?? true),
+        termsAcceptedAt: (profile as any).termsAcceptedAt || new Date().toISOString(),
+        termsVersion: (profile as any).termsVersion || 'v3.2',
+      } as any);
 
       if (!updateResult.success) {
         console.warn('[AuthContext] Profile write failed during registration:', updateResult.error);

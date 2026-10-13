@@ -90,6 +90,17 @@ export async function POST(req: NextRequest) {
     const clientDeviceId = (body.deviceId ? String(body.deviceId).trim() : '') || cookieDeviceId || `dev_${Date.now()}`;
     serverSecurityStore.setActiveSession(user.uid, sessionId, { ip, userAgent, deviceId: clientDeviceId });
 
+    // Record login security incident into Godfather security stream
+    serverSecurityStore.addSecurityEvent({
+      type: 'USER_LOGIN',
+      severity: 'INFO',
+      userEmail: user.email,
+      uid: user.uid,
+      company: user.company || 'Enterprise Logistics',
+      details: `Corporate login authenticated from ${ip}. User affirmed adherence to FR8X Master Terms of Service & Security Policies.`,
+      ipAddress: ip,
+    });
+
     const now = Date.now();
     const expiresAt = now + 2 * 60 * 60 * 1000; // 2 hours
 
