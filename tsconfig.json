@@ -38,6 +38,7 @@
     "node_modules",
     "docs",
     "scratch",
-    ".next"
+    ".next",
+    "FR8X-Website"
   ]
 }
