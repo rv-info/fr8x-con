@@ -7,9 +7,8 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid') || req.nextUrl?.searchParams?.get('uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -29,9 +28,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -44,8 +42,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const callerUid = userAuth.user?.uid || uidHeader || body.postedByUid;
-    if (callerUid && !body.postedByUid) {
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
+
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const allJobs = await getJobs();
+      const existing = allJobs.find((j) => j.id === body.id);
+      if (existing) {
+        const isOwner =
+          (existing.company_id && existing.company_id === userAuth.user?.companyId) ||
+          (existing as any).posted_by_uid === userAuth.user!.uid;
+        if (!isOwner) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You cannot modify another enterprise’s job posting.' },
+            { status: 403 }
+          );
+        }
+      }
+      body.postedByUid = userAuth.user!.uid;
+      if (userAuth.user?.companyId) {
+        body.companyId = userAuth.user.companyId;
+      }
+    } else if (callerUid && !body.postedByUid) {
       body.postedByUid = callerUid;
     }
 
@@ -63,9 +80,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -79,6 +95,26 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const allJobs = await getJobs();
+      const existing = allJobs.find((j) => j.id === id);
+      if (!existing) {
+        return NextResponse.json(
+          { success: false, error: 'Job not found' },
+          { status: 404 }
+        );
+      }
+      const isOwner =
+        (existing.company_id && existing.company_id === userAuth.user?.companyId) ||
+        (existing as any).posted_by_uid === userAuth.user!.uid;
+      if (!isOwner) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You do not have permission to delete this job posting.' },
+          { status: 403 }
+        );
+      }
+    }
+
     const deleted = await deleteJob(id);
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {
@@ -89,3 +125,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+

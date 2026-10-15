@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPosts, getPostById, savePost, deletePost } from '@/lib/db/posts';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { redis } from '@/lib/redis';
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid') || req.nextUrl?.searchParams?.get('uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -36,13 +36,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
   try {
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid || 'anonymous';
+    const rateLimit = await redis.checkRateLimit({
+      action: 'feed_post_mutation',
+      identifier: callerUid,
+      limit: 30,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded: Too many feed posts submitted. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     if (!body || !body.id) {
       return NextResponse.json(
@@ -51,7 +64,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const callerUid = userAuth.user?.uid || uidHeader || body.authorUid || body.authorId;
     if (body.id && userAuth.authenticated && !gfAuth.authenticated) {
       const existing = await getPostById(body.id);
       if (
@@ -65,7 +77,11 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-    if (callerUid) {
+
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      body.authorUid = userAuth.user!.uid;
+      body.authorId = userAuth.user!.uid;
+    } else if (callerUid) {
       body.authorUid = callerUid;
       body.authorId = callerUid;
     }
@@ -84,8 +100,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -99,11 +114,17 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const existing = await getPostById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Post not found' },
+        { status: 404 }
+      );
+    }
+
     // Ownership check for non-operator callers
     if (userAuth.authenticated && !gfAuth.authenticated) {
-      const existing = await getPostById(id);
       if (
-        existing &&
         existing.author_id !== userAuth.user!.uid &&
         existing.author_uid !== userAuth.user!.uid
       ) {
@@ -124,3 +145,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+

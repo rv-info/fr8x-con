@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCases, saveCase, deleteCase } from '@/lib/db/cases';
 import { getReviews, saveReview } from '@/lib/db/reviews';
-import { getPosts, savePost, deletePost } from '@/lib/db/posts';
+import { getPosts, getPostById, savePost, deletePost } from '@/lib/db/posts';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
@@ -9,15 +9,16 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid') || req.nextUrl?.searchParams?.get('uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
   try {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type');
+    const callerUid = userAuth.user?.uid;
+    const isOperator = gfAuth.authenticated;
 
     if (type === 'topics' || type === 'topic') {
       const posts = await getPosts();
@@ -32,14 +33,21 @@ export async function GET(req: NextRequest) {
     }
 
     if (type === 'cases' || type === 'case') {
-      const cases = await getCases();
+      // Tenancy & Data Isolation: Regular members can ONLY inspect their own dispute/support cases
+      const cases = isOperator
+        ? await getCases()
+        : await getCases({ userId: callerUid });
       return NextResponse.json({ success: true, cases }, { status: 200 });
     }
 
-    // Default: return all Nexus collections
+    // Default: return all Nexus collections with strict tenancy on confidential cases
+    const casesPromise = isOperator
+      ? getCases()
+      : getCases({ userId: callerUid });
+
     const [posts, cases] = await Promise.all([
       getPosts(),
-      getCases(),
+      casesPromise,
     ]);
     const topics = posts.filter((p) => p.tags && p.tags.includes('topic'));
     const reviews = await getReviews('');
@@ -57,9 +65,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -72,7 +79,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const callerUid = userAuth.user?.uid || uidHeader;
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
     const type = body.type || (body.topic ? 'topic' : body.review ? 'review' : body.case ? 'case' : null);
 
     // 1. Topic
@@ -84,7 +91,9 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (callerUid && !topicData.authorUid) {
+      if (userAuth.authenticated && !gfAuth.authenticated) {
+        topicData.authorUid = userAuth.user!.uid;
+      } else if (callerUid && !topicData.authorUid) {
         topicData.authorUid = callerUid;
       }
       topicData.tags = Array.from(new Set([...(topicData.tags || []), 'topic']));
@@ -101,7 +110,9 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (callerUid && !reviewData.reviewerUid) {
+      if (userAuth.authenticated && !gfAuth.authenticated) {
+        reviewData.reviewerUid = userAuth.user!.uid;
+      } else if (callerUid && !reviewData.reviewerUid) {
         reviewData.reviewerUid = callerUid;
       }
       const saved = await saveReview(reviewData);
@@ -117,7 +128,10 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
-      if (callerUid && !caseData.reporterUid) {
+      if (userAuth.authenticated && !gfAuth.authenticated) {
+        caseData.reporterUid = userAuth.user!.uid;
+        caseData.user_id = userAuth.user!.uid;
+      } else if (callerUid && !caseData.reporterUid) {
         caseData.reporterUid = callerUid;
         caseData.user_id = callerUid;
       }
@@ -141,9 +155,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -157,6 +170,32 @@ export async function DELETE(req: NextRequest) {
         { success: false, error: 'ID is required to delete item' },
         { status: 400 }
       );
+    }
+
+    // Ownership check for non-operator callers
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      if (type === 'case') {
+        const callerCases = await getCases({ userId: userAuth.user!.uid });
+        const ownsCase = callerCases.some((c) => c.id === id);
+        if (!ownsCase) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You do not have permission to delete this case.' },
+            { status: 403 }
+          );
+        }
+      } else {
+        const existing = await getPostById(id);
+        if (
+          existing &&
+          existing.author_id !== userAuth.user!.uid &&
+          existing.author_uid !== userAuth.user!.uid
+        ) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You do not have permission to delete this post.' },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     let deleted = false;
@@ -175,3 +214,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+

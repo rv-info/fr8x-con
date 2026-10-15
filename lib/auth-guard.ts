@@ -25,47 +25,15 @@ export function authenticateGodfatherOperator(req: NextRequest): {
   operator?: AuthenticatedGodfatherOperator;
   errorResponse?: NextResponse;
 } {
-  // 1. Check explicit Godfather operator headers (used by frontend context & client fetches)
-  const opUidHeader =
-    req.headers.get('x-godfather-operator-uid') ||
-    req.headers.get('x-fr8x-operator-uid') ||
-    req.headers.get('x-operator-uid');
-  const opEmailHeader =
-    req.headers.get('x-godfather-operator-email') ||
-    req.headers.get('x-fr8x-operator-email') ||
-    req.headers.get('x-operator-email') ||
-    req.headers.get('x-fr8x-user-email');
-  const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
-
-  const isKnownOperator =
-    opUidHeader === 'gf-op-godfather' ||
-    opUidHeader === 'gf-op-operator' ||
-    opEmailHeader?.toLowerCase() === 'tech@fr8x.in' ||
-    opEmailHeader?.toLowerCase() === 'operator@fr8x.in' ||
-    authHeader?.toLowerCase() === 'tech@fr8x.in' ||
-    authHeader?.toLowerCase() === 'operator@fr8x.in';
-
-  if (isKnownOperator) {
-    const operatorUid = opUidHeader || (opEmailHeader?.toLowerCase() === 'operator@fr8x.in' ? 'gf-op-operator' : 'gf-op-godfather');
-    const operatorEmail = opEmailHeader || (operatorUid === 'gf-op-operator' ? 'operator@fr8x.in' : 'tech@fr8x.in');
-    const role = operatorUid === 'gf-op-operator' ? 'godfather_admin' : 'godfather_owner';
-    return {
-      authenticated: true,
-      operator: {
-        sessionId: `sess_gf_header_${Date.now()}`,
-        uid: operatorUid,
-        email: operatorEmail,
-        role,
-      },
-    };
-  }
-
-  // 2. Check signed Godfather session cookies
+  // 1. Check signed Godfather session cookies or Bearer authorization header
   const sessionCookie =
     req.cookies.get('fr8x_godfather_session') ||
     req.cookies.get('__Secure-FR8X-Godfather-Session');
+  const authHeader = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
 
-  if (!sessionCookie || !sessionCookie.value) {
+  const token = sessionCookie?.value || authHeader;
+
+  if (!token) {
     return {
       authenticated: false,
       errorResponse: NextResponse.json(
@@ -79,34 +47,22 @@ export function authenticateGodfatherOperator(req: NextRequest): {
     };
   }
 
-  // Handle plain active session flag from client storage
-  if (sessionCookie.value === 'true' || sessionCookie.value === 'active') {
-    return {
-      authenticated: true,
-      operator: {
-        sessionId: `sess_gf_cookie_${Date.now()}`,
-        uid: 'gf-op-godfather',
-        email: 'tech@fr8x.in',
-        role: 'godfather_owner',
-      },
-    };
-  }
-
+  // Cryptographic HMAC-SHA256 signature verification
   const verification = verifySignedSessionToken<{
     sessionId: string;
     uid: string;
     email: string;
     role: string;
     expiresAt?: string;
-  }>(sessionCookie.value);
+  }>(token);
 
   if (!verification.valid || !verification.payload) {
-    // If cookie is an opaque session ID, check server security store directly
-    if (serverSecurityStore.isGodfatherSessionActive(sessionCookie.value)) {
+    // If token is an opaque session ID, check server security store directly
+    if (serverSecurityStore.isGodfatherSessionActive(token)) {
       return {
         authenticated: true,
         operator: {
-          sessionId: sessionCookie.value,
+          sessionId: token,
           uid: 'gf-op-godfather',
           email: 'tech@fr8x.in',
           role: 'godfather_owner',
@@ -161,6 +117,7 @@ export function authenticateGodfatherOperator(req: NextRequest): {
 
 /**
  * Validates that an incoming NextRequest possesses a valid enterprise user session.
+ * Requires cryptographic HMAC-SHA256 signature verification.
  */
 export function authenticateUserSession(
   req: NextRequest,
@@ -177,13 +134,8 @@ export function authenticateUserSession(
     token = authHeader.substring(7).trim();
   }
   if (!token) {
-    const customHeader =
-      req.headers.get('x-fr8x-session') ||
-      req.headers.get('x-fr8x-user-uid') ||
-      req.headers.get('x-user-uid') ||
-      req.cookies.get('fr8x_active_user_uid')?.value ||
-      req.nextUrl?.searchParams?.get('uid');
-    if (customHeader) token = customHeader.trim();
+    const customSession = req.headers.get('x-fr8x-session');
+    if (customSession) token = customSession.trim();
   }
 
   if (!token) {
@@ -200,66 +152,88 @@ export function authenticateUserSession(
     };
   }
 
-  let uid = token;
-
-  // Only attempt cryptographic verification if the token conforms to signed token structure (payloadBase64.64hexSignature)
+  // Only validate tokens with valid cryptographic signature (payloadBase64.64hexSignature)
   const isSignedTokenCandidate =
     token.includes('.') &&
     token.split('.').length === 2 &&
     /^[a-f0-9]{64}$/i.test(token.split('.')[1]);
 
+  let uid: string | null = null;
+  let tokenEmail: string | undefined;
+  let tokenRole: string | undefined;
+  let tokenCompanyId: string | undefined;
+
   if (isSignedTokenCandidate) {
-    const verified = verifySignedSessionToken<{ uid: string; email: string; role: string }>(token);
+    const verified = verifySignedSessionToken<{
+      uid: string;
+      email: string;
+      role: string;
+      companyId?: string;
+      displayName?: string;
+      expiresAt?: string;
+    }>(token);
+
     if (verified.valid && verified.payload?.uid) {
-      uid = verified.payload.uid;
-    } else {
-      const fallbackUser = serverSecurityStore.getUser(token) || serverSecurityStore.getUserByEmailOrUid(token);
-      if (!fallbackUser) {
+      if (verified.payload.expiresAt && new Date() > new Date(verified.payload.expiresAt)) {
         return {
           authenticated: false,
           errorResponse: NextResponse.json(
             {
               success: false,
-              error: 'Unauthorized: Invalid session token signature.',
-              code: 'INVALID_SESSION_SIGNATURE',
+              error: 'Unauthorized: Session token has expired.',
+              code: 'SESSION_EXPIRED',
             },
             { status: 401 }
           ),
         };
       }
-      uid = fallbackUser.uid;
+      uid = verified.payload.uid;
+      tokenEmail = verified.payload.email;
+      tokenRole = verified.payload.role;
+      tokenCompanyId = verified.payload.companyId;
+    } else {
+      return {
+        authenticated: false,
+        errorResponse: NextResponse.json(
+          {
+            success: false,
+            error: 'Unauthorized: Invalid session token signature.',
+            code: 'INVALID_SESSION_SIGNATURE',
+          },
+          { status: 401 }
+        ),
+      };
     }
+  } else {
+    return {
+      authenticated: false,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: 'Unauthorized: Valid signed session token required.',
+          code: 'INVALID_SESSION_TOKEN',
+        },
+        { status: 401 }
+      ),
+    };
   }
 
-  let userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
-  if (!userRecord) {
+  let userRecord = uid ? (serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid)) : null;
+  if (!userRecord && uid) {
     serverSecurityStore.loadPersistedState();
     userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
   }
-  if (!userRecord) {
-    const userEmailHeader = req.headers.get('x-fr8x-user-email') || req.headers.get('x-user-email');
-    if (userEmailHeader) {
-      const cleanEmail = userEmailHeader.trim().toLowerCase();
-      const emailMatch = serverSecurityStore.getUser(cleanEmail);
-      if (emailMatch) {
-        userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUser(cleanEmail) || serverSecurityStore.getUserByEmailOrUid(uid);
-      }
-    }
-  }
-  if (!userRecord && isSignedTokenCandidate) {
-    const verified = verifySignedSessionToken<{ uid: string; email: string; role: string; companyId?: string; displayName?: string }>(token);
-    if (verified.valid && verified.payload?.uid) {
-      const email = verified.payload.email || `${verified.payload.uid}@enterprise.local`;
-      const updateRes = serverSecurityStore.updateUserProfile(verified.payload.uid, {
-        uid: verified.payload.uid,
-        email,
-        displayName: verified.payload.displayName || email.split('@')[0] || 'Enterprise Member',
-        company: verified.payload.companyId || 'Enterprise Legal Entity',
-        role: (verified.payload.role as any) || 'user',
-        status: 'active',
-      });
-      userRecord = updateRes.user;
-    }
+  if (!userRecord && uid && tokenEmail) {
+    const updateRes = serverSecurityStore.updateUserProfile(uid, {
+      uid,
+      email: tokenEmail,
+      displayName: tokenEmail.split('@')[0] || 'Enterprise Member',
+      company: tokenCompanyId || 'Enterprise Legal Entity',
+      companyId: tokenCompanyId,
+      role: (tokenRole as any) || 'user',
+      status: 'active',
+    });
+    userRecord = updateRes.user;
   }
 
   if (!userRecord || userRecord.status === 'blocked') {
@@ -345,5 +319,45 @@ export function validateCsrfHeader(
   }
 
   return { valid: true };
+}
+
+/**
+ * Asserts that the authenticated actor possesses one of the permitted roles,
+ * or is a Godfather platform operator.
+ */
+export function hasAllowedRole(
+  actorRole: string | undefined,
+  allowedRoles: string[],
+  isOperator = false
+): boolean {
+  if (isOperator) return true;
+  if (!actorRole) return false;
+  return allowedRoles.includes(actorRole);
+}
+
+/**
+ * Asserts that the caller is the owner of the resource or has administrative authority.
+ */
+export function isOwnerOrAdmin(
+  callerUid: string | undefined,
+  resourceOwnerUid: string | undefined,
+  isOperator = false
+): boolean {
+  if (isOperator) return true;
+  if (!callerUid || !resourceOwnerUid) return false;
+  return callerUid === resourceOwnerUid;
+}
+
+/**
+ * Asserts that the caller belongs to the target company entity or is a platform operator.
+ */
+export function isCompanyMemberOrAdmin(
+  callerCompanyId: string | undefined,
+  targetCompanyId: string | undefined,
+  isOperator = false
+): boolean {
+  if (isOperator) return true;
+  if (!callerCompanyId || !targetCompanyId) return false;
+  return callerCompanyId.toLowerCase() === targetCompanyId.toLowerCase();
 }
 

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
-import { createSignedSessionToken } from '@/lib/crypto';
+import { createSignedSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '@/lib/crypto';
 import { createClient } from '@/lib/supabase/server';
 import { mapRowToProfile } from '@/lib/supabase/db';
+import { redis } from '@/lib/redis';
 
 export async function POST(req: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const ip = req.headers.get('x-forwarded-for') || '127.0.0.1';
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || '127.0.0.1';
     let targetEmail = String(identifier).trim().toLowerCase();
 
     // If identifier is a UID or non-email, try to resolve associated email
@@ -27,6 +28,33 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Rate Limiting: max 10 login attempts per identifier per minute
+    const rateLimit = await redis.checkRateLimit({
+      action: 'user_login',
+      identifier: targetEmail,
+      limit: 10,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Too many login attempts. Please wait 1 minute before retrying.' },
+        { status: 429 }
+      );
+    }
+
+    // Lockout verification: check if identifier has exceeded maximum consecutive failures
+    const lockCheck = checkRateLimit(targetEmail);
+    if (!lockCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Account is temporarily locked due to repeated failed login attempts. Please wait 15 minutes or reset your password.',
+          code: 'ACCOUNT_LOCKED',
+        },
+        { status: 403 }
+      );
+    }
+
     // 1. Authoritative Supabase Auth Verification
     const supabase = createClient();
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -35,14 +63,33 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      let errorMessage = 'Invalid corporate email or password. Please verify your credentials.';
+      const lockRes = recordFailedAttempt(targetEmail);
+      serverSecurityStore.addSecurityEvent({
+        type: lockRes.locked ? 'ACCOUNT_BLOCKED' : 'FAILED_LOGIN',
+        severity: lockRes.locked ? 'HIGH' : 'WARNING',
+        userEmail: targetEmail,
+        details: `Failed password login from IP ${ip}. Reason: ${authError?.message || 'Invalid credentials'}. Attempts remaining: ${lockRes.remainingAttempts}`,
+        ipAddress: ip,
+      });
+
+      let errorMessage = lockRes.locked
+        ? 'Account has been locked due to 3 consecutive failed login attempts.'
+        : 'Invalid corporate email or password. Please verify your credentials.';
       if (authError?.message?.includes('Email not confirmed')) {
         errorMessage = 'Email address not confirmed. Please verify your email.';
       }
-      return NextResponse.json({ success: false, error: errorMessage }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: errorMessage, attemptsRemaining: lockRes.remainingAttempts },
+        { status: lockRes.locked ? 403 : 401 }
+      );
     }
 
+    // Clear failed attempts counter on successful login
+    clearRateLimit(targetEmail);
+
+
     const userId = authData.user.id;
+
 
     // 2. Authoritative PostgreSQL Profile Check
     const { data: profileRow } = await supabase

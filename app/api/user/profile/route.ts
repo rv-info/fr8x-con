@@ -347,8 +347,21 @@ export async function POST(req: NextRequest) {
     if (body.associationId !== undefined || body.association_id !== undefined) {
       dbUpdates.association_id = body.associationId || body.association_id;
     }
+    // Security Guard: Verification status, trust indicators, roles, and plans are restricted to Godfather operators
     if (body.kycStatus !== undefined || body.kyc_status !== undefined) {
-      dbUpdates.kyc_status = body.kycStatus || body.kyc_status;
+      if (gfAuth.authenticated) {
+        dbUpdates.kyc_status = body.kycStatus || body.kyc_status;
+      }
+    }
+    if (gfAuth.authenticated) {
+      if (body.role !== undefined) dbUpdates.role = body.role;
+      if (body.plan !== undefined) dbUpdates.plan = body.plan;
+      if (body.isVerified !== undefined || body.is_verified !== undefined) {
+        dbUpdates.is_verified = body.isVerified ?? body.is_verified;
+      }
+      if (body.hasGoldenTick !== undefined || body.has_golden_tick !== undefined) {
+        dbUpdates.has_golden_tick = body.hasGoldenTick ?? body.has_golden_tick;
+      }
     }
 
     // Authoritative update in Supabase PostgreSQL

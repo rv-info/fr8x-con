@@ -15,10 +15,11 @@ const suites = [
   { name: 'Phase 11: CI/CD, Containerization & Infrastructure Architecture', file: 'scripts/verify-phase11-cicd-infra.ts' },
   { name: 'Phase 12: Observability, Error Boundaries & Production Hardening', file: 'scripts/verify-phase12-observability-hardening.ts' },
   { name: 'Phase 13: Launch-Readiness & Supabase Architecture', file: 'scripts/verify-launch-readiness.ts' },
+  { name: 'Phase 14: Production Security Hardening & Zero-Trust Defense', file: 'scripts/verify-phase14-security-controls.ts' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-13)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-14)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;

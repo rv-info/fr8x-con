@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuctions, saveAuction, cancelAuction } from '@/lib/db/auctions';
+import { getAuctions, getAuctionById, saveAuction, cancelAuction } from '@/lib/db/auctions';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid') || req.nextUrl?.searchParams?.get('uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -47,9 +46,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -60,6 +58,28 @@ export async function POST(req: NextRequest) {
         { success: false, error: 'Valid auction payload with id is required' },
         { status: 400 }
       );
+    }
+
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid;
+
+    // Ownership & BOLA check for non-operator callers
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const existing = await getAuctionById(body.id);
+      if (existing) {
+        const isOwner = existing.creator_uid === userAuth.user!.uid || (existing as any).creator_id === userAuth.user!.uid;
+        if (!isOwner) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You do not have permission to modify another enterprise’s auction.' },
+            { status: 403 }
+          );
+        }
+      }
+      body.creatorUid = userAuth.user!.uid;
+      if (userAuth.user?.companyId) {
+        body.creatorCompany = userAuth.user.companyId;
+      }
+    } else if (callerUid && !body.creatorUid) {
+      body.creatorUid = callerUid;
     }
 
     const todayStr = new Date().toISOString().slice(0, 10);
@@ -78,11 +98,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const callerUid = userAuth.user?.uid || uidHeader || body.creatorUid;
-    if (callerUid && !body.creatorUid) {
-      body.creatorUid = callerUid;
-    }
-
     const saved = await saveAuction(body);
     return NextResponse.json({ success: true, auction: saved }, { status: 200 });
   } catch (err: any) {
@@ -97,9 +112,8 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -115,6 +129,32 @@ export async function DELETE(req: NextRequest) {
     if (!id) {
       return NextResponse.json(
         { success: false, error: 'Auction ID is required to cancel bidding' },
+        { status: 400 }
+      );
+    }
+
+    // Ownership & state transition check (BOLA prevention)
+    const existing = await getAuctionById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Auction not found' },
+        { status: 404 }
+      );
+    }
+
+    if (userAuth.authenticated && !gfAuth.authenticated) {
+      const isOwner = existing.creator_uid === userAuth.user!.uid || (existing as any).creator_id === userAuth.user!.uid;
+      if (!isOwner) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You do not have permission to cancel another enterprise’s auction.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    if (existing.status === 'Cancelled') {
+      return NextResponse.json(
+        { success: false, error: 'Auction is already cancelled.' },
         { status: 400 }
       );
     }
@@ -139,3 +179,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+

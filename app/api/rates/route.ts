@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getRates, getRateById, saveRate, deleteRate } from '@/lib/db/rates';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
+import { redis } from '@/lib/redis';
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid') || req.nextUrl?.searchParams?.get('uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -32,13 +32,26 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
 
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
   try {
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid || 'anonymous';
+    const rateLimit = await redis.checkRateLimit({
+      action: 'rates_mutation',
+      identifier: callerUid,
+      limit: 60,
+      windowSeconds: 60,
+    });
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { success: false, error: 'Rate limit exceeded: Too many rate submissions. Please wait a moment.' },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json().catch(() => null);
     if (!body || !body.id) {
       return NextResponse.json(
@@ -79,8 +92,7 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
   const gfAuth = authenticateGodfatherOperator(req);
-  const uidHeader = req.headers.get('x-fr8x-user-uid');
-  if (!userAuth.authenticated && !gfAuth.authenticated && !uidHeader) {
+  if (!userAuth.authenticated && !gfAuth.authenticated) {
     return (userAuth.errorResponse || gfAuth.errorResponse)!;
   }
 
@@ -94,19 +106,24 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
+    const existing = await getRateById(id);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: 'Rate card not found' },
+        { status: 404 }
+      );
+    }
+
     // Ownership check for non-operator callers
     if (userAuth.authenticated && !gfAuth.authenticated) {
-      const existing = await getRateById(id);
-      if (existing) {
-        const isOwner =
-          existing.created_by === userAuth.user!.uid ||
-          (existing as any).owner_uid === userAuth.user!.uid;
-        if (!isOwner) {
-          return NextResponse.json(
-            { success: false, error: 'Forbidden: You do not have permission to delete this rate.' },
-            { status: 403 }
-          );
-        }
+      const isOwner =
+        existing.created_by === userAuth.user!.uid ||
+        (existing as any).owner_uid === userAuth.user!.uid;
+      if (!isOwner) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: You do not have permission to delete this rate.' },
+          { status: 403 }
+        );
       }
     }
 
@@ -120,3 +137,4 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
+
