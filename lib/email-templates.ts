@@ -380,14 +380,19 @@ function wrapEmailHtml(content: string, preheader = ''): string {
         <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);">
           <!-- Header -->
           <tr>
-            <td style="padding: 28px 36px 20px; background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 24px 36px 20px; background-color: #ffffff; border-bottom: 1px solid #f1f5f9;">
               <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
                 <tr>
+                  <td valign="middle" style="width: 44px; padding-right: 12px;">
+                    <a href="https://con.fr8x.in" target="_blank" style="text-decoration: none; display: block;">
+                      <img src="https://con.fr8x.in/email-logo.png" width="38" height="38" alt="FR8X" style="width: 38px; height: 38px; display: block; border-radius: 8px; border: 0; outline: none;" />
+                    </a>
+                  </td>
                   <td valign="middle">
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: 900; color: #0f172a; letter-spacing: -0.02em; line-height: 1;">
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 900; color: #0f172a; letter-spacing: -0.02em; line-height: 1.1;">
                       FR<span style="color: #0284c7;">8</span>X
                     </div>
-                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 4px;">
+                    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 600; color: #64748b; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px;">
                       Enterprise Logistics Platform
                     </div>
                   </td>
@@ -409,6 +414,9 @@ function wrapEmailHtml(content: string, preheader = ''): string {
           <!-- Footer -->
           <tr>
             <td style="padding: 24px 36px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center;">
+              <div style="margin-bottom: 8px;">
+                <img src="https://con.fr8x.in/email-logo.png" width="22" height="22" alt="FR8X" style="width: 22px; height: 22px; display: inline-block; vertical-align: middle; border-radius: 5px; opacity: 0.85;" />
+              </div>
               <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 4px;">
                 FR8X Enterprise Network
               </div>

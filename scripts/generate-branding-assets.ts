@@ -133,6 +133,32 @@ async function main() {
     .png()
     .toBuffer();
 
+  console.log('5b. Generating ultra-low file size logo for email clients (< 2 KB)...');
+  const emailLogoSquare = await sharp({
+    create: {
+      width: 128,
+      height: 128,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    },
+  })
+    .composite([
+      {
+        input: await sharp(trimmedBuf)
+          .resize({ width: 112, height: 112, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .png()
+          .toBuffer(),
+        gravity: 'center',
+      },
+    ])
+    .png({ palette: true, quality: 90, compressionLevel: 9 })
+    .toBuffer();
+
+  const emailLogoHorizontal = await sharp(trimmedBuf)
+    .resize({ width: 240, height: 120, fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png({ palette: true, quality: 90, compressionLevel: 9 })
+    .toBuffer();
+
   console.log('6. Writing assets to public/ and app/ directories...');
   const publicDir = path.join(projectRoot, 'public');
   const appDir = path.join(projectRoot, 'app');
@@ -150,6 +176,11 @@ async function main() {
   fs.writeFileSync(path.join(publicDir, 'favicon.png'), icon64);
   fs.writeFileSync(path.join(publicDir, 'favicon.ico'), faviconIco);
   fs.writeFileSync(path.join(publicDir, 'og-image.png'), ogCard);
+
+  // Write ultra-low KB email logos to public/
+  fs.writeFileSync(path.join(publicDir, 'email-logo.png'), emailLogoSquare);
+  fs.writeFileSync(path.join(publicDir, 'logo-email.png'), emailLogoSquare);
+  fs.writeFileSync(path.join(publicDir, 'email-logo-horizontal.png'), emailLogoHorizontal);
 
   // Write Next.js app/ directory icons
   fs.writeFileSync(path.join(appDir, 'icon.png'), icon192);

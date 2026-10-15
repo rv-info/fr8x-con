@@ -138,6 +138,9 @@ export async function POST(req: NextRequest) {
             to: userEmail,
             subject: `Payment Receipt: ${itemTitle} (${currency} ${amount})`,
             html: `<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b;">
+              <div style="margin-bottom: 16px;">
+                <img src="https://con.fr8x.in/email-logo.png" width="36" height="36" alt="FR8X" style="width: 36px; height: 36px; display: block; border-radius: 8px; border: 0;" />
+              </div>
               <h2 style="color: #0f172a; margin-bottom: 8px;">FR8X Payment Confirmation</h2>
               <p style="color: #475569; font-size: 14px;">Your payment for <strong>${itemTitle}</strong> has been successfully verified.</p>
               <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0;">

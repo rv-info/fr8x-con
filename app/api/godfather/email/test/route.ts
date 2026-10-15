@@ -33,8 +33,9 @@ export async function POST(req: NextRequest) {
       preferredProvider,
       htmlBody: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; padding: 28px; background: #ffffff; color: #1e293b; border-radius: 12px; border: 1px solid #e2e8f0;">
-          <div style="margin-bottom: 20px;">
-            <span style="background: #2563eb; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.05em;">FR8X SYSTEM EMAIL</span>
+          <div style="margin-bottom: 20px; display: flex; align-items: center;">
+            <img src="https://con.fr8x.in/email-logo.png" width="32" height="32" alt="FR8X" style="width: 32px; height: 32px; display: inline-block; vertical-align: middle; border-radius: 6px; margin-right: 10px;" />
+            <span style="background: #2563eb; color: #ffffff; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold; letter-spacing: 0.05em; vertical-align: middle;">FR8X SYSTEM EMAIL</span>
           </div>
           <h2 style="font-size: 20px; font-weight: 700; margin: 0 0 8px 0; color: #0f172a;">${providerTitle} Connected Successfully</h2>
           <p style="font-size: 14px; color: #475569; line-height: 1.5; margin: 0 0 20px 0;">
