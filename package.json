@@ -13,6 +13,7 @@
     "test:email": "npx -y tsx scripts/test-email-config.ts",
     "db:push": "npx -y tsx scripts/push-supabase-schema.ts",
     "db:verify": "npx -y tsx scripts/push-supabase-schema.ts --verify-only",
+    "generate:branding": "npx -y tsx scripts/generate-branding-assets.ts",
     "build:apk": "node fr8x-android-app/tools/build-official-apk.js"
   },
   "dependencies": {

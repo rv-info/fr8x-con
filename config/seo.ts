@@ -47,7 +47,14 @@ export const defaultOpenGraph = {
       url: `${SITE_URL}/logo.png`,
       width: 512,
       height: 512,
-      alt: 'FR8X Freight Platform Logo',
+      alt: 'FR8X Official Logo - Multimodal Freight Logistics & Reverse Bidding Platform',
+      type: 'image/png',
+    },
+    {
+      url: `${SITE_URL}/og-image.png`,
+      width: 1200,
+      height: 630,
+      alt: 'FR8X Freight Workspace - Multimodal Logistics Network',
       type: 'image/png',
     },
   ],
@@ -59,7 +66,7 @@ export const defaultTwitterCard = {
   creator: siteMetadata.social.twitterHandle,
   title: siteMetadata.defaultTitle,
   description: siteMetadata.description,
-  images: [`${SITE_URL}/logo.png`],
+  images: [`${SITE_URL}/og-image.png`, `${SITE_URL}/logo.png`],
 };
 
 export const robotsPolicy = {
