@@ -65,22 +65,23 @@ export default function NotFoundPage() {
           padding: '36px 28px',
         }}
       >
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
           <img
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '52px',
-              height: '52px',
-              margin: '0 auto 14px',
+              width: '32px',
+              height: '32px',
+              margin: '0 auto 4px',
               objectFit: 'contain',
               display: 'block',
-              borderRadius: '12px',
-              boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
             }}
           />
-          <h2 style={{ fontSize: '20px', fontWeight: 700, margin: '0 0 6px', color: '#0f172a' }}>
-            FR8X Workspace
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+            FR8X
+          </div>
+          <h2 style={{ fontSize: '16px', fontWeight: 'bold', margin: '6px 0 2px', color: '#002b66' }}>
+            <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
           </h2>
           <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
             {isLoading

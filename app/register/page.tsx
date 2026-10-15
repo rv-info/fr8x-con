@@ -94,11 +94,16 @@ function LiveClockPanel() {
       padding: '40px 28px', gap: '0', position: 'relative', overflow: 'hidden',
     }}>
       {/* Logo */}
-      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ fontSize: '32px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.04em', lineHeight: 1 }}>
-          fr<span style={{ color: '#0ea5e9' }}>8</span>x
+      <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+        <img
+          src="/logo.png"
+          alt="FR8X"
+          style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
+        />
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
+          FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '4px' }}>Enterprise Logistics Platform</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Logistics Platform</div>
       </div>
 
       {/* Digital Clock */}
@@ -1076,25 +1081,24 @@ export default function RegisterPage() {
               src="/logo.png"
               alt="FR8X"
               style={{
-                width: '52px',
-                height: '52px',
-                margin: '0 auto 10px',
+                width: '32px',
+                height: '32px',
+                margin: '0 auto 4px',
                 objectFit: 'contain',
                 display: 'block',
-                borderRadius: '12px',
-                boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
               }}
             />
             <div
               style={{
-                fontSize: '24px',
-                fontWeight: 900,
-                color: 'var(--ink, #0f172a)',
-                letterSpacing: '-0.03em',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#002b66',
+                letterSpacing: '0.04em',
                 lineHeight: 1,
+                textTransform: 'uppercase',
               }}
             >
-              fr<span style={{ color: 'var(--brand, #0284c7)' }}>8</span>x
+              FR8X
             </div>
             <div
               style={{

@@ -148,12 +148,11 @@ export default function TokenVerifyEmailPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#f8fafc',
+        background: '#ffffff',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '32px 16px',
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
       }}
     >
       <div
@@ -180,16 +179,28 @@ export default function TokenVerifyEmailPage() {
               marginBottom: '12px',
             }}
           >
+            <img
+              src="/logo.png"
+              alt="FR8X"
+              style={{
+                width: '32px',
+                height: '32px',
+                margin: '0 auto 4px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
             <div
               style={{
-                fontSize: '28px',
-                fontWeight: 900,
-                color: '#0f172a',
-                letterSpacing: '-0.03em',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#002b66',
+                letterSpacing: '0.04em',
                 lineHeight: 1,
+                textTransform: 'uppercase',
               }}
             >
-              fr<span style={{ color: '#0284c7' }}>8</span>x
+              FR8X
             </div>
             <div
               style={{

@@ -52,11 +52,16 @@ function LiveClockPanel() {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 24px', position: 'relative', overflow: 'hidden',
     }}>
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <div style={{ fontSize: '30px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.04em' }}>
-          fr<span style={{ color: '#0ea5e9' }}>8</span>x
+      <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
+        <img
+          src="/logo.png"
+          alt="FR8X"
+          style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
+        />
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+          FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '3px' }}>Enterprise Workspace</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Workspace</div>
       </div>
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
@@ -482,21 +487,23 @@ export default function LoginPage() {
             textAlign: 'center',
           }}
         >
-          <img
-            src="/logo.png"
-            alt="FR8X"
-            style={{
-              width: '46px',
-              height: '46px',
-              margin: '0 auto 12px',
-              objectFit: 'contain',
-              display: 'block',
-              borderRadius: '10px',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.25)',
-            }}
-          />
-          <h1 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: 'var(--fr8x-text)' }}>
-            fr<b style={{ color: 'var(--fr8x-outline)' }}>8</b>x Workspace
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', margin: '0 auto 8px' }}>
+            <img
+              src="/logo.png"
+              alt="FR8X"
+              style={{
+                width: '32px',
+                height: '32px',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+              FR8X
+            </div>
+          </div>
+          <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--fr8x-text)' }}>
+            <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
           </h1>
           <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
             Enterprise Freight Forwarding &amp; Reverse Auctions Platform

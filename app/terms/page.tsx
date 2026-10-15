@@ -22,8 +22,8 @@ export default function TermsPage() {
             <ArrowLeft size={16} /> Back to Registration
           </Link>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '22px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.03em' }}>
-              fr<span style={{ color: '#0ea5e9' }}>8</span>x
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              FR8X
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontSize: '12px', fontWeight: 700 }}>

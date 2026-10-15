@@ -40,8 +40,12 @@ function createIco(pngBuffers: Buffer[], sizes: number[]): Buffer {
 
 async function main() {
   const projectRoot = path.resolve(__dirname, '..');
-  const sourcePng = path.join(projectRoot, 'fr8x.png');
-  const sourceSvg = path.join(projectRoot, 'fr8x.svg');
+  const sourcePng = fs.existsSync(path.join(projectRoot, 'accessories', 'fr8x.png'))
+    ? path.join(projectRoot, 'accessories', 'fr8x.png')
+    : path.join(projectRoot, 'fr8x.png');
+  const sourceSvg = fs.existsSync(path.join(projectRoot, 'accessories', 'fr8x.svg'))
+    ? path.join(projectRoot, 'accessories', 'fr8x.svg')
+    : path.join(projectRoot, 'fr8x.svg');
 
   if (!fs.existsSync(sourcePng)) {
     throw new Error(`Source PNG not found at: ${sourcePng}`);
@@ -163,9 +167,10 @@ async function main() {
   const publicDir = path.join(projectRoot, 'public');
   const appDir = path.join(projectRoot, 'app');
 
-  // Copy SVG
+  // Copy SVG & PNG sources
   fs.copyFileSync(sourceSvg, path.join(publicDir, 'logo.svg'));
   fs.copyFileSync(sourceSvg, path.join(publicDir, 'fr8x.svg'));
+  fs.copyFileSync(sourcePng, path.join(publicDir, 'fr8x.png'));
 
   // Write PNG icons to public/
   fs.writeFileSync(path.join(publicDir, 'logo.png'), icon512);

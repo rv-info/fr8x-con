@@ -1,4 +1,20 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Agdasima:wght@400;700&display=swap');
+
+@font-face {
+  font-family: 'Agdasima';
+  src: url('/fonts/Agdasima-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Agdasima';
+  src: url('/fonts/Agdasima-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
 @property --border-angle {
   syntax: '<angle>';
@@ -7,40 +23,43 @@
 }
 
 :root {
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+  --font: 'Agdasima', sans-serif;
+  --font-mono: 'Agdasima', monospace;
+  --gf-font: 'Agdasima', sans-serif;
+  --gf-font-mono: 'Agdasima', monospace;
 
   /* ==========================================================================
      FR8X MODERN PROFESSIONAL NETWORK DESIGN SYSTEM
-     Neutral clean surfaces, subtle borders, refined elevation & controlled brand
+     Bright white background, refined borders, executive blue brand
      ========================================================================== */
   --fr8x-outline: #e2e8f0;
-  --fr8x-container: #f1f5f9;
-  --fr8x-input: #f8fafc;
-  --fr8x-background: #f8fafc;
+  --fr8x-container: #ffffff;
+  --fr8x-input: #ffffff;
+  --fr8x-background: #ffffff;
   --fr8x-text: #0f172a;
   --fr8x-muted: #64748b;
 
-  --bg: #f8fafc;
+  --bg: #ffffff;
   --card: #ffffff;
   --ink: #0f172a;
   --ink-secondary: #334155;
   --mut: #64748b;
   --faint: #94a3b8;
   --line: #e2e8f0;
-  --line-light: #f1f5f9;
+  --line-light: #ffffff;
   
   /* Brand Accent: Maritime Deep Blue / Teal-Blue */
-  --brand: #0284c7;
+  --brand: #002b66;
   --brand2: #0369a1;
-  --brand-soft: #f0f9ff;
+  --brand-soft: #f0f4fa;
+  --fr8x-brand-blue: #002b66;
   --teal: #0284c7;
   --teal-soft: #f0f9ff;
-  --primary: #0284c7;
+  --primary: #002b66;
   
   /* Navigation Surfaces */
   --nav: #ffffff;
-  --navhi: #f8fafc;
+  --navhi: #ffffff;
   --nav-border: #e2e8f0;
 
   /* Status Indicators */
@@ -79,12 +98,14 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  font-family: 'Agdasima', sans-serif !important;
 }
 
 html {
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #ffffff !important;
 }
 
 /* Mobile */
@@ -102,16 +123,79 @@ html {
 }
 
 body {
-  background: var(--bg);
-  font: 400 1rem/1.5 var(--font);
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  font: 400 1rem/1.5 'Agdasima', sans-serif !important;
+  font-family: 'Agdasima', sans-serif !important;
   color: var(--ink);
   min-height: 100vh;
   overflow-x: hidden;
 }
 
-button, input, select, textarea {
-  font: inherit;
+button, input, select, textarea, optgroup {
+  font-family: 'Agdasima', sans-serif !important;
   color: inherit;
+}
+
+/* Bright white background across all main containers */
+.app,
+.view,
+.main,
+main,
+.sidebar-wrapper,
+.side,
+.top,
+.login-card,
+.login-viewport,
+.reg-container,
+.reg-viewport,
+.gf-app-layout,
+.gf-main,
+.view-container {
+  background-color: #ffffff !important;
+}
+
+/* Thin textbox border lines across all inputs */
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="range"]),
+textarea,
+select,
+.input,
+.reg-input,
+.login-card input,
+.gfl-clean-input,
+.gf-input,
+.gf-select {
+  border: 0.5px solid #cbd5e1 !important;
+  border-width: 0.5px !important;
+  background-color: #ffffff !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="range"]):focus,
+textarea:focus,
+select:focus,
+.input:focus,
+.reg-input:focus,
+.login-card input:focus,
+.gfl-clean-input:focus,
+.gf-input:focus,
+.gf-select:focus {
+  border: 0.5px solid #002b66 !important;
+  border-width: 0.5px !important;
+  outline: none !important;
+  box-shadow: 0 0 0 1px rgba(0, 43, 102, 0.16) !important;
+}
+
+/* FR8X Mention: Capital letters, bold, and darkblue */
+.fr8x-brand,
+.brand-fr8x,
+.fr8x-mention,
+.fr8x-brand-name,
+.fr8x-brand-text,
+.fr8x-title,
+[data-brand="fr8x"] {
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  color: #002b66 !important;
 }
 
 button {
@@ -1010,10 +1094,10 @@ img.profile-img-avatar,
 .input, select.input, textarea.input {
   width: 100%;
   height: 31px;
-  border: 1px solid var(--fr8x-outline);
+  border: 0.5px solid var(--fr8x-outline, #cbd5e1);
   border-radius: 5px;
   padding: 0 8px;
-  background: var(--fr8x-input);
+  background: #ffffff;
   color: var(--fr8x-text);
   font-weight: 500;
   font-size: 11.5px;
@@ -9916,14 +10000,14 @@ textarea.input {
 .reg-input {
   width: 100%;
   height: 38px;
-  border: 1px solid var(--fr8x-outline, #c5c3c6);
+  border: 0.5px solid var(--fr8x-outline, #cbd5e1);
   border-radius: 4px;
   padding: 0 10px;
   background: #ffffff;
   color: var(--fr8x-text, #1e293b);
   font-weight: 500;
   font-size: 11pt;
-  font-family: Calibri, 'Segoe UI', Arial, sans-serif;
+  font-family: 'Agdasima', sans-serif;
   box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }

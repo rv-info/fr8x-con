@@ -66,25 +66,30 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '3px' }}>
           <img
             src="/logo.png"
             alt="FR8X"
             style={{
-              width: '26px',
-              height: '26px',
+              width: collapsed ? '22px' : '26px',
+              height: collapsed ? '22px' : '26px',
               objectFit: 'contain',
               flexShrink: 0,
               display: 'block',
-              borderRadius: '6px',
-              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
             }}
           />
-          {!collapsed && (
-            <span style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '-0.02em', color: 'var(--fr8x-text)' }}>
-              fr<b style={{ color: 'var(--brand)' }}>8</b>x
-            </span>
-          )}
+          <span
+            style={{
+              fontSize: collapsed ? '9px' : '12px',
+              fontWeight: 'bold',
+              letterSpacing: '0.04em',
+              color: '#002b66',
+              lineHeight: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            FR8X
+          </span>
         </div>
       </div>
 
