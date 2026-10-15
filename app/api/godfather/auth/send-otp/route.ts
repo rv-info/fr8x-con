@@ -55,7 +55,18 @@ export async function POST(req: NextRequest) {
     await otpStore.set(normEmail, hashed);
 
     // ── Dispatch via Zoho SMTP ────────────────────────────────────────────────
-    await sendOtpEmail(normEmail, otpCode, correlationId);
+    const mailResult = await sendOtpEmail(normEmail, otpCode, correlationId);
+
+    if (!mailResult.success) {
+      console.warn('[SEND_OTP_WARNING] Email delivery rejected:', mailResult.error);
+      return NextResponse.json({
+        success: true,
+        warning: `Email service notification: ${mailResult.error || 'Quota exhausted'}. If delivery fails, use emergency backup step-up OTP.`,
+        message: `Verification code generated. Email delivery status: ${mailResult.error || 'Failed'}`,
+        correlationId,
+        expiresAt: hashed.expiresAt,
+      });
+    }
 
     return NextResponse.json({
       success: true,
