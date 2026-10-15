@@ -637,7 +637,11 @@ async function runTests() {
   // 21. 25-HOUR ROLLING WINDOW (MAX 3 SENDS) RATE LIMITING
   // ───────────────────────────────────────────────────────────────────────────
   console.log('\n--- 21. 25-Hour Rolling Window (Max 3 Sends) Rate Limiting ---');
-  // Operator already had 1 OTP send during authenticateOperatorCredentials
+  // Initialize operator send timestamps with exactly 1 send from initial auth and limit of 3
+  operatorStore._setSecurityState({
+    otpSendTimestamps: [Date.now()],
+    maxOtpSendsInWindow: 3,
+  });
   const resend1 = await operatorStore.resendOperatorFirstLoginOtp(opAuthResult.challengeToken!);
   assert(resend1.success, 'OTP Resend 1 succeeds (send count 2 of 3)');
 

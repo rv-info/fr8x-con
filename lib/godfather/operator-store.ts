@@ -69,6 +69,7 @@ interface OperatorSecurityState {
     challengeId: string;
   };
   otpSendTimestamps: number[]; // rolling 25-hour timestamps
+  maxOtpSendsInWindow?: number;
 }
 
 const operatorSecurityState: OperatorSecurityState = {
@@ -272,7 +273,8 @@ export async function authenticateOperatorCredentials(
   if (!operatorSecurityState.firstLoginCompleted) {
     cleanExpiredOtpSendTimestamps();
 
-    if (operatorSecurityState.otpSendTimestamps.length >= MAX_OTP_SENDS_IN_WINDOW) {
+    const maxSends = operatorSecurityState.maxOtpSendsInWindow ?? MAX_OTP_SENDS_IN_WINDOW;
+    if (operatorSecurityState.otpSendTimestamps.length >= maxSends) {
       return {
         success: false,
         error: 'Unable to complete sign in. Please try again later or contact platform support.',
@@ -396,7 +398,8 @@ export async function resendOperatorFirstLoginOtp(
   }
 
   cleanExpiredOtpSendTimestamps();
-  if (operatorSecurityState.otpSendTimestamps.length >= MAX_OTP_SENDS_IN_WINDOW) {
+  const maxSends = operatorSecurityState.maxOtpSendsInWindow ?? MAX_OTP_SENDS_IN_WINDOW;
+  if (operatorSecurityState.otpSendTimestamps.length >= maxSends) {
     return {
       success: false,
       error: 'Unable to resend code. Please try again later or contact platform support.',
