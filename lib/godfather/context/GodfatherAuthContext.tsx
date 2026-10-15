@@ -47,7 +47,7 @@ function clearOperatorFromDevice() {
 export const INITIAL_GODFATHER_OPERATORS: GodfatherOperator[] = [
   {
     uid: 'gf-op-system',
-    email: 'operator@fr8x.in',
+    email: 'tech@fr8x.in',
     displayName: 'Authorized Platform Controller',
     role: 'godfather_owner',
     roleTitle: 'Supreme Administrator & Chief Controller',
