@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import {
   LayoutDashboard,
@@ -11,14 +12,14 @@ import {
   Globe2,
   Gavel,
   BarChart3,
-  UserCheck,
+  Users,
+  Network,
   Briefcase,
+  User,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
   Smartphone,
-  Users2,
-  Network,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -31,20 +32,31 @@ interface SidebarProps {
 export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobileDrawer = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { notifications } = useData();
 
   // If this is rendered inside mobile drawer, force collapsed to false so full labels are shown
   const collapsed = isMobileDrawer ? false : isCollapsed;
 
+  // Compute actual unread Nexus notifications count
+  const nexusUnreadCount = (notifications || []).filter(
+    (n) => !n.read && (n.category === 'nexus' || n.targetUrl?.startsWith('/nexus'))
+  ).length;
+
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/feeds', label: 'Feeds', icon: Rss },
-    { href: '/nexus', label: 'Nexus', icon: Globe2, badge: '12' },
+    {
+      href: '/nexus',
+      label: 'Nexus',
+      icon: Globe2,
+      badge: nexusUnreadCount > 0 ? String(nexusUnreadCount) : undefined,
+    },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },
-    { href: '/people', label: 'People', icon: Users2 },
+    { href: '/people', label: 'People', icon: Users },
     { href: '/connections', label: 'Connections', icon: Network },
     { href: '/jobs', label: 'Jobs', icon: Briefcase },
-    { href: '/profile', label: 'Profile', icon: UserCheck },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const isActive = (href: string) => {
@@ -72,14 +84,27 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           alignItems: 'center',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', gap: '3px' }}>
+        <Link
+          href="/"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: '100%',
+            gap: '3px',
+            textDecoration: 'none',
+          }}
+          title="FR8X Home"
+        >
           <img
-            src="/logo.png"
+            src="/FR8X ICON.png"
             alt="FR8X"
             style={{
-              width: collapsed ? '22px' : '26px',
-              height: collapsed ? '22px' : '26px',
+              width: collapsed ? '24px' : '28px',
+              height: collapsed ? '24px' : '28px',
               objectFit: 'contain',
+              borderRadius: '6px',
               flexShrink: 0,
               display: 'block',
             }}
@@ -96,14 +121,24 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           >
             FR8X
           </span>
-        </div>
+        </Link>
       </div>
 
       {/* Workspace Box */}
       {!collapsed && (
         <div className="workspace">
           <small>Workspace</small>
-          <strong>{user.company}</strong>
+          <strong>
+            {(() => {
+              const raw = (user.company || '').trim();
+              if (!raw || /^CMP-\d+$/i.test(raw)) {
+                return (user.companyName && !/^CMP-\d+$/i.test(user.companyName))
+                  ? user.companyName
+                  : 'SYB INTERNATIONAL';
+              }
+              return raw;
+            })()}
+          </strong>
         </div>
       )}
 
@@ -122,6 +157,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               href={item.href}
               onClick={handleLinkClick}
               className={active ? 'on' : ''}
+              aria-current={active ? 'page' : undefined}
               title={collapsed ? item.label : undefined}
               style={{
                 justifyContent: collapsed ? 'center' : 'flex-start',

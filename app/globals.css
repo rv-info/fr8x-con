@@ -596,29 +596,44 @@ a {
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 32px;
+  height: 34px;
   background: transparent;
-  border: 0;
-  border-left: 3px solid transparent;
-  border-radius: 5px;
-  padding: 0 8px;
-  color: var(--fr8x-text);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 10px;
+  color: #334155;
   text-align: left;
-  font-weight: 600;
-  font-size: 11.5px;
-  transition: all 0.15s ease;
+  font-weight: 500;
+  font-size: 12px;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease-in-out;
 }
 
 .nav button:hover, .nav a:hover {
-  background: var(--fr8x-input);
-  color: var(--fr8x-text);
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
 }
 
-.nav button.on, .nav a.on {
-  background: var(--fr8x-input);
-  color: var(--fr8x-text);
-  border-left-color: var(--fr8x-outline);
+.nav button:focus-visible, .nav a:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
+.nav button.on, .nav a.on,
+.nav button[aria-current="page"], .nav a[aria-current="page"] {
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  border: 1px solid #38bdf8;
+  border-radius: 6px;
+  color: #0369a1;
   font-weight: 700;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08);
+}
+
+.nav button.on svg, .nav a.on svg,
+.nav button[aria-current="page"] svg, .nav a[aria-current="page"] svg {
+  color: #0284c7;
 }
 
 .nav em {
@@ -628,9 +643,40 @@ a {
   font-weight: 700;
   border-radius: 10px;
   padding: 1px 7px;
-  background: var(--fr8x-container);
-  color: var(--fr8x-text);
-  border: 1px solid var(--fr8x-outline);
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.nav button.on em, .nav a.on em,
+.nav button[aria-current="page"] em, .nav a[aria-current="page"] em {
+  background: #bae6fd;
+  color: #0369a1;
+  border-color: #7dd3fc;
+}
+
+/* Mobile brand icon replacing hamburger */
+.mobile-brand-icon-link {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-brand-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  display: block;
+}
+
+@media (max-width: 900px) {
+  .mobile-brand-icon-link {
+    display: inline-flex !important;
+  }
 }
 
 .sidefoot {

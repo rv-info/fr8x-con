@@ -71,6 +71,17 @@ export async function getUserByIdentifier(identifier: string): Promise<ProfileRo
     return getUserById(cleanId);
   }
 
+  // 4. Try matching by slug
+  const { data: bySlug, error: slugError } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('slug', cleanId.toLowerCase())
+    .maybeSingle();
+
+  if (!slugError && bySlug) {
+    return bySlug;
+  }
+
   return null;
 }
 
@@ -134,15 +145,34 @@ export async function updateUser(identifier: string, updates: ProfileUpdate): Pr
     throw new Error(`User not found for identifier: ${identifier}`);
   }
 
-  const { data, error } = await supabase
+  const { generateProfileSlug } = await import('@/lib/seo/profile-seo');
+  const slug = updates.slug || generateProfileSlug(updates.display_name || existing.display_name, existing.id);
+
+  let { data, error } = await supabase
     .from('profiles')
     .update({
       ...updates,
+      slug,
       updated_at: new Date().toISOString(),
     })
     .eq('id', existing.id)
     .select()
     .single();
+
+  if (error && error.message?.includes("'slug' column")) {
+    const { slug: _s, ...updatesWithoutSlug } = updates;
+    const retry = await supabase
+      .from('profiles')
+      .update({
+        ...updatesWithoutSlug,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id)
+      .select()
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.error('[lib/db/users] updateUser error:', error.message);
@@ -157,18 +187,33 @@ export async function upsertUser(user: Partial<ProfileRow> & { email: string }):
   const existing = await getUserByEmail(user.email);
   const id = existing?.id || user.id || crypto.randomUUID();
 
+  const { generateProfileSlug } = await import('@/lib/seo/profile-seo');
+  const slug = user.slug || generateProfileSlug(user.display_name || user.email, id);
+
   const payload: ProfileInsert = {
     ...user,
     id,
+    slug,
     email: user.email.trim().toLowerCase(),
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('profiles')
     .upsert(payload, { onConflict: 'email' })
     .select()
     .single();
+
+  if (error && error.message?.includes("'slug' column")) {
+    const { slug: _s, ...payloadWithoutSlug } = payload;
+    const retry = await supabase
+      .from('profiles')
+      .upsert(payloadWithoutSlug, { onConflict: 'email' })
+      .select()
+      .single();
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     console.error('[lib/db/users] upsertUser error:', error.message);

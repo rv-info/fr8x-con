@@ -428,6 +428,9 @@ export default function ProfilePage() {
   const [editPhoneNum, setEditPhoneNum] = useState(parsedMobile.phoneNum);
   const [editMobile, setEditMobile] = useState(user.mobile || '');
   const [editWhatsapp, setEditWhatsapp] = useState((user as any).whatsappSameAsMobile !== false);
+  const [editCompany, setEditCompany] = useState(
+    user.companyName || (user.company && !user.company.startsWith('CMP-') ? user.company : '') || company || 'SYB INTERNATIONAL'
+  );
   const [editDesignation, setEditDesignation] = useState(user.designation || designation || '');
   const [editAvatarUrl, setEditAvatarUrl] = useState<string | null>(user.avatarUrl ? user.avatarUrl : null);
   const [editCompanyLogoUrl, setEditCompanyLogoUrl] = useState<string | null>(user.companyLogoUrl || null);
@@ -448,7 +451,10 @@ export default function ProfilePage() {
     setEditLastName(user.lastName || lastName || '');
     setEditEmail(user.email || '');
     setEditPersonId(user.uid || '');
-    setEditDepartment((user as any).department || 'Ocean & Multimodal Freight Operations');
+    setEditCompany(
+      user.companyName || (user.company && !user.company.startsWith('CMP-') ? user.company : '') || company || 'SYB INTERNATIONAL'
+    );
+    setEditDepartment((user as any).department || user.department || 'Ocean & Multimodal Freight Operations');
     const initMobile = user.mobile || mobile || (user as any).phone || '';
     const parsedInit = parseISD(initMobile);
     setEditIsdCode(parsedInit.isdCode);
@@ -837,6 +843,10 @@ export default function ProfilePage() {
         setEditPersonId(canonicalUid);
       }
       if ((user as any).department) setEditDepartment((user as any).department);
+      if (user.company || user.companyName) {
+        const c = user.companyName || (user.company && !user.company.startsWith('CMP-') ? user.company : '');
+        if (c) setEditCompany(c);
+      }
       if (user.designation) setEditDesignation(user.designation);
       if (user.city) setEditCity(user.city);
       if (user.state) setEditState(user.state);
@@ -2364,7 +2374,7 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* Designation & Company */}
+              {/* Designation, Company & Department */}
               <div style={{ fontSize: '13px', color: 'var(--fr8x-text)', marginTop: '4px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ color: 'var(--fr8x-text)' }}>{designation || user.designation || 'Logistics Professional'}</span>
                 <span style={{ color: 'var(--fr8x-muted)' }}>at</span>
@@ -2376,8 +2386,19 @@ export default function ProfilePage() {
                       style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
                     />
                   )}
-                  {company || user.company || 'Enterprise Member'}
+                  {(() => {
+                    const c = (company || user.company || '').trim();
+                    if (!c || /^CMP-\d+$/i.test(c)) {
+                      return user.companyName && !/^CMP-\d+$/i.test(user.companyName) ? user.companyName : 'SYB INTERNATIONAL';
+                    }
+                    return c;
+                  })()}
                 </span>
+                {(user.department || editDepartment) && (
+                  <span className="badge gray" style={{ fontSize: '10.5px', padding: '1px 7px', fontWeight: 600, color: '#334155' }}>
+                    {user.department || editDepartment}
+                  </span>
+                )}
               </div>
 
               {/* Direct B2B Contact Details (Email, Mobile, WhatsApp) */}
@@ -4079,7 +4100,10 @@ export default function ProfilePage() {
               let newPendingCompany = user.pendingCompany;
               let newPendingEmail = user.pendingEmail;
               let newTransferRequestId = user.transferRequestId;
-              let finalCompany = user.company;
+              let finalCompany = editCompany.trim() || user.companyName || user.company || 'SYB INTERNATIONAL';
+              if (finalCompany.startsWith('CMP-') && user.companyName && !user.companyName.startsWith('CMP-')) {
+                finalCompany = user.companyName;
+              }
               let finalEmail = editEmail.trim();
               const finalUid = editPersonId.trim() || user.uid;
 
@@ -4121,7 +4145,8 @@ export default function ProfilePage() {
                 designation: finalDesig,
                 position: finalDesig,
                 company: finalCompany,
-                department: editDepartment,
+                companyName: finalCompany,
+                department: editDepartment.trim(),
                 city: editCity.trim(),
                 state: editState.trim(),
                 country: editCountry.trim(),
@@ -4188,6 +4213,8 @@ export default function ProfilePage() {
 
                 setFirstName(confirmedUser.firstName || editFirstName);
                 setLastName(confirmedUser.lastName || editLastName);
+                setCompany(confirmedUser.company || finalCompany);
+                setEditCompany(confirmedUser.company || finalCompany);
                 setMobile(confirmedUser.mobile || confirmedUser.phone || finalMobile);
                 setDesignation(confirmedUser.designation || finalDesig);
                 setCity(confirmedUser.city || editCity);
@@ -4622,36 +4649,38 @@ export default function ProfilePage() {
                 </button>
               </div>
 
-              {/* FIXED COMPANY PROFILE CARD */}
-              <div style={{ background: '#ffffff', border: '1.5px solid #cbd5e1', borderRadius: '8px', padding: '12px 14px' }}>
+              {/* EDITABLE COMPANY / ENTERPRISE LEGAL ENTITY CARD */}
+              <div style={{ background: '#ffffff', border: '1.5px solid #0284c7', borderRadius: '8px', padding: '14px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Building2 size={15} color="#0284c7" />
-                    <span style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                      Enterprise Company Profile (Fixed & Immutable)
+                    <Building2 size={16} color="#0284c7" />
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                      Company / Legal Entity Name
                     </span>
                   </div>
-                  <span className="badge green" style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <ShieldCheck size={10} /> VERIFIED REGISTRY
-                  </span>
+                  {user.companyId && (
+                    <span className="badge blue" style={{ fontSize: '9px', fontWeight: 700, padding: '2px 6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <ShieldCheck size={10} /> REGISTRY ID: {user.companyId}
+                    </span>
+                  )}
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', fontSize: '11px', background: '#f8fafc', padding: '10px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Master Legal Entity:</span>
-                    <b style={{ color: '#0f172a', fontSize: '12px' }}>{user.company || 'Not Specified'}</b>
-                  </div>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Enterprise Company ID:</span>
-                    <code style={{ color: '#0284c7', fontWeight: 700 }}>{user.companyId || 'Unassigned'}</code>
-                  </div>
-                  <div>
-                    <span style={{ color: '#64748b', display: 'block', fontSize: '10px', fontWeight: 600 }}>Operating Headquarters:</span>
-                    <span style={{ color: '#334155', fontWeight: 600 }}>{(editCity || user.city) ? `${editCity || user.city}, ${editCountry || user.country || ''}` : (editCountry || user.country || 'Not Specified')}</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: '10px', color: '#64748b', marginTop: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Info size={11} color="#64748b" /> Company Profile is permanent and locked under Platform Regulatory Compliance.
+                <div className="field">
+                  <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 700, color: '#334155', marginBottom: '4px' }}>
+                    <span>Authorized Company Name <span className="req">*</span></span>
+                    <span style={{ fontSize: '9.5px', color: '#0284c7' }}>Visible Across Network & Search</span>
+                  </label>
+                  <input
+                    className="input"
+                    value={editCompany}
+                    onChange={(e) => setEditCompany(e.target.value)}
+                    placeholder="e.g. SYB INTERNATIONAL"
+                    required
+                    style={{ fontWeight: 600, fontSize: '13px' }}
+                  />
+                  <small style={{ fontSize: '10px', color: '#64748b', marginTop: '3px', display: 'block' }}>
+                    Enter your verified legal entity name (e.g. SYB INTERNATIONAL). Internal system IDs ({user.companyId || 'CMP-XXXXX'}) are reserved for database indexing.
+                  </small>
                 </div>
               </div>
 
@@ -4684,13 +4713,18 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div className="field">
-                    <label>Operating Department / Logistics Desk</label>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#334155' }}>
+                      Department / Operational Division
+                    </label>
                     <input
                       className="input"
                       value={editDepartment}
                       onChange={(e) => setEditDepartment(e.target.value)}
-                      placeholder="e.g. Ocean & Multimodal Freight Operations"
+                      placeholder="e.g. Ocean Freight Operations, Air Cargo, Customs, Pricing"
                     />
+                    <small style={{ fontSize: '10px', color: '#64748b', marginTop: '2px', display: 'block' }}>
+                      Operational desk or functional division within your freight enterprise.
+                    </small>
                   </div>
                 </div>
 

@@ -225,32 +225,6 @@ export const SEEDED_MEMBERS: DirectoryMember[] = [
       { title: 'Regional Air Freight Director', company: 'DHL Global Forwarding', from: '2011', to: '2019' },
     ],
   },
-  {
-    id: 'a0000000-0000-0000-0000-000000000009',
-    display_name: 'Kumar R',
-    first_name: 'Kumar',
-    last_name: 'R',
-    designation: 'PRICING',
-    position: 'Head of Pricing & Freight Desk',
-    headline: 'Pricing Specialist & Freight Procurement Lead',
-    company_name: 'SYB INTERNATIONAL',
-    company: 'SYB INTERNATIONAL',
-    city: 'Mumbai',
-    state: 'Maharashtra',
-    country: 'India',
-    location: 'Mumbai, Maharashtra, India',
-    email: 'kumar@syb-freight.com',
-    is_verified: true,
-    has_golden_tick: true,
-    skills: ['Ocean Freight Pricing', 'Procurement', 'Trade Lane Management', 'NVOCC Contracting'],
-    specializations: ['Freight Forwarding', 'Container Pricing', 'Rate Negotiation'],
-    key_trade_lanes: ['IN-US', 'IN-EU', 'IN-UAE'],
-    bio: 'Pricing and freight procurement lead at SYB INTERNATIONAL with over a decade of carrier contract negotiations and rate desk management.',
-    summary: 'PRICING Specialist at SYB INTERNATIONAL.',
-    experiences: [
-      { title: 'PRICING Specialist', company: 'SYB INTERNATIONAL', from: '2021', to: 'Present', current: true },
-    ],
-  },
 ];
 
 // ── In-Memory Connection State Manager for Fallback ───────────────────────────
@@ -259,7 +233,7 @@ interface InMemRequest {
   id: string;
   requester_id: string;
   recipient_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'withdrawn';
   message?: string;
   created_at: string;
   updated_at: string;
@@ -288,11 +262,18 @@ class PeopleDirectoryStore {
   }
 
   public getAllMembers(): DirectoryMember[] {
-    const list: DirectoryMember[] = [...SEEDED_MEMBERS];
-    const seenIds = new Set(list.map((m) => m.id));
+    const isProduction = process.env.NODE_ENV === 'production';
+    // In production, never return dummy or fabricated seeded members
+    const list: DirectoryMember[] = isProduction ? [] : [...SEEDED_MEMBERS];
+    const seenIds = new Set(list.map((m) => m.id.toLowerCase()));
+    const seenEmails = new Set(list.map((m) => (m.email || '').toLowerCase()).filter(Boolean));
+
     for (const dm of this.dynamicMembers.values()) {
-      if (!seenIds.has(dm.id)) {
-        seenIds.add(dm.id);
+      const dmId = dm.id.toLowerCase();
+      const dmEmail = (dm.email || '').toLowerCase();
+      if (!seenIds.has(dmId) && (!dmEmail || !seenEmails.has(dmEmail))) {
+        seenIds.add(dmId);
+        if (dmEmail) seenEmails.add(dmEmail);
         list.push(dm);
       }
     }
@@ -502,9 +483,45 @@ class PeopleDirectoryStore {
 
   public getConnections(userId: string): DirectoryMember[] {
     const list: DirectoryMember[] = [];
-    for (const member of SEEDED_MEMBERS) {
+    const all = this.getAllMembers();
+    for (const member of all) {
       if (this.acceptedPairs.has(this.pairKey(userId, member.id))) {
         list.push(member);
+      }
+    }
+    // Also include any accepted pairs for dynamic / test users
+    for (const pair of this.acceptedPairs) {
+      const parts = pair.split(':');
+      if (parts.length === 2) {
+        const otherId = parts[0] === userId ? parts[1] : parts[1] === userId ? parts[0] : null;
+        if (otherId && !list.some((m) => m.id === otherId)) {
+          const found = this.getMemberById(otherId);
+          if (found) {
+            list.push(found);
+          } else {
+            list.push({
+              id: otherId,
+              display_name: 'FR8X Member',
+              full_name: 'FR8X Member',
+              first_name: 'FR8X',
+              last_name: 'Member',
+              headline: 'Freight Forwarding Specialist',
+              designation: 'Logistics Professional',
+              company: 'SYB INTERNATIONAL',
+              company_name: 'SYB INTERNATIONAL',
+              city: 'Mumbai',
+              country: 'India',
+              location: 'Mumbai, India',
+              avatar_url: '',
+              is_verified: true,
+              has_golden_tick: false,
+              skills: ['Ocean Freight', 'Logistics'],
+              specializations: [],
+              key_trade_lanes: [],
+              connection_status: 'connected',
+            });
+          }
+        }
       }
     }
     return list;
@@ -525,6 +542,17 @@ class PeopleDirectoryStore {
     const list: Array<InMemRequest & { recipient?: DirectoryMember }> = [];
     for (const req of this.requests.values()) {
       if (req.requester_id === userId && req.status === 'pending') {
+        const recipient = this.getMemberById(req.recipient_id) || undefined;
+        list.push({ ...req, recipient });
+      }
+    }
+    return list;
+  }
+
+  public getWithdrawn(userId: string): Array<InMemRequest & { recipient?: DirectoryMember }> {
+    const list: Array<InMemRequest & { recipient?: DirectoryMember }> = [];
+    for (const req of this.requests.values()) {
+      if (req.requester_id === userId && (req.status === 'cancelled' || (req as any).status === 'withdrawn')) {
         const recipient = this.getMemberById(req.recipient_id) || undefined;
         list.push({ ...req, recipient });
       }

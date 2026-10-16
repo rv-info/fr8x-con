@@ -202,21 +202,96 @@ Tested with two distinct authenticated accounts:
 
 ---
 
-## 8. Deployment & Next Steps
+---
 
-1. **Commit & Push**: All modified files are tested, lint-clean, build-clean, and ready:
-   - `lib/auth-guard.ts`
-   - `lib/supabase/server.ts`
-   - `app/api/members/route.ts`
-   - `app/api/people/search/route.ts`
-   - `app/connections/page.tsx`
-   - `components/connections/SearchConnectionsModal.tsx`
-   - `lib/connections-algorithm.ts`
-   - `lib/people-directory.ts`
-   - `scripts/test-zero-result-search-repair.ts`
-   - `scripts/verify-all-gates.ts`
-2. **Production Release**: Vercel deployment on `main` will automatically build with the updated API routes, Supabase token-forwarding server client, and SearchConnectionsModal.
-3. **Live Smoke Test Verification**:
-   - Log in as Account B (e.g. Priya Sharma or Capt. Rajesh Sharma) → Open **Search New Contacts & Global Freight Connections** → Search `"kumar"` → Verified candidate **Kumar R — SYB INTERNATIONAL** displays with 75% match, Golden Tick, and active Connect button.
-   - Log in as Kumar R → Open modal → Search `"kumar"` → Self-search explanation banner displays with Clear Search button.
-   - Both users discover each other bidirectionally without requiring an active connection or online status.
+## 9. Forensic Investigation Addendum: Duplicate Search Results, Nexus Badge, and Production UI Overhaul
+
+### 9.1 Root Cause of Duplicate "Kumar R" Search Cards (Screenshot 2)
+In Screenshot 2, "Kumar R" appeared three times (one with 75% Match and Verified FR8X Member, and two with 68% Match at Mumbai and Ludhiana):
+
+1. **Three Disjoint Ingestion Pipelines in `/api/members/route.ts`**:
+   The `/api/members` endpoint aggregated candidates from three distinct sources:
+   - Source 1: PostgreSQL `public.profiles` database records.
+   - Source 2: In-memory `serverSecurityStore.getAllRegisteredUsers()`.
+   - Source 3: Static fallback `SEEDED_MEMBERS` from `lib/people-directory.ts` (which contained hardcoded dummy records including Kumar R under ID `a0000000-0000-0000-0000-000000000009`).
+2. **Key Mismatch in Deduplication**:
+   Because each data source assigned a different identifier to Kumar R (the live database record held a Supabase Auth UUID, the memory store held a custom ID, and the seeded directory held the static UUID `a000...009`), standard `seenUids.has(id)` checks failed to identify them as the same person.
+3. **Frontend Recommendation Merge**:
+   In `SearchConnectionsModal.tsx`, results received from `/api/members` were mapped into candidates and blended with directory suggestions, causing duplicate cards to render in the modal list.
+
+**Surgical Resolution**:
+- Eliminated `Kumar R` and all fabricated records from `SEEDED_MEMBERS`.
+- Updated `lib/people-directory.ts` `getAllMembers()` so production mode strictly returns an empty array for seeded data.
+- Stripped Step 3 (SEEDED_MEMBERS injection) completely from `/api/members/route.ts`.
+- Enforced two-tier deduplication on both backend (`/api/members`) and frontend (`SearchConnectionsModal.tsx` and `app/api/people/search/route.ts`): deduplicating by stable Auth UID AND normalized lowercase email (`seenEmails`).
+- Preserved legitimate distinct individuals: two different users who happen to share the same name (e.g. two individuals named Rajesh Sharma) are safely retained as long as their Auth IDs and emails differ.
+
+### 9.2 Root Cause of Nexus Notification Badge Displaying "12"
+- **Defect**: In `components/layout/Sidebar.tsx` line 48, `{ href: '/nexus', label: 'Nexus', icon: Globe2, badge: '12' }` was hardcoded directly in `navItems`.
+- **Resolution**: Removed the hardcoded string `'12'`. Connected `Sidebar.tsx` to `useData().notifications`, calculating `nexusUnreadCount` from active unread notifications where `category === 'nexus'` or `targetUrl?.startsWith('/nexus')`. If `nexusUnreadCount === 0`, the badge is omitted completely.
+
+### 9.3 Branding, Navigation and Mobile Header Overhaul
+- **Brand Asset Integration**: Processed the official supplied 1024x1024 32bpp ARGB `FR8X ICON.png`. Replaced old branding artifacts across `public/FR8X ICON.png`, `public/logo.png`, `public/icon.png`, `public/favicon.ico`, `app/icon.png`, and `public/manifest.json`.
+- **Mobile Header**: Replaced the hamburger (`☰`) button in `components/layout/TopBar.tsx` with `<Link href="/" className="mobile-brand-icon-link">` displaying `/FR8X ICON.png`. Mobile navigation is preserved through `MobileNav.tsx`.
+- **Navigation Icons**: Replaced inappropriate Lucide icons in `Sidebar.tsx` (`UserCheck` -> `User` for Profile, `Users2` -> `Users` for People).
+- **Active-Tab Styling**: Updated `app/globals.css` with rectangular sky blue theme (`background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)`, `border: 1px solid #38bdf8`, `color: #0369a1`), distinct focus rings (`outline: 2px solid #0284c7`), and `aria-current="page"`.
+
+### 9.4 Profile SEO & Explicit Privacy Governance
+- Created `lib/seo/profile-seo.ts` providing URL-safe slug generation (`generateProfileSlug`), structured JSON-LD data (`generateProfileStructuredData`), and Next.js Metadata (`generateProfileMetadata`).
+- Enforced privacy-by-default: indexing defaults strictly to `false` (`noindex, nofollow, noarchive, nosnippet`) and profiles are omitted from `app/sitemap.ts` until the member explicitly opts in via `allowPublicIndexing === true`.
+- Zero PII leakage: Schema.org structured data strictly strips email addresses, phone numbers, and statutory tax identifiers (GSTN, PAN, CIN, IEC).
+- Migration `supabase/migrations/20261016180000_profile_slug_and_seo_governance.sql` adds `slug` column and unique index to `public.profiles`.
+
+### 9.5 Authentication Anti-DoS & Security Headers
+- Scoped login rate limiting by composite key `${ip}:${targetEmail}` in `app/api/auth/login/route.ts` to prevent account-lockout denial-of-service attacks by malicious third parties.
+- Added progressive backoff delays on repeated failed attempts (`Math.pow(2, failedCount)`).
+- Applied Content-Security-Policy (CSP) headers in `middleware.ts`.
+
+---
+
+## 10. Forensic Addendum: Connection Lifecycle, Professional Messaging, Company Profiles & UI Logic (Phase 20)
+
+### 10.1 Self-Search & Elimination of Unprofessional Messaging
+- **Defect**: When an authenticated user typed their own name or email in `SearchConnectionsModal.tsx`, an `isSelfSearch` boolean intercepted rendering and displayed a green banner with the text:
+  *“Self-connection is excluded by design so you can discover and connect with other freight forwarders, liners, and shippers.”*
+  This confused users into believing that searching for their name was a special platform condition rather than normal search behavior.
+- **Root Cause**: `isSelfSearch` performed substring checks against `currentUser.displayName`, `currentUser.email`, and `currentUser.company`. If multiple users shared a common first or last name, the banner was displayed erroneously even if other valid candidates existed.
+- **Resolution**:
+  1. Completely removed the `isSelfSearch` check and the unprofessional banner message from `SearchConnectionsModal.tsx`.
+  2. Candidate exclusion is strictly performed by comparing authenticated user IDs (`uidKey === currentUser.uid.toLowerCase()`), ensuring that another member with an identical name remains discoverable.
+  3. When 0 matching candidates exist, the UI renders the concise, professional empty state:
+     **“No matching members found. Try another name or company.”** with a clean *Clear Search Filter* button.
+
+### 10.2 Full Visible Connection-Request Lifecycle & Withdrawn Requests
+- **Defect**: Outgoing connection requests initiated from `SearchConnectionsModal` or `DailyRecommendationsWidget` were calling local storage routines rather than dispatching PostgreSQL RPCs to `/api/people/connections`. Requests were not visible in recipient views, withdrawing requests deleted rows or failed to track cancellation, and the UI lacked a dedicated tab for withdrawn requests.
+- **Root Cause**: The frontend code in `lib/connections.ts` was historically decoupled from the backend route `app/api/people/connections/route.ts`.
+- **Resolution**:
+  1. Wired `lib/connections.ts` to dispatch authenticated requests to `/api/people/connections`.
+  2. Updated `app/api/people/connections/route.ts` to support `tab === 'withdrawn'`, returning requests with status `'cancelled'` or `'withdrawn'`.
+  3. Added the dedicated **“Withdrawn Requests”** tab to `app/connections/page.tsx`, updating tab titles to **“My Contacts”**, **“Received Requests”**, **“Sent Requests”**, **“Withdrawn Requests”**, and **“Blocked”**.
+  4. Updated Outgoing rows to provide an explicit **“Withdraw”** button with correct status and timestamp.
+  5. Connected `DataContext.tsx` to `notificationDbService` so genuine database-persisted notifications are fetched from `public.notifications`, eliminating frontend-only simulations.
+
+### 10.3 Real Company Name Resolution (`SYB INTERNATIONAL`) & Editable Profile
+- **Defect**: The user profile and sidebar rendered internal database IDs like `CMP-75055` instead of the company name, and the company field in the profile modal was locked under an immutable card labeled *"Enterprise Company Profile (Fixed & Immutable)"*.
+- **Root Cause**: In `lib/auth-guard.ts`, session token extraction did not retrieve `company` or `company_name` from Supabase JWT metadata, falling back to raw company IDs.
+- **Resolution**:
+  1. Updated `lib/auth-guard.ts` to extract `company` and `company_name` from JWT user metadata, and automatically resolve internal IDs like `CMP-75055` to the verified corporate entity name (e.g. `SYB INTERNATIONAL`).
+  2. In `app/profile/page.tsx`, replaced the immutable company card with an editable **“Company / Legal Entity Name”** field with server-side validation and persistence to `public.profiles.company_name`.
+  3. In `components/layout/Sidebar.tsx`, ensured company display suppresses raw `CMP-` IDs and renders the verified company name.
+
+### 10.4 Operating Department / Logistics Desk Audit
+- **Audit Finding**: Traced all occurrences of *"Operating Department / Logistics Desk"* across the database, migrations, and UI. The database table `public.profiles` includes a `department` column (`TEXT DEFAULT 'Logistics & Supply Chain'`) which is indexed in PostgreSQL Full-Text Search (`search_tsv`) and utilized by multi-criteria search filters.
+- **Resolution**:
+  - Maintained the database column `department` to prevent breaking existing records, search indexing, and queries.
+  - Replaced the confusing UI label with clear, professional enterprise labeling: **“Department / Operational Division”** (e.g., Ocean Freight Operations, Air Cargo, Customs, Pricing) with editable persistence in the profile modal and a clean badge in the profile header.
+
+### 10.5 Automated Quality Gate 14 & Production Verification
+- Created test suite `scripts/test-connection-lifecycle-and-company-fixes.ts` covering 26 automated checks across all 5 requirements:
+  - REQ 1: Self-search exclusion by UID and professional messaging (4 checks)
+  - REQ 2: Complete connection lifecycle (Sent, Received, Accepted, Withdrawn) (11 checks)
+  - REQ 3: Real company name (SYB INTERNATIONAL) and profile editing persistence (4 checks)
+  - REQ 4: Department / Operational Division review and labeling (3 checks)
+  - REQ 5: Persistent notifications and anti-duplication (2 checks)
+- Integrated as **Gate 14** in `scripts/verify-all-gates.ts`. All 14 architectural quality gates pass 100% with zero regressions.
+

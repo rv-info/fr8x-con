@@ -28,27 +28,30 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Rate Limiting: max 10 login attempts per identifier per minute
+    // Composite key to prevent third-party Denial-of-Service account lockout attacks
+    const lockKey = `${ip}:${targetEmail}`;
+
+    // Rate Limiting: max 10 login attempts per IP+identifier per minute
     const rateLimit = await redis.checkRateLimit({
       action: 'user_login',
-      identifier: targetEmail,
+      identifier: lockKey,
       limit: 10,
       windowSeconds: 60,
     });
     if (!rateLimit.allowed) {
       return NextResponse.json(
-        { success: false, error: 'Too many login attempts. Please wait 1 minute before retrying.' },
+        { success: false, error: 'Too many login attempts from this network. Please wait 1 minute before retrying.' },
         { status: 429 }
       );
     }
 
-    // Lockout verification: check if identifier has exceeded maximum consecutive failures
-    const lockCheck = checkRateLimit(targetEmail);
+    // Lockout verification: check if this IP+account has exceeded maximum consecutive failures
+    const lockCheck = checkRateLimit(lockKey);
     if (!lockCheck.allowed) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Account is temporarily locked due to repeated failed login attempts. Please wait 15 minutes or reset your password.',
+          error: 'Temporary security hold due to repeated failed attempts from this device. Please wait 15 minutes or reset your password.',
           code: 'ACCOUNT_LOCKED',
         },
         { status: 403 }
@@ -63,17 +66,25 @@ export async function POST(req: NextRequest) {
     });
 
     if (authError || !authData.user) {
-      const lockRes = recordFailedAttempt(targetEmail);
+      const lockRes = recordFailedAttempt(lockKey);
+
+      // Progressive delay to exponentially slow down brute force & credential stuffing
+      const failedCount = 5 - lockRes.remainingAttempts;
+      if (failedCount > 2) {
+        const delayMs = Math.min(500 * Math.pow(2, failedCount - 2), 3000);
+        await new Promise((r) => setTimeout(r, delayMs));
+      }
+
       serverSecurityStore.addSecurityEvent({
         type: lockRes.locked ? 'ACCOUNT_BLOCKED' : 'FAILED_LOGIN',
         severity: lockRes.locked ? 'HIGH' : 'WARNING',
         userEmail: targetEmail,
-        details: `Failed password login from IP ${ip}. Reason: ${authError?.message || 'Invalid credentials'}. Attempts remaining: ${lockRes.remainingAttempts}`,
+        details: `Failed password login from IP ${ip}. Reason: ${authError?.message || 'Invalid credentials'}. Attempts remaining on this device: ${lockRes.remainingAttempts}`,
         ipAddress: ip,
       });
 
       let errorMessage = lockRes.locked
-        ? 'Account has been locked due to 3 consecutive failed login attempts.'
+        ? 'Too many consecutive failed attempts from this device. Please wait 15 minutes.'
         : 'Invalid corporate email or password. Please verify your credentials.';
       if (authError?.message?.includes('Email not confirmed')) {
         errorMessage = 'Email address not confirmed. Please verify your email.';
@@ -85,7 +96,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Clear failed attempts counter on successful login
-    clearRateLimit(targetEmail);
+    clearRateLimit(lockKey);
 
 
     const userId = authData.user.id;

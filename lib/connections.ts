@@ -96,12 +96,16 @@ function saveConnectionRequests(requests: ConnectionRequest[]) {
 export function getConnectionRequests(uid: string): {
   incoming: ConnectionRequest[];
   outgoing: ConnectionRequest[];
+  withdrawn: ConnectionRequest[];
 } {
-  if (!uid) return { incoming: [], outgoing: [] };
+  if (!uid) return { incoming: [], outgoing: [], withdrawn: [] };
   const all = getAllConnectionRequests();
   const incoming = all.filter((r) => r.toUid === uid && r.status === 'pending');
   const outgoing = all.filter((r) => r.fromUid === uid && r.status === 'pending');
-  return { incoming, outgoing };
+  const withdrawn = all.filter(
+    (r) => r.fromUid === uid && (r.status === 'cancelled' || (r as any).status === 'withdrawn')
+  );
+  return { incoming, outgoing, withdrawn };
 }
 
 export type ConnectionStatus =
@@ -187,6 +191,32 @@ export function sendConnectionRequest(
   filtered.unshift(newRequest);
   saveConnectionRequests(filtered);
 
+  // Authoritatively persist outgoing request and real recipient notification via Supabase PostgreSQL API
+  if (typeof window !== 'undefined' && toUser.uid) {
+    fetch('/api/people/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'send',
+        target_id: toUser.uid,
+        message: note ? note.trim().slice(0, 300) : undefined,
+      }),
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.request_id) {
+            newRequest.id = data.request_id;
+            const currentList = getAllConnectionRequests();
+            saveConnectionRequests(
+              currentList.map((r) => (r.id === newRequest.id ? { ...r, id: data.request_id } : r))
+            );
+          }
+        }
+      })
+      .catch(() => {});
+  }
+
   // Push an in-app notification if storage is present
   try {
     const NOTIF_KEY = 'fr8x_app_notifications_v1';
@@ -233,6 +263,18 @@ export function acceptConnectionRequest(
   map[req.fromUid] = Array.from(listA);
   map[req.toUid] = Array.from(listB);
   saveConnectionsMap(map);
+
+  // Authoritatively accept via PostgreSQL API
+  if (typeof window !== 'undefined' && requestId) {
+    fetch('/api/people/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'accept',
+        request_id: requestId,
+      }),
+    }).catch(() => {});
+  }
 
   // Sync to users storage if possible
   if (typeof window !== 'undefined') {
@@ -294,12 +336,41 @@ export function declineConnectionRequest(requestId: string) {
   req.status = 'declined';
   req.updatedAt = new Date().toISOString();
   saveConnectionRequests(all);
+
+  if (typeof window !== 'undefined' && requestId) {
+    fetch('/api/people/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'decline',
+        request_id: requestId,
+      }),
+    }).catch(() => {});
+  }
 }
 
 export function cancelConnectionRequest(requestId: string) {
   const all = getAllConnectionRequests();
-  const filtered = all.filter((r) => r.id !== requestId);
-  saveConnectionRequests(filtered);
+  const req = all.find((r) => r.id === requestId);
+  if (req) {
+    req.status = 'cancelled';
+    req.updatedAt = new Date().toISOString();
+    saveConnectionRequests(all);
+  } else {
+    const filtered = all.filter((r) => r.id !== requestId);
+    saveConnectionRequests(filtered);
+  }
+
+  if (typeof window !== 'undefined' && requestId) {
+    fetch('/api/people/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'cancel',
+        request_id: requestId,
+      }),
+    }).catch(() => {});
+  }
 }
 
 export function removeConnection(uidA: string, uidB: string) {
@@ -313,6 +384,17 @@ export function removeConnection(uidA: string, uidB: string) {
     map[uidB] = map[uidB].filter((id) => id !== uidA);
   }
   saveConnectionsMap(map);
+
+  if (typeof window !== 'undefined') {
+    fetch('/api/people/connections', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'remove',
+        target_id: uidB,
+      }),
+    }).catch(() => {});
+  }
 
   // Sync to users storage
   if (typeof window !== 'undefined') {

@@ -46,7 +46,7 @@ export const DEFAULT_PRIVACY_SETTINGS: UserPrivacySettings = {
   allowConnectionRequests: true,
 };
 
-export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined';
+export type ConnectionRequestStatus = 'pending' | 'accepted' | 'declined' | 'cancelled' | 'withdrawn';
 
 export interface ConnectionRequest {
   id: string;
@@ -110,6 +110,7 @@ export interface ProfileCertification {
 export interface UserProfile {
   uid: string;
   canonicalUid?: string;
+  slug?: string;
   email: string;
   firstName: string;
   middleName?: string;
@@ -770,7 +771,7 @@ export type NotificationType =
   | 'system'
   | 'subscription';
 
-export type NotificationCategory = 'auctions' | 'bids' | 'chat' | 'feeds' | 'jobs' | 'profile' | 'system' | 'subscription';
+export type NotificationCategory = 'auctions' | 'bids' | 'chat' | 'feeds' | 'jobs' | 'nexus' | 'profile' | 'system' | 'subscription';
 
 export interface AppNotification {
   id: string;

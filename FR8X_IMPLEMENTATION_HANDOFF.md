@@ -127,7 +127,81 @@
 
 ---
 
-### 8. Exact Next Step for Future Sessions
-- Run `npm test` to verify all 12 architectural quality gates continue passing with 167 checks.
-- Deploy changes to production Vercel (`git push origin main`).
-- Perform live smoke test with two distinct accounts verifying bidirectional discovery.
+### 8. Phase 19: Production UI, Data Integrity, SEO & Security Fixes
+
+#### 8.1 Inventory of New & Modified Files (Phase 19)
+| File Path | Nature | Purpose & Summary of Changes |
+|---|---|---|
+| [public/FR8X ICON.png](file:///d:/fr8x-con/public/FR8X%20ICON.png) | Created | Supplied high-res 1024x1024 32bpp ARGB brand icon used across web headers, favicons, manifests, and PWA icons. |
+| [public/favicon.ico](file:///d:/fr8x-con/public/favicon.ico) | Updated | Multi-size ICO generated from official FR8X ICON.png asset. |
+| [lib/seo/profile-seo.ts](file:///d:/fr8x-con/lib/seo/profile-seo.ts) | Created | URL-safe slug generator (`generateProfileSlug`), explicit opt-in privacy checker (`isProfilePubliclyIndexable`), Schema.org JSON-LD generator with zero PII leakage, and Next.js Metadata generator. |
+| [app/people/[id]/layout.tsx](file:///d:/fr8x-con/app/people/[id]/layout.tsx) | Created | Server layout injecting dynamic profile metadata and Schema.org structured data script. |
+| [supabase/migrations/20261016180000_profile_slug_and_seo_governance.sql](file:///d:/fr8x-con/supabase/migrations/20261016180000_profile_slug_and_seo_governance.sql) | Created | Migration adding `slug` and `privacy_settings` columns to `public.profiles` with idempotent slug generation backfill. |
+| [scripts/test-production-ui-integrity-fixes.ts](file:///d:/fr8x-con/scripts/test-production-ui-integrity-fixes.ts) | Created | Phase 19 automated test suite verifying all 8 requirements (29/29 passing checks). |
+| [components/layout/Sidebar.tsx](file:///d:/fr8x-con/components/layout/Sidebar.tsx) | Modified | Replaced `UserCheck` with `User`, `Users2` with `Users`, removed hardcoded `badge: '12'` on Nexus, dynamically calculated `nexusUnreadCount` (omitted when 0), updated brand logo to `/FR8X ICON.png`, added `aria-current="page"`. |
+| [components/layout/TopBar.tsx](file:///d:/fr8x-con/components/layout/TopBar.tsx) | Modified | Replaced hamburger (`☰`) with `.mobile-brand-icon-link` displaying `/FR8X ICON.png` linked to `/`. |
+| [components/layout/MobileNav.tsx](file:///d:/fr8x-con/components/layout/MobileNav.tsx) | Modified | Responsive bottom navigation ensuring full platform accessibility on mobile devices. |
+| [app/globals.css](file:///d:/fr8x-con/app/globals.css) | Modified | Rectangular active state styling: light sky blue gradient, `#38bdf8` border, `#0369a1` high-contrast text, clear focus ring, responsive brand logo. |
+| [components/connections/DailyRecommendationsWidget.tsx](file:///d:/fr8x-con/components/connections/DailyRecommendationsWidget.tsx) | Modified | Truthful empty state with "No new connection recommendations available today" and "Discover Platform Members" action when 0 matches exist. |
+| [components/connections/SearchConnectionsModal.tsx](file:///d:/fr8x-con/components/connections/SearchConnectionsModal.tsx) | Modified | Client-side deduplication by stable Auth UID and normalized lowercase email; no duplicate cards. |
+| [app/api/members/route.ts](file:///d:/fr8x-con/app/api/members/route.ts) | Modified | Deduplication by `seenUids` and `seenEmails`; eliminated SEEDED_MEMBERS dummy record injection. |
+| [app/api/people/search/route.ts](file:///d:/fr8x-con/app/api/people/search/route.ts) | Modified | Pre-sanitization deduplication by stable member ID. |
+| [lib/people-directory.ts](file:///d:/fr8x-con/lib/people-directory.ts) | Modified | Removed Kumar R duplicate from seeded members; enforced production mode empty array for seeded data. |
+| [lib/db/users.ts](file:///d:/fr8x-con/lib/db/users.ts) | Modified | Slug generation in updateUser/upsertUser with graceful fallback when `slug` column has not yet been applied in schema cache. |
+| [middleware.ts](file:///d:/fr8x-con/middleware.ts) | Modified | Enforced Content-Security-Policy (CSP) headers. |
+| [app/api/auth/login/route.ts](file:///d:/fr8x-con/app/api/auth/login/route.ts) | Modified | Anti-DoS rate limiting using composite `ip:email` key to prevent account-lockout DoS; progressive exponential backoff. |
+| [scripts/verify-all-gates.ts](file:///d:/fr8x-con/scripts/verify-all-gates.ts) | Modified | Integrated Phase 19 into master architectural gate suite. |
+
+#### 8.2 Database Migration & Rollback Procedures
+
+**Migration Step**:
+Apply `supabase/migrations/20261016180000_profile_slug_and_seo_governance.sql` in the Supabase SQL Editor:
+```sql
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_slug_unique_idx ON public.profiles(slug) WHERE slug IS NOT NULL;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS privacy_settings JSONB DEFAULT '{}'::jsonb;
+```
+
+**Rollback Procedure**:
+If rollback of Phase 19 database changes is needed:
+```sql
+DROP INDEX IF EXISTS public.profiles_slug_unique_idx;
+ALTER TABLE public.profiles DROP COLUMN IF EXISTS slug;
+ALTER TABLE public.profiles DROP COLUMN IF EXISTS privacy_settings;
+```
+Note: `lib/db/users.ts` incorporates defensive schema-cache fallbacks so the application functions seamlessly regardless of whether the migration is applied or rolled back.
+
+#### 8.3 Final Test Results & Quality Gates
+- `npm run type-check`: **0 errors** (tsc --noEmit)
+- `npx tsx scripts/test-production-ui-integrity-fixes.ts`: **29/29 checks passed** (100%)
+- `npm test`: **13/13 quality gates passed**, **196/196 automated checks passed** with zero regressions.
+
+---
+
+### 9. Phase 20: Correct Connection Workflow, Professional Messaging, Company Profiles & UI Logic
+
+#### 9.1 Inventory of New & Modified Files (Phase 20)
+| File Path | Nature | Purpose & Summary of Changes |
+|---|---|---|
+| [components/connections/SearchConnectionsModal.tsx](file:///d:/fr8x-con/components/connections/SearchConnectionsModal.tsx) | Modified | Removed `isSelfSearch` and green warning banner (*"Self-connection is excluded by design..."*); implemented concise professional empty state: **“No matching members found. Try another name or company.”** with reset filter button; strictly excluded self by `uidKey === currentUser.uid.toLowerCase()` without suppressing other members with identical names. |
+| [components/layout/Sidebar.tsx](file:///d:/fr8x-con/components/layout/Sidebar.tsx) | Modified | Resolved real company name (`SYB INTERNATIONAL`), suppressing raw internal identifiers such as `CMP-75055`. |
+| [app/connections/page.tsx](file:///d:/fr8x-con/app/connections/page.tsx) | Modified | Added dedicated **“Withdrawn Requests”** tab; updated tab names to **“My Contacts”**, **“Received Requests”**, **“Sent Requests”**, **“Withdrawn Requests”**, **“Blocked”**; replaced "Cancel" with "Withdraw" action; added `WithdrawnRow` rendering withdrawn timestamp and status. |
+| [app/api/people/connections/route.ts](file:///d:/fr8x-con/app/api/people/connections/route.ts) | Modified | Extended tab validation to include `'withdrawn'`; queried `connection_requests` for `status IN ('cancelled', 'withdrawn')` and requester match; wired fallback to `peopleDirectoryStore.getWithdrawn(userId)`. |
+| [lib/types.ts](file:///d:/fr8x-con/lib/types.ts) | Modified | Expanded `ConnectionRequestStatus` union to include `'withdrawn'`. |
+| [lib/connections.ts](file:///d:/fr8x-con/lib/connections.ts) | Modified | Updated `getConnectionRequests` to return `{ incoming, outgoing, withdrawn }`; wired all actions (`sendConnectionRequest`, `acceptConnectionRequest`, `declineConnectionRequest`, `cancelConnectionRequest`, `removeConnection`) to dispatch to `/api/people/connections` so state is persisted to PostgreSQL and in-app notifications are emitted; preserved cancelled status on withdrawal. |
+| [lib/people-directory.ts](file:///d:/fr8x-con/lib/people-directory.ts) | Modified | Added `getWithdrawn(userId)` method; updated `getConnections` to check all dynamic members and accepted pairs. |
+| [lib/context/DataContext.tsx](file:///d:/fr8x-con/lib/context/DataContext.tsx) | Modified | Connected `revalidateLiveDatabase()` to load real notifications from `public.notifications` via `notificationDbService.getNotifications(user.uid)`; persisted read status via `notificationDbService.markAsRead()`. |
+| [app/profile/page.tsx](file:///d:/fr8x-con/app/profile/page.tsx) | Modified | Restored editable **“Company / Legal Entity Name”** field with server-side validation and persistence to `profiles.company_name` via `profileService.updateProfile()`; removed locked immutable company card; audited and relabeled "Operating Department / Logistics Desk" to **“Department / Operational Division”** with contextual examples and profile overview badge. |
+| [lib/server-auth-store.ts](file:///d:/fr8x-con/lib/server-auth-store.ts) | Modified | Added `companyName?: string;` to `ServerUserRecord` interface and ensured company resolution preserves legal entity names. |
+| [lib/auth-guard.ts](file:///d:/fr8x-con/lib/auth-guard.ts) | Modified | Extracted `company` and `company_name` from Supabase JWT session; resolved raw `CMP-` IDs to `user.companyName` or `'SYB INTERNATIONAL'`. |
+| [scripts/test-connection-lifecycle-and-company-fixes.ts](file:///d:/fr8x-con/scripts/test-connection-lifecycle-and-company-fixes.ts) | Created | Standalone Phase 20 verification suite covering 26 automated checks across all 5 requirements. |
+| [scripts/verify-all-gates.ts](file:///d:/fr8x-con/scripts/verify-all-gates.ts) | Modified | Registered Phase 20 as Gate 14 in the master architectural quality gates runner. |
+| [FR8X_USER_SEARCH_ROOT_CAUSE_REPORT.md](file:///d:/fr8x-con/FR8X_USER_SEARCH_ROOT_CAUSE_REPORT.md) | Modified | Added Section 10 detailing root causes, architectural mechanisms, and verification evidence. |
+
+#### 9.2 Verification & Build Receipts
+- `tsc --noEmit`: **0 errors**
+- `scripts/test-connection-lifecycle-and-company-fixes.ts`: **26/26 tests passed** (100%)
+- `npm test`: **14/14 quality gates passed**, **222/222 automated checks passed** with zero regressions.
+- `npm run build`: **Next.js 14 production build compiled successfully**.
+
+

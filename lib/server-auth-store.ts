@@ -119,6 +119,7 @@ export interface ServerUserRecord {
   firstName?: string;
   lastName?: string;
   company: string;
+  companyName?: string;
   companyId: string;
   role: 'company_admin' | 'user' | 'billing_admin';
   status: 'active' | 'blocked' | 'suspended' | 'pending_verification' | 'pending_deletion' | 'deleted';

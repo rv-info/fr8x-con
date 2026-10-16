@@ -165,6 +165,19 @@ export function applySecurityHeaders(res: NextResponse, requestId?: string): Nex
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(), browsing-topics=()'
   );
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://va.vercel-scripts.com https://checkout.razorpay.com`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co https://images.unsplash.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co wss://haarbaqeuuirwkhmefev.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://api.zeptomail.in",
+    "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join('; ');
+  res.headers.set('Content-Security-Policy', csp);
   return res;
 }
 

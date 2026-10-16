@@ -107,19 +107,6 @@ export function SearchConnectionsModal({
     }
   };
 
-  // Determine if the search query matches the current user (self-search)
-  const isSelfSearch = useMemo(() => {
-    if (!currentUser || !searchTerm.trim()) return false;
-    const term = searchTerm.trim().toLowerCase();
-    if (term.length < 2) return false;
-    const nameMatch =
-      (currentUser.displayName || '').toLowerCase().includes(term) ||
-      (currentUser.firstName || '').toLowerCase().includes(term) ||
-      (currentUser.lastName || '').toLowerCase().includes(term);
-    const emailMatch = (currentUser.email || '').toLowerCase().includes(term);
-    const companyMatch = (currentUser.company || '').toLowerCase().includes(term);
-    return Boolean(nameMatch || emailMatch || companyMatch);
-  }, [currentUser, searchTerm]);
 
   // Debounced search on typing or modal opening
   useEffect(() => {
@@ -137,8 +124,21 @@ export function SearchConnectionsModal({
     const connectedUids = new Set(getConnectedUserIds(currentUser.uid).map((id) => id.toLowerCase()));
     const allRequests = getAllConnectionRequests();
 
-    return allMembers
-      .filter((m) => m.uid && m.uid.toLowerCase() !== currentUser.uid.toLowerCase())
+    const seenUids = new Set<string>();
+    const seenEmails = new Set<string>();
+    const deduplicatedMembers = allMembers.filter((m) => {
+      const uidKey = (m.uid || m.id || '').toLowerCase();
+      const emailKey = (m.email || '').trim().toLowerCase();
+      if (!uidKey) return false;
+      if (uidKey === currentUser.uid.toLowerCase()) return false; // Self-exclusion
+      if (seenUids.has(uidKey)) return false;
+      if (emailKey && seenEmails.has(emailKey)) return false;
+      seenUids.add(uidKey);
+      if (emailKey) seenEmails.add(emailKey);
+      return true;
+    });
+
+    return deduplicatedMembers
       .map((candidate) => {
         const { score, percentage, reasons, topBadges } = calculateConnectionAffinity(currentUser, candidate);
         const status = getConnectionStatus(currentUser.uid, candidate.uid);
@@ -354,61 +354,30 @@ export function SearchConnectionsModal({
               Searching maritime enterprise network...
             </div>
           ) : scoredCandidates.length === 0 ? (
-            isSelfSearch ? (
-              <div
-                style={{
-                  padding: '36px 20px',
-                  textAlign: 'center',
-                  background: '#f0fdf4',
-                  borderRadius: '8px',
-                  border: '1.5px dashed #86efac',
-                }}
-              >
-                <UserCheck size={36} color="#16a34a" style={{ margin: '0 auto 10px', display: 'block' }} />
-                <b style={{ fontSize: '14px', color: '#14532d', display: 'block', marginBottom: '4px' }}>
-                  You searched for your own account ({currentUser.displayName || currentUser.firstName || 'Current User'})
-                </b>
-                <p style={{ fontSize: '12px', color: '#166534', margin: '0 0 14px 0', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto' }}>
-                  Self-connection is excluded by design so you can discover and connect with other freight forwarders, liners, and shippers.
-                </p>
+            <div
+              style={{
+                padding: '40px 20px',
+                textAlign: 'center',
+                background: '#f8fafc',
+                borderRadius: '8px',
+                border: '1px dashed #cbd5e1',
+              }}
+            >
+              <Search size={32} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
+              <b style={{ fontSize: '14px', color: '#1e293b', display: 'block', marginBottom: '4px' }}>
+                No matching members found. Try another name or company.
+              </b>
+              {searchTerm && (
                 <button
                   type="button"
-                  className="btn primary sm"
+                  className="btn secondary sm"
                   onClick={() => setSearchTerm('')}
-                  style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#099889' }}
+                  style={{ margin: '12px auto 0', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                  Clear Search & View All Candidates
+                  Clear Search Filter
                 </button>
-              </div>
-            ) : (
-              <div
-                style={{
-                  padding: '40px 20px',
-                  textAlign: 'center',
-                  background: '#f8fafc',
-                  borderRadius: '8px',
-                  border: '1px dashed #cbd5e1',
-                }}
-              >
-                <Search size={32} color="#94a3b8" style={{ margin: '0 auto 10px', display: 'block' }} />
-                <b style={{ fontSize: '14px', color: '#1e293b', display: 'block', marginBottom: '4px' }}>
-                  No connection candidates found
-                </b>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 12px 0' }}>
-                  Try searching with other terms like specific liner companies, universities, or port hubs.
-                </p>
-                {searchTerm && (
-                  <button
-                    type="button"
-                    className="btn secondary sm"
-                    onClick={() => setSearchTerm('')}
-                    style={{ margin: '0 auto', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    Reset Search Filter
-                  </button>
-                )}
-              </div>
-            )
+              )}
+            </div>
           ) : (
             scoredCandidates.map(({ user: candidate, score, percentage, reasons, topBadges, status }) => {
               const cName = candidate.displayName || `${candidate.firstName || ''} ${candidate.lastName || ''}`.trim() || candidate.email;

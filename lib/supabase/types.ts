@@ -117,6 +117,7 @@ export interface ProfileRow {
   aeo_tier:                  string | null;
   association_name:          string | null;
   association_id:            string | null;
+  slug?:                     string | null;
   created_at:                string;
   updated_at:                string;
   last_login_at:             string | null;

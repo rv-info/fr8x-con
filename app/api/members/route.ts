@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
 
     const callerUid = user.uid;
     const seenUids = new Set<string>();
+    const seenEmails = new Set<string>();
     const allRecords: any[] = [];
 
     // 1. Authoritative: Fetch profiles from Supabase PostgreSQL
@@ -34,7 +35,14 @@ export async function GET(req: NextRequest) {
       if (!dbError && Array.isArray(dbRows)) {
         for (const row of dbRows) {
           if (!row.id) continue;
-          seenUids.add(row.id.toLowerCase());
+          const uidKey = row.id.toLowerCase();
+          const emailKey = (row.email || '').trim().toLowerCase();
+          if (seenUids.has(uidKey)) continue;
+          if (emailKey && seenEmails.has(emailKey)) continue;
+
+          seenUids.add(uidKey);
+          if (emailKey) seenEmails.add(emailKey);
+
           allRecords.push({
             uid: row.id,
             id: row.id,
@@ -72,12 +80,20 @@ export async function GET(req: NextRequest) {
       console.warn('[API/Members] Note: PostgreSQL profiles query deferred, using store fallback:', dbErr);
     }
 
-    // 2. Secondary: Merge in-memory serverSecurityStore accounts
+    // 2. Secondary: Merge dynamically registered in-memory accounts (for active sessions / unit tests)
+    // Strictly deduplicated by stable UID and email to prevent duplicate cards
     try {
       const serverUsers = serverSecurityStore.getAllRegisteredUsers();
       for (const u of serverUsers) {
-        if (!u.uid || seenUids.has(u.uid.toLowerCase())) continue;
-        seenUids.add(u.uid.toLowerCase());
+        if (!u.uid) continue;
+        const uidKey = u.uid.toLowerCase();
+        const emailKey = (u.email || '').trim().toLowerCase();
+        if (seenUids.has(uidKey)) continue;
+        if (emailKey && seenEmails.has(emailKey)) continue;
+
+        seenUids.add(uidKey);
+        if (emailKey) seenEmails.add(emailKey);
+
         allRecords.push({
           uid: u.uid,
           id: u.uid,
@@ -112,42 +128,8 @@ export async function GET(req: NextRequest) {
       }
     } catch {}
 
-    // 3. Fallback: Seeded directory members if database is sparse
-    try {
-      const seeded = peopleDirectoryStore.getAllMembers();
-      for (const s of seeded) {
-        if (!s.id || seenUids.has(s.id.toLowerCase())) continue;
-        seenUids.add(s.id.toLowerCase());
-        allRecords.push({
-          uid: s.id,
-          id: s.id,
-          email: s.email,
-          displayName: s.display_name || s.full_name || 'FR8X Member',
-          firstName: s.first_name || (s.display_name ? s.display_name.split(' ')[0] : ''),
-          lastName: s.last_name || '',
-          company: s.company_name || s.company || 'Enterprise Logistics',
-          companyId: '',
-          designation: s.designation || s.headline || 'Logistics Specialist',
-          role: 'freight_forwarder',
-          city: s.city || 'Mumbai',
-          state: s.state || '',
-          country: s.country || 'India',
-          location: s.location || `${s.city || 'Mumbai'}, ${s.country || 'India'}`,
-          formattedAddress: '',
-          timezone: 'Asia/Kolkata',
-          isVerified: Boolean(s.is_verified),
-          hasGoldenTick: Boolean(s.has_golden_tick),
-          plan: 'professional',
-          avatarUrl: s.avatar_url || null,
-          companyLogoUrl: null,
-          experiences: s.experiences || [],
-          educations: [],
-          certifications: [],
-          contacts: [],
-          isOnline: true,
-        });
-      }
-    } catch {}
+    // Note: No fabricated or seeded directory records are ever injected in production.
+    // Every displayed record must come from verified, authorized database records or legitimately registered accounts.
 
     // 4. Map to sanitized public profiles — strip PII except for the caller's own record
     const sanitized = allRecords.map((u) => {

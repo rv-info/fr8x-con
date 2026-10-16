@@ -122,7 +122,7 @@ export function authenticateGodfatherOperator(req: NextRequest): {
 function extractSupabaseAuthSession(
   req: NextRequest,
   bearerTokenCandidate?: string
-): { uid: string; email: string; role?: string; companyId?: string; token?: string } | null {
+): { uid: string; email: string; role?: string; companyId?: string; company?: string; token?: string } | null {
   try {
     // 1. Check Bearer token if it looks like a standard Supabase JWT (3 parts separated by dot)
     if (bearerTokenCandidate && bearerTokenCandidate.split('.').length === 3) {
@@ -136,6 +136,7 @@ function extractSupabaseAuthSession(
           email: payload.email || '',
           role: payload.user_metadata?.role || payload.role || 'user',
           companyId: payload.user_metadata?.companyId || payload.user_metadata?.company_id || '',
+          company: payload.user_metadata?.company || payload.user_metadata?.company_name || payload.user_metadata?.companyName || '',
           token: bearerTokenCandidate,
         };
       }
@@ -185,6 +186,7 @@ function extractSupabaseAuthSession(
       email: payload.email || '',
       role: payload.user_metadata?.role || payload.role || 'user',
       companyId: payload.user_metadata?.companyId || payload.user_metadata?.company_id || '',
+      company: payload.user_metadata?.company || payload.user_metadata?.company_name || payload.user_metadata?.companyName || '',
       token: accessToken,
     };
   } catch {
@@ -219,6 +221,7 @@ export function authenticateUserSession(
   let tokenEmail: string | undefined;
   let tokenRole: string | undefined;
   let tokenCompanyId: string | undefined;
+  let tokenCompany: string | undefined;
 
   // 1. Check fr8x_session HMAC-SHA256 signed token
   const isSignedTokenCandidate =
@@ -233,6 +236,8 @@ export function authenticateUserSession(
       email: string;
       role: string;
       companyId?: string;
+      company?: string;
+      companyName?: string;
       displayName?: string;
       expiresAt?: string;
     }>(token!);
@@ -255,6 +260,7 @@ export function authenticateUserSession(
       tokenEmail = verified.payload.email;
       tokenRole = verified.payload.role;
       tokenCompanyId = verified.payload.companyId;
+      tokenCompany = verified.payload.company || verified.payload.companyName;
     }
   }
 
@@ -266,6 +272,7 @@ export function authenticateUserSession(
       tokenEmail = sbSession.email;
       tokenRole = sbSession.role;
       tokenCompanyId = sbSession.companyId;
+      tokenCompany = sbSession.company;
       if (sbSession.token) token = sbSession.token;
     }
   }
@@ -290,18 +297,27 @@ export function authenticateUserSession(
     userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
   }
   if (!userRecord && uid && tokenEmail) {
+    const resolvedCompany = (tokenCompany && !tokenCompany.startsWith('CMP-'))
+      ? tokenCompany
+      : 'SYB INTERNATIONAL';
     const updateRes = serverSecurityStore.updateUserProfile(uid, {
       uid,
       email: tokenEmail,
       displayName: tokenEmail.split('@')[0] || 'Enterprise Member',
-      company: tokenCompanyId || 'Enterprise Legal Entity',
-      companyId: tokenCompanyId,
+      company: resolvedCompany,
+      companyName: resolvedCompany,
+      companyId: tokenCompanyId || 'CMP-75055',
       role: (tokenRole as any) || 'user',
       status: 'active',
       email_verified: true,
       isVerified: true,
     });
     userRecord = updateRes.user;
+  }
+
+  if (userRecord && userRecord.company && /^CMP-\d+$/i.test(userRecord.company)) {
+    if (!userRecord.companyId) userRecord.companyId = userRecord.company;
+    userRecord.company = userRecord.companyName || 'SYB INTERNATIONAL';
   }
 
   if (!userRecord || userRecord.status === 'blocked') {

@@ -6,11 +6,12 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Rss,
-  BarChart3,
-  Gavel,
   Globe2,
+  Gavel,
+  BarChart3,
+  Network,
   Briefcase,
-  UserCheck,
+  User,
 } from 'lucide-react';
 
 export function MobileNav() {
@@ -19,16 +20,19 @@ export function MobileNav() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/feeds', label: 'Feeds', icon: Rss },
-    { href: '/rates', label: 'Rates', icon: BarChart3 },
-    { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/nexus', label: 'Nexus', icon: Globe2 },
+    { href: '/auctions', label: 'Auctions', icon: Gavel },
+    { href: '/rates', label: 'Rates', icon: BarChart3 },
+    { href: '/connections', label: 'Network', icon: Network },
     { href: '/jobs', label: 'Jobs', icon: Briefcase },
-    { href: '/profile', label: 'Profile', icon: UserCheck },
+    { href: '/profile', label: 'Profile', icon: User },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
+    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/');
+    if (href === '/people') return pathname === '/people' || pathname.startsWith('/people/');
     return pathname === href;
   };
 

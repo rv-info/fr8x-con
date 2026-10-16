@@ -16,6 +16,7 @@ export function mapRowToProfile(row: any): UserProfile {
   const nameParts = (row.display_name || '').split(' ');
   return {
     uid: row.id,
+    slug: row.slug || undefined,
     email: row.email,
     firstName: row.first_name || nameParts[0] || '',
     lastName: row.last_name || nameParts.slice(1).join(' ') || '',

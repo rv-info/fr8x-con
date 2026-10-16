@@ -40,6 +40,7 @@ import {
   postDbService,
   auctionDbService,
   rateDbService,
+  notificationDbService,
 } from '@/lib/supabase/db';
 import { createClient } from '@/lib/supabase/client';
 import { eventBus } from '@/lib/intelligence/events';
@@ -751,6 +752,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
               }
             })
             .catch(() => {});
+
+          // Fetch authoritative user notifications from Supabase PostgreSQL
+          if (user?.uid) {
+            notificationDbService.getNotifications(user.uid)
+              .then((dbNotifs) => {
+                if (Array.isArray(dbNotifs) && dbNotifs.length > 0) {
+                  const mapped: AppNotification[] = dbNotifs.map((n: any) => ({
+                    id: String(n.id),
+                    title: n.title || 'Notification',
+                    desc: n.description || n.message || '',
+                    time: n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+                    createdAt: n.created_at || new Date().toISOString(),
+                    read: Boolean(n.read),
+                    type: (n.type as any) || 'network',
+                    category: (n.category as any) || 'platform',
+                    targetUrl: n.target_url || n.link || undefined,
+                    relatedId: n.related_id || undefined,
+                    actionLabel: n.metadata?.actionLabel || (n.type?.includes('connection') ? 'View Connection' : undefined),
+                  }));
+                  setNotifications(mapped);
+                  try { localStorage.setItem('fr8x_notifications', JSON.stringify(mapped)); } catch {}
+                }
+              })
+              .catch(() => {});
+          }
         };
 
 
@@ -780,6 +806,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
+    notificationDbService.markAsRead(notifId).catch(() => {});
   };
 
   const markAllNotificationsRead = () => {
@@ -788,6 +815,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
+    if (user?.uid) {
+      const supabase = createClient();
+      supabase.from('notifications').update({ read: true }).eq('user_id', user.uid).catch(() => {});
+    }
     toast('All notifications marked as read.');
   };
 

@@ -316,14 +316,19 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
       )}
 
       <header className="top">
-        {/* Mobile hamburger */}
-        <button
-          className="mobile-menu-btn"
-          onClick={onMobileMenuClick}
-          aria-label="Open navigation menu"
+        {/* Mobile FR8X brand icon linked to homepage */}
+        <Link
+          href="/"
+          className="mobile-brand-icon-link"
+          aria-label="FR8X Home"
+          title="FR8X Home"
         >
-          <Menu size={18} />
-        </button>
+          <img
+            src="/FR8X ICON.png"
+            alt="FR8X"
+            className="mobile-brand-icon-img"
+          />
+        </Link>
 
         <div className="crumb">
           <span className="crumb-prefix">Workspace / </span><b>{activePageTitle}</b>

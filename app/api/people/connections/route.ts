@@ -59,7 +59,7 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
 
 // ── GET — list connections and requests ───────────────────────────────────────
 const GetQuerySchema = z.object({
-  tab:   z.enum(['connections', 'incoming', 'outgoing', 'blocked']).optional().default('connections'),
+  tab:   z.enum(['connections', 'incoming', 'outgoing', 'blocked', 'withdrawn']).optional().default('connections'),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   cursor: z.string().optional(),
 });
@@ -162,6 +162,25 @@ export async function GET(req: NextRequest) {
         if (!error && Array.isArray(data)) {
           return NextResponse.json({ success: true, tab, data });
         }
+      } else if (tab === 'withdrawn') {
+        const { data, error } = await adminClient
+          .from('connection_requests')
+          .select(`
+            id, message, created_at, updated_at, status,
+            profiles!connection_requests_recipient_id_fkey (
+              id, display_name, first_name, last_name, designation,
+              company_name, city, country, avatar_url,
+              is_verified, has_golden_tick
+            )
+          `)
+          .eq('requester_id', userId)
+          .in('status', ['cancelled', 'withdrawn'])
+          .order('updated_at', { ascending: false })
+          .limit(limit);
+
+        if (!error && Array.isArray(data)) {
+          return NextResponse.json({ success: true, tab, data });
+        }
       } else if (tab === 'blocked') {
         const { data, error } = await adminClient
           .from('user_blocks')
@@ -227,6 +246,17 @@ export async function GET(req: NextRequest) {
 
   if (tab === 'outgoing') {
     const list = peopleDirectoryStore.getOutgoing(userId).map((r) => ({
+      id: r.id,
+      message: r.message,
+      created_at: r.created_at,
+      status: r.status,
+      profiles: normalizeProfile(r.recipient),
+    }));
+    return NextResponse.json({ success: true, tab, data: list });
+  }
+
+  if (tab === 'withdrawn') {
+    const list = peopleDirectoryStore.getWithdrawn(userId).map((r) => ({
       id: r.id,
       message: r.message,
       created_at: r.created_at,

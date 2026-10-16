@@ -77,6 +77,7 @@ export const robotsPolicy = {
         '/',
         '/auctions',
         '/rates',
+        '/people',
         '/directory',
         '/about',
         '/privacy',

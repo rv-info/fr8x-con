@@ -367,8 +367,16 @@ export async function GET(req: NextRequest) {
     results = fallbackResults as unknown as Record<string, unknown>[];
   }
 
-  // 6. Sanitize: ensure canonical contract fields and strip restricted data
-  const sanitized = results.map(sanitizeRow);
+  // 6. Deduplicate by unique person ID and sanitize
+  const seenMemberIds = new Set<string>();
+  const deduplicatedResults = results.filter((r) => {
+    const memId = String(r.id || r.user_id || '').toLowerCase();
+    if (!memId || seenMemberIds.has(memId)) return false;
+    seenMemberIds.add(memId);
+    return true;
+  });
+
+  const sanitized = deduplicatedResults.map(sanitizeRow);
 
   // 7. Pagination calculation
   const hasMore = sanitized.length === params.limit;

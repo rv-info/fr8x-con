@@ -14,7 +14,7 @@ import {
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ConnectionButton } from '@/components/people/ConnectionButton';
 
-type Tab = 'connections' | 'incoming' | 'outgoing' | 'blocked';
+type Tab = 'connections' | 'incoming' | 'outgoing' | 'withdrawn' | 'blocked';
 
 interface ProfileSnippet {
   id: string;
@@ -217,11 +217,52 @@ function OutgoingRow({ item, onAction }: { item: RequestItem; onAction: (id: str
           className="conn-action-btn danger"
           onClick={handleCancel}
           disabled={cancelling}
-          aria-label={`Cancel request to ${name}`}
+          aria-label={`Withdraw request to ${name}`}
         >
           {cancelling ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />}
-          Cancel
+          Withdraw
         </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Withdrawn request row ──────────────────────────────────────────────────────
+function WithdrawnRow({ item }: { item: RequestItem }) {
+  const p    = item.profiles;
+  const name = getDisplayName(p);
+
+  return (
+    <div className="conn-row" role="listitem">
+      <Link href={`/people/${p.id}`} className="conn-row-avatar-link" aria-label={`View ${name}'s profile`}>
+        <UserAvatar name={name} avatarUrl={p.avatar_url ?? undefined} size={44} />
+      </Link>
+      <div className="conn-row-body">
+        <Link href={`/people/${p.id}`} className="conn-row-name">{name}</Link>
+        <p className="conn-row-sub">{getSubline(p)}</p>
+        {item.message && <p className="conn-row-message">&ldquo;{item.message}&rdquo;</p>}
+        <p className="conn-row-date">
+          Withdrawn {new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </p>
+      </div>
+      <div className="conn-row-actions">
+        <span
+          className="conn-status-badge withdrawn"
+          style={{
+            color: '#64748b',
+            background: '#f1f5f9',
+            border: '1px solid #cbd5e1',
+            padding: '3px 8px',
+            borderRadius: '4px',
+            fontSize: '11px',
+            fontWeight: 600,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
+        >
+          <RotateCcw size={11} aria-hidden="true" /> Withdrawn
+        </span>
       </div>
     </div>
   );
@@ -266,9 +307,10 @@ function BlockedRow({ item, onAction }: { item: BlockItem; onAction: (id: string
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 const TAB_CONFIG: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'connections', label: 'Connections',       icon: Users    },
-  { id: 'incoming',   label: 'Incoming Requests',  icon: UserPlus },
-  { id: 'outgoing',   label: 'Sent Requests',      icon: Clock    },
+  { id: 'connections', label: 'My Contacts',         icon: Users    },
+  { id: 'incoming',   label: 'Received Requests',   icon: UserPlus },
+  { id: 'outgoing',   label: 'Sent Requests',       icon: Clock    },
+  { id: 'withdrawn',  label: 'Withdrawn Requests',  icon: RotateCcw },
   { id: 'blocked',    label: 'Blocked',             icon: Shield   },
 ];
 
@@ -387,6 +429,13 @@ export default function ConnectionsPage() {
                 <Link href="/people" className="btn-primary">Find People</Link>
               </>
             )}
+            {activeTab === 'withdrawn' && (
+              <>
+                <div className="connections-empty-icon" aria-hidden="true">↩️</div>
+                <h2>No withdrawn requests</h2>
+                <p>You have not withdrawn any connection requests.</p>
+              </>
+            )}
             {activeTab === 'blocked' && (
               <>
                 <div className="connections-empty-icon" aria-hidden="true">🚫</div>
@@ -407,6 +456,9 @@ export default function ConnectionsPage() {
             ))}
             {activeTab === 'outgoing' && (data as RequestItem[]).map((item) => (
               <OutgoingRow key={item.id} item={item} onAction={handleRemoveItem} />
+            ))}
+            {activeTab === 'withdrawn' && (data as RequestItem[]).map((item) => (
+              <WithdrawnRow key={item.id} item={item} />
             ))}
             {activeTab === 'blocked' && (data as BlockItem[]).map((item) => (
               <BlockedRow key={item.id} item={item} onAction={handleRemoveItem} />

@@ -17,6 +17,7 @@ import {
   ExternalLink,
   ShieldCheck,
   X,
+  Users,
 } from 'lucide-react';
 import { UserProfile } from '@/lib/types';
 import { GoldenTick } from '@/components/ui/GoldenTick';
@@ -157,20 +158,130 @@ export function DailyRecommendationsWidget({
   // Filter out dismissed cards
   const visibleRecs = recommendations.filter((r) => !dismissedUids.has(r.user.uid));
 
-  if (loading && candidates.length === 0) {
-    return null;
-  }
-
-  if (visibleRecs.length === 0) {
-    return null;
-  }
-
   // Today's formatted date string
   const todayStr = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   }).format(new Date());
+
+  if (loading && candidates.length === 0) {
+    return null;
+  }
+
+  // Truthful empty state: Render clean, informative card when no qualifying recommendations exist
+  if (visibleRecs.length === 0) {
+    return (
+      <div
+        className="card"
+        style={{
+          marginBottom: '16px',
+          padding: '16px',
+          background: 'linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)',
+          border: '1px solid #bfdbfe',
+          borderRadius: '10px',
+          boxShadow: '0 2px 10px rgba(17, 104, 215, 0.04)',
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '8px',
+            marginBottom: '14px',
+            paddingBottom: '10px',
+            borderBottom: '1px solid #e2e8f0',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #1168d7 0%, #099889 100%)',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 6px rgba(17, 104, 215, 0.25)',
+              }}
+            >
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <b style={{ fontSize: '13.5px', color: 'var(--fr8x-text)', letterSpacing: '-0.01em' }}>
+                  Daily Recommended Connections
+                </b>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    borderRadius: '12px',
+                    background: '#dbeafe',
+                    color: '#1d4ed8',
+                    border: '1px solid #bfdbfe',
+                  }}
+                >
+                  {todayStr}
+                </span>
+              </div>
+              <span style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block', marginTop: '1px' }}>
+                Smart affinity matches across Work, Ex-Companies, Port Hubs, Colleges &amp; Certifications
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn secondary sm"
+            onClick={onOpenSearchModal}
+            style={{
+              fontSize: '11px',
+              fontWeight: 600,
+              padding: '5px 12px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+            }}
+          >
+            <Search size={12} />
+            Search All Connections
+          </button>
+        </div>
+
+        <div
+          style={{
+            padding: '24px 16px',
+            textAlign: 'center',
+            background: '#ffffff',
+            border: '1px dashed #cbd5e1',
+            borderRadius: '8px',
+          }}
+        >
+          <Users size={32} style={{ color: '#94a3b8', margin: '0 auto 8px', display: 'block' }} />
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#1e293b', marginBottom: '4px' }}>
+            No new connection recommendations available today
+          </div>
+          <p style={{ fontSize: '12px', color: '#64748b', maxWidth: '440px', margin: '0 auto 14px', lineHeight: 1.5 }}>
+            Smart recommendations appear here based on verified freight peers matching your trade lanes, active corridors, and company profiles.
+          </p>
+          <button
+            type="button"
+            className="btn primary sm"
+            onClick={onOpenSearchModal}
+            style={{ fontSize: '11.5px', fontWeight: 600, padding: '6px 14px' }}
+          >
+            <Search size={13} style={{ marginRight: '6px' }} /> Discover Platform Members
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
