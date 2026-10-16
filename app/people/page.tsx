@@ -17,6 +17,7 @@ import { LayoutGrid, List, Users } from 'lucide-react';
 import { SearchFilters, PeopleSearchFilters } from '@/components/people/SearchFilters';
 import { PersonCard, PersonCardSkeleton, PersonCardData } from '@/components/people/PersonCard';
 import { ConnectionStatus } from '@/components/people/ConnectionButton';
+import { RecommendedSection } from '@/components/people/RecommendedSection';
 
 const DEBOUNCE_MS = 350;
 const PAGE_SIZE   = 20;
@@ -243,6 +244,9 @@ export default function PeoplePage() {
         onChange={handleFiltersChange}
         disabled={loading}
       />
+
+      {/* People You May Know recommendations tray */}
+      {!filters.q.trim() && <RecommendedSection />}
 
       {/* Live region for screen readers */}
       <div aria-live="polite" aria-atomic="true" className="sr-only">

@@ -2209,6 +2209,20 @@ export default function RegisterPage() {
                 />
                 <span style={{ fontSize: '12px', lineHeight: 1.5, color: '#1e293b' }}>
                   I confirm legal authority to represent <b>{companyName || 'this corporate entity'}</b> and agree to the{' '}
+                  <a
+                    href="https://con.fr8x.in/terms"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      color: '#0284c7',
+                      fontWeight: 700,
+                      textDecoration: 'underline',
+                      fontSize: '12px',
+                      display: 'inline',
+                    }}
+                  >
+                    FR8X Master Terms of Service &amp; Commercial Agreement
+                  </a>{' '}
                   <button
                     type="button"
                     onClick={(e) => {
@@ -2219,15 +2233,16 @@ export default function RegisterPage() {
                       background: 'none',
                       border: 'none',
                       padding: 0,
-                      color: '#0284c7',
-                      fontWeight: 700,
-                      textDecoration: 'underline',
+                      color: '#0369a1',
+                      fontWeight: 600,
+                      textDecoration: 'none',
                       cursor: 'pointer',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       display: 'inline',
+                      marginLeft: '4px',
                     }}
                   >
-                    FR8X Master Terms of Service &amp; Commercial Agreement [View Terms →]
+                    [Preview Terms Modal ↗]
                   </button>
                   .
                 </span>
@@ -2245,7 +2260,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               className="btn primary"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !termsAccepted}
               style={{
                 width: '100%',
                 height: '42px',

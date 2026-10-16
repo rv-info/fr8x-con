@@ -15,6 +15,8 @@ import { authenticateUserSession } from '@/lib/auth-guard';
 import { createClient as createSupabaseServerClient, createAdminClient, getDbClient } from '@/lib/supabase/server';
 import { redis } from '@/lib/redis';
 import { peopleDirectoryStore } from '@/lib/people-directory';
+import { outboxService } from '@/lib/outbox/service';
+import { safeCache } from '@/lib/cache/safe-cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -435,6 +437,48 @@ export async function POST(req: NextRequest) {
         code === 'BLOCKED'      ? 403 :
         code === 'SELF_REQUEST' ? 400 : 409;
       return NextResponse.json(res, { status });
+    }
+
+    // Record transactional outbox event & invalidate affected user caches
+    if (action.action === 'send') {
+      const targetId = action.target_id;
+      const reqId = (res?.request_id as string) || `req_${Date.now()}`;
+      safeCache.invalidateUser(userId);
+      safeCache.invalidateUser(targetId);
+      outboxService.recordEvent({
+        eventType: 'connection.requested',
+        aggregateType: 'connection',
+        aggregateId: reqId,
+        payload: { sender_id: userId, recipient_id: targetId, message: action.message },
+        idempotencyKey: `conn_req:${userId}:${targetId}`,
+      }).catch(() => {});
+    } else if (action.action === 'accept') {
+      safeCache.invalidateUser(userId);
+      outboxService.recordEvent({
+        eventType: 'connection.accepted',
+        aggregateType: 'connection',
+        aggregateId: action.request_id,
+        payload: { recipient_id: userId, request_id: action.request_id },
+        idempotencyKey: `conn_acc:${action.request_id}`,
+      }).catch(() => {});
+    } else if (action.action === 'remove') {
+      safeCache.invalidateUser(userId);
+      safeCache.invalidateUser(action.target_id);
+      outboxService.recordEvent({
+        eventType: 'connection.removed',
+        aggregateType: 'connection',
+        aggregateId: `${userId}:${action.target_id}`,
+        payload: { user_a: userId, user_b: action.target_id },
+      }).catch(() => {});
+    } else if (action.action === 'block') {
+      safeCache.invalidateUser(userId);
+      safeCache.invalidateUser(action.target_id);
+      outboxService.recordEvent({
+        eventType: 'user.blocked',
+        aggregateType: 'user',
+        aggregateId: action.target_id,
+        payload: { blocker_id: userId, blocked_id: action.target_id },
+      }).catch(() => {});
     }
 
     return NextResponse.json(res ?? { success: true });

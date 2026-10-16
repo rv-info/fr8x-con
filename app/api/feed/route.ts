@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPosts, getPostById, savePost, deletePost } from '@/lib/db/posts';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 import { redis } from '@/lib/redis';
+import { timelineEngine } from '@/lib/feed/timeline';
+import { outboxService } from '@/lib/outbox/service';
+import { safeCache } from '@/lib/cache/safe-cache';
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });
@@ -12,18 +15,31 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const rawPosts = await getPosts();
-    // Deduplicate posts with same author and text posted within 5 minutes
-    const seenSignatures = new Set<string>();
-    const deduplicated = [];
-    for (const p of rawPosts) {
-      const sig = `${p.author_id}::${(p.content || '').trim().toLowerCase()}::${(p.created_at || '').slice(0, 16)}`;
-      if (seenSignatures.has(sig)) continue;
-      seenSignatures.add(sig);
-      deduplicated.push(p);
-    }
+    const { searchParams } = new URL(req.url);
+    const limit = Math.min(Number(searchParams.get('limit') || 25), 50);
+    const cursor = searchParams.get('cursor');
+    const surface = (searchParams.get('surface') as any) || 'home';
+    const viewerId = userAuth.user?.uid || gfAuth.operator?.uid || '';
 
-    return NextResponse.json({ success: true, posts: deduplicated }, { status: 200 });
+    const rawPosts = await getPosts();
+
+    const timeline = timelineEngine.generateTimeline(rawPosts as any, {
+      viewerId,
+      viewerRole: userAuth.user?.role || gfAuth.operator?.role,
+      viewerCompany: userAuth.user?.companyId,
+      surface,
+      limit,
+      cursor,
+    });
+
+    return NextResponse.json({
+      success: true,
+      posts: timeline.posts,
+      count: timeline.count,
+      totalCandidates: timeline.totalCandidates,
+      nextCursor: timeline.nextCursor,
+      hasMore: timeline.hasMore,
+    }, { status: 200 });
   } catch (err: any) {
     console.error('[API/feed] GET error:', err);
     return NextResponse.json(
@@ -87,6 +103,16 @@ export async function POST(req: NextRequest) {
     }
 
     const saved = await savePost(body);
+
+    // Invalidate feed cache & emit outbox event
+    safeCache.invalidateFeed();
+    outboxService.recordEvent({
+      eventType: 'post.created',
+      aggregateType: 'post',
+      aggregateId: String(saved.id),
+      payload: { post_id: saved.id, author_uid: callerUid },
+    }).catch(() => {});
+
     return NextResponse.json({ success: true, post: saved }, { status: 200 });
   } catch (err: any) {
     console.error('[API/feed] POST error:', err);
@@ -136,6 +162,14 @@ export async function DELETE(req: NextRequest) {
     }
 
     const deleted = await deletePost(id);
+    safeCache.invalidateFeed();
+    outboxService.recordEvent({
+      eventType: 'post.deleted',
+      aggregateType: 'post',
+      aggregateId: String(id),
+      payload: { post_id: id },
+    }).catch(() => {});
+
     return NextResponse.json({ success: deleted }, { status: 200 });
   } catch (err: any) {
     console.error('[API/feed] DELETE error:', err);
