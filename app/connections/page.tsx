@@ -19,10 +19,14 @@ type Tab = 'connections' | 'incoming' | 'outgoing' | 'blocked';
 interface ProfileSnippet {
   id: string;
   display_name: string | null;
+  full_name?: string | null;
   first_name: string | null;
   last_name: string | null;
+  headline?: string | null;
   designation: string | null;
+  company?: string | null;
   company_name: string | null;
+  location?: string | null;
   city: string | null;
   country: string | null;
   avatar_url: string | null;
@@ -51,17 +55,27 @@ interface BlockItem {
   profiles: ProfileSnippet;
 }
 
-function getDisplayName(p: ProfileSnippet) {
+function getDisplayName(p?: ProfileSnippet | null) {
+  if (!p) return 'FR8X Member';
+  if (p.full_name?.trim()) return p.full_name.trim();
   if (p.display_name?.trim()) return p.display_name.trim();
   const full = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim();
   return full || 'FR8X Member';
 }
 
-function getSubline(p: ProfileSnippet) {
-  return [p.designation, p.company_name].filter(Boolean).join(' · ');
+function getSubline(p?: ProfileSnippet | null) {
+  if (!p) return '';
+  if (p.headline?.trim()) return p.headline.trim();
+  const parts: string[] = [];
+  if (p.designation) parts.push(p.designation);
+  const comp = p.company || p.company_name;
+  if (comp) parts.push(comp);
+  return parts.join(' · ');
 }
 
-function getLocation(p: ProfileSnippet) {
+function getLocation(p?: ProfileSnippet | null) {
+  if (!p) return '';
+  if (p.location?.trim()) return p.location.trim();
   return [p.city, p.country].filter(Boolean).join(', ');
 }
 

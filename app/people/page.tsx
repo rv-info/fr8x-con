@@ -25,11 +25,16 @@ type ViewMode = 'card' | 'list';
 
 interface SearchResponse {
   success:    boolean;
-  results:    PersonCardData[];
-  count:      number;
-  hasMore:    boolean;
-  nextCursor: string | null;
-  error?:     string;
+  data?:      PersonCardData[];
+  results?:   PersonCardData[];
+  count?:     number;
+  hasMore?:   boolean;
+  nextCursor?: string | null;
+  pagination?: {
+    nextCursor: string | null;
+    hasMore: boolean;
+  };
+  error?:     string | { code?: string; message?: string };
   code?:      string;
 }
 
@@ -74,10 +79,10 @@ export default function PeoplePage() {
   const abortRef     = useRef<AbortController | null>(null);
   const loadMoreRef  = useRef<HTMLDivElement | null>(null);
 
-  // Determine if there's enough criteria to actually search
+  // Determine if there's active filter criteria
   const hasCriteria = useMemo(() => {
     return (
-      filters.q.trim().length >= 2 ||
+      filters.q.trim().length >= 1 ||
       !!filters.country || !!filters.city || !!filters.industry ||
       !!filters.company || !!filters.skills || !!filters.verified
     );
@@ -85,12 +90,6 @@ export default function PeoplePage() {
 
   // Core search function
   const doSearch = useCallback(async (searchFilters: PeopleSearchFilters, append = false) => {
-    if (!hasCriteria && !append) {
-      setResults([]);
-      setSearched(false);
-      return;
-    }
-
     // Cancel any in-flight request
     if (abortRef.current) abortRef.current.abort();
     abortRef.current = new AbortController();
@@ -117,18 +116,17 @@ export default function PeoplePage() {
       const data: SearchResponse = await res.json();
 
       if (!res.ok || !data.success) {
-        if (data.code === 'NO_SEARCH_CRITERIA') {
-          setSearched(false);
-          setResults([]);
-        } else {
-          setError(data.error ?? 'Search failed. Please try again.');
-        }
+        const errMsg = typeof data.error === 'object' && data.error !== null
+          ? data.error.message || 'Search failed. Please try again.'
+          : (typeof data.error === 'string' ? data.error : 'Search failed. Please try again.');
+        setError(errMsg);
         return;
       }
 
-      const rows = (data.results ?? []).map((r) => ({
+      const rawRows = data.data ?? data.results ?? [];
+      const rows = rawRows.map((r) => ({
         ...r,
-        connection_status: (r.connection_status ?? 'none') as ConnectionStatus,
+        connection_status: (r.connection_status ?? 'not_connected') as ConnectionStatus,
         skills: Array.isArray(r.skills)
           ? r.skills
           : (r.skills && typeof r.skills === 'object')
@@ -136,16 +134,20 @@ export default function PeoplePage() {
             : [],
       }));
 
+      const hasMoreVal = data.pagination?.hasMore ?? data.hasMore ?? false;
+      const nextCursorVal = data.pagination?.nextCursor ?? data.nextCursor ?? null;
+      const countVal = data.count ?? rawRows.length;
+
       if (append) {
         setResults((prev) => [...prev, ...rows]);
       } else {
         setResults(rows);
-        setTotal(data.count);
+        setTotal(countVal);
         setSearched(true);
       }
 
-      setHasMore(data.hasMore);
-      setCursor(data.nextCursor);
+      setHasMore(hasMoreVal);
+      setCursor(nextCursorVal);
     } catch (e: unknown) {
       if (e instanceof DOMException && e.name === 'AbortError') return;
       setError('Search failed. Please try again.');
@@ -153,7 +155,13 @@ export default function PeoplePage() {
       setLoading(false);
       setLoadMore(false);
     }
-  }, [cursor, hasCriteria]);
+  }, [cursor]);
+
+  // Initial browse query on mount for universal discovery
+  useEffect(() => {
+    doSearch({ q: '' }, false);
+  }, []);
+
 
   // Debounced search trigger
   const handleFiltersChange = useCallback((newFilters: PeopleSearchFilters) => {

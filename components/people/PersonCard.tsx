@@ -16,11 +16,15 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 export interface PersonCardData {
   id:               string;
   display_name:     string | null;
+  full_name?:       string | null;
   first_name:       string | null;
   last_name:        string | null;
+  headline?:        string | null;
   designation:      string | null;
   position:         string | null;
+  company?:         string | null;
   company_name:     string | null;
+  location?:        string | null;
   city:             string | null;
   country:          string | null;
   avatar_url:       string | null;
@@ -39,19 +43,23 @@ interface PersonCardProps {
 }
 
 function getDisplayName(p: PersonCardData) {
+  if (p.full_name?.trim()) return p.full_name.trim();
   if (p.display_name?.trim()) return p.display_name.trim();
   const full = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim();
   return full || 'FR8X Member';
 }
 
 function getHeadline(p: PersonCardData) {
+  if (p.headline?.trim()) return p.headline.trim();
   const parts: string[] = [];
   if (p.designation || p.position) parts.push((p.designation || p.position)!);
-  if (p.company_name) parts.push(p.company_name);
+  const comp = p.company || p.company_name;
+  if (comp) parts.push(comp);
   return parts.join(' · ');
 }
 
 function getLocation(p: PersonCardData) {
+  if (p.location?.trim()) return p.location.trim();
   const parts: string[] = [];
   if (p.city)    parts.push(p.city);
   if (p.country) parts.push(p.country);

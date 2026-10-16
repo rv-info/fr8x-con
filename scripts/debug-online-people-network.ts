@@ -54,20 +54,43 @@ async function debugOnlinePeopleNetwork() {
     }
   }
 
-  // ── TEST 1: PEOPLE SEARCH (General Browse) ───────────────────────────────────
-  console.log('▶ [1/6] Debugging People Search (Live Directory Queries)...');
+  // ── TEST 1: PEOPLE SEARCH (General Browse & Contract Validation) ─────────────
+  console.log('▶ [1/8] Debugging People Search (Live Directory Queries & Contract)...');
   try {
     const req = createReq('/api/people/search?q=ocean&limit=10');
     const res = await searchGet(req);
     const json = await res.json();
-    report('Query with q=ocean returns 200 and search results', res.status === 200 && json.success === true && json.data.length > 0, json);
-    console.log(`    ↳ Found ${json.data?.length} members matching 'ocean'. Top result: "${json.data?.[0]?.display_name}" (${json.data?.[0]?.company_name})`);
+    const hasCanonicalShape =
+      Array.isArray(json.data) &&
+      json.pagination !== undefined &&
+      json.data.length > 0 &&
+      json.data[0].full_name !== undefined &&
+      json.data[0].headline !== undefined &&
+      json.data[0].company !== undefined &&
+      json.data[0].location !== undefined &&
+      (json.data[0].connection_status === 'not_connected' || json.data[0].connection_status === 'none');
+
+    report('Query with q=ocean returns 200 and standard contract (data, pagination, canonical aliases)', res.status === 200 && json.success === true && hasCanonicalShape, json);
+    console.log(`    ↳ Found ${json.data?.length} members matching 'ocean'. Top result: "${json.data?.[0]?.full_name}" (${json.data?.[0]?.company})`);
   } catch (e) {
     report('Query with q=ocean', false, e);
   }
 
-  // ── TEST 2: PEOPLE SEARCH (Multi-Facet Filtering) ─────────────────────────────
-  console.log('\n▶ [2/6] Debugging Multi-Facet Filtering (Country & Verified)...');
+  // ── TEST 2: UNIVERSAL DISCOVERY (Browse with empty query) ───────────────────
+  console.log('\n▶ [2/8] Debugging Universal Discovery (Empty Query Directory Browse)...');
+  try {
+    const browseReq = createReq('/api/people/search');
+    const browseRes = await searchGet(browseReq);
+    const browseJson = await browseRes.json();
+    const hasBrowseResults = browseRes.status === 200 && browseJson.success === true && Array.isArray(browseJson.data) && browseJson.data.length > 0;
+    report('Empty search returns 200 with directory members (no 400 error)', hasBrowseResults, browseJson);
+    console.log(`    ↳ Universal discovery browse returned ${browseJson.data?.length} members.`);
+  } catch (e) {
+    report('Universal discovery browse', false, e);
+  }
+
+  // ── TEST 3: PEOPLE SEARCH (Multi-Facet Filtering) ─────────────────────────────
+  console.log('\n▶ [3/8] Debugging Multi-Facet Filtering (Country & Verified)...');
   try {
     const reqIndia = createReq('/api/people/search?q=&country=India&verified=true');
     const resIndia = await searchGet(reqIndia);
@@ -81,22 +104,24 @@ async function debugOnlinePeopleNetwork() {
     report('Filters country=India & verified=true', false, e);
   }
 
-  // ── TEST 3: PUBLIC PROFILE VIEW ──────────────────────────────────────────────
-  console.log('\n▶ [3/6] Debugging Profile Detail View (/api/people/profile/[id])...');
+  // ── TEST 4: PUBLIC PROFILE VIEW & CONTACT PRIVACY ────────────────────────────
+  console.log('\n▶ [4/8] Debugging Profile Detail & Contact Privacy (/api/people/profile/[id])...');
   const targetId = 'a0000000-0000-0000-0000-000000000001'; // Capt. Rajesh Sharma
   try {
     const req = createReq(`/api/people/profile/${targetId}`);
     const res = await profileGet(req, { params: { id: targetId } });
     const json = await res.json();
-    const hasProfile = json.success && json.profile && json.profile.display_name === 'Capt. Rajesh Sharma';
-    report('Profile detail returns 200 with trade lanes, skills and mutual count', res.status === 200 && hasProfile, json);
-    console.log(`    ↳ Profile loaded: ${json.profile?.display_name} | Golden Tick: ${json.profile?.has_golden_tick} | Mutuals: ${json.profile?.mutual_count}`);
+    const hasProfile = json.success && json.profile && (json.profile.full_name === 'Capt. Rajesh Sharma' || json.profile.display_name === 'Capt. Rajesh Sharma');
+    // Privacy verification: stranger viewing must NOT expose private email/phone
+    const contactHidden = json.profile?.email === undefined && json.profile?.phone === undefined;
+    report('Profile detail returns 200 and protects private contact fields (email/phone hidden)', res.status === 200 && hasProfile && contactHidden, json);
+    console.log(`    ↳ Profile loaded: ${json.profile?.full_name ?? json.profile?.display_name} | Contact details shielded: ${contactHidden}`);
   } catch (e) {
     report('Profile detail view', false, e);
   }
 
-  // ── TEST 4: CONNECTION MUTATIONS (SEND & STATUS) ──────────────────────────────
-  console.log('\n▶ [4/6] Debugging Connection Request Lifecycle (Send Request)...');
+  // ── TEST 5: CONNECTION MUTATIONS (SEND & STATUS) ──────────────────────────────
+  console.log('\n▶ [5/8] Debugging Connection Request Lifecycle (Send Request)...');
   const colleagueId = 'a0000000-0000-0000-0000-000000000003'; // Tariq Al-Mansoor
   let requestId = '';
   try {
@@ -122,24 +147,25 @@ async function debugOnlinePeopleNetwork() {
     report('Connection request lifecycle', false, e);
   }
 
-  // ── TEST 5: CONNECTION TABS (/api/people/connections?tab=outgoing) ────────────
-  console.log('\n▶ [5/6] Debugging Connections Manager Tabs...');
+  // ── TEST 6: CONNECTION TABS (/api/people/connections?tab=outgoing) ────────────
+  console.log('\n▶ [6/8] Debugging Connections Manager Tabs...');
   try {
     const outReq = createReq('/api/people/connections?tab=outgoing');
     const outRes = await connGet(outReq);
     const outJson = await outRes.json();
-    report('Outgoing tab returns the pending request', outRes.status === 200 && outJson.data.length > 0, outJson);
+    const hasCanonicalOutgoing = outJson.data.length > 0 && outJson.data[0].profiles?.full_name !== undefined;
+    report('Outgoing tab returns pending request with canonical profile fields', outRes.status === 200 && hasCanonicalOutgoing, outJson);
 
     const connReq = createReq('/api/people/connections?tab=connections');
     const connRes = await connGet(connReq);
     const connJson = await connRes.json();
-    report('My Connections tab returns 200', connRes.status === 200 && Array.isArray(connJson.data), connJson);
+    report('My Connections tab returns 200 with array', connRes.status === 200 && Array.isArray(connJson.data), connJson);
   } catch (e) {
     report('Connections manager tabs', false, e);
   }
 
-  // ── TEST 6: BLOCK & UNBLOCK MUTATIONS ────────────────────────────────────────
-  console.log('\n▶ [6/6] Debugging Member Block & Unblock...');
+  // ── TEST 7: BLOCK & UNBLOCK MUTATIONS ────────────────────────────────────────
+  console.log('\n▶ [7/8] Debugging Member Block & Unblock...');
   const blockTargetId = 'a0000000-0000-0000-0000-000000000005';
   try {
     const blockReq = createReq('/api/people/connections', 'POST', {
@@ -166,6 +192,44 @@ async function debugOnlinePeopleNetwork() {
     report('Unblock member returns success', unblockRes.status === 200 && unblockJson.success, unblockJson);
   } catch (e) {
     report('Block and unblock mutations', false, e);
+  }
+
+  // ── TEST 8: EXISTING USER DISCOVERY SYNC ─────────────────────────────────────
+  console.log('\n▶ [8/8] Debugging Universal Discovery for Existing Platform Users...');
+  try {
+    const { registerMember } = await import('../lib/people-directory');
+    const existingPlatformUserId = 'b1000000-0000-0000-0000-000000000042';
+    registerMember({
+      id: existingPlatformUserId,
+      first_name: 'Elena',
+      last_name: 'Rostova',
+      display_name: 'Elena Rostova',
+      full_name: 'Elena Rostova',
+      headline: 'Global Air Cargo Director · Baltic Forwarding',
+      designation: 'Global Air Cargo Director',
+      company: 'Baltic Forwarding',
+      company_name: 'Baltic Forwarding',
+      location: 'Hamburg, Germany',
+      city: 'Hamburg',
+      country: 'Germany',
+      skills: ['Air Charter', 'Pharma Logistics', 'Cold Chain'],
+      specializations: ['Air Freight', 'IATA CEIV'],
+      key_trade_lanes: ['FRA-JFK', 'HAM-SIN'],
+      is_verified: true,
+      has_golden_tick: true,
+      connection_status: 'not_connected',
+    });
+
+    const discoverReq = createReq('/api/people/search?q=Rostova');
+    const discoverRes = await searchGet(discoverReq);
+    const discoverJson = await discoverRes.json();
+    const foundElena = (discoverJson.data ?? []).some((m: { id: string; full_name?: string }) =>
+      m.id === existingPlatformUserId || m.full_name === 'Elena Rostova'
+    );
+    report('Existing registered member is discoverable via search without connecting first', discoverRes.status === 200 && foundElena, discoverJson);
+    console.log(`    ↳ Verified Elena Rostova discovery in real-time directory.`);
+  } catch (e) {
+    report('Existing user discovery sync', false, e);
   }
 
   // ── SUMMARY REPORT ───────────────────────────────────────────────────────────

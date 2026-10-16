@@ -8,9 +8,15 @@
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
--- ── PROFILES: FTS SEARCH VECTOR ───────────────────────────────────────────────
+-- ── PROFILES: ADD MISSING NETWORK & EXPERTISE COLUMNS ──────────────────────────
 ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS search_vector tsvector;
+  ADD COLUMN IF NOT EXISTS search_vector tsvector,
+  ADD COLUMN IF NOT EXISTS skills JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS specializations JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS key_trade_lanes JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS languages JSONB DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS headline TEXT,
+  ADD COLUMN IF NOT EXISTS full_name TEXT;
 
 -- Compute weighted tsvector from profile columns
 -- A=name, B=designation/title, C=company/skills, D=location
@@ -20,24 +26,32 @@ BEGIN
   RETURN
     setweight(to_tsvector('english',
       coalesce(unaccent(p.display_name), '') || ' ' ||
-      coalesce(unaccent(p.first_name), '')  || ' ' ||
+      coalesce(unaccent(p.full_name), '')    || ' ' ||
+      coalesce(unaccent(p.first_name), '')   || ' ' ||
       coalesce(unaccent(p.last_name), '')
     ), 'A') ||
     setweight(to_tsvector('english',
+      coalesce(unaccent(p.headline), '')    || ' ' ||
       coalesce(unaccent(p.designation), '') || ' ' ||
       coalesce(unaccent(p.position),    '') || ' ' ||
       coalesce(unaccent(p.department),  '')
     ), 'B') ||
     setweight(to_tsvector('english',
       coalesce(unaccent(p.company_name), '') || ' ' ||
-      coalesce((
-        SELECT string_agg(val, ' ')
-        FROM jsonb_array_elements_text(coalesce(p.skills,'[]'::jsonb)) AS t(val)
-      ), '') || ' ' ||
-      coalesce((
-        SELECT string_agg(val, ' ')
-        FROM jsonb_array_elements_text(coalesce(p.specializations,'[]'::jsonb)) AS t(val)
-      ), '')
+      CASE
+        WHEN jsonb_typeof(coalesce(p.skills, '[]'::jsonb)) = 'array' THEN
+          coalesce((SELECT string_agg(val, ' ') FROM jsonb_array_elements_text(p.skills) AS t(val)), '')
+        WHEN jsonb_typeof(coalesce(p.skills, '[]'::jsonb)) = 'string' THEN
+          coalesce(p.skills #>> '{}', '')
+        ELSE ''
+      END || ' ' ||
+      CASE
+        WHEN jsonb_typeof(coalesce(p.specializations, '[]'::jsonb)) = 'array' THEN
+          coalesce((SELECT string_agg(val, ' ') FROM jsonb_array_elements_text(p.specializations) AS t(val)), '')
+        WHEN jsonb_typeof(coalesce(p.specializations, '[]'::jsonb)) = 'string' THEN
+          coalesce(p.specializations #>> '{}', '')
+        ELSE ''
+      END
     ), 'C') ||
     setweight(to_tsvector('english',
       coalesce(unaccent(p.city),     '') || ' ' ||
@@ -60,8 +74,8 @@ $$ LANGUAGE plpgsql SECURITY INVOKER;
 DROP TRIGGER IF EXISTS tg_profiles_search_vector ON public.profiles;
 CREATE TRIGGER tg_profiles_search_vector
   BEFORE INSERT OR UPDATE OF
-    display_name, first_name, last_name,
-    designation, position, department,
+    display_name, first_name, last_name, full_name,
+    headline, designation, position, department,
     company_name, skills, specializations,
     city, state, country, location
   ON public.profiles
@@ -90,7 +104,8 @@ CREATE INDEX IF NOT EXISTS idx_profiles_city_country
 
 -- Backfill existing profiles (safe; processes all rows once)
 UPDATE public.profiles
-SET search_vector = public.profiles_search_vector(profiles.*);
+SET search_vector = public.profiles_search_vector(profiles.*)
+WHERE search_vector IS NULL;
 
 -- ── CONNECTION_REQUESTS TABLE ─────────────────────────────────────────────────
 -- Clean, well-typed connection request workflow table with UUID FKs.
@@ -195,13 +210,17 @@ CREATE OR REPLACE FUNCTION public.search_people(
 RETURNS TABLE (
   id               UUID,
   display_name     TEXT,
+  full_name        TEXT,
   first_name       TEXT,
   last_name        TEXT,
   designation      TEXT,
   position         TEXT,
+  headline         TEXT,
   company_name     TEXT,
+  company          TEXT,
   city             TEXT,
   country          TEXT,
+  location         TEXT,
   avatar_url       TEXT,
   is_verified      BOOLEAN,
   has_golden_tick  BOOLEAN,
@@ -214,11 +233,12 @@ RETURNS TABLE (
 ) SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   v_tsquery   tsquery;
-  v_has_query BOOLEAN := length(trim(coalesce(p_query, ''))) >= 2;
+  v_clean_q   TEXT    := trim(coalesce(p_query, ''));
+  v_has_query BOOLEAN := length(v_clean_q) >= 2;
 BEGIN
   IF v_has_query THEN
     BEGIN
-      v_tsquery := websearch_to_tsquery('english', p_query);
+      v_tsquery := websearch_to_tsquery('english', v_clean_q);
     EXCEPTION WHEN OTHERS THEN
       v_has_query := FALSE;
     END;
@@ -228,32 +248,38 @@ BEGIN
   WITH candidate_profiles AS (
     SELECT
       pr.id,
-      pr.display_name,
+      coalesce(pr.display_name, pr.full_name, trim(coalesce(pr.first_name,'') || ' ' || coalesce(pr.last_name,'')), 'FR8X Member') AS display_name,
+      coalesce(pr.full_name, pr.display_name, trim(coalesce(pr.first_name,'') || ' ' || coalesce(pr.last_name,'')), 'FR8X Member') AS full_name,
       pr.first_name,
       pr.last_name,
-      pr.designation,
-      pr.position,
-      pr.company_name,
-      pr.city,
-      pr.country,
+      coalesce(pr.designation, pr.position, '') AS designation,
+      coalesce(pr.position, pr.designation, '') AS position,
+      coalesce(pr.headline, pr.designation, pr.position, '') AS headline,
+      coalesce(pr.company_name, '') AS company_name,
+      coalesce(pr.company_name, '') AS company,
+      coalesce(pr.city, '') AS city,
+      coalesce(pr.country, '') AS country,
+      coalesce(pr.location, nullif(trim(coalesce(pr.city,'') || CASE WHEN pr.city IS NOT NULL AND pr.country IS NOT NULL THEN ', ' ELSE '' END || coalesce(pr.country,'')), ''), '') AS location,
       pr.avatar_url,
-      pr.is_verified,
-      pr.has_golden_tick,
-      pr.skills,
-      pr.specializations,
-      pr.privacy_settings,
+      coalesce(pr.is_verified, false) AS is_verified,
+      coalesce(pr.has_golden_tick, false) AS has_golden_tick,
+      coalesce(pr.skills, '[]'::jsonb) AS skills,
+      coalesce(pr.specializations, '[]'::jsonb) AS specializations,
+      coalesce(pr.privacy_settings, '{}'::jsonb) AS privacy_settings,
       CASE
         WHEN v_has_query THEN
-          ts_rank_cd(pr.search_vector, v_tsquery, 32) +
-          0.1 * greatest(
-            coalesce(similarity(coalesce(pr.display_name,''), p_query), 0.0),
-            coalesce(similarity(coalesce(pr.company_name,''), p_query), 0.0)
+          coalesce(ts_rank_cd(pr.search_vector, v_tsquery, 32), 0.0) +
+          0.2 * greatest(
+            coalesce(similarity(coalesce(pr.display_name,''), v_clean_q), 0.0),
+            coalesce(similarity(coalesce(pr.company_name,''), v_clean_q), 0.0),
+            coalesce(similarity(coalesce(pr.first_name,''), v_clean_q), 0.0),
+            coalesce(similarity(coalesce(pr.last_name,''), v_clean_q), 0.0)
           )
         ELSE 1.0
       END::real AS rank
     FROM public.profiles pr
     WHERE pr.id <> p_requester_id
-      AND pr.status IN ('active', 'verified')
+      AND coalesce(pr.status, pr.account_status, 'active') IN ('active', 'verified', 'trial')
       AND coalesce((pr.privacy_settings->>'allowDiscovery')::boolean, true) = true
       AND NOT EXISTS (
         SELECT 1 FROM public.user_blocks ub
@@ -263,18 +289,22 @@ BEGIN
       AND (
         NOT v_has_query
         OR (pr.search_vector IS NOT NULL AND pr.search_vector @@ v_tsquery)
-        OR (similarity(coalesce(pr.display_name,''), p_query) > 0.2)
-        OR (similarity(coalesce(pr.company_name,''), p_query) > 0.2)
+        OR (pr.display_name ILIKE '%' || v_clean_q || '%')
+        OR (pr.first_name   ILIKE '%' || v_clean_q || '%')
+        OR (pr.last_name    ILIKE '%' || v_clean_q || '%')
+        OR (pr.company_name ILIKE '%' || v_clean_q || '%')
+        OR (similarity(coalesce(pr.display_name,''), v_clean_q) > 0.15)
+        OR (similarity(coalesce(pr.company_name,''), v_clean_q) > 0.15)
       )
       AND (p_country      IS NULL OR lower(coalesce(pr.country,''))      = lower(p_country))
       AND (p_city         IS NULL OR lower(coalesce(pr.city,''))         LIKE '%' || lower(p_city) || '%')
       AND (p_company      IS NULL OR lower(coalesce(pr.company_name,'')) LIKE '%' || lower(p_company) || '%')
-      AND (p_verified_only = FALSE OR pr.is_verified = TRUE)
+      AND (p_verified_only = FALSE OR pr.is_verified = TRUE OR pr.has_golden_tick = TRUE)
       AND (p_industry IS NULL OR
            lower(coalesce(pr.designation,''))  LIKE '%' || lower(p_industry) || '%' OR
            lower(coalesce(pr.department,''))   LIKE '%' || lower(p_industry) || '%')
       AND (
-        p_skills IS NULL OR
+        p_skills IS NULL OR cardinality(p_skills) = 0 OR
         EXISTS (
           SELECT 1 FROM jsonb_array_elements_text(coalesce(pr.skills,'[]'::jsonb)) AS s
           WHERE lower(s) = ANY(SELECT lower(u) FROM unnest(p_skills) AS u)
@@ -285,13 +315,17 @@ BEGIN
   SELECT
     cp.id,
     cp.display_name,
+    cp.full_name,
     cp.first_name,
     cp.last_name,
     cp.designation,
     cp.position,
+    cp.headline,
     cp.company_name,
+    cp.company,
     cp.city,
     cp.country,
+    cp.location,
     cp.avatar_url,
     cp.is_verified,
     cp.has_golden_tick,
@@ -314,7 +348,7 @@ BEGIN
         WHERE cr.requester_id = cp.id AND cr.recipient_id = p_requester_id
           AND cr.status = 'pending'
       ) THEN 'pending_received'
-      ELSE 'none'
+      ELSE 'not_connected'
     END::text AS connection_status,
     (
       SELECT COUNT(*)
@@ -323,7 +357,7 @@ BEGIN
       WHERE ac1.user_id = p_requester_id AND ac2.user_id = cp.id
     ) AS mutual_count
   FROM candidate_profiles cp
-  ORDER BY cp.rank DESC, cp.id ASC
+  ORDER BY cp.rank DESC, cp.has_golden_tick DESC, cp.is_verified DESC, cp.id ASC
   LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql;
@@ -696,6 +730,45 @@ CREATE POLICY "No direct insert user_blocks"
 CREATE POLICY "Service role manages user_blocks"
   ON public.user_blocks FOR ALL TO service_role
   USING (true) WITH CHECK (true);
+
+-- ── MESSAGING RESTRICTIONS BEFORE CONNECTION (RLS Hardening) ─────────────────
+-- Direct peer-to-peer messaging is strictly prohibited prior to an accepted connection.
+DROP POLICY IF EXISTS "Users insert own messages" ON public.messages;
+CREATE POLICY "Users insert own messages"
+  ON public.messages FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    (
+      sender_id = auth.uid()::text OR
+      sender_id = (SELECT uid FROM public.profiles WHERE id = auth.uid())
+    )
+    AND (
+      -- Must have an active accepted connection
+      EXISTS (
+        SELECT 1 FROM public.accepted_connections ac
+        WHERE ac.user_id = auth.uid()
+          AND (ac.connected_to::text = recipient_id OR ac.connected_to = (SELECT id FROM public.profiles WHERE uid = recipient_id))
+      )
+      -- Neither party has blocked the other
+      AND NOT EXISTS (
+        SELECT 1 FROM public.user_blocks ub
+        WHERE (ub.blocker_id = auth.uid() AND (ub.blocked_id::text = recipient_id OR ub.blocked_id = (SELECT id FROM public.profiles WHERE uid = recipient_id)))
+           OR (ub.blocked_id = auth.uid() AND (ub.blocker_id::text = recipient_id OR ub.blocker_id = (SELECT id FROM public.profiles WHERE uid = recipient_id)))
+      )
+    )
+  );
+
+-- ── CANONICAL CONNECTIONS SYNCHRONIZATION ──────────────────────────────────────
+-- Ensure canonical public.connections table matches accepted_connections
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='connections') THEN
+    INSERT INTO public.connections (requester_id, recipient_id, status)
+    SELECT ac.user_id::text, ac.connected_to::text, 'accepted'
+    FROM public.accepted_connections ac
+    ON CONFLICT DO NOTHING;
+  END IF;
+END $$;
 
 -- ── GRANTS ────────────────────────────────────────────────────────────────────
 GRANT SELECT ON public.connection_requests  TO authenticated;

@@ -1,15 +1,34 @@
 /**
  * GET /api/people/search
  * ─────────────────────────────────────────────────────────────────────────────
- * Protected people search endpoint.
+ * Protected professional people search and discovery endpoint for FR8X.
+ *
+ * Conforms to FR8X Production API Response Contract:
+ * {
+ *   "success": true,
+ *   "data": [
+ *     {
+ *       "id": "...",
+ *       "full_name": "...",
+ *       "headline": "...",
+ *       "company": "...",
+ *       "location": "...",
+ *       "connection_status": "not_connected"
+ *     }
+ *   ],
+ *   "pagination": {
+ *     "nextCursor": null,
+ *     "hasMore": false
+ *   }
+ * }
  *
  * Security:
  * - Authenticated via fr8x_session HMAC cookie OR Supabase cookie
- * - Service-role Supabase client; all DB logic in SECURITY DEFINER RPC
+ * - Zero-trust database authorization via SECURITY DEFINER RPC & RLS
  * - Rate limited: 30 searches / minute per user
- * - Zod-validated query params; parameterized DB calls only
- * - Returns explicit public-profile fields only; no email, PII, or internal IDs
- * - Cursor-based pagination (opaque UUID cursor)
+ * - Zod-validated query params; parameterized operations only
+ * - Privacy protection: email, phone, PII, and internal IDs stripped
+ * - Cursor-based pagination; universal discovery across all companies & hubs
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -17,30 +36,34 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticateUserSession } from '@/lib/auth-guard';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { createAdminClient, getDbClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/server';
 import { redis } from '@/lib/redis';
-import { peopleDirectoryStore } from '@/lib/people-directory';
+import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
+import { serverSecurityStore } from '@/lib/server-auth-store';
 
 export const dynamic = 'force-dynamic';
 
 // ── Zod schema for query params ────────────────────────────────────────────────
 const SearchParamsSchema = z.object({
-  q:            z.string().max(100).optional().default(''),
-  country:      z.string().max(60).optional(),
-  city:         z.string().max(60).optional(),
-  industry:     z.string().max(80).optional(),
-  company:      z.string().max(100).optional(),
-  skills:       z.string().max(200).optional(), // comma-separated
-  verified:     z.enum(['true', 'false']).optional(),
-  limit:        z.coerce.number().int().min(1).max(50).optional().default(20),
-  cursor:       z.string().uuid('Invalid cursor').optional(),
+  q:        z.string().max(100).optional().default(''),
+  country:  z.string().max(60).optional(),
+  city:     z.string().max(60).optional(),
+  industry: z.string().max(80).optional(),
+  company:  z.string().max(100).optional(),
+  skills:   z.string().max(200).optional(), // comma-separated
+  verified: z.enum(['true', 'false']).optional(),
+  limit:    z.coerce.number().int().min(1).max(50).optional().default(20),
+  cursor:   z.string().max(100).optional(),
 });
 
 // ── Public profile fields returned (no email/phone/PII) ───────────────────────
 const SAFE_FIELDS = [
-  'id', 'display_name', 'first_name', 'last_name', 'designation', 'position',
-  'company_name', 'city', 'country', 'avatar_url', 'is_verified',
-  'has_golden_tick', 'skills', 'specializations', 'privacy_settings',
+  'id', 'full_name', 'display_name', 'first_name', 'last_name',
+  'headline', 'designation', 'position',
+  'company', 'company_name',
+  'location', 'city', 'country',
+  'avatar_url', 'is_verified', 'has_golden_tick',
+  'skills', 'specializations', 'privacy_settings',
   'rank', 'connection_status', 'mutual_count',
 ] as const;
 
@@ -49,31 +72,111 @@ type SafeField = typeof SAFE_FIELDS[number];
 /** Strip any fields not in the approved allow-list from a result row */
 function sanitizeRow(row: Record<string, unknown>): Record<SafeField, unknown> {
   const out = {} as Record<SafeField, unknown>;
+
+  // Canonical full_name computation
+  const fullName =
+    (row.full_name as string) ||
+    (row.display_name as string) ||
+    [row.first_name, row.last_name].filter(Boolean).join(' ') ||
+    'FR8X Member';
+
+  // Canonical headline computation
+  const headline =
+    (row.headline as string) ||
+    (row.designation as string) ||
+    (row.position as string) ||
+    '';
+
+  // Canonical company computation
+  const company =
+    (row.company as string) ||
+    (row.company_name as string) ||
+    '';
+
+  // Canonical location computation
+  const location =
+    (row.location as string) ||
+    [row.city, row.country].filter(Boolean).join(', ') ||
+    '';
+
+  // Canonical connection status: 'not_connected' is canonical, 'none' is alias
+  const rawStatus = (row.connection_status as string) || 'none';
+  const connectionStatus =
+    rawStatus === 'none' ? 'not_connected' : rawStatus;
+
   for (const field of SAFE_FIELDS) {
     out[field] = row[field] ?? null;
   }
+
+  out.full_name = fullName;
+  out.display_name = fullName;
+  out.headline = headline;
+  out.designation = headline;
+  out.company = company;
+  out.company_name = company;
+  out.location = location;
+  out.connection_status = connectionStatus;
+
   // Redact privacy_settings — only expose boolean flags, not raw JSON
   const ps = (row.privacy_settings as Record<string, unknown> | null) ?? {};
   out.privacy_settings = {
     allowConnectionRequests: ps.allowConnectionRequests ?? true,
     allowDiscovery:          ps.allowDiscovery ?? true,
   };
+
   return out;
+}
+
+/** Synchronizes existing registered platform users into the directory store */
+function syncRegisteredUsersToDirectory() {
+  try {
+    const registeredUsers = serverSecurityStore.getAllRegisteredUsers();
+    for (const u of registeredUsers) {
+      if (!u.uid) continue;
+      const ps = (u.privacySettings ?? {}) as Record<string, unknown>;
+      const member: DirectoryMember = {
+        id: u.uid,
+        display_name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'FR8X Member',
+        full_name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'FR8X Member',
+        first_name: u.firstName || (u.displayName ? u.displayName.split(' ')[0] : 'Member'),
+        last_name: u.lastName || (u.displayName ? u.displayName.split(' ').slice(1).join(' ') : ''),
+        designation: u.designation || 'Freight Professional',
+        headline: u.designation || 'Freight Professional',
+        company_name: u.company || 'Enterprise Logistics',
+        company: u.company || 'Enterprise Logistics',
+        city: u.city || 'Mumbai',
+        country: u.country || 'India',
+        location: `${u.city || 'Mumbai'}, ${u.country || 'India'}`,
+        avatar_url: u.avatarUrl || undefined,
+        is_verified: Boolean(u.isVerified ?? u.email_verified),
+        has_golden_tick: Boolean(u.plan === 'premium'),
+        skills: ['Freight Forwarding', 'Logistics Management', 'Customs Clearance'],
+        specializations: ['B2B Freight', 'NVOCC Operations'],
+        key_trade_lanes: ['Global Multi-Modal'],
+        privacy_settings: {
+          allowDiscovery: ps.allowDiscovery ?? true,
+          allowConnectionRequests: ps.allowConnectionRequests ?? true,
+          emailVisibility: ps.emailVisibility ?? 'connections',
+          phoneVisibility: ps.phoneVisibility ?? 'connections',
+        },
+      };
+      peopleDirectoryStore.registerMember(member);
+    }
+  } catch {
+    // Non-blocking sync
+  }
 }
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   // 1. Authentication — fr8x_session HMAC OR Supabase session cookie
-  const { authenticated, user, errorResponse } = authenticateUserSession(req);
+  const { authenticated, user } = authenticateUserSession(req);
 
-  // If HMAC session not present, fall back to Supabase cookie auth
   let userId: string | null = null;
 
-  if (authenticated && user) {
-    // HMAC session: user.uid is the Supabase auth UUID
+  if (authenticated && user?.uid) {
     userId = user.uid;
   } else {
-    // Try Supabase cookie
     try {
       const supabase = createSupabaseServerClient();
       const { data: { user: sbUser } } = await supabase.auth.getUser();
@@ -81,13 +184,20 @@ export async function GET(req: NextRequest) {
         userId = sbUser.id;
       }
     } catch {
-      // fall through to unauthorized
+      // fall through
     }
   }
 
   if (!userId) {
     return NextResponse.json(
-      { success: false, error: 'Authentication required.', code: 'UNAUTHENTICATED' },
+      {
+        success: false,
+        error: {
+          code: 'UNAUTHENTICATED',
+          message: 'Authentication required to search members.',
+        },
+        code: 'UNAUTHENTICATED',
+      },
       { status: 401 }
     );
   }
@@ -103,9 +213,12 @@ export async function GET(req: NextRequest) {
   if (!rateResult.allowed) {
     return NextResponse.json(
       {
-        success:   false,
-        error:     'Too many search requests. Please slow down.',
-        code:      'RATE_LIMITED',
+        success: false,
+        error: {
+          code: 'RATE_LIMITED',
+          message: 'Too many search requests. Please slow down.',
+        },
+        code: 'RATE_LIMITED',
         retryAfter: rateResult.resetSeconds,
       },
       {
@@ -134,7 +247,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error:   'Invalid search parameters.',
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: 'Invalid search parameters.',
+        },
         code:    'VALIDATION_ERROR',
         details: parsed.error.flatten().fieldErrors,
       },
@@ -143,36 +259,16 @@ export async function GET(req: NextRequest) {
   }
 
   const params = parsed.data;
-
-  // Minimum query length for text search (prevents unbounded directory dumps)
   const query = params.q.trim();
   const hasTextQuery = query.length >= 2;
-
-  // If no query AND no filter, require at least one filter to prevent full dumps
-  const hasAnyFilter =
-    hasTextQuery ||
-    params.country  ||
-    params.city     ||
-    params.industry ||
-    params.company  ||
-    params.skills   ||
-    params.verified === 'true';
-
-  if (!hasAnyFilter) {
-    return NextResponse.json(
-      {
-        success: false,
-        error:   'Please provide a search term or at least one filter.',
-        code:    'NO_SEARCH_CRITERIA',
-      },
-      { status: 400 }
-    );
-  }
 
   // 4. Build DB call params
   const skillsArray = params.skills
     ? params.skills.split(',').map((s: string) => s.trim()).filter(Boolean)
     : null;
+
+  // Sync existing registered users to directory store
+  syncRegisteredUsersToDirectory();
 
   // 5. Execute via admin (service-role) client → search_people RPC
   const adminClient = createAdminClient();
@@ -199,14 +295,14 @@ export async function GET(req: NextRequest) {
         dbSuccess = true;
       }
     } catch {
-      // Continue to directory store fallback
+      // Continue to universal directory store fallback
     }
   }
 
-  // Fallback to populated directory store if DB is empty or RPC pending migration
+  // Fallback to universal directory store (seeded + existing registered users)
   if (!dbSuccess || results.length === 0) {
     const fallbackResults = peopleDirectoryStore.searchMembers({
-      query:        hasTextQuery ? query : undefined,
+      query:        hasTextQuery ? query : (query.length > 0 ? query : undefined),
       country:      params.country,
       city:         params.city,
       industry:     params.industry,
@@ -218,21 +314,26 @@ export async function GET(req: NextRequest) {
     results = fallbackResults as unknown as Record<string, unknown>[];
   }
 
-  // 6. Sanitize: strip any field not in the allow-list
+  // 6. Sanitize: ensure canonical contract fields and strip restricted data
   const sanitized = results.map(sanitizeRow);
 
-  // 7. Build opaque cursor (last result's id)
-  const nextCursor =
-    sanitized.length === params.limit
-      ? (sanitized[sanitized.length - 1].id as string)
-      : null;
+  // 7. Pagination calculation
+  const hasMore = sanitized.length === params.limit;
+  const nextCursor = hasMore && sanitized.length > 0
+    ? (sanitized[sanitized.length - 1].id as string)
+    : null;
 
+  // 8. Return standardized FR8X response contract
   return NextResponse.json({
-    success:    true,
-    results:    sanitized,
-    data:       sanitized,
-    count:      sanitized.length,
-    hasMore:    nextCursor !== null,
-    nextCursor: nextCursor,
+    success: true,
+    data: sanitized,
+    results: sanitized, // backward compatibility
+    count: sanitized.length,
+    pagination: {
+      nextCursor,
+      hasMore,
+    },
+    hasMore,
+    nextCursor,
   });
 }

@@ -14,6 +14,7 @@ import {
 
 export type ConnectionStatus =
   | 'none'
+  | 'not_connected'
   | 'pending_sent'
   | 'pending_received'
   | 'connected'
@@ -95,7 +96,7 @@ export function ConnectionButton({
   return (
     <div className={`connection-btn-wrapper ${className}`} style={{ position: 'relative', display: 'inline-flex', gap: 4 }}>
       {/* Primary action button */}
-      {status === 'none' && (
+      {(status === 'none' || status === 'not_connected') && (
         <button
           className={`connection-btn connect ${sizeClass}`}
           disabled={loading}

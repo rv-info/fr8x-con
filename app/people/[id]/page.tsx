@@ -11,6 +11,7 @@ import Link from 'next/link';
 import {
   MapPin, Building2, Award, Briefcase, Globe,
   ArrowLeft, Loader2, AlertTriangle, Users, Ban,
+  Mail, Phone, ShieldCheck,
 } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ConnectionButton, ConnectionStatus } from '@/components/people/ConnectionButton';
@@ -19,16 +20,22 @@ import { GoldenTick } from '@/components/ui/GoldenTick';
 interface PublicProfile {
   id: string;
   display_name: string | null;
+  full_name?: string | null;
   first_name: string | null;
   last_name: string | null;
+  headline?: string | null;
   designation: string | null;
   position: string | null;
+  company?: string | null;
   company_name: string | null;
+  location?: string | null;
   city: string | null;
   country: string | null;
   avatar_url: string | null;
   bio: string | null;
   summary: string | null;
+  email?: string | null;
+  phone?: string | null;
   skills: string[] | null;
   specializations: string[] | null;
   key_trade_lanes: string[] | null;
@@ -42,9 +49,27 @@ interface PublicProfile {
 }
 
 function getDisplayName(p: PublicProfile) {
+  if (p.full_name?.trim()) return p.full_name.trim();
   if (p.display_name?.trim()) return p.display_name.trim();
   const full = `${p.first_name ?? ''} ${p.last_name ?? ''}`.trim();
   return full || 'FR8X Member';
+}
+
+function getHeadline(p: PublicProfile) {
+  if (p.headline?.trim()) return p.headline.trim();
+  const parts: string[] = [];
+  if (p.designation || p.position) parts.push((p.designation || p.position)!);
+  const comp = p.company || p.company_name;
+  if (comp) parts.push(comp);
+  return parts.join(' · ');
+}
+
+function getLocation(p: PublicProfile) {
+  if (p.location?.trim()) return p.location.trim();
+  const parts: string[] = [];
+  if (p.city)    parts.push(p.city);
+  if (p.country) parts.push(p.country);
+  return parts.join(', ');
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -94,14 +119,15 @@ export default function PersonProfilePage({ params }: { params: { id: string } }
   useEffect(() => {
     if (!params.id) return;
 
-    // Validate UUID format before hitting API
-    if (!/^[0-9a-f-]{36}$/i.test(params.id)) {
+    // Validate ID length/format
+    const cleanId = params.id.trim();
+    if (!cleanId || cleanId.length > 128) {
       setNotFound(true);
       setLoading(false);
       return;
     }
 
-    fetch(`/api/people/profile/${params.id}`)
+    fetch(`/api/people/profile/${encodeURIComponent(cleanId)}`)
       .then(async (res) => {
         if (res.status === 404) { setNotFound(true); return; }
         const data = await res.json();
@@ -239,6 +265,33 @@ export default function PersonProfilePage({ params }: { params: { id: string } }
         {(profile.bio || profile.summary) && (
           <Section title="About">
             <p className="profile-about">{profile.summary || profile.bio}</p>
+          </Section>
+        )}
+
+        {/* Contact Information (connection-governed) */}
+        {(profile.email || profile.phone) ? (
+          <Section title="Contact Information">
+            <div className="profile-contact-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {profile.email && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                  <Mail size={14} aria-hidden="true" />
+                  <a href={`mailto:${profile.email}`} style={{ color: 'var(--color-primary, #2563eb)', textDecoration: 'none' }}>{profile.email}</a>
+                </div>
+              )}
+              {profile.phone && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                  <Phone size={14} aria-hidden="true" />
+                  <a href={`tel:${profile.phone}`} style={{ color: 'var(--color-primary, #2563eb)', textDecoration: 'none' }}>{profile.phone}</a>
+                </div>
+              )}
+            </div>
+          </Section>
+        ) : (
+          <Section title="Contact Information">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8125rem', color: '#64748b' }}>
+              <ShieldCheck size={14} aria-hidden="true" />
+              <span>Direct contact details are protected by member privacy settings. Connect to request access.</span>
+            </div>
           </Section>
         )}
 

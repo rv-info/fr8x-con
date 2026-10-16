@@ -183,13 +183,31 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  function normalizeProfile(p: any) {
+    if (!p) return null;
+    const fullName = p.full_name || p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'FR8X Member';
+    const headline = p.headline || p.designation || p.position || '';
+    const company = p.company || p.company_name || '';
+    const location = p.location || [p.city, p.country].filter(Boolean).join(', ') || '';
+    return {
+      ...p,
+      full_name: fullName,
+      display_name: fullName,
+      headline,
+      designation: headline,
+      company,
+      company_name: company,
+      location,
+    };
+  }
+
   // Fallback to peopleDirectoryStore
   if (tab === 'connections') {
     const list = peopleDirectoryStore.getConnections(userId).map((p) => ({
       id: `conn_${p.id}`,
       connected_at: new Date().toISOString(),
       connected_to: p.id,
-      profiles: p,
+      profiles: normalizeProfile(p),
     }));
     return NextResponse.json({ success: true, tab, data: list });
   }
@@ -200,7 +218,7 @@ export async function GET(req: NextRequest) {
       message: r.message,
       created_at: r.created_at,
       status: r.status,
-      profiles: r.requester,
+      profiles: normalizeProfile(r.requester),
     }));
     return NextResponse.json({ success: true, tab, data: list });
   }
@@ -211,7 +229,7 @@ export async function GET(req: NextRequest) {
       message: r.message,
       created_at: r.created_at,
       status: r.status,
-      profiles: r.recipient,
+      profiles: normalizeProfile(r.recipient),
     }));
     return NextResponse.json({ success: true, tab, data: list });
   }
@@ -220,7 +238,7 @@ export async function GET(req: NextRequest) {
     const list = peopleDirectoryStore.getBlocked(userId).map((p) => ({
       id: `blk_${p.id}`,
       created_at: new Date().toISOString(),
-      profiles: p,
+      profiles: normalizeProfile(p),
     }));
     return NextResponse.json({ success: true, tab, data: list });
   }

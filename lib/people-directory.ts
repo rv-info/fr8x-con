@@ -15,14 +15,21 @@
 export interface DirectoryMember {
   id: string;
   display_name: string;
-  first_name: string;
-  last_name: string;
+  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   designation: string;
   position?: string;
+  headline?: string;
   company_name: string;
+  company?: string;
   city: string;
   state?: string;
   country: string;
+  location?: string;
+  email?: string;
+  phone?: string;
+  mobile?: string;
   avatar_url?: string;
   bio?: string;
   summary?: string;
@@ -33,6 +40,7 @@ export interface DirectoryMember {
   key_trade_lanes: string[];
   experiences?: Array<{ title: string; company: string; from: string; to: string; current?: boolean }>;
   privacy_settings?: Record<string, unknown>;
+  connection_status?: string;
 }
 
 export const SEEDED_MEMBERS: DirectoryMember[] = [
@@ -235,6 +243,7 @@ class PeopleDirectoryStore {
   private requests: Map<string, InMemRequest> = new Map();
   private acceptedPairs: Set<string> = new Set();
   private blocks: Set<string> = new Set();
+  private dynamicMembers: Map<string, DirectoryMember> = new Map();
 
   constructor() {
     // Seed an initial mutual connection for realistic experience
@@ -247,8 +256,33 @@ class PeopleDirectoryStore {
     return `${a}:${b}`;
   }
 
+  public registerMember(member: DirectoryMember) {
+    if (!member.id) return;
+    this.dynamicMembers.set(member.id, member);
+  }
+
+  public getAllMembers(): DirectoryMember[] {
+    const list: DirectoryMember[] = [...SEEDED_MEMBERS];
+    const seenIds = new Set(list.map((m) => m.id));
+    for (const dm of this.dynamicMembers.values()) {
+      if (!seenIds.has(dm.id)) {
+        seenIds.add(dm.id);
+        list.push(dm);
+      }
+    }
+    return list;
+  }
+
   public getMemberById(id: string): DirectoryMember | null {
-    return SEEDED_MEMBERS.find((m) => m.id === id) || null;
+    if (!id) return null;
+    if (this.dynamicMembers.has(id)) return this.dynamicMembers.get(id)!;
+    const seeded = SEEDED_MEMBERS.find((m) => m.id === id);
+    if (seeded) return seeded;
+    // Check if matched by email or identifier
+    for (const m of this.dynamicMembers.values()) {
+      if (m.email?.toLowerCase() === id.toLowerCase()) return m;
+    }
+    return null;
   }
 
   public searchMembers(params: {
@@ -263,12 +297,20 @@ class PeopleDirectoryStore {
   }): Array<DirectoryMember & { connection_status: string; mutual_count: number; rank: number }> {
     const q = (params.query || '').trim().toLowerCase();
     const viewerId = params.viewerId || '00000000-0000-0000-0000-000000000000';
+    const allMembers = this.getAllMembers();
 
-    return SEEDED_MEMBERS.filter((m) => {
+    return allMembers.filter((m) => {
+      // Exclude self
+      if (m.id === viewerId) return false;
+
       // Exclude blocked members
       if (this.isBlocked(viewerId, m.id) || this.isBlocked(m.id, viewerId)) {
         return false;
       }
+
+      // Respect allowDiscovery setting
+      const ps = (m.privacy_settings as Record<string, unknown> | null) ?? {};
+      if (ps.allowDiscovery === false) return false;
 
       // Filter by verified
       if (params.verifiedOnly && !m.is_verified && !m.has_golden_tick) {
@@ -293,25 +335,29 @@ class PeopleDirectoryStore {
       // Filter by skills
       if (params.skills && params.skills.length > 0) {
         const hasSkill = params.skills.some((sk) =>
-          m.skills.some((ms) => ms.toLowerCase().includes(sk.toLowerCase()))
+          (m.skills || []).some((ms) => ms.toLowerCase().includes(sk.toLowerCase()))
         );
         if (!hasSkill) return false;
       }
 
-      // Text query match across name, designation, company, city, country, skills
+      // Text query match across name, headline, designation, company, city, country, skills
       if (q) {
         const textToSearch = [
           m.display_name,
+          m.full_name,
           m.first_name,
           m.last_name,
+          m.headline,
           m.designation,
           m.company_name,
+          m.company,
           m.city,
           m.country,
-          ...m.skills,
-          ...m.specializations,
-          ...m.key_trade_lanes,
+          ...(m.skills || []),
+          ...(m.specializations || []),
+          ...(m.key_trade_lanes || []),
         ]
+          .filter(Boolean)
           .join(' ')
           .toLowerCase();
 
@@ -321,11 +367,20 @@ class PeopleDirectoryStore {
       return true;
     }).map((m) => {
       const status = this.getConnectionStatus(viewerId, m.id);
+      const fullName = m.full_name || m.display_name || `${m.first_name || ''} ${m.last_name || ''}`.trim() || 'FR8X Member';
+      const headline = m.headline || m.designation || m.position || '';
+      const company = m.company || m.company_name || '';
+      const location = m.location || [m.city, m.country].filter(Boolean).join(', ') || '';
+
       return {
         ...m,
-        connection_status: status.status,
+        full_name: fullName,
+        headline,
+        company,
+        location,
+        connection_status: status.status === 'none' ? 'not_connected' : status.status,
         request_id: status.request_id,
-        mutual_count: m.id === 'a0000000-0000-0000-0000-000000000001' ? 4 : 2,
+        mutual_count: m.id === 'a0000000-0000-0000-0000-000000000001' ? 4 : 1,
         rank: 1.0,
       };
     });
@@ -351,7 +406,7 @@ class PeopleDirectoryStore {
 
   public sendRequest(requesterId: string, recipientId: string, message?: string): { success: boolean; request_id: string } {
     const existing = this.getConnectionStatus(requesterId, recipientId);
-    if (existing.status !== 'none') {
+    if (existing.status !== 'none' && existing.status !== 'not_connected') {
       return { success: false, request_id: existing.request_id || '' };
     }
 
@@ -463,3 +518,4 @@ class PeopleDirectoryStore {
 }
 
 export const peopleDirectoryStore = new PeopleDirectoryStore();
+export const registerMember = (member: DirectoryMember) => peopleDirectoryStore.registerMember(member);
