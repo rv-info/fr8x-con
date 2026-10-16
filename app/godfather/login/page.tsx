@@ -62,7 +62,7 @@ function RuntimeHealth() {
 
 export default function DedicatedGodfatherLoginPage() {
   const router = useRouter();
-  const { validateCredentials, loginOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
+  const { validateCredentials, loginOperator, logoutOperator, loadRememberedOperator, rememberOperator, forgetOperator } = useGodfatherAuth();
 
   const [mode, setMode] = useState<'login' | 'first_login_otp' | 'forgot' | 'success'>('login');
   const [email, setEmail] = useState('tech@fr8x.in');
@@ -72,12 +72,14 @@ export default function DedicatedGodfatherLoginPage() {
 
   const [errorMessage, setErrorMessage] = useState('');
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+  const [targetNextUrl, setTargetNextUrl] = useState<string>('/godfather');
+  const [activeSession, setActiveSession] = useState<{ email: string; role: string; displayName?: string } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // First-login OTP challenge state
   const [firstLoginChallengeToken, setFirstLoginChallengeToken] = useState('');
   const [firstLoginOtp, setFirstLoginOtp] = useState('');
-  const [firstLoginCountdown, setFirstLoginCountdown] = useState(15);
+  const [firstLoginCountdown, setFirstLoginCountdown] = useState(300);
 
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('tech@fr8x.in');
@@ -94,6 +96,11 @@ export default function DedicatedGodfatherLoginPage() {
   // Access request modal
   const [isAccessRequestOpen, setIsAccessRequestOpen] = useState(false);
   const [accessReqSent, setAccessReqSent] = useState(false);
+  const [clearanceEmail, setClearanceEmail] = useState('tech@fr8x.in');
+  const [clearanceJustification, setClearanceJustification] = useState('');
+  const [clearanceTicketId, setClearanceTicketId] = useState<string | null>(null);
+  const [clearanceError, setClearanceError] = useState('');
+  const [clearanceSubmitting, setClearanceSubmitting] = useState(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -101,12 +108,40 @@ export default function DedicatedGodfatherLoginPage() {
       const reason = params.get('reason');
       if (reason === 'session_expired' || reason === 'inactivity') {
         setSessionNotice('Administrator session expired due to inactivity or idle timeout. Please sign in again.');
+      } else if (reason === 'auth_required') {
+        setSessionNotice('Privileged administrator authentication required to access sovereign console.');
       } else if (reason === 'not_found') {
         setSessionNotice('Requested console route not found or unauthenticated. Please sign in to access Godfather.');
       } else if (reason === 'unauthorized') {
         setSessionNotice('Privileged operator authentication required.');
       }
+
+      const next = params.get('next');
+      if (next) {
+        try {
+          const decoded = decodeURIComponent(next);
+          if (decoded.startsWith('/godfather') && !decoded.startsWith('//') && !decoded.includes('://')) {
+            setTargetNextUrl(decoded);
+          }
+        } catch {}
+      }
     }
+  }, []);
+
+  // Pre-flight check for active authenticated session
+  useEffect(() => {
+    let isMounted = true;
+    fetch('/api/godfather/session')
+      .then((res) => res.json())
+      .then((data) => {
+        if (isMounted && data.authenticated && data.operator) {
+          setActiveSession(data.operator);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -186,7 +221,7 @@ export default function DedicatedGodfatherLoginPage() {
       setMode('success');
 
       setTimeout(() => {
-        window.location.href = '/godfather';
+        window.location.href = targetNextUrl || '/godfather';
       }, 400);
     } catch {
       setErrorMessage('Failed to connect to authentication server.');
@@ -239,7 +274,7 @@ export default function DedicatedGodfatherLoginPage() {
       setMode('success');
 
       setTimeout(() => {
-        window.location.href = '/godfather';
+        window.location.href = targetNextUrl || '/godfather';
       }, 400);
     } catch {
       setErrorMessage('Failed to connect to authentication server.');
@@ -342,6 +377,37 @@ export default function DedicatedGodfatherLoginPage() {
     }
   };
 
+  /* ── Access Request Clearance Submission ── */
+  const handleClearanceSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setClearanceError('');
+    setClearanceSubmitting(true);
+
+    try {
+      const res = await fetch('/api/godfather/auth/request-clearance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: clearanceEmail,
+          justification: clearanceJustification,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setClearanceTicketId(data.ticketId || null);
+        setAccessReqSent(true);
+      } else {
+        setClearanceError(data.error || 'Failed to submit clearance request.');
+      }
+    } catch {
+      setClearanceError('Network connection error. Please try again.');
+    } finally {
+      setClearanceSubmitting(false);
+    }
+  };
+
   return (
     <div className="gfl-clean-root">
       {/* Top clean status bar */}
@@ -387,6 +453,53 @@ export default function DedicatedGodfatherLoginPage() {
             <div className="gfl-clean-alert">
               <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
               <span>{errorMessage}</span>
+            </div>
+          )}
+
+          {/* Active Session Detected Banner */}
+          {activeSession && mode === 'login' && !errorMessage && (
+            <div
+              className="gfl-clean-alert"
+              style={{
+                background: '#f0fdf4',
+                borderColor: '#bbf7d0',
+                color: '#166534',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span style={{ fontSize: '12px', fontWeight: '600' }}>
+                  Active session: Authenticated as {activeSession.displayName || activeSession.email}
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '2px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.location.href = targetNextUrl || '/godfather';
+                  }}
+                  className="gfl-clean-btn gfl-clean-btn-primary"
+                  style={{ height: '32px', fontSize: '12px', padding: '0 12px', width: 'auto' }}
+                >
+                  <span>Continue to Console</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await fetch('/api/godfather/session', { method: 'DELETE' }).catch(() => {});
+                    logoutOperator();
+                    setActiveSession(null);
+                  }}
+                  className="gfl-clean-btn gfl-clean-btn-outline"
+                  style={{ height: '32px', fontSize: '12px', padding: '0 12px', width: 'auto' }}
+                >
+                  Sign Out
+                </button>
+              </div>
             </div>
           )}
 
@@ -670,33 +783,46 @@ export default function DedicatedGodfatherLoginPage() {
                   )}
 
                   {!forgotSent ? (
-                    <button
-                      type="button"
-                      disabled={isSubmitting || !forgotEmail}
-                      onClick={handleSendRecoveryOtp}
-                      className="gfl-clean-btn gfl-clean-btn-primary"
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!isSubmitting && forgotEmail) handleSendRecoveryOtp();
+                      }}
                     >
-                      {isSubmitting ? (
-                        <>
-                          <span className="gfl-clean-spinner" />
-                          <span>Dispatching Code…</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="w-4 h-4" />
-                          <span>Send Recovery Code</span>
-                        </>
-                      )}
-                    </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || !forgotEmail}
+                        className="gfl-clean-btn gfl-clean-btn-primary"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <span className="gfl-clean-spinner" />
+                            <span>Dispatching Code…</span>
+                          </>
+                        ) : (
+                          <>
+                            <Send className="w-4 h-4" />
+                            <span>Send Recovery Code</span>
+                          </>
+                        )}
+                      </button>
+                    </form>
                   ) : (
-                    <>
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (forgotOtp.length === 6 && forgotNewPassword && forgotConfirmPassword && !isSubmitting) {
+                          handleResetPassword();
+                        }
+                      }}
+                    >
                       <div className="gfl-clean-field">
                         <label className="gfl-clean-label">Enter 6-Digit Code</label>
                         <input
                           type="text"
                           maxLength={6}
                           value={forgotOtp}
-                          onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                          onChange={(e) => setForgotOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                           placeholder="______"
                           className="gfl-clean-input gfl-clean-otp-input"
                           autoFocus
@@ -758,9 +884,8 @@ export default function DedicatedGodfatherLoginPage() {
                       </div>
 
                       <button
-                        type="button"
+                        type="submit"
                         disabled={forgotOtp.length < 6 || !forgotNewPassword || !forgotConfirmPassword || isSubmitting}
-                        onClick={handleResetPassword}
                         className="gfl-clean-btn gfl-clean-btn-primary"
                       >
                         {isSubmitting ? (
@@ -775,7 +900,7 @@ export default function DedicatedGodfatherLoginPage() {
                           </>
                         )}
                       </button>
-                    </>
+                    </form>
                   )}
 
                   <button
@@ -855,6 +980,11 @@ export default function DedicatedGodfatherLoginPage() {
               <div className="gfl-modal-body text-center py-6">
                 <CheckCircle2 className="w-10 h-10 text-green-600 mx-auto mb-2" />
                 <h4 className="font-bold text-slate-800 text-sm">Clearance Ticket Submitted</h4>
+                {clearanceTicketId && (
+                  <p className="text-xs font-mono font-bold text-blue-600 mt-1 mb-2">
+                    Ticket ID: {clearanceTicketId}
+                  </p>
+                )}
                 <p className="text-xs text-slate-500 mt-1">
                   Your request has been routed to <strong>tech@fr8x.in</strong>. Security officers will review within business hours.
                 </p>
@@ -863,6 +993,8 @@ export default function DedicatedGodfatherLoginPage() {
                   onClick={() => {
                     setIsAccessRequestOpen(false);
                     setAccessReqSent(false);
+                    setClearanceTicketId(null);
+                    setClearanceJustification('');
                   }}
                   className="gfl-clean-btn gfl-clean-btn-outline mt-4"
                 >
@@ -870,19 +1002,21 @@ export default function DedicatedGodfatherLoginPage() {
                 </button>
               </div>
             ) : (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setAccessReqSent(true);
-                }}
-                className="gfl-modal-body"
-              >
+              <form onSubmit={handleClearanceSubmit} className="gfl-modal-body">
+                {clearanceError && (
+                  <div className="gfl-clean-alert mb-3">
+                    <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
+                    <span>{clearanceError}</span>
+                  </div>
+                )}
                 <div className="gfl-clean-field">
                   <label className="gfl-clean-label">Your @fr8x.in Mailbox</label>
                   <input
                     type="email"
                     required
-                    defaultValue="tech@fr8x.in"
+                    value={clearanceEmail}
+                    onChange={(e) => setClearanceEmail(e.target.value)}
+                    placeholder="operator@fr8x.in"
                     className="gfl-clean-input"
                   />
                 </div>
@@ -891,7 +1025,9 @@ export default function DedicatedGodfatherLoginPage() {
                   <textarea
                     required
                     rows={3}
-                    placeholder="Specify reason for privileged console clearance…"
+                    value={clearanceJustification}
+                    onChange={(e) => setClearanceJustification(e.target.value)}
+                    placeholder="Specify reason for privileged console clearance (min. 10 chars)…"
                     className="gfl-textarea"
                   />
                 </div>
@@ -903,8 +1039,19 @@ export default function DedicatedGodfatherLoginPage() {
                   >
                     Cancel
                   </button>
-                  <button type="submit" className="gfl-clean-btn gfl-clean-btn-primary">
-                    Submit Clearance Request
+                  <button
+                    type="submit"
+                    disabled={clearanceSubmitting || !clearanceJustification.trim()}
+                    className="gfl-clean-btn gfl-clean-btn-primary"
+                  >
+                    {clearanceSubmitting ? (
+                      <>
+                        <span className="gfl-clean-spinner" />
+                        <span>Submitting…</span>
+                      </>
+                    ) : (
+                      <span>Submit Clearance Request</span>
+                    )}
                   </button>
                 </div>
               </form>

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
         firstLoginRequired: true,
         challengeToken: authResult.challengeToken,
         email: authorizedEmail,
-        expiresIn: authResult.expiresIn || 15,
+        expiresIn: authResult.expiresIn || 300,
         correlationId,
       });
     }
