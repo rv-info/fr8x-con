@@ -118,18 +118,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
             alt="FR8X"
             style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
           />
-          <div
-            className="fr8x-brand-name"
-            style={{
-              fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)",
-              fontSize: '18px',
-              fontWeight: 'bold',
-              color: '#002b66',
-              letterSpacing: '0.04em',
-              textTransform: 'uppercase',
-              lineHeight: 1,
-            }}
-          >
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
             FR8X
           </div>
           <div
@@ -144,7 +133,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
             }}
           />
           <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em', marginTop: '4px' }}>
-            Verifying <span className="fr8x-brand-name" style={{ fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)", fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> session…
+            Verifying <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> session…
           </span>
           <a
             href="/login"

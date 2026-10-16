@@ -58,18 +58,7 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div
-          className="fr8x-brand-name"
-          style={{
-            fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)",
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#002b66',
-            letterSpacing: '0.04em',
-            textTransform: 'uppercase',
-            lineHeight: 1,
-          }}
-        >
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
           FR8X
         </div>
         <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Workspace</div>
@@ -509,23 +498,12 @@ export default function LoginPage() {
                 display: 'block',
               }}
             />
-            <div
-              className="fr8x-brand-name"
-              style={{
-                fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)",
-                fontSize: '18px',
-                fontWeight: 'bold',
-                color: '#002b66',
-                letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-                lineHeight: 1,
-              }}
-            >
+            <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
               FR8X
             </div>
           </div>
           <h1 style={{ fontSize: '15px', fontWeight: 'bold', margin: 0, color: 'var(--fr8x-text)' }}>
-            <span className="fr8x-brand-name" style={{ fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)", fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
+            <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Workspace
           </h1>
           <p style={{ fontSize: '11px', color: 'var(--fr8x-muted)', margin: '4px 0 0' }}>
             Enterprise Freight Forwarding &amp; Reverse Auctions Platform

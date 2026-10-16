@@ -85,9 +85,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             }}
           />
           <span
-            className="fr8x-brand-name"
             style={{
-              fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)",
               fontSize: collapsed ? '9px' : '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',

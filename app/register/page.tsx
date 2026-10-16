@@ -100,18 +100,7 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div
-          className="fr8x-brand-name"
-          style={{
-            fontFamily: "var(--font-masterblast, 'masterblast.regular', 'Masterblast', sans-serif)",
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#002b66',
-            letterSpacing: '0.04em',
-            lineHeight: 1,
-            textTransform: 'uppercase',
-          }}
-        >
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
           FR8X
         </div>
         <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Logistics Platform</div>
