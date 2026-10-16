@@ -16,10 +16,11 @@ const suites = [
   { name: 'Phase 12: Observability, Error Boundaries & Production Hardening', file: 'scripts/verify-phase12-observability-hardening.ts' },
   { name: 'Phase 13: Launch-Readiness & Supabase Architecture', file: 'scripts/verify-launch-readiness.ts' },
   { name: 'Phase 14: Production Security Hardening & Zero-Trust Defense', file: 'scripts/verify-phase14-security-controls.ts' },
+  { name: 'Phase 15: Professional People Search & Connection System', file: 'scripts/verify-phase15-people-network.ts' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-14)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-15)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;

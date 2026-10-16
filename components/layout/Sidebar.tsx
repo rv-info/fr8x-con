@@ -17,6 +17,8 @@ import {
   PanelLeftOpen,
   LogOut,
   Smartphone,
+  Users2,
+  Network,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,13 +41,17 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
     { href: '/nexus', label: 'Nexus', icon: Globe2, badge: '12' },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },
+    { href: '/people', label: 'People', icon: Users2 },
+    { href: '/connections', label: 'Connections', icon: Network },
     { href: '/jobs', label: 'Jobs', icon: Briefcase },
     { href: '/profile', label: 'Profile', icon: UserCheck },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
-    if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
+    if (href === '/auctions')  return pathname === '/auctions'  || pathname.startsWith('/auctions/');
+    if (href === '/people')    return pathname === '/people'    || pathname.startsWith('/people/');
+    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/');
     return pathname === href;
   };
 
