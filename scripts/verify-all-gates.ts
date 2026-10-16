@@ -19,10 +19,11 @@ const suites = [
   { name: 'Phase 15: Professional People Search & Connection System', file: 'scripts/verify-phase15-people-network.ts' },
   { name: 'Phase 16: Advanced Backend Architecture, Outbox & Recommendations', file: 'scripts/verify-phase16-advanced-network.ts' },
   { name: 'Phase 17: Master Engineering Directive (Discovery, Input Security, Quarantine & Privacy Overhaul)', file: 'scripts/verify-master-directive.ts' },
+  { name: 'Phase 18: Zero-Result User Search Incident Forensic Repair & Bidirectional Discovery', file: 'scripts/test-zero-result-search-repair.ts' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-17)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-18)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;

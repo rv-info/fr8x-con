@@ -16,7 +16,7 @@
 import { UserProfile, ProfileExperience, ProfileEducation, ProfileCertification } from './types';
 
 export interface MatchReason {
-  category: 'work' | 'ex_company' | 'location' | 'designation' | 'college' | 'qualification' | 'certification' | 'corridor';
+  category: 'work' | 'ex_company' | 'location' | 'designation' | 'college' | 'qualification' | 'certification' | 'corridor' | 'network';
   badge: string;
   label: string;
   detail: string;
@@ -375,13 +375,23 @@ export function calculateConnectionAffinity(
     }
   }
 
-  // Only calculate percentage if there are valid affinity reasons
+  // Assign baseline network peer affinity for registered FR8X members
   if (reasons.length === 0) {
+    const isVerified = Boolean(target.isVerified || target.hasGoldenTick);
+    const baselineScore = isVerified ? 20 : 15;
+    const baselinePct = isVerified ? 75 : 68;
+    const peerReason: MatchReason = {
+      category: 'network',
+      badge: isVerified ? '🌐 Verified FR8X Member' : '🌐 FR8X Network Member',
+      label: 'Freight Industry Professional',
+      detail: 'Registered member in the global logistics network',
+      points: baselineScore,
+    };
     return {
-      score: 0,
-      percentage: 0,
-      reasons: [],
-      topBadges: [],
+      score: baselineScore,
+      percentage: baselinePct,
+      reasons: [peerReason],
+      topBadges: [peerReason.badge],
     };
   }
 

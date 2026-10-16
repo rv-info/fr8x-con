@@ -155,7 +155,7 @@ function IncomingRow({ item, onAction }: { item: RequestItem; onAction: (id: str
       <div className="conn-row-body">
         <Link href={`/people/${p.id}`} className="conn-row-name">{name}</Link>
         <p className="conn-row-sub">{getSubline(p)}</p>
-        {item.message && <p className="conn-row-message">"{item.message}"</p>}
+        {item.message && <p className="conn-row-message">&ldquo;{item.message}&rdquo;</p>}
         <p className="conn-row-date">
           {new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
@@ -204,7 +204,7 @@ function OutgoingRow({ item, onAction }: { item: RequestItem; onAction: (id: str
       <div className="conn-row-body">
         <Link href={`/people/${p.id}`} className="conn-row-name">{name}</Link>
         <p className="conn-row-sub">{getSubline(p)}</p>
-        {item.message && <p className="conn-row-message">"{item.message}"</p>}
+        {item.message && <p className="conn-row-message">&ldquo;{item.message}&rdquo;</p>}
         <p className="conn-row-date">
           Sent {new Date(item.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
@@ -383,7 +383,7 @@ export default function ConnectionsPage() {
               <>
                 <div className="connections-empty-icon" aria-hidden="true">📤</div>
                 <h2>No sent requests</h2>
-                <p>You haven't sent any connection requests yet.</p>
+                <p>You haven&apos;t sent any connection requests yet.</p>
                 <Link href="/people" className="btn-primary">Find People</Link>
               </>
             )}
@@ -391,7 +391,7 @@ export default function ConnectionsPage() {
               <>
                 <div className="connections-empty-icon" aria-hidden="true">🚫</div>
                 <h2>No blocked members</h2>
-                <p>You haven't blocked anyone.</p>
+                <p>You haven&apos;t blocked anyone.</p>
               </>
             )}
           </div>

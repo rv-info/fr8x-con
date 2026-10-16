@@ -36,7 +36,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticateUserSession } from '@/lib/auth-guard';
 import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/server';
+import { createAdminClient, getDbClient } from '@/lib/supabase/server';
 import { redis } from '@/lib/redis';
 import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
@@ -299,7 +299,60 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Fallback to universal directory store (seeded + existing registered users)
+  // 5b. Fallback to direct PostgreSQL public.profiles query if RPC unavailable
+  if (!dbSuccess || results.length === 0) {
+    try {
+      const dbClient = getDbClient();
+      let dbQuery = dbClient
+        .from('profiles')
+        .select('id, display_name, first_name, last_name, company_name, designation, avatar_url, city, country, is_verified, created_at')
+        .neq('id', userId)
+        .limit(params.limit);
+
+      if (hasTextQuery) {
+        dbQuery = dbQuery.or(
+          `display_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name.ilike.%${query}%,company_name.ilike.%${query}%,designation.ilike.%${query}%`
+        );
+      }
+      if (params.country) {
+        dbQuery = dbQuery.ilike('country', `%${params.country}%`);
+      }
+      if (params.city) {
+        dbQuery = dbQuery.ilike('city', `%${params.city}%`);
+      }
+      if (params.company) {
+        dbQuery = dbQuery.ilike('company_name', `%${params.company}%`);
+      }
+      if (params.verified === 'true') {
+        dbQuery = dbQuery.eq('is_verified', true);
+      }
+
+      const { data: dbProfiles, error: dbErr } = await dbQuery;
+      if (!dbErr && dbProfiles && dbProfiles.length > 0) {
+        results = dbProfiles.map((p: any) => ({
+          id: p.id,
+          user_id: p.id,
+          full_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'FR8X Member',
+          display_name: p.display_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'FR8X Member',
+          first_name: p.first_name,
+          last_name: p.last_name,
+          company: p.company_name,
+          company_name: p.company_name,
+          designation: p.designation,
+          headline: p.designation ? `${p.designation} at ${p.company_name || 'Enterprise'}` : (p.company_name ? `Logistics Professional at ${p.company_name}` : 'Logistics Professional'),
+          city: p.city,
+          country: p.country,
+          avatar_url: p.avatar_url,
+          is_verified: p.is_verified,
+        }));
+        dbSuccess = true;
+      }
+    } catch {
+      // Continue to universal directory store fallback
+    }
+  }
+
+  // 5c. Fallback to universal directory store (seeded + existing registered users)
   if (!dbSuccess || results.length === 0) {
     const fallbackResults = peopleDirectoryStore.searchMembers({
       query:        hasTextQuery ? query : (query.length > 0 ? query : undefined),

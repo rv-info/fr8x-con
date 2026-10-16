@@ -1,6 +1,7 @@
 import './globals.css';
 import type { Metadata, Viewport } from 'next';
 import { AppShell } from '@/components/layout/AppShell';
+import { masterblastFont } from '@/lib/fonts';
 
 import { siteMetadata } from '@/config/site-metadata';
 import { buildRouteMetadata } from '@/config/seo';
@@ -49,7 +50,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={masterblastFont.variable}>
       <head>
         <meta charSet="utf-8" />
         <meta name="mobile-web-app-capable" content="yes" />
@@ -60,7 +61,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="192x192" href="/icon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
       </head>
-      <body>
+      <body className={masterblastFont.className}>
         <AppShell>{children}</AppShell>
       </body>
     </html>

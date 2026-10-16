@@ -48,15 +48,23 @@ export const getSupabaseAdminClient = createAdminClient;
  * Prefers admin client with service role key if available, otherwise cookie-based server client,
  * or direct client.
  */
-export function getDbClient() {
+export function getDbClient(userToken?: string) {
   const admin = createAdminClient();
   if (admin) return admin;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
-  return createSupabaseClient(url, publishableKey, {
+  const options: any = {
     auth: { autoRefreshToken: false, persistSession: false },
-  });
+  };
+  if (userToken) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+      },
+    };
+  }
+  return createSupabaseClient(url, publishableKey, options);
 }
 

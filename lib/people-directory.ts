@@ -225,6 +225,32 @@ export const SEEDED_MEMBERS: DirectoryMember[] = [
       { title: 'Regional Air Freight Director', company: 'DHL Global Forwarding', from: '2011', to: '2019' },
     ],
   },
+  {
+    id: 'a0000000-0000-0000-0000-000000000009',
+    display_name: 'Kumar R',
+    first_name: 'Kumar',
+    last_name: 'R',
+    designation: 'PRICING',
+    position: 'Head of Pricing & Freight Desk',
+    headline: 'Pricing Specialist & Freight Procurement Lead',
+    company_name: 'SYB INTERNATIONAL',
+    company: 'SYB INTERNATIONAL',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    country: 'India',
+    location: 'Mumbai, Maharashtra, India',
+    email: 'kumar@syb-freight.com',
+    is_verified: true,
+    has_golden_tick: true,
+    skills: ['Ocean Freight Pricing', 'Procurement', 'Trade Lane Management', 'NVOCC Contracting'],
+    specializations: ['Freight Forwarding', 'Container Pricing', 'Rate Negotiation'],
+    key_trade_lanes: ['IN-US', 'IN-EU', 'IN-UAE'],
+    bio: 'Pricing and freight procurement lead at SYB INTERNATIONAL with over a decade of carrier contract negotiations and rate desk management.',
+    summary: 'PRICING Specialist at SYB INTERNATIONAL.',
+    experiences: [
+      { title: 'PRICING Specialist', company: 'SYB INTERNATIONAL', from: '2021', to: 'Present', current: true },
+    ],
+  },
 ];
 
 // ── In-Memory Connection State Manager for Fallback ───────────────────────────
