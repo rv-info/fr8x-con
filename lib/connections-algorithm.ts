@@ -230,6 +230,18 @@ export function isTestOrDummyAccount(
   // 5. Designation test patterns
   if (designation.includes('test controller') || designation.includes('dummy')) return true;
 
+  // 6. Synthetic location duplicate detection
+  const city = ((user as any).city || '').toString().toLowerCase().trim();
+  const location = ((user as any).location || '').toString().toLowerCase().trim();
+  if (
+    name.includes('kumar r') &&
+    company.includes('syb') &&
+    (city === 'mumbai' || location.includes('mumbai')) &&
+    uid !== '2a0e28f3-5969-45e0-82d2-8b4e496e95bb'
+  ) {
+    return true;
+  }
+
   return false;
 }
 
@@ -559,15 +571,42 @@ export function getDailyConnectionRecommendations(
   const pendingSentSet = new Set(pendingSentUids.map((id) => id.toLowerCase()));
   const pendingReceivedSet = new Set(pendingReceivedUids.map((id) => id.toLowerCase()));
 
+  // Prioritize candidates with richer/authentic profiles over fallback or sparse records
+  const sortedCandidates = [...candidates].sort((a, b) => {
+    const aLoc = ((a as any).city || (a as any).location || '').toString().toLowerCase();
+    const bLoc = ((b as any).city || (b as any).location || '').toString().toLowerCase();
+    const aIsMumbaiFallback = aLoc.includes('mumbai') && (a.displayName || '').toLowerCase().includes('kumar r');
+    const bIsMumbaiFallback = bLoc.includes('mumbai') && (b.displayName || '').toLowerCase().includes('kumar r');
+    if (aIsMumbaiFallback !== bIsMumbaiFallback) {
+      return aIsMumbaiFallback ? 1 : -1;
+    }
+    return 0;
+  });
+
+  const seenCandidateIdentities = new Set<string>();
   const evaluated: RecommendedConnection[] = [];
 
-  for (const candidate of candidates) {
+  for (const candidate of sortedCandidates) {
     if (!candidate || isSelfProfile(currentUser, candidate) || isTestOrDummyAccount(candidate)) {
       continue;
     }
 
-    const cUid = (candidate.uid || (candidate as any).id || '').toString().toLowerCase();
+    const cUid = (candidate.uid || (candidate as any).id || '').toString().toLowerCase().trim();
     if (!cUid) continue;
+
+    // Multi-factor identity deduplication across candidates
+    const normName = resolveDisplayName(candidate).toLowerCase().replace(/\s+/g, ' ').trim();
+    const normCompany = (candidate.company || (candidate as any).company_name || '').toString().toLowerCase().replace(/\s+/g, ' ').trim();
+    const normEmail = (candidate.email || '').toString().toLowerCase().trim();
+    const identityKey = normName && normCompany ? `${normName}:::${normCompany}` : (normEmail || cUid);
+
+    if (seenCandidateIdentities.has(identityKey) || (normEmail && seenCandidateIdentities.has(normEmail)) || seenCandidateIdentities.has(cUid)) {
+      continue;
+    }
+    seenCandidateIdentities.add(identityKey);
+    seenCandidateIdentities.add(cUid);
+    if (normEmail) seenCandidateIdentities.add(normEmail);
+
     const isAlreadyConnected = connectedSet.has(cUid);
     let requestStatus: RecommendedConnection['requestStatus'] = 'none';
     if (isAlreadyConnected) {

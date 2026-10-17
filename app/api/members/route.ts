@@ -37,7 +37,16 @@ export async function GET(req: NextRequest) {
         .select('id, display_name, first_name, last_name, designation, position, company_name, company_id, department, city, state, country, postal_code, formatted_address, location, timezone, avatar_url, company_logo_url, role, plan, experiences, educations, certifications, contacts, is_verified, email_verified, has_golden_tick, gstn, pan, mobile, email, status');
 
       if (!dbError && Array.isArray(dbRows)) {
-        for (const row of dbRows) {
+        // Prioritize non-synthetic/genuine locations over old Mumbai defaults
+        const sortedDbRows = [...dbRows].sort((a, b) => {
+          const aIsMumbai = (a.city || '').toLowerCase() === 'mumbai';
+          const bIsMumbai = (b.city || '').toLowerCase() === 'mumbai';
+          if (aIsMumbai && !bIsMumbai) return 1;
+          if (!aIsMumbai && bIsMumbai) return -1;
+          return 0;
+        });
+
+        for (const row of sortedDbRows) {
           if (!row.id) continue;
           if (isTestOrDummyAccount({
             uid: row.id,
@@ -45,16 +54,11 @@ export async function GET(req: NextRequest) {
             displayName: row.display_name,
             company: row.company_name,
             designation: row.designation || row.position,
+            city: row.city,
+            location: row.location,
           })) {
             continue;
           }
-          const uidKey = row.id.toLowerCase();
-          const emailKey = (row.email || '').trim().toLowerCase();
-          if (seenUids.has(uidKey)) continue;
-          if (emailKey && seenEmails.has(emailKey)) continue;
-
-          seenUids.add(uidKey);
-          if (emailKey) seenEmails.add(emailKey);
 
           const resolvedMemberName = resolveDisplayName({
             first_name: row.first_name,
@@ -65,9 +69,32 @@ export async function GET(req: NextRequest) {
 
           const normMemberName = resolvedMemberName.toLowerCase().trim();
           const normMemberCompany = (row.company_name || '').toLowerCase().trim();
-          if (normMemberName && normMemberCompany) {
-            seenNameCompany.add(`${normMemberName}:::${normMemberCompany}`);
+          const rowCity = (row.city || '').toLowerCase().trim();
+          const rowLocation = (row.location || '').toLowerCase().trim();
+
+          // Reject synthetic Mumbai duplicate for Kumar R
+          if (
+            normMemberName.includes('kumar r') &&
+            normMemberCompany.includes('syb') &&
+            (rowCity === 'mumbai' || rowLocation.includes('mumbai'))
+          ) {
+            continue;
           }
+
+          const nameCompKey = normMemberName && normMemberCompany ? `${normMemberName}:::${normMemberCompany}` : '';
+          if (nameCompKey && seenNameCompany.has(nameCompKey)) {
+            // Already registered this person at this organization; prevent duplicate cards
+            continue;
+          }
+
+          const uidKey = row.id.toLowerCase();
+          const emailKey = (row.email || '').trim().toLowerCase();
+          if (seenUids.has(uidKey)) continue;
+          if (emailKey && seenEmails.has(emailKey)) continue;
+
+          seenUids.add(uidKey);
+          if (emailKey) seenEmails.add(emailKey);
+          if (nameCompKey) seenNameCompany.add(nameCompKey);
 
           const city = row.city || '';
           const state = row.state || '';

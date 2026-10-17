@@ -177,13 +177,21 @@ export function DailyRecommendationsWidget({
     toast('Suggestion dismissed for today.');
   };
 
-  // Filter out dismissed cards, self cards, and test/dummy fixtures
-  const visibleRecs = recommendations.filter(
-    (r) =>
-      !dismissedUids.has(r.user.uid) &&
-      !isSelfProfile(currentUser, r.user) &&
-      !isTestOrDummyAccount(r.user)
-  );
+  // Filter out dismissed cards, self cards, test/dummy fixtures, and duplicate identities
+  const seenVisibleIdentities = new Set<string>();
+  const visibleRecs = recommendations.filter((r) => {
+    if (dismissedUids.has(r.user.uid)) return false;
+    if (isSelfProfile(currentUser, r.user)) return false;
+    if (isTestOrDummyAccount(r.user)) return false;
+
+    // Strict identity deduplication: never render two cards for the same person
+    const name = (r.user.displayName || `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() || r.user.email || '').toLowerCase().trim();
+    const company = (r.user.company || (r.user as any).company_name || '').toLowerCase().trim();
+    const identityKey = name && company ? `${name}:::${company}` : (r.user.email || r.user.uid);
+    if (seenVisibleIdentities.has(identityKey)) return false;
+    seenVisibleIdentities.add(identityKey);
+    return true;
+  });
 
   // Today's formatted date string
   const todayStr = new Intl.DateTimeFormat('en-US', {

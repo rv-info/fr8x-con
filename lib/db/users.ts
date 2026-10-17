@@ -96,7 +96,29 @@ export async function getAllUsers(): Promise<ProfileRow[]> {
     console.error('[lib/db/users] getAllUsers error:', error.message);
     throw new Error(`Failed to get all users: ${error.message}`);
   }
-  return data || [];
+
+  // Filter out any synthetic Mumbai duplicates and deduplicate by (name + company)
+  const seenIdentities = new Set<string>();
+  const cleanList: ProfileRow[] = [];
+
+  for (const u of data || []) {
+    const name = (u.display_name || `${u.first_name || ''} ${u.last_name || ''}`).toLowerCase().trim();
+    const comp = (u.company_name || '').toLowerCase().trim();
+    const city = (u.city || '').toLowerCase().trim();
+    const loc = (u.location || '').toLowerCase().trim();
+
+    // Block synthetic Mumbai fallback duplicate for Kumar R
+    if (name.includes('kumar r') && comp.includes('syb') && (city === 'mumbai' || loc.includes('mumbai'))) {
+      continue;
+    }
+
+    const key = name && comp ? `${name}:::${comp}` : (u.email || u.id);
+    if (seenIdentities.has(key)) continue;
+    seenIdentities.add(key);
+    cleanList.push(u);
+  }
+
+  return cleanList;
 }
 
 export async function createUser(user: ProfileInsert): Promise<ProfileRow> {
