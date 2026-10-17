@@ -142,6 +142,105 @@ export function getConnectionStatus(
   return 'none';
 }
 
+export async function syncConnectionsFromServer(uid: string): Promise<void> {
+  if (typeof window === 'undefined' || !uid) return;
+  try {
+    const [incomingRes, outgoingRes, withdrawnRes, connRes] = await Promise.all([
+      fetch('/api/people/connections?tab=incoming').then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=outgoing').then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=withdrawn').then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=connections').then((r) => r.json()).catch(() => null),
+    ]);
+
+    const allRequests: ConnectionRequest[] = [];
+    const seenReqIds = new Set<string>();
+
+    if (incomingRes?.success && Array.isArray(incomingRes.data)) {
+      incomingRes.data.forEach((item: any) => {
+        if (!seenReqIds.has(item.id)) {
+          seenReqIds.add(item.id);
+          const p = item.profiles || {};
+          allRequests.push({
+            id: item.id,
+            fromUid: p.id || item.requester_id,
+            toUid: uid,
+            senderName: p.display_name || p.full_name || 'Freight Colleague',
+            senderRole: p.designation || p.headline,
+            senderCompany: p.company_name || p.company,
+            senderAvatarUrl: p.avatar_url,
+            recipientName: '',
+            note: item.message,
+            status: item.status || 'pending',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    if (outgoingRes?.success && Array.isArray(outgoingRes.data)) {
+      outgoingRes.data.forEach((item: any) => {
+        if (!seenReqIds.has(item.id)) {
+          seenReqIds.add(item.id);
+          const p = item.profiles || {};
+          allRequests.push({
+            id: item.id,
+            fromUid: uid,
+            toUid: p.id || item.recipient_id,
+            senderName: '',
+            recipientName: p.display_name || p.full_name || 'Freight Colleague',
+            recipientCompany: p.company_name || p.company,
+            recipientAvatarUrl: p.avatar_url,
+            note: item.message,
+            status: item.status || 'pending',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    if (withdrawnRes?.success && Array.isArray(withdrawnRes.data)) {
+      withdrawnRes.data.forEach((item: any) => {
+        if (!seenReqIds.has(item.id)) {
+          seenReqIds.add(item.id);
+          const p = item.profiles || {};
+          allRequests.push({
+            id: item.id,
+            fromUid: uid,
+            toUid: p.id || item.recipient_id,
+            senderName: '',
+            recipientName: p.display_name || p.full_name || 'Freight Colleague',
+            recipientCompany: p.company_name || p.company,
+            recipientAvatarUrl: p.avatar_url,
+            note: item.message,
+            status: 'cancelled',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    // Merge with any existing requests in local storage not yet overwritten
+    const existing = getAllConnectionRequests();
+    existing.forEach((r) => {
+      if (!seenReqIds.has(r.id)) {
+        allRequests.push(r);
+      }
+    });
+
+    saveConnectionRequests(allRequests);
+
+    // Sync connected map
+    if (connRes?.success && Array.isArray(connRes.data)) {
+      const map = getConnectionsMap();
+      const connectedIds = connRes.data.map((c: any) => c.connected_to || c.profiles?.id).filter(Boolean);
+      map[uid] = Array.from(new Set([...(map[uid] || []), ...connectedIds]));
+      saveConnectionsMap(map);
+    }
+  } catch (err) {
+    console.warn('[Connections] syncConnectionsFromServer error:', err);
+  }
+}
+
 export function sendConnectionRequest(
   fromUser: Partial<UserProfile>,
   toUser: Partial<UserProfile>,
@@ -167,8 +266,12 @@ export function sendConnectionRequest(
   const senderName = resolveDisplayName(fromUser, 'Freight Colleague');
   const recipientName = resolveDisplayName(toUser, 'Freight Colleague');
 
+  const newId = typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, '0')}`;
+
   const newRequest: ConnectionRequest = {
-    id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    id: newId,
     fromUid: fromUser.uid,
     toUid: toUser.uid,
     senderName,
@@ -187,7 +290,7 @@ export function sendConnectionRequest(
   filtered.unshift(newRequest);
   saveConnectionRequests(filtered);
 
-  // Authoritatively persist outgoing request and real recipient notification via Supabase PostgreSQL API
+  // Authoritatively persist outgoing request and recipient notification via API
   if (typeof window !== 'undefined' && toUser.uid) {
     fetch('/api/people/connections', {
       method: 'POST',
@@ -201,37 +304,17 @@ export function sendConnectionRequest(
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          if (data?.request_id) {
+          if (data?.request_id && data.request_id !== newId) {
             newRequest.id = data.request_id;
             const currentList = getAllConnectionRequests();
             saveConnectionRequests(
-              currentList.map((r) => (r.id === newRequest.id ? { ...r, id: data.request_id } : r))
+              currentList.map((r) => (r.id === newId ? { ...r, id: data.request_id } : r))
             );
           }
         }
       })
       .catch(() => {});
   }
-
-  // Push an in-app notification if storage is present
-  try {
-    const NOTIF_KEY = 'fr8x_app_notifications_v1';
-    const notifsRaw = localStorage.getItem(NOTIF_KEY);
-    const notifs = notifsRaw ? JSON.parse(notifsRaw) : [];
-    notifs.unshift({
-      id: `notif-${Date.now()}`,
-      title: 'New Connection Request',
-      desc: `${senderName} (${fromUser.company || 'Enterprise Member'}) sent you a connection request.`,
-      time: 'Just now',
-      createdAt: new Date().toISOString(),
-      read: false,
-      type: 'network',
-      category: 'platform',
-      relatedId: newRequest.id,
-      actionLabel: 'Review Request',
-    });
-    localStorage.setItem(NOTIF_KEY, JSON.stringify(notifs.slice(0, 50)));
-  } catch {}
 
   return newRequest;
 }
@@ -299,26 +382,6 @@ export function acceptConnectionRequest(
       }
     } catch {}
   }
-
-  // Also create acceptance notification for original requester
-  try {
-    const NOTIF_KEY = 'fr8x_app_notifications_v1';
-    const notifsRaw = localStorage.getItem(NOTIF_KEY);
-    const notifs = notifsRaw ? JSON.parse(notifsRaw) : [];
-    const accepterName = resolveDisplayName(currentUser, req.recipientName || 'Trade Partner');
-    notifs.unshift({
-      id: `notif-${Date.now()}`,
-      title: 'Connection Accepted',
-      desc: `${accepterName} accepted your connection request. Direct contact information is now unlocked.`,
-      time: 'Just now',
-      createdAt: new Date().toISOString(),
-      read: false,
-      type: 'network',
-      category: 'platform',
-      actionLabel: 'Start Chat',
-    });
-    localStorage.setItem(NOTIF_KEY, JSON.stringify(notifs.slice(0, 50)));
-  } catch {}
 }
 
 export function declineConnectionRequest(requestId: string) {

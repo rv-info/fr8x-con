@@ -73,6 +73,7 @@ import {
   cancelConnectionRequest,
   removeConnection,
   CONNECTIONS_CHANGED_EVENT,
+  syncConnectionsFromServer,
 } from '@/lib/connections';
 import { DailyRecommendationsWidget } from '@/components/connections/DailyRecommendationsWidget';
 import { SearchConnectionsModal } from '@/components/connections/SearchConnectionsModal';
@@ -428,7 +429,7 @@ export default function FeedsPage() {
   const [activeReplyBoxKey, setActiveReplyBoxKey] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState('');
 
-  // Real-time connections revision sync
+  // Real-time connections revision sync & authoritative server hydration
   const [connRevision, setConnRevision] = useState(0);
 
   React.useEffect(() => {
@@ -436,6 +437,13 @@ export default function FeedsPage() {
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, handler);
     return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handler);
   }, []);
+
+  // Hydrate connections and incoming/outgoing requests from server
+  React.useEffect(() => {
+    if (user?.uid) {
+      syncConnectionsFromServer(user.uid).then(() => setConnRevision((v) => v + 1));
+    }
+  }, [user?.uid]);
 
   // Connection requests for active user
   const connRequests = React.useMemo(() => {
@@ -590,6 +598,12 @@ export default function FeedsPage() {
   const [selectedProfileUid, setSelectedProfileUid] = useState<string | null>(null);
   const [remoteMembers, setRemoteMembers] = useState<any[]>([]);
   const [isSearchingMembers, setIsSearchingMembers] = useState(false);
+  // Sync fresh connection requests whenever Manage Contacts modal opens
+  React.useEffect(() => {
+    if (showManageContactsModal && user?.uid) {
+      syncConnectionsFromServer(user.uid).then(() => setConnRevision((v) => v + 1));
+    }
+  }, [showManageContactsModal, user?.uid]);
 
   React.useEffect(() => {
     if (showManageContactsModal && manageContactsTab === 'discover') {
@@ -3398,9 +3412,13 @@ export default function FeedsPage() {
                             <button
                               type="button"
                               className="btn secondary sm"
-                              onClick={() => {
+                              onClick={async () => {
                                 declineConnectionRequest(req.id);
                                 toast('Connection request declined.');
+                                if (user?.uid) {
+                                  await syncConnectionsFromServer(user.uid);
+                                  setConnRevision((v) => v + 1);
+                                }
                               }}
                               style={{ fontSize: '10.5px', padding: '3px 10px' }}
                             >
@@ -3409,9 +3427,13 @@ export default function FeedsPage() {
                             <button
                               type="button"
                               className="btn primary sm"
-                              onClick={() => {
+                              onClick={async () => {
                                 acceptConnectionRequest(req.id, user);
                                 toast(`Connected with ${req.senderName}!`);
+                                if (user?.uid) {
+                                  await syncConnectionsFromServer(user.uid);
+                                  setConnRevision((v) => v + 1);
+                                }
                               }}
                               style={{ fontSize: '10.5px', padding: '3px 12px' }}
                             >
@@ -3459,9 +3481,13 @@ export default function FeedsPage() {
                           <button
                             type="button"
                             className="btn secondary sm"
-                            onClick={() => {
+                            onClick={async () => {
                               cancelConnectionRequest(req.id);
                               toast('Invitation withdrawn.');
+                              if (user?.uid) {
+                                await syncConnectionsFromServer(user.uid);
+                                setConnRevision((v) => v + 1);
+                              }
                             }}
                             style={{ fontSize: '10.5px', color: '#dc2626' }}
                           >

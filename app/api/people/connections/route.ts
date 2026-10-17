@@ -24,38 +24,40 @@ export const dynamic = 'force-dynamic';
 const ConnectionActionSchema = z.discriminatedUnion('action', [
   z.object({
     action:     z.literal('send'),
-    target_id:  z.string().uuid('target_id must be a UUID'),
+    target_id:  z.string().min(1, 'target_id is required'),
     message:    z.string().max(300).optional(),
   }),
   z.object({
     action:     z.literal('accept'),
-    request_id: z.string().uuid('request_id must be a UUID'),
+    request_id: z.string().min(1, 'request_id is required'),
   }),
   z.object({
     action:     z.literal('decline'),
-    request_id: z.string().uuid('request_id must be a UUID'),
+    request_id: z.string().min(1, 'request_id is required'),
   }),
   z.object({
     action:     z.literal('cancel'),
-    request_id: z.string().uuid('request_id must be a UUID'),
+    request_id: z.string().min(1, 'request_id is required'),
   }),
   z.object({
     action:    z.literal('remove'),
-    target_id: z.string().uuid('target_id must be a UUID'),
+    target_id: z.string().min(1, 'target_id is required'),
   }),
   z.object({
     action:    z.literal('block'),
-    target_id: z.string().uuid('target_id must be a UUID'),
+    target_id: z.string().min(1, 'target_id is required'),
   }),
   z.object({
     action:    z.literal('unblock'),
-    target_id: z.string().uuid('target_id must be a UUID'),
+    target_id: z.string().min(1, 'target_id is required'),
   }),
   z.object({
     action:    z.literal('status'),
-    target_id: z.string().uuid('target_id must be a UUID'),
+    target_id: z.string().min(1, 'target_id is required'),
   }),
 ]);
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // ── GET — list connections and requests ───────────────────────────────────────
 const GetQuerySchema = z.object({
@@ -105,98 +107,162 @@ export async function GET(req: NextRequest) {
   if (adminClient) {
     try {
       if (tab === 'connections') {
-        const { data, error } = await adminClient
+        const { data: connRows, error: connErr } = await adminClient
           .from('accepted_connections')
-          .select(`
-            id,
-            connected_at,
-            connected_to,
-            profiles!accepted_connections_connected_to_fkey (
-              id, display_name, first_name, last_name, designation,
-              company_name, city, country, avatar_url,
-              is_verified, has_golden_tick
-            )
-          `)
+          .select('id, connected_at, connected_to')
           .eq('user_id', userId)
           .order('connected_at', { ascending: false })
           .limit(limit);
 
-        if (!error && Array.isArray(data)) {
-          return NextResponse.json({ success: true, tab, data });
+        if (!connErr && Array.isArray(connRows)) {
+          const targetIds = connRows.map((r: any) => r.connected_to).filter(Boolean);
+          const profileMap = new Map<string, any>();
+          if (targetIds.length > 0) {
+            const { data: profRows } = await adminClient
+              .from('profiles')
+              .select('id, display_name, first_name, last_name, designation, company_name, city, country, avatar_url, is_verified, has_golden_tick')
+              .in('id', targetIds);
+            if (profRows) {
+              profRows.forEach((p: any) => profileMap.set(p.id, p));
+            }
+          }
+          const list = connRows.map((r: any) => ({
+            id: r.id,
+            connected_at: r.connected_at,
+            connected_to: r.connected_to,
+            profiles: normalizeProfile(profileMap.get(r.connected_to)),
+          }));
+          targetIds.forEach((tId) => peopleDirectoryStore.upsertConnection(userId, tId));
+          return NextResponse.json({ success: true, tab, data: list });
         }
       } else if (tab === 'incoming') {
-        const { data, error } = await adminClient
+        const { data: reqRows, error: reqErr } = await adminClient
           .from('connection_requests')
-          .select(`
-            id, message, created_at, status,
-            profiles!connection_requests_requester_id_fkey (
-              id, display_name, first_name, last_name, designation,
-              company_name, city, country, avatar_url,
-              is_verified, has_golden_tick
-            )
-          `)
+          .select('id, requester_id, message, created_at, status')
           .eq('recipient_id', userId)
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(limit);
 
-        if (!error && Array.isArray(data)) {
-          return NextResponse.json({ success: true, tab, data });
+        if (!reqErr && Array.isArray(reqRows)) {
+          const requesterIds = reqRows.map((r: any) => r.requester_id).filter(Boolean);
+          const profileMap = new Map<string, any>();
+          if (requesterIds.length > 0) {
+            const { data: profRows } = await adminClient
+              .from('profiles')
+              .select('id, display_name, first_name, last_name, designation, company_name, city, country, avatar_url, is_verified, has_golden_tick')
+              .in('id', requesterIds);
+            if (profRows) {
+              profRows.forEach((p: any) => profileMap.set(p.id, p));
+            }
+          }
+          const list = reqRows.map((r: any) => ({
+            id: r.id,
+            message: r.message,
+            created_at: r.created_at,
+            status: r.status,
+            profiles: normalizeProfile(profileMap.get(r.requester_id)),
+          }));
+          reqRows.forEach((r: any) => {
+            peopleDirectoryStore.upsertRequest({
+              id: r.id,
+              requester_id: r.requester_id,
+              recipient_id: userId,
+              status: r.status,
+              message: r.message,
+              created_at: r.created_at,
+              updated_at: r.created_at,
+            });
+          });
+          return NextResponse.json({ success: true, tab, data: list });
         }
       } else if (tab === 'outgoing') {
-        const { data, error } = await adminClient
+        const { data: reqRows, error: reqErr } = await adminClient
           .from('connection_requests')
-          .select(`
-            id, message, created_at, status,
-            profiles!connection_requests_recipient_id_fkey (
-              id, display_name, first_name, last_name, designation,
-              company_name, city, country, avatar_url,
-              is_verified, has_golden_tick
-            )
-          `)
+          .select('id, recipient_id, message, created_at, status')
           .eq('requester_id', userId)
           .eq('status', 'pending')
           .order('created_at', { ascending: false })
           .limit(limit);
 
-        if (!error && Array.isArray(data)) {
-          return NextResponse.json({ success: true, tab, data });
+        if (!reqErr && Array.isArray(reqRows)) {
+          const recipientIds = reqRows.map((r: any) => r.recipient_id).filter(Boolean);
+          const profileMap = new Map<string, any>();
+          if (recipientIds.length > 0) {
+            const { data: profRows } = await adminClient
+              .from('profiles')
+              .select('id, display_name, first_name, last_name, designation, company_name, city, country, avatar_url, is_verified, has_golden_tick')
+              .in('id', recipientIds);
+            if (profRows) {
+              profRows.forEach((p: any) => profileMap.set(p.id, p));
+            }
+          }
+          const list = reqRows.map((r: any) => ({
+            id: r.id,
+            message: r.message,
+            created_at: r.created_at,
+            status: r.status,
+            profiles: normalizeProfile(profileMap.get(r.recipient_id)),
+          }));
+          return NextResponse.json({ success: true, tab, data: list });
         }
       } else if (tab === 'withdrawn') {
-        const { data, error } = await adminClient
+        const { data: reqRows, error: reqErr } = await adminClient
           .from('connection_requests')
-          .select(`
-            id, message, created_at, updated_at, status,
-            profiles!connection_requests_recipient_id_fkey (
-              id, display_name, first_name, last_name, designation,
-              company_name, city, country, avatar_url,
-              is_verified, has_golden_tick
-            )
-          `)
+          .select('id, recipient_id, message, created_at, updated_at, status')
           .eq('requester_id', userId)
           .in('status', ['cancelled', 'withdrawn'])
           .order('updated_at', { ascending: false })
           .limit(limit);
 
-        if (!error && Array.isArray(data)) {
-          return NextResponse.json({ success: true, tab, data });
+        if (!reqErr && Array.isArray(reqRows)) {
+          const recipientIds = reqRows.map((r: any) => r.recipient_id).filter(Boolean);
+          const profileMap = new Map<string, any>();
+          if (recipientIds.length > 0) {
+            const { data: profRows } = await adminClient
+              .from('profiles')
+              .select('id, display_name, first_name, last_name, designation, company_name, city, country, avatar_url, is_verified, has_golden_tick')
+              .in('id', recipientIds);
+            if (profRows) {
+              profRows.forEach((p: any) => profileMap.set(p.id, p));
+            }
+          }
+          const list = reqRows.map((r: any) => ({
+            id: r.id,
+            message: r.message,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+            status: r.status,
+            profiles: normalizeProfile(profileMap.get(r.recipient_id)),
+          }));
+          return NextResponse.json({ success: true, tab, data: list });
         }
       } else if (tab === 'blocked') {
-        const { data, error } = await adminClient
+        const { data: blkRows, error: blkErr } = await adminClient
           .from('user_blocks')
-          .select(`
-            id, created_at,
-            profiles!user_blocks_blocked_id_fkey (
-              id, display_name, first_name, last_name, designation,
-              company_name, city, country, avatar_url
-            )
-          `)
+          .select('id, created_at, blocked_id')
           .eq('blocker_id', userId)
           .order('created_at', { ascending: false })
           .limit(limit);
 
-        if (!error && Array.isArray(data)) {
-          return NextResponse.json({ success: true, tab, data });
+        if (!blkErr && Array.isArray(blkRows)) {
+          const blockedIds = blkRows.map((r: any) => r.blocked_id).filter(Boolean);
+          const profileMap = new Map<string, any>();
+          if (blockedIds.length > 0) {
+            const { data: profRows } = await adminClient
+              .from('profiles')
+              .select('id, display_name, first_name, last_name, designation, company_name, city, country, avatar_url')
+              .in('id', blockedIds);
+            if (profRows) {
+              profRows.forEach((p: any) => profileMap.set(p.id, p));
+            }
+          }
+          const list = blkRows.map((r: any) => ({
+            id: r.id,
+            created_at: r.created_at,
+            profiles: normalizeProfile(profileMap.get(r.blocked_id)),
+          }));
+          return NextResponse.json({ success: true, tab, data: list });
         }
       }
     } catch {
@@ -337,68 +403,137 @@ export async function POST(req: NextRequest) {
       try {
         switch (action.action) {
           case 'send': {
-            const { data, error } = await adminClient.rpc('send_connection_request', {
-              p_requester_id: userId,
-              p_recipient_id: action.target_id,
-              p_message:      action.message ?? null,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.target_id) && UUID_REGEX.test(userId)) {
+              const { data, error } = await adminClient.rpc('send_connection_request', {
+                p_requester_id: userId,
+                p_recipient_id: action.target_id,
+                p_message:      action.message ?? null,
+              });
+              if (!error && data) {
+                result = data;
+                handled = true;
+                if ((data as any).success && (data as any).request_id) {
+                  peopleDirectoryStore.upsertRequest({
+                    id: (data as any).request_id,
+                    requester_id: userId,
+                    recipient_id: action.target_id,
+                    status: 'pending',
+                    message: action.message,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
+                }
+              } else if (error) {
+                const errMsg = error.message || '';
+                if (errMsg.includes('ALREADY_CONNECTED')) {
+                  result = { success: false, code: 'ALREADY_CONNECTED', error: 'You are already connected with this member.' };
+                  handled = true;
+                } else if (errMsg.includes('DUPLICATE_REQUEST')) {
+                  result = { success: false, code: 'DUPLICATE_REQUEST', error: 'A pending request already exists.' };
+                  handled = true;
+                } else if (errMsg.includes('BLOCKED')) {
+                  result = { success: false, code: 'BLOCKED', error: 'Connection request cannot be sent.' };
+                  handled = true;
+                } else if (errMsg.includes('RATE_LIMIT')) {
+                  result = { success: false, code: 'RATE_LIMIT', error: 'Too many pending requests. Cancel some before sending new ones.' };
+                  handled = true;
+                }
+              }
+            }
             break;
           }
           case 'accept': {
-            const { data, error } = await adminClient.rpc('accept_connection_request', {
-              p_recipient_id: userId,
-              p_request_id:   action.request_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.request_id)) {
+              const { data, error } = await adminClient.rpc('accept_connection_request', {
+                p_recipient_id: userId,
+                p_request_id:   action.request_id,
+              });
+              if (!error && data) {
+                result = data;
+                handled = true;
+                peopleDirectoryStore.acceptRequest(userId, action.request_id);
+              }
+            }
             break;
           }
           case 'decline': {
-            const { data, error } = await adminClient.rpc('decline_connection_request', {
-              p_recipient_id: userId,
-              p_request_id:   action.request_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.request_id)) {
+              const { data, error } = await adminClient.rpc('decline_connection_request', {
+                p_recipient_id: userId,
+                p_request_id:   action.request_id,
+              });
+              if (!error && data) {
+                result = data;
+                handled = true;
+                peopleDirectoryStore.declineRequest(userId, action.request_id);
+              }
+            }
             break;
           }
           case 'cancel': {
-            const { data, error } = await adminClient.rpc('cancel_connection_request', {
-              p_requester_id: userId,
-              p_request_id:   action.request_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.request_id)) {
+              const { data, error } = await adminClient.rpc('cancel_connection_request', {
+                p_requester_id: userId,
+                p_request_id:   action.request_id,
+              });
+              if (!error && data) {
+                result = data;
+                handled = true;
+                peopleDirectoryStore.cancelRequest(userId, action.request_id);
+              }
+            }
             break;
           }
           case 'remove': {
-            const { data, error } = await adminClient.rpc('remove_connection', {
-              p_user_id:  userId,
-              p_other_id: action.target_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.target_id)) {
+              const { data, error } = await adminClient.rpc('remove_connection', {
+                p_user_id:  userId,
+                p_other_id: action.target_id,
+              });
+              if (!error) {
+                result = data || { success: true };
+                handled = true;
+                peopleDirectoryStore.removeConnection(userId, action.target_id);
+              }
+            }
             break;
           }
           case 'block': {
-            const { data, error } = await adminClient.rpc('block_user', {
-              p_blocker_id: userId,
-              p_blocked_id: action.target_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.target_id)) {
+              const { data, error } = await adminClient.rpc('block_user', {
+                p_blocker_id: userId,
+                p_blocked_id: action.target_id,
+              });
+              if (!error) {
+                result = data || { success: true };
+                handled = true;
+                peopleDirectoryStore.blockUser(userId, action.target_id);
+              }
+            }
             break;
           }
           case 'unblock': {
-            const { data, error } = await adminClient.rpc('unblock_user', {
-              p_blocker_id: userId,
-              p_blocked_id: action.target_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.target_id)) {
+              const { data, error } = await adminClient.rpc('unblock_user', {
+                p_blocker_id: userId,
+                p_blocked_id: action.target_id,
+              });
+              if (!error) {
+                result = data || { success: true };
+                handled = true;
+                peopleDirectoryStore.unblockUser(userId, action.target_id);
+              }
+            }
             break;
           }
           case 'status': {
-            const { data, error } = await adminClient.rpc('get_connection_status', {
-              p_viewer_id: userId,
-              p_target_id: action.target_id,
-            });
-            if (!error) { result = data; handled = true; }
+            if (UUID_REGEX.test(action.target_id)) {
+              const { data, error } = await adminClient.rpc('get_connection_status', {
+                p_viewer_id: userId,
+                p_target_id: action.target_id,
+              });
+              if (!error) { result = data; handled = true; }
+            }
             break;
           }
         }

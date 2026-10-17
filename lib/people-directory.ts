@@ -229,7 +229,7 @@ export const SEEDED_MEMBERS: DirectoryMember[] = [
 
 // ── In-Memory Connection State Manager for Fallback ───────────────────────────
 
-interface InMemRequest {
+export interface InMemRequest {
   id: string;
   requester_id: string;
   recipient_id: string;
@@ -237,6 +237,20 @@ interface InMemRequest {
   message?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface InMemNotification {
+  id: string;
+  user_id: string;
+  type: string;
+  category: string;
+  title: string;
+  description: string;
+  target_url?: string;
+  related_id?: string;
+  read: boolean;
+  metadata?: Record<string, unknown>;
+  created_at: string;
 }
 
 class PeopleDirectoryStore {
@@ -411,13 +425,67 @@ class PeopleDirectoryStore {
     return { status: 'none' };
   }
 
+  // In-memory notifications store for fallback and realtime sync
+  private notifications: Map<string, InMemNotification[]> = new Map();
+
+  public addNotification(notif: InMemNotification) {
+    const list = this.notifications.get(notif.user_id) || [];
+    // Deduplicate by related_id or id
+    if (notif.related_id && list.some((n) => n.related_id === notif.related_id)) {
+      return;
+    }
+    list.unshift(notif);
+    this.notifications.set(notif.user_id, list.slice(0, 100));
+  }
+
+  public getNotifications(userId: string): InMemNotification[] {
+    return this.notifications.get(userId) || [];
+  }
+
+  public getUnreadNotificationCount(userId: string): number {
+    const list = this.notifications.get(userId) || [];
+    return list.filter((n) => !n.read).length;
+  }
+
+  public markNotificationRead(userId: string, notifId?: string): boolean {
+    const list = this.notifications.get(userId);
+    if (!list) return false;
+    if (notifId) {
+      list.forEach((n) => { if (n.id === notifId) n.read = true; });
+    } else {
+      list.forEach((n) => { n.read = true; });
+    }
+    return true;
+  }
+
+  public clearNotifications(userId: string, notifId?: string): boolean {
+    if (!notifId) {
+      this.notifications.set(userId, []);
+      return true;
+    }
+    const list = this.notifications.get(userId) || [];
+    this.notifications.set(userId, list.filter((n) => n.id !== notifId));
+    return true;
+  }
+
+  public upsertRequest(req: InMemRequest) {
+    this.requests.set(req.id, req);
+  }
+
+  public upsertConnection(userId: string, targetId: string) {
+    this.acceptedPairs.add(this.pairKey(userId, targetId));
+    this.acceptedPairs.add(this.pairKey(targetId, userId));
+  }
+
   public sendRequest(requesterId: string, recipientId: string, message?: string): { success: boolean; request_id: string } {
     const existing = this.getConnectionStatus(requesterId, recipientId);
     if (existing.status !== 'none' && existing.status !== 'not_connected') {
       return { success: false, request_id: existing.request_id || '' };
     }
 
-    const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const id = typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, '0')}`;
     const req: InMemRequest = {
       id,
       requester_id: requesterId,
@@ -428,6 +496,30 @@ class PeopleDirectoryStore {
       updated_at: new Date().toISOString(),
     };
     this.requests.set(id, req);
+
+    // Create notification for recipient in memory store
+    const requester = this.getMemberById(requesterId);
+    const requesterName = requester?.display_name || requester?.full_name || 'A freight colleague';
+    this.addNotification({
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `notif_${Date.now()}`,
+      user_id: recipientId,
+      type: 'connection_request',
+      category: 'network',
+      title: `${requesterName} sent you a connection request`,
+      description: message ? `"${message.slice(0, 150)}"` : 'Review and respond to grow your professional freight network.',
+      target_url: '/connections?tab=incoming',
+      related_id: id,
+      read: false,
+      metadata: {
+        requester_id: requesterId,
+        request_id: id,
+        requester_name: requesterName,
+        requester_company: requester?.company_name || requester?.company || '',
+        requester_avatar: requester?.avatar_url || '',
+      },
+      created_at: new Date().toISOString(),
+    });
+
     return { success: true, request_id: id };
   }
 
@@ -439,6 +531,36 @@ class PeopleDirectoryStore {
     req.updated_at = new Date().toISOString();
     this.acceptedPairs.add(this.pairKey(req.requester_id, req.recipient_id));
     this.acceptedPairs.add(this.pairKey(req.recipient_id, req.requester_id));
+
+    // Mark recipient's connection request notification as read
+    const notifs = this.notifications.get(userId) || [];
+    notifs.forEach((n) => {
+      if (n.related_id === requestId) n.read = true;
+    });
+
+    // Send "connection_accepted" notification to original requester
+    const acceptor = this.getMemberById(userId);
+    const acceptorName = acceptor?.display_name || acceptor?.full_name || 'Your contact';
+    this.addNotification({
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `notif_${Date.now()}`,
+      user_id: req.requester_id,
+      type: 'connection_accepted',
+      category: 'network',
+      title: `${acceptorName} accepted your connection request`,
+      description: 'You are now connected. Direct contact credentials and instant trade chat are unlocked.',
+      target_url: '/connections?tab=connections',
+      related_id: `accepted_${requestId}`,
+      read: false,
+      metadata: {
+        acceptor_id: userId,
+        request_id: requestId,
+        acceptor_name: acceptorName,
+        acceptor_company: acceptor?.company_name || acceptor?.company || '',
+        acceptor_avatar: acceptor?.avatar_url || '',
+      },
+      created_at: new Date().toISOString(),
+    });
+
     return true;
   }
 
@@ -448,6 +570,12 @@ class PeopleDirectoryStore {
 
     req.status = 'declined';
     req.updated_at = new Date().toISOString();
+
+    const notifs = this.notifications.get(userId) || [];
+    notifs.forEach((n) => {
+      if (n.related_id === requestId) n.read = true;
+    });
+
     return true;
   }
 
@@ -457,6 +585,13 @@ class PeopleDirectoryStore {
 
     req.status = 'cancelled';
     req.updated_at = new Date().toISOString();
+
+    // Mark recipient's notification as read
+    const recipientNotifs = this.notifications.get(req.recipient_id) || [];
+    recipientNotifs.forEach((n) => {
+      if (n.related_id === requestId) n.read = true;
+    });
+
     return true;
   }
 

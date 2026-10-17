@@ -55,6 +55,7 @@ import {
   recordRecentlyViewed,
   getRecentlyViewed,
 } from '@/lib/cache/indexedDBCache';
+import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connections';
 
 // Supabase DBMS Bridge Functions replacing legacy Firestore helpers
 const upsertPostInDB = (post: Partial<FeedPost>) => postDbService.upsertPost(post);
@@ -755,9 +756,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
             })
             .catch(() => {});
 
-          // Fetch authoritative user notifications from Supabase PostgreSQL
+          // Fetch authoritative user notifications from database / notifications API
           if (user?.uid) {
-            notificationDbService.getNotifications(user.uid)
+            fetch('/api/notifications')
+              .then((res) => (res.ok ? res.json() : null))
+              .then((json) => {
+                if (json?.success && Array.isArray(json.notifications)) {
+                  setNotifications(json.notifications);
+                  try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
+                } else {
+                  return notificationDbService.getNotifications(user.uid);
+                }
+              })
               .then((dbNotifs) => {
                 if (Array.isArray(dbNotifs) && dbNotifs.length > 0) {
                   const mapped: AppNotification[] = dbNotifs.map((n: any) => ({
@@ -771,7 +781,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                     category: (n.category as any) || 'platform',
                     targetUrl: n.target_url || n.link || undefined,
                     relatedId: n.related_id || undefined,
-                    actionLabel: n.metadata?.actionLabel || (n.type?.includes('connection') ? 'View Connection' : undefined),
+                    actionLabel: n.metadata?.actionLabel || (n.type?.includes('connection') ? 'Review Request' : undefined),
                   }));
                   setNotifications(mapped);
                   try { localStorage.setItem('fr8x_notifications', JSON.stringify(mapped)); } catch {}
@@ -780,7 +790,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
               .catch(() => {});
           }
         };
-
 
         if (isLowBandwidth) {
           // Defer heavy secondary queries on flaky 3G to keep main thread unblocked
@@ -799,6 +808,34 @@ export function DataProvider({ children }: { children: ReactNode }) {
       isMounted = false;
     };
   }, [user?.uid, isLowBandwidth]);
+
+  // Periodic and event-driven notifications synchronization
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const refreshNotifications = () => {
+      fetch('/api/notifications')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((json) => {
+          if (json?.success && Array.isArray(json.notifications)) {
+            setNotifications(json.notifications);
+            try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
+          }
+        })
+        .catch(() => {});
+    };
+
+    window.addEventListener('focus', refreshNotifications);
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
+    const interval = setInterval(refreshNotifications, 15000);
+
+    return () => {
+      window.removeEventListener('focus', refreshNotifications);
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
+      clearInterval(interval);
+    };
+  }, [user?.uid]);
+
   const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([]);
 
   // Notification Actions
@@ -808,7 +845,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
-    notificationDbService.markAsRead(notifId).catch(() => {});
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'mark_read', id: notifId }),
+    }).catch(() => {
+      notificationDbService.markAsRead(notifId).catch(() => {});
+    });
   };
 
   const markAllNotificationsRead = () => {
@@ -817,9 +860,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
-    if (user?.uid) {
-      notificationDbService.markAllAsRead(user.uid).catch(() => {});
-    }
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'mark_all_read' }),
+    }).catch(() => {
+      if (user?.uid) {
+        notificationDbService.markAllAsRead(user.uid).catch(() => {});
+      }
+    });
     toast('All notifications marked as read.');
   };
 
@@ -829,17 +878,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
-    if (user?.uid) {
-      notificationDbService.clearNotification(notifId, user.uid).catch(() => {});
-    }
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear', id: notifId }),
+    }).catch(() => {
+      if (user?.uid) {
+        notificationDbService.clearNotification(notifId, user.uid).catch(() => {});
+      }
+    });
   };
 
   const clearAllNotifications = () => {
     setNotifications([]);
     try { localStorage.removeItem('fr8x_notifications'); } catch {}
-    if (user?.uid) {
-      notificationDbService.clearAllNotifications(user.uid).catch(() => {});
-    }
+    fetch('/api/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear_all' }),
+    }).catch(() => {
+      if (user?.uid) {
+        notificationDbService.clearAllNotifications(user.uid).catch(() => {});
+      }
+    });
     toast('All notifications cleared.');
   };
 

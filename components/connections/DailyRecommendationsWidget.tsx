@@ -34,6 +34,7 @@ import {
   sendConnectionRequest,
   acceptConnectionRequest,
   CONNECTIONS_CHANGED_EVENT,
+  syncConnectionsFromServer,
 } from '@/lib/connections';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -137,6 +138,7 @@ export function DailyRecommendationsWidget({
       const [membersRes, profileRes] = await Promise.all([
         fetch('/api/members?limit=100').then((r) => r.json()).catch(() => null),
         fetch(`/api/user/profile?uid=${encodeURIComponent(myUid)}`).then((r) => r.json()).catch(() => null),
+        syncConnectionsFromServer(myUid),
       ]);
 
       if (membersRes && Array.isArray(membersRes.members)) {
@@ -230,6 +232,9 @@ export function DailyRecommendationsWidget({
       const senderName = currentUser.displayName || `${currentUser.firstName} ${currentUser.lastName}`.trim();
       sendConnectionRequest(currentUser, rec.user, `Hi ${rec.user.firstName || rec.user.displayName}, I noticed our common background in the freight network and would like to connect!`);
       toast(`Connection invitation dispatched to ${rec.user.displayName || rec.user.firstName}!`);
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
+      }
       refreshRecommendations();
     } catch (err: any) {
       toast(err.message || 'Could not send connection invitation');

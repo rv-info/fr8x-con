@@ -35,6 +35,7 @@ import {
   acceptConnectionRequest,
   cancelConnectionRequest,
   CONNECTIONS_CHANGED_EVENT,
+  syncConnectionsFromServer,
 } from '@/lib/connections';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -230,7 +231,7 @@ export function SearchConnectionsModal({
       });
   }, [allMembers, currentUser, activeFilter]);
 
-  const handleSendRequest = (targetUser: UserProfile, noteText?: string) => {
+  const handleSendRequest = async (targetUser: UserProfile, noteText?: string) => {
     if (!currentUser.uid || !targetUser.uid) return;
     if (isSelfProfile(currentUser, targetUser)) {
       toast('You cannot send a connection request to yourself.');
@@ -250,6 +251,9 @@ export function SearchConnectionsModal({
       toast(`Connection invitation sent to ${targetUser.displayName || targetUser.firstName}!`);
       setNotePromptUid(null);
       setCustomNote('');
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
+      }
     } catch (err: any) {
       toast(err.message || 'Failed to send connection request');
     } finally {
@@ -257,21 +261,27 @@ export function SearchConnectionsModal({
     }
   };
 
-  const handleAcceptRequest = (targetUid: string, targetName: string) => {
+  const handleAcceptRequest = async (targetUid: string, targetName: string) => {
     const all = getAllConnectionRequests();
     const req = all.find((r) => r.fromUid === targetUid && r.toUid === currentUser.uid && r.status === 'pending');
     if (req) {
       acceptConnectionRequest(req.id, currentUser);
       toast(`Connected with ${targetName}!`);
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
+      }
     }
   };
 
-  const handleWithdrawRequest = (targetUid: string) => {
+  const handleWithdrawRequest = async (targetUid: string) => {
     const all = getAllConnectionRequests();
     const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid && r.status === 'pending');
     if (req) {
       cancelConnectionRequest(req.id);
       toast('Connection request withdrawn.');
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
+      }
     }
   };
 

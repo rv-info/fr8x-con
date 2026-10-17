@@ -23,10 +23,11 @@ const suites = [
   { name: 'Phase 19: Production UI, Data Integrity, SEO & Security Fixes', file: 'scripts/test-production-ui-integrity-fixes.ts' },
   { name: 'Phase 20: Correct Connection Workflow, Professional Messaging, Company Profiles & UI Logic', file: 'scripts/test-connection-lifecycle-and-company-fixes.ts' },
   { name: 'Phase 21: Registration Integrity, Forensic De-duplication, Godfather Audit, Notification Center, Search History & Rich Post Formatting', file: 'scripts/test-integrity-forensics-and-enhancements.ts' },
+  { name: 'Phase 22: Connection Requests, Recipient Visibility & Database-Backed Notification Bell', file: 'scripts/test-connection-workflow-root-cause.ts' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-21)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-22)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;
