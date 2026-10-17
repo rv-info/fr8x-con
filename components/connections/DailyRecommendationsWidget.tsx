@@ -44,6 +44,61 @@ interface DailyRecommendationsWidgetProps {
   onOpenChat?: (uid: string, name: string) => void;
 }
 
+/**
+ * Computes whether the current time falls inside one of the 10-15 random daily periods.
+ * Uses a daily date seed so windows are distributed across the 24 hours of the day (13 windows, ~15 mins each).
+ */
+function isWithinRandomDailySchedule(): boolean {
+  if (typeof window === 'undefined') return false;
+  const now = new Date();
+  const daySeed = now.getFullYear() * 10000 + (now.getMonth() + 1) * 100 + now.getDate();
+  const currentMinuteOfDay = now.getHours() * 60 + now.getMinutes();
+
+  // 13 pseudo-random windows distributed throughout the 24 hours of the day (10-15 times a day)
+  const TOTAL_PERIODS = 13;
+  const SLOT_SIZE = Math.floor(1440 / TOTAL_PERIODS); // ~110 minutes per slot
+  const WINDOW_DURATION = 15; // each period lasts 15 minutes
+
+  for (let i = 0; i < TOTAL_PERIODS; i++) {
+    // Deterministic seeded random offset within the slot
+    const seed = (daySeed * 9301 + 49297 + i * 233280) % 233280;
+    const randomFactor = seed / 233280;
+    const slotStart = i * SLOT_SIZE;
+    const windowStart = slotStart + Math.floor(randomFactor * (SLOT_SIZE - WINDOW_DURATION));
+    const windowEnd = windowStart + WINDOW_DURATION;
+
+    if (currentMinuteOfDay >= windowStart && currentMinuteOfDay <= windowEnd) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Checks whether the page was reloaded/refreshed, or if the widget was previously vanished in this session.
+ */
+function checkIsPageRefreshedOrVanished(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    if (sessionStorage.getItem('fr8x_daily_recs_vanished') === 'true') {
+      return true;
+    }
+    // Check if the current page navigation is a reload / refresh
+    const navEntries = performance.getEntriesByType('navigation');
+    if (navEntries && navEntries.length > 0) {
+      const navTiming = navEntries[0] as PerformanceNavigationTiming;
+      if (navTiming.type === 'reload') {
+        sessionStorage.setItem('fr8x_daily_recs_vanished', 'true');
+        return true;
+      }
+    } else if ((performance as any)?.navigation?.type === 1) {
+      sessionStorage.setItem('fr8x_daily_recs_vanished', 'true');
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
 export function DailyRecommendationsWidget({
   currentUser,
   onOpenSearchModal,
@@ -58,6 +113,17 @@ export function DailyRecommendationsWidget({
   const [scrollIndex, setScrollIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [connectingUid, setConnectingUid] = useState<string | null>(null);
+  const [isVanished, setIsVanished] = useState<boolean>(() => checkIsPageRefreshedOrVanished());
+
+  const handleCloseWidget = () => {
+    setIsVanished(true);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('fr8x_daily_recs_vanished', 'true');
+      } catch {}
+    }
+    toast('Recommendations section hidden for this session.');
+  };
 
   // Load all remote registered members from DBMS endpoint
   const loadMembers = async () => {
@@ -200,6 +266,16 @@ export function DailyRecommendationsWidget({
     year: 'numeric',
   }).format(new Date());
 
+  const isForceShown = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).get('recs') === '1' ||
+    localStorage.getItem('fr8x_force_recs') === 'true'
+  );
+
+  // If user refreshed the page, or dismissed it, or if current time is outside the 10-15 random daily periods, vanish!
+  if (!isForceShown && (isVanished || !isWithinRandomDailySchedule())) {
+    return null;
+  }
+
   if (loading && candidates.length === 0) {
     return null;
   }
@@ -271,22 +347,44 @@ export function DailyRecommendationsWidget({
               </span>
             </div>
           </div>
-          <button
-            type="button"
-            className="btn secondary sm"
-            onClick={onOpenSearchModal}
-            style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              padding: '5px 12px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            <Search size={12} />
-            Search All Connections
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              className="btn secondary sm"
+              onClick={onOpenSearchModal}
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '5px 12px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              <Search size={12} />
+              Search All Connections
+            </button>
+            <button
+              type="button"
+              className="btn secondary sm"
+              onClick={handleCloseWidget}
+              title="Dismiss section"
+              style={{
+                padding: '5px 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#64748b',
+                border: '1px solid #cbd5e1',
+                background: '#ffffff',
+                borderRadius: '6px',
+                cursor: 'pointer',
+              }}
+              aria-label="Close recommendations"
+            >
+              <X size={13} />
+            </button>
+          </div>
         </div>
 
         <div
@@ -403,6 +501,26 @@ export function DailyRecommendationsWidget({
             }}
           >
             <Search size={12} /> Search All Connections
+          </button>
+          <button
+            type="button"
+            className="btn secondary sm"
+            onClick={handleCloseWidget}
+            title="Dismiss recommendations"
+            style={{
+              padding: '5px 8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#64748b',
+              border: '1px solid #cbd5e1',
+              background: '#ffffff',
+              borderRadius: '6px',
+              cursor: 'pointer',
+            }}
+            aria-label="Close recommendations"
+          >
+            <X size={13} />
           </button>
         </div>
       </div>
