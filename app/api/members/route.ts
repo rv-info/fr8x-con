@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
     const callerUid = user.uid;
     const seenUids = new Set<string>();
     const seenEmails = new Set<string>();
+    const seenNameCompany = new Set<string>();
     const allRecords: any[] = [];
 
     // 1. Authoritative: Fetch profiles from Supabase PostgreSQL
@@ -62,6 +63,17 @@ export async function GET(req: NextRequest) {
             email: row.email,
           });
 
+          const normMemberName = resolvedMemberName.toLowerCase().trim();
+          const normMemberCompany = (row.company_name || '').toLowerCase().trim();
+          if (normMemberName && normMemberCompany) {
+            seenNameCompany.add(`${normMemberName}:::${normMemberCompany}`);
+          }
+
+          const city = row.city || '';
+          const state = row.state || '';
+          const country = row.country || 'India';
+          const location = row.location || [city, state, country].filter(Boolean).join(', ') || 'India';
+
           allRecords.push({
             uid: row.id,
             id: row.id,
@@ -73,10 +85,10 @@ export async function GET(req: NextRequest) {
             companyId: row.company_id || '',
             designation: row.designation || row.position || 'Trade Specialist',
             role: row.role || 'freight_forwarder',
-            city: row.city || 'Mumbai',
-            state: row.state || 'Maharashtra',
-            country: row.country || 'India',
-            location: `${row.city || 'Mumbai'}, ${row.country || 'India'}`,
+            city,
+            state,
+            country,
+            location,
             formattedAddress: row.formatted_address || '',
             timezone: row.timezone || 'Asia/Kolkata',
             isVerified: Boolean(row.is_verified || row.email_verified),
@@ -100,7 +112,7 @@ export async function GET(req: NextRequest) {
     }
 
     // 2. Secondary: Merge dynamically registered in-memory accounts (for active sessions / unit tests)
-    // Strictly deduplicated by stable UID and email to prevent duplicate cards
+    // Strictly deduplicated by stable UID, email, and verified name-company to prevent duplicate cards
     try {
       const serverUsers = serverSecurityStore.getAllRegisteredUsers();
       for (const u of serverUsers) {
@@ -111,15 +123,29 @@ export async function GET(req: NextRequest) {
         if (seenUids.has(uidKey)) continue;
         if (emailKey && seenEmails.has(emailKey)) continue;
 
-        seenUids.add(uidKey);
-        if (emailKey) seenEmails.add(emailKey);
-
         const resolvedServerUserName = resolveDisplayName({
           firstName: u.firstName,
           lastName: u.lastName,
           displayName: u.displayName,
           email: u.email,
         });
+
+        const normServerName = resolvedServerUserName.toLowerCase().trim();
+        const normServerCompany = (u.company || '').toLowerCase().trim();
+        const serverNameCompKey = normServerName && normServerCompany ? `${normServerName}:::${normServerCompany}` : '';
+        if (serverNameCompKey && seenNameCompany.has(serverNameCompKey)) {
+          // Skip duplicate in-memory representation of already persisted database user
+          continue;
+        }
+
+        seenUids.add(uidKey);
+        if (emailKey) seenEmails.add(emailKey);
+        if (serverNameCompKey) seenNameCompany.add(serverNameCompKey);
+
+        const serverCity = u.city || '';
+        const serverState = u.state || '';
+        const serverCountry = u.country || 'India';
+        const serverLocation = u.location || [serverCity, serverState, serverCountry].filter(Boolean).join(', ') || 'India';
 
         allRecords.push({
           uid: u.uid,
@@ -132,10 +158,10 @@ export async function GET(req: NextRequest) {
           companyId: u.companyId || '',
           designation: u.designation || 'Trade Specialist',
           role: u.role || 'freight_forwarder',
-          city: u.city || 'Mumbai',
-          state: u.state || 'Maharashtra',
-          country: u.country || 'India',
-          location: `${u.city || 'Mumbai'}, ${u.country || 'India'}`,
+          city: serverCity,
+          state: serverState,
+          country: serverCountry,
+          location: serverLocation,
           formattedAddress: u.formattedAddress || '',
           timezone: u.timezone || 'Asia/Kolkata',
           isVerified: Boolean(u.isVerified || u.email_verified),

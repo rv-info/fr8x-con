@@ -3723,10 +3723,10 @@ export default function ProfilePage() {
                   iec: finalIec,
                   mto: finalMto,
                   registeredAddress: {
-                    addressLine1: formattedAddress || 'Logistics Hub',
-                    city: city || 'Mumbai',
-                    state: stateName || 'State',
-                    postalCode: user.postalCode || '400093',
+                    addressLine1: formattedAddress || '',
+                    city: city || '',
+                    state: stateName || '',
+                    postalCode: user.postalCode || '',
                     country: kycCountry || country || 'India',
                   },
                   memberships: [

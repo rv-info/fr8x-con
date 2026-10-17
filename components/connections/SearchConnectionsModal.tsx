@@ -64,6 +64,51 @@ export function SearchConnectionsModal({
   const [connectingUid, setConnectingUid] = useState<string | null>(null);
   const [notePromptUid, setNotePromptUid] = useState<string | null>(null);
   const [customNote, setCustomNote] = useState('');
+  const [recentSearches, setRecentSearches] = useState<{ id: string; query: string }[]>([]);
+
+  const loadSearchHistory = async () => {
+    try {
+      const res = await fetch('/api/search/history?context=connections&limit=8');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.history)) {
+          setRecentSearches(json.history.map((h: any) => ({ id: h.id, query: h.query })));
+        }
+      }
+    } catch {}
+  };
+
+  const recordSearchHistory = async (query: string, count: number) => {
+    if (!query || query.trim().length < 2) return;
+    try {
+      await fetch('/api/search/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim(), context: 'connections', resultCount: count }),
+      });
+      loadSearchHistory();
+    } catch {}
+  };
+
+  const removeHistoryItem = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setRecentSearches((prev) => prev.filter((item) => item.id !== id));
+    try {
+      await fetch(`/api/search/history?id=${encodeURIComponent(id)}&context=connections`, {
+        method: 'DELETE',
+      });
+    } catch {}
+  };
+
+  const clearAllHistory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setRecentSearches([]);
+    try {
+      await fetch('/api/search/history?all=true&context=connections', {
+        method: 'DELETE',
+      });
+    } catch {}
+  };
 
   // Fetch all members from DBMS endpoint
   const fetchMembers = async (query = '') => {
@@ -100,6 +145,9 @@ export function SearchConnectionsModal({
       const data = await res.json();
       if (data && Array.isArray(data.members)) {
         setAllMembers(data.members);
+        if (query.trim().length >= 2) {
+          recordSearchHistory(query, data.members.length);
+        }
       }
     } catch (err: any) {
       console.error('[SearchConnectionsModal] Error querying members:', err);
@@ -113,6 +161,7 @@ export function SearchConnectionsModal({
   // Debounced search on typing or modal opening
   useEffect(() => {
     if (!isOpen) return;
+    loadSearchHistory();
     const timer = setTimeout(() => {
       fetchMembers(searchTerm);
     }, 250);
@@ -281,6 +330,60 @@ export function SearchConnectionsModal({
               </button>
             )}
           </div>
+
+          {/* Recent Searches Chips */}
+          {!searchTerm && recentSearches.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', padding: '2px 0' }}>
+              <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={11} /> Recent:
+              </span>
+              {recentSearches.map((item) => (
+                <span
+                  key={item.id}
+                  onClick={() => setSearchTerm(item.query)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    background: '#f1f5f9',
+                    fontSize: '11px',
+                    color: '#334155',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                  }}
+                  className="hover:bg-slate-200"
+                >
+                  <span>{item.query}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => removeHistoryItem(e, item.id)}
+                    title="Remove from history"
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94a3b8', display: 'flex' }}
+                    className="hover:text-red-500"
+                  >
+                    <X size={10} />
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={clearAllHistory}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '10.5px',
+                  color: '#94a3b8',
+                  padding: '2px 4px',
+                  textDecoration: 'underline',
+                }}
+              >
+                Clear all
+              </button>
+            </div>
+          )}
 
           {/* Filter Chips / Facets */}
           <div

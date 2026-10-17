@@ -291,6 +291,8 @@ interface DataContextType {
   notifications: AppNotification[];
   markNotificationRead: (notifId: string) => void;
   markAllNotificationsRead: () => void;
+  clearNotification: (notifId: string) => void;
+  clearAllNotifications: () => void;
   // Master Data
   masterLocations: LocationMasterItem[];
   masterCarriers: CarrierMasterItem[];
@@ -816,10 +818,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
     if (user?.uid) {
-      const supabase = createClient();
-      supabase.from('notifications').update({ read: true }).eq('user_id', user.uid).catch(() => {});
+      notificationDbService.markAllAsRead(user.uid).catch(() => {});
     }
     toast('All notifications marked as read.');
+  };
+
+  const clearNotification = (notifId: string) => {
+    setNotifications((prev) => {
+      const next = prev.filter((n) => n.id !== notifId);
+      try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
+      return next;
+    });
+    if (user?.uid) {
+      notificationDbService.clearNotification(notifId, user.uid).catch(() => {});
+    }
+  };
+
+  const clearAllNotifications = () => {
+    setNotifications([]);
+    try { localStorage.removeItem('fr8x_notifications'); } catch {}
+    if (user?.uid) {
+      notificationDbService.clearAllNotifications(user.uid).catch(() => {});
+    }
+    toast('All notifications cleared.');
   };
 
   // Feed Actions
@@ -2540,6 +2561,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       notifications,
       markNotificationRead,
       markAllNotificationsRead,
+      clearNotification,
+      clearAllNotifications,
       masterLocations,
       masterCarriers,
       masterEquipment,

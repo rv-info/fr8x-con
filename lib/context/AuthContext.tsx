@@ -611,7 +611,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const resolvedMto = profile.mto || profile.mtoNumber || '';
       const resolvedIsdCode = profile.isdCode || '+91';
       const resolvedTimezone = profile.timezone || 'Asia/Kolkata';
-      const resolvedCity = profile.city || 'Mumbai';
+      const resolvedCity = profile.city || '';
       const resolvedState = profile.state || '';
       const resolvedCountry = profile.country || 'India';
       const resolvedPostalCode = profile.postalCode || '';

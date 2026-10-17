@@ -23,10 +23,10 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
   const mobile = u.mobile || u.phone || '';
   const designation = u.designation || '';
 
-  const city = u.city || 'Mumbai';
-  const state = u.state || 'Maharashtra';
+  const city = u.city || '';
+  const state = u.state || '';
   const country = u.country || 'India';
-  const location = u.location || `${city}, ${state}, ${country}`;
+  const location = u.location || [city, state, country].filter(Boolean).join(', ');
 
   return {
     uid: u.uid || u.id || `usr_${Date.now()}`,
@@ -35,14 +35,14 @@ function mapToGodfatherUserProfile(u: any): UserProfile {
     lastName: u.last_name || u.lastName || displayName.split(' ').slice(1).join(' ') || '',
     displayName,
     designation,
-    company: company || 'Enterprise Logistics',
+    company: company || '',
     companyId: companyId || '',
     city,
     state,
     country,
     location,
-    address: u.address || u.formatted_address || `${city}, ${country}`,
-    formattedAddress: u.formatted_address || u.address || `${city}, ${country}`,
+    address: u.address || u.formatted_address || [city, country].filter(Boolean).join(', '),
+    formattedAddress: u.formatted_address || u.address || [city, country].filter(Boolean).join(', '),
     timezone: u.timezone || 'Asia/Kolkata',
     mobile,
     phone: mobile,

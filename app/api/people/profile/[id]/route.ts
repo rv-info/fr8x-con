@@ -169,7 +169,7 @@ export async function GET(
           company_name: storeUser.company,
           city: storeStoreUserCity(storeUser),
           country: storeUser.country || 'India',
-          location: `${storeUser.city || 'Mumbai'}, ${storeUser.country || 'India'}`,
+          location: [storeUser.city, storeUser.country || 'India'].filter(Boolean).join(', ') || '',
           avatar_url: storeUser.avatarUrl,
           bio: (storeUser as any).bio,
           summary: (storeUser as any).summary,
@@ -414,5 +414,5 @@ export async function GET(
 }
 
 function storeStoreUserCity(u: any): string {
-  return u.city || 'Mumbai';
+  return u.city || '';
 }

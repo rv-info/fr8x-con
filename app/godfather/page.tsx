@@ -68,7 +68,7 @@ const upsertKYCDossierInDB = async (dossier: any): Promise<void> => {
 };
 
 export default function GodfatherDashboardPage() {
-  const { companies, users, auctions, auditLogs } = useGodfatherData();
+  const { companies, users, auctions, auditLogs, cases } = useGodfatherData();
   const { environment } = useGodfatherAuth();
   const { config: platformConfig } = usePlatformConfig();
 
@@ -171,15 +171,15 @@ export default function GodfatherDashboardPage() {
     const dossier: KYCDossier = {
       userId: activeKycReview.companyId || activeKycReview.uid || 'usr_unknown',
       companyId: activeKycReview.companyId || 'comp_unknown',
-      legalEntityName: activeKycReview.legalName || activeKycReview.company || 'Enterprise Entity',
-      gstin: activeKycReview.gstn || '27AAAAA0000A1Z5',
-      pan: activeKycReview.pan || 'AAAAA0000A',
-      registeredAddress: {
-        addressLine1: 'Corporate Logistics Park',
-        city: 'Mumbai',
-        state: 'Maharashtra',
-        postalCode: '400093',
-        country: 'India',
+      legalEntityName: activeKycReview.legalName || activeKycReview.company || '',
+      gstin: activeKycReview.gstn || '',
+      pan: activeKycReview.pan || '',
+      registeredAddress: (activeKycReview as any).registeredAddress || {
+        addressLine1: (activeKycReview as any).address || '',
+        city: (activeKycReview as any).city || '',
+        state: (activeKycReview as any).state || '',
+        postalCode: (activeKycReview as any).postalCode || '',
+        country: (activeKycReview as any).country || 'India',
       },
       memberships: [],
       status: newStatus,
@@ -258,7 +258,9 @@ export default function GodfatherDashboardPage() {
   const activeUsersCount = users.length;
   const blockedAccountsCount = blockedAccounts.length;
   const pendingKYCCount = companies.filter((c) => c.status === 'pending' || c.status === 'additional_info_required').length;
-  const openReportsCount = 1;
+  const openReportsCount = (cases || []).filter(
+    (c) => c.status === 'open' || c.status === 'investigating'
+  ).length;
   const activeSecurityAlertsCount = securityEvents.filter((e) => e.severity === 'CRITICAL' || e.severity === 'HIGH').length;
   const pendingPasswordResetsCount = passwordResets.filter((p) => p.status === 'pending').length;
   const otpLimitEventsCount = securityEvents.filter((e) => e.type === 'OTP_LIMIT_REACHED').length;

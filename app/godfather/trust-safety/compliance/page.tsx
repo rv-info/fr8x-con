@@ -22,8 +22,16 @@ import { ComplianceRecord } from '@/lib/godfather/types';
 import { ActionConfirmModal } from '@/components/godfather/ActionConfirmModal';
 
 export default function ComplianceGovernancePage() {
-  const { complianceRecords, updateComplianceStatus } = useGodfatherData();
+  const { complianceRecords, updateComplianceStatus, companies, auditLogs } = useGodfatherData();
   const { requestStepUpVerification } = useGodfatherAuth();
+
+  const verifiedCompaniesWithGstin = companies.filter((c) => c.status === 'verified' && Boolean(c.gstn)).length;
+  const gstinVerifiedRate = companies.length > 0 
+    ? `${Math.round((verifiedCompaniesWithGstin / companies.length) * 100)}%` 
+    : '0%';
+  const amlScreeningsCount = complianceRecords.filter(
+    (r) => r.type === 'aml_sanctions'
+  ).length + auditLogs.filter((l) => (l.actionType || '').toLowerCase().includes('aml') || (l.actionType || '').toLowerCase().includes('sanction')).length;
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<string>('all');
@@ -101,7 +109,7 @@ export default function ComplianceGovernancePage() {
       <div className="gf-metric-grid">
         <div className="gf-metric-card">
           <div className="gf-metric-title">GSTIN Verified Entities</div>
-          <div className="gf-metric-value text-emerald-700">100%</div>
+          <div className="gf-metric-value text-emerald-700">{gstinVerifiedRate}</div>
           <div className="gf-metric-foot">
             <CheckCircle2 className="lucide w-3.5 h-3.5" /> Direct GST Portal API Sync
           </div>
@@ -109,7 +117,7 @@ export default function ComplianceGovernancePage() {
 
         <div className="gf-metric-card">
           <div className="gf-metric-title">AML Watchlist Screenings</div>
-          <div className="gf-metric-value text-sky-700">1,420</div>
+          <div className="gf-metric-value text-sky-700">{amlScreeningsCount.toLocaleString()}</div>
           <div className="gf-metric-foot text-sky-700">
             <Shield className="lucide w-3.5 h-3.5" /> UN & EU Maritime Sanctions
           </div>

@@ -10411,4 +10411,135 @@ td.active-cell,
     ) !important;
 }
 
+/* =============================================================================
+   FR8X RICH POST FORMATTING & RESPONSIVE TABLES
+   ============================================================================= */
+.fr8x-table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 12px 0;
+  border-radius: 8px;
+  border: 1px solid var(--fr8x-outline, #cbd5e1);
+}
+
+.fr8x-post-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  text-align: left;
+  background: #ffffff;
+}
+
+.fr8x-post-table th {
+  background: #f8fafc;
+  color: #0f172a;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-bottom: 1.5px solid #cbd5e1;
+  white-space: nowrap;
+}
+
+.fr8x-post-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.fr8x-post-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fr8x-post-table tr:nth-child(even) {
+  background: #fcfdfe;
+}
+
+.fr8x-post-table tr:hover {
+  background: #f1f5f9;
+}
+
+.post-body-text h1 {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 12px 0 6px;
+  line-height: 1.3;
+}
+
+.post-body-text h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 10px 0 5px;
+  line-height: 1.35;
+}
+
+.post-body-text h3 {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 8px 0 4px;
+  line-height: 1.4;
+}
+
+.post-body-text blockquote {
+  border-left: 3.5px solid var(--brand, #1168d7);
+  background: rgba(17, 104, 215, 0.04);
+  padding: 8px 14px;
+  margin: 8px 0;
+  border-radius: 0 6px 6px 0;
+  color: #475569;
+  font-style: italic;
+}
+
+.post-body-text li.fr8x-bullet-item {
+  list-style-type: disc;
+  margin-left: 20px;
+  margin-bottom: 4px;
+}
+
+.post-body-text li.fr8x-numbered-item {
+  list-style-type: decimal;
+  margin-left: 20px;
+  margin-bottom: 4px;
+}
+
+.post-body-text a.fr8x-post-link {
+  color: #1168d7;
+  text-decoration: underline;
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.post-body-text a.fr8x-post-link:hover {
+  color: #0d4fa8;
+}
+
+.post-body-text pre {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 10px 14px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  margin: 8px 0;
+}
+
+.post-body-text code {
+  background: rgba(15, 23, 42, 0.06);
+  color: #0f172a;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+}
+
+.toolbar-btn:hover {
+  background: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+
 

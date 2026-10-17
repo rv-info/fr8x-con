@@ -294,22 +294,160 @@ export function escapeHtml(str: string): string {
 
 export function parseRichText(text: string): string {
   if (!text) return '';
-  let escaped = escapeHtml(text);
+
+  const lines = text.split('\n');
+  const processedLines: string[] = [];
+  let inTable = false;
+  let tableHeader: string[] = [];
+  let tableRows: string[][] = [];
+
+  const flushTable = () => {
+    if (tableHeader.length > 0 || tableRows.length > 0) {
+      let tableHtml = '<div class="fr8x-table-responsive"><table class="fr8x-post-table">';
+      if (tableHeader.length > 0) {
+        tableHtml += '<thead><tr>';
+        for (const th of tableHeader) {
+          tableHtml += `<th>${parseInlineFormatting(th)}</th>`;
+        }
+        tableHtml += '</tr></thead>';
+      }
+      if (tableRows.length > 0) {
+        tableHtml += '<tbody>';
+        for (const row of tableRows) {
+          tableHtml += '<tr>';
+          for (const cell of row) {
+            tableHtml += `<td>${parseInlineFormatting(cell)}</td>`;
+          }
+          tableHtml += '</tr>';
+        }
+        tableHtml += '</tbody>';
+      }
+      tableHtml += '</table></div>';
+      processedLines.push(tableHtml);
+    }
+    inTable = false;
+    tableHeader = [];
+    tableRows = [];
+  };
+
+  const isTableSeparator = (line: string): boolean => {
+    return /^\|?(\s*:?-+:?\s*\|)+\s*:?-+:?\s*\|?$/.test(line.trim());
+  };
+
+  const parseTableRow = (line: string): string[] => {
+    let clean = line.trim();
+    if (clean.startsWith('|')) clean = clean.slice(1);
+    if (clean.endsWith('|')) clean = clean.slice(0, -1);
+    return clean.split('|').map((c) => c.trim());
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    // Markdown Table Detection
+    if (trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.includes('|')) {
+      if (!inTable) {
+        if (i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
+          inTable = true;
+          tableHeader = parseTableRow(trimmed);
+          i++; // Skip separator line
+          continue;
+        }
+      } else {
+        tableRows.push(parseTableRow(trimmed));
+        continue;
+      }
+    } else if (inTable) {
+      flushTable();
+    }
+
+    // Headings
+    if (trimmed.startsWith('### ')) {
+      processedLines.push(`<h3>${parseInlineFormatting(trimmed.slice(4))}</h3>`);
+      continue;
+    }
+    if (trimmed.startsWith('## ')) {
+      processedLines.push(`<h2>${parseInlineFormatting(trimmed.slice(3))}</h2>`);
+      continue;
+    }
+    if (trimmed.startsWith('# ')) {
+      processedLines.push(`<h1>${parseInlineFormatting(trimmed.slice(2))}</h1>`);
+      continue;
+    }
+
+    // Blockquote
+    if (trimmed.startsWith('> ') || trimmed.startsWith('&gt; ')) {
+      const quoteText = trimmed.replace(/^(&gt;|>)\s?/, '');
+      processedLines.push(`<blockquote>${parseInlineFormatting(quoteText)}</blockquote>`);
+      continue;
+    }
+
+    // Bullet lists
+    if (/^[-*]\s+/.test(trimmed)) {
+      const itemText = trimmed.replace(/^[-*]\s+/, '');
+      processedLines.push(`<li class="fr8x-bullet-item">${parseInlineFormatting(itemText)}</li>`);
+      continue;
+    }
+
+    // Numbered lists
+    if (/^\d+\.\s+/.test(trimmed)) {
+      const itemText = trimmed.replace(/^\d+\.\s+/, '');
+      processedLines.push(`<li class="fr8x-numbered-item">${parseInlineFormatting(itemText)}</li>`);
+      continue;
+    }
+
+    // Normal line
+    processedLines.push(parseInlineFormatting(line));
+  }
+
+  if (inTable) {
+    flushTable();
+  }
+
+  let result = processedLines.join('<br>');
+  result = result.replace(/<br>(<\/?(?:div|table|thead|tbody|tr|th|td|h1|h2|h3|blockquote|pre|li)[^>]*>)/gi, '$1');
+  result = result.replace(/(<\/?(?:div|table|thead|tbody|tr|th|td|h1|h2|h3|blockquote|pre|li)[^>]*>)<br>/gi, '$1');
+
+  return result;
+}
+
+function parseInlineFormatting(str: string): string {
+  if (!str) return '';
+  let escaped = escapeHtml(str);
+
+  // Restore allowed safe formatting tags
+  escaped = escaped
+    .replace(/&lt;u&gt;/gi, '<u>')
+    .replace(/&lt;\/u&gt;/gi, '</u>')
+    .replace(/&lt;del&gt;/gi, '<del>')
+    .replace(/&lt;\/del&gt;/gi, '</del>')
+    .replace(/&lt;strong&gt;/gi, '<strong>')
+    .replace(/&lt;\/strong&gt;/gi, '</strong>')
+    .replace(/&lt;em&gt;/gi, '<em>')
+    .replace(/&lt;\/em&gt;/gi, '</em>');
 
   // Code blocks ```code```
   escaped = escaped.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
   // Inline code `code`
   escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // Bold *text*
+  // Bold **text** or *text*
+  escaped = escaped.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   escaped = escaped.replace(/\*([^*]+)\*/g, '<strong>$1</strong>');
   // Italic _text_
   escaped = escaped.replace(/_([^_]+)_/g, '<em>$1</em>');
-  // Strikethrough ~text~
+  // Strikethrough ~~text~~ or ~text~
+  escaped = escaped.replace(/~~([^~]+)~~/g, '<del>$1</del>');
   escaped = escaped.replace(/~([^~]+)~/g, '<del>$1</del>');
-  // Blockquote > text
-  escaped = escaped.replace(/^&gt;\s?(.*)$/gm, '<blockquote>$1</blockquote>');
-  // Line breaks
-  escaped = escaped.replace(/\n/g, '<br>');
+
+  // Markdown Links [label](url) with safe URL validation
+  escaped = escaped.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, label, url) => {
+    const trimmedUrl = url.trim();
+    if (/^(https?:\/\/|\/)/i.test(trimmedUrl) && !/^(javascript:|data:|vbscript:)/i.test(trimmedUrl)) {
+      return `<a href="${trimmedUrl}" target="_blank" rel="noopener noreferrer" class="fr8x-post-link">${label}</a>`;
+    }
+    return label;
+  });
 
   return escaped;
 }

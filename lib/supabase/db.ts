@@ -413,6 +413,7 @@ export const connectionDbService = {
 // ─── NOTIFICATIONS SERVICE ───────────────────────────────────────────────────
 export const notificationDbService = {
   async getNotifications(userId: string) {
+    if (!userId) return [];
     const supabase = createClient();
     const { data, error } = await supabase
       .from('notifications')
@@ -425,14 +426,100 @@ export const notificationDbService = {
     return data || [];
   },
 
-  async markAsRead(notificationId: string) {
+  async markAsRead(notificationId: string, userId?: string) {
+    if (!notificationId) return false;
     const supabase = createClient();
-    const { error } = await supabase
+    let query = supabase
       .from('notifications')
       .update({ read: true })
       .eq('id', notificationId);
 
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    const { error } = await query;
     return !error;
+  },
+
+  async markAllAsRead(userId: string) {
+    if (!userId) return false;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+
+    return !error;
+  },
+
+  async clearNotification(notificationId: string, userId?: string) {
+    if (!notificationId) return false;
+    const supabase = createClient();
+    let query = supabase
+      .from('notifications')
+      .delete()
+      .eq('id', notificationId);
+
+    if (userId) {
+      query = query.eq('user_id', userId);
+    }
+    const { error } = await query;
+    return !error;
+  },
+
+  async clearAllNotifications(userId: string) {
+    if (!userId) return false;
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('user_id', userId);
+
+    return !error;
+  },
+
+  async createNotification(params: {
+    userId: string;
+    type: string;
+    title: string;
+    body?: string;
+    link?: string;
+    metadata?: Record<string, unknown>;
+  }) {
+    if (!params.userId || !params.title) return null;
+    const supabase = createClient();
+
+    // Idempotency check: don't create duplicate notification within last 60 seconds
+    const { data: existing } = await supabase
+      .from('notifications')
+      .select('id')
+      .eq('user_id', params.userId)
+      .eq('title', params.title)
+      .gt('created_at', new Date(Date.now() - 60000).toISOString())
+      .limit(1);
+
+    if (existing && existing.length > 0) {
+      return existing[0];
+    }
+
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: params.userId,
+        type: params.type,
+        title: params.title,
+        body: params.body || '',
+        link: params.link || null,
+        metadata: params.metadata || {},
+        read: false,
+        created_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) return null;
+    return data;
   },
 };
 

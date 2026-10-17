@@ -900,7 +900,7 @@ export default function RegisterPage() {
           country: country || 'India',
           state: state || '',
           district: state || '',
-          city: (isCustomCity ? customCity : city) || 'Mumbai',
+          city: (isCustomCity ? customCity : city) || '',
           area: (isCustomCity ? customCity : city) || '',
           postalCode: postalCode || '',
           address: resolvedRegAddress,

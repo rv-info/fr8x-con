@@ -70,7 +70,7 @@ const getAllCanonicalCompanies = async (): Promise<any[]> => {
       companyId: c.id,
       companyName: c.name,
       country: c.country || 'India',
-      city: c.city || 'Mumbai',
+      city: c.city || '',
       gstn: c.gstin || '',
       pan: c.pan || '',
       approvalStatus: c.is_verified ? 'APPROVED' : c.status === 'rejected' ? 'REJECTED' : 'PENDING',
@@ -549,7 +549,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-08-01T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 1420,
+    totalAcceptances: 0,
   },
   {
     id: 'tac-002',
@@ -571,7 +571,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-07-15T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 840,
+    totalAcceptances: 0,
   },
   {
     id: 'tac-003',
@@ -592,7 +592,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-06-01T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 195,
+    totalAcceptances: 0,
   },
   {
     id: 'tac-004',
@@ -613,7 +613,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-08-10T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 72,
+    totalAcceptances: 0,
   },
   {
     id: 'tac-005',
@@ -634,7 +634,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-05-20T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 1420,
+    totalAcceptances: 0,
   },
   {
     id: 'tac-006',
@@ -656,7 +656,7 @@ const SEED_TERMS_AGREEMENTS: TermsAgreement[] = [
     mandatoryClickwrap: true,
     updatedAt: '2026-08-01T00:00:00Z',
     updatedBy: 'tech@fr8x.in',
-    totalAcceptances: 1420,
+    totalAcceptances: 0,
   },
 ];
 
@@ -2125,6 +2125,15 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
 
         if (isMounted && members.length > 0) {
           setUsers(members);
+          const acceptedMembersCount = members.filter((m: any) => m.termsAccepted || m.isVerified || m.is_verified).length;
+          setTermsAgreements((prev) =>
+            prev.map((t) => {
+              if (t.enforceAtRegistration) {
+                return { ...t, totalAcceptances: acceptedMembersCount };
+              }
+              return t;
+            })
+          );
         }
       } catch (err) {
         console.error('[GodfatherData] Failed to sync live members:', err);
@@ -2147,7 +2156,7 @@ export function GodfatherDataProvider({ children }: { children: ReactNode }) {
           legalName: c.companyName,
           tradeName: c.companyName,
           country: c.country || 'India',
-          city: c.city || 'Mumbai',
+          city: c.city || '',
           gstn: c.gstn,
           pan: c.pan,
           status: c.approvalStatus === 'APPROVED' ? 'verified' : c.approvalStatus === 'REJECTED' ? 'rejected' : 'pending',

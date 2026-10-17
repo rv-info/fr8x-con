@@ -13,6 +13,8 @@ import { PostDetailModal } from '@/components/ui/PostDetailModal';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { parseRichText } from '@/lib/utils';
+import { RichPostEditor } from '@/components/posts/RichPostEditor';
+import { sanitizeRichTextPost } from '@/lib/security/input-validation';
 import Image from 'next/image';
 import { FeedPost, JobPost, PostType, FeedSurface } from '@/lib/types';
 import { feedRankingEngine } from '@/lib/ranking/engine';
@@ -775,7 +777,8 @@ export default function FeedsPage() {
     if (isPostingFeed || !postText.trim()) return;
     setIsPostingFeed(true);
     try {
-      addPost(postText.trim(), composerPostType);
+      const sanitized = sanitizeRichTextPost(postText.trim());
+      addPost(sanitized, composerPostType);
       setPostText('');
     } finally {
       setTimeout(() => setIsPostingFeed(false), 800);
@@ -784,7 +787,8 @@ export default function FeedsPage() {
 
   const handleEditSave = (postId: string | number) => {
     if (!editingPostText.trim()) return;
-    editPost(postId, editingPostText);
+    const sanitized = sanitizeRichTextPost(editingPostText.trim());
+    editPost(postId, sanitized);
     setEditingPostId(null);
     setEditingPostText('');
   };
@@ -1856,14 +1860,15 @@ export default function FeedsPage() {
           </div>
 
           <form onSubmit={handlePostSubmit}>
-            <textarea
-              className="compose-textarea"
-              rows={2}
-              placeholder="Share market intelligence, blank sailings alert, port operational updates, or rate trends… (Markdown supported)"
-              value={postText}
-              onChange={(e) => setPostText(e.target.value)}
-              style={{ minHeight: '60px', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid var(--fr8x-outline)' }}
-            />
+            <div style={{ marginBottom: '8px' }}>
+              <RichPostEditor
+                value={postText}
+                onChange={setPostText}
+                disabled={isPostingFeed}
+                placeholder="Share market intelligence, blank sailings alert, port operational updates, or rate trends…"
+                minHeight="70px"
+              />
+            </div>
             <div className="compose-footer" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
 
               <button type="submit" className="btn primary" disabled={isPostingFeed || !postText.trim()} style={{ padding: '0 16px', height: '32px' }}>
@@ -2129,11 +2134,10 @@ export default function FeedsPage() {
                 {/* Post Body */}
                 {isEditing ? (
                   <div style={{ margin: '12px 0' }}>
-                    <textarea
-                      className="input"
-                      rows={4}
+                    <RichPostEditor
                       value={editingPostText}
-                      onChange={(e) => setEditingPostText(e.target.value)}
+                      onChange={setEditingPostText}
+                      minHeight="90px"
                     />
                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px', marginTop: '8px' }}>
                       <button className="btn secondary sm" onClick={() => setEditingPostId(null)}>

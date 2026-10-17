@@ -40,6 +40,8 @@ import {
   ShieldCheck,
   Settings,
   LogOut,
+  Trash2,
+  Clock,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -50,7 +52,7 @@ interface TopBarProps {
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { user, allUsers, logout } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates, convertAmount: convertAmountLive } = useCurrency();
-  const { notifications, markNotificationRead, markAllNotificationsRead, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
+  const { notifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -58,6 +60,51 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [previewPassportUid, setPreviewPassportUid] = useState<string | null>(null);
+  const [globalSearchHistory, setGlobalSearchHistory] = useState<{ id: string; query: string }[]>([]);
+
+  const loadGlobalSearchHistory = async () => {
+    try {
+      const res = await fetch('/api/search/history?context=global&limit=6');
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.history)) {
+          setGlobalSearchHistory(json.history.map((h: any) => ({ id: h.id, query: h.query })));
+        }
+      }
+    } catch {}
+  };
+
+  const recordGlobalSearch = async (query: string, count: number) => {
+    if (!query || query.trim().length < 2) return;
+    try {
+      await fetch('/api/search/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: query.trim(), context: 'global', resultCount: count }),
+      });
+      loadGlobalSearchHistory();
+    } catch {}
+  };
+
+  const removeGlobalHistoryItem = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setGlobalSearchHistory((prev) => prev.filter((item) => item.id !== id));
+    try {
+      await fetch(`/api/search/history?id=${encodeURIComponent(id)}&context=global`, {
+        method: 'DELETE',
+      });
+    } catch {}
+  };
+
+  const clearAllGlobalHistory = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setGlobalSearchHistory([]);
+    try {
+      await fetch('/api/search/history?all=true&context=global', {
+        method: 'DELETE',
+      });
+    } catch {}
+  };
 
   const searchRef = useRef<HTMLInputElement>(null);
 
@@ -86,6 +133,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const totalResultsCount = matchedLocations.length + matchedCarriers.length + matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
 
   // Keyboard shortcut: Cmd/Ctrl+K for global search
+  useEffect(() => {
+    if (showGlobalSearch) {
+      loadGlobalSearchHistory();
+    }
+  }, [showGlobalSearch]);
+
+  // Record search when typing finishes
+  useEffect(() => {
+    if (globalSearchQuery.trim().length >= 2) {
+      const timer = setTimeout(() => {
+        recordGlobalSearch(globalSearchQuery, totalResultsCount);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [globalSearchQuery, totalResultsCount]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
@@ -147,6 +210,63 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             <div className="global-search-body">
               {globalSearchQuery.length < 2 ? (
                 <div>
+                  {globalSearchHistory.length > 0 && (
+                    <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', padding: '0 4px' }}>
+                        <span className="gs-section-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Clock size={11} /> Recent Searches
+                        </span>
+                        <button
+                          type="button"
+                          onClick={clearAllGlobalHistory}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: '10.5px',
+                            color: '#ef4444',
+                            fontWeight: 600,
+                          }}
+                        >
+                          Clear all
+                        </button>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', padding: '0 4px' }}>
+                        {globalSearchHistory.map((item) => (
+                          <span
+                            key={item.id}
+                            onClick={() => setGlobalSearchQuery(item.query)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              background: 'var(--bg-faint)',
+                              fontSize: '11px',
+                              color: 'var(--ink)',
+                              cursor: 'pointer',
+                              border: '1px solid var(--border)',
+                              userSelect: 'none',
+                            }}
+                            className="hover:bg-slate-200"
+                          >
+                            <span>{item.query}</span>
+                            <button
+                              type="button"
+                              onClick={(e) => removeGlobalHistoryItem(e, item.id)}
+                              title="Remove from history"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--mut)', display: 'flex' }}
+                              className="hover:text-red-500"
+                            >
+                              <X size={10} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="gs-section-label">Quick Navigate</div>
                   {quickSearchLinks.map((link) => (
                     <Link key={link.href} href={link.href} className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
@@ -570,9 +690,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <button
                         onClick={() => markAllNotificationsRead()}
                         title="Mark all as read"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: 'var(--brand)', fontWeight: 600 }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: 'var(--brand)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <CheckCheck size={12} /> All Read
+                      </button>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={() => clearAllNotifications()}
+                        title="Clear all notifications"
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#ef4444', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={12} /> Clear All
                       </button>
                     )}
                   </div>
@@ -621,10 +750,32 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             </div>
                           </div>
                           {!n.read && <span className="notif-unread-dot" />}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearNotification(n.id);
+                            }}
+                            title="Dismiss notification"
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: 'var(--mut)', flexShrink: 0, opacity: 0.6 }}
+                            className="hover:opacity-100 hover:text-red-500"
+                          >
+                            <X size={12} />
+                          </button>
                         </div>
                       </div>
                     ))
                   )}
+                </div>
+
+                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid var(--border)', background: 'var(--bg-faint)' }}>
+                  <Link
+                    href="/notifications"
+                    onClick={() => setShowNotifications(false)}
+                    style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Open Notification Center →
+                  </Link>
                 </div>
               </div>
             )}

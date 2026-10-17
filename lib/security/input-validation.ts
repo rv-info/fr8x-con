@@ -239,3 +239,27 @@ export function validateWithSchema<T>(
   );
   return { success: false, errors };
 }
+
+/**
+ * Strict server-side sanitizer for rich-text posts.
+ * Strips script injection, unsafe protocols, event handlers, and dangerous tags.
+ * Allows safe formatting (p, br, strong, em, u, del, h1-h4, ul, ol, li, blockquote, pre, code, a, table, etc.).
+ */
+export function sanitizeRichTextPost(input: string, maxLength = 20000): string {
+  if (!input || typeof input !== 'string') return '';
+  const trimmed = input.trim().slice(0, maxLength).normalize('NFKC');
+
+  let sanitized = trimmed
+    // Strip malicious tags entirely
+    .replace(/<\/?(?:script|iframe|object|embed|style|form|input|button|svg|math|meta|link|base)[^>]*>/gi, '')
+    // Strip inline event handlers
+    .replace(/\bon\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\bon\w+\s*=\s*[^>\s]+/gi, '')
+    // Block unsafe protocols
+    .replace(/(?:href|src)\s*=\s*["']?\s*(?:javascript|vbscript|data):[^"'>\s]*/gi, 'href="#"')
+    // Remove null bytes and control chars
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+
+  return sanitized;
+}
+
