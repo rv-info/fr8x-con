@@ -296,14 +296,15 @@ export function authenticateUserSession(
     serverSecurityStore.loadPersistedState();
     userRecord = serverSecurityStore.getUser(uid) || serverSecurityStore.getUserByEmailOrUid(uid);
   }
-  if (!userRecord && uid && tokenEmail) {
+  if (!userRecord && uid) {
+    const resolvedEmail = tokenEmail || `${uid}@fr8x.in`;
     const resolvedCompany = (tokenCompany && !tokenCompany.startsWith('CMP-'))
       ? tokenCompany
       : 'SYB INTERNATIONAL';
     const updateRes = serverSecurityStore.updateUserProfile(uid, {
       uid,
-      email: tokenEmail,
-      displayName: tokenEmail.split('@')[0] || 'Enterprise Member',
+      email: resolvedEmail,
+      displayName: resolvedEmail.split('@')[0] || 'Enterprise Member',
       company: resolvedCompany,
       companyName: resolvedCompany,
       companyId: tokenCompanyId || 'CMP-75055',

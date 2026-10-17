@@ -145,14 +145,45 @@ export function getConnectionStatus(
   return 'none';
 }
 
+export function getClientAuthHeaders(preferredUid?: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (typeof window === 'undefined') return headers;
+
+  try {
+    const activeUid = preferredUid || localStorage.getItem('fr8x_active_user_uid');
+    if (activeUid) {
+      headers['x-fr8x-user-uid'] = activeUid;
+      headers['x-fr8x-session'] = activeUid;
+    }
+
+    // Inspect localStorage for sb-*-auth-token or Bearer token
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        try {
+          const val = JSON.parse(localStorage.getItem(key) || '{}');
+          const token = val?.access_token || (Array.isArray(val) ? val[0] : null);
+          if (token && typeof token === 'string') {
+            headers['Authorization'] = `Bearer ${token}`;
+            break;
+          }
+        } catch {}
+      }
+    }
+  } catch {}
+
+  return headers;
+}
+
 export async function syncConnectionsFromServer(uid: string): Promise<void> {
   if (typeof window === 'undefined' || !uid) return;
   try {
+    const authHeaders = getClientAuthHeaders(uid);
     const [incomingRes, outgoingRes, withdrawnRes, connRes] = await Promise.all([
-      fetch('/api/people/connections?tab=incoming').then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=outgoing').then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=withdrawn').then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=connections').then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=incoming', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=outgoing', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=withdrawn', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+      fetch('/api/people/connections?tab=connections', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
     ]);
 
     const allRequests: ConnectionRequest[] = [];
@@ -298,9 +329,11 @@ export function sendConnectionRequest(
 
   // Authoritatively persist outgoing request and recipient notification via API
   if (typeof window !== 'undefined' && toUser.uid) {
+    const authHeaders = getClientAuthHeaders(fromUser.uid);
     fetch('/api/people/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({
         action: 'send',
         target_id: toUser.uid,
@@ -317,6 +350,7 @@ export function sendConnectionRequest(
               currentList.map((r) => (r.id === newId ? { ...r, id: data.request_id } : r))
             );
           }
+          dispatchConnectionsChanged();
         }
       })
       .catch(() => {});
@@ -351,14 +385,20 @@ export function acceptConnectionRequest(
 
   // Authoritatively accept via PostgreSQL API
   if (typeof window !== 'undefined' && requestId) {
+    const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
     fetch('/api/people/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({
         action: 'accept',
         request_id: requestId,
       }),
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (res.ok) dispatchConnectionsChanged();
+      })
+      .catch(() => {});
   }
 
   // Sync to users storage if possible
@@ -390,7 +430,7 @@ export function acceptConnectionRequest(
   }
 }
 
-export function declineConnectionRequest(requestId: string) {
+export function declineConnectionRequest(requestId: string, currentUser?: Partial<UserProfile>) {
   const all = getAllConnectionRequests();
   const req = all.find((r) => r.id === requestId);
   if (!req) return;
@@ -400,18 +440,24 @@ export function declineConnectionRequest(requestId: string) {
   saveConnectionRequests(all);
 
   if (typeof window !== 'undefined' && requestId) {
+    const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
     fetch('/api/people/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({
         action: 'decline',
         request_id: requestId,
       }),
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (res.ok) dispatchConnectionsChanged();
+      })
+      .catch(() => {});
   }
 }
 
-export function cancelConnectionRequest(requestId: string) {
+export function cancelConnectionRequest(requestId: string, currentUser?: Partial<UserProfile>) {
   const all = getAllConnectionRequests();
   const req = all.find((r) => r.id === requestId);
   if (req) {
@@ -424,14 +470,20 @@ export function cancelConnectionRequest(requestId: string) {
   }
 
   if (typeof window !== 'undefined' && requestId) {
+    const authHeaders = getClientAuthHeaders(currentUser?.uid || req?.fromUid);
     fetch('/api/people/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({
         action: 'cancel',
         request_id: requestId,
       }),
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (res.ok) dispatchConnectionsChanged();
+      })
+      .catch(() => {});
   }
 }
 
@@ -448,14 +500,20 @@ export function removeConnection(uidA: string, uidB: string) {
   saveConnectionsMap(map);
 
   if (typeof window !== 'undefined') {
+    const authHeaders = getClientAuthHeaders(uidA);
     fetch('/api/people/connections', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({
         action: 'remove',
         target_id: uidB,
       }),
-    }).catch(() => {});
+    })
+      .then((res) => {
+        if (res.ok) dispatchConnectionsChanged();
+      })
+      .catch(() => {});
   }
 
   // Sync to users storage

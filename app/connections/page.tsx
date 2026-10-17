@@ -9,10 +9,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Users, UserPlus, Clock, UserX, Shield,
-  CheckCircle2, XCircle, RotateCcw, Loader2,
+  CheckCircle2, XCircle, RotateCcw, Loader2, Globe2,
 } from 'lucide-react';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { ConnectionButton } from '@/components/people/ConnectionButton';
+import { useAuth } from '@/lib/context/AuthContext';
+import { SearchConnectionsModal } from '@/components/connections/SearchConnectionsModal';
+import { getClientAuthHeaders, CONNECTIONS_CHANGED_EVENT } from '@/lib/connections';
 
 type Tab = 'connections' | 'incoming' | 'outgoing' | 'withdrawn' | 'blocked';
 
@@ -80,9 +83,11 @@ function getLocation(p?: ProfileSnippet | null) {
 }
 
 async function callConnectionAction(body: Record<string, string | undefined>) {
+  const authHeaders = getClientAuthHeaders();
   const res = await fetch('/api/people/connections', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    credentials: 'include',
     body:    JSON.stringify(body),
   });
   return res.json();
@@ -315,16 +320,22 @@ const TAB_CONFIG: { id: Tab; label: string; icon: React.ElementType }[] = [
 ];
 
 export default function ConnectionsPage() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab]   = useState<Tab>('connections');
   const [data, setData]             = useState<unknown[]>([]);
   const [loading, setLoading]       = useState(false);
   const [error, setError]           = useState<string | null>(null);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   const fetchTab = useCallback(async (tab: Tab) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/people/connections?tab=${tab}&limit=100`);
+      const authHeaders = getClientAuthHeaders();
+      const res = await fetch(`/api/people/connections?tab=${tab}&limit=100`, {
+        headers: authHeaders,
+        credentials: 'include',
+      });
       const json = await res.json();
       if (!res.ok || !json.success) {
         setError(json.error ?? 'Failed to load data.');
@@ -342,6 +353,16 @@ export default function ConnectionsPage() {
     fetchTab(activeTab);
   }, [activeTab, fetchTab]);
 
+  useEffect(() => {
+    const handleChanged = () => {
+      fetchTab(activeTab);
+    };
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleChanged);
+    return () => {
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleChanged);
+    };
+  }, [activeTab, fetchTab]);
+
   const handleRemoveItem = useCallback((removedId: string) => {
     setData((prev) => (prev as { id: string }[]).filter((item) => item.id !== removedId));
   }, []);
@@ -350,14 +371,39 @@ export default function ConnectionsPage() {
 
   return (
     <div className="connections-page" role="main">
-      <div className="connections-page-header">
-        <h1 className="connections-page-title">
+      <div className="connections-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+        <h1 className="connections-page-title" style={{ margin: 0 }}>
           <Users size={22} aria-hidden="true" className="connections-icon" />
           My Network
         </h1>
-        <Link href="/people" className="btn-secondary" aria-label="Find new connections">
-          <UserPlus size={14} aria-hidden="true" /> Find People
-        </Link>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={() => setIsSearchModalOpen(true)}
+            className="btn-primary"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 14px',
+              background: 'var(--brand, #0284c7)',
+              color: '#ffffff',
+              borderRadius: '6px',
+              fontWeight: 600,
+              fontSize: '12.5px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.08)',
+            }}
+            aria-label="Search New Contacts & Global Freight Connections"
+          >
+            <Globe2 size={15} aria-hidden="true" />
+            Search New Contacts & Global Freight Connections
+          </button>
+          <Link href="/people" className="btn-secondary" aria-label="Find new connections">
+            <UserPlus size={14} aria-hidden="true" /> Find People
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -466,6 +512,12 @@ export default function ConnectionsPage() {
           </div>
         )}
       </div>
+
+      <SearchConnectionsModal
+        isOpen={isSearchModalOpen}
+        onClose={() => setIsSearchModalOpen(false)}
+        currentUser={user}
+      />
     </div>
   );
 }

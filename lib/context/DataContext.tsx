@@ -55,7 +55,8 @@ import {
   recordRecentlyViewed,
   getRecentlyViewed,
 } from '@/lib/cache/indexedDBCache';
-import { CONNECTIONS_CHANGED_EVENT } from '@/lib/connections';
+import { CONNECTIONS_CHANGED_EVENT, syncConnectionsFromServer, getClientAuthHeaders } from '@/lib/connections';
+import { HardenedRealtimeManager } from '@/lib/supabase/realtime';
 
 // Supabase DBMS Bridge Functions replacing legacy Firestore helpers
 const upsertPostInDB = (post: Partial<FeedPost>) => postDbService.upsertPost(post);
@@ -758,7 +759,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
           // Fetch authoritative user notifications from database / notifications API
           if (user?.uid) {
-            fetch('/api/notifications')
+            const authHeaders = getClientAuthHeaders(user.uid);
+            fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
               .then((res) => (res.ok ? res.json() : null))
               .then((json) => {
                 if (json?.success && Array.isArray(json.notifications)) {
@@ -814,7 +816,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!user?.uid) return;
 
     const refreshNotifications = () => {
-      fetch('/api/notifications')
+      const authHeaders = getClientAuthHeaders(user.uid);
+      fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
         .then((r) => (r.ok ? r.json() : null))
         .then((json) => {
           if (json?.success && Array.isArray(json.notifications)) {
@@ -836,6 +839,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.uid]);
 
+  // Supabase Realtime Listener for Connections & Notifications
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const manager = new HardenedRealtimeManager(user.uid);
+    const unsubscribe = manager.subscribe({
+      currentUserId: user.uid,
+      onStateChange: () => {
+        syncConnectionsFromServer(user.uid);
+        const authHeaders = getClientAuthHeaders(user.uid);
+        fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((json) => {
+            if (json?.success && Array.isArray(json.notifications)) {
+              setNotifications(json.notifications);
+              try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
+            }
+          })
+          .catch(() => {});
+      },
+      onNotificationChange: () => {
+        const authHeaders = getClientAuthHeaders(user.uid);
+        fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
+          .then((r) => (r.ok ? r.json() : null))
+          .then((json) => {
+            if (json?.success && Array.isArray(json.notifications)) {
+              setNotifications(json.notifications);
+              try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
+            }
+          })
+          .catch(() => {});
+      },
+      onError: (err) => {
+        console.warn('[DataContext] Realtime connection:', err.message);
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [user?.uid]);
+
   const [mySubmittedBids, setMySubmittedBids] = useState<SubmittedBid[]>([]);
 
   // Notification Actions
@@ -845,9 +890,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
+    const authHeaders = getClientAuthHeaders(user?.uid);
     fetch('/api/notifications', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({ action: 'mark_read', id: notifId }),
     }).catch(() => {
       notificationDbService.markAsRead(notifId).catch(() => {});
@@ -860,9 +907,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
+    const authHeaders = getClientAuthHeaders(user?.uid);
     fetch('/api/notifications', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({ action: 'mark_all_read' }),
     }).catch(() => {
       if (user?.uid) {
@@ -878,9 +927,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try { localStorage.setItem('fr8x_notifications', JSON.stringify(next)); } catch {}
       return next;
     });
+    const authHeaders = getClientAuthHeaders(user?.uid);
     fetch('/api/notifications', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({ action: 'clear', id: notifId }),
     }).catch(() => {
       if (user?.uid) {
@@ -892,9 +943,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const clearAllNotifications = () => {
     setNotifications([]);
     try { localStorage.removeItem('fr8x_notifications'); } catch {}
+    const authHeaders = getClientAuthHeaders(user?.uid);
     fetch('/api/notifications', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders },
+      credentials: 'include',
       body: JSON.stringify({ action: 'clear_all' }),
     }).catch(() => {
       if (user?.uid) {

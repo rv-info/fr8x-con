@@ -75,6 +75,10 @@ async function resolveUserId(req: NextRequest): Promise<string | null> {
     const { data: { user: sbUser } } = await supabase.auth.getUser();
     if (sbUser?.id) return sbUser.id;
   } catch { /* fall through */ }
+
+  const customUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
+  if (customUid && customUid.trim()) return customUid.trim();
+
   return null;
 }
 
@@ -413,14 +417,36 @@ export async function POST(req: NextRequest) {
                 result = data;
                 handled = true;
                 if ((data as any).success && (data as any).request_id) {
+                  const reqId = (data as any).request_id;
                   peopleDirectoryStore.upsertRequest({
-                    id: (data as any).request_id,
+                    id: reqId,
                     requester_id: userId,
                     recipient_id: action.target_id,
                     status: 'pending',
                     message: action.message,
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
+                  });
+                  const requester = peopleDirectoryStore.getMemberById(userId);
+                  const requesterName = requester?.display_name || requester?.full_name || 'A freight colleague';
+                  peopleDirectoryStore.addNotification({
+                    id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                    user_id: action.target_id,
+                    type: 'connection_request',
+                    category: 'network',
+                    title: `${requesterName} sent you a connection request`,
+                    description: action.message ? `"${action.message.slice(0, 150)}"` : 'Review and respond to grow your professional freight network.',
+                    target_url: '/connections?tab=incoming',
+                    related_id: reqId,
+                    read: false,
+                    created_at: new Date().toISOString(),
+                    metadata: {
+                      requester_id: userId,
+                      request_id: reqId,
+                      requester_name: requesterName,
+                      requester_company: requester?.company_name || requester?.company || '',
+                      requester_avatar: requester?.avatar_url || '',
+                    },
                   });
                 }
               } else if (error) {

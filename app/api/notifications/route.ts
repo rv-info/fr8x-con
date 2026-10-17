@@ -26,6 +26,10 @@ async function resolveUserId(req: NextRequest): Promise<string | null> {
     const { data: { user: sbUser } } = await supabase.auth.getUser();
     if (sbUser?.id) return sbUser.id;
   } catch { /* fall through */ }
+
+  const customUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
+  if (customUid && customUid.trim()) return customUid.trim();
+
   return null;
 }
 

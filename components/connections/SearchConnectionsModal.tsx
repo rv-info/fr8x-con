@@ -36,6 +36,7 @@ import {
   cancelConnectionRequest,
   CONNECTIONS_CHANGED_EVENT,
   syncConnectionsFromServer,
+  getClientAuthHeaders,
 } from '@/lib/connections';
 import { useToast } from '@/lib/context/ToastContext';
 
@@ -43,7 +44,7 @@ interface SearchConnectionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUser: UserProfile;
-  onViewProfile: (uid: string, name: string) => void;
+  onViewProfile?: (uid: string, name: string) => void;
   onOpenChat?: (uid: string, name: string) => void;
 }
 
@@ -120,7 +121,8 @@ export function SearchConnectionsModal({
         ? `/api/members?q=${encodeURIComponent(query)}&limit=100`
         : `/api/members?limit=100`;
 
-      const headers: Record<string, string> = {};
+      const authHeaders = getClientAuthHeaders(currentUser?.uid);
+      const headers: Record<string, string> = { ...authHeaders };
       try {
         const { createClient } = await import('@/lib/supabase/client');
         const supabase = createClient();
@@ -532,7 +534,8 @@ export function SearchConnectionsModal({
                         className="avatar"
                         onClick={() => {
                           onClose();
-                          onViewProfile(candidate.uid, cName);
+                          if (onViewProfile) onViewProfile(candidate.uid, cName);
+                          else if (typeof window !== 'undefined') window.location.href = `/people/${candidate.uid}`;
                         }}
                         style={{
                           width: '46px',
@@ -571,7 +574,8 @@ export function SearchConnectionsModal({
                           <b
                             onClick={() => {
                               onClose();
-                              onViewProfile(candidate.uid, cName);
+                              if (onViewProfile) onViewProfile(candidate.uid, cName);
+                              else if (typeof window !== 'undefined') window.location.href = `/people/${candidate.uid}`;
                             }}
                             style={{
                               fontSize: '13.5px',
@@ -627,7 +631,8 @@ export function SearchConnectionsModal({
                         className="btn secondary sm"
                         onClick={() => {
                           onClose();
-                          onViewProfile(candidate.uid, cName);
+                          if (onViewProfile) onViewProfile(candidate.uid, cName);
+                          else if (typeof window !== 'undefined') window.location.href = `/people/${candidate.uid}`;
                         }}
                         style={{ fontSize: '11px', padding: '5px 10px' }}
                       >

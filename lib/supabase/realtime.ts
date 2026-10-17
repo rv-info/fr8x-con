@@ -30,6 +30,7 @@ export type ConnectionStateChangeHandler = (event: {
 export interface RealtimeSubscriptionConfig {
   currentUserId: string;
   onStateChange: ConnectionStateChangeHandler;
+  onNotificationChange?: (payload: any) => void;
   onError?: (err: Error) => void;
 }
 
@@ -104,6 +105,19 @@ export class HardenedRealtimeManager {
               unshieldedContactAvailable: true,
             });
           }
+        }
+      )
+      // Listen for user notifications
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${this.currentUserId}`,
+        },
+        (payload: any) => {
+          config.onNotificationChange?.(payload);
         }
       )
       .subscribe((status: string) => {
