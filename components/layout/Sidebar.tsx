@@ -185,22 +185,22 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             gap: '8px',
             padding: collapsed ? '8px 0' : '7px 10px',
             marginBottom: '10px',
-            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(2, 132, 199, 0.18))',
-            border: '1px solid rgba(56, 189, 248, 0.3)',
+            background: 'var(--color-secondary-accent, #E5F3FC)',
+            border: '1px solid var(--color-border, #DFE7F0)',
             borderRadius: '6px',
-            color: '#38bdf8',
-            fontWeight: 700,
+            color: 'var(--color-nav-active-text, #075985)',
+            fontWeight: 600,
             fontSize: '11px',
             textDecoration: 'none',
             justifyContent: collapsed ? 'center' : 'flex-start',
             transition: 'all 0.15s ease',
           }}
         >
-          <Smartphone size={15} style={{ flexShrink: 0, color: '#38bdf8' }} />
+          <Smartphone size={15} style={{ flexShrink: 0, color: 'var(--color-primary, #147DAB)' }} />
           {!collapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span>Android App</span>
-              <span style={{ fontSize: '9px', opacity: 0.85, fontWeight: 500 }}>v2.4 · Direct APK</span>
+              <span style={{ color: 'var(--color-nav-active-text, #075985)', fontWeight: 600 }}>Android App</span>
+              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>v2.4 · Direct APK</span>
             </div>
           )}
         </a>

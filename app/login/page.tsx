@@ -57,7 +57,7 @@ function LiveClockPanel() {
       suppressHydrationWarning
       style={{
         width: '100%', height: '100%',
-        background: '#ffffff',
+        background: 'var(--color-surface, #FFFFFF)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '40px 24px', position: 'relative', overflow: 'hidden',
       }}
@@ -68,34 +68,34 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-primary-text, #172B4D)', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
           FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Workspace</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-text-secondary, #52657D)', marginTop: '2px' }}>Enterprise Workspace</div>
       </div>
-      <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
+      <div style={{ background: 'var(--color-bg-app, #F5F8FC)', border: '1px solid var(--color-border, #DFE7F0)', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '48px', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <span style={{ fontSize: '48px', fontWeight: 900, color: 'var(--color-primary-text, #172B4D)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {mounted ? `${String(h12).padStart(2,'0')}:${mm}` : '--:--'}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary, #147DAB)', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
           </div>
         </div>
-        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--color-text-secondary, #52657D)', marginTop: '6px' }}>
           {days[currentTime.getDay()]} · {months[currentTime.getMonth()]} {currentTime.getDate()}, {currentTime.getFullYear()}
         </div>
       </div>
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <div style={{ background: 'var(--color-surface, #FFFFFF)', border: '1px solid var(--color-border, #DFE7F0)', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(23,43,77,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '10px' }}>
-          <Calendar size={13} color="#0ea5e9" />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
+          <Calendar size={13} color="var(--color-primary, #147DAB)" />
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary-text, #172B4D)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
-          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', padding: '2px 0' }}>{d}</div>)}
+          {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', padding: '2px 0' }}>{d}</div>)}
           {calDays.map((d, i) => (
-            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? '#334155' : 'transparent', background: d === currentTime.getDate() ? '#0ea5e9' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
+            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? 'var(--color-primary-text, #172B4D)' : 'transparent', background: d === currentTime.getDate() ? 'var(--color-primary, #147DAB)' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
           ))}
         </div>
       </div>
@@ -475,15 +475,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', justifyContent: 'center' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg-app, #F5F8FC)', display: 'flex', justifyContent: 'center' }}>
       <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'row', minHeight: '100vh', position: 'relative' }}>
         {/* LEFT PANEL — Live Clock/Calendar */}
-        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid #e2e8f0' }} className="login-left-panel">
+        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid var(--color-border, #DFE7F0)', background: 'var(--color-surface, #FFFFFF)' }} className="login-left-panel">
           <LiveClockPanel />
         </div>
 
         {/* RIGHT PANEL — Login Form */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: '#ffffff' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: 'transparent' }}>
         <div className="login-card">
         {/* Top Brand Stripe */}
         <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />

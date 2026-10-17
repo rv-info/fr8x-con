@@ -89,7 +89,7 @@ function LiveClockPanel() {
   return (
     <div style={{
       width: '100%', height: '100%',
-      background: '#ffffff',
+      background: 'var(--color-surface, #FFFFFF)',
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       padding: '40px 28px', gap: '0', position: 'relative', overflow: 'hidden',
     }}>
@@ -100,60 +100,60 @@ function LiveClockPanel() {
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
-        <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-primary-text, #172B4D)', letterSpacing: '0.04em', lineHeight: 1, textTransform: 'uppercase' }}>
           FR8X
         </div>
-        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: '#64748b', marginTop: '2px' }}>Enterprise Logistics Platform</div>
+        <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.14em', color: 'var(--color-text-secondary, #52657D)', marginTop: '2px' }}>Enterprise Logistics Platform</div>
       </div>
 
       {/* Digital Clock */}
       <div style={{
-        background: '#f8fafc',
-        border: '1px solid #e2e8f0',
+        background: 'var(--color-bg-app, #F5F8FC)',
+        border: '1px solid var(--color-border, #DFE7F0)',
         borderRadius: '16px',
         padding: '20px 32px',
         textAlign: 'center',
         marginBottom: '20px',
       }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
-          <span style={{ fontSize: '52px', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
+          <span style={{ fontSize: '52px', fontWeight: 900, color: 'var(--color-primary-text, #172B4D)', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
             {String(h12).padStart(2,'0')}:{mm}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{ampm}</span>
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b', fontFamily: 'monospace' }}>{ss}s</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-primary, #147DAB)', fontFamily: 'monospace' }}>{ampm}</span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', fontFamily: 'monospace' }}>{ss}s</span>
           </div>
         </div>
-        <div style={{ fontSize: '12px', color: '#64748b', marginTop: '6px', letterSpacing: '0.05em' }}>
+        <div style={{ fontSize: '12px', color: 'var(--color-text-secondary, #52657D)', marginTop: '6px', letterSpacing: '0.05em' }}>
           {days[now.getDay()]} · {months[now.getMonth()]} {now.getDate()}, {now.getFullYear()}
         </div>
       </div>
 
       {/* Mini Calendar */}
       <div style={{
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
+        background: 'var(--color-surface, #FFFFFF)',
+        border: '1px solid var(--color-border, #DFE7F0)',
         borderRadius: '14px',
         padding: '16px',
         width: '100%',
         maxWidth: '260px',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+        boxShadow: '0 1px 3px rgba(23,43,77,0.04)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '12px' }}>
-          <Calendar size={14} color="#0ea5e9" />
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          <Calendar size={14} color="var(--color-primary, #147DAB)" />
+          <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-primary-text, #172B4D)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {months[now.getMonth()]} {now.getFullYear()}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
           {['S','M','T','W','T','F','S'].map((d,i) => (
-            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
+            <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--color-text-secondary, #52657D)', padding: '3px 0', textTransform: 'uppercase' }}>{d}</div>
           ))}
           {calDays.map((d, i) => (
             <div key={i} style={{
               fontSize: '11px', fontWeight: d === now.getDate() ? 800 : 500,
-              color: d === now.getDate() ? '#fff' : d ? '#334155' : 'transparent',
-              background: d === now.getDate() ? '#0ea5e9' : 'transparent',
+              color: d === now.getDate() ? '#fff' : d ? 'var(--color-primary-text, #172B4D)' : 'transparent',
+              background: d === now.getDate() ? 'var(--color-primary, #147DAB)' : 'transparent',
               borderRadius: '4px', padding: '3px 0',
               transition: 'all 0.2s',
             }}>{d || ''}</div>
@@ -163,7 +163,7 @@ function LiveClockPanel() {
 
       {/* Tagline */}
       <div style={{ marginTop: '28px', textAlign: 'center', maxWidth: '220px' }}>
-        <p style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
+        <p style={{ fontSize: '12px', color: 'var(--color-text-secondary, #52657D)', lineHeight: 1.6, margin: 0, fontStyle: 'italic' }}>
           Trusted by freight professionals across 40+ countries for enterprise logistics procurement.
         </p>
       </div>
@@ -1042,7 +1042,7 @@ export default function RegisterPage() {
     <div
       style={{
         minHeight: '100vh',
-        background: '#ffffff',
+        background: 'var(--color-bg-app, #F5F8FC)',
         display: 'flex',
         flexDirection: 'row',
         minWidth: 0,
@@ -1057,13 +1057,14 @@ export default function RegisterPage() {
         height: '100vh',
         flexShrink: 0,
         display: 'none',
-        borderRight: '1px solid #e2e8f0',
+        borderRight: '1px solid var(--color-border, #DFE7F0)',
+        background: 'var(--color-surface, #FFFFFF)',
       }} className="reg-left-panel">
         <LiveClockPanel />
       </div>
 
       {/* RIGHT PANEL — Registration Form */}
-      <div style={{ flex: 1, minWidth: 0, padding: '30px 16px 60px', display: 'flex', justifyContent: 'center', background: '#ffffff' }}>
+      <div style={{ flex: 1, minWidth: 0, padding: '30px 16px 60px', display: 'flex', justifyContent: 'center', background: 'transparent' }}>
       <div className="reg-container">
         {/* Header Branding */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>

@@ -6,11 +6,11 @@ import { ShieldCheck, ArrowLeft, Scale, Globe, FileText, AlertTriangle, Building
 
 export default function TermsPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#ffffff', padding: '0 0 80px' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--color-bg-app, #F5F8FC)', padding: '0 0 80px' }}>
       {/* Header */}
       <div style={{
-        background: '#ffffff',
-        borderBottom: '1px solid #e2e8f0',
+        background: 'var(--color-surface, #FFFFFF)',
+        borderBottom: '1px solid var(--color-border, #DFE7F0)',
         padding: '18px 0',
         position: 'sticky',
         top: 0,
@@ -18,15 +18,15 @@ export default function TermsPage() {
         backdropFilter: 'blur(12px)',
       }}>
         <div style={{ maxWidth: '900px', margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link href="/register" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#475569', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
+          <Link href="/register" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-text-secondary, #52657D)', textDecoration: 'none', fontSize: '13px', fontWeight: 600 }}>
             <ArrowLeft size={16} /> Back to Registration
           </Link>
           <div style={{ flex: 1, textAlign: 'center' }}>
-            <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--color-primary-text, #172B4D)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               FR8X
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#16a34a', fontSize: '12px', fontWeight: 700 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--color-success, #15803D)', fontSize: '12px', fontWeight: 700 }}>
             <ShieldCheck size={14} /> Legally Binding
           </div>
         </div>
@@ -36,26 +36,27 @@ export default function TermsPage() {
       <div style={{ maxWidth: '900px', margin: '0 auto', padding: '40px 24px' }}>
         {/* Title Block */}
         <div style={{
-          background: '#f8fafc',
-          border: '1px solid #e2e8f0',
+          background: 'var(--color-surface, #FFFFFF)',
+          border: '1px solid var(--color-border, #DFE7F0)',
           borderRadius: '16px',
           padding: '36px 40px',
           marginBottom: '32px',
           position: 'relative',
           overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(23,43,77,0.04)',
         }}>
           <div style={{
             position: 'absolute', top: 0, right: 0, width: '200px', height: '200px',
-            background: 'radial-gradient(circle, rgba(14,165,233,0.06) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(20,125,171,0.06) 0%, transparent 70%)',
             pointerEvents: 'none',
           }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'var(--color-primary, #147DAB)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Scale size={24} color="#fff" />
             </div>
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#0284c7', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FR8X Enterprise Platform</div>
-              <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-primary, #147DAB)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>FR8X Enterprise Platform</div>
+              <h1 style={{ margin: 0, fontSize: '26px', fontWeight: 900, color: 'var(--color-primary-text, #172B4D)', letterSpacing: '-0.02em' }}>
                 Master Terms of Service & Commercial Agreement
               </h1>
             </div>
@@ -248,25 +249,25 @@ export default function TermsPage() {
 function TermsSection({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
     <div style={{
-      background: '#ffffff',
-      border: '1px solid #e2e8f0',
+      background: 'var(--color-surface, #FFFFFF)',
+      border: '1px solid var(--color-border, #DFE7F0)',
       borderRadius: '12px',
       overflow: 'hidden',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+      boxShadow: '0 1px 3px rgba(23,43,77,0.03)',
     }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: '10px',
         padding: '14px 20px',
-        background: '#f8fafc',
-        borderBottom: '1px solid #e2e8f0',
+        background: 'var(--color-bg-app, #F5F8FC)',
+        borderBottom: '1px solid var(--color-border, #DFE7F0)',
       }}>
-        <span style={{ color: '#0284c7' }}>{icon}</span>
-        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: '#0f172a' }}>{title}</h2>
+        <span style={{ color: 'var(--color-primary, #147DAB)' }}>{icon}</span>
+        <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'var(--color-primary-text, #172B4D)' }}>{title}</h2>
       </div>
       <div style={{
         padding: '20px',
         fontSize: '13.5px',
-        color: '#334155',
+        color: 'var(--color-text-secondary, #52657D)',
         lineHeight: 1.7,
       }}>
         {children}
@@ -276,8 +277,8 @@ function TermsSection({ icon, title, children }: { icon: React.ReactNode; title:
         div p:last-child { margin-bottom: 0; }
         div ul, div ol { margin: 8px 0 12px 20px; padding: 0; }
         div li { margin-bottom: 6px; }
-        div strong { color: #0f172a; }
-        div a { color: #0284c7; }
+        div strong { color: var(--color-primary-text, #172B4D); }
+        div a { color: var(--color-primary, #147DAB); }
       `}</style>
     </div>
   );

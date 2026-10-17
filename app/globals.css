@@ -30,48 +30,72 @@
   --gf-font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
 
   /* ==========================================================================
-     FR8X MODERN PROFESSIONAL NETWORK DESIGN SYSTEM
-     Bright white background, refined borders, executive blue brand
+     FR8X PREMIUM LIGHT ENTERPRISE DESIGN SYSTEM
+     Canvas: #F5F8FC | Surfaces: #FFFFFF | Brand: #147DAB | Text: #172B4D
      ========================================================================== */
-  --fr8x-outline: #e2e8f0;
-  --fr8x-container: #ffffff;
-  --fr8x-input: #ffffff;
-  --fr8x-background: #ffffff;
-  --fr8x-text: #0f172a;
-  --fr8x-muted: #64748b;
+  /* 1. Global Color Tokens */
+  --color-bg-app: #F5F8FC;               /* Main application background (soft blue-grey canvas) */
+  --color-surface: #FFFFFF;              /* Main content surfaces, cards, panels */
+  --color-sidebar: #FFFFFF;              /* Sidebar navigation background */
+  --color-topbar: #FFFFFF;               /* Top navigation bar background */
+  --color-primary: #147DAB;              /* FR8X primary brand actions */
+  --color-primary-hover: #10658B;        /* Primary hover interactive state */
+  --color-nav-active-bg: #E5F3FC;        /* Active navigation background */
+  --color-nav-active-text: #075985;      /* Active navigation text */
+  --color-accent-secondary: #D9EEFA;     /* Secondary accent soft highlight */
+  --color-text-primary: #172B4D;         /* Primary text: headings and important content */
+  --color-text-secondary: #52657D;       /* Secondary text: descriptions and supporting text */
+  --color-text-muted: #7A869A;           /* Captions, subtext and placeholder text */
+  --color-border: #DFE7F0;               /* Subtle component separation */
+  --color-input-bg: #FFFFFF;             /* Readable form field background */
+  --color-input-focus: #38A5DB;          /* Input and keyboard focus ring */
+  --color-success: #15803D;              /* Successful actions and badges */
+  --color-warning: #A16207;              /* Caution, in-transit and pending states */
+  --color-error: #B42318;                /* Errors, dispute and destructive states */
+  --color-info: #1769AA;                 /* Informational notices */
 
-  --bg: #ffffff;
-  --card: #ffffff;
-  --ink: #0f172a;
-  --ink-secondary: #334155;
-  --mut: #64748b;
-  --faint: #94a3b8;
-  --line: #e2e8f0;
-  --line-light: #ffffff;
+  /* 2. Semantic System Mappings */
+  --bg: #F5F8FC;
+  --card: #FFFFFF;
+  --ink: #172B4D;
+  --ink-secondary: #52657D;
+  --mut: #52657D;
+  --faint: #7A869A;
+  --line: #DFE7F0;
+  --line-light: #F5F8FC;
   
-  /* Brand Accent: Maritime Deep Blue / Teal-Blue */
-  --brand: #002b66;
-  --brand2: #0369a1;
-  --brand-soft: #f0f4fa;
-  --fr8x-brand-blue: #002b66;
-  --teal: #0284c7;
-  --teal-soft: #f0f9ff;
-  --primary: #002b66;
+  --brand: #147DAB;
+  --brand2: #10658B;
+  --brand-soft: #E5F3FC;
+  --fr8x-brand-blue: #147DAB;
+  --teal: #147DAB;
+  --teal-soft: #E5F3FC;
+  --primary: #147DAB;
   
+  --fr8x-outline: #DFE7F0;
+  --fr8x-container: #FFFFFF;
+  --fr8x-input: #FFFFFF;
+  --fr8x-background: #F5F8FC;
+  --fr8x-text: #172B4D;
+  --fr8x-muted: #52657D;
+
   /* Navigation Surfaces */
-  --nav: #ffffff;
-  --navhi: #ffffff;
-  --nav-border: #e2e8f0;
+  --nav: #FFFFFF;
+  --navhi: #E5F3FC;
+  --nav-border: #DFE7F0;
 
   /* Status Indicators */
-  --green: #10b981;
-  --green-soft: #ecfdf5;
-  --amber: #f59e0b;
-  --amber-soft: #fffbeb;
-  --red: #ef4444;
-  --red-soft: #fef2f2;
-  --gold: #f59e0b;
-  --gold-gradient: linear-gradient(135deg, #f59e0b, #d97706);
+  --green: #15803D;
+  --green-soft: #F0FDF4;
+  --green-border: #BBF7D0;
+  --amber: #A16207;
+  --amber-soft: #FEFCE8;
+  --amber-border: #FEF08A;
+  --red: #B42318;
+  --red-soft: #FEF2F2;
+  --red-border: #FECACA;
+  --gold: #A16207;
+  --gold-gradient: linear-gradient(135deg, #147DAB, #10658B);
 
   /* Elevation & Border Radius Scale */
   --r-xs: 4px;
@@ -83,11 +107,11 @@
   --r-full: 9999px;
   --r: 8px;
   
-  --sh-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --sh: 0 1px 3px 0 rgba(15, 23, 42, 0.06), 0 1px 2px -1px rgba(15, 23, 42, 0.04);
-  --sh-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --sh-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --sh-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --sh-sm: 0 1px 2px 0 rgba(23, 43, 77, 0.05);
+  --sh: 0 1px 3px 0 rgba(23, 43, 77, 0.05), 0 1px 2px -1px rgba(23, 43, 77, 0.03);
+  --sh-md: 0 4px 6px -1px rgba(23, 43, 77, 0.06), 0 2px 4px -2px rgba(23, 43, 77, 0.04);
+  --sh-lg: 0 10px 15px -3px rgba(23, 43, 77, 0.07), 0 4px 6px -4px rgba(23, 43, 77, 0.03);
+  --sh-xl: 0 20px 25px -5px rgba(23, 43, 77, 0.08), 0 8px 10px -6px rgba(23, 43, 77, 0.03);
 
   /* Layout Dimensions */
   --sidebar-width: 240px;
@@ -161,15 +185,20 @@ button, input, select, textarea, optgroup {
 
 /* WCAG 2.4.7 Focus Visible Indicator */
 :focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid #38A5DB;
   outline-offset: 2px;
 }
 
-/* Bright white background across all main containers */
+/* Premium Light Canvas vs Content Surfaces */
 .app,
 .view,
 .main,
 main,
+.gf-main,
+.view-container {
+  background-color: #F5F8FC !important;
+}
+
 .sidebar-wrapper,
 .side,
 .top,
@@ -177,13 +206,11 @@ main,
 .login-viewport,
 .reg-container,
 .reg-viewport,
-.gf-app-layout,
-.gf-main,
-.view-container {
-  background-color: #ffffff !important;
+.gf-app-layout {
+  background-color: #FFFFFF !important;
 }
 
-/* Thin textbox border lines across all inputs */
+/* Refined border lines across all inputs */
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="range"]),
 textarea,
 select,
@@ -193,9 +220,10 @@ select,
 .gfl-clean-input,
 .gf-input,
 .gf-select {
-  border: 0.5px solid #cbd5e1 !important;
-  border-width: 0.5px !important;
-  background-color: #ffffff !important;
+  border: 1px solid #DFE7F0 !important;
+  background-color: #FFFFFF !important;
+  color: #172B4D !important;
+  border-radius: 6px;
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="color"]):not([type="range"]):focus,
@@ -207,10 +235,9 @@ select:focus,
 .gfl-clean-input:focus,
 .gf-input:focus,
 .gf-select:focus {
-  border: 0.5px solid #002b66 !important;
-  border-width: 0.5px !important;
+  border-color: #38A5DB !important;
   outline: none !important;
-  box-shadow: 0 0 0 1px rgba(0, 43, 102, 0.16) !important;
+  box-shadow: 0 0 0 3px rgba(56, 165, 219, 0.22) !important;
 }
 
 /* FR8X Mention: Capital letters, bold, and darkblue */
@@ -624,12 +651,13 @@ a {
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 34px;
+  height: 35px;
   background: transparent;
   border: 1px solid transparent;
+  border-left: 3px solid transparent;
   border-radius: 6px;
   padding: 0 10px;
-  color: #334155;
+  color: #52657D;
   text-align: left;
   font-weight: 500;
   font-size: 12px;
@@ -639,29 +667,32 @@ a {
 }
 
 .nav button:hover, .nav a:hover {
-  background: #f1f5f9;
-  border-color: #cbd5e1;
-  color: #0f172a;
+  background: #F0F4FA;
+  border-color: transparent;
+  border-left-color: #DFE7F0;
+  color: #172B4D;
 }
 
 .nav button:focus-visible, .nav a:focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid #38A5DB;
   outline-offset: 2px;
 }
 
 .nav button.on, .nav a.on,
 .nav button[aria-current="page"], .nav a[aria-current="page"] {
-  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  /* Design System: Soft light-blue rectangular background, blue text and subtle left accent */
+  background: var(--color-nav-active-bg, linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)) !important;
   border: 1px solid #38bdf8;
+  border-left: 3px solid var(--color-primary, #147DAB) !important;
   border-radius: 6px;
-  color: #0369a1;
+  color: var(--color-nav-active-text, #0369a1) !important;
   font-weight: 700;
-  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.08);
+  box-shadow: 0 1px 2px rgba(20, 125, 171, 0.06);
 }
 
 .nav button.on svg, .nav a.on svg,
 .nav button[aria-current="page"] svg, .nav a[aria-current="page"] svg {
-  color: #0284c7;
+  color: #147DAB !important;
 }
 
 .nav em {
@@ -671,16 +702,16 @@ a {
   font-weight: 700;
   border-radius: 10px;
   padding: 1px 7px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: #E5F3FC;
+  color: #075985;
+  border: 1px solid #DFE7F0;
 }
 
 .nav button.on em, .nav a.on em,
 .nav button[aria-current="page"] em, .nav a[aria-current="page"] em {
-  background: #bae6fd;
-  color: #0369a1;
-  border-color: #7dd3fc;
+  background: #147DAB;
+  color: #FFFFFF;
+  border-color: #147DAB;
 }
 
 /* Mobile brand icon replacing hamburger */
@@ -1051,69 +1082,72 @@ img.profile-img-avatar,
 }
 
 .btn.primary, button.primary, [type="submit"].btn {
-  background: #1985a1 !important;
+  background: #147DAB !important;
   color: #ffffff !important;
-  border-color: #1985a1 !important;
+  border-color: #147DAB !important;
   font-weight: 700;
 }
 .btn.primary:hover, button.primary:hover, [type="submit"].btn:hover {
-  background: #146b82 !important;
-  border-color: #146b82 !important;
+  background: #10658B !important;
+  border-color: #10658B !important;
 }
 
 .btn.secondary {
-  border-color: #c5c3c6;
-  color: #1985a1;
+  border-color: #DFE7F0;
+  color: #147DAB;
   background: #ffffff;
   font-weight: 700;
 }
 .btn.secondary:hover {
-  background: #f0f9fb;
-  border-color: #1985a1;
-  color: #146b82;
+  background: #E5F3FC;
+  border-color: #147DAB;
+  color: #10658B;
 }
 
 .btn.danger {
   background: #ffffff;
-  color: #dc2626;
-  border-color: #fca5a5;
+  color: #B42318;
+  border-color: #FECACA;
   font-weight: 700;
 }
 .btn.danger:hover {
-  background: #dc2626;
+  background: #B42318;
   color: #ffffff;
+  border-color: #B42318;
 }
 
 .btn.sm {
-  height: 24px;
-  padding: 0 7px;
-  font-size: 10.5px;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 11px;
 }
 
 .btn.icon {
-  width: 26px;
+  width: 28px;
   padding: 0;
 }
 
-/* Cards (Structured Monochromatic Grid) */
+/* Cards (Clean White Surfaces with Subtle Separation) */
 .card {
-  background: #fff;
-  border: 1px solid var(--fr8x-outline);
-  border-radius: 6px;
-  box-shadow: var(--sh);
+  background: #FFFFFF;
+  border: 1px solid #DFE7F0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, 0.05), 0 1px 2px rgba(23, 43, 77, 0.03);
 }
 
 .cardhead {
-  padding: 8px 11px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   gap: 8px;
   align-items: center;
-  border-bottom: 1px solid var(--fr8x-outline);
-  font-size: 12px;
+  border-bottom: 1px solid #DFE7F0;
+  font-size: 12.5px;
   font-weight: 700;
-  color: var(--fr8x-text);
-  background: var(--fr8x-background);
+  color: #172B4D;
+  background: #FFFFFF;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 .sub {
@@ -1226,28 +1260,49 @@ textarea.input {
   box-shadow: var(--sh);
 }
 
-/* Badges (Monochromatic & Enterprise) */
+/* Badges (Accessible Semantic Palette) */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 2.5px 8px;
+  padding: 3px 9px;
   border-radius: 12px;
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 700;
   gap: 4px;
-  background: var(--fr8x-input);
-  border: 1px solid var(--fr8x-outline);
-  color: var(--fr8x-text);
+  background: #F0F4FA;
+  border: 1px solid #DFE7F0;
+  color: #172B4D;
+  line-height: 1.2;
 }
 
-.badge.blue,
-.badge.green,
-.badge.amber,
-.badge.red,
-.badge.grey {
-  background: var(--fr8x-input);
-  border: 1px solid var(--fr8x-outline);
-  color: var(--fr8x-text);
+.badge.blue, .badge.info {
+  background: #E5F3FC !important;
+  border: 1px solid #BAE6FD !important;
+  color: #075985 !important;
+}
+
+.badge.green, .badge.success {
+  background: #F0FDF4 !important;
+  border: 1px solid #BBF7D0 !important;
+  color: #15803D !important;
+}
+
+.badge.amber, .badge.warning {
+  background: #FEFCE8 !important;
+  border: 1px solid #FEF08A !important;
+  color: #A16207 !important;
+}
+
+.badge.red, .badge.error, .badge.danger {
+  background: #FEF2F2 !important;
+  border: 1px solid #FECACA !important;
+  color: #B42318 !important;
+}
+
+.badge.grey, .badge.neutral {
+  background: #F0F4FA !important;
+  border: 1px solid #DFE7F0 !important;
+  color: #52657D !important;
 }
 
 /* Golden Tick (Approved Brand Asset Exception) */
@@ -1316,36 +1371,38 @@ textarea.input {
 .tablewrap {
   width: 100%;
   overflow: auto;
-  border: 1px solid var(--fr8x-outline);
-  border-radius: var(--r);
-  background: #fff;
+  border: 1px solid #DFE7F0;
+  border-radius: 8px;
+  background: #FFFFFF;
+  box-shadow: 0 1px 3px rgba(23, 43, 77, 0.04);
 }
 
 .tablewrap.flush {
   border: 0;
   border-radius: 0;
+  box-shadow: none;
 }
 
 .table {
   border-collapse: collapse;
   width: 100%;
   min-width: 860px;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 
 .table th {
   position: sticky;
   top: 0;
-  background: var(--fr8x-background);
-  color: var(--fr8x-text);
-  padding: 8px 10px;
+  background: #F5F8FC;
+  color: #52657D;
+  padding: 10px 12px;
   text-align: left;
   text-transform: uppercase;
-  font-size: 9.5px;
+  font-size: 10px;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--fr8x-outline);
-  border-right: 1px solid var(--fr8x-container);
+  border-bottom: 1px solid #DFE7F0;
   font-weight: 700;
+  z-index: 10;
 }
 
 .table th:last-child {
@@ -1353,19 +1410,20 @@ textarea.input {
 }
 
 .table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--fr8x-outline);
-  border-right: 1px solid var(--fr8x-container);
+  padding: 10px 12px;
+  border-bottom: 1px solid #DFE7F0;
   white-space: nowrap;
-  color: var(--fr8x-text);
+  color: #172B4D;
+  background: #FFFFFF;
+  font-size: 12px;
 }
 
 .table td:last-child {
   border-right: none;
 }
 
-.table tr:hover {
-  background: var(--fr8x-input);
+.table tr:hover td {
+  background: #F8FAFD;
 }
 
 .table tr:last-child td {
