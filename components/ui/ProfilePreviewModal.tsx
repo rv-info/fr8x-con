@@ -323,11 +323,38 @@ export function ProfilePreviewModal({
     profile?.teuVolumeYear ||
     null;
 
-  const resolvedCompanyLogo =
-    effectiveUser?.companyLogoUrl ||
-    (profile as any)?.companyLogoUrl ||
-    (typeof window !== 'undefined' && targetUserUid ? localStorage.getItem(`fr8x_user_logo_${targetUserUid}`) : null) ||
-    (typeof window !== 'undefined' ? localStorage.getItem('fr8x_user_logo') : null);
+  const resolvedCompanyLogo = useMemo(() => {
+    if (isCurrentUser) {
+      return (
+        effectiveUser?.companyLogoUrl ||
+        user?.companyLogoUrl ||
+        (typeof window !== 'undefined' && user?.uid ? localStorage.getItem(`fr8x_user_logo_${user.uid}`) : null) ||
+        (typeof window !== 'undefined' ? localStorage.getItem('fr8x_user_logo') : null) ||
+        null
+      );
+    }
+
+    // STRICT MULTI-TENANT ISOLATION:
+    // When viewing another member's profile/passport, NEVER leak or fall back to the active viewer's company logo.
+    // The logo must strictly originate from the target member's authenticated profile.
+    const targetLogo = effectiveUser?.companyLogoUrl || (profile as any)?.companyLogoUrl || null;
+    if (!targetLogo) return null;
+
+    // Safety guard against cross-account contamination in shared client state
+    if (typeof window !== 'undefined') {
+      const myCompany = (user?.company || '').trim().toLowerCase();
+      const otherCompany = (resolvedCompany || '').trim().toLowerCase();
+      if (myCompany && otherCompany && myCompany !== otherCompany) {
+        const myLogo = user?.companyLogoUrl || localStorage.getItem('fr8x_user_logo');
+        const myScopedLogo = user?.uid ? localStorage.getItem(`fr8x_user_logo_${user.uid}`) : null;
+        if (targetLogo === myLogo || (myScopedLogo && targetLogo === myScopedLogo)) {
+          return null;
+        }
+      }
+    }
+
+    return targetLogo;
+  }, [isCurrentUser, effectiveUser?.companyLogoUrl, (profile as any)?.companyLogoUrl, user, resolvedCompany]);
 
   const resolvedExperiences = useMemo(() => {
     if (Array.isArray(effectiveUser?.experiences) && effectiveUser.experiences.length > 0) {
@@ -877,6 +904,9 @@ export function ProfilePreviewModal({
                     src={resolvedCompanyLogo}
                     alt=""
                     style={{ width: '16px', height: '16px', objectFit: 'contain', borderRadius: '3px' }}
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
                   />
                 )}
                 {resolvedCompany}
