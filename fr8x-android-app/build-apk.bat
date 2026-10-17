@@ -12,9 +12,10 @@ node tools\build-official-apk.js
 if %ERRORLEVEL% EQU 0 (
     echo.
     echo ==============================================================================
-    echo [FR8X] SUCCESS! 100%% Genuine Android APK Built and Verified!
-    echo Output: public\fr8x-enterprise-mobile-v2.4.apk
+    echo [FR8X] SUCCESS! 100%% Genuine Universal Android APK Built and Verified!
+    echo Output: dist\FR8X-Android-Universal-Release.apk
     echo ==============================================================================
+
 ) else (
     echo.
     echo [ERROR] Build failed. Please check the logs above.

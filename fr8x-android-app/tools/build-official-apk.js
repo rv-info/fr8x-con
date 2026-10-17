@@ -37,6 +37,22 @@ function ensureDir(dir) {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 }
 
+function findClassFiles(dir) {
+  let results = [];
+  if (!fs.existsSync(dir)) return results;
+  const list = fs.readdirSync(dir);
+  for (const file of list) {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    if (stat.isDirectory()) {
+      results = results.concat(findClassFiles(fullPath));
+    } else if (file.endsWith('.class')) {
+      results.push(`"${fullPath}"`);
+    }
+  }
+  return results;
+}
+
 // Replaces any Windows backslashes in ZIP headers with POSIX forward slashes
 function fixZipSlashes(filePath) {
   let buf = fs.readFileSync(filePath);
@@ -83,6 +99,7 @@ function fixZipSlashes(filePath) {
 async function build() {
   console.log('================================================================');
   console.log('  FR8X ENTERPRISE MOBILE APK COMPILER (Official Google Toolchain)');
+  console.log('  Target: FR8X-Android-Universal-Release.apk');
   console.log('================================================================');
 
   // Verify prerequisites
@@ -93,6 +110,12 @@ async function build() {
     }
   }
 
+  // 0. Ensure authentic brand icons and density mipmaps are generated
+  const iconGenScript = path.join(__dirname, 'generate-brand-icons.js');
+  if (fs.existsSync(iconGenScript)) {
+    run(`node "${iconGenScript}"`, 'Verifying and Generating FR8X Brand Resources');
+  }
+
   // 1. Prepare directories
   ensureDir(BUILD_DIR);
   ensureDir(INTERMEDIATE_DIR);
@@ -101,6 +124,15 @@ async function build() {
   ensureDir(DEX_DIR);
   ensureDir(DIST_DIR);
   ensureDir(KEYSTORE_DIR);
+
+  // Clean old intermediate files to avoid stale class conflicts
+  const cleanDirs = [GEN_DIR, CLASSES_DIR, DEX_DIR];
+  for (const d of cleanDirs) {
+    if (fs.existsSync(d)) {
+      fs.rmSync(d, { recursive: true, force: true });
+      fs.mkdirSync(d, { recursive: true });
+    }
+  }
 
   const resDir = path.join(ANDROID_APP_DIR, 'app', 'src', 'main', 'res');
   const manifest = path.join(ANDROID_APP_DIR, 'app', 'src', 'main', 'AndroidManifest.xml');
@@ -130,21 +162,11 @@ async function build() {
   const rJava = path.join(GEN_DIR, 'com', 'fr8x', 'app', 'R.java');
   run(`"${JAVAC}" -cp "${ANDROID_JAR}" -d "${CLASSES_DIR}" --release 8 "${rJava}" "${javaSrc}"`, 'Compiling Java Sources with JDK 17');
 
-  // 5. Compile bytecode to Dalvik Executable (classes.dex) with Google D8
-  const classFiles = [
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'MainActivity.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'MainActivity$1.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'MainActivity$2.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'MainActivity$3.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$color.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$drawable.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$id.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$layout.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$string.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$style.class'),
-    path.join(CLASSES_DIR, 'com', 'fr8x', 'app', 'R$xml.class')
-  ].filter(f => fs.existsSync(f)).map(f => `"${f}"`).join(' ');
+  // 5. Dynamically collect all compiled .class files and compile to Dalvik Executable (classes.dex) with Google D8
+  const classFiles = findClassFiles(CLASSES_DIR).join(' ');
+  if (!classFiles || classFiles.length === 0) {
+    throw new Error('No compiled class files found in ' + CLASSES_DIR);
+  }
 
   run(`call "${D8}" --release --lib "${ANDROID_JAR}" --output "${DEX_DIR}" ${classFiles}`, 'Compiling Dalvik Executable (classes.dex) with Google D8');
 
@@ -174,34 +196,36 @@ async function build() {
   }
 
   // 9. Sign APK with Google apksigner (v1 + v2 + v3 schemes)
-  const signedApk = path.join(DIST_DIR, 'fr8x-enterprise-mobile-v2.4.apk');
-  if (fs.existsSync(signedApk)) fs.unlinkSync(signedApk);
-  run(`call "${APKSIGNER}" sign --ks "${keystoreFile}" --ks-key-alias fr8x --ks-pass pass:fr8xenterprise --key-pass pass:fr8xenterprise --out "${signedApk}" "${alignedApk}"`, 'Signing APK with Google Apksigner (v1+v2+v3)');
+  const primaryApk = path.join(DIST_DIR, 'FR8X-Android-Universal-Release.apk');
+  const legacyApk = path.join(DIST_DIR, 'fr8x-enterprise-mobile-v2.4.apk');
+  if (fs.existsSync(primaryApk)) fs.unlinkSync(primaryApk);
+  run(`call "${APKSIGNER}" sign --ks "${keystoreFile}" --ks-key-alias fr8x --ks-pass pass:fr8xenterprise --key-pass pass:fr8xenterprise --out "${primaryApk}" "${alignedApk}"`, 'Signing Universal Release APK with Google Apksigner (v1+v2+v3)');
 
   // 10. Verify APK signature
-  run(`call "${APKSIGNER}" verify --verbose "${signedApk}"`, 'Verifying APK Signature Scheme');
+  run(`call "${APKSIGNER}" verify --verbose "${primaryApk}"`, 'Verifying Universal APK Signature Scheme');
 
   // 11. Dump badging info
-  run(`"${AAPT2}" dump badging "${signedApk}"`, 'Inspecting APK Manifest & Metadata');
+  run(`"${AAPT2}" dump badging "${primaryApk}"`, 'Inspecting APK Manifest & Metadata');
 
   // 12. Copy APK to distribution endpoints
+  fs.copyFileSync(primaryApk, legacyApk);
   const targets = [
+    path.join(ROOT_DIR, 'public', 'FR8X-Android-Universal-Release.apk'),
     path.join(ROOT_DIR, 'public', 'fr8x-enterprise-mobile-v2.4.apk'),
     path.join(ROOT_DIR, 'public', 'fr8x-mobile.apk'),
-    path.join(ROOT_DIR, 'public', 'fr8x-workspace-debug.apk'),
-    path.join(ROOT_DIR, 'fr8x-enterprise-mobile-v2.4.apk'),
-    path.join(DIST_DIR, 'fr8x-workspace-debug.apk')
+    path.join(ROOT_DIR, 'FR8X-Android-Universal-Release.apk'),
+    path.join(ROOT_DIR, 'fr8x-enterprise-mobile-v2.4.apk')
   ];
 
   for (const t of targets) {
-    fs.copyFileSync(signedApk, t);
+    fs.copyFileSync(primaryApk, t);
     console.log(`[DIST] Copied APK to: ${t} (${(fs.statSync(t).size / 1024).toFixed(1)} KB)`);
   }
 
   console.log('\n================================================================');
-  console.log('  SUCCESS! 100% GENUINE, CERTIFIED ANDROID APK BUILT!');
-  console.log(`  File: ${signedApk}`);
-  console.log(`  Size: ${(fs.statSync(signedApk).size / 1024).toFixed(1)} KB`);
+  console.log('  SUCCESS! 100% GENUINE, CERTIFIED UNIVERSAL ANDROID APK BUILT!');
+  console.log(`  File: ${primaryApk}`);
+  console.log(`  Size: ${(fs.statSync(primaryApk).size / 1024).toFixed(1)} KB`);
   console.log('================================================================\n');
 }
 

@@ -11,13 +11,17 @@ public final class R {
   public static final class color {
     public static final int accent=0x7f010000;
     public static final int background=0x7f010001;
-    public static final int primary=0x7f010002;
-    public static final int primary_dark=0x7f010003;
-    public static final int white=0x7f010004;
+    public static final int ic_launcher_background=0x7f010002;
+    public static final int launcher_background=0x7f010003;
+    public static final int primary=0x7f010004;
+    public static final int primary_dark=0x7f010005;
+    public static final int white=0x7f010006;
   }
   public static final class drawable {
     public static final int ic_launcher=0x7f020000;
-    public static final int progress_bar_drawable=0x7f020001;
+    public static final int ic_stat_fr8x=0x7f020001;
+    public static final int progress_bar_drawable=0x7f020002;
+    public static final int splash_logo=0x7f020003;
   }
   public static final class id {
     public static final int progress_bar=0x7f030000;
@@ -26,15 +30,21 @@ public final class R {
   public static final class layout {
     public static final int activity_main=0x7f040000;
   }
+  public static final class mipmap {
+    public static final int ic_launcher=0x7f050000;
+    public static final int ic_launcher_foreground=0x7f050001;
+    public static final int ic_launcher_monochrome=0x7f050002;
+    public static final int ic_launcher_round=0x7f050003;
+  }
   public static final class string {
-    public static final int app_name=0x7f050000;
-    public static final int workspace_title=0x7f050001;
+    public static final int app_name=0x7f060000;
+    public static final int workspace_title=0x7f060001;
   }
   public static final class style {
-    public static final int Theme_FR8XWorkspace=0x7f060000;
+    public static final int Theme_FR8XWorkspace=0x7f070000;
   }
   public static final class xml {
-    public static final int file_paths=0x7f070000;
-    public static final int network_security_config=0x7f070001;
+    public static final int file_paths=0x7f080000;
+    public static final int network_security_config=0x7f080001;
   }
 }

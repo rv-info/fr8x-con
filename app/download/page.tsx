@@ -84,14 +84,14 @@ export default function DownloadPage() {
             marginBottom: '26px',
           }}
         >
-          <CheckCircle2 size={14} /> v2.4.0 Standalone • Verified &amp; Signed • 182 KB
+          <CheckCircle2 size={14} /> v2.4.0 Universal • Verified &amp; Signed • 396 KB
         </div>
 
         {/* Primary Download Button */}
         <div>
           <a
-            href="/fr8x-enterprise-mobile-v2.4.apk"
-            download="fr8x-enterprise-mobile-v2.4.apk"
+            href="/FR8X-Android-Universal-Release.apk"
+            download="FR8X-Android-Universal-Release.apk"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -112,13 +112,14 @@ export default function DownloadPage() {
             }}
           >
             <Download size={20} />
-            DOWNLOAD ANDROID APK
+            DOWNLOAD UNIVERSAL APK
           </a>
         </div>
 
         <p style={{ fontSize: '11px', color: '#64748b', marginTop: '10px' }}>
-          Direct download • No Google Play account required • Compatible with Android 5.0+ to 14+
+          Direct download • No Google Play account required • Compatible with Android 5.0+ to 14+ / 15
         </p>
+
 
         {/* Feature Highlights Grid */}
         <div
@@ -210,9 +211,10 @@ export default function DownloadPage() {
             Quick Installation Guide:
           </h3>
           <ol style={{ fontSize: '12.5px', color: '#475569', paddingLeft: '18px', lineHeight: 1.8 }}>
-            <li>Tap the <strong>DOWNLOAD ANDROID APK</strong> button above on your Android phone.</li>
-            <li>In your phone&apos;s Downloads or Files app, tap <code style={{ color: '#002b66', fontWeight: 'bold' }}>fr8x-enterprise-mobile-v2.4.apk</code>.</li>
+            <li>Tap the <strong>DOWNLOAD UNIVERSAL APK</strong> button above on your Android phone.</li>
+            <li>In your phone&apos;s Downloads or Files app, tap <code style={{ color: '#002b66', fontWeight: 'bold' }}>FR8X-Android-Universal-Release.apk</code>.</li>
             <li>If prompted with <em>&quot;Install unknown apps&quot;</em>, go to <strong>Settings</strong> &gt; enable <strong>&quot;Allow from this source&quot;</strong>, then tap <strong>Install</strong>.</li>
+
           </ol>
         </div>
       </div>

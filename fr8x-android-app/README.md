@@ -1,61 +1,81 @@
-# FR8X Enterprise Mobile Android Application (v2.4.0 Standalone)
+# FR8X Android Mobile Application (Universal Release)
 
-This package contains the complete, self-contained native Android mobile application for **FR8X Global Freight Workspace**.
-
-> **100% Native Mobile Feel & Offline Standalone:**
-> Everything (UI, screens, reverse auctions, trade chat, freight calculator, and KYC profile) is bundled directly inside the APK file (`assets/www/`). It does **not** load `localhost:3000` or an external website in a browser frame. When installed on an Android device, it behaves like an authentic native mobile application.
+This package contains the upgraded, secure native Android mobile application for **FR8X Global Freight Workspace**.
 
 ---
 
 ## 1. Ready-to-Install APK Binaries
 
-The compiled, signed, and aligned Android APK is available at:
-- **Primary Root Location:** [`fr8x-enterprise-mobile-v2.4.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-enterprise-mobile-v2.4.apk)
-- **Dist Location:** [`fr8x-android-app/dist/fr8x-enterprise-mobile-v2.4.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/dist/fr8x-enterprise-mobile-v2.4.apk)
-- **Debug Package:** [`fr8x-android-app/dist/fr8x-workspace-debug.apk`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/dist/fr8x-workspace-debug.apk)
+The compiled, signed, and aligned universal Android APK is available at:
+- **Primary Universal APK:** [`FR8X-Android-Universal-Release.apk`](file:///d:/fr8x-con/fr8x-android-app/dist/FR8X-Android-Universal-Release.apk)
+- **Root Release Path:** [`d:\fr8x-con\FR8X-Android-Universal-Release.apk`](file:///d:/fr8x-con/FR8X-Android-Universal-Release.apk)
+- **Public Web Endpoint:** [`d:\fr8x-con\public\FR8X-Android-Universal-Release.apk`](file:///d:/fr8x-con/public/FR8X-Android-Universal-Release.apk)
+- **Legacy Compatibility Link:** [`fr8x-enterprise-mobile-v2.4.apk`](file:///d:/fr8x-con/fr8x-android-app/dist/fr8x-enterprise-mobile-v2.4.apk)
 
 ### Binary Specifications
-- **File Size:** ~181.7 KB
 - **Package ID:** `com.fr8x.app`
-- **Application Name:** FR8X Mobile
-- **Version:** 2.4.0 (Build 240)
-- **Min Android SDK:** Android 5.0+ (API 21+)
-- **Target Android SDK:** Android 14+ (API 34)
-- **Signing:** Aligned, Signed (Android Signature Schemes v1 & v2)
+- **Application Name:** `FR8X`
+- **Version Code:** `204`
+- **Version Name:** `2.4.0`
+- **Min Android SDK:** Android 5.0 (API 21)
+- **Compile Android SDK:** Android 13 (API 33)
+- **Target Android SDK:** Android 14 (API 34)
+- **File Size:** ~395.5 KB
+- **Signing Schemes:** Verified using v1 (JAR signing), v2 (APK Signature Scheme v2), and v3 (APK Signature Scheme v3)
+- **Security Profile:** Cleartext traffic disabled (`usesCleartextTraffic="false"`), strict HTTPS domain enforcement, user CA certificates excluded, mixed content blocked (`MIXED_CONTENT_NEVER_ALLOW`), arbitrary local file URLs blocked, strict SSL verification enforced.
 
 ---
 
-## 2. Key Native Mobile Features Included
+## 2. Brand Identity & Launcher Resources
 
-1. **Native Android App Shell:**
-   - Deep ocean enterprise theme with hardware acceleration.
-   - Fixed Android App Bar with live status pill, notifications counter, and route search.
-   - 5-tab Bottom Navigation Bar with touch ripples, active indicators, and haptic feedback.
-   - Floating Action Button (FAB) for "+ Post Demand".
-
-2. **5 Fully Functional Mobile Modules:**
-   - **Market / Freight Demands:** Live international shipping corridors (INNSA → NLRTM, CNSHA → AEJEA, INMUN → GBFXT), category filters (Ocean FCL, Reefer, Air, Hazmat), and instant quotation drawer.
-   - **Reverse Auctions Arena:** Real-time ticking countdown clocks (`01:42:15`), lowest bid vs ceiling rate, and interactive "Place Lower Bid" bottom sheet.
-   - **Trade Desk Chat:** Mobile WhatsApp-style in-app messenger with 4 active carrier desks (Maersk, Hapag-Lloyd, Port CFS, Customs Broker), live messages, and quick freight reply pills.
-   - **FX & Landed Cost Calculator:** Live currency switcher (USD, INR, EUR, AED, SGD, CNY), Ocean Freight + THC + BAF + Customs breakdown with 18% statutory duty computation.
-   - **Enterprise Profile & Compliance KYC:** Tier-1 Verified Forwarder badge, active GSTIN, IEC, MTO License, and FMC bond details.
+Derived directly from authoritative asset **`accessories/FR8X Infinity App Icon.png`**:
+- **Adaptive Launcher Icon (API 26+):** `res/mipmap-anydpi-v26/ic_launcher.xml` and `ic_launcher_round.xml` with safe-zone padded infinity mark foreground and `#070d18` enterprise background.
+- **Density Mipmaps:** Canonical resolutions generated for `mdpi` (48px/108px), `hdpi` (72px/162px), `xhdpi` (96px/216px), `xxhdpi` (144px/324px), and `xxxhdpi` (192px/432px).
+- **Themed Monochrome Icon (Android 13+):** Material You dynamic theming supported via `<monochrome>` drawable.
+- **Notification Icon:** High-contrast white silhouette (`ic_stat_fr8x.png`) across all densities.
+- **Splash Screen:** Centered high-resolution infinity logo.
 
 ---
 
-## 3. How to Install on Any Physical Android Phone
+## 3. Architecture & Real-Time Backend Integration
+
+1. **Live Production System:**
+   - Connects directly to the authorized live FR8X enterprise platform (`https://con.fr8x.in`).
+   - Deep linking supported for HTTPS domains (`con.fr8x.in`, `fr8x.app`, `fr8x.in`) and custom in-app scheme (`fr8x://`).
+   - Seamless Supabase authentication, PostgreSQL RLS persistence, and real-time event synchronization.
+2. **Native JavaScript Bridge (`FR8XNativeBridge`):**
+   - In-app Android detection (`window.FR8XAndroid.isNativeApp()`).
+   - Native OS share sheet trigger (`shareFreightDemand`).
+   - Native haptic feedback for bid placement and user actions (`vibrate`).
+   - Native toast notifications and network state introspection.
+3. **Resilience & Offline Handling:**
+   - Zero fabricated mock data or bypass auth.
+   - Automatic connectivity monitoring via Android `ConnectivityManager`.
+   - Production offline interface with real-time status indicator, reconnect trigger, and emergency corporate communication channels.
+4. **Android 13+ Notification Flow:**
+   - Runtime prompt for `POST_NOTIFICATIONS` permission to ensure real-time delivery of freight auction bids, trade messages, and rate approvals.
+5. **Modern File Chooser & Document Upload:**
+   - Integrated `WebChromeClient.onShowFileChooser` supporting SAF documents, KYC certificates, and cargo manifests.
+
+---
+
+## 4. How to Install on Any Physical Android Phone
 
 1. **Send the APK to your phone:**
-   - Via WhatsApp, Telegram, Google Drive, Email attachment, or USB file transfer.
+   - Via WhatsApp, Telegram, Google Drive, Email attachment, or direct USB file transfer.
 2. **Tap the file on your phone:**
-   - Open your phone's **Files** or **Downloads** app and tap `fr8x-enterprise-mobile-v2.4.apk`.
+   - Open your phone's **Files** or **Downloads** app and tap `FR8X-Android-Universal-Release.apk`.
 3. **If prompted:**
-   - Tap **Settings** → Turn ON **"Allow from this source"**.
-4. **Tap Install → Open:**
-   - The app launches instantly with native bottom tabs, smooth transitions, and offline capability.
+   - Tap **Settings** &rarr; Turn ON **"Allow from this source"**.
+4. **Tap Install &rarr; Open:**
+   - The app launches instantly under its official **FR8X** launcher icon and connects securely to the live freight workspace.
 
 ---
 
-## 4. How to Rebuild Anytime
+## 5. How to Rebuild Anytime
 
-To rebuild the APK after making any changes to the mobile app files in `mobile-app/`:
-Double-click [`build-apk.bat`](file:///c:/Users/RajatKumarRai/OneDrive%20-%20Cogoport/Documents/fr8x-con/fr8x-android-app/build-apk.bat). It compiles and signs the new APK in 3 seconds.
+Run from terminal or command prompt:
+```bash
+node tools/build-official-apk.js
+```
+Or run `build-apk.bat`. The build toolchain compiles resources with `aapt2`, compiles Java with JDK 17, compiles DEX with `d8`, aligns with `zipalign`, and signs with `apksigner`.
