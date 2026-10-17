@@ -1051,13 +1051,15 @@
 }
 
 .connections-tab.active {
-  color: var(--color-primary, #1168d7);
-  border-bottom-color: var(--color-primary, #1168d7);
+  color: var(--fr8x-active-text, #075985);
+  background: var(--fr8x-active-bg, #E5F3FC);
+  border-radius: 6px 6px 0 0;
+  border-bottom: 2px solid var(--fr8x-primary, #147DAB);
 }
 
 .connections-tab-count {
   font-size: 0.72rem;
-  background: var(--color-primary, #1168d7);
+  background: var(--fr8x-primary, #147DAB);
   color: #fff;
   border-radius: 20px;
   padding: 1px 7px;
