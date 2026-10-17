@@ -165,6 +165,11 @@ function ShellLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className={`app ${isSidebarCollapsed ? 'collapsed-sidebar' : ''}`}>
+      {/* WCAG 2.4.1 Accessible Skip Link */}
+      <a href="#main-content" className="skip-to-content-link">
+        Skip to main content
+      </a>
+
       {/* Mobile Sidebar Overlay */}
       {isMobileSidebarOpen && (
         <div
@@ -184,7 +189,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
         />
       </div>
 
-      <main style={{ minWidth: 0 }}>
+      <main id="main-content" tabIndex={-1} style={{ minWidth: 0, outline: 'none' }}>
         <TopBar
           activePageTitle={activeTitle}
           onMobileMenuClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}

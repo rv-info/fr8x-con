@@ -137,6 +137,34 @@ button, input, select, textarea, optgroup {
   color: inherit;
 }
 
+/* WCAG 2.4.1 Skip to Content Link */
+.skip-to-content-link {
+  position: absolute;
+  top: -60px;
+  left: 16px;
+  background: var(--brand, #002b66);
+  color: #ffffff !important;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+  z-index: 99999;
+  box-shadow: 0 4px 12px rgba(0, 43, 102, 0.25);
+  transition: top 0.15s ease-in-out;
+}
+.skip-to-content-link:focus {
+  top: 12px;
+  outline: 3px solid #38bdf8;
+  outline-offset: 2px;
+}
+
+/* WCAG 2.4.7 Focus Visible Indicator */
+:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+
 /* Bright white background across all main containers */
 .app,
 .view,
@@ -6408,12 +6436,13 @@ textarea.input {
     align-items: center;
     justify-content: center;
     flex: 1;
-    min-width: 0;
+    min-width: 48px;
+    min-height: 44px;
     height: 100%;
     color: var(--mut);
     text-decoration: none;
     transition: all 0.12s ease;
-    padding: 2px 2px;
+    padding: 4px 4px;
     position: relative;
     user-select: none;
     -webkit-tap-highlight-color: transparent;

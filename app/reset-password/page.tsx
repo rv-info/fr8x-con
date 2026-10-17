@@ -220,7 +220,7 @@ function ResetPasswordInner() {
             RESET PASSWORD
           </h1>
           <p style={{ fontSize: '13px', color: '#64748b', margin: '4px 0 0' }}>
-            FR8X Team · Password Recovery
+            FR8X Workspace · Enterprise Account Recovery
           </p>
         </div>
 

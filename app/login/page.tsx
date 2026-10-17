@@ -28,30 +28,40 @@ function calcPasswordStrength(pwd: string): { level: StrengthLevel; score: numbe
 
 // --- Shared Live Clock Panel ---
 function LiveClockPanel() {
-  const [now, setNow] = useState(new Date());
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState<Date | null>(null);
+
   useEffect(() => {
+    setNow(new Date());
+    setMounted(true);
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
+
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const mm = String(now.getMinutes()).padStart(2,'0');
-  const ss = String(now.getSeconds()).padStart(2,'0');
-  const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-  const h12 = now.getHours() % 12 || 12;
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  const currentTime = now || new Date(2026, 9, 17, 10, 0, 0);
+  const mm = String(currentTime.getMinutes()).padStart(2,'0');
+  const ss = String(currentTime.getSeconds()).padStart(2,'0');
+  const ampm = currentTime.getHours() >= 12 ? 'PM' : 'AM';
+  const h12 = currentTime.getHours() % 12 || 12;
+  const daysInMonth = new Date(currentTime.getFullYear(), currentTime.getMonth()+1, 0).getDate();
+  const firstDayOfMonth = new Date(currentTime.getFullYear(), currentTime.getMonth(), 1).getDay();
   const calDays: (number|null)[] = [];
   for (let i = 0; i < firstDayOfMonth; i++) calDays.push(null);
   for (let d = 1; d <= daysInMonth; d++) calDays.push(d);
   while (calDays.length % 7 !== 0) calDays.push(null);
+
   return (
-    <div style={{
-      width: '100%', height: '100%',
-      background: '#ffffff',
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '40px 24px', position: 'relative', overflow: 'hidden',
-    }}>
+    <div
+      suppressHydrationWarning
+      style={{
+        width: '100%', height: '100%',
+        background: '#ffffff',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        padding: '40px 24px', position: 'relative', overflow: 'hidden',
+      }}
+    >
       <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
         <img
           src="/logo.png"
@@ -66,26 +76,26 @@ function LiveClockPanel() {
       <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '16px', padding: '18px 28px', textAlign: 'center', marginBottom: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px' }}>
           <span style={{ fontSize: '48px', fontWeight: 900, color: '#0f172a', fontFamily: 'monospace', letterSpacing: '-0.02em', lineHeight: 1 }}>
-            {String(h12).padStart(2,'0')}:{mm}
+            {mounted ? `${String(h12).padStart(2,'0')}:${mm}` : '--:--'}
           </span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{ampm}</span>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', fontFamily: 'monospace' }}>{ss}s</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0ea5e9', fontFamily: 'monospace' }}>{mounted ? ampm : '--'}</span>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', fontFamily: 'monospace' }}>{mounted ? `${ss}s` : '--'}</span>
           </div>
         </div>
         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
-          {days[now.getDay()]} · {months[now.getMonth()]} {now.getDate()}, {now.getFullYear()}
+          {days[currentTime.getDay()]} · {months[currentTime.getMonth()]} {currentTime.getDate()}, {currentTime.getFullYear()}
         </div>
       </div>
       <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '14px', width: '100%', maxWidth: '240px', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '10px' }}>
           <Calendar size={13} color="#0ea5e9" />
-          <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[now.getMonth()]} {now.getFullYear()}</span>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{months[currentTime.getMonth()]} {currentTime.getFullYear()}</span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px', textAlign: 'center' }}>
           {['S','M','T','W','T','F','S'].map((d,i) => <div key={i} style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', padding: '2px 0' }}>{d}</div>)}
           {calDays.map((d, i) => (
-            <div key={i} style={{ fontSize: '10px', fontWeight: d === now.getDate() ? 800 : 500, color: d === now.getDate() ? '#fff' : d ? '#334155' : 'transparent', background: d === now.getDate() ? '#0ea5e9' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
+            <div key={i} style={{ fontSize: '10px', fontWeight: d === currentTime.getDate() ? 800 : 500, color: d === currentTime.getDate() ? '#fff' : d ? '#334155' : 'transparent', background: d === currentTime.getDate() ? '#0ea5e9' : 'transparent', borderRadius: '4px', padding: '2px 0', transition: 'all 0.2s' }}>{d || ''}</div>
           ))}
         </div>
       </div>
@@ -465,15 +475,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'row', background: '#ffffff' }}>
-      {/* LEFT PANEL — Live Clock/Calendar */}
-      <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid #e2e8f0' }} className="login-left-panel">
-        <LiveClockPanel />
-      </div>
+    <div style={{ minHeight: '100vh', background: '#ffffff', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ width: '100%', maxWidth: '1100px', display: 'flex', flexDirection: 'row', minHeight: '100vh', position: 'relative' }}>
+        {/* LEFT PANEL — Live Clock/Calendar */}
+        <div style={{ width: '280px', minWidth: '280px', position: 'sticky', top: 0, height: '100vh', flexShrink: 0, display: 'none', borderRight: '1px solid #e2e8f0' }} className="login-left-panel">
+          <LiveClockPanel />
+        </div>
 
-      {/* RIGHT PANEL — Login Form */}
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: '#ffffff' }}>
-      <div className="login-card">
+        {/* RIGHT PANEL — Login Form */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px 16px', background: '#ffffff' }}>
+        <div className="login-card">
         {/* Top Brand Stripe */}
         <div style={{ height: '4px', background: 'var(--fr8x-outline)' }} />
 
@@ -617,16 +628,24 @@ export default function LoginPage() {
             <div className="field" style={{ marginBottom: '14px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                 <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Password</label>
-                <a
-                  href="#"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    openForgotModal();
+                <button
+                  type="button"
+                  onClick={openForgotModal}
+                  aria-haspopup="dialog"
+                  aria-expanded={isForgotModalOpen}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    fontSize: '11px',
+                    color: 'var(--brand)',
+                    fontWeight: 600,
+                    padding: '2px 4px',
+                    cursor: 'pointer',
+                    textDecoration: 'none',
                   }}
-                  style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600, padding: '2px 4px' }}
                 >
                   Forgot password?
-                </a>
+                </button>
               </div>
               <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                 <input
@@ -1149,16 +1168,13 @@ export default function LoginPage() {
 
 
 
-      {/* Floating APK Download Pill on Bottom Right */}
+      {/* Floating APK Download Pill */}
       <a
         href="/fr8x-enterprise-mobile-v2.4.apk"
         download
         title="Download FR8X Android Mobile App (.apk)"
+        className="login-apk-pill"
         style={{
-          position: 'fixed',
-          bottom: '22px',
-          right: '22px',
-          zIndex: 50,
           display: 'flex',
           alignItems: 'center',
           gap: '10px',
@@ -1222,7 +1238,23 @@ export default function LoginPage() {
         </div>
       </a>
       </div>{/* end right panel */}
+      </div>{/* end centered container */}
       <style>{`
+        .login-apk-pill {
+          position: fixed;
+          bottom: 22px;
+          right: 22px;
+          z-index: 50;
+        }
+        @media (max-width: 640px) {
+          .login-apk-pill {
+            position: static !important;
+            margin: 16px auto 0 !important;
+            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+            justify-content: center !important;
+            max-width: 290px !important;
+          }
+        }
         @media (min-width: 860px) {
           .login-left-panel { display: flex !important; }
         }
