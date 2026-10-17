@@ -188,26 +188,54 @@ export interface ServerUserRecord {
  * Rigorous filter to reject test fixtures, lockout test accounts, and automated dummy users
  * from entering or persisting in the DBMS / authentication store.
  */
-export function isDummyOrTestUser(u?: { uid?: string; email?: string; displayName?: string }): boolean {
+export function isDummyOrTestUser(u?: { uid?: string; email?: string; displayName?: string; company?: string; designation?: string }): boolean {
   if (!u) return true;
   const uid = (u.uid || '').toLowerCase();
   const email = (u.email || '').toLowerCase();
   const name = (u.displayName || '').toLowerCase();
+  const company = ((u as any).company || (u as any).company_name || '').toLowerCase();
+  const designation = ((u as any).designation || '').toLowerCase();
 
   // Test patterns in uid
-  if (['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david', 'u-vikram', 'u-ananya', 'u-suspended-01', 'u-chen', 'u-vikas'].includes(uid)) return true;
+  if (['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david', 'u-vikram', 'u-ananya', 'u-suspended-01', 'u-chen', 'u-vikas', 'usr_raivega_mgt'].includes(uid)) return true;
   if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp|su|exp)[-_0-9]/i.test(uid)) return true;
+  if (/^usr_(compliance|commerce)_[0-9]+/i.test(uid)) return true;
   if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true; // e.g. u-neha-1789208393001
   if (/^u-[0-9]{10,}/i.test(uid)) return true;
 
   // Test patterns in email
-  if (['arjun@atlaslogistics.com', 'sarah.lewis@rotterdamfreight.nl', 'kiran.sharma@gatewaylines.in', 'elena.rostova@balticlogistics.eu', 'david.chen@pacificfreight.sg', 'vikram.malhotra@samudralogistics.com', 'ananya.sen@apollomaritime.in', 'ramesh@transoceanicexpress.in', 'chen.wei@orientfreight.cn', 'vikas.dubey@apexforwarders.in', 'kiran.mehta@indoocean.com'].includes(email)) return true;
-  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@') || email.includes('@freightforwarders.com') || email.includes('@oceanmarine.com') || email.includes('@shippinglogistics.com') || email.includes('@oceanfreight.corp') || email.includes('@oceanfreight.com') || email.includes('@railfreight.net') || email.includes('@atlaslogistics.com') || email.includes('@gatewaylines.in')) return true;
-  if (/^(lockout|sureset|test\.|tester|dummy|temp|single-use|expiry-user|real-user|delivery-test|otprate)[-_0-9.]/i.test(email)) return true;
+  if (['arjun@atlaslogistics.com', 'sarah.lewis@rotterdamfreight.nl', 'kiran.sharma@gatewaylines.in', 'elena.rostova@balticlogistics.eu', 'david.chen@pacificfreight.sg', 'vikram.malhotra@samudralogistics.com', 'ananya.sen@apollomaritime.in', 'ramesh@transoceanicexpress.in', 'chen.wei@orientfreight.cn', 'vikas.dubey@apexforwarders.in', 'kiran.mehta@indoocean.com', 'operations.test@example.com'].includes(email)) return true;
+  if (email.includes('@test.') || email.includes('@example.com') || email.includes('test.pilot') || email.includes('.test@') || email.includes('@freightforwarders.com') || email.includes('@oceanmarine.com') || email.includes('@shippinglogistics.com') || email.includes('@oceanfreight.corp') || email.includes('@oceanfreight.com') || email.includes('@railfreight.net') || email.includes('@atlaslogistics.com') || email.includes('@gatewaylines.in') || email.endsWith('.local') || email.endsWith('@enterprise.local')) return true;
+  if (/^(lockout|sureset|test\.|tester|dummy|temp|sample|mock|single-use|expiry-user|real-user|delivery-test|otprate)[-_0-9.]/i.test(email)) return true;
   if (/^[a-z0-9._-]+[0-9]{10,}@/i.test(email)) return true;
 
   // Test patterns in displayName
-  if (name.includes('dummy') || name.includes('test user') || name.includes('mock user') || name.includes('lockout test')) return true;
+  if (
+    name.includes('dummy') ||
+    name.includes('test user') ||
+    name.includes('mock user') ||
+    name.includes('lockout test') ||
+    name.includes('test discovery') ||
+    name.includes('operations test') ||
+    name.includes('test controller') ||
+    name.includes('fixture') ||
+    /^test\b/i.test(name) ||
+    /\btest$/i.test(name) ||
+    name === 'test'
+  ) return true;
+
+  // Test patterns in company
+  if (
+    company.includes('fr8x test') ||
+    company.includes('test co') ||
+    company.includes('test company') ||
+    company.includes('sample company') ||
+    company === 'beacon forwarding' ||
+    company === 'cooldown test co'
+  ) return true;
+
+  // Test patterns in designation
+  if (designation.includes('test controller') || designation.includes('dummy')) return true;
 
   return false;
 }

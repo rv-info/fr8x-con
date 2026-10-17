@@ -3,6 +3,7 @@ import { serverSecurityStore } from '@/lib/server-auth-store';
 import { authenticateUserSession } from '@/lib/auth-guard';
 import { createClient as createSupabaseServerClient, getDbClient } from '@/lib/supabase/server';
 import { peopleDirectoryStore } from '@/lib/people-directory';
+import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
     const q = (searchParams.get('q') || '').trim().toLowerCase();
     const roleFilter = (searchParams.get('role') || '').trim().toLowerCase();
     const statusFilter = (searchParams.get('status') || '').trim().toLowerCase();
+    const excludeSelf = searchParams.get('excludeSelf') === 'true' || searchParams.get('exclude_self') === 'true';
     const limit = Math.min(Number(searchParams.get('limit') || 100), 200);
 
     const callerUid = user.uid;
@@ -35,6 +37,15 @@ export async function GET(req: NextRequest) {
       if (!dbError && Array.isArray(dbRows)) {
         for (const row of dbRows) {
           if (!row.id) continue;
+          if (isTestOrDummyAccount({
+            uid: row.id,
+            email: row.email,
+            displayName: row.display_name,
+            company: row.company_name,
+            designation: row.designation || row.position,
+          })) {
+            continue;
+          }
           const uidKey = row.id.toLowerCase();
           const emailKey = (row.email || '').trim().toLowerCase();
           if (seenUids.has(uidKey)) continue;
@@ -86,6 +97,7 @@ export async function GET(req: NextRequest) {
       const serverUsers = serverSecurityStore.getAllRegisteredUsers();
       for (const u of serverUsers) {
         if (!u.uid) continue;
+        if (isTestOrDummyAccount(u)) continue;
         const uidKey = u.uid.toLowerCase();
         const emailKey = (u.email || '').trim().toLowerCase();
         if (seenUids.has(uidKey)) continue;
@@ -132,40 +144,46 @@ export async function GET(req: NextRequest) {
     // Every displayed record must come from verified, authorized database records or legitimately registered accounts.
 
     // 4. Map to sanitized public profiles — strip PII except for the caller's own record
-    const sanitized = allRecords.map((u) => {
-      const isSelf = u.uid === callerUid;
-      return {
-        uid: u.uid,
-        id: u.uid,
-        email: isSelf ? u.email : undefined,
-        displayName: u.displayName,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        company: u.company,
-        companyId: u.companyId,
-        designation: u.designation,
-        role: u.role,
-        city: u.city,
-        state: u.state,
-        country: u.country,
-        location: u.location,
-        formattedAddress: u.formattedAddress,
-        timezone: u.timezone,
-        isVerified: u.isVerified,
-        hasGoldenTick: u.hasGoldenTick,
-        plan: u.plan,
-        gstn: isSelf ? (u.gstn || '') : undefined,
-        pan: isSelf ? (u.pan || '') : undefined,
-        mobile: isSelf ? (u.mobile || '') : undefined,
-        avatarUrl: u.avatarUrl,
-        companyLogoUrl: u.companyLogoUrl,
-        experiences: u.experiences,
-        educations: u.educations,
-        certifications: u.certifications,
-        contacts: u.contacts,
-        isOnline: true,
-      };
-    });
+    const sanitized = allRecords
+      .filter((u) => {
+        if (isTestOrDummyAccount(u)) return false;
+        if (excludeSelf && isSelfProfile(user, u)) return false;
+        return true;
+      })
+      .map((u) => {
+        const isSelf = isSelfProfile(user, u) || u.uid === callerUid;
+        return {
+          uid: u.uid,
+          id: u.uid,
+          email: isSelf ? u.email : undefined,
+          displayName: u.displayName,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          company: u.company,
+          companyId: u.companyId,
+          designation: u.designation,
+          role: u.role,
+          city: u.city,
+          state: u.state,
+          country: u.country,
+          location: u.location,
+          formattedAddress: u.formattedAddress,
+          timezone: u.timezone,
+          isVerified: u.isVerified,
+          hasGoldenTick: u.hasGoldenTick,
+          plan: u.plan,
+          gstn: isSelf ? (u.gstn || '') : undefined,
+          pan: isSelf ? (u.pan || '') : undefined,
+          mobile: isSelf ? (u.mobile || '') : undefined,
+          avatarUrl: u.avatarUrl,
+          companyLogoUrl: u.companyLogoUrl,
+          experiences: u.experiences,
+          educations: u.educations,
+          certifications: u.certifications,
+          contacts: u.contacts,
+          isOnline: true,
+        };
+      });
 
     // 5. Apply filtering
     let results = sanitized;

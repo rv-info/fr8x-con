@@ -40,6 +40,7 @@ import { createAdminClient, getDbClient } from '@/lib/supabase/server';
 import { redis } from '@/lib/redis';
 import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
+import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 
 export const dynamic = 'force-dynamic';
 
@@ -367,11 +368,13 @@ export async function GET(req: NextRequest) {
     results = fallbackResults as unknown as Record<string, unknown>[];
   }
 
-  // 6. Deduplicate by unique person ID and sanitize
+  // 6. Deduplicate by unique person ID, filter out self and test/dummy profiles, and sanitize
   const seenMemberIds = new Set<string>();
   const deduplicatedResults = results.filter((r) => {
     const memId = String(r.id || r.user_id || '').toLowerCase();
     if (!memId || seenMemberIds.has(memId)) return false;
+    if (isTestOrDummyAccount(r)) return false;
+    if (isSelfProfile(user, r as any)) return false;
     seenMemberIds.add(memId);
     return true;
   });

@@ -6,6 +6,7 @@ import {
   ConnectionRequestStatus,
   PrivacyLevel,
 } from './types';
+import { isSelfProfile } from './connections-algorithm';
 
 // Storage keys
 const CONNECTIONS_MAP_KEY = 'fr8x_connections_map_v1';
@@ -147,6 +148,9 @@ export function sendConnectionRequest(
 ): ConnectionRequest {
   if (!fromUser.uid || !toUser.uid) {
     throw new Error('Valid sender and recipient UIDs required');
+  }
+  if (fromUser.uid === toUser.uid || isSelfProfile(fromUser, toUser)) {
+    throw new Error('Cannot send a connection request to yourself');
   }
 
   const all = getAllConnectionRequests();

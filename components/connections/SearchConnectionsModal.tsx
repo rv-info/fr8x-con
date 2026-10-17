@@ -24,6 +24,8 @@ import { GoldenTick } from '@/components/ui/GoldenTick';
 import {
   calculateConnectionAffinity,
   MatchReason,
+  isSelfProfile,
+  isTestOrDummyAccount,
 } from '@/lib/connections-algorithm';
 import {
   getConnectedUserIds,
@@ -130,7 +132,7 @@ export function SearchConnectionsModal({
       const uidKey = (m.uid || m.id || '').toLowerCase();
       const emailKey = (m.email || '').trim().toLowerCase();
       if (!uidKey) return false;
-      if (uidKey === currentUser.uid.toLowerCase()) return false; // Self-exclusion
+      if (isSelfProfile(currentUser, m) || isTestOrDummyAccount(m)) return false; // Self & Dummy exclusion
       if (seenUids.has(uidKey)) return false;
       if (emailKey && seenEmails.has(emailKey)) return false;
       seenUids.add(uidKey);
@@ -181,6 +183,14 @@ export function SearchConnectionsModal({
 
   const handleSendRequest = (targetUser: UserProfile, noteText?: string) => {
     if (!currentUser.uid || !targetUser.uid) return;
+    if (isSelfProfile(currentUser, targetUser)) {
+      toast('You cannot send a connection request to yourself.');
+      return;
+    }
+    if (isTestOrDummyAccount(targetUser)) {
+      toast('This user is not available for connections.');
+      return;
+    }
     try {
       setConnectingUid(targetUser.uid);
       sendConnectionRequest(

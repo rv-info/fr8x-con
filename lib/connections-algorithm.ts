@@ -126,13 +126,128 @@ function extractPastCompanyNames(u: Partial<UserProfile>): string[] {
 }
 
 /**
+ * Rigorous multi-factor self-profile check.
+ * Compares UID, database ID, email, mobile phone, and normalized name+company.
+ * Returns true if candidate is the exact same human being as currentUser.
+ */
+export function isSelfProfile(
+  me?: Partial<UserProfile> | Record<string, any> | null,
+  target?: Partial<UserProfile> | Record<string, any> | null
+): boolean {
+  if (!me || !target) return false;
+
+  // 1. Direct UID / ID matching (case-insensitive, trimmed)
+  const myUid = (me.uid || (me as any).id || '').toString().trim().toLowerCase();
+  const targetUid = (target.uid || (target as any).id || '').toString().trim().toLowerCase();
+  if (myUid && targetUid && myUid === targetUid) return true;
+
+  // 2. Email matching (authoritative)
+  const myEmail = (me.email || '').toString().trim().toLowerCase();
+  const targetEmail = (target.email || '').toString().trim().toLowerCase();
+  if (myEmail && targetEmail && myEmail === targetEmail) return true;
+
+  // 3. Mobile / Phone number matching (last 10 digits)
+  const cleanPhone = (p?: string) => (p || '').replace(/[^0-9]/g, '');
+  const myPhone = cleanPhone((me as any).mobile || (me as any).phone);
+  const targetPhone = cleanPhone((target as any).mobile || (target as any).phone);
+  if (myPhone.length >= 10 && targetPhone.length >= 10 && myPhone.slice(-10) === targetPhone.slice(-10)) {
+    return true;
+  }
+
+  // 4. Normalized Display Name + Company match:
+  // Catches cross-session schema drift where UID or email format differs
+  const myName = (me.displayName || `${(me as any).firstName || ''} ${(me as any).lastName || ''}`)
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  const targetName = (target.displayName || `${(target as any).firstName || ''} ${(target as any).lastName || ''}`)
+    .toString()
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  const myCompany = (me.company || (me as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+  const targetCompany = (target.company || (target as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
+
+  if (myName && targetName && myName === targetName && myName !== 'fr8x member') {
+    if (myCompany && targetCompany && (myCompany === targetCompany || myCompany.includes(targetCompany) || targetCompany.includes(myCompany))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Filter to permanently block test fixtures, automated dummy accounts,
+ * and sample records from surfacing in production directory or recommendations.
+ */
+export function isTestOrDummyAccount(
+  user?: Partial<UserProfile> | Record<string, any> | null
+): boolean {
+  if (!user) return true;
+
+  const uid = (user.uid || (user as any).id || '').toString().toLowerCase().trim();
+  const email = (user.email || '').toString().toLowerCase().trim();
+  const name = (user.displayName || (user as any).display_name || (user as any).full_name || `${(user as any).firstName || ''} ${(user as any).lastName || ''}`)
+    .toString()
+    .toLowerCase()
+    .trim();
+  const company = (user.company || (user as any).company_name || '').toString().toLowerCase().trim();
+  const designation = (user.designation || (user as any).position || (user as any).headline || '').toString().toLowerCase().trim();
+
+  // 1. UID test patterns
+  if (['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david', 'u-vikram', 'u-ananya', 'u-suspended-01', 'u-chen', 'u-vikas', 'usr_raivega_mgt'].includes(uid)) return true;
+  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp|su|exp)[-_0-9]/i.test(uid)) return true;
+  if (/^usr_(compliance|commerce)_[0-9]+/i.test(uid)) return true;
+  if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true;
+
+  // 2. Email test patterns
+  if (email.includes('@example.com') || email.includes('@test.') || email.includes('.test@') || email.includes('test.pilot') || email.endsWith('.local') || email.endsWith('@enterprise.local')) return true;
+  if (/^(lockout|sureset|test|tester|dummy|temp|sample|mock|single-use|delivery-test|otprate)[-_0-9.]/i.test(email)) return true;
+  if (email.includes('operations.test') || email.includes('test_') || email.includes('test-') || email.includes('+test')) return true;
+
+  // 3. Name test patterns
+  if (
+    name.includes('test discovery') ||
+    name.includes('operations test') ||
+    name.includes('test controller') ||
+    name.includes('test user') ||
+    name.includes('mock user') ||
+    name.includes('dummy user') ||
+    name.includes('fixture') ||
+    name.includes('sample user')
+  ) {
+    return true;
+  }
+  if (/^test\b/i.test(name) || /\btest$/i.test(name) || name === 'test') return true;
+
+  // 4. Company test patterns
+  if (
+    company.includes('fr8x test') ||
+    company.includes('test co') ||
+    company.includes('test company') ||
+    company.includes('sample company') ||
+    company === 'beacon forwarding' ||
+    company === 'cooldown test co'
+  ) {
+    return true;
+  }
+
+  // 5. Designation test patterns
+  if (designation.includes('test controller') || designation.includes('dummy')) return true;
+
+  return false;
+}
+
+/**
  * Calculates multi-dimensional affinity between two users
  */
 export function calculateConnectionAffinity(
   me: Partial<UserProfile>,
   target: Partial<UserProfile>
 ): { score: number; percentage: number; reasons: MatchReason[]; topBadges: string[] } {
-  if (!me || !target || me.uid === target.uid) {
+  if (!me || !target || isSelfProfile(me, target)) {
     return { score: 0, percentage: 0, reasons: [], topBadges: [] };
   }
 
@@ -454,11 +569,12 @@ export function getDailyConnectionRecommendations(
   const evaluated: RecommendedConnection[] = [];
 
   for (const candidate of candidates) {
-    if (!candidate.uid || candidate.uid.toLowerCase() === currentUser.uid.toLowerCase()) {
+    if (!candidate || isSelfProfile(currentUser, candidate) || isTestOrDummyAccount(candidate)) {
       continue;
     }
 
-    const cUid = candidate.uid.toLowerCase();
+    const cUid = (candidate.uid || (candidate as any).id || '').toString().toLowerCase();
+    if (!cUid) continue;
     const isAlreadyConnected = connectedSet.has(cUid);
     let requestStatus: RecommendedConnection['requestStatus'] = 'none';
     if (isAlreadyConnected) {
@@ -479,12 +595,12 @@ export function getDailyConnectionRecommendations(
     }
 
     // Apply minor daily jitter to break ties and keep recommendations fresh each day
-    const userSeed = (candidate.uid.charCodeAt(0) || 1) * 17 + daySeed;
+    const userSeed = (cUid.charCodeAt(0) || 1) * 17 + daySeed;
     const dailyJitter = seededPseudoRandom(userSeed) * 2;
     const totalRankScore = score + dailyJitter;
 
     evaluated.push({
-      user: candidate as UserProfile,
+      user: { ...candidate, uid: candidate.uid || cUid } as UserProfile,
       affinityScore: Math.round(totalRankScore),
       matchPercentage: percentage,
       reasons,

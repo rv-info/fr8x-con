@@ -25,6 +25,8 @@ import {
   calculateConnectionAffinity,
   getDailyConnectionRecommendations,
   RecommendedConnection,
+  isSelfProfile,
+  isTestOrDummyAccount,
 } from '@/lib/connections-algorithm';
 import {
   getConnectedUserIds,
@@ -72,13 +74,16 @@ export function DailyRecommendationsWidget({
       ]);
 
       if (membersRes && Array.isArray(membersRes.members)) {
-        setCandidates(membersRes.members);
+        const safeCandidates = membersRes.members.filter(
+          (m: any) => !isSelfProfile(currentUser, m) && !isTestOrDummyAccount(m)
+        );
+        setCandidates(safeCandidates);
       }
 
       if (profileRes?.success && profileRes?.user) {
         setHydratedSelf(profileRes.user);
       } else if (membersRes && Array.isArray(membersRes.members)) {
-        const selfFromDbms = membersRes.members.find((m: any) => m.uid === myUid || m.uid === currentUser.uid);
+        const selfFromDbms = membersRes.members.find((m: any) => isSelfProfile(currentUser, m) || m.uid === myUid || m.uid === currentUser.uid);
         if (selfFromDbms) {
           setHydratedSelf(selfFromDbms);
         }
@@ -102,6 +107,15 @@ export function DailyRecommendationsWidget({
     const activeSelf = hydratedSelf ? { ...currentUser, ...hydratedSelf, uid: myUid } : { ...currentUser, uid: myUid };
     if (!activeSelf?.uid || candidates.length === 0) return;
 
+    // Filter candidate pool to guarantee zero self-cards and zero test/dummy fixtures
+    const validCandidates = candidates.filter(
+      (c) => !isSelfProfile(activeSelf, c) && !isTestOrDummyAccount(c)
+    );
+    if (validCandidates.length === 0) {
+      setRecommendations([]);
+      return;
+    }
+
     const connectedUids = getConnectedUserIds(activeSelf.uid);
     const requests = getAllConnectionRequests();
     const pendingSentUids = requests
@@ -113,7 +127,7 @@ export function DailyRecommendationsWidget({
 
     const recs = getDailyConnectionRecommendations(
       activeSelf,
-      candidates,
+      validCandidates,
       connectedUids,
       pendingSentUids,
       pendingReceivedUids,
@@ -137,6 +151,14 @@ export function DailyRecommendationsWidget({
 
   const handleConnect = async (rec: RecommendedConnection) => {
     if (!currentUser.uid || !rec.user.uid) return;
+    if (isSelfProfile(currentUser, rec.user)) {
+      toast('You cannot send a connection request to yourself.');
+      return;
+    }
+    if (isTestOrDummyAccount(rec.user)) {
+      toast('This candidate profile is not available for connection.');
+      return;
+    }
     try {
       setConnectingUid(rec.user.uid);
       const senderName = currentUser.displayName || `${currentUser.firstName} ${currentUser.lastName}`.trim();
@@ -155,8 +177,13 @@ export function DailyRecommendationsWidget({
     toast('Suggestion dismissed for today.');
   };
 
-  // Filter out dismissed cards
-  const visibleRecs = recommendations.filter((r) => !dismissedUids.has(r.user.uid));
+  // Filter out dismissed cards, self cards, and test/dummy fixtures
+  const visibleRecs = recommendations.filter(
+    (r) =>
+      !dismissedUids.has(r.user.uid) &&
+      !isSelfProfile(currentUser, r.user) &&
+      !isTestOrDummyAccount(r.user)
+  );
 
   // Today's formatted date string
   const todayStr = new Intl.DateTimeFormat('en-US', {
