@@ -96,10 +96,23 @@ async function runTests() {
     assert(profile.uid === 'd9b626a0-53bc-42b8-bb65-f481c97a5270', 'Primary key UUID maps to profile.uid');
     assert(profile.firstName === 'Rajat', 'Roundtrip firstName matches');
     assert(profile.lastName === 'Rai', 'Roundtrip lastName matches');
+    assert(profile.displayName === 'Rajat Rai', 'Roundtrip displayName resolved to human name Rajat Rai, not email handle');
     assert(profile.mobile === '+91 9877902622', 'Roundtrip mobile matches');
     assert(profile.formattedAddress === 'Gurugram (Sikanderpur), Haryana, India', 'Roundtrip formattedAddress matches');
     assert(profile.timezone === 'Asia/Kolkata', 'Roundtrip timezone matches');
     assert(profile.gstn === '06AAAAA0000A1Z5', 'Roundtrip gstn matches');
+
+    // Test case: User saved as 'Rajat Kumar RAI' with stale display_name: 'rajat.rai'
+    const legacyRow = {
+      id: 'd9b626a0-53bc-42b8-bb65-f481c97a5270',
+      email: 'rajat.rai@cogoport.com',
+      first_name: 'Rajat Kumar',
+      last_name: 'RAI',
+      display_name: 'rajat.rai',
+      company_name: 'Cogoport Freight Solutions',
+    };
+    const resolvedProfile = mapRowToProfile(legacyRow);
+    assert(resolvedProfile.displayName === 'Rajat Kumar RAI', 'Prioritizes real saved name "Rajat Kumar RAI" over stale handle "rajat.rai"');
   }
 
   // ── TEST SUITE 2: Migration Files Integrity ─────────────────────────────────

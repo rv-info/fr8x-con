@@ -4,6 +4,7 @@ import { authenticateUserSession } from '@/lib/auth-guard';
 import { createClient as createSupabaseServerClient, getDbClient } from '@/lib/supabase/server';
 import { peopleDirectoryStore } from '@/lib/people-directory';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
+import { resolveDisplayName } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,13 +55,20 @@ export async function GET(req: NextRequest) {
           seenUids.add(uidKey);
           if (emailKey) seenEmails.add(emailKey);
 
+          const resolvedMemberName = resolveDisplayName({
+            first_name: row.first_name,
+            last_name: row.last_name,
+            display_name: row.display_name,
+            email: row.email,
+          });
+
           allRecords.push({
             uid: row.id,
             id: row.id,
             email: row.email,
-            displayName: row.display_name || `${row.first_name || ''} ${row.last_name || ''}`.trim() || row.email,
-            firstName: row.first_name || (row.display_name ? row.display_name.split(' ')[0] : ''),
-            lastName: row.last_name || (row.display_name ? row.display_name.split(' ').slice(1).join(' ') : ''),
+            displayName: resolvedMemberName,
+            firstName: row.first_name || (resolvedMemberName.split(' ').length > 1 ? resolvedMemberName.split(' ')[0] : resolvedMemberName),
+            lastName: row.last_name || (resolvedMemberName.split(' ').length > 1 ? resolvedMemberName.split(' ').slice(1).join(' ') : ''),
             company: row.company_name || 'Enterprise Logistics Member',
             companyId: row.company_id || '',
             designation: row.designation || row.position || 'Trade Specialist',
@@ -106,13 +114,20 @@ export async function GET(req: NextRequest) {
         seenUids.add(uidKey);
         if (emailKey) seenEmails.add(emailKey);
 
+        const resolvedServerUserName = resolveDisplayName({
+          firstName: u.firstName,
+          lastName: u.lastName,
+          displayName: u.displayName,
+          email: u.email,
+        });
+
         allRecords.push({
           uid: u.uid,
           id: u.uid,
           email: u.email,
-          displayName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
-          firstName: u.firstName || (u.displayName ? u.displayName.split(' ')[0] : ''),
-          lastName: u.lastName || (u.displayName ? u.displayName.split(' ').slice(1).join(' ') : ''),
+          displayName: resolvedServerUserName,
+          firstName: u.firstName || (resolvedServerUserName.split(' ').length > 1 ? resolvedServerUserName.split(' ')[0] : resolvedServerUserName),
+          lastName: u.lastName || (resolvedServerUserName.split(' ').length > 1 ? resolvedServerUserName.split(' ').slice(1).join(' ') : ''),
           company: u.company || 'Enterprise Logistics Member',
           companyId: u.companyId || '',
           designation: u.designation || 'Trade Specialist',

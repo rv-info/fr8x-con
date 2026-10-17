@@ -10,6 +10,7 @@ import {
   CURRENCY_RATES,
   getLocationTypeIcon,
   getCarrierTypeIcon,
+  resolveDisplayName,
 } from '@/lib/utils';
 import Link from 'next/link';
 import { NetworkStatusPill } from './NetworkStatusPill';
@@ -80,7 +81,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const matchedJobs = query.length >= 2 ? jobs.filter((j) => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query) || j.location.toLowerCase().includes(query)).slice(0, 2) : [];
   const matchedPosts = query.length >= 2 ? posts.filter((p) => p.text.toLowerCase().includes(query) || p.author.toLowerCase().includes(query) || (p.authorCompany || '').toLowerCase().includes(query)).slice(0, 2) : [];
   const matchedTopics = query.length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(query) || t.author.toLowerCase().includes(query) || t.category.toLowerCase().includes(query)).slice(0, 2) : [];
-  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => u.displayName.toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 2) : [];
+  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => resolveDisplayName(u).toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 2) : [];
 
   const totalResultsCount = matchedLocations.length + matchedCarriers.length + matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
 
@@ -279,7 +280,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         >
                           <span className="gs-icon" style={{ color: '#059669' }}><Users size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{u.displayName} · {u.company}</div>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{resolveDisplayName(u)} · {u.company}</div>
                             <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{u.designation} · {u.city}, {u.country}</small>
                           </div>
                           <span className="badge blue" style={{ fontSize: '9.5px' }}>View Passport</span>

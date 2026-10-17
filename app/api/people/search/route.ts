@@ -41,6 +41,7 @@ import { redis } from '@/lib/redis';
 import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
+import { resolveDisplayName } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -135,12 +136,19 @@ function syncRegisteredUsersToDirectory() {
     for (const u of registeredUsers) {
       if (!u.uid) continue;
       const ps = (u.privacySettings ?? {}) as Record<string, unknown>;
+      const resolvedPersonName = resolveDisplayName({
+        firstName: u.firstName,
+        lastName: u.lastName,
+        displayName: u.displayName,
+        email: u.email,
+      }, 'FR8X Member');
+
       const member: DirectoryMember = {
         id: u.uid,
-        display_name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'FR8X Member',
-        full_name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'FR8X Member',
-        first_name: u.firstName || (u.displayName ? u.displayName.split(' ')[0] : 'Member'),
-        last_name: u.lastName || (u.displayName ? u.displayName.split(' ').slice(1).join(' ') : ''),
+        display_name: resolvedPersonName,
+        full_name: resolvedPersonName,
+        first_name: u.firstName || (resolvedPersonName.split(' ').length > 1 ? resolvedPersonName.split(' ')[0] : resolvedPersonName),
+        last_name: u.lastName || (resolvedPersonName.split(' ').length > 1 ? resolvedPersonName.split(' ').slice(1).join(' ') : ''),
         designation: u.designation || 'Freight Professional',
         headline: u.designation || 'Freight Professional',
         company_name: u.company || 'Enterprise Logistics',

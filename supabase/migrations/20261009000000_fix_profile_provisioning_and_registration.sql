@@ -70,8 +70,12 @@ BEGIN
     NEW.id,
     NEW.email,
     COALESCE(
-      NEW.raw_user_meta_data->>'display_name',
-      NEW.raw_user_meta_data->>'displayName',
+      NULLIF(TRIM(CONCAT_WS(' ',
+        NULLIF(COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'firstName', ''), ''),
+        NULLIF(COALESCE(NEW.raw_user_meta_data->>'last_name',  NEW.raw_user_meta_data->>'lastName',  ''), '')
+      )), ''),
+      NULLIF(NEW.raw_user_meta_data->>'display_name', ''),
+      NULLIF(NEW.raw_user_meta_data->>'displayName', ''),
       split_part(NEW.email, '@', 1)
     ),
     COALESCE(NEW.raw_user_meta_data->>'first_name', NEW.raw_user_meta_data->>'firstName', ''),
@@ -105,7 +109,14 @@ BEGIN
   )
   ON CONFLICT (id) DO UPDATE SET
     email                   = EXCLUDED.email,
-    display_name            = COALESCE(NULLIF(EXCLUDED.display_name, ''), profiles.display_name),
+    display_name            = COALESCE(
+      NULLIF(TRIM(CONCAT_WS(' ',
+        NULLIF(COALESCE(EXCLUDED.first_name, profiles.first_name), ''),
+        NULLIF(COALESCE(EXCLUDED.last_name,  profiles.last_name),  '')
+      )), ''),
+      NULLIF(EXCLUDED.display_name, ''),
+      profiles.display_name
+    ),
     first_name              = COALESCE(NULLIF(EXCLUDED.first_name, ''), profiles.first_name),
     last_name               = COALESCE(NULLIF(EXCLUDED.last_name, ''), profiles.last_name),
     phone                   = COALESCE(NULLIF(EXCLUDED.phone, ''), profiles.phone),

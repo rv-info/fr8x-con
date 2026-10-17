@@ -9,18 +9,25 @@
 
 import { createClient } from './client';
 import { UserProfile, RateItem, Auction, SubmittedBid, FeedPost } from '@/lib/types';
+import { resolveDisplayName } from '@/lib/utils';
 
 // Map database row (snake_case) to application UserProfile (camelCase)
 export function mapRowToProfile(row: any): UserProfile {
   if (!row) return {} as UserProfile;
-  const nameParts = (row.display_name || '').split(' ');
+  const resolved = resolveDisplayName({
+    first_name: row.first_name,
+    last_name: row.last_name,
+    display_name: row.display_name,
+    email: row.email,
+  });
+  const nameParts = resolved.split(' ');
   return {
     uid: row.id,
     slug: row.slug || undefined,
     email: row.email,
-    firstName: row.first_name || nameParts[0] || '',
-    lastName: row.last_name || nameParts.slice(1).join(' ') || '',
-    displayName: row.display_name || `${row.first_name || ''} ${row.last_name || ''}`.trim() || row.email,
+    firstName: row.first_name || (nameParts.length > 1 ? nameParts[0] : resolved),
+    lastName: row.last_name || (nameParts.length > 1 ? nameParts.slice(1).join(' ') : ''),
+    displayName: resolved,
     mobile: row.mobile || row.phone || '',
     phone: row.phone || row.mobile || '',
     isdCode: row.isd_code || '+91',
@@ -100,6 +107,17 @@ export function mapProfileToRow(updates: Record<string, any>): Record<string, an
   if (updates.firstName !== undefined) row.first_name = updates.firstName;
   if (updates.lastName !== undefined) row.last_name = updates.lastName;
   if (updates.displayName !== undefined) row.display_name = updates.displayName;
+
+  // Ensure display_name is cleanly synchronized with first_name + last_name
+  const resolvedDisp = resolveDisplayName({
+    first_name: row.first_name !== undefined ? row.first_name : updates.firstName,
+    last_name: row.last_name !== undefined ? row.last_name : updates.lastName,
+    display_name: row.display_name !== undefined ? row.display_name : updates.displayName,
+    email: row.email || updates.email,
+  });
+  if (resolvedDisp && resolvedDisp !== 'Freight Professional') {
+    row.display_name = resolvedDisp;
+  }
 
   // Unify mobile and phone
   if (updates.mobile !== undefined || updates.phone !== undefined || updates.mobileNumber !== undefined) {

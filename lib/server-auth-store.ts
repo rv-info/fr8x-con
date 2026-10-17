@@ -11,7 +11,7 @@ import {
   createSignedSessionToken,
   verifySignedSessionToken,
 } from '@/lib/crypto';
-import { isCorporateEmail } from '@/lib/utils';
+import { isCorporateEmail, resolveDisplayName } from '@/lib/utils';
 
 
 import {
@@ -593,7 +593,7 @@ class ServerSecurityStore {
         email,
         passwordHash: '',
         salt: '',
-        displayName: updates.displayName || `${updates.firstName || ''} ${updates.lastName || ''}`.trim() || 'Enterprise Member',
+        displayName: resolveDisplayName(updates, 'Enterprise Member'),
         company: updates.company || 'Enterprise Logistics Co.',
         companyId: updates.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
         role: 'user',
@@ -656,6 +656,15 @@ class ServerSecurityStore {
     if (sanitizedUpdates.firstName !== undefined) merged.firstName = sanitizedUpdates.firstName;
     if (sanitizedUpdates.lastName !== undefined) merged.lastName = sanitizedUpdates.lastName;
     if (sanitizedUpdates.displayName !== undefined) merged.displayName = sanitizedUpdates.displayName;
+    const resolvedMergedDisp = resolveDisplayName({
+      firstName: merged.firstName,
+      lastName: merged.lastName,
+      displayName: merged.displayName,
+      email: merged.email,
+    });
+    if (resolvedMergedDisp && resolvedMergedDisp !== 'Freight Professional') {
+      merged.displayName = resolvedMergedDisp;
+    }
     if (sanitizedUpdates.company !== undefined) merged.company = sanitizedUpdates.company;
     if (sanitizedUpdates.companyId !== undefined) merged.companyId = sanitizedUpdates.companyId;
     if (sanitizedUpdates.avatarUrl !== undefined) {

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { RateItem, FeedPost, UserPresenceState, IdempotentEvent, LogisticsIntent, Auction } from '@/lib/types';
+import { resolveDisplayName } from '@/lib/utils';
 
 function initDbmsDir(): string {
   // Use test fixtures directory for automated unit tests
@@ -815,7 +816,7 @@ export function getPersistedCompanies(): DbmsCompanyRecord[] {
             status: u.isVerified || u.email_verified ? 'verified' : 'pending',
             verified: Boolean(u.isVerified || u.email_verified),
             memberCount: 1,
-            primaryContactName: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email,
+            primaryContactName: resolveDisplayName(u),
             primaryContactEmail: u.email,
             primaryContactPhone: u.mobile || u.phone || '',
             adminNotes: ['Auto-reconciled from registered member profile'],

@@ -8,6 +8,7 @@
  */
 
 import { ValidationError } from './errors';
+import { resolveDisplayName } from '@/lib/utils';
 
 export interface ValidatedProfileUpdate {
   phone?: string;
@@ -143,6 +144,14 @@ export function validateProfileUpdate(input: Record<string, any>): ValidatedProf
   }
   if (input.last_name !== undefined || input.lastName !== undefined) {
     output.last_name = String(input.last_name || input.lastName).trim();
+  }
+  const resolvedDisp = resolveDisplayName({
+    first_name: output.first_name,
+    last_name: output.last_name,
+    display_name: output.display_name,
+  });
+  if (resolvedDisp && resolvedDisp !== 'Freight Professional') {
+    output.display_name = resolvedDisp;
   }
 
   // 6. Statutory & KYC Identifiers

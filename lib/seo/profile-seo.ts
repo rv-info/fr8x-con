@@ -19,6 +19,7 @@
 
 import type { Metadata } from 'next';
 import { SITE_URL } from '@/config/site-metadata';
+import { resolveDisplayName } from '@/lib/utils';
 
 export interface ProfileSeoInput {
   id: string;
@@ -43,6 +44,7 @@ export interface ProfileSeoInput {
   has_golden_tick?: boolean | null;
   privacy_settings?: Record<string, any> | null;
   privacySettings?: Record<string, any> | null;
+  email?: string | null;
   updated_at?: string | null;
 }
 
@@ -80,21 +82,15 @@ export function isProfilePubliclyIndexable(profile: ProfileSeoInput | null): boo
  * Resolves safe public display name without disclosing private identity details.
  */
 export function getSafeDisplayName(profile: ProfileSeoInput): string {
-  const candidate =
-    profile.displayName ||
-    profile.display_name ||
-    [profile.firstName || profile.first_name, profile.lastName || profile.last_name].filter(Boolean).join(' ');
-
-  if (!candidate || candidate.trim().length === 0) {
-    return 'FR8X Member';
-  }
-
-  // Never expose raw email address as name
-  if (candidate.includes('@')) {
-    return candidate.split('@')[0];
-  }
-
-  return candidate.trim();
+  return resolveDisplayName(
+    {
+      firstName: profile.firstName || profile.first_name,
+      lastName: profile.lastName || profile.last_name,
+      displayName: profile.displayName || profile.display_name,
+      email: profile.email,
+    },
+    'FR8X Member'
+  );
 }
 
 /**

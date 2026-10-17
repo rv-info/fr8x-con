@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { UserProfile, PlanTier, UserRole } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { profileService } from '@/lib/supabase/db';
+import { resolveDisplayName } from '@/lib/utils';
 
 export const INITIAL_USERS: UserProfile[] = [];
 
@@ -502,11 +503,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (!profile) {
         // Self-heal initial profile row
+        const metaDisp = resolveDisplayName({
+          firstName: data.user.user_metadata?.firstName,
+          lastName: data.user.user_metadata?.lastName,
+          displayName: data.user.user_metadata?.displayName,
+          email: cleanEmail,
+        });
+
         const newProfile: Partial<UserProfile> = {
           email: cleanEmail,
-          displayName: data.user.user_metadata?.displayName || cleanEmail.split('@')[0],
-          firstName: data.user.user_metadata?.firstName || cleanEmail.split('@')[0],
-          lastName: data.user.user_metadata?.lastName || '',
+          displayName: metaDisp,
+          firstName: data.user.user_metadata?.firstName || (metaDisp.split(' ').length > 1 ? metaDisp.split(' ')[0] : metaDisp),
+          lastName: data.user.user_metadata?.lastName || (metaDisp.split(' ').length > 1 ? metaDisp.split(' ').slice(1).join(' ') : ''),
           company: data.user.user_metadata?.company || 'Enterprise Logistics',
           designation: data.user.user_metadata?.designation || 'Freight Procurement Manager',
           role: 'company_admin',
@@ -520,7 +528,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ...GUEST_USER,
         uid: data.user.id,
         email: cleanEmail,
-        displayName: cleanEmail.split('@')[0],
+        displayName: resolveDisplayName({ email: cleanEmail }),
       };
 
       setCurrentUser(activeProfile);
@@ -586,10 +594,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const supabase = createClient();
 
-      const displayName =
-        profile.displayName ||
-        `${profile.firstName || ''} ${profile.lastName || ''}`.trim() ||
-        cleanEmail;
+      const displayName = resolveDisplayName(
+        {
+          firstName: profile.firstName,
+          lastName: profile.lastName,
+          displayName: profile.displayName,
+          email: cleanEmail,
+        },
+        'Freight Member'
+      );
 
       const resolvedAddress = profile.registeredAddress || profile.formattedAddress || profile.address || '';
       const resolvedGstn = profile.gstn || '';

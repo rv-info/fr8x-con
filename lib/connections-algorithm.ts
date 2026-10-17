@@ -14,6 +14,7 @@
  */
 
 import { UserProfile, ProfileExperience, ProfileEducation, ProfileCertification } from './types';
+import { resolveDisplayName } from './utils';
 
 export interface MatchReason {
   category: 'work' | 'ex_company' | 'location' | 'designation' | 'college' | 'qualification' | 'certification' | 'corridor' | 'network';
@@ -156,16 +157,8 @@ export function isSelfProfile(
 
   // 4. Normalized Display Name + Company match:
   // Catches cross-session schema drift where UID or email format differs
-  const myName = (me.displayName || `${(me as any).firstName || ''} ${(me as any).lastName || ''}`)
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
-  const targetName = (target.displayName || `${(target as any).firstName || ''} ${(target as any).lastName || ''}`)
-    .toString()
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
+  const myName = resolveDisplayName(me).toLowerCase().replace(/\s+/g, ' ');
+  const targetName = resolveDisplayName(target).toLowerCase().replace(/\s+/g, ' ');
   const myCompany = (me.company || (me as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
   const targetCompany = (target.company || (target as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
 

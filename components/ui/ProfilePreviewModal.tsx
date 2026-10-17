@@ -8,6 +8,7 @@ import { useChat } from '@/lib/context/ChatContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { UserProfile } from '@/lib/types';
+import { resolveDisplayName } from '@/lib/utils';
 import {
   getConnectionStatus,
   sendConnectionRequest,
@@ -141,12 +142,16 @@ export function ProfilePreviewModal({
     const found = allUsers.find((u) => {
       const uDisp = (u.displayName || '').trim().toLowerCase();
       const uEmail = (u.email || '').trim().toLowerCase();
+      const uHandle = uEmail.split('@')[0];
       const uFull = `${u.firstName || ''} ${u.lastName || ''}`.trim().toLowerCase();
+      const uSlug = ((u as any).slug || '').toLowerCase();
       return (
         (uDisp && uDisp === target) ||
         (uEmail && uEmail === target) ||
+        (uHandle && uHandle === target) ||
         (uFull && uFull === target) ||
-        (u.uid && u.uid === rawTargetName)
+        (uSlug && uSlug === target) ||
+        (u.uid && (u.uid === rawTargetName || u.uid === targetUid))
       );
     });
     if (found) return found;
@@ -161,11 +166,15 @@ export function ProfilePreviewModal({
             return parsed.find((u: any) => {
               const uDisp = (u.displayName || '').trim().toLowerCase();
               const uEmail = (u.email || '').trim().toLowerCase();
+              const uHandle = uEmail.split('@')[0];
               const uFull = `${u.firstName || ''} ${u.lastName || ''}`.trim().toLowerCase();
+              const uSlug = (u.slug || '').toLowerCase();
               return (
                 (uDisp && uDisp === target) ||
                 (uEmail && uEmail === target) ||
+                (uHandle && uHandle === target) ||
                 (uFull && uFull === target) ||
+                (uSlug && uSlug === target) ||
                 (u.uid && (u.uid === rawTargetName || u.uid === targetUid))
               );
             });
@@ -200,13 +209,17 @@ export function ProfilePreviewModal({
 
   const effectiveUser = matchedUser || remoteUser;
 
-  // Genuine fields resolution (strict real-data mapping — zero fabricated claims)
-  const resolvedName =
-    effectiveUser?.displayName ||
-    `${effectiveUser?.firstName || ''} ${effectiveUser?.lastName || ''}`.trim() ||
-    profile?.name ||
-    personName ||
-    'Freight Member';
+  // Genuine fields resolution (strict real-data mapping — real human First & Last name prioritised over handles)
+  const resolvedName = resolveDisplayName(
+    {
+      firstName: effectiveUser?.firstName,
+      lastName: effectiveUser?.lastName,
+      displayName: effectiveUser?.displayName,
+      email: effectiveUser?.email,
+      name: profile?.name || personName,
+    },
+    'Freight Member'
+  );
 
   const resolvedCompany =
     effectiveUser?.company?.trim() ||

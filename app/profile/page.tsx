@@ -25,6 +25,7 @@ import {
   maskPhone,
   maskStatutory,
 } from '@/lib/connections';
+import { resolveDisplayName } from '@/lib/utils';
 import { normalizeAssociationName } from '@/lib/utils/associations';
 import { profileService } from '@/lib/supabase/db';
 import { createClient } from '@/lib/supabase/client';
@@ -1096,7 +1097,7 @@ export default function ProfilePage() {
     const profilePayload = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      displayName: `${firstName.trim()} ${lastName.trim()}`.trim() || user.displayName,
+      displayName: resolveDisplayName({ firstName: firstName.trim(), lastName: lastName.trim(), displayName: user.displayName, email: user.email }),
       designation: designation.trim(),
       position: designation.trim() || user.position || 'Manager',
       company: company.trim(),
@@ -2119,7 +2120,7 @@ export default function ProfilePage() {
                       fontWeight: 800,
                     }}
                   >
-                    {((firstName && lastName) ? `${firstName} ${lastName}` : (user.displayName || user.email || 'U')).split(' ').map((p: string) => p[0] || '').join('').substring(0, 2).toUpperCase()}
+                    {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'U').split(' ').map((p: string) => p[0] || '').join('').substring(0, 2).toUpperCase()}
                   </div>
                 )}
 
@@ -2343,7 +2344,7 @@ export default function ProfilePage() {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
-                  {firstName && lastName ? `${firstName} ${lastName}`.trim() : (user.displayName || 'Enterprise Member')}
+                  {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'Enterprise Member')}
                 </h2>
                 {user.hasGoldenTick && <GoldenTick size={16} />}
                 <span className="badge" style={{ fontSize: '10px', fontWeight: 700 }}>
@@ -3441,7 +3442,7 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
-                    {user.displayName || `${firstName} ${lastName}`}
+                    {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'Enterprise Member')}
                   </div>
                   <div style={{ fontSize: '11px', color: 'var(--fr8x-muted)' }}>
                     {designation || user.designation} at <b>{company || user.company}</b>
@@ -4136,7 +4137,7 @@ export default function ProfilePage() {
               const profilePayload = {
                 firstName: editFirstName.trim(),
                 lastName: editLastName.trim(),
-                displayName: `${editFirstName.trim()} ${editLastName.trim()}`.trim() || user.displayName,
+                displayName: resolveDisplayName({ firstName: editFirstName.trim(), lastName: editLastName.trim(), displayName: user.displayName, email: finalEmail }),
                 email: finalEmail,
                 mobile: finalMobile,
                 phone: finalMobile,

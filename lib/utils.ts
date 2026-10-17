@@ -1391,4 +1391,86 @@ export function getIncotermIcon(): string {
   return '⚖️';
 }
 
+export interface NameResolutionInput {
+  displayName?: string | null;
+  display_name?: string | null;
+  firstName?: string | null;
+  first_name?: string | null;
+  lastName?: string | null;
+  last_name?: string | null;
+  email?: string | null;
+  name?: string | null;
+}
+
+/**
+ * Checks whether a given string is an email address, system handle, or raw dot-separated username (e.g. "rajat.rai", "user@domain.com")
+ */
+export function isEmailOrHandle(val?: string | null): boolean {
+  if (!val) return true;
+  const s = val.trim();
+  if (s.includes('@')) return true;
+  // If string contains dots, underscores, or hyphens without spaces and is lowercase or mixed alphanum (e.g. "rajat.rai", "rajat_rai")
+  if (/^[a-zA-Z0-9]+[._-][a-zA-Z0-9._-]+$/.test(s) && !s.includes(' ')) return true;
+  return false;
+}
+
+/**
+ * Formats a raw username or email handle into Title Case words (e.g. "rajat.rai" -> "Rajat Rai")
+ */
+export function formatHandleToName(handle: string): string {
+  if (!handle) return 'Freight Professional';
+  const clean = handle.replace(/@.*$/, '').trim();
+  const parts = clean.split(/[._-]+/).filter(Boolean);
+  if (parts.length === 0) return 'Freight Professional';
+  return parts.map((p) => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+}
+
+/**
+ * Single Authoritative Source of Truth for resolving a user's real human display name.
+ * Priority:
+ * 1. Saved First Name + Last Name (e.g. "Rajat Kumar RAI")
+ * 2. Real human displayName (if non-empty and NOT an email or raw handle)
+ * 3. Formatted/Cleaned Title Case representation if only an email/handle is available
+ */
+export function resolveDisplayName(
+  user?: NameResolutionInput | null,
+  fallback: string = 'Freight Professional'
+): string {
+  if (!user) return fallback;
+
+  // 1. Explicit First Name + Last Name (The user's actual entered name, e.g. "Rajat Kumar RAI")
+  const fName = (user.firstName || user.first_name || '').trim();
+  const lName = (user.lastName || user.last_name || '').trim();
+  const fullRealName = [fName, lName].filter(Boolean).join(' ').trim();
+
+  // If first name and last name form a real human name and not just a handle
+  if (fullRealName && !isEmailOrHandle(fullRealName)) {
+    return fullRealName;
+  }
+
+  // 2. Explicit displayName / name if valid and NOT an email or handle
+  const rawDisp = (user.displayName || user.display_name || user.name || '').trim();
+  if (rawDisp && !isEmailOrHandle(rawDisp)) {
+    return rawDisp;
+  }
+
+  // 3. If fullRealName exists even if it looked like a handle, format it
+  if (fullRealName) {
+    return isEmailOrHandle(fullRealName) ? formatHandleToName(fullRealName) : fullRealName;
+  }
+
+  // 4. If rawDisp is an email or handle (e.g. "rajat.rai" or "rajat.rai@cogoport.com")
+  if (rawDisp) {
+    return formatHandleToName(rawDisp);
+  }
+
+  // 5. Fallback to email username formatted nicely
+  if (user.email) {
+    return formatHandleToName(user.email);
+  }
+
+  return fallback;
+}
+
+
 

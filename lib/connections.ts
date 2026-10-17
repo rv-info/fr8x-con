@@ -7,6 +7,7 @@ import {
   PrivacyLevel,
 } from './types';
 import { isSelfProfile } from './connections-algorithm';
+import { resolveDisplayName } from './utils';
 
 // Storage keys
 const CONNECTIONS_MAP_KEY = 'fr8x_connections_map_v1';
@@ -163,17 +164,8 @@ export function sendConnectionRequest(
       )
   );
 
-  const senderName =
-    fromUser.displayName ||
-    `${fromUser.firstName || ''} ${fromUser.lastName || ''}`.trim() ||
-    fromUser.email ||
-    'Freight Colleague';
-
-  const recipientName =
-    toUser.displayName ||
-    `${toUser.firstName || ''} ${toUser.lastName || ''}`.trim() ||
-    toUser.email ||
-    'Freight Colleague';
+  const senderName = resolveDisplayName(fromUser, 'Freight Colleague');
+  const recipientName = resolveDisplayName(toUser, 'Freight Colleague');
 
   const newRequest: ConnectionRequest = {
     id: `req-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
@@ -313,10 +305,7 @@ export function acceptConnectionRequest(
     const NOTIF_KEY = 'fr8x_app_notifications_v1';
     const notifsRaw = localStorage.getItem(NOTIF_KEY);
     const notifs = notifsRaw ? JSON.parse(notifsRaw) : [];
-    const accepterName =
-      currentUser?.displayName ||
-      req.recipientName ||
-      'Trade Partner';
+    const accepterName = resolveDisplayName(currentUser, req.recipientName || 'Trade Partner');
     notifs.unshift({
       id: `notif-${Date.now()}`,
       title: 'Connection Accepted',

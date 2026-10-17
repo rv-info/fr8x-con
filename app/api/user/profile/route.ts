@@ -4,6 +4,7 @@ import { getUserByIdentifier, updateUser, deleteUser } from '@/lib/db/users';
 import { DEFAULT_PRIVACY_SETTINGS, UserPrivacySettings } from '@/lib/types';
 import { maskEmail, maskPhone, maskStatutory } from '@/lib/connections';
 import { redis } from '@/lib/redis';
+import { resolveDisplayName } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -90,11 +91,20 @@ export async function GET(req: NextRequest) {
         if (rawPan) resolvedPan = maskStatutory(rawPan);
       }
 
+      const resolvedPublicDisp = resolveDisplayName({
+        first_name: u.first_name || u.firstName,
+        last_name: u.last_name || u.lastName,
+        display_name: u.display_name || u.displayName,
+        email: user.email,
+      });
+
       return NextResponse.json({
         success: true,
         user: {
           uid: u.uid || u.id,
-          displayName: u.display_name || u.displayName || 'Enterprise Member',
+          displayName: resolvedPublicDisp,
+          firstName: u.first_name || u.firstName || (resolvedPublicDisp.split(' ').length > 1 ? resolvedPublicDisp.split(' ')[0] : resolvedPublicDisp),
+          lastName: u.last_name || u.lastName || (resolvedPublicDisp.split(' ').length > 1 ? resolvedPublicDisp.split(' ').slice(1).join(' ') : ''),
           company: privacy.companyVisibility === 'private' ? 'Confidential Logistics Member' : (u.company_name || u.company),
           companyId: privacy.companyVisibility === 'private' ? undefined : (u.company_id || u.companyId),
           designation: u.designation || 'Freight Logistics Specialist',
@@ -128,15 +138,22 @@ export async function GET(req: NextRequest) {
     }
 
     // Full profile returned to the verified account owner or privileged Godfather operator
+    const resolvedSelfDisp = resolveDisplayName({
+      first_name: u.first_name || u.firstName,
+      last_name: u.last_name || u.lastName,
+      display_name: u.display_name || u.displayName,
+      email: u.email,
+    });
+
     return NextResponse.json({
       success: true,
       user: {
         uid: u.uid || u.id,
         id: u.id,
         email: u.email,
-        displayName: u.display_name || u.displayName,
-        firstName: u.first_name || u.firstName,
-        lastName: u.last_name || u.lastName,
+        displayName: resolvedSelfDisp,
+        firstName: u.first_name || u.firstName || (resolvedSelfDisp.split(' ').length > 1 ? resolvedSelfDisp.split(' ')[0] : resolvedSelfDisp),
+        lastName: u.last_name || u.lastName || (resolvedSelfDisp.split(' ').length > 1 ? resolvedSelfDisp.split(' ').slice(1).join(' ') : ''),
         designation: u.designation || '',
         company: u.company_name || u.company,
         companyId: u.company_id || u.companyId,
@@ -241,6 +258,15 @@ export async function POST(req: NextRequest) {
     }
     if (body.lastName !== undefined || body.last_name !== undefined) {
       dbUpdates.last_name = body.lastName || body.last_name;
+    }
+    const resolvedPostName = resolveDisplayName({
+      first_name: dbUpdates.first_name !== undefined ? dbUpdates.first_name : body.firstName,
+      last_name: dbUpdates.last_name !== undefined ? dbUpdates.last_name : body.lastName,
+      display_name: dbUpdates.display_name !== undefined ? dbUpdates.display_name : body.displayName,
+      email: body.email,
+    });
+    if (resolvedPostName && resolvedPostName !== 'Freight Professional') {
+      dbUpdates.display_name = resolvedPostName;
     }
     if (body.company !== undefined || body.company_name !== undefined) {
       dbUpdates.company_name = body.company || body.company_name;
