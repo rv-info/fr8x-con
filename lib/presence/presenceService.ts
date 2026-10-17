@@ -18,7 +18,7 @@ const ACTIVITY_THROTTLE_MS = 3000;     // Throttle activity listener to max once
 class PresenceService {
   private currentUserId: string | null = null;
   private currentStatus: PresenceStatus = 'active';
-  private manualPreference: 'active' | 'away' | null = null;
+  private manualPreference: 'active' | 'away' | 'offline' | null = null;
   private heartbeatTimer: NodeJS.Timeout | null = null;
   private idleTimer: NodeJS.Timeout | null = null;
   private awayTimer: NodeJS.Timeout | null = null;
@@ -37,7 +37,7 @@ class PresenceService {
     // Load persisted manual presence preference if present
     try {
       const saved = localStorage.getItem('fr8x_user_presence_status');
-      if (saved === 'active' || saved === 'away') {
+      if (saved === 'active' || saved === 'away' || saved === 'offline') {
         this.manualPreference = saved;
         this.currentStatus = saved;
       }
@@ -100,7 +100,7 @@ class PresenceService {
     return this.currentStatus;
   }
 
-  public setStatus(status: 'active' | 'away'): void {
+  public setStatus(status: 'active' | 'away' | 'offline'): void {
     this.manualPreference = status;
     this.currentStatus = status;
 

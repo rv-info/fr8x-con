@@ -744,7 +744,7 @@ export interface ChatContact {
   location: string;
   timezone: string;
   online: boolean;
-  presenceStatus?: 'active' | 'idle' | 'away';
+  presenceStatus?: PresenceStatus;
   unreadCount: number;
   hasGoldenTick?: boolean;
   contextRecord?: {
@@ -1170,7 +1170,7 @@ export interface KYCDossier {
 }
 
 // ─── REAL PRESENCE (3-STATE HEARTBEAT) ───────────────────────────────────────
-export type PresenceStatus = 'active' | 'idle' | 'away'; // green = active, orange = idle, red = away
+export type PresenceStatus = 'active' | 'idle' | 'away' | 'offline'; // green = active (online), orange = idle/away, gray = offline
 
 export interface UserPresenceState {
   userId: string;

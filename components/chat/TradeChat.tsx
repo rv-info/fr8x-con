@@ -23,7 +23,7 @@ interface SingleChatBoxProps {
   onOpenProfile: (contactName: string) => void;
 }
 
-const PresenceDot = ({ status }: { status?: 'active' | 'idle' | 'away' | boolean }) => {
+const PresenceDot = ({ status }: { status?: 'active' | 'idle' | 'away' | 'offline' | boolean }) => {
   let color = '#ef4444'; // away
   let title = 'Away / Offline';
   if (status === 'active' || status === true) {
@@ -32,6 +32,9 @@ const PresenceDot = ({ status }: { status?: 'active' | 'idle' | 'away' | boolean
   } else if (status === 'idle') {
     color = '#f59e0b'; // idle
     title = 'Idle (Tab Inactive)';
+  } else if (status === 'offline') {
+    color = '#94a3b8'; // offline
+    title = 'Offline';
   }
   return (
     <span
@@ -150,6 +153,8 @@ function SingleChatBox({
                     ? 'Active'
                     : contact.presenceStatus === 'idle'
                     ? 'Idle'
+                    : contact.presenceStatus === 'offline'
+                    ? 'Offline'
                     : 'Away'
                   : contact?.online
                   ? 'Active'
@@ -362,6 +367,8 @@ export function TradeChat() {
                               ? 'Active'
                               : c.presenceStatus === 'idle'
                               ? 'Idle'
+                              : c.presenceStatus === 'offline'
+                              ? 'Offline'
                               : 'Away'
                             : c.online
                             ? 'Active'
