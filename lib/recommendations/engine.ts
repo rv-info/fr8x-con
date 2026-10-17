@@ -79,8 +79,8 @@ export class PeopleRecommendationEngine {
 
     // 3. Fallback Deterministic Recommendation Scoring Engine
     const viewer = peopleDirectoryStore.getMemberById(viewerId);
-    const viewerLanes = new Set((viewer?.key_trade_lanes || []).map((l) => l.toLowerCase()));
-    const viewerSkills = new Set((viewer?.skills || []).map((s) => s.toLowerCase()));
+    const viewerLanes = new Set((viewer?.key_trade_lanes || []).filter(Boolean).map((l) => String(l).toLowerCase()));
+    const viewerSkills = new Set((viewer?.skills || []).filter(Boolean).map((s) => String(s).toLowerCase()));
     const viewerCountry = (viewer?.country || '').toLowerCase();
 
     const allMembers = peopleDirectoryStore.getAllMembers();
@@ -105,13 +105,13 @@ export class PeopleRecommendationEngine {
       }
 
       // Compute matching trade lanes
-      const matchingLanes = (member.key_trade_lanes || []).filter((l) =>
-        viewerLanes.has(l.toLowerCase())
+      const matchingLanes = (member.key_trade_lanes || []).filter(Boolean).filter((l) =>
+        viewerLanes.has(String(l).toLowerCase())
       ).length;
 
       // Compute matching skills
-      const matchingSkills = (member.skills || []).filter((s) =>
-        viewerSkills.has(s.toLowerCase())
+      const matchingSkills = (member.skills || []).filter(Boolean).filter((s) =>
+        viewerSkills.has(String(s).toLowerCase())
       ).length;
 
       // Compute simulated mutual connections
@@ -119,7 +119,7 @@ export class PeopleRecommendationEngine {
                           member.id === 'a0000000-0000-0000-0000-000000000002' ? 2 : 1;
 
       // Country match
-      const sameCountry = Boolean(viewerCountry && member.country.toLowerCase() === viewerCountry);
+      const sameCountry = Boolean(viewerCountry && member.country && String(member.country).toLowerCase() === viewerCountry);
 
       // Deterministic scoring calculation
       // Weights: Mutuals (max 45), Trade Lanes (max 25), Skills (max 20), Country (10), Verified (4/8)

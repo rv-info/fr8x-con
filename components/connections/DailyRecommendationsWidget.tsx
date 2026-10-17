@@ -184,14 +184,16 @@ export function DailyRecommendationsWidget({
       return;
     }
 
-    const connectedUids = getConnectedUserIds(activeSelf.uid);
-    const requests = getAllConnectionRequests();
+    const connectedUids = (getConnectedUserIds(activeSelf.uid) || []).filter(Boolean);
+    const requests = (getAllConnectionRequests() || []).filter(Boolean);
     const pendingSentUids = requests
-      .filter((r) => r.fromUid === activeSelf.uid && r.status === 'pending')
-      .map((r) => r.toUid);
+      .filter((r) => r && r.fromUid === activeSelf.uid && r.status === 'pending')
+      .map((r) => r.toUid)
+      .filter(Boolean);
     const pendingReceivedUids = requests
-      .filter((r) => r.toUid === activeSelf.uid && r.status === 'pending')
-      .map((r) => r.fromUid);
+      .filter((r) => r && r.toUid === activeSelf.uid && r.status === 'pending')
+      .map((r) => r.fromUid)
+      .filter(Boolean);
 
     const recs = getDailyConnectionRecommendations(
       activeSelf,
@@ -251,14 +253,16 @@ export function DailyRecommendationsWidget({
   // Filter out dismissed cards, self cards, test/dummy fixtures, and duplicate identities
   const seenVisibleIdentities = new Set<string>();
   const visibleRecs = recommendations.filter((r) => {
-    if (dismissedUids.has(r.user.uid)) return false;
+    if (!r || !r.user) return false;
+    const targetUid = r.user.uid || (r.user as any).id;
+    if (!targetUid || dismissedUids.has(targetUid)) return false;
     if (isSelfProfile(currentUser, r.user)) return false;
     if (isTestOrDummyAccount(r.user)) return false;
 
     // Strict identity deduplication: never render two cards for the same person
-    const name = (r.user.displayName || `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() || r.user.email || '').toLowerCase().trim();
-    const company = (r.user.company || (r.user as any).company_name || '').toLowerCase().trim();
-    const identityKey = name && company ? `${name}:::${company}` : (r.user.email || r.user.uid);
+    const name = (r.user.displayName || `${r.user.firstName || ''} ${r.user.lastName || ''}`.trim() || r.user.email || '').toString().toLowerCase().trim();
+    const company = (r.user.company || (r.user as any).company_name || '').toString().toLowerCase().trim();
+    const identityKey = name && company ? `${name}:::${company}` : (r.user.email || targetUid);
     if (seenVisibleIdentities.has(identityKey)) return false;
     seenVisibleIdentities.add(identityKey);
     return true;

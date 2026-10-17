@@ -454,18 +454,18 @@ export default function FeedsPage() {
   // Dynamic Workspace Contacts: ONLY users who are confirmed mutual connections!
   const workspaceContacts: WorkspaceContact[] = React.useMemo(() => {
     if (!user?.uid) return [];
-    const connectedUids = new Set(getConnectedUserIds(user.uid));
+    const connectedUids = new Set(getConnectedUserIds(user.uid).filter(Boolean));
     return (allUsers || [])
-      .filter((u) => u.uid && u.uid !== user.uid && connectedUids.has(u.uid))
+      .filter((u) => u && u.uid && u.uid !== user.uid && connectedUids.has(u.uid))
       .map((u) => ({
         id: `c-${u.uid}`,
         uid: u.uid,
-        name: u.displayName || `${u.firstName} ${u.lastName}`.trim() || u.email,
+        name: u.displayName || `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.email || 'Member',
         role: u.designation || 'Freight Professional',
         company: u.company || 'Enterprise Member',
         isOnline: false,
         hasGoldenTick: Boolean(u.hasGoldenTick),
-        email: u.email,
+        email: u.email || '',
       }));
   }, [allUsers, user?.uid, connRevision]);
 
@@ -726,9 +726,9 @@ export default function FeedsPage() {
     const q = sendContactSearch.toLowerCase();
     return workspaceContacts.filter(
       (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.company.toLowerCase().includes(q) ||
-        c.role.toLowerCase().includes(q)
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.company || '').toLowerCase().includes(q) ||
+        (c.role || '').toLowerCase().includes(q)
     );
   }, [sendContactSearch, workspaceContacts]);
 
@@ -738,9 +738,9 @@ export default function FeedsPage() {
     const q = contactRailSearch.toLowerCase();
     return workspaceContacts.filter(
       (c) =>
-        c.name.toLowerCase().includes(q) ||
-        c.company.toLowerCase().includes(q) ||
-        c.role.toLowerCase().includes(q)
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.company || '').toLowerCase().includes(q) ||
+        (c.role || '').toLowerCase().includes(q)
     );
   }, [contactRailSearch, workspaceContacts]);
 
@@ -776,9 +776,9 @@ export default function FeedsPage() {
     if (!feedSearch.trim()) return true;
     const q = feedSearch.toLowerCase();
     return (
-      p.author.toLowerCase().includes(q) ||
+      (p.author || '').toLowerCase().includes(q) ||
       (p.authorCompany || '').toLowerCase().includes(q) ||
-      p.text.toLowerCase().includes(q) ||
+      (p.text || '').toLowerCase().includes(q) ||
       (p.auctionRefId || '').toLowerCase().includes(q) ||
       (p.tradeLane || '').toLowerCase().includes(q)
     );

@@ -35,9 +35,10 @@ export interface RecommendedConnection {
 }
 
 // Normalized token cleaners for resilient matching
-function cleanString(str?: string): string {
+function cleanString(str?: any): string {
   if (!str) return '';
-  return str
+  if (Array.isArray(str)) return str.map((s) => cleanString(s)).join(' ');
+  return String(str)
     .toLowerCase()
     .replace(/[^\w\s]/gi, ' ')
     .replace(/\s+/g, ' ')
@@ -567,16 +568,22 @@ export function getDailyConnectionRecommendations(
   if (!currentUser?.uid || !Array.isArray(candidates)) return [];
 
   const daySeed = getDaySeed();
-  const connectedSet = new Set(connectedUids.map((id) => id.toLowerCase()));
-  const pendingSentSet = new Set(pendingSentUids.map((id) => id.toLowerCase()));
-  const pendingReceivedSet = new Set(pendingReceivedUids.map((id) => id.toLowerCase()));
+  const connectedSet = new Set(
+    (connectedUids || []).filter(Boolean).map((id) => String(id).toLowerCase())
+  );
+  const pendingSentSet = new Set(
+    (pendingSentUids || []).filter(Boolean).map((id) => String(id).toLowerCase())
+  );
+  const pendingReceivedSet = new Set(
+    (pendingReceivedUids || []).filter(Boolean).map((id) => String(id).toLowerCase())
+  );
 
   // Prioritize candidates with richer/authentic profiles over fallback or sparse records
-  const sortedCandidates = [...candidates].sort((a, b) => {
-    const aLoc = ((a as any).city || (a as any).location || '').toString().toLowerCase();
-    const bLoc = ((b as any).city || (b as any).location || '').toString().toLowerCase();
-    const aIsMumbaiFallback = aLoc.includes('mumbai') && (a.displayName || '').toLowerCase().includes('kumar r');
-    const bIsMumbaiFallback = bLoc.includes('mumbai') && (b.displayName || '').toLowerCase().includes('kumar r');
+  const sortedCandidates = [...candidates].filter(Boolean).sort((a, b) => {
+    const aLoc = ((a as any)?.city || (a as any)?.location || '').toString().toLowerCase();
+    const bLoc = ((b as any)?.city || (b as any)?.location || '').toString().toLowerCase();
+    const aIsMumbaiFallback = aLoc.includes('mumbai') && (a?.displayName || '').toLowerCase().includes('kumar r');
+    const bIsMumbaiFallback = bLoc.includes('mumbai') && (b?.displayName || '').toLowerCase().includes('kumar r');
     if (aIsMumbaiFallback !== bIsMumbaiFallback) {
       return aIsMumbaiFallback ? 1 : -1;
     }

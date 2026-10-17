@@ -279,12 +279,13 @@ class PeopleDirectoryStore {
     const isProduction = process.env.NODE_ENV === 'production';
     // In production, never return dummy or fabricated seeded members
     const list: DirectoryMember[] = isProduction ? [] : [...SEEDED_MEMBERS];
-    const seenIds = new Set(list.map((m) => m.id.toLowerCase()));
-    const seenEmails = new Set(list.map((m) => (m.email || '').toLowerCase()).filter(Boolean));
+    const seenIds = new Set(list.filter((m) => m && m.id).map((m) => String(m.id).toLowerCase()));
+    const seenEmails = new Set(list.map((m) => (m.email || '').toString().toLowerCase()).filter(Boolean));
 
     for (const dm of this.dynamicMembers.values()) {
-      const dmId = dm.id.toLowerCase();
-      const dmEmail = (dm.email || '').toLowerCase();
+      if (!dm || !dm.id) continue;
+      const dmId = String(dm.id).toLowerCase();
+      const dmEmail = (dm.email || '').toString().toLowerCase();
       if (!seenIds.has(dmId) && (!dmEmail || !seenEmails.has(dmEmail))) {
         seenIds.add(dmId);
         if (dmEmail) seenEmails.add(dmEmail);
@@ -339,24 +340,24 @@ class PeopleDirectoryStore {
       }
 
       // Filter by country
-      if (params.country && m.country.toLowerCase() !== params.country.toLowerCase()) {
+      if (params.country && (!m.country || m.country.toLowerCase() !== params.country.toLowerCase())) {
         return false;
       }
 
       // Filter by city
-      if (params.city && !m.city.toLowerCase().includes(params.city.toLowerCase())) {
+      if (params.city && (!m.city || !m.city.toLowerCase().includes(params.city.toLowerCase()))) {
         return false;
       }
 
       // Filter by company
-      if (params.company && !m.company_name.toLowerCase().includes(params.company.toLowerCase())) {
+      if (params.company && (!m.company_name || !m.company_name.toLowerCase().includes(params.company.toLowerCase()))) {
         return false;
       }
 
       // Filter by skills
       if (params.skills && params.skills.length > 0) {
         const hasSkill = params.skills.some((sk) =>
-          (m.skills || []).some((ms) => ms.toLowerCase().includes(sk.toLowerCase()))
+          (m.skills || []).some((ms) => (ms || '').toString().toLowerCase().includes((sk || '').toString().toLowerCase()))
         );
         if (!hasSkill) return false;
       }

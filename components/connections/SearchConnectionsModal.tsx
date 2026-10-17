@@ -173,14 +173,19 @@ export function SearchConnectionsModal({
   const scoredCandidates = useMemo(() => {
     if (!currentUser?.uid) return [];
 
-    const connectedUids = new Set(getConnectedUserIds(currentUser.uid).map((id) => id.toLowerCase()));
+    const connectedUids = new Set(
+      (getConnectedUserIds(currentUser.uid) || [])
+        .filter(Boolean)
+        .map((id) => String(id).toLowerCase())
+    );
     const allRequests = getAllConnectionRequests();
 
     const seenUids = new Set<string>();
     const seenEmails = new Set<string>();
     const deduplicatedMembers = allMembers.filter((m) => {
-      const uidKey = (m.uid || m.id || '').toLowerCase();
-      const emailKey = (m.email || '').trim().toLowerCase();
+      if (!m) return false;
+      const uidKey = (m.uid || m.id || '').toString().toLowerCase();
+      const emailKey = (m.email || '').toString().trim().toLowerCase();
       if (!uidKey) return false;
       if (isSelfProfile(currentUser, m) || isTestOrDummyAccount(m)) return false; // Self & Dummy exclusion
       if (seenUids.has(uidKey)) return false;

@@ -47,7 +47,7 @@ function saveConnectionsMap(map: Record<string, string[]>) {
 export function getConnectedUserIds(uid: string): string[] {
   if (!uid) return [];
   const map = getConnectionsMap();
-  const list = map[uid] || [];
+  const list = (map[uid] || []).filter((id): id is string => typeof id === 'string' && Boolean(id.trim()));
 
   // Also inspect stored user profile if available
   if (typeof window !== 'undefined') {
@@ -55,9 +55,10 @@ export function getConnectedUserIds(uid: string): string[] {
       const usersRaw = localStorage.getItem(USERS_STORAGE_KEY);
       if (usersRaw) {
         const users: UserProfile[] = JSON.parse(usersRaw);
-        const user = users.find((u) => u.uid === uid);
+        const user = users.find((u) => u && u.uid === uid);
         if (user && Array.isArray(user.contacts) && user.contacts.length > 0) {
-          const combined = Array.from(new Set([...list, ...user.contacts]));
+          const validContacts = user.contacts.filter((c: any): c is string => typeof c === 'string' && Boolean(c.trim()));
+          const combined = Array.from(new Set([...list, ...validContacts]));
           return combined;
         }
       }
@@ -81,7 +82,9 @@ export function getAllConnectionRequests(): ConnectionRequest[] {
   try {
     const raw = localStorage.getItem(CONNECTION_REQUESTS_KEY);
     if (!raw) return [];
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((r) => r && r.id && typeof r.fromUid === 'string' && Boolean(r.fromUid.trim()) && typeof r.toUid === 'string' && Boolean(r.toUid.trim()));
   } catch {
     return [];
   }
@@ -157,65 +160,68 @@ export async function syncConnectionsFromServer(uid: string): Promise<void> {
 
     if (incomingRes?.success && Array.isArray(incomingRes.data)) {
       incomingRes.data.forEach((item: any) => {
-        if (!seenReqIds.has(item.id)) {
-          seenReqIds.add(item.id);
-          const p = item.profiles || {};
-          allRequests.push({
-            id: item.id,
-            fromUid: p.id || item.requester_id,
-            toUid: uid,
-            senderName: p.display_name || p.full_name || 'Freight Colleague',
-            senderRole: p.designation || p.headline,
-            senderCompany: p.company_name || p.company,
-            senderAvatarUrl: p.avatar_url,
-            recipientName: '',
-            note: item.message,
-            status: item.status || 'pending',
-            createdAt: item.created_at || new Date().toISOString(),
-          });
-        }
+        if (!item || !item.id || seenReqIds.has(item.id)) return;
+        const p = item.profiles || {};
+        const fromUid = p.id || item.requester_id;
+        if (!fromUid || !uid) return;
+        seenReqIds.add(item.id);
+        allRequests.push({
+          id: item.id,
+          fromUid: String(fromUid),
+          toUid: String(uid),
+          senderName: p.display_name || p.full_name || 'Freight Colleague',
+          senderRole: p.designation || p.headline,
+          senderCompany: p.company_name || p.company,
+          senderAvatarUrl: p.avatar_url,
+          recipientName: '',
+          note: item.message,
+          status: item.status || 'pending',
+          createdAt: item.created_at || new Date().toISOString(),
+        });
       });
     }
 
     if (outgoingRes?.success && Array.isArray(outgoingRes.data)) {
       outgoingRes.data.forEach((item: any) => {
-        if (!seenReqIds.has(item.id)) {
-          seenReqIds.add(item.id);
-          const p = item.profiles || {};
-          allRequests.push({
-            id: item.id,
-            fromUid: uid,
-            toUid: p.id || item.recipient_id,
-            senderName: '',
-            recipientName: p.display_name || p.full_name || 'Freight Colleague',
-            recipientCompany: p.company_name || p.company,
-            recipientAvatarUrl: p.avatar_url,
-            note: item.message,
-            status: item.status || 'pending',
-            createdAt: item.created_at || new Date().toISOString(),
-          });
-        }
+        if (!item || !item.id || seenReqIds.has(item.id)) return;
+        const p = item.profiles || {};
+        const toUid = p.id || item.recipient_id;
+        if (!toUid || !uid) return;
+        seenReqIds.add(item.id);
+        allRequests.push({
+          id: item.id,
+          fromUid: String(uid),
+          toUid: String(toUid),
+          senderName: '',
+          recipientName: p.display_name || p.full_name || 'Freight Colleague',
+          recipientCompany: p.company_name || p.company,
+          recipientAvatarUrl: p.avatar_url,
+          note: item.message,
+          status: item.status || 'pending',
+          createdAt: item.created_at || new Date().toISOString(),
+        });
       });
     }
 
     if (withdrawnRes?.success && Array.isArray(withdrawnRes.data)) {
       withdrawnRes.data.forEach((item: any) => {
-        if (!seenReqIds.has(item.id)) {
-          seenReqIds.add(item.id);
-          const p = item.profiles || {};
-          allRequests.push({
-            id: item.id,
-            fromUid: uid,
-            toUid: p.id || item.recipient_id,
-            senderName: '',
-            recipientName: p.display_name || p.full_name || 'Freight Colleague',
-            recipientCompany: p.company_name || p.company,
-            recipientAvatarUrl: p.avatar_url,
-            note: item.message,
-            status: 'cancelled',
-            createdAt: item.created_at || new Date().toISOString(),
-          });
-        }
+        if (!item || !item.id || seenReqIds.has(item.id)) return;
+        const p = item.profiles || {};
+        const toUid = p.id || item.recipient_id;
+        if (!toUid || !uid) return;
+        seenReqIds.add(item.id);
+        allRequests.push({
+          id: item.id,
+          fromUid: String(uid),
+          toUid: String(toUid),
+          senderName: '',
+          recipientName: p.display_name || p.full_name || 'Freight Colleague',
+          recipientCompany: p.company_name || p.company,
+          recipientAvatarUrl: p.avatar_url,
+          note: item.message,
+          status: 'cancelled',
+          createdAt: item.created_at || new Date().toISOString(),
+        });
       });
     }
 
