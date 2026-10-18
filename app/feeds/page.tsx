@@ -1552,18 +1552,18 @@ export default function FeedsPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setManageContactsTab('requests');
+                  setManageContactsTab('received');
                   setShowManageContactsModal(true);
                 }}
                 style={{
                   width: '100%',
                   marginBottom: '8px',
                   padding: '6px 8px',
-                  background: '#fffbeb',
-                  border: '1px solid #fde68a',
+                  background: '#eff6ff',
+                  border: '1.5px solid #bfdbfe',
                   borderRadius: '5px',
-                  color: '#92400e',
-                  fontSize: '10.5px',
+                  color: '#1e40af',
+                  fontSize: '11px',
                   fontWeight: 700,
                   cursor: 'pointer',
                   display: 'flex',
@@ -1572,9 +1572,11 @@ export default function FeedsPage() {
                 }}
               >
                 <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Bell size={12} color="#d97706" /> {connRequests.incoming.length} Request{connRequests.incoming.length > 1 ? 's' : ''} Received
+                  <UserPlus size={12} color="#0284c7" /> CONNECTION REQUEST RECEIVED
                 </span>
-                <span style={{ fontSize: '9.5px', textDecoration: 'underline', color: '#b45309' }}>Review</span>
+                <span className="badge blue" style={{ fontSize: '9px', fontWeight: 800 }}>
+                  {connRequests.incoming.length} New
+                </span>
               </button>
             )}
 
@@ -3161,44 +3163,23 @@ export default function FeedsPage() {
             <div style={{ display: 'flex', borderBottom: '1px solid var(--fr8x-outline, #e2e8f0)', gap: '4px', overflowX: 'auto' }}>
               <button
                 type="button"
-                onClick={() => setManageContactsTab('contacts')}
+                onClick={() => setManageContactsTab('received')}
                 style={{
-                  padding: '8px 14px',
-                  fontSize: '12px',
-                  fontWeight: manageContactsTab === 'contacts' ? 700 : 500,
-                  color: manageContactsTab === 'contacts' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  padding: '8px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: manageContactsTab === 'received' ? 700 : 500,
+                  color: manageContactsTab === 'received' ? '#0369a1' : 'var(--fr8x-muted)',
                   border: 'none',
-                  borderBottom: manageContactsTab === 'contacts' ? '2px solid var(--brand)' : '2px solid transparent',
+                  borderBottom: manageContactsTab === 'received' ? '2px solid #0284c7' : '2px solid transparent',
                   background: 'none',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   whiteSpace: 'nowrap',
                 }}
               >
-                <UserCheck size={13} /> My Contacts ({workspaceContacts.length})
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setManageContactsTab('requests')}
-                style={{
-                  padding: '8px 14px',
-                  fontSize: '12px',
-                  fontWeight: manageContactsTab === 'requests' ? 700 : 500,
-                  color: manageContactsTab === 'requests' ? 'var(--brand)' : 'var(--fr8x-muted)',
-                  border: 'none',
-                  borderBottom: manageContactsTab === 'requests' ? '2px solid var(--brand)' : '2px solid transparent',
-                  background: 'none',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                <UserPlus size={13} /> Connection Request Received
+                <UserCheck size={13} /> CONNECTION REQUEST RECEIVED
                 {connRequests.incoming.length > 0 && (
                   <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', borderRadius: '10px', padding: '1px 5px', fontWeight: 800 }}>
                     {connRequests.incoming.length}
@@ -3208,10 +3189,57 @@ export default function FeedsPage() {
 
               <button
                 type="button"
+                onClick={() => setManageContactsTab('sent')}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: manageContactsTab === 'sent' ? 700 : 500,
+                  color: manageContactsTab === 'sent' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  border: 'none',
+                  borderBottom: manageContactsTab === 'sent' ? '2px solid var(--brand)' : '2px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Clock size={13} /> Sent Requests
+                {connRequests.outgoing.length > 0 && (
+                  <span style={{ fontSize: '9px', background: '#f1f5f9', color: '#475569', borderRadius: '10px', padding: '1px 5px', fontWeight: 700 }}>
+                    {connRequests.outgoing.length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setManageContactsTab('contacts')}
+                style={{
+                  padding: '8px 12px',
+                  fontSize: '11.5px',
+                  fontWeight: manageContactsTab === 'contacts' ? 700 : 500,
+                  color: manageContactsTab === 'contacts' ? 'var(--brand)' : 'var(--fr8x-muted)',
+                  border: 'none',
+                  borderBottom: manageContactsTab === 'contacts' ? '2px solid var(--brand)' : '2px solid transparent',
+                  background: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <Users size={13} /> Connected Contacts ({workspaceContacts.length})
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setManageContactsTab('discover')}
                 style={{
-                  padding: '8px 14px',
-                  fontSize: '12px',
+                  padding: '8px 12px',
+                  fontSize: '11.5px',
                   fontWeight: manageContactsTab === 'discover' ? 700 : 500,
                   color: manageContactsTab === 'discover' ? 'var(--brand)' : 'var(--fr8x-muted)',
                   border: 'none',
@@ -3220,173 +3248,56 @@ export default function FeedsPage() {
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                   whiteSpace: 'nowrap',
                 }}
               >
-                <Search size={13} /> Discover Members
+                <Globe2 size={13} /> Global Directory
               </button>
             </div>
 
-            {/* TAB 1: MY CONTACTS */}
-            {manageContactsTab === 'contacts' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <p style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', margin: 0 }}>
-                  These verified partners have connected with you. Full contact credentials and instant trade chat are unlocked.
-                </p>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
-                  {workspaceContacts.length === 0 ? (
-                    <div style={{ padding: '32px 16px', textAlign: 'center', background: '#f8fafc', borderRadius: '8px', border: '1px dashed #cbd5e1' }}>
-                      <Users size={28} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
-                      <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No contacts connected yet</b>
-                      <p style={{ fontSize: '11.5px', color: 'var(--fr8x-muted)', margin: '0 0 12px' }}>
-                        Connect with freight forwarders, carriers, and shippers across the network to build your trusted contact book.
-                      </p>
-                      <button
-                        type="button"
-                        className="btn primary sm"
-                        onClick={() => setManageContactsTab('discover')}
-                      >
-                        <Search size={12} /> Find &amp; Discover Members
-                      </button>
-                    </div>
-                  ) : (
-                    workspaceContacts.map((contact) => (
-                      <div
-                        key={contact.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '8px 10px',
-                          borderRadius: '6px',
-                          border: '1px solid var(--fr8x-outline, #e2e8f0)',
-                          background: '#ffffff',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ position: 'relative' }}>
-                            <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
-                              {(contact as any).avatarUrl ? (
-                                <img src={(contact as any).avatarUrl} alt={contact.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
-                                  {contact.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'C'}
-                                </div>
-                              )}
-                            </div>
-                            {contact.isOnline && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  bottom: 0,
-                                  right: 0,
-                                  width: '8px',
-                                  height: '8px',
-                                  borderRadius: '50%',
-                                  background: '#16a34a',
-                                  border: '1.5px solid #ffffff',
-                                }}
-                                title="Online"
-                              />
-                            )}
-                          </div>
-
-                          <div>
-                            <b
-                              onClick={() => {
-                                setShowManageContactsModal(false);
-                                setSelectedProfileName(contact.name);
-                                setSelectedProfileUid(contact.uid);
-                              }}
-                              style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            >
-                              {contact.name}
-                              {contact.hasGoldenTick && <GoldenTick size={12} />}
-                            </b>
-                            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
-                              {contact.role} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{contact.company}</span>
-                            </small>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <button
-                            type="button"
-                            className="btn secondary sm"
-                            onClick={() => {
-                              setShowManageContactsModal(false);
-                              setSelectedProfileName(contact.name);
-                              setSelectedProfileUid(contact.uid);
-                            }}
-                            style={{ fontSize: '10.5px' }}
-                          >
-                            Passport
-                          </button>
-                          <button
-                            type="button"
-                            className="btn primary sm"
-                            onClick={() => {
-                              setShowManageContactsModal(false);
-                              openChatWith(contact.uid, { type: 'company', id: contact.id, title: `Chat with ${contact.name}` });
-                            }}
-                            style={{ fontSize: '10.5px' }}
-                          >
-                            <MessageCircle size={11} /> Chat
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Remove ${contact.name} from your contacts?`)) {
-                                removeConnection(user.uid, contact.uid);
-                                toast(`Removed ${contact.name} from contacts.`);
-                              }
-                            }}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              color: '#dc2626',
-                              cursor: 'pointer',
-                              padding: '4px',
-                              display: 'flex',
-                              alignItems: 'center',
-                            }}
-                            title="Disconnect contact"
-                          >
-                            <UserMinus size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    ))
+            {/* TAB 1: CONNECTION REQUEST RECEIVED */}
+            {manageContactsTab === 'received' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <UserCheck size={13} /> CONNECTION REQUEST RECEIVED ({connRequests.incoming.length})
+                  </div>
+                  {isSyncingContacts && (
+                    <span style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <Loader2 size={11} className="spin" /> Updating...
+                    </span>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* TAB 2: CONNECTION REQUESTS */}
-            {manageContactsTab === 'requests' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '380px', overflowY: 'auto' }}>
-                {/* Incoming Requests */}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <UserCheck size={13} /> CONNECTION REQUEST RECEIVED ({connRequests.incoming.length})
-                    </div>
-                    {connRequests.incoming.length > 0 && (
-                      <span className="badge blue" style={{ fontSize: '9.5px', background: '#e0f2fe', color: '#0369a1', fontWeight: 700 }}>
-                        Action Required
-                      </span>
-                    )}
+                {syncContactsError && (
+                  <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', color: '#b91c1c' }}>{syncContactsError}</span>
+                    <button type="button" className="btn secondary sm" onClick={refreshContactsState} style={{ fontSize: '10px', padding: '2px 8px' }}>
+                      Retry Query
+                    </button>
                   </div>
+                )}
 
-                  {connRequests.incoming.length === 0 ? (
-                    <div style={{ padding: '16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-                      No incoming connection requests received.
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {connRequests.incoming.map((req) => (
+                {isSyncingContacts && connRequests.incoming.length === 0 ? (
+                  <div style={{ padding: '36px', textAlign: 'center', fontSize: '12px', color: 'var(--fr8x-muted)' }}>
+                    <Loader2 size={20} className="spin" style={{ display: 'block', margin: '0 auto 8px', color: 'var(--brand)' }} />
+                    Loading incoming connection requests...
+                  </div>
+                ) : connRequests.incoming.length === 0 ? (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                    <UserPlus size={26} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No incoming connection requests received.</b>
+                    <span>When other freight companies and logistics partners invite you to connect, they will appear here.</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {connRequests.incoming.map((req) => {
+                      const isAccepting = actioningReqId === req.id && actioningType === 'accept';
+                      const isRejecting = actioningReqId === req.id && actioningType === 'reject';
+                      const isActionDisabled = actioningReqId !== null;
+
+                      return (
                         <div
                           key={req.id}
                           style={{
@@ -3402,7 +3313,7 @@ export default function FeedsPage() {
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
+                              <div className="avatar" style={{ width: '36px', height: '36px', padding: 0, overflow: 'hidden' }}>
                                 {req.senderAvatarUrl ? (
                                   <img src={req.senderAvatarUrl} alt={req.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
@@ -3423,17 +3334,17 @@ export default function FeedsPage() {
                                   {req.senderName}
                                 </b>
                                 <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
-                                  {req.senderRole || 'Freight Member'} · {req.senderCompany || 'Enterprise Partner'}
+                                  {req.senderRole || 'Freight Member'} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{req.senderCompany || 'Enterprise Partner'}</span>
                                 </small>
                               </div>
                             </div>
                             <span style={{ fontSize: '10px', color: 'var(--fr8x-muted)' }}>
-                              {new Date(req.createdAt).toLocaleDateString()}
+                              Sent {new Date(req.createdAt).toLocaleDateString()}
                             </span>
                           </div>
 
                           {req.note && (
-                            <div style={{ padding: '6px 8px', background: '#f8fafc', borderLeft: '3px solid var(--brand)', fontSize: '11px', color: '#334155', fontStyle: 'italic', borderRadius: '0 4px 4px 0' }}>
+                            <div style={{ padding: '6px 8px', background: '#f8fafc', borderLeft: '3px solid #0284c7', fontSize: '11px', color: '#334155', fontStyle: 'italic', borderRadius: '0 4px 4px 0' }}>
                               &ldquo;{req.note}&rdquo;
                             </div>
                           )}
@@ -3442,60 +3353,92 @@ export default function FeedsPage() {
                             <button
                               type="button"
                               className="btn secondary sm"
+                              disabled={isActionDisabled}
                               onClick={async () => {
+                                setActioningReqId(req.id);
+                                setActioningType('reject');
                                 try {
                                   await declineConnectionRequest(req.id, user);
-                                  toast('Connection request declined.');
-                                  if (user?.uid) {
-                                    await syncConnectionsFromServer(user.uid);
-                                    setConnRevision((v) => v + 1);
-                                  }
+                                  toast('Connection request rejected.');
+                                  await refreshContactsState();
                                 } catch (err: any) {
-                                  toast(err?.message || 'Failed to decline request');
+                                  toast(err?.message || 'Failed to reject request');
+                                } finally {
+                                  setActioningReqId(null);
+                                  setActioningType(null);
                                 }
                               }}
-                              style={{ fontSize: '10.5px', padding: '3px 10px', color: '#dc2626' }}
+                              style={{ fontSize: '11px', padding: '4px 10px', color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
-                              <X size={11} /> Decline
+                              {isRejecting ? (
+                                <>
+                                  <Loader2 size={11} className="spin" /> REJECTING...
+                                </>
+                              ) : (
+                                <>
+                                  <X size={11} /> Reject
+                                </>
+                              )}
                             </button>
                             <button
                               type="button"
                               className="btn primary sm"
+                              disabled={isActionDisabled}
                               onClick={async () => {
+                                setActioningReqId(req.id);
+                                setActioningType('accept');
                                 try {
                                   await acceptConnectionRequest(req.id, user);
                                   toast(`Connected with ${req.senderName}!`);
-                                  if (user?.uid) {
-                                    await syncConnectionsFromServer(user.uid);
-                                    setConnRevision((v) => v + 1);
-                                  }
+                                  await refreshContactsState();
                                 } catch (err: any) {
                                   toast(err?.message || 'Failed to accept connection');
+                                } finally {
+                                  setActioningReqId(null);
+                                  setActioningType(null);
                                 }
                               }}
-                              style={{ fontSize: '10.5px', padding: '3px 12px', background: '#099889' }}
+                              style={{ fontSize: '11px', padding: '4px 12px', background: '#099889', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             >
-                              <Check size={11} /> Accept Connection
+                              {isAccepting ? (
+                                <>
+                                  <Loader2 size={11} className="spin" /> ACCEPTING...
+                                </>
+                              ) : (
+                                <>
+                                  <Check size={11} /> Accept
+                                </>
+                              )}
                             </button>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 2: SENT REQUESTS */}
+            {manageContactsTab === 'sent' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Clock size={12} /> Sent Invitations Pending ({connRequests.outgoing.length})
                 </div>
 
-                {/* Outgoing Requests */}
-                <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
-                    Sent Invitations Pending ({connRequests.outgoing.length})
+                {connRequests.outgoing.length === 0 ? (
+                  <div style={{ padding: '32px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                    <Clock size={26} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No outgoing pending requests.</b>
+                    <span>When you invite colleagues or partners, your pending requests will be listed here.</span>
                   </div>
-                  {connRequests.outgoing.length === 0 ? (
-                    <div style={{ padding: '14px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px' }}>
-                      No outgoing pending invitations.
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {connRequests.outgoing.map((req) => (
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {connRequests.outgoing.map((req) => {
+                      const isWithdrawing = actioningReqId === req.id && actioningType === 'withdraw';
+                      const isActionDisabled = actioningReqId !== null;
+
+                      return (
                         <div
                           key={req.id}
                           style={{
@@ -3513,33 +3456,42 @@ export default function FeedsPage() {
                               {req.recipientName || 'Trade Partner'}
                             </b>
                             <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--fr8x-muted)' }}>
-                              {req.recipientCompany || 'Enterprise Member'} · <Clock size={10} style={{ verticalAlign: '-1px' }} /> Waiting for response
+                              {req.recipientCompany || 'Enterprise Member'} · <Clock size={10} style={{ verticalAlign: '-1px' }} /> REQUEST SENT · Waiting for response
                             </small>
                           </div>
                           <button
                             type="button"
                             className="btn secondary sm"
+                            disabled={isActionDisabled}
                             onClick={async () => {
+                              setActioningReqId(req.id);
+                              setActioningType('withdraw');
                               try {
                                 await cancelConnectionRequest(req.id, user, req.toUid);
                                 toast('Invitation withdrawn.');
-                                if (user?.uid) {
-                                  await syncConnectionsFromServer(user.uid);
-                                  setConnRevision((v) => v + 1);
-                                }
+                                await refreshContactsState();
                               } catch (err: any) {
                                 toast(err?.message || 'Failed to withdraw invitation.');
+                              } finally {
+                                setActioningReqId(null);
+                                setActioningType(null);
                               }
                             }}
-                            style={{ fontSize: '10.5px', color: '#dc2626' }}
+                            style={{ fontSize: '10.5px', color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                           >
-                            Withdraw
+                            {isWithdrawing ? (
+                              <>
+                                <Loader2 size={10} className="spin" /> WITHDRAWING...
+                              </>
+                            ) : (
+                              'Withdraw'
+                            )}
                           </button>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
 
