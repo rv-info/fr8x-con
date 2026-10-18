@@ -481,20 +481,16 @@ export async function cancelConnectionRequest(
   const req = all.find(
     (r) =>
       (requestId && r.id === requestId) ||
-      (targetUid && r.toUid === targetUid && r.status === 'pending')
+      (targetUid && r.toUid === targetUid)
   );
-  const prevStatus = req?.status;
   const effectiveReqId = req?.id || requestId;
   const effectiveTargetId = targetUid || req?.toUid;
 
-  if (req) {
-    req.status = 'cancelled';
-    req.updatedAt = new Date().toISOString();
-    saveConnectionRequests(all);
-  } else if (requestId) {
-    const filtered = all.filter((r) => r.id !== requestId);
-    saveConnectionRequests(filtered);
-  }
+  // Immediately remove or mark cancelled locally
+  const remaining = all.filter(
+    (r) => !((requestId && r.id === requestId) || (targetUid && r.toUid === targetUid))
+  );
+  saveConnectionRequests(remaining);
   dispatchConnectionsChanged();
 
   if (typeof window !== 'undefined' && (effectiveReqId || effectiveTargetId)) {
@@ -512,10 +508,19 @@ export async function cancelConnectionRequest(
       });
 
       const data = await res.json().catch(() => null);
+
       if (!res.ok || (data && data.success === false)) {
-        if (req && prevStatus) {
-          req.status = prevStatus;
-          saveConnectionRequests(all);
+        const errMessage = (data?.error || '').toLowerCase();
+        // If not found or already inactive on server, it is ALREADY cancelled.
+        // Treat as idempotent success and DO NOT roll back to pending!
+        if (res.status === 404 || errMessage.includes('not found') || errMessage.includes('inactive')) {
+          dispatchConnectionsChanged();
+          return true;
+        }
+
+        // Only restore for genuine authorization or server faults
+        if (req) {
+          saveConnectionRequests([...remaining, req]);
         }
         dispatchConnectionsChanged();
         throw new Error(data?.error || 'Failed to withdraw connection request');
@@ -523,7 +528,12 @@ export async function cancelConnectionRequest(
 
       dispatchConnectionsChanged();
       return true;
-    } catch (err) {
+    } catch (err: any) {
+      const errMessage = (err?.message || '').toLowerCase();
+      if (errMessage.includes('not found') || errMessage.includes('inactive')) {
+        dispatchConnectionsChanged();
+        return true;
+      }
       throw err;
     }
   }

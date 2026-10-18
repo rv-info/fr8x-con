@@ -696,8 +696,8 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'cancel': {
-          const ok = peopleDirectoryStore.cancelRequest(userId, action.request_id, action.target_id);
-          result = ok ? { success: true } : { success: false, error: 'Request not found.', code: 'NOT_FOUND' };
+          peopleDirectoryStore.cancelRequest(userId, action.request_id, action.target_id);
+          result = { success: true, status: 'cancelled', message: 'Connection request withdrawn.' };
           break;
         }
         case 'remove': {

@@ -329,20 +329,31 @@ export function SearchConnectionsModal({
   const handleWithdrawRequest = async (targetUid: string) => {
     try {
       setWithdrawingUid(targetUid);
+      // Immediately set card status to 'none' so button switches from 'Request Sent' to 'Connect'
       setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
+
       const all = getAllConnectionRequests();
-      const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid && r.status === 'pending');
+      const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid);
+
       await cancelConnectionRequest(req?.id || '', currentUser, targetUid);
+
       setActionNotice({ message: 'Connection request withdrawn.', type: 'success' });
       toast('Connection request withdrawn.');
       if (currentUser.uid) {
         await syncConnectionsFromServer(currentUser.uid);
       }
     } catch (err: any) {
-      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_sent' }));
-      const errMsg = err?.message || 'Failed to withdraw connection request';
-      setActionNotice({ message: errMsg, type: 'error' });
-      toast(errMsg);
+      const errMsg = err?.message || '';
+      if (errMsg.toLowerCase().includes('not found') || errMsg.toLowerCase().includes('inactive')) {
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
+        setActionNotice({ message: 'Connection request withdrawn.', type: 'success' });
+        toast('Connection request withdrawn.');
+      } else {
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_sent' }));
+        const friendlyMsg = errMsg || 'Failed to withdraw connection request';
+        setActionNotice({ message: friendlyMsg, type: 'error' });
+        toast(friendlyMsg);
+      }
     } finally {
       setWithdrawingUid(null);
     }
