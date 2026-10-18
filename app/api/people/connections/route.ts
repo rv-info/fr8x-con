@@ -36,6 +36,10 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
     request_id: z.string().min(1, 'request_id is required'),
   }),
   z.object({
+    action:     z.literal('reject'),
+    request_id: z.string().min(1, 'request_id is required'),
+  }),
+  z.object({
     action:     z.literal('cancel'),
     request_id: z.string().optional(),
     target_id:  z.string().optional(),
@@ -527,16 +531,33 @@ export async function POST(req: NextRequest) {
             }
             break;
           }
+          case 'reject':
           case 'decline': {
             if (UUID_REGEX.test(action.request_id)) {
-              const { data, error } = await adminClient.rpc('decline_connection_request', {
-                p_recipient_id: userId,
-                p_request_id:   action.request_id,
-              });
-              if (!error && data) {
-                result = data;
-                handled = true;
-                peopleDirectoryStore.declineRequest(userId, action.request_id);
+              try {
+                const { data, error } = await adminClient.rpc('decline_connection_request', {
+                  p_recipient_id: userId,
+                  p_request_id:   action.request_id,
+                });
+                if (!error && data) {
+                  result = data;
+                  handled = true;
+                  peopleDirectoryStore.declineRequest(userId, action.request_id);
+                }
+              } catch {}
+
+              if (!handled) {
+                // Direct PostgreSQL update fallback
+                const { error: updErr } = await adminClient
+                  .from('connection_requests')
+                  .update({ status: 'rejected', updated_at: new Date().toISOString() })
+                  .eq('id', action.request_id)
+                  .eq('recipient_id', userId);
+                if (!updErr) {
+                  result = { success: true };
+                  handled = true;
+                  peopleDirectoryStore.declineRequest(userId, action.request_id);
+                }
               }
             }
             break;
@@ -668,6 +689,7 @@ export async function POST(req: NextRequest) {
           result = ok ? { success: true } : { success: false, error: 'Request not found.', code: 'NOT_FOUND' };
           break;
         }
+        case 'reject':
         case 'decline': {
           const ok = peopleDirectoryStore.declineRequest(userId, action.request_id);
           result = ok ? { success: true } : { success: false, error: 'Request not found.', code: 'NOT_FOUND' };

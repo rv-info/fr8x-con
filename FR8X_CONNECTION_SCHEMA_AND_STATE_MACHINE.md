@@ -1,126 +1,201 @@
-# FR8X CONNECTION ARCHITECTURE & STATE MACHINE SPECIFICATION
-**Standard:** FR8X Enterprise Data Model & Realtime Event Synchronization  
-**Version:** 3.0.0 (Production Release)  
+# FR8X CONNECTION SCHEMA AND STATE MACHINE SPECIFICATION
+
+**Project:** FR8X B2B Freight Logistics & Networking Platform  
+**Repository:** `D:\fr8x-con`  
+**Database:** PostgreSQL 15+ (Supabase)  
+**Specification Version:** 2.1 (Hardened)  
 **Date:** October 18, 2026  
-**Status:** Approved & Enforced  
 
 ---
 
-## 1. Logical Data Architecture & Schema Definition
+## 1. Canonical Schema Architecture
 
-The FR8X connection system maintains a single canonical relationship model across PostgreSQL, Supabase Realtime, and Next.js frontend state.
+The FR8X Connection Architecture separates **in-flight invitation lifecycle states** (`public.connection_requests`) from **active mutual relationships** (`public.accepted_connections` / `public.connections`).
+
+### A. Table: `public.connection_requests`
+
+| Column | Type | Constraints / Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Authoritative request identifier. |
+| `requester_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Authenticated initiating user. |
+| `recipient_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Targeted recipient user. |
+| `status` | `TEXT` | `NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'declined', 'cancelled', 'withdrawn', 'expired'))` | Current lifecycle state. |
+| `message` | `TEXT` | `NULL CHECK (char_length(message) <= 500)` | Optional introductory business note. |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Initial submission timestamp. |
+| `updated_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Latest state transition timestamp. |
+| `responded_at` | `TIMESTAMPTZ` | `NULL` | Timestamp when recipient accepted or rejected. |
+| `withdrawn_at` | `TIMESTAMPTZ` | `NULL` | Timestamp when sender withdrew request. |
+
+#### Database Indexes & Constraints:
+1. **Self-Request Prevention Check:**
+   ```sql
+   CONSTRAINT check_no_self_requests CHECK (requester_id <> recipient_id)
+   ```
+2. **Directed Uniqueness Constraint for Active Requests:**
+   ```sql
+   CREATE UNIQUE INDEX IF NOT EXISTS uq_active_pending_request
+     ON public.connection_requests(requester_id, recipient_id)
+     WHERE status = 'pending';
+   ```
+   *Guarantees that at most ONE pending request can exist from User A to User B at any given moment.*
+
+3. **Performance B-Tree Indexes:**
+   ```sql
+   CREATE INDEX IF NOT EXISTS idx_conn_req_requester ON public.connection_requests(requester_id, status);
+   CREATE INDEX IF NOT EXISTS idx_conn_req_recipient ON public.connection_requests(recipient_id, status);
+   CREATE INDEX IF NOT EXISTS idx_conn_req_updated ON public.connection_requests(updated_at DESC);
+   ```
+
+---
+
+### B. Table: `public.accepted_connections`
+
+Once accepted, a mutual business connection is persisted as a canonical relationship between two accounts.
+
+| Column | Type | Constraints / Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `UUID` | `PRIMARY KEY DEFAULT gen_random_uuid()` | Relationship record ID. |
+| `user_a` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | First connected member (ordered `user_a < user_b`). |
+| `user_b` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Second connected member. |
+| `request_id` | `UUID` | `NULL REFERENCES public.connection_requests(id) ON DELETE SET NULL` | Originating request reference. |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Connection establishment timestamp. |
+
+#### Canonical Ordering Invariant:
+```sql
+CONSTRAINT check_canonical_order CHECK (user_a < user_b)
+```
+*Prevents duplicate directional pairs (e.g., prevents having both `(A, B)` and `(B, A)` in separate rows).*
+
+---
+
+### C. Table: `public.notifications` (Network Category)
+
+| Column | Type | Constraints / Default | Description |
+| :--- | :--- | :--- | :--- |
+| `id` | `TEXT` | `PRIMARY KEY` | Notification identifier. |
+| `user_id` | `UUID` | `NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE` | Intended recipient of the alert. |
+| `type` | `TEXT` | `NOT NULL DEFAULT 'connection_request'` | Event type indicator. |
+| `category` | `TEXT` | `NOT NULL DEFAULT 'network'` | Filtering classification (`network`, `system`, etc.). |
+| `title` | `TEXT` | `NOT NULL` | Human-readable title (`"Aarav sent you a connection request"`). |
+| `description`| `TEXT` | `NOT NULL` | Message excerpt or status explanation. |
+| `target_url` | `TEXT` | `NOT NULL DEFAULT '/connections?tab=incoming'` | In-app navigation destination. |
+| `related_id` | `TEXT` | `NULL` | ID of the connection request row. |
+| `read` | `BOOLEAN` | `NOT NULL DEFAULT FALSE` | Read status controlling notification badge count. |
+| `metadata` | `JSONB` | `NOT NULL DEFAULT '{}'::jsonb` | Hydration details: `{ requester_id, requester_name, requester_company, ... }` |
+| `created_at` | `TIMESTAMPTZ` | `NOT NULL DEFAULT NOW()` | Alert creation timestamp. |
+
+---
+
+## 2. Formal State Machine
 
 ```
-                      ┌──────────────────────┐
-                      │   public.profiles    │
-                      └──────────┬───────────┘
-                                 │ 1:N
-           ┌─────────────────────┴─────────────────────┐
-           │                                           │
-           ▼                                           ▼
-┌───────────────────────────────┐       ┌───────────────────────────────┐
-│  public.connection_requests   │       │  public.accepted_connections  │
-├───────────────────────────────┤       ├───────────────────────────────┤
-│ id: UUID (PK)                 │       │ id: UUID (PK)                 │
-│ requester_id: UUID (FK prof)  │       │ user_id: UUID (FK profiles)   │
-│ recipient_id: UUID (FK prof)  │       │ connected_to: UUID (FK prof)  │
-│ message: TEXT                 │       │ connected_at: TIMESTAMPTZ     │
-│ status: request_status        │       │ source_request_id: UUID (FK)  │
-│ created_at: TIMESTAMPTZ       │       └───────────────────────────────┘
-│ updated_at: TIMESTAMPTZ       │                      ▲
-└──────────────┬────────────────┘                      │
-               │ Triggers / Writes                     │ Reciprocal (A->B & B->A)
-               ▼                                       │ on acceptance
-┌───────────────────────────────┐                      │
-│     public.notifications      │                      │
-├───────────────────────────────┤                      │
-│ id: TEXT / UUID (PK)          │                      │
-│ user_id: TEXT (Recipient UID) │                      │
-│ type: 'connection_request'    │                      │
-│ category: 'network'           │                      │
-│ title: TEXT                   │                      │
-│ description: TEXT             │                      │
-│ target_url: TEXT              │                      │
-│ related_id: TEXT (Request ID) ├──────────────────────┘
-│ read: BOOLEAN (DEFAULT FALSE) │
-│ metadata: JSONB               │
-│ created_at: TIMESTAMPTZ       │
-└───────────────────────────────┘
+                   ┌──────────────────────────────────────┐
+                   │               [INIT]                 │
+                   └──────────────────┬───────────────────┘
+                                      │
+                                      ▼  User A calls 'send'
+                       ┌──────────────────────────────┐
+                       │           PENDING            │
+                       └──────┬──────────┬─────────┬──┘
+                              │          │         │
+          User A calls        │          │         │  User B calls
+          'cancel' (Withdraw) │          │         │  'reject' / 'decline'
+                              │          │         │
+                              ▼          │         ▼
+                     ┌─────────────┐     │   ┌──────────────┐
+                     │  WITHDRAWN  │     │   │   REJECTED   │
+                     │ (cancelled) │     │   │  (declined)  │
+                     └──────┬──────┘     │   └──────┬───────┘
+                            │            │          │
+                            │            │ User B   │
+                            │            │ calls    │
+                            │            │ 'accept' │
+                            │            ▼          │
+                            │     ┌──────────────┐  │
+                            │     │   ACCEPTED   │  │
+                            │     │ (connected)  │  │
+                            │     └──────────────┘  │
+                            │                       │
+                            └───────────┬───────────┘
+                                        │
+                                        ▼  Allowed after cooldown
+                                 Re-send Allowed
 ```
 
----
+### Valid Transitions:
+1. `NONE -> PENDING`: Initiated by authenticated User A directed to User B.
+2. `PENDING -> ACCEPTED`: Executed **only** by authenticated User B (Recipient). Atomically inserts row into `public.accepted_connections` and marks request `status = 'accepted'`.
+3. `PENDING -> REJECTED / DECLINED`: Executed **only** by authenticated User B (Recipient). Sets `status = 'rejected'`, records `responded_at = NOW()`.
+4. `PENDING -> WITHDRAWN / CANCELLED`: Executed **only** by authenticated User A (Requester). Sets `status = 'cancelled'`, records `withdrawn_at = NOW()`, and reconciles recipient notification.
 
-## 2. Definitive Connection State Machine
+### Invalid / Rejected Transitions:
+- `ACCEPTED -> WITHDRAWN`: Once accepted, a request cannot be withdrawn. (Removing a connection must use the `remove` action on `accepted_connections`).
+- `REJECTED -> ACCEPTED`: A rejected request is terminal.
+- `WITHDRAWN -> ACCEPTED`: A withdrawn request cannot be accepted by the recipient.
+- `PENDING -> PENDING (Duplicate)`: Rejected with `CONFLICT (HTTP 409)` by unique index `uq_active_pending_request`.
 
-### 2.1 State Transition Matrix
-
-| Initial State | Actor | Action | Next State | Persisted Database Effects | Notification Outcome |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **None / Disconnected** | Requester | `send` | `pending` | Row inserted into `connection_requests` (`status = 'pending'`). Audit logged. | Recipient receives new notification (`category: 'network'`, `read: false`). |
-| **Pending** | Requester | `cancel` / `withdraw` | `cancelled` | Row updated to `status = 'cancelled'`, `updated_at = NOW()`. Audit logged. | Recipient notification reconciled (`read = true` / dismissed). |
-| **Pending** | Recipient | `accept` | `accepted` | Row updated to `status = 'accepted'`. Reciprocal rows inserted into `accepted_connections`. | Requester receives notification: `"[Recipient] accepted your connection request"`. |
-| **Pending** | Recipient | `decline` / `reject` | `declined` | Row updated to `status = 'declined'`, `updated_at = NOW()`. Audit logged. | Recipient notification marked read. |
-| **Accepted** | Either User | `remove` | `None` | Reciprocal rows deleted from `accepted_connections`. | None. |
-| **Any State** | Either User | `block` | `blocked` | Pending requests cancelled. Connections severed. Row inserted into `user_blocks`. | Notifications dismissed. |
-
-### 2.2 Invariant Guarantees
-1. **Self-Connections Forbidden:** `requester_id <> recipient_id` enforced by table check constraints and RPC validation.
-2. **Directed Uniqueness:** Partial unique index on `(requester_id, recipient_id) WHERE status = 'pending'` prevents duplicate pending requests.
-3. **Opposing Request Resolution:** If User B attempts to send a request to User A while a pending request from A to B exists, the system automatically resolves the conflict by calling `accept_connection_request(User B, Request A->B)`, connecting both users immediately without error.
-4. **Reciprocal Connection Integrity:** Upon acceptance, two reciprocal rows are committed in a single atomic PostgreSQL transaction (`(user_id=A, connected_to=B)` and `(user_id=B, connected_to=A)`), ensuring identical relationship state whether queried from User A or User B.
+### Re-sending Policy:
+If a previous request has reached a terminal state (`cancelled`, `withdrawn`, or `rejected`), the unique partial index `WHERE status = 'pending'` is not violated. Therefore, User A is permitted to send a fresh request to User B.
 
 ---
 
-## 3. Row-Level Security (RLS) Policies
+## 3. Database Security & Row Level Security (RLS)
 
-### 3.1 `public.connection_requests`
+All tables enforce strict Row Level Security policies:
+
 ```sql
 ALTER TABLE public.connection_requests ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view incoming and outgoing requests"
-  ON public.connection_requests FOR SELECT TO authenticated
-  USING (auth.uid() = requester_id OR auth.uid() = recipient_id);
-
-CREATE POLICY "Users can insert own requests"
-  ON public.connection_requests FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = requester_id);
-
-CREATE POLICY "Users can update relevant requests"
-  ON public.connection_requests FOR UPDATE TO authenticated
-  USING (auth.uid() = requester_id OR auth.uid() = recipient_id)
-  WITH CHECK (auth.uid() = requester_id OR auth.uid() = recipient_id);
-```
-
-### 3.2 `public.notifications`
-```sql
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view and manage own notifications"
-  ON public.notifications FOR ALL TO authenticated
-  USING (auth.uid()::text = user_id)
-  WITH CHECK (auth.uid()::text = user_id);
-```
-
-### 3.3 `public.accepted_connections`
-```sql
 ALTER TABLE public.accepted_connections ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own accepted connections"
-  ON public.accepted_connections FOR SELECT TO authenticated
-  USING (auth.uid() = user_id);
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ```
+
+### Policy Rules for `public.connection_requests`:
+1. **SELECT (Read):**
+   ```sql
+   CREATE POLICY "Users can view their incoming and outgoing requests"
+     ON public.connection_requests FOR SELECT
+     USING (auth.uid() = requester_id OR auth.uid() = recipient_id);
+   ```
+2. **INSERT (Create):**
+   ```sql
+   CREATE POLICY "Users can create outgoing requests"
+     ON public.connection_requests FOR INSERT
+     WITH CHECK (auth.uid() = requester_id AND requester_id <> recipient_id);
+   ```
+3. **UPDATE (Withdraw):**
+   ```sql
+   CREATE POLICY "Requesters can withdraw their own pending requests"
+     ON public.connection_requests FOR UPDATE
+     USING (auth.uid() = requester_id AND status = 'pending')
+     WITH CHECK (auth.uid() = requester_id AND status IN ('cancelled', 'withdrawn'));
+   ```
+4. **UPDATE (Accept/Reject):**
+   ```sql
+   CREATE POLICY "Recipients can respond to requests addressed to them"
+     ON public.connection_requests FOR UPDATE
+     USING (auth.uid() = recipient_id AND status = 'pending')
+     WITH CHECK (auth.uid() = recipient_id AND status IN ('accepted', 'rejected', 'declined'));
+   ```
 
 ---
 
-## 4. Supabase Realtime Publication & Event Protocol
+## 4. Supabase Realtime Synchronization Topology
 
-To ensure instant multi-device and cross-account synchronization without manual refresh:
-1. Tables are registered in the `supabase_realtime` publication:
-   ```sql
-   ALTER PUBLICATION supabase_realtime ADD TABLE public.connection_requests;
-   ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
-   ALTER PUBLICATION supabase_realtime ADD TABLE public.accepted_connections;
-   ```
-2. `REPLICA IDENTITY FULL` is configured for `public.connection_requests` and `public.notifications` to deliver old and new records in WebSocket payloads.
-3. Client subscriptions listen to private channels scoped to `user_networking:${userId}` and `notifications:${userId}`.
-4. If Realtime encounters a disconnect or jitter, an 8-second bounded interval fallback ensures that incoming requests and notification badge counts self-heal automatically.
+Realtime publication includes `public.connection_requests` and `public.notifications`:
+
+```sql
+ALTER PUBLICATION supabase_realtime ADD TABLE public.connection_requests;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
+```
+
+### Event Handling in Frontend:
+- On `INSERT` into `connection_requests` where `recipient_id === activeUser`:
+  - Recipient's `CONNECTION REQUEST RECEIVED` counter and list update.
+  - Notification bell receives live alert.
+- On `UPDATE` where `status IN ('cancelled', 'withdrawn')`:
+  - Recipient's incoming list automatically removes the card.
+  - Recipient's notification bell reconciles unread count.
+  - Sender's `Sent Requests` tab removes the card or transitions to inactive.
+- On `UPDATE` where `status = 'accepted'`:
+  - Both Sender and Recipient transition card status to `CONNECTED`.
+  - Recipient moves member from `CONNECTION REQUEST RECEIVED` to `Connected Contacts`.
