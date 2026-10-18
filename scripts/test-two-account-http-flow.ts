@@ -113,6 +113,32 @@ async function runTwoAccountHttpTests() {
   peopleDirectoryStore.registerMember(memberB);
   peopleDirectoryStore.registerMember(memberC);
 
+  // Clean test fixtures from disk store for idempotent runs
+  try {
+    const fs = await import('fs');
+    const path = await import('path');
+    const storePath = path.join(process.cwd(), 'data', 'connections_store.json');
+    if (fs.existsSync(storePath)) {
+      const disk = JSON.parse(fs.readFileSync(storePath, 'utf8'));
+      if (Array.isArray(disk.connections)) {
+        disk.connections = disk.connections.filter(
+          (c: any) =>
+            !(
+              (c.requester_id === userA_Id && (c.recipient_id === userB_Id || c.receiver_id === userB_Id)) ||
+              (c.requester_id === userB_Id && (c.recipient_id === userA_Id || c.receiver_id === userA_Id))
+            )
+        );
+      }
+      if (Array.isArray(disk.notifications)) {
+        disk.notifications = disk.notifications.filter(
+          (n: any) => n.user_id !== userA_Id && n.user_id !== userB_Id
+        );
+      }
+      fs.writeFileSync(storePath, JSON.stringify(disk, null, 2), 'utf8');
+    }
+  } catch {}
+  peopleDirectoryStore.removeConnection(userA_Id, userB_Id);
+
   // 1. Unauthenticated request protection
   console.log('▶ [TEST 1] Unauthenticated request rejection...');
   const unauthReq = createMockRequest('http://localhost:3000/api/people/connections?tab=incoming', 'GET');
@@ -209,12 +235,66 @@ async function runTwoAccountHttpTests() {
   const falseNotif = userANotifJson.notifications.find((n: any) => n.relatedId === createdRequestId && n.type === 'connection_request');
   assert(!falseNotif, 'Sender User A has NO false/inverted self-notification');
 
-  // 8. User B accepts connection request
-  console.log('\n▶ [TEST 8] User B accepts connection request...');
+  // 8. User A withdraws / cancels the request
+  console.log('\n▶ [TEST 8] User A withdraws connection request...');
+  const cancelReq = createMockRequest(
+    'http://localhost:3000/api/people/connections',
+    'POST',
+    { action: 'cancel', request_id: createdRequestId, target_id: userB_Id },
+    { 'x-fr8x-user-uid': userA_Id }
+  );
+  const cancelRes = await mutateConnections(cancelReq);
+  const cancelJson = await cancelRes.json();
+  assert(cancelRes.status === 200, 'Withdraw request returns HTTP 200');
+  assert(cancelJson.success === true, 'Withdraw reports success: true');
+
+  // 9. Verify User B incoming requests is now empty
+  console.log('\n▶ [TEST 9] User B incoming requests cleared after withdrawal...');
+  const userBIncomingAfterCancelReq = createMockRequest(
+    'http://localhost:3000/api/people/connections?tab=incoming',
+    'GET',
+    undefined,
+    { 'x-fr8x-user-uid': userB_Id }
+  );
+  const userBIncomingAfterCancelRes = await getConnections(userBIncomingAfterCancelReq);
+  const userBIncomingAfterCancelJson = await userBIncomingAfterCancelRes.json();
+  const pendingAfterCancel = userBIncomingAfterCancelJson.data.filter((r: any) => r.id === createdRequestId);
+  assert(pendingAfterCancel.length === 0, 'User B sees 0 pending requests for the withdrawn ID');
+
+  // 10. User A verifies request appears in withdrawn tab
+  console.log('\n▶ [TEST 10] User A sees request in withdrawn tab...');
+  const userAWithdrawnReq = createMockRequest(
+    'http://localhost:3000/api/people/connections?tab=withdrawn',
+    'GET',
+    undefined,
+    { 'x-fr8x-user-uid': userA_Id }
+  );
+  const userAWithdrawnRes = await getConnections(userAWithdrawnReq);
+  const userAWithdrawnJson = await userAWithdrawnRes.json();
+  assert(userAWithdrawnRes.status === 200, 'User A withdrawn query returns HTTP 200');
+  assert(userAWithdrawnJson.data.some((r: any) => r.id === createdRequestId || r.recipient_id === userB_Id), 'User A sees withdrawn request');
+
+  // 11. User A re-sends connection request to User B
+  console.log('\n▶ [TEST 11] User A re-sends connection request to User B...');
+  const resendReq = createMockRequest(
+    'http://localhost:3000/api/people/connections',
+    'POST',
+    { action: 'send', target_id: userB_Id, message: 'Re-connecting to explore trade lanes.' },
+    { 'x-fr8x-user-uid': userA_Id }
+  );
+  const resendRes = await mutateConnections(resendReq);
+  const resendJson = await resendRes.json();
+  assert(resendRes.status === 200, 'Re-send connection request returns HTTP 200');
+  assert(resendJson.success === true, 'Re-send reports success: true');
+  const resentRequestId = resendJson.request_id;
+  assert(Boolean(resentRequestId), `New valid request_id received: ${resentRequestId}`);
+
+  // 12. User B accepts the re-sent request
+  console.log('\n▶ [TEST 12] User B accepts re-sent connection request...');
   const acceptReq = createMockRequest(
     'http://localhost:3000/api/people/connections',
     'POST',
-    { action: 'accept', request_id: createdRequestId },
+    { action: 'accept', request_id: resentRequestId },
     { 'x-fr8x-user-uid': userB_Id }
   );
   const acceptRes = await mutateConnections(acceptReq);

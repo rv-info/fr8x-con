@@ -46,6 +46,7 @@ next-env.d.ts
 
 # Local data / IDE
 .data/
+data/
 .knox/
 .agents/
 scratch/

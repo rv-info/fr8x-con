@@ -408,24 +408,6 @@ class PeopleDirectoryStore {
     });
   }
 
-  public getConnectionStatus(viewerId: string, targetId: string): { status: string; request_id?: string } {
-    if (this.isBlocked(viewerId, targetId)) return { status: 'blocked' };
-    if (this.isBlocked(targetId, viewerId)) return { status: 'none' };
-    if (this.acceptedPairs.has(this.pairKey(viewerId, targetId))) return { status: 'connected' };
-
-    // Check pending sent
-    for (const req of this.requests.values()) {
-      if (req.requester_id === viewerId && req.recipient_id === targetId && req.status === 'pending') {
-        return { status: 'pending_sent', request_id: req.id };
-      }
-      if (req.requester_id === targetId && req.recipient_id === viewerId && req.status === 'pending') {
-        return { status: 'pending_received', request_id: req.id };
-      }
-    }
-
-    return { status: 'none' };
-  }
-
   // In-memory notifications store for fallback and realtime sync
   private notifications: Map<string, InMemNotification[]> = new Map();
 
@@ -480,7 +462,7 @@ class PeopleDirectoryStore {
 
   public sendRequest(requesterId: string, recipientId: string, message?: string): { success: boolean; request_id: string } {
     const existing = this.getConnectionStatus(requesterId, recipientId);
-    if (existing.status !== 'none' && existing.status !== 'not_connected') {
+    if (existing.status !== 'none') {
       return { success: false, request_id: existing.request_id || '' };
     }
 
@@ -634,6 +616,36 @@ class PeopleDirectoryStore {
 
   public isBlocked(blockerId: string, blockedId: string): boolean {
     return this.blocks.has(this.pairKey(blockerId, blockedId));
+  }
+
+  public getConnectionStatus(
+    userId: string,
+    targetId: string
+  ): { status: 'self' | 'connected' | 'pending_sent' | 'pending_received' | 'blocked' | 'none'; request_id?: string } {
+    if (!userId || !targetId) return { status: 'none' };
+    const u = userId.toLowerCase();
+    const t = targetId.toLowerCase();
+    if (u === t) return { status: 'self' };
+    if (this.isBlocked(userId, targetId)) return { status: 'blocked' };
+    if (this.isBlocked(targetId, userId)) return { status: 'none' };
+
+    if (this.acceptedPairs.has(this.pairKey(userId, targetId)) || this.acceptedPairs.has(this.pairKey(targetId, userId))) {
+      return { status: 'connected' };
+    }
+
+    for (const req of this.requests.values()) {
+      if (req.status === 'pending') {
+        const reqU = req.requester_id.toLowerCase();
+        const recU = req.recipient_id.toLowerCase();
+        if (reqU === u && recU === t) {
+          return { status: 'pending_sent', request_id: req.id };
+        }
+        if (reqU === t && recU === u) {
+          return { status: 'pending_received', request_id: req.id };
+        }
+      }
+    }
+    return { status: 'none' };
   }
 
   public getConnections(userId: string): DirectoryMember[] {

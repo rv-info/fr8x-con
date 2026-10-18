@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { authenticateUserSession } from '@/lib/auth-guard';
-import { createClient as createSupabaseServerClient, getDbClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseServerClient, createAdminClient, getDbClient } from '@/lib/supabase/server';
 import { peopleDirectoryStore } from '@/lib/people-directory';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 import { resolveDisplayName } from '@/lib/utils';
@@ -31,22 +31,15 @@ export async function GET(req: NextRequest) {
     // 1. Authoritative: Fetch profiles from Supabase PostgreSQL
     try {
       const userToken = user.token || req.headers.get('authorization')?.replace(/^Bearer\s+/i, '').trim();
-      const supabase = getDbClient(userToken);
+      const admin = createAdminClient();
+      const userClient = createSupabaseServerClient();
+      const supabase = admin || userClient || getDbClient(userToken);
       const { data: dbRows, error: dbError } = await supabase
         .from('profiles')
         .select('id, display_name, first_name, last_name, designation, position, company_name, company_id, department, city, state, country, postal_code, formatted_address, location, timezone, avatar_url, company_logo_url, role, plan, experiences, educations, certifications, contacts, is_verified, email_verified, has_golden_tick, gstn, pan, mobile, email, status');
 
       if (!dbError && Array.isArray(dbRows)) {
-        // Prioritize non-synthetic/genuine locations over old Mumbai defaults
-        const sortedDbRows = [...dbRows].sort((a, b) => {
-          const aIsMumbai = (a.city || '').toLowerCase() === 'mumbai';
-          const bIsMumbai = (b.city || '').toLowerCase() === 'mumbai';
-          if (aIsMumbai && !bIsMumbai) return 1;
-          if (!aIsMumbai && bIsMumbai) return -1;
-          return 0;
-        });
-
-        for (const row of sortedDbRows) {
+        for (const row of dbRows) {
           if (!row.id) continue;
           if (isTestOrDummyAccount({
             uid: row.id,
@@ -69,17 +62,6 @@ export async function GET(req: NextRequest) {
 
           const normMemberName = resolvedMemberName.toLowerCase().trim();
           const normMemberCompany = (row.company_name || '').toLowerCase().trim();
-          const rowCity = (row.city || '').toLowerCase().trim();
-          const rowLocation = (row.location || '').toLowerCase().trim();
-
-          // Reject synthetic Mumbai duplicate for Kumar R
-          if (
-            normMemberName.includes('kumar r') &&
-            normMemberCompany.includes('syb') &&
-            (rowCity === 'mumbai' || rowLocation.includes('mumbai'))
-          ) {
-            continue;
-          }
 
           const nameCompKey = normMemberName && normMemberCompany ? `${normMemberName}:::${normMemberCompany}` : '';
           if (nameCompKey && seenNameCompany.has(nameCompKey)) {

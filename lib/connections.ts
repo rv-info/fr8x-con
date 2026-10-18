@@ -70,9 +70,12 @@ export function getConnectedUserIds(uid: string): string[] {
 
 export function areUsersConnected(uidA: string, uidB: string): boolean {
   if (!uidA || !uidB) return false;
-  if (uidA === uidB) return true;
-  const list = getConnectedUserIds(uidA);
-  return list.includes(uidB);
+  const a = uidA.trim().toLowerCase();
+  const b = uidB.trim().toLowerCase();
+  if (a === b) return true;
+  const listA = getConnectedUserIds(uidA).map((id) => String(id).trim().toLowerCase());
+  const listB = getConnectedUserIds(uidB).map((id) => String(id).trim().toLowerCase());
+  return listA.includes(b) || listB.includes(a);
 }
 
 // ── Connection Requests ─────────────────────────────────────────────────────
@@ -104,11 +107,12 @@ export function getConnectionRequests(uid: string): {
   withdrawn: ConnectionRequest[];
 } {
   if (!uid) return { incoming: [], outgoing: [], withdrawn: [] };
+  const u = uid.trim().toLowerCase();
   const all = getAllConnectionRequests();
-  const incoming = all.filter((r) => r.toUid === uid && r.status === 'pending');
-  const outgoing = all.filter((r) => r.fromUid === uid && r.status === 'pending');
+  const incoming = all.filter((r) => (r.toUid || '').trim().toLowerCase() === u && r.status === 'pending');
+  const outgoing = all.filter((r) => (r.fromUid || '').trim().toLowerCase() === u && r.status === 'pending');
   const withdrawn = all.filter(
-    (r) => r.fromUid === uid && (r.status === 'cancelled' || (r as any).status === 'withdrawn')
+    (r) => (r.fromUid || '').trim().toLowerCase() === u && (r.status === 'cancelled' || (r as any).status === 'withdrawn')
   );
   return { incoming, outgoing, withdrawn };
 }
@@ -122,24 +126,35 @@ export type ConnectionStatus =
 
 export function getConnectionStatus(
   viewerUid: string,
-  targetUid: string
+  targetUid: string,
+  viewerAltId?: string,
+  targetAltId?: string
 ): ConnectionStatus {
   if (!viewerUid || !targetUid) return 'none';
-  if (viewerUid === targetUid) return 'self';
+  const vUids = new Set([viewerUid.trim().toLowerCase(), viewerAltId ? viewerAltId.trim().toLowerCase() : ''].filter(Boolean));
+  const tUids = new Set([targetUid.trim().toLowerCase(), targetAltId ? targetAltId.trim().toLowerCase() : ''].filter(Boolean));
+
+  for (const v of vUids) {
+    if (tUids.has(v)) return 'self';
+  }
 
   if (areUsersConnected(viewerUid, targetUid)) {
     return 'connected';
   }
 
   const all = getAllConnectionRequests();
-  const pendingSent = all.find(
-    (r) => r.fromUid === viewerUid && r.toUid === targetUid && r.status === 'pending'
-  );
+  const pendingSent = all.find((r) => {
+    const f = (r.fromUid || '').trim().toLowerCase();
+    const t = (r.toUid || '').trim().toLowerCase();
+    return vUids.has(f) && tUids.has(t) && r.status === 'pending';
+  });
   if (pendingSent) return 'pending_sent';
 
-  const pendingReceived = all.find(
-    (r) => r.fromUid === targetUid && r.toUid === viewerUid && r.status === 'pending'
-  );
+  const pendingReceived = all.find((r) => {
+    const f = (r.fromUid || '').trim().toLowerCase();
+    const t = (r.toUid || '').trim().toLowerCase();
+    return tUids.has(f) && vUids.has(t) && r.status === 'pending';
+  });
   if (pendingReceived) return 'pending_received';
 
   return 'none';
@@ -372,33 +387,35 @@ export async function sendConnectionRequest(
 
 export async function acceptConnectionRequest(
   requestId: string,
-  currentUser?: Partial<UserProfile>
+  currentUser?: Partial<UserProfile>,
+  targetUid?: string
 ): Promise<boolean> {
   const all = getAllConnectionRequests();
-  const req = all.find((r) => r.id === requestId);
-  if (!req) return false;
+  const req = all.find((r) => r.id === requestId || (targetUid && r.fromUid === targetUid));
+  const previousStatus = req?.status;
 
-  const previousStatus = req.status;
-  req.status = 'accepted';
-  req.updatedAt = new Date().toISOString();
-  saveConnectionRequests(all);
+  if (req) {
+    req.status = 'accepted';
+    req.updatedAt = new Date().toISOString();
+    saveConnectionRequests(all);
 
-  // Add mutual connection
-  const map = getConnectionsMap();
-  const listA = new Set(map[req.fromUid] || []);
-  const listB = new Set(map[req.toUid] || []);
+    // Add mutual connection
+    const map = getConnectionsMap();
+    const listA = new Set(map[req.fromUid] || []);
+    const listB = new Set(map[req.toUid] || []);
 
-  listA.add(req.toUid);
-  listB.add(req.fromUid);
+    listA.add(req.toUid);
+    listB.add(req.fromUid);
 
-  map[req.fromUid] = Array.from(listA);
-  map[req.toUid] = Array.from(listB);
-  saveConnectionsMap(map);
-  dispatchConnectionsChanged();
+    map[req.fromUid] = Array.from(listA);
+    map[req.toUid] = Array.from(listB);
+    saveConnectionsMap(map);
+    dispatchConnectionsChanged();
+  }
 
   // Authoritatively accept via PostgreSQL API
-  if (typeof window !== 'undefined' && requestId) {
-    const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
+  if (typeof window !== 'undefined' && (requestId || targetUid)) {
+    const authHeaders = getClientAuthHeaders(currentUser?.uid || req?.toUid);
     try {
       const res = await fetch('/api/people/connections', {
         method: 'POST',
@@ -406,16 +423,18 @@ export async function acceptConnectionRequest(
         credentials: 'include',
         body: JSON.stringify({
           action: 'accept',
-          request_id: requestId,
+          request_id: requestId || targetUid,
         }),
       });
 
       const data = await res.json().catch(() => null);
       if (!res.ok || (data && data.success === false)) {
-        // Rollback
-        req.status = previousStatus;
-        saveConnectionRequests(all);
-        dispatchConnectionsChanged();
+        // Rollback optimistic update
+        if (req && previousStatus) {
+          req.status = previousStatus;
+          saveConnectionRequests(all);
+          dispatchConnectionsChanged();
+        }
         throw new Error(data?.error || 'Failed to accept connection request');
       }
 
@@ -431,20 +450,22 @@ export async function acceptConnectionRequest(
 
 export async function declineConnectionRequest(
   requestId: string,
-  currentUser?: Partial<UserProfile>
+  currentUser?: Partial<UserProfile>,
+  targetUid?: string
 ): Promise<boolean> {
   const all = getAllConnectionRequests();
-  const req = all.find((r) => r.id === requestId);
-  if (!req) return false;
+  const req = all.find((r) => r.id === requestId || (targetUid && r.fromUid === targetUid));
+  const prevStatus = req?.status;
 
-  const prevStatus = req.status;
-  req.status = 'declined';
-  req.updatedAt = new Date().toISOString();
-  saveConnectionRequests(all);
-  dispatchConnectionsChanged();
+  if (req) {
+    req.status = 'declined';
+    req.updatedAt = new Date().toISOString();
+    saveConnectionRequests(all);
+    dispatchConnectionsChanged();
+  }
 
-  if (typeof window !== 'undefined' && requestId) {
-    const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
+  if (typeof window !== 'undefined' && (requestId || targetUid)) {
+    const authHeaders = getClientAuthHeaders(currentUser?.uid || req?.toUid);
     try {
       const res = await fetch('/api/people/connections', {
         method: 'POST',
@@ -452,14 +473,16 @@ export async function declineConnectionRequest(
         credentials: 'include',
         body: JSON.stringify({
           action: 'decline',
-          request_id: requestId,
+          request_id: requestId || targetUid,
         }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || (data && data.success === false)) {
-        req.status = prevStatus;
-        saveConnectionRequests(all);
-        dispatchConnectionsChanged();
+        if (req && prevStatus) {
+          req.status = prevStatus;
+          saveConnectionRequests(all);
+          dispatchConnectionsChanged();
+        }
         throw new Error(data?.error || 'Failed to decline request');
       }
       dispatchConnectionsChanged();

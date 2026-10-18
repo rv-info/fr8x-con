@@ -5,36 +5,30 @@
  * Security:
  * - Requires authenticated session
  * - Resolves notifications from Supabase PostgreSQL notifications table
- * - Resilient fallback to peopleDirectoryStore notifications
+ * - Resilient fallback to persistent store & peopleDirectoryStore notifications
  * - Accurate unread count calculation
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { authenticateUserSession } from '@/lib/auth-guard';
-import { createClient as createSupabaseServerClient, createAdminClient, getDbClient } from '@/lib/supabase/server';
-import { peopleDirectoryStore } from '@/lib/people-directory';
+import {
+  createClient as createSupabaseServerClient,
+  createAdminClient,
+  getDbClient,
+} from '@/lib/supabase/server';
+import {
+  resolveCallerIdentity,
+  getNotificationsForUser,
+  markNotificationReadBackend,
+  clearNotificationBackend,
+} from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
 
-async function resolveUserId(req: NextRequest): Promise<string | null> {
-  const { authenticated, user } = authenticateUserSession(req);
-  if (authenticated && user?.uid) return user.uid;
-
-  try {
-    const supabase = createSupabaseServerClient();
-    const { data: { user: sbUser } } = await supabase.auth.getUser();
-    if (sbUser?.id) return sbUser.id;
-  } catch { /* fall through */ }
-
-  const customUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
-  if (customUid && customUid.trim()) return customUid.trim();
-
-  return null;
-}
-
 export async function GET(req: NextRequest) {
-  const userId = await resolveUserId(req);
+  const caller = await resolveCallerIdentity(req);
+  const userId = caller.userId;
+
   if (!userId) {
     return NextResponse.json(
       { success: false, error: 'Authentication required.', code: 'UNAUTHENTICATED' },
@@ -46,89 +40,23 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Number(searchParams.get('limit') || 50), 100);
   const unreadOnly = searchParams.get('unread') === 'true';
 
-  let dbNotifs: any[] = [];
-  const adminClient = createAdminClient();
+  try {
+    const list = await getNotificationsForUser(userId, limit, unreadOnly, caller.token);
+    const unreadCount = list.filter((n) => !n.read).length;
 
-  if (adminClient) {
-    try {
-      let query = adminClient
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (unreadOnly) {
-        query = query.eq('read', false);
-      }
-
-      const { data, error } = await query;
-      if (!error && Array.isArray(data)) {
-        dbNotifs = data;
-      }
-    } catch (err) {
-      console.warn('[API/Notifications] Supabase fetch error:', err);
-    }
-  }
-
-  // Fallback / merge with in-memory store
-  const memNotifs = peopleDirectoryStore.getNotifications(userId);
-  const seenIds = new Set<string>();
-  const seenRelated = new Set<string>();
-  const combined: any[] = [];
-
-  for (const n of dbNotifs) {
-    const notifId = String(n.id);
-    seenIds.add(notifId);
-    if (n.related_id) seenRelated.add(String(n.related_id));
-    combined.push({
-      id: notifId,
-      title: n.title || 'Notification',
-      desc: n.description || n.message || '',
-      time: n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-      createdAt: n.created_at || new Date().toISOString(),
-      read: Boolean(n.read),
-      type: n.type || 'network',
-      category: n.category || 'platform',
-      targetUrl: n.target_url || n.link || undefined,
-      relatedId: n.related_id || undefined,
-      actionLabel: n.metadata?.actionLabel || (n.type?.includes('connection') ? 'Review Request' : undefined),
-      metadata: n.metadata || {},
+    return NextResponse.json({
+      success: true,
+      notifications: list,
+      unreadCount,
+      total: list.length,
     });
+  } catch (err: any) {
+    console.error('[API/notifications GET error]:', err);
+    return NextResponse.json(
+      { success: false, error: 'Failed to retrieve notifications.', details: err.message },
+      { status: 500 }
+    );
   }
-
-  for (const mn of memNotifs) {
-    if (seenIds.has(mn.id) || (mn.related_id && seenRelated.has(mn.related_id))) {
-      continue;
-    }
-    if (unreadOnly && mn.read) continue;
-    combined.push({
-      id: mn.id,
-      title: mn.title,
-      desc: mn.description,
-      time: mn.created_at ? new Date(mn.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
-      createdAt: mn.created_at,
-      read: mn.read,
-      type: mn.type,
-      category: mn.category,
-      targetUrl: mn.target_url,
-      relatedId: mn.related_id,
-      actionLabel: mn.metadata?.actionLabel || (mn.type?.includes('connection') ? 'Review Request' : undefined),
-      metadata: mn.metadata || {},
-    });
-  }
-
-  // Sort descending by creation date
-  combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  const unreadCount = combined.filter((n) => !n.read).length;
-
-  return NextResponse.json({
-    success: true,
-    notifications: combined.slice(0, limit),
-    unreadCount,
-    total: combined.length,
-  });
 }
 
 const NotificationActionSchema = z.discriminatedUnion('action', [
@@ -149,7 +77,9 @@ const NotificationActionSchema = z.discriminatedUnion('action', [
 ]);
 
 export async function POST(req: NextRequest) {
-  const userId = await resolveUserId(req);
+  const caller = await resolveCallerIdentity(req);
+  const userId = caller.userId;
+
   if (!userId) {
     return NextResponse.json(
       { success: false, error: 'Authentication required.', code: 'UNAUTHENTICATED' },
@@ -174,59 +104,26 @@ export async function POST(req: NextRequest) {
 
   const action = parsed.data;
   const adminClient = createAdminClient();
+  const userClient = createSupabaseServerClient();
+  const client = adminClient || userClient || getDbClient(caller.token);
 
   if (action.action === 'mark_read') {
-    if (adminClient) {
-      try {
-        await adminClient
-          .from('notifications')
-          .update({ read: true })
-          .eq('user_id', userId)
-          .eq('id', action.id);
-      } catch {}
-    }
-    peopleDirectoryStore.markNotificationRead(userId, action.id);
+    await markNotificationReadBackend(userId, action.id, caller.token);
     return NextResponse.json({ success: true, id: action.id });
   }
 
   if (action.action === 'mark_all_read') {
-    if (adminClient) {
-      try {
-        await adminClient
-          .from('notifications')
-          .update({ read: true })
-          .eq('user_id', userId)
-          .eq('read', false);
-      } catch {}
-    }
-    peopleDirectoryStore.markNotificationRead(userId);
+    await markNotificationReadBackend(userId, undefined, caller.token);
     return NextResponse.json({ success: true });
   }
 
   if (action.action === 'clear') {
-    if (adminClient) {
-      try {
-        await adminClient
-          .from('notifications')
-          .delete()
-          .eq('user_id', userId)
-          .eq('id', action.id);
-      } catch {}
-    }
-    peopleDirectoryStore.clearNotifications(userId, action.id);
+    await clearNotificationBackend(userId, action.id, caller.token);
     return NextResponse.json({ success: true, id: action.id });
   }
 
   if (action.action === 'clear_all') {
-    if (adminClient) {
-      try {
-        await adminClient
-          .from('notifications')
-          .delete()
-          .eq('user_id', userId);
-      } catch {}
-    }
-    peopleDirectoryStore.clearNotifications(userId);
+    await clearNotificationBackend(userId, undefined, caller.token);
     return NextResponse.json({ success: true });
   }
 

@@ -231,18 +231,6 @@ export function isTestOrDummyAccount(
   // 5. Designation test patterns
   if (designation.includes('test controller') || designation.includes('dummy')) return true;
 
-  // 6. Synthetic location duplicate detection
-  const city = ((user as any).city || '').toString().toLowerCase().trim();
-  const location = ((user as any).location || '').toString().toLowerCase().trim();
-  if (
-    name.includes('kumar r') &&
-    company.includes('syb') &&
-    (city === 'mumbai' || location.includes('mumbai')) &&
-    uid !== '2a0e28f3-5969-45e0-82d2-8b4e496e95bb'
-  ) {
-    return true;
-  }
-
   return false;
 }
 

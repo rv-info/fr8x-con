@@ -816,6 +816,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     if (!user?.uid) return;
 
     const refreshNotifications = () => {
+      syncConnectionsFromServer(user.uid);
       const authHeaders = getClientAuthHeaders(user.uid);
       fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
         .then((r) => (r.ok ? r.json() : null))
@@ -827,6 +828,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         })
         .catch(() => {});
     };
+
+    refreshNotifications();
 
     window.addEventListener('focus', refreshNotifications);
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);

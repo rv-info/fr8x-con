@@ -76,7 +76,11 @@ export function Modal({
         </div>
         <div
           className="modalbody"
-          style={isFullScreen ? { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' } : undefined}
+          style={{
+            ...(isFullScreen || style?.display === 'flex'
+              ? { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', minHeight: 0 }
+              : {}),
+          }}
         >
           {children}
         </div>

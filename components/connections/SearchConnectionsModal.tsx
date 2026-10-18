@@ -173,12 +173,15 @@ export function SearchConnectionsModal({
   // Debounced search on typing or modal opening
   useEffect(() => {
     if (!isOpen) return;
+    if (currentUser?.uid) {
+      syncConnectionsFromServer(currentUser.uid);
+    }
     loadSearchHistory();
     const timer = setTimeout(() => {
       fetchMembers(searchTerm);
     }, 250);
     return () => clearTimeout(timer);
-  }, [searchTerm, isOpen]);
+  }, [searchTerm, isOpen, currentUser?.uid]);
 
   // Reactive listener for connection events to immediately update open modal cards
   useEffect(() => {
@@ -221,7 +224,7 @@ export function SearchConnectionsModal({
     return deduplicatedMembers
       .map((candidate) => {
         const { score, percentage, reasons, topBadges } = calculateConnectionAffinity(currentUser, candidate);
-        const baseStatus = getConnectionStatus(currentUser.uid, candidate.uid);
+        const baseStatus = getConnectionStatus(currentUser.uid, candidate.uid, (currentUser as any).id, (candidate as any).id);
         const status = (localStatusMap[candidate.uid] as any) || baseStatus;
 
         return {
@@ -304,25 +307,33 @@ export function SearchConnectionsModal({
 
   const handleAcceptRequest = async (targetUid: string, targetName: string) => {
     const all = getAllConnectionRequests();
-    const req = all.find((r) => r.fromUid === targetUid && r.toUid === currentUser.uid && r.status === 'pending');
-    if (req) {
-      try {
-        setAcceptingUid(targetUid);
-        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'connected' }));
-        await acceptConnectionRequest(req.id, currentUser);
-        setActionNotice({ message: `Connected with ${targetName}!`, type: 'success' });
-        toast(`Connected with ${targetName}!`);
-        if (currentUser.uid) {
-          await syncConnectionsFromServer(currentUser.uid);
-        }
-      } catch (err: any) {
-        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_received' }));
-        const errMsg = err?.message || 'Failed to accept connection request';
-        setActionNotice({ message: errMsg, type: 'error' });
-        toast(errMsg);
-      } finally {
-        setAcceptingUid(null);
+    const tUid = targetUid.trim().toLowerCase();
+    const myUid = (currentUser.uid || '').trim().toLowerCase();
+    const myId = ((currentUser as any).id || '').trim().toLowerCase();
+
+    const req = all.find((r) => {
+      const f = (r.fromUid || '').trim().toLowerCase();
+      const t = (r.toUid || '').trim().toLowerCase();
+      return f === tUid && (t === myUid || (myId && t === myId)) && r.status === 'pending';
+    });
+
+    const effectiveReqId = req?.id || targetUid;
+    try {
+      setAcceptingUid(targetUid);
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'connected' }));
+      await acceptConnectionRequest(effectiveReqId, currentUser, targetUid);
+      setActionNotice({ message: `Connected with ${targetName}!`, type: 'success' });
+      toast(`Connected with ${targetName}!`);
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
       }
+    } catch (err: any) {
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_received' }));
+      const errMsg = err?.message || 'Failed to accept connection request';
+      setActionNotice({ message: errMsg, type: 'error' });
+      toast(errMsg);
+    } finally {
+      setAcceptingUid(null);
     }
   };
 
@@ -333,7 +344,15 @@ export function SearchConnectionsModal({
       setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
 
       const all = getAllConnectionRequests();
-      const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid);
+      const tUid = targetUid.trim().toLowerCase();
+      const myUid = (currentUser.uid || '').trim().toLowerCase();
+      const myId = ((currentUser as any).id || '').trim().toLowerCase();
+
+      const req = all.find((r) => {
+        const f = (r.fromUid || '').trim().toLowerCase();
+        const t = (r.toUid || '').trim().toLowerCase();
+        return (f === myUid || (myId && f === myId)) && t === tUid;
+      });
 
       await cancelConnectionRequest(req?.id || '', currentUser, targetUid);
 
@@ -364,10 +383,17 @@ export function SearchConnectionsModal({
       setRejectingUid(targetUid);
       setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
       const all = getAllConnectionRequests();
-      const req = all.find((r) => r.fromUid === targetUid && r.toUid === currentUser.uid && r.status === 'pending');
-      if (req) {
-        await declineConnectionRequest(req.id, currentUser);
-      }
+      const tUid = targetUid.trim().toLowerCase();
+      const myUid = (currentUser.uid || '').trim().toLowerCase();
+      const myId = ((currentUser as any).id || '').trim().toLowerCase();
+
+      const req = all.find((r) => {
+        const f = (r.fromUid || '').trim().toLowerCase();
+        const t = (r.toUid || '').trim().toLowerCase();
+        return f === tUid && (t === myUid || (myId && t === myId)) && r.status === 'pending';
+      });
+
+      await declineConnectionRequest(req?.id || targetUid, currentUser, targetUid);
       setActionNotice({ message: 'Connection request rejected.', type: 'success' });
       toast('Connection request rejected.');
       if (currentUser.uid) {
