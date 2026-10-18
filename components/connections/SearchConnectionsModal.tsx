@@ -388,9 +388,17 @@ export function SearchConnectionsModal({
       isOpen={isOpen}
       onClose={onClose}
       title="Search New Contacts & Global Freight Connections"
-      maxWidth="860px"
+      maxWidth="723px"
+      style={{
+        width: '723px',
+        maxWidth: 'min(723px, 96vw)',
+        height: '932px',
+        maxHeight: 'min(932px, 94vh)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1, gap: '14px', minHeight: 0 }}>
         {/* Search Bar & Stats */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ position: 'relative' }}>
@@ -574,7 +582,8 @@ export function SearchConnectionsModal({
         {/* Results List */}
         <div
           style={{
-            maxHeight: '480px',
+            flex: 1,
+            minHeight: 0,
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',

@@ -3156,9 +3156,17 @@ export default function FeedsPage() {
           isOpen={showManageContactsModal}
           onClose={() => setShowManageContactsModal(false)}
           title="Enterprise Network Contacts & Directory"
-          maxWidth="640px"
+          maxWidth="723px"
+          style={{
+            width: '723px',
+            maxWidth: 'min(723px, 96vw)',
+            height: '932px',
+            maxHeight: 'min(932px, 94vh)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1, gap: '12px', minHeight: 0 }}>
             {/* Tab Navigation */}
             <div style={{ display: 'flex', borderBottom: '1px solid var(--fr8x-outline, #e2e8f0)', gap: '4px', overflowX: 'auto' }}>
               <button
@@ -3258,7 +3266,7 @@ export default function FeedsPage() {
 
             {/* TAB 1: CONNECTION REQUEST RECEIVED */}
             {manageContactsTab === 'received' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ fontSize: '11px', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <UserCheck size={13} /> CONNECTION REQUEST RECEIVED ({connRequests.incoming.length})
@@ -3421,7 +3429,7 @@ export default function FeedsPage() {
 
             {/* TAB 2: SENT REQUESTS */}
             {manageContactsTab === 'sent' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '380px', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
                 <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Clock size={12} /> Sent Invitations Pending ({connRequests.outgoing.length})
                 </div>
@@ -3495,9 +3503,91 @@ export default function FeedsPage() {
               </div>
             )}
 
-            {/* TAB 3: DISCOVER MEMBERS */}
+            {/* TAB 3: CONNECTED CONTACTS */}
+            {manageContactsTab === 'contacts' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--brand)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Users size={12} /> Connected Members ({workspaceContacts.length})
+                </div>
+
+                {workspaceContacts.length === 0 ? (
+                  <div style={{ padding: '36px 16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                    <Users size={28} color="#94a3b8" style={{ display: 'block', margin: '0 auto 8px' }} />
+                    <b style={{ fontSize: '13px', color: 'var(--fr8x-text)', display: 'block', marginBottom: '4px' }}>No direct contacts connected yet.</b>
+                    <span>Accept incoming requests or explore the Global Directory to establish verified freight partnerships.</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {workspaceContacts.map((c) => (
+                      <div
+                        key={c.id || c.uid}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          borderRadius: '6px',
+                          border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                          background: '#ffffff',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 800 }}>
+                            {c.name.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div>
+                            <b
+                              onClick={() => {
+                                setShowManageContactsModal(false);
+                                setSelectedProfileUid(c.uid);
+                                setSelectedProfileName(c.name);
+                              }}
+                              style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                            >
+                              {c.name}
+                              {c.hasGoldenTick && <GoldenTick size={12} />}
+                            </b>
+                            <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block' }}>
+                              {c.role || 'Enterprise Member'} · <span style={{ fontWeight: 600, color: 'var(--fr8x-text)' }}>{c.company || 'Enterprise Partner'}</span>
+                            </small>
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            onClick={() => {
+                              setShowManageContactsModal(false);
+                              setSelectedProfileUid(c.uid);
+                              setSelectedProfileName(c.name);
+                            }}
+                            style={{ fontSize: '10.5px' }}
+                          >
+                            Passport
+                          </button>
+                          <button
+                            type="button"
+                            className="btn primary sm"
+                            onClick={() => {
+                              setShowManageContactsModal(false);
+                              openChatWith(c.uid, { type: 'company', id: c.uid, title: `Chat with ${c.name}` });
+                            }}
+                            style={{ fontSize: '10.5px', background: '#099889' }}
+                          >
+                            <MessageCircle size={11} /> Chat
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB 4: DISCOVER MEMBERS */}
             {manageContactsTab === 'discover' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0 }}>
                 {/* Search Bar */}
                 <div style={{ position: 'relative' }}>
                   <Search size={13} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--fr8x-muted)' }} />
@@ -3519,7 +3609,7 @@ export default function FeedsPage() {
                 </div>
 
                 {/* Directory List */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: '4px' }}>
                   {(() => {
                     const q = discoverMemberSearch.trim().toLowerCase();
                     const pool = [...remoteMembers];
