@@ -771,21 +771,19 @@ export default function LoginPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div
+              <img
+                src="/mobile-app-icon.png"
+                alt="FR8X Mobile App"
                 style={{
                   width: '32px',
                   height: '32px',
-                  borderRadius: '8px',
-                  background: '#070d18',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#38bdf8',
+                  borderRadius: '7px',
+                  objectFit: 'cover',
+                  display: 'block',
                   flexShrink: 0,
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
                 }}
-              >
-                <Smartphone size={17} />
-              </div>
+              />
               <div style={{ lineHeight: 1.25 }}>
                 <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a' }}>
                   FR8X Android App
@@ -1280,21 +1278,19 @@ export default function LoginPage() {
           e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
-        <div
+        <img
+          src="/mobile-app-icon.png"
+          alt="FR8X App Icon"
           style={{
             width: '28px',
             height: '28px',
-            borderRadius: '50%',
-            background: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            borderRadius: '6px',
+            objectFit: 'cover',
+            display: 'block',
             flexShrink: 0,
+            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
           }}
-        >
-          <Smartphone size={15} />
-        </div>
+        />
         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
           <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Download Android App</span>
           <span style={{ fontSize: '9.5px', color: '#0ea5e9', fontWeight: 700 }}>v2.4.0 Universal Release (14.0 MB)</span>

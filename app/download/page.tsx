@@ -48,12 +48,20 @@ export default function DownloadPage() {
           textAlign: 'center',
         }}
       >
-        {/* Compact Logo with FR8X below */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', marginBottom: '14px' }}>
+        {/* Official FR8X Infinity App Icon */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginBottom: '16px' }}>
           <img
-            src="/logo.png"
-            alt="FR8X"
-            style={{ width: '36px', height: '36px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
+            src="/mobile-app-icon.png"
+            alt="FR8X Infinity App Icon"
+            style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '14px',
+              objectFit: 'cover',
+              display: 'block',
+              margin: '0 auto',
+              boxShadow: '0 4px 14px rgba(0, 43, 102, 0.15)',
+            }}
           />
           <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
             FR8X
