@@ -150,6 +150,28 @@ async function build() {
     }
   });
 
+  // Stage thick standalone bundle: Next.js static chunks, fonts, and brand assets
+  const bundleDir = path.join(assetsDir, 'bundle');
+  ensureDir(bundleDir);
+  try {
+    const nextStatic = path.join(ROOT_DIR, '.next', 'static');
+    const destStatic = path.join(bundleDir, '_next', 'static');
+    ensureDir(destStatic);
+    execSync(`robocopy "${nextStatic}" "${destStatic}" /E /MT:8 /R:1 /W:1 /NP`, { stdio: 'ignore' });
+
+    const publicDir = path.join(ROOT_DIR, 'public');
+    const destPublic = path.join(bundleDir, 'public');
+    ensureDir(destPublic);
+    execSync(`robocopy "${publicDir}" "${destPublic}" /E /XF *.apk /MT:8 /R:1 /W:1 /NP`, { stdio: 'ignore' });
+
+    const accDir = path.join(ROOT_DIR, 'accessories');
+    const destAcc = path.join(bundleDir, 'accessories');
+    ensureDir(destAcc);
+    execSync(`robocopy "${accDir}" "${destAcc}" /E /MT:8 /R:1 /W:1 /NP`, { stdio: 'ignore' });
+    console.log('[BUNDLE] Staged thick standalone Next.js frontend chunks, fonts, and brand assets.');
+  } catch (ignored) {}
+
+
   // 2. Compile resources with aapt2
   const compiledResZip = path.join(INTERMEDIATE_DIR, 'compiled_res.zip');
   run(`"${AAPT2}" compile --dir "${resDir}" -o "${compiledResZip}"`, 'Compiling Android Resources with AAPT2');

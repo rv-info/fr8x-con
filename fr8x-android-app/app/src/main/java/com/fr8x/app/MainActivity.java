@@ -34,6 +34,10 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+import android.webkit.WebResourceResponse;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends Activity {
 
@@ -199,7 +203,48 @@ public class MainActivity extends Activity {
             }
 
             @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                String scheme = uri.getScheme();
+                String host = uri.getHost();
+                String path = uri.getPath();
+
+                // Intercept static chunks, styles, and fonts to serve from bundled APK storage
+                if ("https".equalsIgnoreCase(scheme) && 
+                    ("con.fr8x.in".equalsIgnoreCase(host) || "fr8x.app".equalsIgnoreCase(host) || "fr8x.in".equalsIgnoreCase(host)) && 
+                    path != null) {
+
+                    String assetPath = null;
+                    if (path.startsWith("/_next/static/")) {
+                        assetPath = "bundle" + path;
+                    } else if (path.startsWith("/fonts/")) {
+                        assetPath = "bundle/public" + path;
+                    } else if (path.equals("/logo.png") || path.equals("/icon.png") || 
+                               path.equals("/favicon.ico") || path.equals("/apple-icon.png") ||
+                               path.equals("/fr8x.png") || path.equals("/fr8x.svg") ||
+                               path.equals("/manifest.json")) {
+                        assetPath = "bundle/public" + path;
+                    }
+
+                    if (assetPath != null) {
+                        try {
+                            InputStream is = getAssets().open(assetPath);
+                            String mimeType = getMimeType(path);
+                            Map<String, String> responseHeaders = new HashMap<String, String>();
+                            responseHeaders.put("Access-Control-Allow-Origin", "*");
+                            responseHeaders.put("Cache-Control", "max-age=31536000, immutable");
+                            return new WebResourceResponse(mimeType, "UTF-8", 200, "OK", responseHeaders, is);
+                        } catch (Exception ignored) {
+                            // If not in local assets bundle, fall back to network seamlessly
+                        }
+                    }
+                }
+                return super.shouldInterceptRequest(view, request);
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+
                 Uri uri = request.getUrl();
                 String scheme = uri.getScheme();
                 String host = uri.getHost();
@@ -494,4 +539,21 @@ public class MainActivity extends Activity {
             return false;
         }
     }
+
+
+    private static String getMimeType(String path) {
+        if (path.endsWith(".js") || path.endsWith(".mjs")) return "application/javascript";
+        if (path.endsWith(".css")) return "text/css";
+        if (path.endsWith(".png")) return "image/png";
+        if (path.endsWith(".jpg") || path.endsWith(".jpeg")) return "image/jpeg";
+        if (path.endsWith(".svg")) return "image/svg+xml";
+        if (path.endsWith(".ttf")) return "font/ttf";
+        if (path.endsWith(".woff")) return "font/woff";
+        if (path.endsWith(".woff2")) return "font/woff2";
+        if (path.endsWith(".json")) return "application/json";
+        if (path.endsWith(".ico")) return "image/x-icon";
+        if (path.endsWith(".html")) return "text/html";
+        return "application/octet-stream";
+    }
 }
+

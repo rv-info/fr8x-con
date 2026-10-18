@@ -1,0 +1,1 @@
+self.__BUILD_MANIFEST=function(e,r){return{__rewrites:{afterFiles:[{has:e,source:"/godfatheron",destination:r},{has:e,source:"/GODFATHERON",destination:r}],beforeFiles:[],fallback:[]},"/_error":["static/chunks/pages/_error-cf5ca766ac8f493f.js"],sortedPages:["/_app","/_error"]}}(void 0,"/godfather/login"),self.__BUILD_MANIFEST_CB&&self.__BUILD_MANIFEST_CB();

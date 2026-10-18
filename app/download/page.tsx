@@ -84,7 +84,7 @@ export default function DownloadPage() {
             marginBottom: '26px',
           }}
         >
-          <CheckCircle2 size={14} /> v2.4.0 Universal • Verified &amp; Signed • 396 KB
+          <CheckCircle2 size={14} /> v2.4.0 Universal • Verified &amp; Signed • 14.0 MB
         </div>
 
         {/* Primary Download Button */}

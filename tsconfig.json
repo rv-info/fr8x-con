@@ -38,6 +38,8 @@
     "node_modules",
     "docs",
     "scratch",
+    "scripts",
+    "fr8x-android-app",
     ".next",
     "FR8X-Website"
   ]

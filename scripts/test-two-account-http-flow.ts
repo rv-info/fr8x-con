@@ -43,7 +43,7 @@ function createMockRequest(
   if (body && method !== 'GET') {
     reqInit.body = JSON.stringify(body);
   }
-  return new NextRequest(new URL(url, 'http://localhost:3000'), reqInit);
+  return new NextRequest(new URL(url, 'http://localhost:3000'), reqInit as any);
 }
 
 async function runTwoAccountHttpTests() {
@@ -68,6 +68,10 @@ async function runTwoAccountHttpTests() {
     city: 'Mumbai',
     country: 'India',
     is_verified: true,
+    has_golden_tick: true,
+    skills: ['Ocean Freight', 'Procurement'],
+    specializations: ['FCL'],
+    key_trade_lanes: ['IN-AE', 'IN-US'],
   };
 
   const memberB: DirectoryMember = {
@@ -82,6 +86,10 @@ async function runTwoAccountHttpTests() {
     city: 'Dubai',
     country: 'United Arab Emirates',
     is_verified: true,
+    has_golden_tick: false,
+    skills: ['Customs Clearance', 'Air Cargo'],
+    specializations: ['LCL', 'Air Freight'],
+    key_trade_lanes: ['AE-IN', 'AE-EU'],
   };
 
   const memberC: DirectoryMember = {
@@ -92,7 +100,13 @@ async function runTwoAccountHttpTests() {
     email: 'interloper@hacker.io',
     company_name: 'Suspicious Corp',
     designation: 'Adversary',
+    city: 'Unknown',
+    country: 'Unknown',
     is_verified: false,
+    has_golden_tick: false,
+    skills: [],
+    specializations: [],
+    key_trade_lanes: [],
   };
 
   peopleDirectoryStore.registerMember(memberA);

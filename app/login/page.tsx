@@ -754,9 +754,87 @@ export default function LoginPage() {
           <Link href="/register" style={{ color: 'var(--brand)', fontWeight: 700 }}>
             Register Company
           </Link>
+
+          {/* Official Android Mobile App Download Section */}
           <div
             style={{
-              marginTop: '8px',
+              marginTop: '14px',
+              padding: '10px 12px',
+              background: '#f8fafc',
+              border: '1px solid #e2e8f0',
+              borderRadius: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '10px',
+              textAlign: 'left',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '8px',
+                  background: '#070d18',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#38bdf8',
+                  flexShrink: 0,
+                }}
+              >
+                <Smartphone size={17} />
+              </div>
+              <div style={{ lineHeight: 1.25 }}>
+                <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#0f172a' }}>
+                  FR8X Android App
+                </div>
+                <div style={{ fontSize: '10px', color: '#64748b' }}>
+                  v2.4.0 Universal Release • 14.0 MB
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Link
+                href="/download"
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: '#0284c7',
+                  textDecoration: 'none',
+                  padding: '4px 6px',
+                }}
+              >
+                Guide
+              </Link>
+              <a
+                href="/FR8X-Android-Universal-Release.apk"
+                download="FR8X-Android-Universal-Release.apk"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  background: '#002b66',
+                  color: '#ffffff',
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  textDecoration: 'none',
+                  boxShadow: '0 2px 6px rgba(0, 43, 102, 0.2)',
+                  cursor: 'pointer',
+                }}
+              >
+                <Download size={13} />
+                <span>Download APK</span>
+              </a>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: '10px',
               fontSize: '11px',
               color: 'var(--mut)',
               display: 'flex',
@@ -770,6 +848,7 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
 
       {/* Forgot Password Modal with OTP Workflow */}
       {isForgotModalOpen && (
@@ -1170,8 +1249,8 @@ export default function LoginPage() {
 
       {/* Floating APK Download Pill */}
       <a
-        href="/fr8x-enterprise-mobile-v2.4.apk"
-        download
+        href="/FR8X-Android-Universal-Release.apk"
+        download="FR8X-Android-Universal-Release.apk"
         title="Download FR8X Android Mobile App (.apk)"
         className="login-apk-pill"
         style={{
@@ -1218,8 +1297,9 @@ export default function LoginPage() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
           <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Download Android App</span>
-          <span style={{ fontSize: '9.5px', color: '#0ea5e9', fontWeight: 700 }}>v2.4.0 Native Standalone (.apk)</span>
+          <span style={{ fontSize: '9.5px', color: '#0ea5e9', fontWeight: 700 }}>v2.4.0 Universal Release (14.0 MB)</span>
         </div>
+
         <div
           style={{
             width: '24px',
