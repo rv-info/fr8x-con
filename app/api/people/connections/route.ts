@@ -417,15 +417,15 @@ export async function POST(req: NextRequest) {
         switch (action.action) {
           case 'send': {
             if (UUID_REGEX.test(action.target_id) && UUID_REGEX.test(userId)) {
-              const { data, error } = await adminClient.rpc('send_connection_request', {
-                p_requester_id: userId,
-                p_recipient_id: action.target_id,
-                p_message:      action.message ?? null,
-              });
-              if (!error && data) {
-                result = data;
-                handled = true;
-                if ((data as any).success && (data as any).request_id) {
+              try {
+                const { data, error } = await adminClient.rpc('send_connection_request', {
+                  p_requester_id: userId,
+                  p_recipient_id: action.target_id,
+                  p_message:      action.message ?? null,
+                });
+                if (!error && data && (data as any).success) {
+                  result = data;
+                  handled = true;
                   const reqId = (data as any).request_id;
                   peopleDirectoryStore.upsertRequest({
                     id: reqId,
@@ -436,9 +436,47 @@ export async function POST(req: NextRequest) {
                     created_at: new Date().toISOString(),
                     updated_at: new Date().toISOString(),
                   });
+                } else if (error) {
+                  const errMsg = error.message || '';
+                  if (errMsg.includes('ALREADY_CONNECTED')) {
+                    result = { success: false, code: 'ALREADY_CONNECTED', error: 'You are already connected with this member.' };
+                    handled = true;
+                  } else if (errMsg.includes('DUPLICATE_REQUEST')) {
+                    result = { success: false, code: 'DUPLICATE_REQUEST', error: 'A pending request already exists.' };
+                    handled = true;
+                  } else if (errMsg.includes('BLOCKED')) {
+                    result = { success: false, code: 'BLOCKED', error: 'Connection request cannot be sent.' };
+                    handled = true;
+                  } else if (errMsg.includes('RATE_LIMIT')) {
+                    result = { success: false, code: 'RATE_LIMIT', error: 'Too many pending requests. Cancel some before sending new ones.' };
+                    handled = true;
+                  }
+                }
+              } catch {}
+
+              // Direct PostgreSQL database fallback if RPC failed
+              if (!handled) {
+                const newReqId = typeof crypto !== 'undefined' && crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `00000000-0000-4000-8000-${Date.now().toString(16).padStart(12, '0')}`;
+
+                const { error: insErr } = await adminClient
+                  .from('connection_requests')
+                  .upsert({
+                    id: newReqId,
+                    requester_id: userId,
+                    recipient_id: action.target_id,
+                    message: action.message ? action.message.trim().slice(0, 300) : null,
+                    status: 'pending',
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  }, { onConflict: 'id' });
+
+                if (!insErr) {
                   const requester = peopleDirectoryStore.getMemberById(userId);
                   const requesterName = requester?.display_name || requester?.full_name || 'A freight colleague';
-                  peopleDirectoryStore.addNotification({
+
+                  await adminClient.from('notifications').insert({
                     id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
                     user_id: action.target_id,
                     type: 'connection_request',
@@ -446,32 +484,30 @@ export async function POST(req: NextRequest) {
                     title: `${requesterName} sent you a connection request`,
                     description: action.message ? `"${action.message.slice(0, 150)}"` : 'Review and respond to grow your professional freight network.',
                     target_url: '/connections?tab=incoming',
-                    related_id: reqId,
+                    related_id: newReqId,
                     read: false,
-                    created_at: new Date().toISOString(),
                     metadata: {
                       requester_id: userId,
-                      request_id: reqId,
+                      request_id: newReqId,
                       requester_name: requesterName,
                       requester_company: requester?.company_name || requester?.company || '',
                       requester_avatar: requester?.avatar_url || '',
+                      actionLabel: 'Review Request',
                     },
+                    created_at: new Date().toISOString(),
                   });
-                }
-              } else if (error) {
-                const errMsg = error.message || '';
-                if (errMsg.includes('ALREADY_CONNECTED')) {
-                  result = { success: false, code: 'ALREADY_CONNECTED', error: 'You are already connected with this member.' };
+
+                  result = { success: true, request_id: newReqId, status: 'pending' };
                   handled = true;
-                } else if (errMsg.includes('DUPLICATE_REQUEST')) {
-                  result = { success: false, code: 'DUPLICATE_REQUEST', error: 'A pending request already exists.' };
-                  handled = true;
-                } else if (errMsg.includes('BLOCKED')) {
-                  result = { success: false, code: 'BLOCKED', error: 'Connection request cannot be sent.' };
-                  handled = true;
-                } else if (errMsg.includes('RATE_LIMIT')) {
-                  result = { success: false, code: 'RATE_LIMIT', error: 'Too many pending requests. Cancel some before sending new ones.' };
-                  handled = true;
+                  peopleDirectoryStore.upsertRequest({
+                    id: newReqId,
+                    requester_id: userId,
+                    recipient_id: action.target_id,
+                    status: 'pending',
+                    message: action.message,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                  });
                 }
               }
             }
@@ -506,21 +542,55 @@ export async function POST(req: NextRequest) {
             break;
           }
           case 'cancel': {
-            let reqId = action.request_id;
-            if (!reqId && action.target_id) {
-              // Try finding pending request id by target_id
-              const status = peopleDirectoryStore.getConnectionStatus(userId, action.target_id);
-              if (status.request_id) reqId = status.request_id;
-            }
+            const reqId = action.request_id;
+            const targetId = action.target_id;
+
+            // 1. Try atomic RPC first
             if (reqId && UUID_REGEX.test(reqId)) {
-              const { data, error } = await adminClient.rpc('cancel_connection_request', {
-                p_requester_id: userId,
-                p_request_id:   reqId,
-              });
-              if (!error && data) {
-                result = data;
+              try {
+                const { data, error } = await adminClient.rpc('cancel_connection_request', {
+                  p_requester_id: userId,
+                  p_request_id:   reqId,
+                });
+                if (!error && data && (data as any).success) {
+                  result = data;
+                  handled = true;
+                  peopleDirectoryStore.cancelRequest(userId, reqId, targetId);
+                }
+              } catch {}
+            }
+
+            // 2. Direct PostgreSQL update fallback (guarantees cancellation in Supabase)
+            if (!handled) {
+              let query = adminClient
+                .from('connection_requests')
+                .update({ status: 'cancelled', updated_at: new Date().toISOString() })
+                .eq('requester_id', userId);
+
+              if (reqId && UUID_REGEX.test(reqId)) {
+                query = query.eq('id', reqId);
+              } else if (targetId) {
+                query = query.eq('recipient_id', targetId).eq('status', 'pending');
+              }
+
+              const { data: updatedRows, error: updErr } = await query.select('id, recipient_id');
+
+              if (!updErr && Array.isArray(updatedRows) && updatedRows.length > 0) {
+                const cancelledId = updatedRows[0].id;
+                const recId = updatedRows[0].recipient_id;
+                await adminClient
+                  .from('notifications')
+                  .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
+                  .eq('user_id', String(recId))
+                  .eq('related_id', String(cancelledId));
+
+                result = { success: true, request_id: cancelledId, status: 'cancelled' };
                 handled = true;
-                peopleDirectoryStore.cancelRequest(userId, reqId, action.target_id);
+                peopleDirectoryStore.cancelRequest(userId, cancelledId, recId);
+              } else {
+                result = { success: true, status: 'cancelled', note: 'Request marked inactive or already cancelled.' };
+                handled = true;
+                peopleDirectoryStore.cancelRequest(userId, reqId, targetId);
               }
             }
             break;

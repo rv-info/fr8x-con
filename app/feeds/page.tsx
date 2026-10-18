@@ -61,6 +61,8 @@ import {
   X,
   Info,
   HelpCircle,
+  Globe2,
+  Loader2,
 } from 'lucide-react';
 import {
   getConnectedUserIds,
@@ -593,17 +595,36 @@ export default function FeedsPage() {
   const [contactRailSearch, setContactRailSearch] = useState('');
   const [showManageContactsModal, setShowManageContactsModal] = useState(false);
   const [showSearchConnectionsModal, setShowSearchConnectionsModal] = useState(false);
-  const [manageContactsTab, setManageContactsTab] = useState<'contacts' | 'requests' | 'discover'>('contacts');
+  const [manageContactsTab, setManageContactsTab] = useState<'received' | 'sent' | 'contacts' | 'discover'>('received');
+  const [isSyncingContacts, setIsSyncingContacts] = useState(false);
+  const [syncContactsError, setSyncContactsError] = useState<string | null>(null);
+  const [actioningReqId, setActioningReqId] = useState<string | null>(null);
+  const [actioningType, setActioningType] = useState<'accept' | 'reject' | 'withdraw' | null>(null);
   const [discoverMemberSearch, setDiscoverMemberSearch] = useState('');
   const [selectedProfileUid, setSelectedProfileUid] = useState<string | null>(null);
   const [remoteMembers, setRemoteMembers] = useState<any[]>([]);
   const [isSearchingMembers, setIsSearchingMembers] = useState(false);
+
+  const refreshContactsState = React.useCallback(async () => {
+    if (!user?.uid) return;
+    setIsSyncingContacts(true);
+    setSyncContactsError(null);
+    try {
+      await syncConnectionsFromServer(user.uid);
+      setConnRevision((v) => v + 1);
+    } catch (err: any) {
+      setSyncContactsError(err?.message || 'Failed to sync latest connection requests.');
+    } finally {
+      setIsSyncingContacts(false);
+    }
+  }, [user?.uid]);
+
   // Sync fresh connection requests whenever Manage Contacts modal opens
   React.useEffect(() => {
     if (showManageContactsModal && user?.uid) {
-      syncConnectionsFromServer(user.uid).then(() => setConnRevision((v) => v + 1));
+      refreshContactsState();
     }
-  }, [showManageContactsModal, user?.uid]);
+  }, [showManageContactsModal, user?.uid, refreshContactsState]);
 
   React.useEffect(() => {
     if (showManageContactsModal && manageContactsTab === 'discover') {
@@ -3177,7 +3198,7 @@ export default function FeedsPage() {
                   whiteSpace: 'nowrap',
                 }}
               >
-                <Bell size={13} /> Connection Requests
+                <UserPlus size={13} /> Connection Request Received
                 {connRequests.incoming.length > 0 && (
                   <span style={{ fontSize: '9px', background: '#dc2626', color: '#fff', borderRadius: '10px', padding: '1px 5px', fontWeight: 800 }}>
                     {connRequests.incoming.length}
@@ -3348,12 +3369,20 @@ export default function FeedsPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '380px', overflowY: 'auto' }}>
                 {/* Incoming Requests */}
                 <div>
-                  <div style={{ fontSize: '11px', fontWeight: 800, color: 'var(--fr8x-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '6px' }}>
-                    Received Invitations ({connRequests.incoming.length})
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#0369a1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <UserCheck size={13} /> CONNECTION REQUEST RECEIVED ({connRequests.incoming.length})
+                    </div>
+                    {connRequests.incoming.length > 0 && (
+                      <span className="badge blue" style={{ fontSize: '9.5px', background: '#e0f2fe', color: '#0369a1', fontWeight: 700 }}>
+                        Action Required
+                      </span>
+                    )}
                   </div>
+
                   {connRequests.incoming.length === 0 ? (
-                    <div style={{ padding: '14px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px' }}>
-                      No incoming connection requests.
+                    <div style={{ padding: '16px', textAlign: 'center', fontSize: '11.5px', color: 'var(--fr8x-muted)', background: '#f8fafc', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
+                      No incoming connection requests received.
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -3361,18 +3390,19 @@ export default function FeedsPage() {
                         <div
                           key={req.id}
                           style={{
-                            padding: '10px',
+                            padding: '10px 12px',
                             background: '#ffffff',
-                            border: '1px solid var(--fr8x-outline, #e2e8f0)',
+                            border: '1.5px solid #bae6fd',
                             borderRadius: '6px',
                             display: 'flex',
                             flexDirection: 'column',
                             gap: '8px',
+                            boxShadow: '0 1px 3px rgba(2, 132, 199, 0.08)',
                           }}
                         >
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <div className="avatar" style={{ width: '32px', height: '32px', padding: 0, overflow: 'hidden' }}>
+                              <div className="avatar" style={{ width: '34px', height: '34px', padding: 0, overflow: 'hidden' }}>
                                 {req.senderAvatarUrl ? (
                                   <img src={req.senderAvatarUrl} alt={req.senderName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 ) : (
@@ -3388,7 +3418,7 @@ export default function FeedsPage() {
                                     setSelectedProfileUid(req.fromUid);
                                     setSelectedProfileName(req.senderName);
                                   }}
-                                  style={{ fontSize: '12px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
+                                  style={{ fontSize: '12.5px', color: 'var(--fr8x-text)', cursor: 'pointer' }}
                                 >
                                   {req.senderName}
                                 </b>
@@ -3413,14 +3443,18 @@ export default function FeedsPage() {
                               type="button"
                               className="btn secondary sm"
                               onClick={async () => {
-                                declineConnectionRequest(req.id);
-                                toast('Connection request declined.');
-                                if (user?.uid) {
-                                  await syncConnectionsFromServer(user.uid);
-                                  setConnRevision((v) => v + 1);
+                                try {
+                                  await declineConnectionRequest(req.id, user);
+                                  toast('Connection request declined.');
+                                  if (user?.uid) {
+                                    await syncConnectionsFromServer(user.uid);
+                                    setConnRevision((v) => v + 1);
+                                  }
+                                } catch (err: any) {
+                                  toast(err?.message || 'Failed to decline request');
                                 }
                               }}
-                              style={{ fontSize: '10.5px', padding: '3px 10px' }}
+                              style={{ fontSize: '10.5px', padding: '3px 10px', color: '#dc2626' }}
                             >
                               <X size={11} /> Decline
                             </button>
@@ -3428,14 +3462,18 @@ export default function FeedsPage() {
                               type="button"
                               className="btn primary sm"
                               onClick={async () => {
-                                acceptConnectionRequest(req.id, user);
-                                toast(`Connected with ${req.senderName}!`);
-                                if (user?.uid) {
-                                  await syncConnectionsFromServer(user.uid);
-                                  setConnRevision((v) => v + 1);
+                                try {
+                                  await acceptConnectionRequest(req.id, user);
+                                  toast(`Connected with ${req.senderName}!`);
+                                  if (user?.uid) {
+                                    await syncConnectionsFromServer(user.uid);
+                                    setConnRevision((v) => v + 1);
+                                  }
+                                } catch (err: any) {
+                                  toast(err?.message || 'Failed to accept connection');
                                 }
                               }}
-                              style={{ fontSize: '10.5px', padding: '3px 12px' }}
+                              style={{ fontSize: '10.5px', padding: '3px 12px', background: '#099889' }}
                             >
                               <Check size={11} /> Accept Connection
                             </button>
@@ -3482,11 +3520,15 @@ export default function FeedsPage() {
                             type="button"
                             className="btn secondary sm"
                             onClick={async () => {
-                              cancelConnectionRequest(req.id);
-                              toast('Invitation withdrawn.');
-                              if (user?.uid) {
-                                await syncConnectionsFromServer(user.uid);
-                                setConnRevision((v) => v + 1);
+                              try {
+                                await cancelConnectionRequest(req.id, user, req.toUid);
+                                toast('Invitation withdrawn.');
+                                if (user?.uid) {
+                                  await syncConnectionsFromServer(user.uid);
+                                  setConnRevision((v) => v + 1);
+                                }
+                              } catch (err: any) {
+                                toast(err?.message || 'Failed to withdraw invitation.');
                               }
                             }}
                             style={{ fontSize: '10.5px', color: '#dc2626' }}

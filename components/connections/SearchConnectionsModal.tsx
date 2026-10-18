@@ -18,6 +18,7 @@ import {
   Send,
   ExternalLink,
   Loader2,
+  CheckCircle2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { UserProfile } from '@/lib/types';
@@ -34,6 +35,7 @@ import {
   getConnectionStatus,
   sendConnectionRequest,
   acceptConnectionRequest,
+  declineConnectionRequest,
   cancelConnectionRequest,
   CONNECTIONS_CHANGED_EVENT,
   syncConnectionsFromServer,
@@ -67,6 +69,7 @@ export function SearchConnectionsModal({
   const [connectingUid, setConnectingUid] = useState<string | null>(null);
   const [withdrawingUid, setWithdrawingUid] = useState<string | null>(null);
   const [acceptingUid, setAcceptingUid] = useState<string | null>(null);
+  const [rejectingUid, setRejectingUid] = useState<string | null>(null);
   const [connectionsVersion, setConnectionsVersion] = useState(0);
   const [localStatusMap, setLocalStatusMap] = useState<Record<string, string>>({});
   const [actionNotice, setActionNotice] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -324,26 +327,48 @@ export function SearchConnectionsModal({
   };
 
   const handleWithdrawRequest = async (targetUid: string) => {
-    const all = getAllConnectionRequests();
-    const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid && r.status === 'pending');
-    if (req) {
-      try {
-        setWithdrawingUid(targetUid);
-        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
-        await cancelConnectionRequest(req.id, currentUser);
-        setActionNotice({ message: 'Connection request withdrawn.', type: 'success' });
-        toast('Connection request withdrawn.');
-        if (currentUser.uid) {
-          await syncConnectionsFromServer(currentUser.uid);
-        }
-      } catch (err: any) {
-        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_sent' }));
-        const errMsg = err?.message || 'Failed to withdraw connection request';
-        setActionNotice({ message: errMsg, type: 'error' });
-        toast(errMsg);
-      } finally {
-        setWithdrawingUid(null);
+    try {
+      setWithdrawingUid(targetUid);
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
+      const all = getAllConnectionRequests();
+      const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid && r.status === 'pending');
+      await cancelConnectionRequest(req?.id || '', currentUser, targetUid);
+      setActionNotice({ message: 'Connection request withdrawn.', type: 'success' });
+      toast('Connection request withdrawn.');
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
       }
+    } catch (err: any) {
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_sent' }));
+      const errMsg = err?.message || 'Failed to withdraw connection request';
+      setActionNotice({ message: errMsg, type: 'error' });
+      toast(errMsg);
+    } finally {
+      setWithdrawingUid(null);
+    }
+  };
+
+  const handleDeclineRequest = async (targetUid: string) => {
+    try {
+      setRejectingUid(targetUid);
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
+      const all = getAllConnectionRequests();
+      const req = all.find((r) => r.fromUid === targetUid && r.toUid === currentUser.uid && r.status === 'pending');
+      if (req) {
+        await declineConnectionRequest(req.id, currentUser);
+      }
+      setActionNotice({ message: 'Connection request rejected.', type: 'success' });
+      toast('Connection request rejected.');
+      if (currentUser.uid) {
+        await syncConnectionsFromServer(currentUser.uid);
+      }
+    } catch (err: any) {
+      setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_received' }));
+      const errMsg = err?.message || 'Failed to reject request';
+      setActionNotice({ message: errMsg, type: 'error' });
+      toast(errMsg);
+    } finally {
+      setRejectingUid(null);
     }
   };
 
@@ -732,21 +757,36 @@ export function SearchConnectionsModal({
                       </button>
 
                       {status === 'connected' ? (
-                        <button
-                          type="button"
-                          className="btn primary sm"
-                          onClick={() => {
-                            onClose();
-                            onOpenChat && onOpenChat(candidate.uid, cName);
-                          }}
-                          style={{
-                            fontSize: '11px',
-                            padding: '5px 12px',
-                            background: '#099889',
-                          }}
-                        >
-                          <MessageCircle size={12} /> Chat
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span
+                            className="badge green"
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              padding: '4px 8px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            <CheckCircle2 size={11} /> CONNECTED
+                          </span>
+                          <button
+                            type="button"
+                            className="btn primary sm"
+                            onClick={() => {
+                              onClose();
+                              onOpenChat && onOpenChat(candidate.uid, cName);
+                            }}
+                            style={{
+                              fontSize: '11px',
+                              padding: '5px 12px',
+                              background: '#099889',
+                            }}
+                          >
+                            <MessageCircle size={12} /> Chat
+                          </button>
+                        </div>
                       ) : status === 'pending_sent' ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <span
@@ -763,7 +803,7 @@ export function SearchConnectionsModal({
                               border: '1px solid #cbd5e1',
                             }}
                           >
-                            <Clock size={11} /> Request Sent
+                            <Clock size={11} /> REQUEST SENT
                           </span>
                           <button
                             type="button"
@@ -775,7 +815,7 @@ export function SearchConnectionsModal({
                           >
                             {withdrawingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={10} className="spin" /> Withdrawing...
+                                <Loader2 size={10} className="spin" /> WITHDRAWING...
                               </>
                             ) : (
                               'Withdraw'
@@ -783,23 +823,59 @@ export function SearchConnectionsModal({
                           </button>
                         </div>
                       ) : status === 'pending_received' ? (
-                        <button
-                          type="button"
-                          className="btn primary sm"
-                          disabled={acceptingUid === candidate.uid}
-                          onClick={() => handleAcceptRequest(candidate.uid, cName)}
-                          style={{ fontSize: '11px', padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                        >
-                          {acceptingUid === candidate.uid ? (
-                            <>
-                              <Loader2 size={12} className="spin" /> Accepting...
-                            </>
-                          ) : (
-                            <>
-                              <Check size={12} /> Accept Request
-                            </>
-                          )}
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              background: '#ecfdf5',
+                              color: '#065f46',
+                              border: '1px solid #a7f3d0',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              letterSpacing: '0.02em',
+                            }}
+                          >
+                            <UserCheck size={11} /> CONNECTION REQUEST RECEIVED
+                          </span>
+                          <button
+                            type="button"
+                            className="btn primary sm"
+                            disabled={acceptingUid === candidate.uid || rejectingUid === candidate.uid}
+                            onClick={() => handleAcceptRequest(candidate.uid, cName)}
+                            style={{ fontSize: '11px', padding: '5px 12px', background: '#099889', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            {acceptingUid === candidate.uid ? (
+                              <>
+                                <Loader2 size={12} className="spin" /> ACCEPTING...
+                              </>
+                            ) : (
+                              <>
+                                <Check size={12} /> Accept
+                              </>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn secondary sm"
+                            disabled={rejectingUid === candidate.uid || acceptingUid === candidate.uid}
+                            onClick={() => handleDeclineRequest(candidate.uid)}
+                            style={{ fontSize: '11px', padding: '5px 8px', color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            {rejectingUid === candidate.uid ? (
+                              <>
+                                <Loader2 size={12} className="spin" /> REJECTING...
+                              </>
+                            ) : (
+                              <>
+                                <X size={12} /> Reject
+                              </>
+                            )}
+                          </button>
+                        </div>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <button
@@ -811,7 +887,7 @@ export function SearchConnectionsModal({
                           >
                             {connectingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" /> Sending...
+                                <Loader2 size={12} className="spin" /> SENDING...
                               </>
                             ) : (
                               <>

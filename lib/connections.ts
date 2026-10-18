@@ -474,23 +474,30 @@ export async function declineConnectionRequest(
 
 export async function cancelConnectionRequest(
   requestId: string,
-  currentUser?: Partial<UserProfile>
+  currentUser?: Partial<UserProfile>,
+  targetUid?: string
 ): Promise<boolean> {
   const all = getAllConnectionRequests();
-  const req = all.find((r) => r.id === requestId);
+  const req = all.find(
+    (r) =>
+      (requestId && r.id === requestId) ||
+      (targetUid && r.toUid === targetUid && r.status === 'pending')
+  );
   const prevStatus = req?.status;
+  const effectiveReqId = req?.id || requestId;
+  const effectiveTargetId = targetUid || req?.toUid;
 
   if (req) {
     req.status = 'cancelled';
     req.updatedAt = new Date().toISOString();
     saveConnectionRequests(all);
-  } else {
+  } else if (requestId) {
     const filtered = all.filter((r) => r.id !== requestId);
     saveConnectionRequests(filtered);
   }
   dispatchConnectionsChanged();
 
-  if (typeof window !== 'undefined' && requestId) {
+  if (typeof window !== 'undefined' && (effectiveReqId || effectiveTargetId)) {
     const authHeaders = getClientAuthHeaders(currentUser?.uid || req?.fromUid);
     try {
       const res = await fetch('/api/people/connections', {
@@ -499,7 +506,8 @@ export async function cancelConnectionRequest(
         credentials: 'include',
         body: JSON.stringify({
           action: 'cancel',
-          request_id: requestId,
+          request_id: effectiveReqId || undefined,
+          target_id: effectiveTargetId || undefined,
         }),
       });
 

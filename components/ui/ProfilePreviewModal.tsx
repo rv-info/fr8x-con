@@ -16,6 +16,7 @@ import {
   declineConnectionRequest,
   cancelConnectionRequest,
   removeConnection,
+  syncConnectionsFromServer,
   getUserPrivacySettings,
   getAllConnectionRequests,
   maskEmail,
@@ -617,33 +618,52 @@ export function ProfilePreviewModal({
     }
   };
 
-  const handleWithdrawRequest = () => {
+  const handleWithdrawRequest = async () => {
     if (!user?.uid || !effectiveUser?.uid) return;
     const reqs = getAllConnectionRequests();
     const req = reqs.find((r) => r.fromUid === user.uid && r.toUid === effectiveUser.uid && r.status === 'pending');
-    if (req) {
-      cancelConnectionRequest(req.id);
+    try {
+      await cancelConnectionRequest(req?.id || '', user, effectiveUser.uid);
       toast('Connection request withdrawn.');
+      if (user.uid) {
+        await syncConnectionsFromServer(user.uid);
+      }
+    } catch (err: any) {
+      toast(err?.message || 'Failed to withdraw connection request.');
     }
   };
 
-  const handleAcceptReceived = () => {
+  const handleAcceptReceived = async () => {
     if (!user?.uid || !effectiveUser?.uid) return;
     const reqs = getAllConnectionRequests();
     const req = reqs.find((r) => r.fromUid === effectiveUser.uid && r.toUid === user.uid && r.status === 'pending');
     if (req) {
-      acceptConnectionRequest(req.id, user);
-      toast(`Connected with ${resolvedName}! Direct communication unlocked.`);
+      try {
+        await acceptConnectionRequest(req.id, user);
+        toast(`Connected with ${resolvedName}! Direct communication unlocked.`);
+        if (user.uid) {
+          await syncConnectionsFromServer(user.uid);
+        }
+      } catch (err: any) {
+        toast(err?.message || 'Failed to accept connection request.');
+      }
     }
   };
 
-  const handleDeclineReceived = () => {
+  const handleDeclineReceived = async () => {
     if (!user?.uid || !effectiveUser?.uid) return;
     const reqs = getAllConnectionRequests();
     const req = reqs.find((r) => r.fromUid === effectiveUser.uid && r.toUid === user.uid && r.status === 'pending');
     if (req) {
-      declineConnectionRequest(req.id);
-      toast('Connection request declined.');
+      try {
+        await declineConnectionRequest(req.id, user);
+        toast('Connection request declined.');
+        if (user.uid) {
+          await syncConnectionsFromServer(user.uid);
+        }
+      } catch (err: any) {
+        toast(err?.message || 'Failed to decline connection request.');
+      }
     }
   };
 
