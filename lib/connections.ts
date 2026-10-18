@@ -278,11 +278,11 @@ export async function syncConnectionsFromServer(uid: string): Promise<void> {
   }
 }
 
-export function sendConnectionRequest(
+export async function sendConnectionRequest(
   fromUser: Partial<UserProfile>,
   toUser: Partial<UserProfile>,
   note?: string
-): ConnectionRequest {
+): Promise<ConnectionRequest> {
   if (!fromUser.uid || !toUser.uid) {
     throw new Error('Valid sender and recipient UIDs required');
   }
@@ -326,47 +326,59 @@ export function sendConnectionRequest(
 
   filtered.unshift(newRequest);
   saveConnectionRequests(filtered);
+  dispatchConnectionsChanged();
 
   // Authoritatively persist outgoing request and recipient notification via API
   if (typeof window !== 'undefined' && toUser.uid) {
     const authHeaders = getClientAuthHeaders(fromUser.uid);
-    fetch('/api/people/connections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'send',
-        target_id: toUser.uid,
-        message: note ? note.trim().slice(0, 300) : undefined,
-      }),
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          if (data?.request_id && data.request_id !== newId) {
-            newRequest.id = data.request_id;
-            const currentList = getAllConnectionRequests();
-            saveConnectionRequests(
-              currentList.map((r) => (r.id === newId ? { ...r, id: data.request_id } : r))
-            );
-          }
-          dispatchConnectionsChanged();
-        }
-      })
-      .catch(() => {});
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'send',
+          target_id: toUser.uid,
+          message: note ? note.trim().slice(0, 300) : undefined,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || (data && data.success === false)) {
+        // Rollback optimistic addition on server failure
+        const rollbackList = getAllConnectionRequests().filter((r) => r.id !== newId);
+        saveConnectionRequests(rollbackList);
+        dispatchConnectionsChanged();
+        throw new Error(data?.error || `Failed to send connection request (${res.status})`);
+      }
+
+      if (data?.request_id && data.request_id !== newId) {
+        newRequest.id = data.request_id;
+        const currentList = getAllConnectionRequests();
+        saveConnectionRequests(
+          currentList.map((r) => (r.id === newId ? { ...r, id: data.request_id } : r))
+        );
+      }
+      dispatchConnectionsChanged();
+    } catch (err: any) {
+      // Re-throw so caller can display actionable error and handle UI rollback
+      throw err;
+    }
   }
 
   return newRequest;
 }
 
-export function acceptConnectionRequest(
+export async function acceptConnectionRequest(
   requestId: string,
   currentUser?: Partial<UserProfile>
-) {
+): Promise<boolean> {
   const all = getAllConnectionRequests();
   const req = all.find((r) => r.id === requestId);
-  if (!req) return;
+  if (!req) return false;
 
+  const previousStatus = req.status;
   req.status = 'accepted';
   req.updatedAt = new Date().toISOString();
   saveConnectionRequests(all);
@@ -382,84 +394,92 @@ export function acceptConnectionRequest(
   map[req.fromUid] = Array.from(listA);
   map[req.toUid] = Array.from(listB);
   saveConnectionsMap(map);
+  dispatchConnectionsChanged();
 
   // Authoritatively accept via PostgreSQL API
   if (typeof window !== 'undefined' && requestId) {
     const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
-    fetch('/api/people/connections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'accept',
-        request_id: requestId,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) dispatchConnectionsChanged();
-      })
-      .catch(() => {});
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'accept',
+          request_id: requestId,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.success === false)) {
+        // Rollback
+        req.status = previousStatus;
+        saveConnectionRequests(all);
+        dispatchConnectionsChanged();
+        throw new Error(data?.error || 'Failed to accept connection request');
+      }
+
+      dispatchConnectionsChanged();
+      return true;
+    } catch (err) {
+      throw err;
+    }
   }
 
-  // Sync to users storage if possible
-  if (typeof window !== 'undefined') {
-    try {
-      const usersRaw = localStorage.getItem(USERS_STORAGE_KEY);
-      if (usersRaw) {
-        const users: UserProfile[] = JSON.parse(usersRaw);
-        let changed = false;
-        users.forEach((u) => {
-          if (u.uid === req.fromUid) {
-            const set = new Set(u.contacts || []);
-            set.add(req.toUid);
-            u.contacts = Array.from(set);
-            changed = true;
-          }
-          if (u.uid === req.toUid) {
-            const set = new Set(u.contacts || []);
-            set.add(req.fromUid);
-            u.contacts = Array.from(set);
-            changed = true;
-          }
-        });
-        if (changed) {
-          localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-        }
-      }
-    } catch {}
-  }
+  return true;
 }
 
-export function declineConnectionRequest(requestId: string, currentUser?: Partial<UserProfile>) {
+export async function declineConnectionRequest(
+  requestId: string,
+  currentUser?: Partial<UserProfile>
+): Promise<boolean> {
   const all = getAllConnectionRequests();
   const req = all.find((r) => r.id === requestId);
-  if (!req) return;
+  if (!req) return false;
 
+  const prevStatus = req.status;
   req.status = 'declined';
   req.updatedAt = new Date().toISOString();
   saveConnectionRequests(all);
+  dispatchConnectionsChanged();
 
   if (typeof window !== 'undefined' && requestId) {
     const authHeaders = getClientAuthHeaders(currentUser?.uid || req.toUid);
-    fetch('/api/people/connections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'decline',
-        request_id: requestId,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) dispatchConnectionsChanged();
-      })
-      .catch(() => {});
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'decline',
+          request_id: requestId,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.success === false)) {
+        req.status = prevStatus;
+        saveConnectionRequests(all);
+        dispatchConnectionsChanged();
+        throw new Error(data?.error || 'Failed to decline request');
+      }
+      dispatchConnectionsChanged();
+      return true;
+    } catch (err) {
+      throw err;
+    }
   }
+
+  return true;
 }
 
-export function cancelConnectionRequest(requestId: string, currentUser?: Partial<UserProfile>) {
+export async function cancelConnectionRequest(
+  requestId: string,
+  currentUser?: Partial<UserProfile>
+): Promise<boolean> {
   const all = getAllConnectionRequests();
   const req = all.find((r) => r.id === requestId);
+  const prevStatus = req?.status;
+
   if (req) {
     req.status = 'cancelled';
     req.updatedAt = new Date().toISOString();
@@ -468,23 +488,39 @@ export function cancelConnectionRequest(requestId: string, currentUser?: Partial
     const filtered = all.filter((r) => r.id !== requestId);
     saveConnectionRequests(filtered);
   }
+  dispatchConnectionsChanged();
 
   if (typeof window !== 'undefined' && requestId) {
     const authHeaders = getClientAuthHeaders(currentUser?.uid || req?.fromUid);
-    fetch('/api/people/connections', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders },
-      credentials: 'include',
-      body: JSON.stringify({
-        action: 'cancel',
-        request_id: requestId,
-      }),
-    })
-      .then((res) => {
-        if (res.ok) dispatchConnectionsChanged();
-      })
-      .catch(() => {});
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'cancel',
+          request_id: requestId,
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || (data && data.success === false)) {
+        if (req && prevStatus) {
+          req.status = prevStatus;
+          saveConnectionRequests(all);
+        }
+        dispatchConnectionsChanged();
+        throw new Error(data?.error || 'Failed to withdraw connection request');
+      }
+
+      dispatchConnectionsChanged();
+      return true;
+    } catch (err) {
+      throw err;
+    }
   }
+
+  return true;
 }
 
 export function removeConnection(uidA: string, uidB: string) {

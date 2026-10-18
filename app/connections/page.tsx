@@ -312,11 +312,11 @@ function BlockedRow({ item, onAction }: { item: BlockItem; onAction: (id: string
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 const TAB_CONFIG: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'connections', label: 'My Contacts',         icon: Users    },
-  { id: 'incoming',   label: 'Received Requests',   icon: UserPlus },
-  { id: 'outgoing',   label: 'Sent Requests',       icon: Clock    },
-  { id: 'withdrawn',  label: 'Withdrawn Requests',  icon: RotateCcw },
-  { id: 'blocked',    label: 'Blocked',             icon: Shield   },
+  { id: 'connections', label: 'Connected Contacts',   icon: Users    },
+  { id: 'incoming',   label: 'Received Requests',    icon: UserPlus },
+  { id: 'outgoing',   label: 'Sent Requests',        icon: Clock    },
+  { id: 'withdrawn',  label: 'Withdrawn Requests',   icon: RotateCcw },
+  { id: 'blocked',    label: 'Blocked',              icon: Shield   },
 ];
 
 export default function ConnectionsPage() {
@@ -327,8 +327,8 @@ export default function ConnectionsPage() {
   const [error, setError]           = useState<string | null>(null);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
-  const fetchTab = useCallback(async (tab: Tab) => {
-    setLoading(true);
+  const fetchTab = useCallback(async (tab: Tab, isBackground = false) => {
+    if (!isBackground) setLoading(true);
     setError(null);
     try {
       const authHeaders = getClientAuthHeaders();
@@ -338,14 +338,14 @@ export default function ConnectionsPage() {
       });
       const json = await res.json();
       if (!res.ok || !json.success) {
-        setError(json.error ?? 'Failed to load data.');
+        if (!isBackground) setError(json.error ?? 'Failed to load data.');
       } else {
         setData(json.data ?? []);
       }
     } catch {
-      setError('Failed to load data. Please try again.');
+      if (!isBackground) setError('Failed to load data. Please try again.');
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   }, []);
 
@@ -353,9 +353,18 @@ export default function ConnectionsPage() {
     fetchTab(activeTab);
   }, [activeTab, fetchTab]);
 
+  // Polling fallback every 8 seconds for incoming requests tab to guarantee instantaneous sync even if websocket drops
+  useEffect(() => {
+    if (activeTab !== 'incoming') return;
+    const interval = setInterval(() => {
+      fetchTab('incoming', true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [activeTab, fetchTab]);
+
   useEffect(() => {
     const handleChanged = () => {
-      fetchTab(activeTab);
+      fetchTab(activeTab, true);
     };
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleChanged);
     return () => {

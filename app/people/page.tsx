@@ -13,7 +13,8 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { LayoutGrid, List, Users } from 'lucide-react';
+import Link from 'next/link';
+import { LayoutGrid, List, Users, UserPlus, Clock } from 'lucide-react';
 import { SearchFilters, PeopleSearchFilters } from '@/components/people/SearchFilters';
 import { PersonCard, PersonCardSkeleton, PersonCardData } from '@/components/people/PersonCard';
 import { ConnectionStatus } from '@/components/people/ConnectionButton';
@@ -217,24 +218,79 @@ export default function PeoplePage() {
           </div>
         </div>
 
-        {/* View toggle */}
-        <div className="people-view-toggle" role="group" aria-label="Results view">
-          <button
-            className={`people-view-btn ${view === 'card' ? 'active' : ''}`}
-            onClick={() => setView('card')}
-            aria-pressed={view === 'card'}
-            aria-label="Card view"
-          >
-            <LayoutGrid size={16} />
-          </button>
-          <button
-            className={`people-view-btn ${view === 'list' ? 'active' : ''}`}
-            onClick={() => setView('list')}
-            aria-pressed={view === 'list'}
-            aria-label="List view"
-          >
-            <List size={16} />
-          </button>
+        {/* View toggle & Directory Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: '6px', gap: '4px' }}>
+            <Link
+              href="/connections?tab=incoming"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: '#0284c7',
+                background: '#ffffff',
+                textDecoration: 'none',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+              }}
+            >
+              <UserPlus size={13} /> Received Requests
+            </Link>
+            <Link
+              href="/connections?tab=outgoing"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: '#475569',
+                textDecoration: 'none',
+              }}
+            >
+              <Clock size={13} /> Sent Requests
+            </Link>
+            <Link
+              href="/connections?tab=connections"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 10px',
+                borderRadius: '4px',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: '#475569',
+                textDecoration: 'none',
+              }}
+            >
+              <Users size={13} /> Connected
+            </Link>
+          </div>
+
+          <div className="people-view-toggle" role="group" aria-label="Results view">
+            <button
+              className={`people-view-btn ${view === 'card' ? 'active' : ''}`}
+              onClick={() => setView('card')}
+              aria-pressed={view === 'card'}
+              aria-label="Card view"
+            >
+              <LayoutGrid size={16} />
+            </button>
+            <button
+              className={`people-view-btn ${view === 'list' ? 'active' : ''}`}
+              onClick={() => setView('list')}
+              aria-pressed={view === 'list'}
+              aria-label="List view"
+            >
+              <List size={16} />
+            </button>
+          </div>
         </div>
       </div>
 

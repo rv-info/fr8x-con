@@ -17,6 +17,7 @@ import {
   X,
   Send,
   ExternalLink,
+  Loader2,
 } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { UserProfile } from '@/lib/types';
@@ -64,6 +65,11 @@ export function SearchConnectionsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [connectingUid, setConnectingUid] = useState<string | null>(null);
+  const [withdrawingUid, setWithdrawingUid] = useState<string | null>(null);
+  const [acceptingUid, setAcceptingUid] = useState<string | null>(null);
+  const [connectionsVersion, setConnectionsVersion] = useState(0);
+  const [localStatusMap, setLocalStatusMap] = useState<Record<string, string>>({});
+  const [actionNotice, setActionNotice] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [notePromptUid, setNotePromptUid] = useState<string | null>(null);
   const [customNote, setCustomNote] = useState('');
   const [recentSearches, setRecentSearches] = useState<{ id: string; query: string }[]>([]);
@@ -171,6 +177,18 @@ export function SearchConnectionsModal({
     return () => clearTimeout(timer);
   }, [searchTerm, isOpen]);
 
+  // Reactive listener for connection events to immediately update open modal cards
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleConnChanged = () => {
+      setConnectionsVersion((v) => v + 1);
+    };
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChanged);
+    return () => {
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChanged);
+    };
+  }, [isOpen]);
+
   // Compute affinity and filter candidates
   const scoredCandidates = useMemo(() => {
     if (!currentUser?.uid) return [];
@@ -200,7 +218,8 @@ export function SearchConnectionsModal({
     return deduplicatedMembers
       .map((candidate) => {
         const { score, percentage, reasons, topBadges } = calculateConnectionAffinity(currentUser, candidate);
-        const status = getConnectionStatus(currentUser.uid, candidate.uid);
+        const baseStatus = getConnectionStatus(currentUser.uid, candidate.uid);
+        const status = (localStatusMap[candidate.uid] as any) || baseStatus;
 
         return {
           user: candidate,
@@ -236,33 +255,45 @@ export function SearchConnectionsModal({
         if (a.status !== 'connected' && b.status === 'connected') return -1;
         return b.percentage - a.percentage;
       });
-  }, [allMembers, currentUser, activeFilter]);
+  }, [allMembers, currentUser, activeFilter, connectionsVersion, localStatusMap]);
 
   const handleSendRequest = async (targetUser: UserProfile, noteText?: string) => {
     if (!currentUser.uid || !targetUser.uid) return;
     if (isSelfProfile(currentUser, targetUser)) {
+      setActionNotice({ message: 'You cannot send a connection request to yourself.', type: 'error' });
       toast('You cannot send a connection request to yourself.');
       return;
     }
     if (isTestOrDummyAccount(targetUser)) {
+      setActionNotice({ message: 'This user is not available for connections.', type: 'error' });
       toast('This user is not available for connections.');
       return;
     }
     try {
       setConnectingUid(targetUser.uid);
-      sendConnectionRequest(
+      setLocalStatusMap((prev) => ({ ...prev, [targetUser.uid]: 'pending_sent' }));
+      await sendConnectionRequest(
         currentUser,
         targetUser,
         noteText || `Hi ${targetUser.firstName || targetUser.displayName}, let's connect on FR8X!`
       );
-      toast(`Connection invitation sent to ${targetUser.displayName || targetUser.firstName}!`);
+      const targetName = targetUser.displayName || targetUser.firstName || 'Member';
+      setActionNotice({ message: `Connection invitation sent to ${targetName}!`, type: 'success' });
+      toast(`Connection invitation sent to ${targetName}!`);
       setNotePromptUid(null);
       setCustomNote('');
       if (currentUser.uid) {
         await syncConnectionsFromServer(currentUser.uid);
       }
     } catch (err: any) {
-      toast(err.message || 'Failed to send connection request');
+      setLocalStatusMap((prev) => {
+        const copy = { ...prev };
+        delete copy[targetUser.uid];
+        return copy;
+      });
+      const errMsg = err?.message || 'Failed to send connection request';
+      setActionNotice({ message: errMsg, type: 'error' });
+      toast(errMsg);
     } finally {
       setConnectingUid(null);
     }
@@ -272,10 +303,22 @@ export function SearchConnectionsModal({
     const all = getAllConnectionRequests();
     const req = all.find((r) => r.fromUid === targetUid && r.toUid === currentUser.uid && r.status === 'pending');
     if (req) {
-      acceptConnectionRequest(req.id, currentUser);
-      toast(`Connected with ${targetName}!`);
-      if (currentUser.uid) {
-        await syncConnectionsFromServer(currentUser.uid);
+      try {
+        setAcceptingUid(targetUid);
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'connected' }));
+        await acceptConnectionRequest(req.id, currentUser);
+        setActionNotice({ message: `Connected with ${targetName}!`, type: 'success' });
+        toast(`Connected with ${targetName}!`);
+        if (currentUser.uid) {
+          await syncConnectionsFromServer(currentUser.uid);
+        }
+      } catch (err: any) {
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_received' }));
+        const errMsg = err?.message || 'Failed to accept connection request';
+        setActionNotice({ message: errMsg, type: 'error' });
+        toast(errMsg);
+      } finally {
+        setAcceptingUid(null);
       }
     }
   };
@@ -284,10 +327,22 @@ export function SearchConnectionsModal({
     const all = getAllConnectionRequests();
     const req = all.find((r) => r.fromUid === currentUser.uid && r.toUid === targetUid && r.status === 'pending');
     if (req) {
-      cancelConnectionRequest(req.id);
-      toast('Connection request withdrawn.');
-      if (currentUser.uid) {
-        await syncConnectionsFromServer(currentUser.uid);
+      try {
+        setWithdrawingUid(targetUid);
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'none' }));
+        await cancelConnectionRequest(req.id, currentUser);
+        setActionNotice({ message: 'Connection request withdrawn.', type: 'success' });
+        toast('Connection request withdrawn.');
+        if (currentUser.uid) {
+          await syncConnectionsFromServer(currentUser.uid);
+        }
+      } catch (err: any) {
+        setLocalStatusMap((prev) => ({ ...prev, [targetUid]: 'pending_sent' }));
+        const errMsg = err?.message || 'Failed to withdraw connection request';
+        setActionNotice({ message: errMsg, type: 'error' });
+        toast(errMsg);
+      } finally {
+        setWithdrawingUid(null);
       }
     }
   };
@@ -442,6 +497,43 @@ export function SearchConnectionsModal({
             ))}
           </div>
         </div>
+
+        {/* In-Modal Realtime Action Feedback Banner */}
+        {actionNotice && (
+          <div
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '10px',
+              background: actionNotice.type === 'success' ? '#f0fdf4' : actionNotice.type === 'error' ? '#fef2f2' : '#eff6ff',
+              border: `1px solid ${actionNotice.type === 'success' ? '#bbf7d0' : actionNotice.type === 'error' ? '#fecaca' : '#bfdbfe'}`,
+              color: actionNotice.type === 'success' ? '#166534' : actionNotice.type === 'error' ? '#991b1b' : '#1e40af',
+              animation: 'fadeIn 0.2s ease',
+            }}
+          >
+            <span>{actionNotice.message}</span>
+            <button
+              type="button"
+              onClick={() => setActionNotice(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'inherit',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '13px',
+                padding: '0 4px',
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {/* Results List */}
         <div
@@ -676,21 +768,37 @@ export function SearchConnectionsModal({
                           <button
                             type="button"
                             className="btn secondary sm"
+                            disabled={withdrawingUid === candidate.uid}
                             onClick={() => handleWithdrawRequest(candidate.uid)}
-                            style={{ fontSize: '10px', color: '#dc2626', padding: '4px 6px' }}
+                            style={{ fontSize: '10px', color: '#dc2626', padding: '4px 6px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                             title="Withdraw request"
                           >
-                            Withdraw
+                            {withdrawingUid === candidate.uid ? (
+                              <>
+                                <Loader2 size={10} className="spin" /> Withdrawing...
+                              </>
+                            ) : (
+                              'Withdraw'
+                            )}
                           </button>
                         </div>
                       ) : status === 'pending_received' ? (
                         <button
                           type="button"
                           className="btn primary sm"
+                          disabled={acceptingUid === candidate.uid}
                           onClick={() => handleAcceptRequest(candidate.uid, cName)}
-                          style={{ fontSize: '11px', padding: '5px 12px' }}
+                          style={{ fontSize: '11px', padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                         >
-                          <Check size={12} /> Accept Request
+                          {acceptingUid === candidate.uid ? (
+                            <>
+                              <Loader2 size={12} className="spin" /> Accepting...
+                            </>
+                          ) : (
+                            <>
+                              <Check size={12} /> Accept Request
+                            </>
+                          )}
                         </button>
                       ) : (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -699,13 +807,22 @@ export function SearchConnectionsModal({
                             className="btn primary sm"
                             disabled={connectingUid === candidate.uid}
                             onClick={() => handleSendRequest(candidate)}
-                            style={{ fontSize: '11px', padding: '5px 12px' }}
+                            style={{ fontSize: '11px', padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                           >
-                            <UserPlus size={12} /> Connect
+                            {connectingUid === candidate.uid ? (
+                              <>
+                                <Loader2 size={12} className="spin" /> Sending...
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus size={12} /> Connect
+                              </>
+                            )}
                           </button>
                           <button
                             type="button"
                             className="btn secondary sm"
+                            disabled={connectingUid === candidate.uid}
                             onClick={() => {
                               setNotePromptUid(isNoteOpen ? null : candidate.uid);
                               setCustomNote('');

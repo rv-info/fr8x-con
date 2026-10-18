@@ -580,17 +580,31 @@ class PeopleDirectoryStore {
     return true;
   }
 
-  public cancelRequest(userId: string, requestId: string): boolean {
-    const req = this.requests.get(requestId);
+  public cancelRequest(userId: string, requestId?: string, targetId?: string): boolean {
+    let req: InMemRequest | undefined;
+    if (requestId) {
+      req = this.requests.get(requestId);
+    }
+    if (!req && targetId) {
+      for (const r of this.requests.values()) {
+        if (r.requester_id === userId && r.recipient_id === targetId && r.status === 'pending') {
+          req = r;
+          break;
+        }
+      }
+    }
     if (!req || req.requester_id !== userId || req.status !== 'pending') return false;
 
-    req.status = 'cancelled';
+    req.status = 'withdrawn';
     req.updated_at = new Date().toISOString();
 
-    // Mark recipient's notification as read
+    // Mark recipient's notification as read and note withdrawal
     const recipientNotifs = this.notifications.get(req.recipient_id) || [];
     recipientNotifs.forEach((n) => {
-      if (n.related_id === requestId) n.read = true;
+      if (n.related_id === req!.id) {
+        n.read = true;
+        n.description = 'This connection request was withdrawn by the sender.';
+      }
     });
 
     return true;

@@ -166,6 +166,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   }, []);
 
   const categoryMap: Record<string, { icon: React.ReactNode; color: string }> = {
+    network: { icon: <Users size={13} />, color: '#0284c7' },
     auctions: { icon: <Gavel size={13} />, color: '#1168d7' },
     bids: { icon: <Gavel size={13} />, color: '#099889' },
     chat: { icon: <MessageSquare size={13} />, color: '#7c3aed' },
@@ -175,8 +176,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
     subscription: { icon: <Users size={13} />, color: '#dc2626' },
   };
 
-  // Group notifications by category
-  const categories = ['auctions', 'bids', 'chat', 'feeds', 'jobs', 'system'] as const;
+  // Group notifications by category (including enterprise network connections)
+  const categories = ['network', 'auctions', 'bids', 'chat', 'feeds', 'jobs', 'system'] as const;
 
   // Quick search results
   const quickSearchLinks = [

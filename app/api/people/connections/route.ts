@@ -37,7 +37,8 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action:     z.literal('cancel'),
-    request_id: z.string().min(1, 'request_id is required'),
+    request_id: z.string().optional(),
+    target_id:  z.string().optional(),
   }),
   z.object({
     action:    z.literal('remove'),
@@ -391,6 +392,14 @@ export async function POST(req: NextRequest) {
   const action = parsed.data;
   const adminClient = createAdminClient();
 
+  // Enforce cancel parameter check
+  if (action.action === 'cancel' && !action.request_id && !action.target_id) {
+    return NextResponse.json(
+      { success: false, error: 'Either request_id or target_id must be provided to withdraw a request.', code: 'VALIDATION_ERROR' },
+      { status: 400 }
+    );
+  }
+
   // Enforce self checks
   if ('target_id' in action && action.target_id === userId) {
     return NextResponse.json(
@@ -497,15 +506,21 @@ export async function POST(req: NextRequest) {
             break;
           }
           case 'cancel': {
-            if (UUID_REGEX.test(action.request_id)) {
+            let reqId = action.request_id;
+            if (!reqId && action.target_id) {
+              // Try finding pending request id by target_id
+              const status = peopleDirectoryStore.getConnectionStatus(userId, action.target_id);
+              if (status.request_id) reqId = status.request_id;
+            }
+            if (reqId && UUID_REGEX.test(reqId)) {
               const { data, error } = await adminClient.rpc('cancel_connection_request', {
                 p_requester_id: userId,
-                p_request_id:   action.request_id,
+                p_request_id:   reqId,
               });
               if (!error && data) {
                 result = data;
                 handled = true;
-                peopleDirectoryStore.cancelRequest(userId, action.request_id);
+                peopleDirectoryStore.cancelRequest(userId, reqId, action.target_id);
               }
             }
             break;
@@ -589,7 +604,7 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'cancel': {
-          const ok = peopleDirectoryStore.cancelRequest(userId, action.request_id);
+          const ok = peopleDirectoryStore.cancelRequest(userId, action.request_id, action.target_id);
           result = ok ? { success: true } : { success: false, error: 'Request not found.', code: 'NOT_FOUND' };
           break;
         }

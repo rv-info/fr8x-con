@@ -2058,15 +2058,16 @@ textarea.input {
   color: var(--ink);
 }
 
-/* Toast Container */
+/* Toast Container — Always in front of all dialogs and modals (z-index 100001 > modalbg 99999) */
 .toastbox {
   position: fixed;
   right: 18px;
   bottom: 88px;
-  z-index: 150;
+  z-index: 100001;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  pointer-events: none;
 }
 
 .toast {
@@ -2077,6 +2078,7 @@ textarea.input {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
   font-size: 12px;
   max-width: 340px;
+  pointer-events: auto;
   animation: slideIn 0.2s ease forwards;
 }
 
