@@ -696,8 +696,8 @@ export async function POST(req: NextRequest) {
           break;
         }
         case 'cancel': {
-          peopleDirectoryStore.cancelRequest(userId, action.request_id, action.target_id);
-          result = { success: true, status: 'cancelled', message: 'Connection request withdrawn.' };
+          const cancelRes = peopleDirectoryStore.cancelRequest(userId, action.request_id, action.target_id);
+          result = cancelRes.success ? { success: true, status: 'cancelled', message: 'Connection request withdrawn.' } : cancelRes;
           break;
         }
         case 'remove': {
