@@ -161,14 +161,6 @@ export async function resolveCallerIdentity(req: NextRequest): Promise<{
     // Continue
   }
 
-  // 3. Header fallback
-  const customUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
-  if (customUid && customUid.trim()) {
-    return {
-      userId: customUid.trim(),
-    };
-  }
-
   return { userId: null };
 }
 
@@ -884,22 +876,69 @@ export async function acceptConnectionRequestBackend(
   const recipientAliases = await resolveUserAliases(recipientId, userToken);
   const recipientAliasSet = new Set(recipientAliases.map((a) => a.toLowerCase()));
 
-  // Find record in disk/memory store
   const disk = loadDiskStore();
-  let match = disk.connections.find((c) => {
-    const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
-    const req = (c.requester_id || '').toLowerCase();
-    if (c.status !== 'pending') return false;
-    if (requestId && (c.id === requestId || c.id.includes(requestId))) return true;
-    if (recipientAliasSet.has(rec)) {
-      if (requesterId && (req === requesterId.toLowerCase() || req.includes(requesterId.toLowerCase()))) return true;
-      if (requestId && (req === requestId.toLowerCase() || req.includes(requestId.toLowerCase()))) return true;
-    }
-    return false;
-  });
+  let targetRecord: PersistentConnectionRecord | undefined;
 
-  const actualReqId = match?.id || requestId || '';
-  const actualSenderId = match?.requester_id || requesterId || (requestId && !requestId.includes('-') ? requestId : '');
+  if (requestId) {
+    targetRecord = disk.connections.find((c) => c.id === requestId || c.id.includes(requestId));
+    if (!targetRecord) {
+      const memReq = peopleDirectoryStore.getRequestById(requestId);
+      if (memReq) {
+        targetRecord = {
+          id: memReq.id,
+          requester_id: memReq.requester_id,
+          recipient_id: memReq.recipient_id,
+          receiver_id: memReq.recipient_id,
+          status: memReq.status as any,
+          created_at: memReq.created_at,
+          updated_at: memReq.updated_at,
+        };
+      }
+    }
+  }
+
+  if (!targetRecord && requesterId) {
+    targetRecord = disk.connections.find((c) => {
+      const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
+      const req = (c.requester_id || '').toLowerCase();
+      return (
+        recipientAliasSet.has(rec) &&
+        (req === requesterId.toLowerCase() || req.includes(requesterId.toLowerCase())) &&
+        c.status === 'pending'
+      );
+    });
+  }
+
+  // Strict Authorization: Only the intended recipient can accept the request
+  if (targetRecord) {
+    const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
+    if (!recipientAliasSet.has(targetRec)) {
+      return {
+        success: false,
+        code: 'FORBIDDEN',
+        error: 'You are not authorized to accept this connection request.',
+      };
+    }
+    if (targetRecord.status !== 'pending') {
+      if (targetRecord.status === 'accepted') {
+        return { success: true };
+      }
+      return {
+        success: false,
+        code: 'INVALID_STATE',
+        error: `Cannot accept request with status ${targetRecord.status}.`,
+      };
+    }
+  } else {
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Connection request not found.',
+    };
+  }
+
+  const actualReqId = targetRecord.id;
+  const actualSenderId = targetRecord.requester_id;
 
   // 1. Update in Supabase `connections` table
   try {
@@ -971,6 +1010,7 @@ export async function acceptConnectionRequestBackend(
     } catch {}
 
     upsertMemoryNotification(accNotif);
+    disk.notifications.push(accNotif);
   }
 
   // 3. Mark recipient's original connection_request notification as read
@@ -987,24 +1027,24 @@ export async function acceptConnectionRequestBackend(
     }
   } catch {}
 
-  // 4. Update memory & disk store
-  if (match) {
-    match.status = 'accepted';
-    match.updated_at = now;
-    saveDiskStore(disk);
-  } else if (actualReqId) {
-    upsertMemoryConnection({
-      id: actualReqId,
-      requester_id: actualSenderId,
-      recipient_id: recipientId,
-      receiver_id: recipientId,
-      status: 'accepted',
-      created_at: now,
-      updated_at: now,
-    });
+  for (const n of disk.notifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+    }
+  }
+  for (const n of memoryNotifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+    }
   }
 
-  // 5. Mirror to peopleDirectoryStore
+  // 4. Update memory & disk store
+  targetRecord.status = 'accepted';
+  targetRecord.updated_at = now;
+  saveDiskStore(disk);
+  upsertMemoryConnection(targetRecord);
+
+  // 5. Mirror to peopleDirectoryStore (bidirectionally so both participants see each other)
   if (actualSenderId) {
     peopleDirectoryStore.upsertConnection(recipientId, actualSenderId);
     peopleDirectoryStore.upsertConnection(actualSenderId, recipientId);
@@ -1021,7 +1061,7 @@ export async function cancelConnectionRequestBackend(
   requestId?: string,
   recipientId?: string,
   userToken?: string
-): Promise<{ success: boolean; status: string; message: string }> {
+): Promise<{ success: boolean; status: string; message: string; code?: string; error?: string }> {
   initStore();
   const now = new Date().toISOString();
   const senderAliases = await resolveUserAliases(senderId, userToken);
@@ -1033,26 +1073,62 @@ export async function cancelConnectionRequestBackend(
   }
 
   const disk = loadDiskStore();
-  // Prioritize active pending request
-  let match = disk.connections.find((c) => {
-    const req = (c.requester_id || '').toLowerCase();
-    const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
-    if (!senderAliasSet.has(req)) return false;
-    if (c.status !== 'pending') return false;
-    if (requestId && (c.id === requestId || c.id.includes(requestId))) return true;
-    if (recipientId && (recipientAliasSet.has(rec) || rec === recipientId.toLowerCase())) return true;
-    return false;
-  }) || disk.connections.find((c) => {
-    const req = (c.requester_id || '').toLowerCase();
-    const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
-    if (!senderAliasSet.has(req)) return false;
-    if (requestId && (c.id === requestId || c.id.includes(requestId))) return true;
-    if (recipientId && (recipientAliasSet.has(rec) || rec === recipientId.toLowerCase())) return true;
-    return false;
-  });
+  let targetRecord: PersistentConnectionRecord | undefined;
 
-  const actualReqId = match?.id || requestId || '';
-  const actualTargetId = match?.recipient_id || match?.receiver_id || recipientId || '';
+  if (requestId) {
+    targetRecord = disk.connections.find((c) => c.id === requestId || c.id.includes(requestId));
+    if (!targetRecord) {
+      const memReq = peopleDirectoryStore.getRequestById(requestId);
+      if (memReq) {
+        targetRecord = {
+          id: memReq.id,
+          requester_id: memReq.requester_id,
+          recipient_id: memReq.recipient_id,
+          receiver_id: memReq.recipient_id,
+          status: memReq.status as any,
+          created_at: memReq.created_at,
+          updated_at: memReq.updated_at,
+        };
+      }
+    }
+  }
+
+  if (!targetRecord && recipientId) {
+    targetRecord = disk.connections.find((c) => {
+      const req = (c.requester_id || '').toLowerCase();
+      const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
+      return (
+        senderAliasSet.has(req) &&
+        (recipientAliasSet.has(rec) || rec === recipientId.toLowerCase()) &&
+        c.status === 'pending'
+      );
+    });
+  }
+
+  // Strict Authorization: Only the actual requester can withdraw their outgoing request
+  if (targetRecord) {
+    const reqOwner = (targetRecord.requester_id || '').toLowerCase();
+    if (!senderAliasSet.has(reqOwner)) {
+      return {
+        success: false,
+        code: 'FORBIDDEN',
+        status: 'forbidden',
+        error: 'You are not authorized to withdraw this connection request.',
+        message: 'You are not authorized to withdraw this connection request.',
+      };
+    }
+  } else {
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      status: 'not_found',
+      error: 'Connection request not found.',
+      message: 'Connection request not found.',
+    };
+  }
+
+  const actualReqId = targetRecord.id;
+  const actualTargetId = targetRecord.recipient_id || targetRecord.receiver_id || recipientId || '';
 
   // 1. Update in Supabase `connections` table
   try {
@@ -1079,35 +1155,35 @@ export async function cancelConnectionRequestBackend(
     console.warn('[ConnectionsBackend] Supabase cancel update warning:', err);
   }
 
-  // 2. Update notification to withdrawn for recipient
-  if (actualTargetId && actualReqId) {
-    try {
-      const admin = createAdminClient();
-      const userClient = createSupabaseServerClient();
-      const client = admin || userClient || getDbClient(userToken);
-      await client
-        .from('notifications')
-        .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
-        .eq('related_id', actualReqId);
-    } catch {}
+  // 2. Update notification to withdrawn for recipient in Supabase, disk, and memory
+  try {
+    const admin = createAdminClient();
+    const userClient = createSupabaseServerClient();
+    const client = admin || userClient || getDbClient(userToken);
+    await client
+      .from('notifications')
+      .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
+      .eq('related_id', actualReqId);
+  } catch {}
+
+  for (const n of disk.notifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+      n.description = 'This connection request was withdrawn by the sender.';
+    }
+  }
+  for (const n of memoryNotifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+      n.description = 'This connection request was withdrawn by the sender.';
+    }
   }
 
   // 3. Update memory and disk
-  if (match) {
-    match.status = 'cancelled';
-    match.updated_at = now;
-    saveDiskStore(disk);
-  } else if (actualReqId) {
-    upsertMemoryConnection({
-      id: actualReqId,
-      requester_id: senderId,
-      recipient_id: actualTargetId,
-      receiver_id: actualTargetId,
-      status: 'cancelled',
-      created_at: now,
-      updated_at: now,
-    });
-  }
+  targetRecord.status = 'cancelled';
+  targetRecord.updated_at = now;
+  saveDiskStore(disk);
+  upsertMemoryConnection(targetRecord);
 
   // 4. Mirror to peopleDirectoryStore
   peopleDirectoryStore.cancelRequest(senderId, actualReqId, actualTargetId);
@@ -1120,24 +1196,65 @@ export async function declineConnectionRequestBackend(
   requestId?: string,
   requesterId?: string,
   userToken?: string
-): Promise<{ success: boolean }> {
+): Promise<{ success: boolean; error?: string; code?: string }> {
   initStore();
   const now = new Date().toISOString();
   const recipientAliases = await resolveUserAliases(recipientId, userToken);
   const recipientAliasSet = new Set(recipientAliases.map((a) => a.toLowerCase()));
 
   const disk = loadDiskStore();
-  let match = disk.connections.find((c) => {
-    const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
-    const req = (c.requester_id || '').toLowerCase();
-    if (!recipientAliasSet.has(rec)) return false;
-    if (requestId && (c.id === requestId || c.id.includes(requestId))) return true;
-    if (requesterId && (req === requesterId.toLowerCase() || req.includes(requesterId.toLowerCase()))) return true;
-    return false;
-  });
+  let targetRecord: PersistentConnectionRecord | undefined;
 
-  const actualReqId = match?.id || requestId || '';
-  const actualRequesterId = match?.requester_id || requesterId || '';
+  if (requestId) {
+    targetRecord = disk.connections.find((c) => c.id === requestId || c.id.includes(requestId));
+    if (!targetRecord) {
+      const memReq = peopleDirectoryStore.getRequestById(requestId);
+      if (memReq) {
+        targetRecord = {
+          id: memReq.id,
+          requester_id: memReq.requester_id,
+          recipient_id: memReq.recipient_id,
+          receiver_id: memReq.recipient_id,
+          status: memReq.status as any,
+          created_at: memReq.created_at,
+          updated_at: memReq.updated_at,
+        };
+      }
+    }
+  }
+
+  if (!targetRecord && requesterId) {
+    targetRecord = disk.connections.find((c) => {
+      const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
+      const req = (c.requester_id || '').toLowerCase();
+      return (
+        recipientAliasSet.has(rec) &&
+        (req === requesterId.toLowerCase() || req.includes(requesterId.toLowerCase())) &&
+        c.status === 'pending'
+      );
+    });
+  }
+
+  // Strict Authorization: Only the intended recipient can decline
+  if (targetRecord) {
+    const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
+    if (!recipientAliasSet.has(targetRec)) {
+      return {
+        success: false,
+        code: 'FORBIDDEN',
+        error: 'You are not authorized to decline this connection request.',
+      };
+    }
+  } else {
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Connection request not found.',
+    };
+  }
+
+  const actualReqId = targetRecord.id;
+  const actualRequesterId = targetRecord.requester_id;
 
   // 1. Update in Supabase
   try {
@@ -1161,14 +1278,25 @@ export async function declineConnectionRequestBackend(
     }
   } catch {}
 
-  // 2. Update memory & disk
-  if (match) {
-    match.status = 'rejected';
-    match.updated_at = now;
-    saveDiskStore(disk);
+  // 2. Mark recipient notification read
+  for (const n of disk.notifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+    }
+  }
+  for (const n of memoryNotifications) {
+    if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
+      n.read = true;
+    }
   }
 
-  // 3. Mirror in peopleDirectoryStore
+  // 3. Update memory & disk
+  targetRecord.status = 'rejected';
+  targetRecord.updated_at = now;
+  saveDiskStore(disk);
+  upsertMemoryConnection(targetRecord);
+
+  // 4. Mirror in peopleDirectoryStore
   if (actualReqId) {
     peopleDirectoryStore.declineRequest(recipientId, actualReqId);
   }

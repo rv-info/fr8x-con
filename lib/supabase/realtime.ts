@@ -86,6 +86,44 @@ export class HardenedRealtimeManager {
           this.handleConnectionRequestEvent(payload, config.onStateChange);
         }
       )
+      // Listen for incoming connection requests on public.connections table
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connections',
+          filter: `recipient_id=eq.${this.currentUserId}`,
+        },
+        (payload: any) => {
+          this.handleConnectionRequestEvent(payload, config.onStateChange);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connections',
+          filter: `receiver_id=eq.${this.currentUserId}`,
+        },
+        (payload: any) => {
+          this.handleConnectionRequestEvent(payload, config.onStateChange);
+        }
+      )
+      // Listen for outgoing connection updates on public.connections table
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'connections',
+          filter: `requester_id=eq.${this.currentUserId}`,
+        },
+        (payload: any) => {
+          this.handleConnectionRequestEvent(payload, config.onStateChange);
+        }
+      )
       // Listen for reciprocal accepted connections entry
       .on(
         'postgres_changes',
@@ -120,6 +158,28 @@ export class HardenedRealtimeManager {
           config.onNotificationChange?.(payload);
         }
       )
+      // Listen for real-time broadcast events
+      .on(
+        'broadcast',
+        { event: 'connection_change' },
+        (payload: any) => {
+          const p = payload.payload || {};
+          config.onStateChange({
+            eventType: p.eventType || 'UPDATE',
+            requestId: p.requestId,
+            targetUserId: p.targetUserId || p.senderId || '',
+            newStatus: p.status || 'pending',
+            unshieldedContactAvailable: p.status === 'accepted',
+          });
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'notification_change' },
+        (payload: any) => {
+          config.onNotificationChange?.(payload.payload);
+        }
+      )
       .subscribe((status: string) => {
         if (status === 'SUBSCRIBED') {
           this.isConnected = true;
@@ -148,10 +208,12 @@ export class HardenedRealtimeManager {
   ) {
     const eventType = payload.eventType as 'INSERT' | 'UPDATE' | 'DELETE';
     const row = payload.new || payload.old || {};
-    const status = row.status as 'pending' | 'accepted' | 'declined' | 'cancelled';
+    const status = (row.status || 'pending') as 'pending' | 'accepted' | 'declined' | 'cancelled';
     
     // Determine the peer user ID relative to current user
-    const peerId = row.requester_id === this.currentUserId ? row.recipient_id : row.requester_id;
+    const peerId = row.requester_id === this.currentUserId
+      ? (row.recipient_id || row.receiver_id)
+      : row.requester_id;
 
     if (!peerId) return;
 

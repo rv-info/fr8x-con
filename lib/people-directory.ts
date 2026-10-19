@@ -451,6 +451,10 @@ class PeopleDirectoryStore {
     return true;
   }
 
+  public getRequestById(id: string): InMemRequest | undefined {
+    return this.requests.get(id);
+  }
+
   public upsertRequest(req: InMemRequest) {
     this.requests.set(req.id, req);
   }
@@ -562,7 +566,7 @@ class PeopleDirectoryStore {
     return true;
   }
 
-  public cancelRequest(userId: string, requestId?: string, targetId?: string): { success: boolean; code?: string; error?: string } {
+  public cancelRequest(userId: string, requestId?: string, targetId?: string): boolean {
     let req: InMemRequest | undefined;
     if (requestId) {
       req = this.requests.get(requestId);
@@ -576,10 +580,13 @@ class PeopleDirectoryStore {
       }
     }
     if (req && req.requester_id !== userId) {
-      return { success: false, code: 'FORBIDDEN', error: 'Not authorized to cancel this request.' };
+      return false;
     }
-    if (!req || req.status !== 'pending') {
-      return { success: true };
+    if (!req) {
+      return false;
+    }
+    if (req.status !== 'pending') {
+      return true;
     }
 
     req.status = 'withdrawn';
@@ -594,7 +601,7 @@ class PeopleDirectoryStore {
       }
     });
 
-    return { success: true };
+    return true;
   }
 
   public removeConnection(userId: string, targetId: string): boolean {

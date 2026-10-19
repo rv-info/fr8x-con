@@ -212,10 +212,6 @@ export function authenticateUserSession(
   if (!token && authHeader?.startsWith('Bearer ')) {
     token = authHeader.substring(7).trim();
   }
-  if (!token) {
-    const customSession = req.headers.get('x-fr8x-session');
-    if (customSession) token = customSession.trim();
-  }
 
   let uid: string | null = null;
   let tokenEmail: string | undefined;

@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
         bidder_uid: callerUid,
         bidder_name: (sessionAuth.user as any)?.displayName || callerEmail,
         bidder_company: (sessionAuth.user as any)?.company || sessionAuth.user?.companyId || '',
+        amount: bidAmount,
         grand_total_usd: bidAmount,
         currency: bid.currency || 'USD',
         charges: bid.charges || [],

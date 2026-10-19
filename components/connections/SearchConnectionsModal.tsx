@@ -858,10 +858,11 @@ export function SearchConnectionsModal({
                             onClick={() => handleWithdrawRequest(candidate.uid)}
                             style={{ fontSize: '10px', color: '#dc2626', padding: '4px 6px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}
                             title="Withdraw request"
+                            aria-label={withdrawingUid === candidate.uid ? 'Withdrawing...' : 'Withdraw'}
                           >
                             {withdrawingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={10} className="spin" /> WITHDRAWING...
+                                <Loader2 size={10} className="spin" aria-label="Withdrawing..." /> WITHDRAWING...
                               </>
                             ) : (
                               'Withdraw'
@@ -893,10 +894,11 @@ export function SearchConnectionsModal({
                             disabled={acceptingUid === candidate.uid || rejectingUid === candidate.uid}
                             onClick={() => handleAcceptRequest(candidate.uid, cName)}
                             style={{ fontSize: '11px', padding: '5px 12px', background: '#099889', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            aria-label={acceptingUid === candidate.uid ? 'Accepting...' : 'Accept'}
                           >
                             {acceptingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" /> ACCEPTING...
+                                <Loader2 size={12} className="spin" aria-label="Accepting..." /> ACCEPTING...
                               </>
                             ) : (
                               <>
@@ -910,6 +912,7 @@ export function SearchConnectionsModal({
                             disabled={rejectingUid === candidate.uid || acceptingUid === candidate.uid}
                             onClick={() => handleDeclineRequest(candidate.uid)}
                             style={{ fontSize: '11px', padding: '5px 8px', color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            aria-label={rejectingUid === candidate.uid ? 'Rejecting...' : 'Reject'}
                           >
                             {rejectingUid === candidate.uid ? (
                               <>
@@ -930,10 +933,11 @@ export function SearchConnectionsModal({
                             disabled={connectingUid === candidate.uid}
                             onClick={() => handleSendRequest(candidate)}
                             style={{ fontSize: '11px', padding: '5px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                            aria-label={connectingUid === candidate.uid ? 'Sending...' : 'Connect'}
                           >
                             {connectingUid === candidate.uid ? (
                               <>
-                                <Loader2 size={12} className="spin" /> SENDING...
+                                <Loader2 size={12} className="spin" aria-label="Sending..." /> SENDING...
                               </>
                             ) : (
                               <>

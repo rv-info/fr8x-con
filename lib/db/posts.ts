@@ -9,12 +9,22 @@
 import { getDbClient } from '@/lib/supabase/server';
 import { PostRow } from '@/lib/supabase/types';
 
-export async function getPosts(): Promise<PostRow[]> {
+export async function getPosts(options?: { limit?: number; cursor?: string }): Promise<PostRow[]> {
   const supabase = getDbClient();
-  const { data, error } = await supabase
+  let q = supabase
     .from('posts')
     .select('*')
+    .eq('is_published', true)
     .order('created_at', { ascending: false });
+
+  if (options?.cursor) {
+    q = q.lt('created_at', options.cursor);
+  }
+  if (options?.limit) {
+    q = q.limit(options.limit);
+  }
+
+  const { data, error } = await q;
 
   if (error) {
     console.error('[lib/db/posts] getPosts error:', error.message);

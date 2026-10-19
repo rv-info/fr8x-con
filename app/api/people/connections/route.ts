@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { authenticateUserSession } from '@/lib/auth-guard';
-import { createClient as createSupabaseServerClient } from '@/lib/supabase/server';
+import { createClient as createSupabaseServerClient, createAdminClient } from '@/lib/supabase/server';
 import { redis } from '@/lib/redis';
 import { peopleDirectoryStore } from '@/lib/people-directory';
 import { outboxService } from '@/lib/outbox/service';

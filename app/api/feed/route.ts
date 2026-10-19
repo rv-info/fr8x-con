@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const surface = (searchParams.get('surface') as any) || 'home';
     const viewerId = userAuth.user?.uid || gfAuth.operator?.uid || '';
 
-    const rawPosts = await getPosts();
+    const rawPosts = await getPosts({ limit: limit * 2, cursor: cursor || undefined });
 
     const timeline = timelineEngine.generateTimeline(rawPosts as any, {
       viewerId,

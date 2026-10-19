@@ -311,9 +311,9 @@ function BlockedRow({ item, onAction }: { item: BlockItem; onAction: (id: string
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
-const TAB_CONFIG: { id: Tab; label: string; icon: React.ElementType }[] = [
-  { id: 'connections', label: 'Connected Contacts',   icon: Users    },
-  { id: 'incoming',   label: 'Received Requests',    icon: UserPlus },
+const TAB_CONFIG: { id: Tab; label: string; sublabel?: string; icon: React.ElementType }[] = [
+  { id: 'connections', label: 'Connected Contacts', sublabel: 'My Contacts', icon: Users },
+  { id: 'incoming',   label: 'CONNECTION REQUEST RECEIVED', sublabel: 'Received Requests', icon: UserPlus },
   { id: 'outgoing',   label: 'Sent Requests',        icon: Clock    },
   { id: 'withdrawn',  label: 'Withdrawn Requests',   icon: RotateCcw },
   { id: 'blocked',    label: 'Blocked',              icon: Shield   },
@@ -383,7 +383,7 @@ export default function ConnectionsPage() {
       <div className="connections-page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <h1 className="connections-page-title" style={{ margin: 0 }}>
           <Users size={22} aria-hidden="true" className="connections-icon" />
-          My Network
+          Enterprise Network Contacts & Directory
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <button
@@ -409,15 +409,15 @@ export default function ConnectionsPage() {
             <Globe2 size={15} aria-hidden="true" />
             Search New Contacts & Global Freight Connections
           </button>
-          <Link href="/people" className="btn-secondary" aria-label="Find new connections">
-            <UserPlus size={14} aria-hidden="true" /> Find People
+          <Link href="/people" className="btn-secondary" aria-label="Global Directory">
+            <Globe2 size={14} aria-hidden="true" /> Global Directory
           </Link>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="connections-tabs" role="tablist" aria-label="Network sections">
-        {TAB_CONFIG.map(({ id, label, icon: Icon }) => (
+        {TAB_CONFIG.map(({ id, label, sublabel, icon: Icon }) => (
           <button
             key={id}
             role="tab"
@@ -429,6 +429,11 @@ export default function ConnectionsPage() {
           >
             <Icon size={14} aria-hidden="true" />
             <span>{label}</span>
+            {sublabel && (
+              <span className="tab-subtext" style={{ fontSize: '10px', opacity: 0.75, marginLeft: '3px' }}>
+                ({sublabel})
+              </span>
+            )}
             {!loading && activeTab === id && data.length > 0 && (
               <span className="connections-tab-count" aria-label={`${data.length} items`}>
                 {data.length}

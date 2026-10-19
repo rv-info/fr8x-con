@@ -27,18 +27,35 @@ function assert(condition: unknown, testName: string, detail?: string) {
   }
 }
 
+import { createSignedSessionToken } from '../lib/crypto';
+
 function createMockRequest(
   url: string,
   method: string,
   body?: Record<string, any>,
   headers?: Record<string, string>
 ): NextRequest {
+  const mergedHeaders: Record<string, string> = {
+    'content-type': 'application/json',
+    ...(headers || {}),
+  };
+
+  // If a test passes x-fr8x-user-uid, generate a valid cryptographic signed token for that user
+  const actorUid = mergedHeaders['x-fr8x-user-uid'];
+  if (actorUid) {
+    const signedToken = createSignedSessionToken({
+      uid: actorUid,
+      email: `${actorUid}@fr8x.in`,
+      role: 'user',
+      companyId: 'CMP-75055',
+    });
+    mergedHeaders['authorization'] = `Bearer ${signedToken}`;
+    mergedHeaders['cookie'] = `fr8x_session=${signedToken}`;
+  }
+
   const reqInit: RequestInit = {
     method,
-    headers: {
-      'content-type': 'application/json',
-      ...(headers || {}),
-    },
+    headers: mergedHeaders,
   };
   if (body && method !== 'GET') {
     reqInit.body = JSON.stringify(body);

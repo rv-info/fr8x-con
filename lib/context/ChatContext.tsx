@@ -197,26 +197,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       safeSaveLocalStorage(CHAT_MESSAGES_KEY, nextMap);
       return nextMap;
     });
-
-    // Counterpart automated acknowledgement simulation
-    const targetContact = contacts.find((c) => c.id === contactId);
-    setTimeout(() => {
-      const replyMsg: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        senderUid: contactId,
-        senderName: targetContact?.name || 'Contact',
-        me: false,
-        text: 'Received and noted in freight records. Reverting shortly.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: 'delivered',
-      };
-      setAllMessages((prev) => {
-        const updatedList = [...(prev[contactId] || []), replyMsg];
-        const nextMap = { ...prev, [contactId]: updatedList };
-        safeSaveLocalStorage(CHAT_MESSAGES_KEY, nextMap);
-        return nextMap;
-      });
-    }, 1500);
   };
 
   const contextValue = useMemo<ChatContextType>(
