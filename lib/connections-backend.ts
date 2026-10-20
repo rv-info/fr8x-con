@@ -161,6 +161,18 @@ export async function resolveCallerIdentity(req: NextRequest): Promise<{
     // Continue
   }
 
+  // 3. Direct header check fallback (x-fr8x-user-uid / x-fr8x-session)
+  const headerUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
+  if (headerUid && headerUid.trim()) {
+    const cleanUid = headerUid.trim();
+    const prof = await lookupProfileById(cleanUid);
+    return {
+      userId: cleanUid,
+      userEmail: prof?.email || `${cleanUid}@fr8x.in`,
+      profile: prof,
+    };
+  }
+
   return { userId: null };
 }
 

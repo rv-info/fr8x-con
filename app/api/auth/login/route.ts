@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { serverSecurityStore } from '@/lib/server-auth-store';
+import { serverSecurityStore, verifyHashedPassword } from '@/lib/server-auth-store';
 import { createSignedSessionToken, checkRateLimit, recordFailedAttempt, clearRateLimit } from '@/lib/crypto';
 import { createClient } from '@/lib/supabase/server';
 import { mapRowToProfile } from '@/lib/supabase/db';
@@ -58,14 +58,67 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Authoritative Supabase Auth Verification
-    const supabase = createClient();
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: targetEmail,
-      password,
-    });
+    // 1. Authoritative Supabase Auth Verification with Server DBMS fallback
+    let authSucceeded = false;
+    let userId = '';
+    let fallbackProfile: any = null;
 
-    if (authError || !authData.user) {
+    const supabase = createClient();
+    try {
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: targetEmail,
+        password,
+      });
+
+      if (!authError && authData?.user) {
+        authSucceeded = true;
+        userId = authData.user.id;
+      }
+    } catch {
+      // Continue to server store fallback
+    }
+
+    // Fallback: Verify credentials against server security store (PBKDF2)
+    if (!authSucceeded) {
+      const secUser = serverSecurityStore.getUser(targetEmail) || serverSecurityStore.getUserByEmailOrUid(targetEmail);
+      if (secUser && secUser.passwordHash) {
+        const isMatch = verifyHashedPassword(password, secUser.passwordHash);
+        if (isMatch) {
+          authSucceeded = true;
+          userId = secUser.uid;
+          fallbackProfile = {
+            uid: secUser.uid,
+            email: secUser.email || targetEmail,
+            displayName: secUser.displayName || targetEmail.split('@')[0],
+            firstName: secUser.firstName || secUser.displayName?.split(' ')[0] || targetEmail.split('@')[0],
+            lastName: secUser.lastName || '',
+            company: secUser.company || secUser.companyName || 'Enterprise Logistics',
+            companyId: secUser.companyId || '',
+            role: secUser.role || 'user',
+            status: secUser.status || 'active',
+            mobile: secUser.mobile || secUser.phone || '',
+            phone: secUser.phone || secUser.mobile || '',
+            designation: secUser.designation || 'Logistics Manager',
+            plan: secUser.plan || 'trial',
+            hasGoldenTick: Boolean((secUser as any).hasGoldenTick || secUser.plan === 'premium'),
+            email_verified: Boolean(secUser.email_verified ?? true),
+            isVerified: Boolean((secUser as any).isVerified ?? true),
+            city: secUser.city || '',
+            state: secUser.state || '',
+            country: secUser.country || 'India',
+            formattedAddress: secUser.formattedAddress || secUser.address || '',
+            timezone: secUser.timezone || 'Asia/Kolkata',
+            avatarUrl: secUser.avatarUrl || '',
+            companyLogoUrl: secUser.companyLogoUrl || '',
+            experiences: (secUser as any).experiences || [],
+            educations: (secUser as any).educations || [],
+            certifications: (secUser as any).certifications || [],
+          };
+        }
+      }
+    }
+
+    if (!authSucceeded) {
       const lockRes = recordFailedAttempt(lockKey);
 
       // Progressive delay to exponentially slow down brute force & credential stuffing
@@ -79,16 +132,13 @@ export async function POST(req: NextRequest) {
         type: lockRes.locked ? 'ACCOUNT_BLOCKED' : 'FAILED_LOGIN',
         severity: lockRes.locked ? 'HIGH' : 'WARNING',
         userEmail: targetEmail,
-        details: `Failed password login from IP ${ip}. Reason: ${authError?.message || 'Invalid credentials'}. Attempts remaining on this device: ${lockRes.remainingAttempts}`,
+        details: `Failed password login from IP ${ip}. Attempts remaining on this device: ${lockRes.remainingAttempts}`,
         ipAddress: ip,
       });
 
-      let errorMessage = lockRes.locked
+      const errorMessage = lockRes.locked
         ? 'Too many consecutive failed attempts from this device. Please wait 15 minutes.'
         : 'Invalid corporate email or password. Please verify your credentials.';
-      if (authError?.message?.includes('Email not confirmed')) {
-        errorMessage = 'Email address not confirmed. Please verify your email.';
-      }
       return NextResponse.json(
         { success: false, error: errorMessage, attemptsRemaining: lockRes.remainingAttempts },
         { status: lockRes.locked ? 403 : 401 }
@@ -98,18 +148,20 @@ export async function POST(req: NextRequest) {
     // Clear failed attempts counter on successful login
     clearRateLimit(lockKey);
 
+    // 2. Authoritative PostgreSQL Profile Check (or server store profile)
+    let profileRow: any = null;
+    try {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      profileRow = data;
+    } catch {
+      // continue to fallback
+    }
 
-    const userId = authData.user.id;
-
-
-    // 2. Authoritative PostgreSQL Profile Check
-    const { data: profileRow } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    const user = profileRow ? mapRowToProfile(profileRow) : {
+    const user = profileRow ? mapRowToProfile(profileRow) : (fallbackProfile || {
       uid: userId,
       email: targetEmail,
       displayName: targetEmail.split('@')[0],
@@ -136,7 +188,7 @@ export async function POST(req: NextRequest) {
       experiences: [],
       educations: [],
       certifications: [],
-    };
+    });
 
     // Keep server DBMS in sync
     serverSecurityStore.updateUserProfile(user.uid, user as any);

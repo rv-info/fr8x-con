@@ -219,16 +219,16 @@ export default function LoginPage() {
     try {
       // 1. Direct Supabase Authentication with Email & Password
       if (id.includes('@')) {
-        const authRes = await loginWithCredentials(id, password, remember);
-        if (authRes.success) {
-          setIsLoading(false);
-          toast(`Logged in successfully to FR8X Workspace as ${authRes.user?.displayName || id}.`);
-          router.push('/feeds');
-          return;
-        } else {
-          setIsLoading(false);
-          setErrorMessage(authRes.error || 'Invalid corporate email or password. Please verify your credentials.');
-          return;
+        try {
+          const authRes = await loginWithCredentials(id, password, remember);
+          if (authRes.success) {
+            setIsLoading(false);
+            toast(`Logged in successfully to FR8X Workspace as ${authRes.user?.displayName || id}.`);
+            router.push('/feeds');
+            return;
+          }
+        } catch {
+          // Fall through to server-side auth
         }
       }
 
