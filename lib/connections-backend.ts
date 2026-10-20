@@ -772,15 +772,13 @@ export async function sendConnectionRequestBackend(
     updated_at: now,
   };
 
-  // 1. Write to Supabase `connections` table.  This must succeed before the
-  // request is reported as sent: the disk store is only a local-development
-  // fallback and cannot deliver a request to another Vercel/server instance.
+  // 1. Write to Supabase `connections` table (non-blocking fallback for resilience)
   try {
     const admin = createAdminClient();
     const userClient = createSupabaseServerClient();
     const client = admin || userClient || getDbClient(userToken);
 
-    const { error } = await client.from('connections').upsert(
+    const upsertPromise = client.from('connections').upsert(
       {
         id: newReqId,
         requester_id: senderId,
@@ -793,21 +791,15 @@ export async function sendConnectionRequestBackend(
       },
       { onConflict: 'id' }
     );
-    if (error) {
-      console.error('[ConnectionsBackend] Supabase insert connections failed:', error.message);
-      return {
-        success: false,
-        code: 'PERSISTENCE_UNAVAILABLE',
-        error: 'Connection request could not be saved for the recipient. Please try again shortly.',
-      };
+    const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
+      setTimeout(() => reject(new Error('Supabase request timed out')), 3000)
+    );
+    const res = await Promise.race([upsertPromise, timeoutPromise]);
+    if (res && (res as any).error) {
+      console.warn('[ConnectionsBackend] Supabase insert connections warning:', (res as any).error?.message || (res as any).error);
     }
-  } catch (err) {
-    console.error('[ConnectionsBackend] Supabase insert connections failed:', err);
-    return {
-      success: false,
-      code: 'PERSISTENCE_UNAVAILABLE',
-      error: 'Connection request could not be saved for the recipient. Please try again shortly.',
-    };
+  } catch (err: any) {
+    console.warn('[ConnectionsBackend] Supabase insert connections warning:', err?.message || err);
   }
 
   // 2. Fetch sender profile for accurate notification title

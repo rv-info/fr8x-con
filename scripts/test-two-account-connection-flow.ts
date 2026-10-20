@@ -14,6 +14,8 @@
  * ==============================================================================
  */
 
+import fs from 'fs';
+import path from 'path';
 import { NextRequest } from 'next/server';
 import { GET as getConnections, POST as mutateConnections } from '../app/api/people/connections/route';
 import { GET as getNotifications, POST as mutateNotifications } from '../app/api/notifications/route';
@@ -35,18 +37,34 @@ function assert(condition: unknown, testName: string, detail?: string) {
   }
 }
 
+import { createSignedSessionToken } from '../lib/crypto';
+
 function createMockRequest(
   url: string,
   method: string,
   body?: Record<string, any>,
   headers?: Record<string, string>
 ): NextRequest {
+  const mergedHeaders: Record<string, string> = {
+    'content-type': 'application/json',
+    ...(headers || {}),
+  };
+
+  const actorUid = mergedHeaders['x-fr8x-user-uid'];
+  if (actorUid) {
+    const signedToken = createSignedSessionToken({
+      uid: actorUid,
+      email: `${actorUid}@fr8x.in`,
+      role: 'user',
+      companyId: 'CMP-75055',
+    });
+    mergedHeaders['authorization'] = `Bearer ${signedToken}`;
+    mergedHeaders['cookie'] = `fr8x_session=${signedToken}`;
+  }
+
   const reqInit: RequestInit = {
     method,
-    headers: {
-      'content-type': 'application/json',
-      ...(headers || {}),
-    },
+    headers: mergedHeaders,
   };
   if (body && method !== 'GET') {
     reqInit.body = JSON.stringify(body);
@@ -121,6 +139,25 @@ async function runTwoAccountConnectionFlowVerification() {
   peopleDirectoryStore.registerMember(memberA);
   peopleDirectoryStore.registerMember(memberB);
   peopleDirectoryStore.registerMember(memberC);
+
+  // Clean stale test records from previous runs
+  const storePath = path.resolve(process.cwd(), 'data', 'connections_store.json');
+  if (fs.existsSync(storePath)) {
+    try {
+      const disk = JSON.parse(fs.readFileSync(storePath, 'utf8'));
+      const testUids = new Set([userA_Id, userB_Id, userC_Id]);
+      disk.connections = (disk.connections || []).filter(
+        (c: any) => !testUids.has(c.requester_id) && !testUids.has(c.recipient_id) && !testUids.has(c.receiver_id)
+      );
+      disk.notifications = (disk.notifications || []).filter(
+        (n: any) => !testUids.has(n.user_id) && !testUids.has(n.metadata?.requester_id)
+      );
+      fs.writeFileSync(storePath, JSON.stringify(disk, null, 2), 'utf8');
+    } catch {}
+  }
+  peopleDirectoryStore.clearNotifications(userA_Id);
+  peopleDirectoryStore.clearNotifications(userB_Id);
+  peopleDirectoryStore.clearNotifications(userC_Id);
 
   // --------------------------------------------------------------------------
   // TEST SECTION 1: INVARIANTS & CONSTRAINTS
