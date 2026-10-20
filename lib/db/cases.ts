@@ -30,6 +30,13 @@ export async function getCases(filter?: { userId?: string; companyId?: string; s
   return data || [];
 }
 
+export async function getCaseById(id: string): Promise<CaseRow | null> {
+  const supabase = getDbClient();
+  const { data, error } = await supabase.from('cases').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(`Failed to get case by id: ${error.message}`);
+  return data;
+}
+
 export async function saveCase(bCase: any): Promise<CaseRow> {
   const supabase = getDbClient();
   const payload = {

@@ -36,6 +36,14 @@ function mapToDbAuction(a: any): any {
     containers: a.containers || [],
     origin_charges: a.originCharges || a.origin_charges || {},
     destination_charges: a.destinationCharges || a.destination_charges || {},
+    // Invitations are part of the server-side auction record.  They must not
+    // live only in browser state or every authenticated account can bid.
+    selected_bidders: Array.isArray(a.selectedBidders ?? a.selected_bidders)
+      ? (a.selectedBidders ?? a.selected_bidders)
+      : [],
+    blocked_bidders: Array.isArray(a.blockedBidders ?? a.blocked_bidders)
+      ? (a.blockedBidders ?? a.blocked_bidders)
+      : [],
     updated_at: new Date().toISOString(),
   };
 }

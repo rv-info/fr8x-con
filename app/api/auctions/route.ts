@@ -12,6 +12,25 @@ export async function GET(req: NextRequest) {
 
   try {
     const rawAuctions = await getAuctions();
+    const callerUid = userAuth.user?.uid || gfAuth.operator?.uid || '';
+    const isOperator = gfAuth.authenticated;
+
+    // General auctions are discoverable to verified members.  A specific
+    // auction is visible only to its creator, an explicitly invited bidder,
+    // or an operator.  This is also enforced at bid submission time.
+    const isVisibleToCaller = (auction: any) => {
+      if (isOperator) return true;
+      if (auction.creator_uid === callerUid || auction.creator_id === callerUid) return true;
+      if ((auction.auction_type || auction.auctionType) === 'General bidding') return true;
+      const selected = Array.isArray(auction.selected_bidders)
+        ? auction.selected_bidders
+        : Array.isArray(auction.selectedBidders) ? auction.selectedBidders : [];
+      return selected.some((bidder: any) =>
+        [bidder?.id, bidder?.uid, bidder?.userId, bidder?.user_id]
+          .filter(Boolean)
+          .some((id) => String(id) === callerUid)
+      );
+    };
 
     // Deduplicate identical auctions to prevent duplicate records
     const seenSignatures = new Set<string>();
@@ -19,6 +38,7 @@ export async function GET(req: NextRequest) {
 
     for (const a of rawAuctions) {
       if (!a || !a.id) continue;
+      if (!isVisibleToCaller(a)) continue;
       // Filter out any dummy seed IDs
       if (['RA-2026-0842', 'GB-2026-0311', 'RA-2026-0901', 'RA-2026-0788'].includes(a.id)) {
         continue;
@@ -179,4 +199,3 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-

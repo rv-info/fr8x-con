@@ -23,12 +23,19 @@ export async function getReviews(companyId: string): Promise<ReviewRow[]> {
   return data || [];
 }
 
+export async function getReviewById(id: string): Promise<ReviewRow | null> {
+  const supabase = getDbClient();
+  const { data, error } = await supabase.from('reviews').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(`Failed to get review by id: ${error.message}`);
+  return data;
+}
+
 export async function saveReview(review: any): Promise<ReviewRow> {
   const supabase = getDbClient();
   const payload = {
     id: review.id || `rev_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     target_company_id: review.targetCompanyId || review.target_company_id,
-    reviewer_id: review.reviewerId || review.reviewer_id || null,
+    reviewer_id: review.reviewerUid || review.reviewer_uid || review.reviewerId || review.reviewer_id || null,
     reviewer_name: review.reviewerName || review.reviewer_name || 'Anonymous',
     reviewer_company: review.reviewerCompany || review.reviewer_company || null,
     rating: Math.max(1, Math.min(5, Number(review.rating) || 5)),

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCases, saveCase, deleteCase } from '@/lib/db/cases';
-import { getReviews, saveReview } from '@/lib/db/reviews';
+import { getCases, getCaseById, saveCase, deleteCase } from '@/lib/db/cases';
+import { getReviews, getReviewById, saveReview } from '@/lib/db/reviews';
 import { getPosts, getPostById, savePost, deletePost } from '@/lib/db/posts';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
@@ -92,6 +92,13 @@ export async function POST(req: NextRequest) {
         );
       }
       if (userAuth.authenticated && !gfAuth.authenticated) {
+        const existing = await getPostById(topicData.id);
+        if (existing && existing.author_uid !== userAuth.user!.uid && existing.author_id !== userAuth.user!.uid) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You cannot modify another member\'s Nexus topic.' },
+            { status: 403 }
+          );
+        }
         topicData.authorUid = userAuth.user!.uid;
       } else if (callerUid && !topicData.authorUid) {
         topicData.authorUid = callerUid;
@@ -111,6 +118,13 @@ export async function POST(req: NextRequest) {
         );
       }
       if (userAuth.authenticated && !gfAuth.authenticated) {
+        const existing = await getReviewById(reviewData.id);
+        if (existing && (existing as any).reviewer_id !== userAuth.user!.uid) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You cannot modify another member\'s review.' },
+            { status: 403 }
+          );
+        }
         reviewData.reviewerUid = userAuth.user!.uid;
       } else if (callerUid && !reviewData.reviewerUid) {
         reviewData.reviewerUid = callerUid;
@@ -129,6 +143,13 @@ export async function POST(req: NextRequest) {
         );
       }
       if (userAuth.authenticated && !gfAuth.authenticated) {
+        const existing = await getCaseById(caseData.id);
+        if (existing && (existing as any).user_id !== userAuth.user!.uid) {
+          return NextResponse.json(
+            { success: false, error: 'Forbidden: You cannot modify another member\'s case.' },
+            { status: 403 }
+          );
+        }
         caseData.reporterUid = userAuth.user!.uid;
         caseData.user_id = userAuth.user!.uid;
       } else if (callerUid && !caseData.reporterUid) {
@@ -214,4 +235,3 @@ export async function DELETE(req: NextRequest) {
     );
   }
 }
-

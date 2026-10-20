@@ -772,13 +772,15 @@ export async function sendConnectionRequestBackend(
     updated_at: now,
   };
 
-  // 1. Write to Supabase `connections` table
+  // 1. Write to Supabase `connections` table.  This must succeed before the
+  // request is reported as sent: the disk store is only a local-development
+  // fallback and cannot deliver a request to another Vercel/server instance.
   try {
     const admin = createAdminClient();
     const userClient = createSupabaseServerClient();
     const client = admin || userClient || getDbClient(userToken);
 
-    await client.from('connections').upsert(
+    const { error } = await client.from('connections').upsert(
       {
         id: newReqId,
         requester_id: senderId,
@@ -791,8 +793,21 @@ export async function sendConnectionRequestBackend(
       },
       { onConflict: 'id' }
     );
+    if (error) {
+      console.error('[ConnectionsBackend] Supabase insert connections failed:', error.message);
+      return {
+        success: false,
+        code: 'PERSISTENCE_UNAVAILABLE',
+        error: 'Connection request could not be saved for the recipient. Please try again shortly.',
+      };
+    }
   } catch (err) {
-    console.warn('[ConnectionsBackend] Supabase insert connections warning:', err);
+    console.error('[ConnectionsBackend] Supabase insert connections failed:', err);
+    return {
+      success: false,
+      code: 'PERSISTENCE_UNAVAILABLE',
+      error: 'Connection request could not be saved for the recipient. Please try again shortly.',
+    };
   }
 
   // 2. Fetch sender profile for accurate notification title
@@ -1553,4 +1568,3 @@ function upsertMemoryNotification(record: PersistentNotificationRecord) {
   }
   saveDiskStore(disk);
 }
-

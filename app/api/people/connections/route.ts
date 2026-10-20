@@ -298,6 +298,7 @@ export async function POST(req: NextRequest) {
         code === 'FORBIDDEN'    ? 403 :
         code === 'NOT_FOUND'    ? 404 :
         code === 'RATE_LIMIT'   ? 429 :
+        code === 'PERSISTENCE_UNAVAILABLE' ? 503 :
         code === 'BLOCKED'      ? 403 :
         code === 'SELF_REQUEST' ? 400 : 409;
       return NextResponse.json(result, { status });

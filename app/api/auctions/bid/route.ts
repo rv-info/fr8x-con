@@ -96,6 +96,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // A specific-bidder auction is an invitation-only tender.  The invitation
+    // list is persisted on the auction instead of trusting UI state.
+    if ((auction.auction_type || '').toLowerCase() === 'specific bidder') {
+      const selectedBidders = Array.isArray((auction as any).selected_bidders)
+        ? (auction as any).selected_bidders
+        : [];
+      const isInvited = selectedBidders.some((bidder: any) =>
+        [bidder?.id, bidder?.uid, bidder?.userId, bidder?.user_id]
+          .filter(Boolean)
+          .some((id) => String(id) === callerUid)
+      );
+      if (!isInvited) {
+        return NextResponse.json(
+          { success: false, error: 'Forbidden: This is an invitation-only auction.' },
+          { status: 403 }
+        );
+      }
+    }
+
+    const blockedBidders = Array.isArray((auction as any).blocked_bidders)
+      ? (auction as any).blocked_bidders : [];
+    if (blockedBidders.some((id: unknown) => String(id) === callerUid)) {
+      return NextResponse.json(
+        { success: false, error: 'Forbidden: You are blocked from this auction.' },
+        { status: 403 }
+      );
+    }
+
     // Competition ceiling enforcement
     if (auction.competition_ceiling != null && bidAmount > auction.competition_ceiling) {
       return NextResponse.json(
@@ -185,4 +213,3 @@ export async function POST(req: NextRequest) {
     }
   }
 }
-
