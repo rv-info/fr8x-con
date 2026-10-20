@@ -449,9 +449,9 @@ export default function FeedsPage() {
 
   // Connection requests for active user
   const connRequests = React.useMemo(() => {
-    if (!user?.uid) return { incoming: [], outgoing: [] };
-    return getConnectionRequests(user.uid);
-  }, [user?.uid, connRevision]);
+    if (!user?.uid && !(user as any)?.id && !user?.email) return { incoming: [], outgoing: [], withdrawn: [] };
+    return getConnectionRequests(user?.uid || '', (user as any)?.id, user?.email);
+  }, [user?.uid, (user as any)?.id, user?.email, connRevision]);
 
   // Dynamic Workspace Contacts: ONLY users who are confirmed mutual connections!
   const workspaceContacts: WorkspaceContact[] = React.useMemo(() => {

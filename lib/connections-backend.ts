@@ -126,6 +126,17 @@ function initStore() {
   isInitialized = true;
 }
 
+function getEffectiveSupabaseClient(userToken?: string) {
+  const admin = createAdminClient();
+  if (admin) return admin;
+  if (userToken) return getDbClient(userToken);
+  try {
+    return createSupabaseServerClient() || getDbClient();
+  } catch {
+    return getDbClient();
+  }
+}
+
 // ── User Resolution ──────────────────────────────────────────────────────────
 export async function resolveCallerIdentity(req: NextRequest): Promise<{
   userId: string | null;
@@ -266,9 +277,7 @@ export async function lookupProfileById(userId: string, userToken?: string): Pro
 
   // 3. Query Supabase profiles table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId);
     let q = client.from('profiles').select('*');
@@ -329,9 +338,7 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
 
   // 1. Authoritative Supabase query from `connections` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const orClauses: string[] = [];
     for (const a of aliases) {
@@ -434,9 +441,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
 
   // 1. Authoritative Supabase query from `connections` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
@@ -531,9 +536,7 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
 
   // 1. Authoritative Supabase query from `connections` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const orClauses: string[] = [];
     for (const a of aliases) {
@@ -624,9 +627,7 @@ export async function getWithdrawnRequestsForUser(userId: string, limit = 50, us
 
   // 1. Authoritative Supabase query
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
@@ -786,9 +787,7 @@ export async function sendConnectionRequestBackend(
 
   // 1. Write to Supabase `connections` table (non-blocking fallback for resilience)
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     const upsertPromise = client.from('connections').upsert(
       {
@@ -845,9 +844,7 @@ export async function sendConnectionRequestBackend(
   };
 
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     await client.from('notifications').insert({
       id: notifId,
@@ -961,9 +958,7 @@ export async function acceptConnectionRequestBackend(
 
   // 1. Update in Supabase `connections` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     if (actualReqId && actualReqId.includes('-')) {
       await client
@@ -1034,9 +1029,7 @@ export async function acceptConnectionRequestBackend(
 
   // 3. Mark recipient's original connection_request notification as read
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
     if (actualReqId) {
       await client
         .from('notifications')
@@ -1151,9 +1144,7 @@ export async function cancelConnectionRequestBackend(
 
   // 1. Update in Supabase `connections` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     if (actualReqId && actualReqId.includes('-')) {
       await client
@@ -1176,9 +1167,7 @@ export async function cancelConnectionRequestBackend(
 
   // 2. Update notification to withdrawn for recipient in Supabase, disk, and memory
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
     await client
       .from('notifications')
       .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
@@ -1277,9 +1266,7 @@ export async function declineConnectionRequestBackend(
 
   // 1. Update in Supabase
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     if (actualReqId && actualReqId.includes('-')) {
       await client
@@ -1334,9 +1321,7 @@ export async function getNotificationsForUser(userId: string, limit = 50, unread
 
   // 1. Query Supabase `notifications` table
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     let q = client
       .from('notifications')
@@ -1453,9 +1438,7 @@ export async function markNotificationReadBackend(
 
   // 1. Supabase update
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     let q = client.from('notifications').update({ read: true }).in('user_id', aliases);
     if (notifId) {
@@ -1509,9 +1492,7 @@ export async function clearNotificationBackend(
 
   // 1. Supabase delete
   try {
-    const admin = createAdminClient();
-    const userClient = createSupabaseServerClient();
-    const client = admin || userClient || getDbClient(userToken);
+    const client = getEffectiveSupabaseClient(userToken);
 
     let q = client.from('notifications').delete().in('user_id', aliases);
     if (notifId) {

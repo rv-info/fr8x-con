@@ -101,19 +101,37 @@ function saveConnectionRequests(requests: ConnectionRequest[]) {
   } catch {}
 }
 
-export function getConnectionRequests(uid: string): {
+export function getConnectionRequests(uid: string, altId?: string, email?: string): {
   incoming: ConnectionRequest[];
   outgoing: ConnectionRequest[];
   withdrawn: ConnectionRequest[];
 } {
-  if (!uid) return { incoming: [], outgoing: [], withdrawn: [] };
-  const u = uid.trim().toLowerCase();
+  if (!uid && !altId && !email) return { incoming: [], outgoing: [], withdrawn: [] };
+  const uids = new Set<string>();
+  if (uid) uids.add(uid.trim().toLowerCase());
+  if (altId) uids.add(altId.trim().toLowerCase());
+  if (email) uids.add(email.trim().toLowerCase());
+
+  if (typeof window !== 'undefined') {
+    const active = localStorage.getItem('fr8x_active_user_uid');
+    if (active) uids.add(active.trim().toLowerCase());
+    const remembered = localStorage.getItem('fr8x_remembered_email_v3');
+    if (remembered) uids.add(remembered.trim().toLowerCase());
+  }
+
   const all = getAllConnectionRequests();
-  const incoming = all.filter((r) => (r.toUid || '').trim().toLowerCase() === u && r.status === 'pending');
-  const outgoing = all.filter((r) => (r.fromUid || '').trim().toLowerCase() === u && r.status === 'pending');
-  const withdrawn = all.filter(
-    (r) => (r.fromUid || '').trim().toLowerCase() === u && (r.status === 'cancelled' || (r as any).status === 'withdrawn')
-  );
+  const incoming = all.filter((r) => {
+    const to = (r.toUid || '').trim().toLowerCase();
+    return uids.has(to) && r.status === 'pending';
+  });
+  const outgoing = all.filter((r) => {
+    const from = (r.fromUid || '').trim().toLowerCase();
+    return uids.has(from) && r.status === 'pending';
+  });
+  const withdrawn = all.filter((r) => {
+    const from = (r.fromUid || '').trim().toLowerCase();
+    return uids.has(from) && (r.status === 'cancelled' || (r as any).status === 'withdrawn');
+  });
   return { incoming, outgoing, withdrawn };
 }
 
