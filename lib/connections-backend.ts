@@ -137,6 +137,37 @@ function getEffectiveSupabaseClient(userToken?: string) {
   }
 }
 
+/**
+ * The disk store is only a resilience cache. A recipient may be handled by a
+ * different server instance, so mutation actions must also resolve requests
+ * from the shared Supabase table.
+ */
+async function findConnectionInSupabase(requestId: string, userToken?: string): Promise<PersistentConnectionRecord | undefined> {
+  try {
+    const client = getEffectiveSupabaseClient(userToken);
+    const { data, error } = await client
+      .from('connections')
+      .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
+      .eq('id', requestId)
+      .maybeSingle();
+
+    if (error || !data) return undefined;
+
+    return {
+      id: data.id,
+      requester_id: data.requester_id,
+      recipient_id: data.recipient_id || data.receiver_id || '',
+      receiver_id: data.receiver_id || data.recipient_id || '',
+      status: data.status,
+      note: data.note,
+      created_at: data.created_at,
+      updated_at: data.updated_at || data.created_at,
+    } as PersistentConnectionRecord;
+  } catch {
+    return undefined;
+  }
+}
+
 // ── User Resolution ──────────────────────────────────────────────────────────
 export async function resolveCallerIdentity(req: NextRequest): Promise<{
   userId: string | null;
@@ -785,11 +816,12 @@ export async function sendConnectionRequestBackend(
     updated_at: now,
   };
 
-  // 1. Write to Supabase `connections` table (non-blocking fallback for resilience)
+  // 1. Persist the request in Supabase before reporting success. Local disk
+  // storage cannot deliver a request to a recipient on another server instance.
   try {
     const client = getEffectiveSupabaseClient(userToken);
 
-    const upsertPromise = client.from('connections').upsert(
+    const insertPromise = client.from('connections').insert(
       {
         id: newReqId,
         requester_id: senderId,
@@ -800,17 +832,25 @@ export async function sendConnectionRequestBackend(
         created_at: now,
         updated_at: now,
       },
-      { onConflict: 'id' }
-    );
+    ).select('id').single();
     const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
       setTimeout(() => reject(new Error('Supabase request timed out')), 3000)
     );
-    const res = await Promise.race([upsertPromise, timeoutPromise]);
+    const res = await Promise.race([insertPromise, timeoutPromise]);
     if (res && (res as any).error) {
-      console.warn('[ConnectionsBackend] Supabase insert connections warning:', (res as any).error?.message || (res as any).error);
+      return {
+        success: false,
+        code: 'PERSISTENCE_UNAVAILABLE',
+        error: 'Unable to save the connection request. Please try again.',
+      };
     }
   } catch (err: any) {
-    console.warn('[ConnectionsBackend] Supabase insert connections warning:', err?.message || err);
+    console.warn('[ConnectionsBackend] Supabase insert connections error:', err?.message || err);
+    return {
+      success: false,
+      code: 'PERSISTENCE_UNAVAILABLE',
+      error: 'Unable to save the connection request. Please try again.',
+    };
   }
 
   // 2. Fetch sender profile for accurate notification title
@@ -910,6 +950,9 @@ export async function acceptConnectionRequestBackend(
           updated_at: memReq.updated_at,
         };
       }
+    }
+    if (!targetRecord) {
+      targetRecord = await findConnectionInSupabase(requestId, userToken);
     }
   }
 
@@ -1103,6 +1146,9 @@ export async function cancelConnectionRequestBackend(
         };
       }
     }
+    if (!targetRecord) {
+      targetRecord = await findConnectionInSupabase(requestId, userToken);
+    }
   }
 
   if (!targetRecord && recipientId) {
@@ -1228,6 +1274,9 @@ export async function declineConnectionRequestBackend(
           updated_at: memReq.updated_at,
         };
       }
+    }
+    if (!targetRecord) {
+      targetRecord = await findConnectionInSupabase(requestId, userToken);
     }
   }
 
