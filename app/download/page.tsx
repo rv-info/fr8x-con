@@ -95,11 +95,12 @@ export default function DownloadPage() {
           <CheckCircle2 size={14} /> v2.4.0 Universal • Verified &amp; Signed • 14.0 MB
         </div>
 
-        {/* Primary Download Button */}
+        {/* Primary Download Button (Hosted externally on Google Drive to prevent bandwidth limits) */}
         <div>
           <a
-            href="/FR8X-Android-Universal-Release.apk"
-            download="FR8X-Android-Universal-Release.apk"
+            href={process.env.NEXT_PUBLIC_GDRIVE_APK_URL || 'https://drive.google.com/file/d/YOUR_GOOGLE_DRIVE_FILE_ID/view?usp=sharing'}
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -120,12 +121,12 @@ export default function DownloadPage() {
             }}
           >
             <Download size={20} />
-            DOWNLOAD UNIVERSAL APK
+            DOWNLOAD APK VIA GOOGLE DRIVE
           </a>
         </div>
 
         <p style={{ fontSize: '11px', color: '#64748b', marginTop: '10px' }}>
-          Direct download • No Google Play account required • Compatible with Android 5.0+ to 14+ / 15
+          Hosted securely on Google Drive • No Google Play account required • Compatible with Android 5.0+ to 14+ / 15
         </p>
 
 
@@ -219,7 +220,7 @@ export default function DownloadPage() {
             Quick Installation Guide:
           </h3>
           <ol style={{ fontSize: '12.5px', color: '#475569', paddingLeft: '18px', lineHeight: 1.8 }}>
-            <li>Tap the <strong>DOWNLOAD UNIVERSAL APK</strong> button above on your Android phone.</li>
+            <li>Tap the <strong>DOWNLOAD APK VIA GOOGLE DRIVE</strong> button above on your Android phone.</li>
             <li>In your phone&apos;s Downloads or Files app, tap <code style={{ color: '#002b66', fontWeight: 'bold' }}>FR8X-Android-Universal-Release.apk</code>.</li>
             <li>If prompted with <em>&quot;Install unknown apps&quot;</em>, go to <strong>Settings</strong> &gt; enable <strong>&quot;Allow from this source&quot;</strong>, then tap <strong>Install</strong>.</li>
 

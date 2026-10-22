@@ -174,11 +174,11 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
 
       {/* Sidebar Footer */}
       <div className="sidefoot">
-        <a
-          href="/fr8x-enterprise-mobile-v2.4.apk"
-          download
+        <Link
+          href="/download"
+          onClick={handleLinkClick}
           className="sidelink"
-          title="Download FR8X Android Mobile App (.apk)"
+          title="Download FR8X Android Mobile App"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -200,10 +200,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           {!collapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
               <span style={{ color: 'var(--color-nav-active-text, #075985)', fontWeight: 600 }}>Android App</span>
-              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>v2.4 · Direct APK</span>
+              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>v2.4 · Mobile Enterprise</span>
             </div>
           )}
-        </a>
+        </Link>
 
         <Link
           href="/profile"

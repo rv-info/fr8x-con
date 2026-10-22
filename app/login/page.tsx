@@ -806,9 +806,8 @@ export default function LoginPage() {
               >
                 Guide
               </Link>
-              <a
-                href="/FR8X-Android-Universal-Release.apk"
-                download="FR8X-Android-Universal-Release.apk"
+              <Link
+                href="/download"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -825,8 +824,8 @@ export default function LoginPage() {
                 }}
               >
                 <Download size={13} />
-                <span>Download APK</span>
-              </a>
+                <span>Mobile App</span>
+              </Link>
             </div>
           </div>
 
@@ -1245,92 +1244,9 @@ export default function LoginPage() {
 
 
 
-      {/* Floating APK Download Pill */}
-      <a
-        href="/FR8X-Android-Universal-Release.apk"
-        download="FR8X-Android-Universal-Release.apk"
-        title="Download FR8X Android Mobile App (.apk)"
-        className="login-apk-pill"
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          padding: '9px 15px',
-          background: '#ffffff',
-          border: '1.5px solid #cbd5e1',
-          borderRadius: '50px',
-          boxShadow: '0 4px 16px rgba(15, 23, 42, 0.12)',
-          textDecoration: 'none',
-          color: '#0f172a',
-          fontWeight: 700,
-          fontSize: '12px',
-          transition: 'all 0.15s ease',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.borderColor = '#0ea5e9';
-          e.currentTarget.style.boxShadow = '0 6px 20px rgba(14, 165, 233, 0.25)';
-          e.currentTarget.style.transform = 'translateY(-2px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.borderColor = '#cbd5e1';
-          e.currentTarget.style.boxShadow = '0 4px 16px rgba(15, 23, 42, 0.12)';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
-      >
-        <img
-          src="/mobile-app-icon.png"
-          alt="FR8X App Icon"
-          style={{
-            width: '28px',
-            height: '28px',
-            borderRadius: '6px',
-            objectFit: 'cover',
-            display: 'block',
-            flexShrink: 0,
-            boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-          }}
-        />
-        <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'left', lineHeight: 1.2 }}>
-          <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Download Android App</span>
-          <span style={{ fontSize: '9.5px', color: '#0ea5e9', fontWeight: 700 }}>v2.4.0 Universal Release (14.0 MB)</span>
-        </div>
-
-        <div
-          style={{
-            width: '24px',
-            height: '24px',
-            borderRadius: '50%',
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
-            color: '#16a34a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: '4px',
-          }}
-        >
-          <Download size={13} />
-        </div>
-      </a>
       </div>{/* end right panel */}
       </div>{/* end centered container */}
       <style>{`
-        .login-apk-pill {
-          position: fixed;
-          bottom: 22px;
-          right: 22px;
-          z-index: 50;
-        }
-        @media (max-width: 640px) {
-          .login-apk-pill {
-            position: static !important;
-            margin: 16px auto 0 !important;
-            box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
-            justify-content: center !important;
-            max-width: 290px !important;
-          }
-        }
         @media (min-width: 860px) {
           .login-left-panel { display: flex !important; }
         }

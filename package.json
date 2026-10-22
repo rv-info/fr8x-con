@@ -14,7 +14,8 @@
     "db:push": "npx -y tsx scripts/push-supabase-schema.ts",
     "db:verify": "npx -y tsx scripts/push-supabase-schema.ts --verify-only",
     "generate:branding": "npx -y tsx scripts/generate-branding-assets.ts",
-    "build:apk": "node fr8x-android-app/tools/build-official-apk.js"
+    "build:apk": "node fr8x-android-app/tools/build-official-apk.js",
+    "pages:build": "npx @cloudflare/next-on-pages"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -31,6 +32,7 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@types/node": "^20.17.19",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",

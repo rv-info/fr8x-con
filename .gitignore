@@ -50,3 +50,9 @@ data/
 .knox/
 .agents/
 scratch/
+
+# Cloudflare Pages
+.cloudflare/
+
+# Android APK binaries (hosted externally on Google Drive)
+*.apk
