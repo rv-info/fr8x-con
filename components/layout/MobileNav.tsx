@@ -28,7 +28,7 @@ export function MobileNav() {
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
-    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/') || pathname.startsWith('/people');
+    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/') || pathname.startsWith('/people') || pathname.startsWith('/contacts');
     if (href === '/rates') return pathname === '/rates';
     if (href === '/feeds') return pathname === '/feeds';
     return pathname === href;

@@ -24,6 +24,9 @@ const PROTECTED_USER_ROUTES = [
   '/jobs',
   '/auctions',
   '/rates',
+  '/people',
+  '/contacts',
+  '/connections',
   '/profile',
   '/nexus',
 ];
