@@ -815,12 +815,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user?.uid) return;
 
-    const refreshNotifications = () => {
-      syncConnectionsFromServer(user.uid);
+    let isSubscribed = true;
+
+    const refreshNotificationsOnly = () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+        return;
+      }
       const authHeaders = getClientAuthHeaders(user.uid);
       fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
         .then((r) => (r.ok ? r.json() : null))
         .then((json) => {
+          if (!isSubscribed) return;
           if (json?.success && Array.isArray(json.notifications)) {
             setNotifications(json.notifications);
             try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
@@ -829,15 +834,25 @@ export function DataProvider({ children }: { children: ReactNode }) {
         .catch(() => {});
     };
 
-    refreshNotifications();
+    // Initial background sync once on mount (throttled to max 1/min in lib/connections)
+    syncConnectionsFromServer(user.uid);
+    refreshNotificationsOnly();
 
-    window.addEventListener('focus', refreshNotifications);
-    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
-    const interval = setInterval(refreshNotifications, 15000);
+    const handleFocus = () => {
+      refreshNotificationsOnly();
+      syncConnectionsFromServer(user.uid);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    // When connections change locally, only refresh notification unread count, do NOT re-sync connections
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotificationsOnly);
+    // Light background fallback every 60 seconds (only when tab is active)
+    const interval = setInterval(refreshNotificationsOnly, 60000);
 
     return () => {
-      window.removeEventListener('focus', refreshNotifications);
-      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
+      isSubscribed = false;
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotificationsOnly);
       clearInterval(interval);
     };
   }, [user?.uid]);

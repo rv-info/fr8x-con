@@ -353,12 +353,13 @@ export default function ConnectionsPage() {
     fetchTab(activeTab);
   }, [activeTab, fetchTab]);
 
-  // Polling fallback every 8 seconds for incoming requests tab to guarantee instantaneous sync even if websocket drops
+  // Polling fallback every 45 seconds for incoming requests tab (only when active in foreground)
   useEffect(() => {
     if (activeTab !== 'incoming') return;
     const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
       fetchTab('incoming', true);
-    }, 8000);
+    }, 45000);
     return () => clearInterval(interval);
   }, [activeTab, fetchTab]);
 

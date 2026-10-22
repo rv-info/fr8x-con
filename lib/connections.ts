@@ -36,11 +36,13 @@ function getConnectionsMap(): Record<string, string[]> {
   }
 }
 
-function saveConnectionsMap(map: Record<string, string[]>) {
+function saveConnectionsMap(map: Record<string, string[]>, shouldDispatch = true) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(CONNECTIONS_MAP_KEY, JSON.stringify(map));
-    dispatchConnectionsChanged();
+    if (shouldDispatch) {
+      dispatchConnectionsChanged();
+    }
   } catch {}
 }
 
@@ -93,11 +95,13 @@ export function getAllConnectionRequests(): ConnectionRequest[] {
   }
 }
 
-function saveConnectionRequests(requests: ConnectionRequest[]) {
+function saveConnectionRequests(requests: ConnectionRequest[], shouldDispatch = true) {
   if (typeof window === 'undefined') return;
   try {
     localStorage.setItem(CONNECTION_REQUESTS_KEY, JSON.stringify(requests));
-    dispatchConnectionsChanged();
+    if (shouldDispatch) {
+      dispatchConnectionsChanged();
+    }
   } catch {}
 }
 
@@ -208,107 +212,129 @@ export function getClientAuthHeaders(preferredUid?: string): Record<string, stri
   return headers;
 }
 
-export async function syncConnectionsFromServer(uid: string): Promise<void> {
+let lastSyncTimestamp = 0;
+let activeSyncPromise: Promise<void> | null = null;
+const MIN_SYNC_INTERVAL_MS = 60_000; // Throttle: at most once every 60 seconds
+
+export async function syncConnectionsFromServer(uid: string, force = false): Promise<void> {
   if (typeof window === 'undefined' || !uid) return;
-  try {
-    const authHeaders = getClientAuthHeaders(uid);
-    const [incomingRes, outgoingRes, withdrawnRes, connRes] = await Promise.all([
-      fetch('/api/people/connections?tab=incoming', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=outgoing', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=withdrawn', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
-      fetch('/api/people/connections?tab=connections', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
-    ]);
 
-    const allRequests: ConnectionRequest[] = [];
-    const seenReqIds = new Set<string>();
-
-    if (incomingRes?.success && Array.isArray(incomingRes.data)) {
-      incomingRes.data.forEach((item: any) => {
-        if (!item || !item.id || seenReqIds.has(item.id)) return;
-        const p = item.profiles || {};
-        const fromUid = p.id || item.requester_id;
-        if (!fromUid || !uid) return;
-        seenReqIds.add(item.id);
-        allRequests.push({
-          id: item.id,
-          fromUid: String(fromUid),
-          toUid: String(uid),
-          senderName: p.display_name || p.full_name || 'Freight Colleague',
-          senderRole: p.designation || p.headline,
-          senderCompany: p.company_name || p.company,
-          senderAvatarUrl: p.avatar_url,
-          recipientName: '',
-          note: item.message,
-          status: item.status || 'pending',
-          createdAt: item.created_at || new Date().toISOString(),
-        });
-      });
-    }
-
-    if (outgoingRes?.success && Array.isArray(outgoingRes.data)) {
-      outgoingRes.data.forEach((item: any) => {
-        if (!item || !item.id || seenReqIds.has(item.id)) return;
-        const p = item.profiles || {};
-        const toUid = p.id || item.recipient_id;
-        if (!toUid || !uid) return;
-        seenReqIds.add(item.id);
-        allRequests.push({
-          id: item.id,
-          fromUid: String(uid),
-          toUid: String(toUid),
-          senderName: '',
-          recipientName: p.display_name || p.full_name || 'Freight Colleague',
-          recipientCompany: p.company_name || p.company,
-          recipientAvatarUrl: p.avatar_url,
-          note: item.message,
-          status: item.status || 'pending',
-          createdAt: item.created_at || new Date().toISOString(),
-        });
-      });
-    }
-
-    if (withdrawnRes?.success && Array.isArray(withdrawnRes.data)) {
-      withdrawnRes.data.forEach((item: any) => {
-        if (!item || !item.id || seenReqIds.has(item.id)) return;
-        const p = item.profiles || {};
-        const toUid = p.id || item.recipient_id;
-        if (!toUid || !uid) return;
-        seenReqIds.add(item.id);
-        allRequests.push({
-          id: item.id,
-          fromUid: String(uid),
-          toUid: String(toUid),
-          senderName: '',
-          recipientName: p.display_name || p.full_name || 'Freight Colleague',
-          recipientCompany: p.company_name || p.company,
-          recipientAvatarUrl: p.avatar_url,
-          note: item.message,
-          status: 'cancelled',
-          createdAt: item.created_at || new Date().toISOString(),
-        });
-      });
-    }
-
-    // Merge with any existing requests in local storage not yet overwritten
-    const existing = getAllConnectionRequests();
-    existing.forEach((r) => {
-      if (!seenReqIds.has(r.id)) {
-        allRequests.push(r);
-      }
-    });
-
-    saveConnectionRequests(allRequests);
-
-    // Sync connected map
-    if (connRes?.success && Array.isArray(connRes.data)) {
-      const map = getConnectionsMap();
-      const connectedIds = connRes.data.map((c: any) => c.connected_to || c.profiles?.id).filter(Boolean);
-      map[uid] = Array.from(new Set([...(map[uid] || []), ...connectedIds]));
-      saveConnectionsMap(map);
-    }
-  } catch (err) {
-    console.warn('[Connections] syncConnectionsFromServer error:', err);
+  const now = Date.now();
+  if (!force && (now - lastSyncTimestamp < MIN_SYNC_INTERVAL_MS)) {
+    return;
   }
+
+  if (activeSyncPromise) {
+    return activeSyncPromise;
+  }
+
+  activeSyncPromise = (async () => {
+    try {
+      lastSyncTimestamp = Date.now();
+      const authHeaders = getClientAuthHeaders(uid);
+      const [incomingRes, outgoingRes, withdrawnRes, connRes] = await Promise.all([
+        fetch('/api/people/connections?tab=incoming', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+        fetch('/api/people/connections?tab=outgoing', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+        fetch('/api/people/connections?tab=withdrawn', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+        fetch('/api/people/connections?tab=connections', { headers: authHeaders, credentials: 'include' }).then((r) => r.json()).catch(() => null),
+      ]);
+
+      const allRequests: ConnectionRequest[] = [];
+      const seenReqIds = new Set<string>();
+
+      if (incomingRes?.success && Array.isArray(incomingRes.data)) {
+        incomingRes.data.forEach((item: any) => {
+          if (!item || !item.id || seenReqIds.has(item.id)) return;
+          const p = item.profiles || {};
+          const fromUid = p.id || item.requester_id;
+          if (!fromUid || !uid) return;
+          seenReqIds.add(item.id);
+          allRequests.push({
+            id: item.id,
+            fromUid: String(fromUid),
+            toUid: String(uid),
+            senderName: p.display_name || p.full_name || 'Freight Colleague',
+            senderRole: p.designation || p.headline,
+            senderCompany: p.company_name || p.company,
+            senderAvatarUrl: p.avatar_url,
+            recipientName: '',
+            note: item.message,
+            status: item.status || 'pending',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        });
+      }
+
+      if (outgoingRes?.success && Array.isArray(outgoingRes.data)) {
+        outgoingRes.data.forEach((item: any) => {
+          if (!item || !item.id || seenReqIds.has(item.id)) return;
+          const p = item.profiles || {};
+          const toUid = p.id || item.recipient_id;
+          if (!toUid || !uid) return;
+          seenReqIds.add(item.id);
+          allRequests.push({
+            id: item.id,
+            fromUid: String(uid),
+            toUid: String(toUid),
+            senderName: '',
+            recipientName: p.display_name || p.full_name || 'Freight Colleague',
+            recipientCompany: p.company_name || p.company,
+            recipientAvatarUrl: p.avatar_url,
+            note: item.message,
+            status: item.status || 'pending',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        });
+      }
+
+      if (withdrawnRes?.success && Array.isArray(withdrawnRes.data)) {
+        withdrawnRes.data.forEach((item: any) => {
+          if (!item || !item.id || seenReqIds.has(item.id)) return;
+          const p = item.profiles || {};
+          const toUid = p.id || item.recipient_id;
+          if (!toUid || !uid) return;
+          seenReqIds.add(item.id);
+          allRequests.push({
+            id: item.id,
+            fromUid: String(uid),
+            toUid: String(toUid),
+            senderName: '',
+            recipientName: p.display_name || p.full_name || 'Freight Colleague',
+            recipientCompany: p.company_name || p.company,
+            recipientAvatarUrl: p.avatar_url,
+            note: item.message,
+            status: 'cancelled',
+            createdAt: item.created_at || new Date().toISOString(),
+          });
+        });
+      }
+
+      // Merge with any existing requests in local storage not yet overwritten
+      const existing = getAllConnectionRequests();
+      existing.forEach((r) => {
+        if (!seenReqIds.has(r.id)) {
+          allRequests.push(r);
+        }
+      });
+
+      // Save quietly without dispatching CONNECTIONS_CHANGED_EVENT to prevent recursive storms
+      saveConnectionRequests(allRequests, false);
+
+      // Sync connected map quietly
+      if (connRes?.success && Array.isArray(connRes.data)) {
+        const map = getConnectionsMap();
+        const connectedIds = connRes.data.map((c: any) => c.connected_to || c.profiles?.id).filter(Boolean);
+        map[uid] = Array.from(new Set([...(map[uid] || []), ...connectedIds]));
+        saveConnectionsMap(map, false);
+      }
+    } catch (err) {
+      console.warn('[Connections] syncConnectionsFromServer error:', err);
+    } finally {
+      activeSyncPromise = null;
+    }
+  })();
+
+  return activeSyncPromise;
 }
 
 export async function sendConnectionRequest(
