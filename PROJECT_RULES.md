@@ -311,5 +311,15 @@ Before "Done"    → Empirical proof captured
 
 ---
 
+## Asset & Deployment Fair-Use Rule (CRITICAL)
+
+**Zero Heavy Binary Assets in Web Origin (`public/`)**:
+- **NEVER** commit `.apk`, `.zip`, `.tar.gz`, `.dmg`, `.exe`, or files > 1 MB into `public/`.
+- All downloadable artifacts/installers **MUST** be hosted on external cloud storage (Google Drive, GitHub Releases, Cloudflare R2).
+- Vercel paused this project previously due to `.apk` files being crawled by bots. A **one-time courtesy unblock** was granted by Vercel with a 30-day 3x limit multiplier. A second violation will lead to permanent suspension.
+- See full post-mortem: [`docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md`](docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md).
+
+---
+
 *GSD Methodology — Model-Agnostic Edition*
 *Reference implementation for multi-LLM environments*
