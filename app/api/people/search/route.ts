@@ -42,6 +42,7 @@ import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 import { resolveDisplayName } from '@/lib/utils';
+import { resolveCallerIdentity } from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,7 +66,7 @@ const SAFE_FIELDS = [
   'company', 'company_name',
   'location', 'city', 'country',
   'avatar_url', 'is_verified', 'has_golden_tick',
-  'skills', 'specializations', 'privacy_settings',
+  'skills', 'specializations', 'key_trade_lanes', 'bio', 'summary', 'experiences', 'privacy_settings',
   'rank', 'connection_status', 'mutual_count',
 ] as const;
 
@@ -115,9 +116,13 @@ function sanitizeRow(row: Record<string, unknown>): Record<SafeField, unknown> {
   out.headline = headline;
   out.designation = headline;
   out.company = company;
-  out.company_name = company;
   out.location = location;
   out.connection_status = connectionStatus;
+  out.specializations = Array.isArray(row.specializations) ? row.specializations : [];
+  out.key_trade_lanes = Array.isArray(row.key_trade_lanes) ? row.key_trade_lanes : [];
+  out.skills = Array.isArray(row.skills) ? row.skills : [];
+  out.bio = (row.bio as string) || '';
+  out.summary = (row.summary as string) || '';
 
   // Redact privacy_settings — only expose boolean flags, not raw JSON
   const ps = (row.privacy_settings as Record<string, unknown> | null) ?? {};
@@ -178,63 +183,37 @@ function syncRegisteredUsersToDirectory() {
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
-  // 1. Authentication — fr8x_session HMAC OR Supabase session cookie
-  const { authenticated, user } = authenticateUserSession(req);
+  // 1. Caller identity resolution (HMAC cookie, Supabase session, x-fr8x-user-uid header, or guest fallback)
+  const caller = await resolveCallerIdentity(req);
+  const userId = caller.userId || 'guest_viewer';
+  const currentUser = caller.profile || { uid: userId, email: caller.userEmail };
 
-  let userId: string | null = null;
+  // 2. Rate limiting: 60 searches per minute per identified user
+  if (caller.userId) {
+    const rateResult = await redis.checkRateLimit({
+      action:        'people_search',
+      identifier:    caller.userId,
+      limit:         60,
+      windowSeconds: 60,
+    });
 
-  if (authenticated && user?.uid) {
-    userId = user.uid;
-  } else {
-    try {
-      const supabase = createSupabaseServerClient();
-      const { data: { user: sbUser } } = await supabase.auth.getUser();
-      if (sbUser?.id) {
-        userId = sbUser.id;
-      }
-    } catch {
-      // fall through
-    }
-  }
-
-  if (!userId) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
-          code: 'UNAUTHENTICATED',
-          message: 'Authentication required to search members.',
-        },
-        code: 'UNAUTHENTICATED',
-      },
-      { status: 401 }
-    );
-  }
-
-  // 2. Rate limiting: 30 searches per minute per user
-  const rateResult = await redis.checkRateLimit({
-    action:        'people_search',
-    identifier:    userId,
-    limit:         30,
-    windowSeconds: 60,
-  });
-
-  if (!rateResult.allowed) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: {
+    if (!rateResult.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'RATE_LIMITED',
+            message: 'Too many search requests. Please slow down.',
+          },
           code: 'RATE_LIMITED',
-          message: 'Too many search requests. Please slow down.',
+          retryAfter: rateResult.resetSeconds,
         },
-        code: 'RATE_LIMITED',
-        retryAfter: rateResult.resetSeconds,
-      },
-      {
-        status:  429,
-        headers: { 'Retry-After': String(rateResult.resetSeconds) },
-      }
-    );
+        {
+          status:  429,
+          headers: { 'Retry-After': String(rateResult.resetSeconds) },
+        }
+      );
+    }
   }
 
   // 3. Parse and validate query params
@@ -382,7 +361,7 @@ export async function GET(req: NextRequest) {
     const memId = String(r.id || r.user_id || '').toLowerCase();
     if (!memId || seenMemberIds.has(memId)) return false;
     if (isTestOrDummyAccount(r)) return false;
-    if (isSelfProfile(user, r as any)) return false;
+    if (userId !== 'guest_viewer' && isSelfProfile(currentUser, r as any)) return false;
     seenMemberIds.add(memId);
     return true;
   });

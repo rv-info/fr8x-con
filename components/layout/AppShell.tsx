@@ -162,6 +162,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
   else if (pathname.startsWith('/auctions/create')) activeTitle = 'Create Auction';
   else if (pathname.startsWith('/auctions/')) activeTitle = 'Live Bid Room';
   else if (pathname === '/auctions') activeTitle = 'Auctions';
+  else if (pathname.startsWith('/people') || pathname.startsWith('/connections') || pathname.startsWith('/contacts')) activeTitle = 'People';
 
   return (
     <div className={`app ${isSidebarCollapsed ? 'collapsed-sidebar' : ''}`}>

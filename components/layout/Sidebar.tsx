@@ -13,10 +13,8 @@ import {
   Gavel,
   BarChart3,
   Users,
-  Network,
   Briefcase,
   User,
-  BookUser,
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
@@ -55,8 +53,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },
     { href: '/people', label: 'People', icon: Users },
-    { href: '/contacts', label: 'Contacts', icon: BookUser },
-    { href: '/connections', label: 'Connections', icon: Network },
     { href: '/jobs', label: 'Jobs', icon: Briefcase },
     { href: '/profile', label: 'Profile', icon: User },
   ];
@@ -64,9 +60,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions')  return pathname === '/auctions'  || pathname.startsWith('/auctions/');
-    if (href === '/people')    return pathname === '/people'    || pathname.startsWith('/people/');
-    if (href === '/contacts')  return pathname === '/contacts'  || pathname.startsWith('/contacts/');
-    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/');
+    if (href === '/people')    return pathname === '/people'    || pathname.startsWith('/people/') || pathname.startsWith('/connections') || pathname.startsWith('/contacts');
     return pathname === href;
   };
 

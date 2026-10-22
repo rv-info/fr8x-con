@@ -291,6 +291,7 @@ interface DataContextType {
   bulkUpdateRates: (rateIds: string[], updates: Partial<RateItem>, adjustmentPercentage?: number) => Promise<void>;
   // Notifications
   notifications: AppNotification[];
+  refreshNotifications: () => Promise<void>;
   markNotificationRead: (notifId: string) => void;
   markAllNotificationsRead: () => void;
   clearNotification: (notifId: string) => void;
@@ -721,51 +722,83 @@ export function DataProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.uid, isLowBandwidth]);
 
+  // Active DBMS Notifications synchronization
+  const refreshNotifications = useCallback(async () => {
+    if (!user?.uid) return;
+    const authHeaders = getClientAuthHeaders(user.uid);
+    try {
+      const res = await fetch('/api/notifications', { headers: authHeaders, credentials: 'include' });
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.success && Array.isArray(json.notifications)) {
+          setNotifications(json.notifications);
+          try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
+          return;
+        }
+      }
+    } catch {}
+
+    // Direct fallback to notificationDbService
+    try {
+      const dbNotifs = await notificationDbService.getNotifications(user.uid);
+      if (Array.isArray(dbNotifs)) {
+        const mapped: AppNotification[] = dbNotifs.map((n: any) => ({
+          id: String(n.id),
+          title: n.title || 'Notification',
+          desc: n.description || n.message || '',
+          time: n.created_at ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now',
+          createdAt: n.created_at || new Date().toISOString(),
+          read: Boolean(n.read),
+          type: n.type || 'system',
+          category: n.category || 'system',
+          targetUrl: n.target_url || n.link || undefined,
+          relatedId: n.related_id || undefined,
+          actionLabel: n.metadata?.actionLabel,
+        }));
+        setNotifications(mapped);
+        try { localStorage.setItem('fr8x_notifications', JSON.stringify(mapped)); } catch {}
+      }
+    } catch {}
+  }, [user?.uid]);
+
   // Periodic and event-driven notifications synchronization
   useEffect(() => {
     if (!user?.uid) return;
 
     let isSubscribed = true;
 
-    const refreshNotificationsOnly = () => {
-      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
-        return;
-      }
-      const authHeaders = getClientAuthHeaders(user.uid);
-      fetch('/api/notifications', { headers: authHeaders, credentials: 'include' })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((json) => {
-          if (!isSubscribed) return;
-          if (json?.success && Array.isArray(json.notifications)) {
-            setNotifications(json.notifications);
-            try { localStorage.setItem('fr8x_notifications', JSON.stringify(json.notifications)); } catch {}
-          }
-        })
-        .catch(() => {});
-    };
-
-    // Initial background sync once on mount (throttled to max 1/min in lib/connections)
+    // Initial background sync once on mount
     syncConnectionsFromServer(user.uid);
-    refreshNotificationsOnly();
+    refreshNotifications();
 
-    const handleFocus = () => {
-      refreshNotificationsOnly();
-      syncConnectionsFromServer(user.uid);
+    const handleFocusOrVisible = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refreshNotifications();
+        syncConnectionsFromServer(user.uid);
+      }
     };
 
-    window.addEventListener('focus', handleFocus);
-    // When connections change locally, only refresh notification unread count, do NOT re-sync connections
-    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotificationsOnly);
-    // Light background fallback every 60 seconds (only when tab is active)
-    const interval = setInterval(refreshNotificationsOnly, 60000);
+    window.addEventListener('focus', handleFocusOrVisible);
+    window.addEventListener('visibilitychange', handleFocusOrVisible);
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
+    window.addEventListener('fr8x_refresh_notifications', refreshNotifications);
+
+    // Fast background sync: poll DBMS every 8 seconds when tab is active
+    const interval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        refreshNotifications();
+      }
+    }, 8000);
 
     return () => {
       isSubscribed = false;
-      window.removeEventListener('focus', handleFocus);
-      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotificationsOnly);
+      window.removeEventListener('focus', handleFocusOrVisible);
+      window.removeEventListener('visibilitychange', handleFocusOrVisible);
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
+      window.removeEventListener('fr8x_refresh_notifications', refreshNotifications);
       clearInterval(interval);
     };
-  }, [user?.uid]);
+  }, [user?.uid, refreshNotifications]);
 
   // Supabase Realtime Listener for Connections & Notifications
   useEffect(() => {
@@ -2601,6 +2634,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       bulkImportRates,
       bulkUpdateRates,
       notifications,
+      refreshNotifications,
       markNotificationRead,
       markAllNotificationsRead,
       clearNotification,

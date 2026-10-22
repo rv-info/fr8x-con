@@ -9,9 +9,7 @@ import {
   Globe2,
   Gavel,
   BarChart3,
-  Network,
-  Briefcase,
-  User,
+  Users,
 } from 'lucide-react';
 
 export function MobileNav() {
@@ -22,13 +20,13 @@ export function MobileNav() {
     { href: '/feeds', label: 'Feeds', icon: Rss },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },
-    { href: '/connections', label: 'Network', icon: Network },
+    { href: '/people', label: 'People', icon: Users },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
-    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/') || pathname.startsWith('/people') || pathname.startsWith('/contacts');
+    if (href === '/people') return pathname === '/people' || pathname.startsWith('/people') || pathname.startsWith('/connections') || pathname.startsWith('/contacts');
     if (href === '/rates') return pathname === '/rates';
     if (href === '/feeds') return pathname === '/feeds';
     return pathname === href;

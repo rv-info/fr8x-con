@@ -31,6 +31,8 @@ export interface PersonCardData {
   is_verified:      boolean | null;
   has_golden_tick:  boolean | null;
   skills:           string[] | null;
+  specializations?: string[] | null;
+  key_trade_lanes?: string[] | null;
   connection_status: ConnectionStatus;
   mutual_count:     number;
   request_id?:      string;

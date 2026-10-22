@@ -42,6 +42,7 @@ import {
   LogOut,
   Trash2,
   Clock,
+  RefreshCw,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -52,11 +53,12 @@ interface TopBarProps {
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { user, allUsers, logout } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates, convertAmount: convertAmountLive } = useCurrency();
-  const { notifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
+  const { notifications, refreshNotifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isSyncingNotifs, setIsSyncingNotifs] = useState(false);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [previewPassportUid, setPreviewPassportUid] = useState<string | null>(null);
@@ -672,18 +674,112 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           <div style={{ position: 'relative' }}>
             <button
               className="topicon"
-              onClick={() => { setShowNotifications(!showNotifications); setShowUserDropdown(false); setShowCurrencyModal(false); }}
+              onClick={async () => {
+                const nextState = !showNotifications;
+                setShowNotifications(nextState);
+                setShowUserDropdown(false);
+                setShowCurrencyModal(false);
+                if (nextState) {
+                  setIsSyncingNotifs(true);
+                  try {
+                    await refreshNotifications();
+                  } finally {
+                    setIsSyncingNotifs(false);
+                  }
+                }
+              }}
               aria-label="View notifications"
+              title="Notifications (Live DBMS Synchronized)"
             >
               <Bell size={15} />
-              {unreadCount > 0 && <span className="dot" />}
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-2px',
+                    right: '-3px',
+                    minWidth: '16px',
+                    height: '16px',
+                    padding: '0 4px',
+                    borderRadius: '8px',
+                    background: '#ef4444',
+                    color: '#ffffff',
+                    fontSize: '9.5px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    lineHeight: 1,
+                    border: '1.5px solid #ffffff',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </button>
 
             {showNotifications && (
               <div className="notifications-dropdown">
                 <div className="notif-header">
-                  <b style={{ fontSize: '12px' }}>Notifications</b>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <b style={{ fontSize: '12px' }}>Notifications</b>
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        fontSize: '9px',
+                        color: '#15803d',
+                        background: '#dcfce7',
+                        padding: '1px 6px',
+                        borderRadius: '10px',
+                        fontWeight: 700,
+                      }}
+                      title="Direct PostgreSQL Realtime & Database Connection Active"
+                    >
+                      <span
+                        style={{
+                          width: '5px',
+                          height: '5px',
+                          borderRadius: '50%',
+                          background: '#16a34a',
+                          display: 'inline-block',
+                          animation: 'pulse 1.8s infinite',
+                        }}
+                      />
+                      Live DBMS
+                    </span>
+                  </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setIsSyncingNotifs(true);
+                        try {
+                          await refreshNotifications();
+                        } finally {
+                          setIsSyncingNotifs(false);
+                        }
+                      }}
+                      title="Sync immediately with DBMS"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '10px',
+                        color: 'var(--brand)',
+                        fontWeight: 600,
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '2px 4px',
+                        borderRadius: '4px',
+                      }}
+                    >
+                      <RefreshCw size={11} className={isSyncingNotifs ? 'spin' : ''} />
+                      {isSyncingNotifs ? 'Syncing…' : 'Sync'}
+                    </button>
                     {unreadCount > 0 && (
                       <span className="badge blue" style={{ fontSize: '9px' }}>{unreadCount} Unread</span>
                     )}

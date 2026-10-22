@@ -11,6 +11,7 @@ import {
   UserPlus, UserCheck, Clock, UserX, MessageSquare, Shield,
   Loader2, ChevronDown,
 } from 'lucide-react';
+import { getClientAuthHeaders } from '@/lib/connections';
 
 export type ConnectionStatus =
   | 'none'
@@ -31,9 +32,11 @@ export interface ConnectionButtonProps {
 }
 
 async function callConnectionsAPI(body: Record<string, string | undefined>) {
+  const authHeaders = getClientAuthHeaders();
   const res = await fetch('/api/people/connections', {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...authHeaders },
+    credentials: 'include',
     body:    JSON.stringify(body),
   });
   const data = await res.json();
