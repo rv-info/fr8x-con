@@ -25,10 +25,12 @@ import {
   getOutgoingRequestsForUser,
   getAcceptedConnectionsForUser,
   getWithdrawnRequestsForUser,
+  getHeldRequestsForUser,
   sendConnectionRequestBackend,
   acceptConnectionRequestBackend,
   cancelConnectionRequestBackend,
   declineConnectionRequestBackend,
+  holdConnectionRequestBackend,
   normalizeMemberProfile,
 } from '@/lib/connections-backend';
 
@@ -51,6 +53,10 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action:     z.literal('reject'),
+    request_id: z.string().min(1, 'request_id is required'),
+  }),
+  z.object({
+    action:     z.literal('hold'),
     request_id: z.string().min(1, 'request_id is required'),
   }),
   z.object({
@@ -78,7 +84,7 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
 
 // ── GET query schema ──────────────────────────────────────────────────────────
 const GetQuerySchema = z.object({
-  tab:   z.enum(['connections', 'incoming', 'outgoing', 'blocked', 'withdrawn']).optional().default('connections'),
+  tab:   z.enum(['connections', 'incoming', 'outgoing', 'blocked', 'withdrawn', 'held', 'hold']).optional().default('connections'),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
   cursor: z.string().optional(),
 });
@@ -129,6 +135,11 @@ export async function GET(req: NextRequest) {
     if (tab === 'withdrawn') {
       const list = await getWithdrawnRequestsForUser(userId, limit, caller.token);
       return NextResponse.json({ success: true, tab, data: list });
+    }
+
+    if (tab === 'held' || tab === 'hold') {
+      const list = await getHeldRequestsForUser(userId, limit, caller.token);
+      return NextResponse.json({ success: true, tab: 'held', data: list });
     }
 
     if (tab === 'blocked') {
@@ -248,6 +259,16 @@ export async function POST(req: NextRequest) {
       case 'reject':
       case 'decline': {
         result = await declineConnectionRequestBackend(
+          userId,
+          action.request_id,
+          undefined,
+          caller.token
+        );
+        break;
+      }
+
+      case 'hold': {
+        result = await holdConnectionRequestBackend(
           userId,
           action.request_id,
           undefined,

@@ -33,6 +33,14 @@ import {
   Check,
   UserCheck,
   ArrowUpRight,
+  UserPlus,
+  Inbox,
+  PauseCircle,
+  RotateCcw,
+  XCircle,
+  SlidersHorizontal,
+  ChevronRight,
+  Filter,
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
@@ -40,6 +48,7 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { ContactRecord } from '@/lib/db/contacts';
 
+type MainContactTab = 'all' | 'discover' | 'incoming' | 'outgoing' | 'held';
 type ViewMode = 'grid' | 'table';
 type PresenceFilter = 'all' | 'live' | 'away' | 'busy' | 'offline';
 type CategoryFilter = 'all' | 'Freight Forwarder' | 'Shipping Line / Carrier' | 'Customs Broker' | 'Shipper (BCO)' | 'Transporter / Fleet';
@@ -54,15 +63,97 @@ interface ChatMessage {
   is_read: boolean;
 }
 
+interface ProfileSnippet {
+  id: string;
+  display_name?: string | null;
+  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  headline?: string | null;
+  designation?: string | null;
+  position?: string | null;
+  company?: string | null;
+  company_name?: string | null;
+  location?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  avatar_url?: string | null;
+  is_verified?: boolean | null;
+  has_golden_tick?: boolean | null;
+  skills?: string[];
+  specializations?: string[];
+  key_trade_lanes?: string[];
+  connection_status?: string;
+  request_id?: string;
+}
+
+interface RequestItem {
+  id: string;
+  message: string | null;
+  created_at: string;
+  updated_at?: string;
+  status: string;
+  requester_id?: string;
+  recipient_id?: string;
+  profiles: ProfileSnippet;
+}
+
+function resolveMemberName(p?: ProfileSnippet | null): string {
+  if (!p) return 'FR8X Member';
+  if (p.full_name?.trim()) return p.full_name.trim();
+  if (p.display_name?.trim()) return p.display_name.trim();
+  const combined = `${p.first_name || ''} ${p.last_name || ''}`.trim();
+  return combined || 'FR8X Member';
+}
+
+function resolveMemberSubline(p?: ProfileSnippet | null): string {
+  if (!p) return '';
+  if (p.headline?.trim()) return p.headline.trim();
+  const parts: string[] = [];
+  if (p.designation || p.position) parts.push((p.designation || p.position)!);
+  const comp = p.company_name || p.company;
+  if (comp) parts.push(comp);
+  return parts.join(' · ');
+}
+
+function resolveMemberLocation(p?: ProfileSnippet | null): string {
+  if (!p) return '';
+  if (p.location?.trim()) return p.location.trim();
+  return [p.city, p.state, p.country].filter(Boolean).join(', ');
+}
+
 export default function ContactsCrmPage() {
   const { user } = useAuth();
   const { toast } = useToast();
 
+  // Active Main Navigation Tab
+  const [activeMainTab, setActiveMainTab] = useState<MainContactTab>('all');
+
+  // Contact CRM State
   const [contacts, setContacts] = useState<ContactRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filters & View State
+  // Network Requests State
+  const [incomingRequests, setIncomingRequests] = useState<RequestItem[]>([]);
+  const [outgoingRequests, setOutgoingRequests] = useState<RequestItem[]>([]);
+  const [heldRequests, setHeldRequests] = useState<RequestItem[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
+
+  // Network Discovery State
+  const [directoryMembers, setDirectoryMembers] = useState<ProfileSnippet[]>([]);
+  const [discoverSearch, setDiscoverSearch] = useState('');
+  const [discoverRole, setDiscoverRole] = useState('all');
+  const [loadingDiscover, setLoadingDiscover] = useState(false);
+
+  // Send Connection Modal State
+  const [sendConnectTarget, setSendConnectTarget] = useState<ProfileSnippet | null>(null);
+  const [sendConnectNote, setSendConnectNote] = useState('');
+  const [sendingConnect, setSendingConnect] = useState(false);
+
+  // Filters & View State for CRM Contacts
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [presenceFilter, setPresenceFilter] = useState<PresenceFilter>('all');
@@ -110,10 +201,21 @@ export default function ContactsCrmPage() {
     contact_profile_id: '' as string | null,
   });
 
-  // ── Load Contacts from API ──────────────────────────────────────────────────
+  // Check URL query parameters for initial tab
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as MainContactTab | null;
+      if (tabParam && ['all', 'discover', 'incoming', 'outgoing', 'held'].includes(tabParam)) {
+        setActiveMainTab(tabParam);
+      }
+    }
+  }, []);
+
+  // ── Fetch Unified Contacts ──────────────────────────────────────────────────
   const fetchContacts = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    else setLoadingContacts(true);
 
     try {
       const res = await fetch('/api/contacts', { credentials: 'include' });
@@ -121,18 +223,81 @@ export default function ContactsCrmPage() {
       if (json.success && Array.isArray(json.data)) {
         setContacts(json.data);
       }
-    } catch (err: any) {
-      console.error('Failed to fetch contacts:', err);
+    } catch {
       toast('Failed to load contacts.');
     } finally {
-      setLoading(false);
+      setLoadingContacts(false);
       setRefreshing(false);
     }
   }, [toast]);
 
+  // ── Fetch Network Requests (Incoming, Outgoing, Held) ──────────────────────
+  const fetchNetworkRequests = useCallback(async () => {
+    setLoadingRequests(true);
+    try {
+      const [inRes, outRes, heldRes] = await Promise.all([
+        fetch('/api/people/connections?tab=incoming', { credentials: 'include' }),
+        fetch('/api/people/connections?tab=outgoing', { credentials: 'include' }),
+        fetch('/api/people/connections?tab=held', { credentials: 'include' }),
+      ]);
+
+      const [inJson, outJson, heldJson] = await Promise.all([
+        inRes.json(),
+        outRes.json(),
+        heldRes.json(),
+      ]);
+
+      if (inJson.success && Array.isArray(inJson.data)) {
+        setIncomingRequests(inJson.data);
+      }
+      if (outJson.success && Array.isArray(outJson.data)) {
+        setOutgoingRequests(outJson.data);
+      }
+      if (heldJson.success && Array.isArray(heldJson.data)) {
+        setHeldRequests(heldJson.data);
+      }
+    } catch {
+      // silently ignore
+    } finally {
+      setLoadingRequests(false);
+    }
+  }, []);
+
+  // ── Fetch Discovery Members ────────────────────────────────────────────────
+  const fetchDiscoveryMembers = useCallback(async (query = '', role = 'all') => {
+    setLoadingDiscover(true);
+    try {
+      let url = `/api/people/search?limit=30`;
+      if (query.trim()) url += `&q=${encodeURIComponent(query.trim())}`;
+      if (role !== 'all') url += `&skills=${encodeURIComponent(role)}`;
+
+      const res = await fetch(url, { credentials: 'include' });
+      const json = await res.json();
+      if (json.success && Array.isArray(json.data)) {
+        setDirectoryMembers(json.data);
+      }
+    } catch {
+      // error handling
+    } finally {
+      setLoadingDiscover(false);
+    }
+  }, []);
+
+  // Initial Data Loads
   useEffect(() => {
     fetchContacts();
-  }, [fetchContacts]);
+    fetchNetworkRequests();
+  }, [fetchContacts, fetchNetworkRequests]);
+
+  // Load discovery members when tab changes or search filters change
+  useEffect(() => {
+    if (activeMainTab === 'discover') {
+      const timer = setTimeout(() => {
+        fetchDiscoveryMembers(discoverSearch, discoverRole);
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [activeMainTab, discoverSearch, discoverRole, fetchDiscoveryMembers]);
 
   // ── Handle Own Presence Status Toggle in DBMS ──────────────────────────────
   const handleUpdateMyPresence = async (status: 'live' | 'away' | 'busy' | 'offline') => {
@@ -163,7 +328,134 @@ export default function ContactsCrmPage() {
     }
   };
 
-  // ── Directory Member Live Search (Add from FR8X) ───────────────────────────
+  // ── Connection Actions: Accept, Hold, Decline, Withdraw ────────────────────
+  const handleAcceptRequest = async (requestId: string, requesterName: string) => {
+    setRequestBusyId(requestId);
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'accept', request_id: requestId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast(`Connected with ${requesterName}! Added to Contacts CRM.`);
+        await Promise.all([fetchNetworkRequests(), fetchContacts(true)]);
+      } else {
+        toast(json.error || 'Failed to accept connection request.');
+      }
+    } catch {
+      toast('Network error accepting request.');
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleHoldRequest = async (requestId: string, requesterName: string) => {
+    setRequestBusyId(requestId);
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'hold', request_id: requestId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast(`Request from ${requesterName} kept on hold for review.`);
+        await fetchNetworkRequests();
+      } else {
+        toast(json.error || 'Failed to hold connection request.');
+      }
+    } catch {
+      toast('Network error holding request.');
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleDeclineRequest = async (requestId: string, requesterName: string) => {
+    setRequestBusyId(requestId);
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'decline', request_id: requestId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast(`Connection request from ${requesterName} declined.`);
+        await fetchNetworkRequests();
+      } else {
+        toast(json.error || 'Failed to decline request.');
+      }
+    } catch {
+      toast('Network error declining request.');
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleWithdrawRequest = async (requestId: string, targetName: string) => {
+    setRequestBusyId(requestId);
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'cancel', request_id: requestId }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast(`Connection request to ${targetName} withdrawn.`);
+        await fetchNetworkRequests();
+        if (activeMainTab === 'discover') {
+          fetchDiscoveryMembers(discoverSearch, discoverRole);
+        }
+      } else {
+        toast(json.error || 'Failed to withdraw request.');
+      }
+    } catch {
+      toast('Network error withdrawing request.');
+    } finally {
+      setRequestBusyId(null);
+    }
+  };
+
+  const handleSendConnectRequest = async () => {
+    if (!sendConnectTarget) return;
+    setSendingConnect(true);
+    try {
+      const res = await fetch('/api/people/connections', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          action: 'send',
+          target_id: sendConnectTarget.id,
+          message: sendConnectNote.trim() || undefined,
+        }),
+      });
+      const json = await res.json();
+      if (json.success) {
+        toast(`Connection invitation sent to ${resolveMemberName(sendConnectTarget)}!`);
+        setSendConnectTarget(null);
+        setSendConnectNote('');
+        await fetchNetworkRequests();
+        fetchDiscoveryMembers(discoverSearch, discoverRole);
+      } else {
+        toast(json.error || 'Failed to send connection request.');
+      }
+    } catch {
+      toast('Network error sending request.');
+    } finally {
+      setSendingConnect(false);
+    }
+  };
+
+  // ── Directory Member Live Search (Add Modal) ──────────────────────────────
   useEffect(() => {
     if (addMode !== 'directory' || !directorySearch.trim()) {
       setDirectoryResults([]);
@@ -219,7 +511,7 @@ export default function ContactsCrmPage() {
         toast(json.error || 'Failed to save contact');
       }
     } catch {
-      toast('Network error saving contact');
+      toast('Network error while saving contact');
     }
   };
 
@@ -230,8 +522,18 @@ export default function ContactsCrmPage() {
 
     const payload = {
       id: selectedContact.id,
-      ...formData,
+      name: formData.name,
+      company: formData.company,
+      designation: formData.designation,
+      email: formData.email,
+      phone: formData.phone,
+      category: formData.category,
+      stage: formData.stage,
+      status: formData.status,
+      location: formData.location,
       tags: formData.tags ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      notes: formData.notes,
+      is_favorite: formData.is_favorite,
     };
 
     try {
@@ -244,109 +546,121 @@ export default function ContactsCrmPage() {
       const json = await res.json();
 
       if (json.success) {
-        toast(`Updated "${payload.name}" in DBMS`);
+        toast(`Contact "${payload.name}" updated in DBMS`);
         setShowEditModal(false);
         fetchContacts(true);
       } else {
         toast(json.error || 'Failed to update contact');
       }
     } catch {
-      toast('Network error updating contact');
+      toast('Network error while updating contact');
     }
   };
 
-  // ── Handle Delete Contact & DBMS Connection ────────────────────────────────
+  // ── Handle Delete Contact ──────────────────────────────────────────────────
   const handleConfirmDelete = async () => {
     if (!selectedContact) return;
 
     try {
-      const query = new URLSearchParams({
-        id: selectedContact.id,
-        deleteConnection: deleteWithConnection ? 'true' : 'false',
-      });
-
-      const res = await fetch(`/api/contacts?${query.toString()}`, {
+      const url = `/api/contacts?id=${selectedContact.id}&deleteConnection=${deleteWithConnection ? 'true' : 'false'}`;
+      const res = await fetch(url, {
         method: 'DELETE',
         credentials: 'include',
       });
       const json = await res.json();
 
       if (json.success) {
-        toast(json.message || 'Contact deleted');
+        toast(json.message || 'Contact deleted successfully.');
         setShowDeleteModal(false);
         setSelectedContact(null);
         fetchContacts(true);
+        fetchNetworkRequests();
       } else {
-        toast(json.error || 'Delete failed');
+        toast(json.error || 'Failed to delete contact');
       }
     } catch {
-      toast('Network error during deletion');
+      toast('Network error deleting contact');
     }
   };
 
-  // ── Quick Toggle Favorite Star ─────────────────────────────────────────────
-  const handleToggleFavorite = async (c: ContactRecord, e: React.MouseEvent) => {
+  // ── Handle Toggle Favorite ─────────────────────────────────────────────────
+  const handleToggleFavorite = async (contact: ContactRecord, e: React.MouseEvent) => {
     e.stopPropagation();
-    const newFav = !c.is_favorite;
+    const updatedFav = !contact.is_favorite;
 
-    // Optimistic update
-    setContacts((prev) => prev.map((item) => (item.id === c.id ? { ...item, is_favorite: newFav } : item)));
+    // Optimistic UI update
+    setContacts((prev) =>
+      prev.map((c) => (c.id === contact.id ? { ...c, is_favorite: updatedFav } : c))
+    );
 
     try {
       await fetch('/api/contacts', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ id: c.id, is_favorite: newFav }),
+        body: JSON.stringify({ id: contact.id, is_favorite: updatedFav }),
       });
+      toast(updatedFav ? `Marked ${contact.name} as favorite` : `Unmarked ${contact.name}`);
     } catch {
-      // Revert on error
-      setContacts((prev) => prev.map((item) => (item.id === c.id ? { ...item, is_favorite: !newFav } : item)));
+      fetchContacts();
     }
   };
 
-  // ── Direct Chat Drawer Logic ───────────────────────────────────────────────
-  const handleOpenChat = async (c: ContactRecord) => {
-    setActiveChatContact(c);
+  // ── Open Chat Drawer ───────────────────────────────────────────────────────
+  const handleOpenChat = async (contact: ContactRecord) => {
+    setActiveChatContact(contact);
     setChatLoading(true);
+    setChatMessages([]);
 
     try {
-      const targetId = c.contact_profile_id || c.id;
-      const res = await fetch(`/api/contacts/chat?targetId=${targetId}`, { credentials: 'include' });
+      const res = await fetch(`/api/contacts/chat?contactId=${contact.id}`, { credentials: 'include' });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setChatMessages(json.data);
       }
     } catch {
-      setChatMessages([]);
+      toast('Failed to load chat history');
     } finally {
       setChatLoading(false);
     }
   };
 
-  const handleSendChatMessage = async (presetText?: string) => {
-    const textToSend = presetText || chatInputText;
-    if (!textToSend.trim() || !activeChatContact || chatSending) return;
+  const handleSendChatMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeChatContact || !chatInputText.trim() || chatSending) return;
 
+    const text = chatInputText.trim();
+    setChatInputText('');
     setChatSending(true);
-    const targetId = activeChatContact.contact_profile_id || activeChatContact.id;
+
+    // Optimistic message
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      sender_id: user?.uid || 'me',
+      recipient_id: activeChatContact.contact_profile_id || activeChatContact.id,
+      content: text,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    };
+    setChatMessages((prev) => [...prev, optimisticMsg]);
 
     try {
       const res = await fetch('/api/contacts/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ targetId, content: textToSend }),
+        body: JSON.stringify({
+          contactId: activeChatContact.id,
+          message: text,
+        }),
       });
       const json = await res.json();
-
       if (json.success && json.data) {
-        setChatMessages((prev) => [...prev, json.data]);
-        if (!presetText) setChatInputText('');
-        toast('Message sent to contact');
+        setChatMessages((prev) => prev.map((m) => (m.id === tempId ? json.data : m)));
       }
     } catch {
-      toast('Failed to send message');
+      toast('Failed to dispatch message');
     } finally {
       setChatSending(false);
     }
@@ -396,10 +710,9 @@ export default function ContactsCrmPage() {
     setShowEditModal(true);
   };
 
-  // ── Filter & Search Logic ──────────────────────────────────────────────────
+  // ── Filter & Search Logic for Contacts CRM ─────────────────────────────────
   const filteredContacts = useMemo(() => {
     return contacts.filter((c) => {
-      // 1. Text Search
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = c.name?.toLowerCase().includes(q);
@@ -414,19 +727,16 @@ export default function ContactsCrmPage() {
         }
       }
 
-      // 2. Category Filter
       if (categoryFilter !== 'all' && c.category !== categoryFilter) {
         return false;
       }
 
-      // 3. Presence Status Filter
       if (presenceFilter === 'live') {
         if (c.status !== 'live' && c.status !== 'online') return false;
       } else if (presenceFilter !== 'all' && c.status !== presenceFilter) {
         return false;
       }
 
-      // 4. Deal Stage Filter
       if (stageFilter !== 'all' && c.stage !== stageFilter) {
         return false;
       }
@@ -443,18 +753,18 @@ export default function ContactsCrmPage() {
   return (
     <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 20px 80px', color: '#172B4D' }}>
       {/* ── CRM Top Header ──────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '22px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '18px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <h1 style={{ fontSize: '24px', fontWeight: 850, color: '#002b66', letterSpacing: '-0.02em', margin: 0 }}>
-              Contacts &amp; Trade CRM
+              Contacts &amp; Network CRM
             </h1>
             <span style={{ fontSize: '11px', fontWeight: 700, background: '#E5F3FC', color: '#075985', padding: '2px 8px', borderRadius: '12px' }}>
-              DBMS Connected
+              PostgreSQL Connected
             </span>
           </div>
           <p style={{ fontSize: '13px', color: '#52657D', marginTop: '4px', margin: 0 }}>
-            Unified B2B logistics address book, live partner presence, and real-time deal communication.
+            Unified freight directory, live presence telemetry, connection requests &amp; instant trade chat.
           </p>
         </div>
 
@@ -563,551 +873,667 @@ export default function ContactsCrmPage() {
         </div>
       </div>
 
-      {/* ── KPI Metric Cards Row ────────────────────────────────────────────── */}
+      {/* ── Main Navigation Mode Tabs (CRM vs Discover vs Requests) ─────────── */}
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: '14px',
-          marginBottom: '22px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          borderBottom: '2px solid #DFE7F0',
+          marginBottom: '20px',
+          overflowX: 'auto',
+          paddingBottom: '2px',
         }}
       >
-        {/* Metric 1: Total Contacts */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#52657D', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Directory</span>
-            <div style={{ background: '#F1F5F9', color: '#475569', padding: '6px', borderRadius: '8px' }}>
-              <Users size={16} />
-            </div>
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', marginTop: '8px' }}>
+        {/* Tab 1: All Contacts & Connections */}
+        <button
+          onClick={() => setActiveMainTab('all')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '13.5px',
+            fontWeight: 750,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeMainTab === 'all' ? '3px solid #002b66' : '3px solid transparent',
+            color: activeMainTab === 'all' ? '#002b66' : '#52657D',
+            marginBottom: '-2px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Users size={16} />
+          <span>All Contacts &amp; Connections</span>
+          <span
+            style={{
+              fontSize: '11px',
+              padding: '2px 7px',
+              borderRadius: '10px',
+              background: activeMainTab === 'all' ? '#002b66' : '#E2E8F0',
+              color: activeMainTab === 'all' ? '#FFFFFF' : '#475569',
+              fontWeight: 800,
+            }}
+          >
             {contacts.length}
-          </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-            Connected with Postgres DBMS
-          </div>
-        </div>
+          </span>
+        </button>
 
-        {/* Metric 2: Live Now */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Live / Online Now</span>
-            <div style={{ background: '#DCFCE7', color: '#16A34A', padding: '6px', borderRadius: '8px' }}>
-              <Zap size={16} />
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '8px' }}>
-            <span style={{ fontSize: '26px', fontWeight: 900, color: '#15803D' }}>{liveCount}</span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16A34A', animation: 'pulse 1.8s infinite' }} />
-              Active
+        {/* Tab 2: Find New Connections */}
+        <button
+          onClick={() => setActiveMainTab('discover')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '13.5px',
+            fontWeight: 750,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeMainTab === 'discover' ? '3px solid #002b66' : '3px solid transparent',
+            color: activeMainTab === 'discover' ? '#002b66' : '#52657D',
+            marginBottom: '-2px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Globe2 size={16} />
+          <span>Find Connections</span>
+          <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: '#DCFCE7', color: '#166534', fontWeight: 800 }}>
+            Discover
+          </span>
+        </button>
+
+        {/* Tab 3: Requests Received */}
+        <button
+          onClick={() => setActiveMainTab('incoming')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '13.5px',
+            fontWeight: 750,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeMainTab === 'incoming' ? '3px solid #002b66' : '3px solid transparent',
+            color: activeMainTab === 'incoming' ? '#002b66' : '#52657D',
+            marginBottom: '-2px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Inbox size={16} />
+          <span>Requests Recd</span>
+          {incomingRequests.length > 0 && (
+            <span
+              style={{
+                fontSize: '11px',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                background: '#EF4444',
+                color: '#FFFFFF',
+                fontWeight: 800,
+                animation: 'pulse 1.8s infinite',
+              }}
+            >
+              {incomingRequests.length}
             </span>
-          </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-            Available for immediate dispatch
-          </div>
-        </div>
+          )}
+        </button>
 
-        {/* Metric 3: Away / Transit */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#B45309', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Away / In Transit</span>
-            <div style={{ background: '#FEF3C7', color: '#D97706', padding: '6px', borderRadius: '8px' }}>
-              <Clock size={16} />
-            </div>
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#B45309', marginTop: '8px' }}>
-            {awayCount}
-          </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-            Responding via mobile notification
-          </div>
-        </div>
+        {/* Tab 4: Requests Sent */}
+        <button
+          onClick={() => setActiveMainTab('outgoing')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '13.5px',
+            fontWeight: 750,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeMainTab === 'outgoing' ? '3px solid #002b66' : '3px solid transparent',
+            color: activeMainTab === 'outgoing' ? '#002b66' : '#52657D',
+            marginBottom: '-2px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <Send size={15} />
+          <span>Requests Sent</span>
+          {outgoingRequests.length > 0 && (
+            <span
+              style={{
+                fontSize: '11px',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                background: '#E2E8F0',
+                color: '#475569',
+                fontWeight: 800,
+              }}
+            >
+              {outgoingRequests.length}
+            </span>
+          )}
+        </button>
 
-        {/* Metric 4: Active Partners */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', fontWeight: 700, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Trade Deals</span>
-            <div style={{ background: '#E0F2FE', color: '#0284C7', padding: '6px', borderRadius: '8px' }}>
-              <Building2 size={16} />
-            </div>
-          </div>
-          <div style={{ fontSize: '26px', fontWeight: 900, color: '#0369A1', marginTop: '8px' }}>
-            {activePartnerCount}
-          </div>
-          <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-            Contracted freight partners
-          </div>
-        </div>
+        {/* Tab 5: Kept on Hold */}
+        <button
+          onClick={() => setActiveMainTab('held')}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 16px',
+            fontSize: '13.5px',
+            fontWeight: 750,
+            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
+            borderBottom: activeMainTab === 'held' ? '3px solid #002b66' : '3px solid transparent',
+            color: activeMainTab === 'held' ? '#002b66' : '#52657D',
+            marginBottom: '-2px',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <PauseCircle size={16} />
+          <span>Kept on Hold</span>
+          {heldRequests.length > 0 && (
+            <span
+              style={{
+                fontSize: '11px',
+                padding: '2px 7px',
+                borderRadius: '10px',
+                background: '#FEF3C7',
+                color: '#B45309',
+                fontWeight: 800,
+              }}
+            >
+              {heldRequests.length}
+            </span>
+          )}
+        </button>
       </div>
 
-      {/* ── Control Bar: Search, Category, Status, View Switcher ────────────── */}
-      <div
-        style={{
-          background: '#FFFFFF',
-          border: '1px solid #DFE7F0',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
-        }}
-      >
-        {/* Upper Row: Search Input + Presence Filter + View Mode */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
-          {/* Search Box */}
-          <div style={{ position: 'relative', flex: '1', minWidth: '240px', maxWidth: '420px' }}>
-            <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
-            <input
-              type="text"
-              placeholder="Search by name, company, email, phone, city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 34px',
-                fontSize: '13px',
-                border: '1px solid #CBD5E1',
-                borderRadius: '8px',
-                outline: 'none',
-                background: '#F8FAFC',
-                color: '#0F172A',
-              }}
-            />
+      {/* ────────────────────────────────────────────────────────────────────────
+          TAB 1: ALL CONTACTS & CRM DIRECTORY
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeMainTab === 'all' && (
+        <>
+          {/* KPI Metric Cards Row */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: '14px',
+              marginBottom: '22px',
+            }}
+          >
+            {/* Metric 1: Total Directory */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#52657D', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Total Directory</span>
+                <div style={{ background: '#F1F5F9', color: '#475569', padding: '6px', borderRadius: '8px' }}>
+                  <Users size={16} />
+                </div>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#0f172a', marginTop: '8px' }}>
+                {contacts.length}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+                Synchronized with DBMS connections
+              </div>
+            </div>
+
+            {/* Metric 2: Live Now */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#15803D', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Live / Online Now</span>
+                <div style={{ background: '#DCFCE7', color: '#16A34A', padding: '6px', borderRadius: '8px' }}>
+                  <Zap size={16} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '8px' }}>
+                <span style={{ fontSize: '26px', fontWeight: 900, color: '#15803D' }}>{liveCount}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#16A34A', fontWeight: 700 }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#16A34A' }} />
+                  Active
+                </span>
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+                Available for instant freight chat
+              </div>
+            </div>
+
+            {/* Metric 3: Away / Transit */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#B45309', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Away / In Transit</span>
+                <div style={{ background: '#FEF3C7', color: '#D97706', padding: '6px', borderRadius: '8px' }}>
+                  <Clock size={16} />
+                </div>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#B45309', marginTop: '8px' }}>
+                {awayCount}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+                Active within the last 2 hours
+              </div>
+            </div>
+
+            {/* Metric 4: Active Partners */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', padding: '16px 18px', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#0369A1', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Active Trade Deals</span>
+                <div style={{ background: '#E0F2FE', color: '#0284C7', padding: '6px', borderRadius: '8px' }}>
+                  <Building2 size={16} />
+                </div>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#0369A1', marginTop: '8px' }}>
+                {activePartnerCount}
+              </div>
+              <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
+                Contracted freight partners
+              </div>
+            </div>
           </div>
 
-          {/* Presence Filter & View Toggles */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
-              {(['all', 'live', 'away', 'offline'] as PresenceFilter[]).map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setPresenceFilter(st)}
+          {/* Control Bar: Search, Category, Status, View Switcher */}
+          <div
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #DFE7F0',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
+            }}
+          >
+            {/* Upper Row: Search Input + Presence Filter + View Mode */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '240px', maxWidth: '420px' }}>
+                <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Search by name, company, email, phone, city..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
-                    padding: '4px 10px',
-                    fontSize: '11.5px',
-                    fontWeight: 700,
-                    borderRadius: '6px',
-                    border: 'none',
+                    width: '100%',
+                    padding: '8px 12px 8px 34px',
+                    fontSize: '13px',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    background: '#F8FAFC',
+                    color: '#0F172A',
+                  }}
+                />
+              </div>
+
+              {/* Presence Filter & View Toggles */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
+                  {(['all', 'live', 'away', 'offline'] as PresenceFilter[]).map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setPresenceFilter(st)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '11.5px',
+                        fontWeight: 700,
+                        borderRadius: '6px',
+                        border: 'none',
+                        cursor: 'pointer',
+                        background: presenceFilter === st ? '#FFFFFF' : 'transparent',
+                        color: presenceFilter === st ? '#002b66' : '#64748B',
+                        boxShadow: presenceFilter === st ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                        textTransform: 'capitalize',
+                      }}
+                    >
+                      {st === 'live' ? '🟢 Live' : st === 'away' ? '🟡 Away' : st === 'offline' ? '⚪ Offline' : 'All'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* View Switcher */}
+                <div style={{ display: 'flex', alignItems: 'center', background: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
+                      color: viewMode === 'grid' ? '#002b66' : '#64748B',
+                      cursor: 'pointer',
+                    }}
+                    title="Cards Grid View"
+                  >
+                    <LayoutGrid size={15} />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('table')}
+                    style={{
+                      padding: '4px 8px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: viewMode === 'table' ? '#FFFFFF' : 'transparent',
+                      color: viewMode === 'table' ? '#002b66' : '#64748B',
+                      cursor: 'pointer',
+                    }}
+                    title="CRM Table View"
+                  >
+                    <TableIcon size={15} />
+                  </button>
+                </div>
+
+                {/* Refresh Button */}
+                <button
+                  onClick={() => fetchContacts(true)}
+                  disabled={refreshing}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '8px',
+                    border: '1px solid #DFE7F0',
+                    background: '#FFFFFF',
+                    color: '#475569',
                     cursor: 'pointer',
-                    background: presenceFilter === st ? '#FFFFFF' : 'transparent',
-                    color: presenceFilter === st ? '#002b66' : '#64748B',
-                    boxShadow: presenceFilter === st ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                    textTransform: 'capitalize',
+                  }}
+                  title="Refresh from DBMS"
+                >
+                  <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
+                </button>
+              </div>
+            </div>
+
+            {/* Lower Row: Category Pills */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+              {(['all', 'Freight Forwarder', 'Shipping Line / Carrier', 'Customs Broker', 'Shipper (BCO)', 'Transporter / Fleet'] as CategoryFilter[]).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategoryFilter(cat)}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    padding: '4px 12px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    borderRadius: '50px',
+                    border: categoryFilter === cat ? '1px solid #002b66' : '1px solid #E2E8F0',
+                    background: categoryFilter === cat ? '#002b66' : '#FFFFFF',
+                    color: categoryFilter === cat ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {st === 'live' ? '🟢 Live' : st === 'away' ? '🟡 Away' : st === 'offline' ? '⚪ Offline' : 'All'}
+                  {cat === 'all' ? 'All Roles' : cat}
                 </button>
               ))}
             </div>
-
-            {/* View Switcher */}
-            <div style={{ display: 'flex', alignItems: 'center', background: '#F1F5F9', padding: '3px', borderRadius: '8px' }}>
-              <button
-                onClick={() => setViewMode('grid')}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: viewMode === 'grid' ? '#FFFFFF' : 'transparent',
-                  color: viewMode === 'grid' ? '#002b66' : '#64748B',
-                  cursor: 'pointer',
-                }}
-                title="Cards Grid View"
-              >
-                <LayoutGrid size={15} />
-              </button>
-              <button
-                onClick={() => setViewMode('table')}
-                style={{
-                  padding: '4px 8px',
-                  borderRadius: '6px',
-                  border: 'none',
-                  background: viewMode === 'table' ? '#FFFFFF' : 'transparent',
-                  color: viewMode === 'table' ? '#002b66' : '#64748B',
-                  cursor: 'pointer',
-                }}
-                title="CRM Table View"
-              >
-                <TableIcon size={15} />
-              </button>
-            </div>
-
-            {/* Refresh Button */}
-            <button
-              onClick={() => fetchContacts(true)}
-              disabled={refreshing}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '6px 10px',
-                fontSize: '12px',
-                fontWeight: 600,
-                borderRadius: '8px',
-                border: '1px solid #DFE7F0',
-                background: '#FFFFFF',
-                color: '#475569',
-                cursor: 'pointer',
-              }}
-              title="Refresh from DBMS"
-            >
-              <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
-            </button>
           </div>
-        </div>
 
-        {/* Lower Row: Category Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
-          {(['all', 'Freight Forwarder', 'Shipping Line / Carrier', 'Customs Broker', 'Shipper (BCO)', 'Transporter / Fleet'] as CategoryFilter[]).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              style={{
-                whiteSpace: 'nowrap',
-                padding: '4px 12px',
-                fontSize: '12px',
-                fontWeight: 700,
-                borderRadius: '50px',
-                border: categoryFilter === cat ? '1px solid #002b66' : '1px solid #E2E8F0',
-                background: categoryFilter === cat ? '#002b66' : '#FFFFFF',
-                color: categoryFilter === cat ? '#FFFFFF' : '#475569',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              {cat === 'all' ? 'All Roles' : cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Main Contacts Content ───────────────────────────────────────────── */}
-      {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
-          <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-          <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading trade contacts from DBMS...</p>
-        </div>
-      ) : filteredContacts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
-          <Users size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
-          <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No contacts found</h3>
-          <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
-            {searchQuery || categoryFilter !== 'all' || presenceFilter !== 'all'
-              ? 'Try resetting your search query or filters to view all entries.'
-              : 'Add your first freight contact or link a connection from the FR8X verified directory.'}
-          </p>
-          <button
-            onClick={() => {
-              resetForm();
-              setShowAddModal(true);
-            }}
-            style={{
-              padding: '8px 16px',
-              fontSize: '13px',
-              fontWeight: 700,
-              background: '#002b66',
-              color: '#FFFFFF',
-              borderRadius: '8px',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            + Add Contact Now
-          </button>
-        </div>
-      ) : viewMode === 'grid' ? (
-        /* ── Grid View ──────────────────────────────────────────────────────── */
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-            gap: '16px',
-          }}
-        >
-          {filteredContacts.map((contact) => {
-            const isLive = contact.status === 'live' || contact.status === 'online';
-            const isAway = contact.status === 'away';
-            const isBusy = contact.status === 'busy';
-
-            return (
-              <div
-                key={contact.id}
-                style={{
-                  background: '#FFFFFF',
-                  border: '1px solid #DFE7F0',
-                  borderRadius: '12px',
-                  padding: '18px',
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  transition: 'all 0.15s ease',
-                  position: 'relative',
-                }}
-              >
-                {/* Card Header: Avatar, Name, Favorite Star */}
-                <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                      {/* Avatar with Status Indicator Ring */}
-                      <div style={{ position: 'relative' }}>
-                        <UserAvatar
-                          avatarUrl={contact.avatar_url}
-                          name={contact.name}
-                          size={46}
-                        />
-                        {/* Status Dot */}
-                        <span
-                          style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            right: '0',
-                            width: '12px',
-                            height: '12px',
-                            borderRadius: '50%',
-                            border: '2px solid #FFFFFF',
-                            background: isLive ? '#16A34A' : isAway ? '#F59E0B' : isBusy ? '#EF4444' : '#94A3B8',
-                          }}
-                          title={`Status: ${contact.status}`}
-                        />
-                      </div>
-
-                      {/* Name & Designation */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>
-                            {contact.name}
-                          </span>
-                          {contact.has_golden_tick && <GoldenTick size={15} />}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#64748B', marginTop: '1px' }}>
-                          {contact.designation || 'Logistics Executive'}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Star / Favorite Button */}
-                    <button
-                      onClick={(e) => handleToggleFavorite(contact, e)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: contact.is_favorite ? '#EAB308' : '#CBD5E1',
-                        padding: '4px',
-                      }}
-                      title={contact.is_favorite ? 'Favorited' : 'Add to Favorites'}
-                    >
-                      <Star size={18} fill={contact.is_favorite ? '#EAB308' : 'none'} />
-                    </button>
-                  </div>
-
-                  {/* Company & Category Pill */}
-                  <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: 700, color: '#002b66' }}>
-                      <Building2 size={13} /> {contact.company || 'Enterprise Partner'}
-                    </div>
-                    <span style={{ fontSize: '10.5px', fontWeight: 700, background: '#F1F5F9', color: '#475569', padding: '2px 7px', borderRadius: '4px' }}>
-                      {contact.category}
-                    </span>
-                  </div>
-
-                  {/* Presence Status Banner */}
-                  <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#F8FAFC', padding: '5px 10px', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700 }}>
-                      <span
-                        style={{
-                          width: '7px',
-                          height: '7px',
-                          borderRadius: '50%',
-                          background: isLive ? '#16A34A' : isAway ? '#F59E0B' : isBusy ? '#EF4444' : '#94A3B8',
-                        }}
-                      />
-                      <span style={{ color: isLive ? '#15803D' : isAway ? '#B45309' : isBusy ? '#B91C1C' : '#64748B' }}>
-                        {isLive ? 'Live · Online Now' : isAway ? 'Away · In Transit' : isBusy ? 'Busy · In Auction' : 'Offline'}
-                      </span>
-                    </div>
-
-                    <span style={{ fontSize: '10.5px', fontWeight: 700, color: '#0369A1' }}>
-                      {contact.stage}
-                    </span>
-                  </div>
-
-                  {/* Notes Preview (if any) */}
-                  {contact.notes && (
-                    <div style={{ marginTop: '10px', fontSize: '11.5px', color: '#475569', background: '#FFFBEB', border: '1px solid #FEF3C7', padding: '6px 8px', borderRadius: '6px' }}>
-                      <strong>CRM Note:</strong> {contact.notes}
-                    </div>
-                  )}
-
-                  {/* Contact Methods (Email / Phone / Location) */}
-                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '11.5px', color: '#64748B' }}>
-                    {contact.email && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Mail size={12} /> <a href={`mailto:${contact.email}`} style={{ color: '#0284C7', textDecoration: 'none' }}>{contact.email}</a>
-                      </div>
-                    )}
-                    {contact.phone && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Phone size={12} /> <a href={`tel:${contact.phone}`} style={{ color: '#475569', textDecoration: 'none' }}>{contact.phone}</a>
-                      </div>
-                    )}
-                    {contact.location && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <MapPin size={12} /> <span>{contact.location}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Card Action Buttons (Chat, Edit, Delete) */}
-                <div
+          {/* Contacts List / Grid View */}
+          {loadingContacts ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading trade contacts from DBMS...</p>
+            </div>
+          ) : filteredContacts.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <Users size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No contacts found</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
+                {searchQuery || categoryFilter !== 'all' || presenceFilter !== 'all'
+                  ? 'Try resetting your search query or filters to view all entries.'
+                  : 'Add your first freight contact or link a connection from the FR8X verified directory.'}
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                <button
+                  onClick={() => {
+                    resetForm();
+                    setShowAddModal(true);
+                  }}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: '16px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid #F1F5F9',
+                    padding: '8px 16px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    background: '#002b66',
+                    color: '#FFFFFF',
+                    borderRadius: '8px',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                 >
-                  <button
-                    onClick={() => handleOpenChat(contact)}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      fontSize: '12px',
-                      fontWeight: 700,
-                      background: '#E5F3FC',
-                      color: '#075985',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    <MessageSquare size={13} /> Chat
-                  </button>
-
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <button
-                      onClick={() => populateEditForm(contact)}
-                      style={{
-                        background: '#F8FAFC',
-                        border: '1px solid #DFE7F0',
-                        color: '#475569',
-                        padding: '6px 8px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                      }}
-                      title="Edit Contact Details & Notes"
-                    >
-                      <Edit3 size={13} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setSelectedContact(contact);
-                        setShowDeleteModal(true);
-                      }}
-                      style={{
-                        background: '#FEF2F2',
-                        border: '1px solid #FEE2E2',
-                        color: '#DC2626',
-                        padding: '6px 8px',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                      }}
-                      title="Delete Contact & Manage Connection"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
+                  + Add Contact Now
+                </button>
+                <button
+                  onClick={() => setActiveMainTab('discover')}
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    background: '#F1F5F9',
+                    color: '#002b66',
+                    borderRadius: '8px',
+                    border: '1px solid #CBD5E1',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Find New Connections
+                </button>
               </div>
-            );
-          })}
-        </div>
-      ) : (
-        /* ── Table View ──────────────────────────────────────────────────────── */
-        <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', overflowX: 'auto', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-            <thead>
-              <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #DFE7F0', color: '#52657D', fontWeight: 700, fontSize: '11.5px', textTransform: 'uppercase' }}>
-                <th style={{ padding: '12px 16px' }}>Contact</th>
-                <th style={{ padding: '12px 16px' }}>Company &amp; Role</th>
-                <th style={{ padding: '12px 16px' }}>Presence</th>
-                <th style={{ padding: '12px 16px' }}>Deal Stage</th>
-                <th style={{ padding: '12px 16px' }}>Contact Info</th>
-                <th style={{ padding: '12px 16px', textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
+            </div>
+          ) : viewMode === 'grid' ? (
+            /* Cards Grid View */
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: '16px',
+              }}
+            >
               {filteredContacts.map((contact) => {
                 const isLive = contact.status === 'live' || contact.status === 'online';
                 const isAway = contact.status === 'away';
                 const isBusy = contact.status === 'busy';
 
                 return (
-                  <tr key={contact.id} style={{ borderBottom: '1px solid #F1F5F9', transition: 'background 0.1s' }}>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    key={contact.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #DFE7F0',
+                      borderRadius: '12px',
+                      padding: '18px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div>
+                      {/* Card Header: Avatar, Name, Favorite Star */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                          <div style={{ position: 'relative' }}>
+                            <UserAvatar
+                              avatarUrl={contact.avatar_url}
+                              name={contact.name}
+                              size={46}
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                right: '0',
+                                width: '12px',
+                                height: '12px',
+                                borderRadius: '50%',
+                                border: '2px solid #FFFFFF',
+                                background: isLive ? '#16A34A' : isAway ? '#F59E0B' : isBusy ? '#EF4444' : '#94A3B8',
+                              }}
+                              title={`Status: ${contact.status}`}
+                            />
+                          </div>
+
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                              <span style={{ fontSize: '15px', fontWeight: 800, color: '#0F172A' }}>
+                                {contact.name}
+                              </span>
+                              {contact.has_golden_tick && <GoldenTick size={15} />}
+                            </div>
+                            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '1px' }}>
+                              {contact.designation || 'Logistics Executive'}
+                            </div>
+                          </div>
+                        </div>
+
                         <button
                           onClick={(e) => handleToggleFavorite(contact, e)}
-                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: contact.is_favorite ? '#EAB308' : '#CBD5E1', padding: 0 }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: contact.is_favorite ? '#EAB308' : '#CBD5E1',
+                            padding: '4px',
+                          }}
+                          title={contact.is_favorite ? 'Remove Favorite' : 'Mark as Favorite'}
                         >
-                          <Star size={15} fill={contact.is_favorite ? '#EAB308' : 'none'} />
+                          <Star size={18} fill={contact.is_favorite ? '#EAB308' : 'none'} />
                         </button>
-                        <UserAvatar avatarUrl={contact.avatar_url} name={contact.name} size={34} />
-                        <div>
-                          <div style={{ fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {contact.name}
-                            {contact.has_golden_tick && <GoldenTick size={13} />}
-                          </div>
-                          <span style={{ fontSize: '11px', color: '#64748B' }}>{contact.designation || 'Member'}</span>
+                      </div>
+
+                      {/* Company & Location */}
+                      <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: '#334155', fontWeight: 600 }}>
+                          <Building2 size={13} style={{ color: '#64748B' }} />
+                          <span>{contact.company || 'Private Carrier'}</span>
                         </div>
+                        {contact.location && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748B' }}>
+                            <MapPin size={13} style={{ color: '#94A3B8' }} />
+                            <span>{contact.location}</span>
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontWeight: 700, color: '#002b66' }}>{contact.company || 'Enterprise'}</div>
-                      <span style={{ fontSize: '11px', color: '#64748B' }}>{contact.category}</span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', fontWeight: 700 }}>
-                        <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: isLive ? '#16A34A' : isAway ? '#F59E0B' : isBusy ? '#EF4444' : '#94A3B8' }} />
-                        <span style={{ color: isLive ? '#15803D' : isAway ? '#B45309' : isBusy ? '#B91C1C' : '#64748B' }}>
-                          {isLive ? 'Live' : isAway ? 'Away' : isBusy ? 'Busy' : 'Offline'}
+
+                      {/* Category & Stage Chips */}
+                      <div style={{ marginTop: '12px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#F1F5F9', color: '#475569' }}>
+                          {contact.category}
                         </span>
+                        <span
+                          style={{
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            padding: '2px 8px',
+                            borderRadius: '4px',
+                            background:
+                              contact.stage === 'VIP / Key Account'
+                                ? '#FEF3C7'
+                                : contact.stage === 'Active Partner'
+                                ? '#DCFCE7'
+                                : '#E0F2FE',
+                            color:
+                              contact.stage === 'VIP / Key Account'
+                                ? '#B45309'
+                                : contact.stage === 'Active Partner'
+                                ? '#166534'
+                                : '#0369A1',
+                          }}
+                        >
+                          {contact.stage}
+                        </span>
+                        {contact.is_connection && (
+                          <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#EEF2FF', color: '#4338CA' }}>
+                            DBMS Peer
+                          </span>
+                        )}
                       </div>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 700, background: '#E0F2FE', color: '#0369A1', padding: '3px 8px', borderRadius: '4px' }}>
-                        {contact.stage}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 16px' }}>
-                      <div style={{ fontSize: '12px', color: '#475569' }}>{contact.email || '-'}</div>
-                      <div style={{ fontSize: '11px', color: '#64748B' }}>{contact.phone || '-'}</div>
-                    </td>
-                    <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+
+                      {/* Trade Notes Snippet */}
+                      {contact.notes && (
+                        <div
+                          style={{
+                            marginTop: '10px',
+                            fontSize: '11.5px',
+                            color: '#64748B',
+                            background: '#F8FAFC',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            borderLeft: '3px solid #CBD5E1',
+                            fontStyle: 'italic',
+                          }}
+                        >
+                          &ldquo;{contact.notes.slice(0, 75)}{contact.notes.length > 75 ? '...' : ''}&rdquo;
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Bottom Action Footer */}
+                    <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        {contact.phone && (
+                          <a
+                            href={`tel:${contact.phone}`}
+                            style={{
+                              padding: '6px',
+                              background: '#F8FAFC',
+                              borderRadius: '6px',
+                              color: '#475569',
+                              display: 'inline-flex',
+                            }}
+                            title={`Call ${contact.phone}`}
+                          >
+                            <Phone size={14} />
+                          </a>
+                        )}
+                        {contact.email && (
+                          <a
+                            href={`mailto:${contact.email}`}
+                            style={{
+                              padding: '6px',
+                              background: '#F8FAFC',
+                              borderRadius: '6px',
+                              color: '#475569',
+                              display: 'inline-flex',
+                            }}
+                            title={`Email ${contact.email}`}
+                          >
+                            <Mail size={14} />
+                          </a>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '6px' }}>
                         <button
                           onClick={() => handleOpenChat(contact)}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '4px',
-                            background: '#E5F3FC',
-                            color: '#075985',
-                            border: 'none',
-                            padding: '5px 10px',
-                            borderRadius: '6px',
+                            padding: '6px 12px',
+                            fontSize: '12px',
                             fontWeight: 700,
-                            fontSize: '11.5px',
+                            background: '#002b66',
+                            color: '#FFFFFF',
+                            borderRadius: '6px',
+                            border: 'none',
                             cursor: 'pointer',
                           }}
                         >
@@ -1115,40 +1541,1085 @@ export default function ContactsCrmPage() {
                         </button>
                         <button
                           onClick={() => populateEditForm(contact)}
-                          style={{ background: '#F8FAFC', border: '1px solid #DFE7F0', padding: '5px', borderRadius: '6px', cursor: 'pointer', color: '#475569' }}
-                          title="Edit"
+                          style={{
+                            padding: '6px 8px',
+                            background: '#F8FAFC',
+                            border: '1px solid #DFE7F0',
+                            borderRadius: '6px',
+                            color: '#64748B',
+                            cursor: 'pointer',
+                          }}
+                          title="Edit Contact"
                         >
                           <Edit3 size={13} />
                         </button>
                         <button
                           onClick={() => {
                             setSelectedContact(contact);
+                            setDeleteWithConnection(true);
                             setShowDeleteModal(true);
                           }}
-                          style={{ background: '#FEF2F2', border: '1px solid #FEE2E2', padding: '5px', borderRadius: '6px', cursor: 'pointer', color: '#DC2626' }}
-                          title="Delete"
+                          style={{
+                            padding: '6px 8px',
+                            background: '#FEF2F2',
+                            border: '1px solid #FEE2E2',
+                            borderRadius: '6px',
+                            color: '#DC2626',
+                            cursor: 'pointer',
+                          }}
+                          title="Delete Contact"
                         >
                           <Trash2 size={13} />
                         </button>
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 );
               })}
-            </tbody>
-          </table>
+            </div>
+          ) : (
+            /* CRM Table View */
+            <div style={{ background: '#FFFFFF', border: '1px solid #DFE7F0', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.02)' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                  <thead>
+                    <tr style={{ background: '#F8FAFC', borderBottom: '1px solid #DFE7F0', color: '#475569' }}>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Contact / Member</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Company &amp; Role</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Status</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Deal Stage</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700 }}>Location</th>
+                      <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredContacts.map((c) => {
+                      const isLive = c.status === 'live' || c.status === 'online';
+                      const isAway = c.status === 'away';
+                      const isBusy = c.status === 'busy';
+
+                      return (
+                        <tr key={c.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: '12px 16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <UserAvatar avatarUrl={c.avatar_url} name={c.name} size={36} />
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 750, color: '#0F172A' }}>
+                                  <span>{c.name}</span>
+                                  {c.has_golden_tick && <GoldenTick size={14} />}
+                                </div>
+                                <div style={{ fontSize: '11.5px', color: '#64748B' }}>{c.email || c.phone || 'No direct info'}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <div style={{ fontWeight: 600, color: '#1E293B' }}>{c.company || '—'}</div>
+                            <div style={{ fontSize: '11.5px', color: '#64748B' }}>{c.category}</div>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                fontSize: '11.5px',
+                                fontWeight: 700,
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                background: isLive ? '#DCFCE7' : isAway ? '#FEF3C7' : isBusy ? '#FEE2E2' : '#F1F5F9',
+                                color: isLive ? '#166534' : isAway ? '#B45309' : isBusy ? '#991B1B' : '#64748B',
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  background: isLive ? '#16A34A' : isAway ? '#F59E0B' : isBusy ? '#EF4444' : '#94A3B8',
+                                }}
+                              />
+                              {isLive ? 'Live' : isAway ? 'Away' : isBusy ? 'Busy' : 'Offline'}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px' }}>
+                            <span style={{ fontSize: '11.5px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#F1F5F9', color: '#334155' }}>
+                              {c.stage}
+                            </span>
+                          </td>
+                          <td style={{ padding: '12px 16px', color: '#64748B', fontSize: '12px' }}>
+                            {c.location || '—'}
+                          </td>
+                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px' }}>
+                              <button
+                                onClick={() => handleOpenChat(c)}
+                                style={{
+                                  padding: '5px 10px',
+                                  fontSize: '11.5px',
+                                  fontWeight: 700,
+                                  background: '#002b66',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Chat
+                              </button>
+                              <button
+                                onClick={() => populateEditForm(c)}
+                                style={{
+                                  padding: '5px 8px',
+                                  background: '#F8FAFC',
+                                  border: '1px solid #DFE7F0',
+                                  borderRadius: '6px',
+                                  color: '#64748B',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Edit
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────
+          TAB 2: FIND NEW CONNECTIONS (DISCOVERY)
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeMainTab === 'discover' && (
+        <div>
+          {/* Discovery Control & Search Bar */}
+          <div
+            style={{
+              background: '#FFFFFF',
+              border: '1px solid #DFE7F0',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.02)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+            }}
+          >
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: 800, color: '#002b66', margin: 0 }}>
+                Discover Freight Forwarders, Shippers &amp; Fleet Owners
+              </h2>
+              <p style={{ fontSize: '12.5px', color: '#64748B', marginTop: '2px', margin: 0 }}>
+                Expand your logistics footprint. Connect with verified freight professionals across global ports and inland corridors.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1', minWidth: '260px' }}>
+                <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+                <input
+                  type="text"
+                  placeholder="Search by name, company, trade lane (e.g. IN-UAE), city (e.g. Mumbai, Dubai)..."
+                  value={discoverSearch}
+                  onChange={(e) => setDiscoverSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '9px 12px 9px 36px',
+                    fontSize: '13px',
+                    border: '1px solid #CBD5E1',
+                    borderRadius: '8px',
+                    outline: 'none',
+                    background: '#F8FAFC',
+                  }}
+                />
+              </div>
+
+              {/* Role filter buttons */}
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+                {[
+                  { id: 'all', label: 'All Roles' },
+                  { id: 'Ocean Freight', label: 'Ocean Freight' },
+                  { id: 'Air Freight', label: 'Air Freight' },
+                  { id: 'Transporter', label: 'Transporters / Fleet' },
+                  { id: 'Customs Clearance', label: 'Customs Broker' },
+                  { id: 'Cold Chain', label: 'Cold Chain' },
+                ].map((rf) => (
+                  <button
+                    key={rf.id}
+                    onClick={() => setDiscoverRole(rf.id)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      borderRadius: '50px',
+                      border: discoverRole === rf.id ? '1px solid #002b66' : '1px solid #E2E8F0',
+                      background: discoverRole === rf.id ? '#002b66' : '#FFFFFF',
+                      color: discoverRole === rf.id ? '#FFFFFF' : '#475569',
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {rf.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Members Discovery Grid */}
+          {loadingDiscover ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Searching verified freight directory...</p>
+            </div>
+          ) : directoryMembers.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <Globe2 size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No members match your criteria</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
+                Try modifying your search keywords or switching role specializations.
+              </p>
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+                gap: '16px',
+              }}
+            >
+              {directoryMembers.map((member) => {
+                const name = resolveMemberName(member);
+                const subline = resolveMemberSubline(member);
+                const location = resolveMemberLocation(member);
+                const status = member.connection_status || 'not_connected';
+                const isConnected = status === 'connected';
+                const isPendingSent = status === 'pending_sent';
+
+                return (
+                  <div
+                    key={member.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #DFE7F0',
+                      borderRadius: '12px',
+                      padding: '18px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <div>
+                      {/* Member Info Header */}
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <Link href={`/people/${member.id}`} style={{ textDecoration: 'none' }}>
+                          <UserAvatar avatarUrl={member.avatar_url || undefined} name={name} size={46} />
+                        </Link>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <Link
+                              href={`/people/${member.id}`}
+                              style={{
+                                fontSize: '15px',
+                                fontWeight: 800,
+                                color: '#002b66',
+                                textDecoration: 'none',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {name}
+                            </Link>
+                            {member.has_golden_tick && <GoldenTick size={15} />}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#64748B', marginTop: '1px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {subline || 'Freight Professional'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {location && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#64748B', marginTop: '10px' }}>
+                          <MapPin size={13} style={{ color: '#94A3B8' }} />
+                          <span>{location}</span>
+                        </div>
+                      )}
+
+                      {/* Trade Lanes & Specializations */}
+                      <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginTop: '10px' }}>
+                        {(member.skills || member.specializations || []).slice(0, 3).map((sk, idx) => (
+                          <span
+                            key={idx}
+                            style={{
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              background: '#F1F5F9',
+                              color: '#475569',
+                            }}
+                          >
+                            {sk}
+                          </span>
+                        ))}
+                        {(member.key_trade_lanes || []).slice(0, 2).map((tl, idx) => (
+                          <span
+                            key={`tl_${idx}`}
+                            style={{
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              padding: '2px 7px',
+                              borderRadius: '4px',
+                              background: '#E0F2FE',
+                              color: '#0369A1',
+                            }}
+                          >
+                            🛣️ {tl}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid #F1F5F9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Link
+                        href={`/people/${member.id}`}
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#002b66',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                        }}
+                      >
+                        Profile <ArrowUpRight size={13} />
+                      </Link>
+
+                      {isConnected ? (
+                        <span
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            background: '#DCFCE7',
+                            color: '#166534',
+                          }}
+                        >
+                          <CheckCircle2 size={13} /> Connected
+                        </span>
+                      ) : isPendingSent ? (
+                        <button
+                          onClick={() => member.request_id && handleWithdrawRequest(member.request_id, name)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            padding: '5px 10px',
+                            borderRadius: '6px',
+                            border: '1px solid #CBD5E1',
+                            background: '#F8FAFC',
+                            color: '#64748B',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Clock size={12} /> Pending · Withdraw
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSendConnectTarget(member);
+                            setSendConnectNote('');
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            padding: '6px 14px',
+                            borderRadius: '6px',
+                            border: 'none',
+                            background: '#002b66',
+                            color: '#FFFFFF',
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                          }}
+                        >
+                          <UserPlus size={13} /> Connect
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
-      {/* ── Slide-over Live Chat Drawer ─────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────────────
+          TAB 3: REQUESTS RECEIVED (ACCEPT, KEEP ON HOLD, DECLINE)
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeMainTab === 'incoming' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#002b66', margin: 0 }}>
+                Incoming Connection Requests
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748B', marginTop: '2px', margin: 0 }}>
+                Review incoming requests. You can accept to connect in DBMS, keep on hold for due diligence, or decline.
+              </p>
+            </div>
+            <button
+              onClick={() => fetchNetworkRequests()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: '1px solid #DFE7F0',
+                background: '#FFFFFF',
+                color: '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              <RefreshCw size={13} className={loadingRequests ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
+
+          {loadingRequests ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading incoming requests from DBMS...</p>
+            </div>
+          ) : incomingRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <Inbox size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No pending requests</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
+                You have addressed all connection requests. Find new partners in the network discovery tab.
+              </p>
+              <button
+                onClick={() => setActiveMainTab('discover')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  background: '#002b66',
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Find New Connections
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {incomingRequests.map((req) => {
+                const p = req.profiles;
+                const name = resolveMemberName(p);
+                const subline = resolveMemberSubline(p);
+                const location = resolveMemberLocation(p);
+                const isBusy = requestBusyId === req.id;
+
+                return (
+                  <div
+                    key={req.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #DFE7F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '14px',
+                    }}
+                  >
+                    {/* Left: Avatar & Info */}
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center', minWidth: '260px' }}>
+                      <Link href={`/people/${p.id}`} style={{ textDecoration: 'none' }}>
+                        <UserAvatar avatarUrl={p.avatar_url || undefined} name={name} size={48} />
+                      </Link>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Link href={`/people/${p.id}`} style={{ fontSize: '15px', fontWeight: 800, color: '#002b66', textDecoration: 'none' }}>
+                            {name}
+                          </Link>
+                          {p.has_golden_tick && <GoldenTick size={15} />}
+                        </div>
+                        <div style={{ fontSize: '12.5px', color: '#475569', marginTop: '1px' }}>
+                          {subline || 'Freight Forwarder'}
+                        </div>
+                        {location && (
+                          <div style={{ fontSize: '11.5px', color: '#64748B', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '3px' }}>
+                            <MapPin size={12} /> {location}
+                          </div>
+                        )}
+                        {req.message && (
+                          <div
+                            style={{
+                              marginTop: '8px',
+                              fontSize: '12px',
+                              color: '#334155',
+                              background: '#F8FAFC',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              borderLeft: '3px solid #002b66',
+                              fontStyle: 'italic',
+                              maxWidth: '520px',
+                            }}
+                          >
+                            &ldquo;{req.message}&rdquo;
+                          </div>
+                        )}
+                        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                          Received on {new Date(req.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right: The 3 Requested Buttons (Accept, Keep on Hold, Decline) */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      {/* 1. Accept Button */}
+                      <button
+                        onClick={() => handleAcceptRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          fontSize: '12.5px',
+                          fontWeight: 750,
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#16A34A',
+                          color: '#FFFFFF',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(22, 163, 74, 0.3)',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                      >
+                        <CheckCircle2 size={15} /> Accept
+                      </button>
+
+                      {/* 2. Keep on Hold Button */}
+                      <button
+                        onClick={() => handleHoldRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 14px',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          borderRadius: '8px',
+                          border: '1px solid #F59E0B',
+                          background: '#FEF3C7',
+                          color: '#B45309',
+                          cursor: 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                        title="Keep this request on hold for deeper due diligence without declining"
+                      >
+                        <PauseCircle size={15} /> Keep on Hold
+                      </button>
+
+                      {/* 3. Decline Button */}
+                      <button
+                        onClick={() => handleDeclineRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 14px',
+                          fontSize: '12.5px',
+                          fontWeight: 650,
+                          borderRadius: '8px',
+                          border: '1px solid #DFE7F0',
+                          background: '#FFFFFF',
+                          color: '#64748B',
+                          cursor: 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                      >
+                        <XCircle size={15} /> Decline
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────
+          TAB 4: REQUESTS SENT (OUTGOING & WITHDRAW)
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeMainTab === 'outgoing' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#002b66', margin: 0 }}>
+                Sent Connection Requests
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748B', marginTop: '2px', margin: 0 }}>
+                Invitations you have dispatched. You can withdraw any pending request at any time.
+              </p>
+            </div>
+            <button
+              onClick={() => fetchNetworkRequests()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: '1px solid #DFE7F0',
+                background: '#FFFFFF',
+                color: '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              <RefreshCw size={13} className={loadingRequests ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
+
+          {loadingRequests ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading sent requests...</p>
+            </div>
+          ) : outgoingRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <Send size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No outgoing requests pending</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
+                All your outgoing connection requests have either been accepted or responded to.
+              </p>
+              <button
+                onClick={() => setActiveMainTab('discover')}
+                style={{
+                  padding: '8px 16px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  background: '#002b66',
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+              >
+                Find New Partners
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {outgoingRequests.map((req) => {
+                const p = req.profiles;
+                const name = resolveMemberName(p);
+                const subline = resolveMemberSubline(p);
+                const isBusy = requestBusyId === req.id;
+                const isHeldByRecipient = req.status === 'hold';
+
+                return (
+                  <div
+                    key={req.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #DFE7F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '14px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <Link href={`/people/${p.id}`} style={{ textDecoration: 'none' }}>
+                        <UserAvatar avatarUrl={p.avatar_url || undefined} name={name} size={46} />
+                      </Link>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Link href={`/people/${p.id}`} style={{ fontSize: '15px', fontWeight: 800, color: '#002b66', textDecoration: 'none' }}>
+                            {name}
+                          </Link>
+                          {p.has_golden_tick && <GoldenTick size={15} />}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>{subline}</div>
+                        {req.message && (
+                          <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontStyle: 'italic' }}>
+                            Note: &ldquo;{req.message}&rdquo;
+                          </div>
+                        )}
+                        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                          Sent on {new Date(req.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      {isHeldByRecipient ? (
+                        <span style={{ fontSize: '11.5px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', background: '#FEF3C7', color: '#B45309' }}>
+                          Kept on Hold by Member
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '11.5px', fontWeight: 700, padding: '4px 10px', borderRadius: '6px', background: '#F1F5F9', color: '#64748B' }}>
+                          Pending Response
+                        </span>
+                      )}
+
+                      {/* Withdraw Button */}
+                      <button
+                        onClick={() => handleWithdrawRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '7px 14px',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          borderRadius: '6px',
+                          border: '1px solid #FCA5A5',
+                          background: '#FEF2F2',
+                          color: '#DC2626',
+                          cursor: 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                      >
+                        <RotateCcw size={13} /> Withdraw
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────
+          TAB 5: KEPT ON HOLD (HELD REQUESTS)
+      ──────────────────────────────────────────────────────────────────────── */}
+      {activeMainTab === 'held' && (
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#002b66', margin: 0 }}>
+                Connection Requests Kept on Hold
+              </h2>
+              <p style={{ fontSize: '13px', color: '#64748B', marginTop: '2px', margin: 0 }}>
+                Requests you have placed on hold for rate review, port authorization check, or partner verification.
+              </p>
+            </div>
+            <button
+              onClick={() => fetchNetworkRequests()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 600,
+                borderRadius: '6px',
+                border: '1px solid #DFE7F0',
+                background: '#FFFFFF',
+                color: '#475569',
+                cursor: 'pointer',
+              }}
+            >
+              <RefreshCw size={13} className={loadingRequests ? 'spin' : ''} /> Refresh
+            </button>
+          </div>
+
+          {/* Info Banner */}
+          <div
+            style={{
+              background: '#FEF3C7',
+              border: '1px solid #FDE68A',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              color: '#92400E',
+              fontSize: '12.5px',
+            }}
+          >
+            <PauseCircle size={18} />
+            <span>
+              These requests are temporarily deferred. Senders see that their request is under review. You can accept or decline whenever you are ready.
+            </span>
+          </div>
+
+          {loadingRequests ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading held requests...</p>
+            </div>
+          ) : heldRequests.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
+              <PauseCircle size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No requests on hold</h3>
+              <p style={{ fontSize: '13px', color: '#64748B', maxWidth: '400px', margin: '6px auto 16px' }}>
+                You do not have any requests on hold right now.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {heldRequests.map((req) => {
+                const p = req.profiles;
+                const name = resolveMemberName(p);
+                const subline = resolveMemberSubline(p);
+                const isBusy = requestBusyId === req.id;
+
+                return (
+                  <div
+                    key={req.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid #DFE7F0',
+                      borderRadius: '12px',
+                      padding: '16px 20px',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexWrap: 'wrap',
+                      gap: '14px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+                      <Link href={`/people/${p.id}`} style={{ textDecoration: 'none' }}>
+                        <UserAvatar avatarUrl={p.avatar_url || undefined} name={name} size={46} />
+                      </Link>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <Link href={`/people/${p.id}`} style={{ fontSize: '15px', fontWeight: 800, color: '#002b66', textDecoration: 'none' }}>
+                            {name}
+                          </Link>
+                          {p.has_golden_tick && <GoldenTick size={15} />}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748B' }}>{subline}</div>
+                        {req.message && (
+                          <div style={{ fontSize: '12px', color: '#475569', marginTop: '4px', fontStyle: 'italic' }}>
+                            Note: &ldquo;{req.message}&rdquo;
+                          </div>
+                        )}
+                        <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px' }}>
+                          Deferred on {new Date(req.updated_at || req.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* Accept Now */}
+                      <button
+                        onClick={() => handleAcceptRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          fontSize: '12.5px',
+                          fontWeight: 750,
+                          borderRadius: '8px',
+                          border: 'none',
+                          background: '#16A34A',
+                          color: '#FFFFFF',
+                          cursor: 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                      >
+                        <CheckCircle2 size={15} /> Accept Now
+                      </button>
+
+                      {/* Decline */}
+                      <button
+                        onClick={() => handleDeclineRequest(req.id, name)}
+                        disabled={isBusy}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 14px',
+                          fontSize: '12.5px',
+                          fontWeight: 650,
+                          borderRadius: '8px',
+                          border: '1px solid #DFE7F0',
+                          background: '#FFFFFF',
+                          color: '#64748B',
+                          cursor: 'pointer',
+                          opacity: isBusy ? 0.6 : 1,
+                        }}
+                      >
+                        <XCircle size={15} /> Decline
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────
+          SEND CONNECTION INVITATION MODAL
+      ──────────────────────────────────────────────────────────────────────── */}
+      {sendConnectTarget && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.55)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '16px',
+          }}
+          onClick={() => setSendConnectTarget(null)}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              borderRadius: '16px',
+              maxWidth: '480px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h2 style={{ fontSize: '17px', fontWeight: 800, color: '#002b66', margin: 0 }}>
+                Connect with {resolveMemberName(sendConnectTarget)}
+              </h2>
+              <button onClick={() => setSendConnectTarget(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#F8FAFC', padding: '12px', borderRadius: '10px', marginBottom: '16px' }}>
+              <UserAvatar avatarUrl={sendConnectTarget.avatar_url || undefined} name={resolveMemberName(sendConnectTarget)} size={42} />
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, fontSize: '14px', color: '#0F172A' }}>
+                  <span>{resolveMemberName(sendConnectTarget)}</span>
+                  {sendConnectTarget.has_golden_tick && <GoldenTick size={14} />}
+                </div>
+                <div style={{ fontSize: '12px', color: '#64748B' }}>{resolveMemberSubline(sendConnectTarget)}</div>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                Introductory Freight Message (Optional)
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. Hello, we manage dry van and reefer loads on Mumbai-Delhi. Would like to connect and share active trade rates."
+                value={sendConnectNote}
+                onChange={(e) => setSendConnectNote(e.target.value)}
+                maxLength={300}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  fontSize: '13px',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  outline: 'none',
+                  resize: 'vertical',
+                }}
+              />
+              <div style={{ fontSize: '11px', color: '#94A3B8', marginTop: '4px', textAlign: 'right' }}>
+                {sendConnectNote.length}/300 characters
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={() => setSendConnectTarget(null)}
+                style={{ padding: '8px 14px', fontSize: '13px', fontWeight: 600, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSendConnectRequest}
+                disabled={sendingConnect}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 20px',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  background: '#002b66',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  opacity: sendingConnect ? 0.7 : 1,
+                }}
+              >
+                {sendingConnect ? <RefreshCw size={14} className="spin" /> : <Send size={14} />}
+                Send Connection Request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────────────────────────────────────────────────────────────────
+          SLIDE-OVER LIVE FREIGHT CHAT DRAWER
+      ──────────────────────────────────────────────────────────────────────── */}
       {activeChatContact && (
         <div
           style={{
             position: 'fixed',
             inset: 0,
             background: 'rgba(15, 23, 42, 0.45)',
-            backdropFilter: 'blur(3px)',
-            zIndex: 100,
+            backdropFilter: 'blur(2px)',
+            zIndex: 120,
             display: 'flex',
             justifyContent: 'flex-end',
           }}
@@ -1160,74 +2631,111 @@ export default function ContactsCrmPage() {
               maxWidth: '440px',
               height: '100%',
               background: '#FFFFFF',
-              boxShadow: '-8px 0 30px rgba(0,0,0,0.15)',
+              boxShadow: '-4px 0 25px rgba(0,0,0,0.12)',
               display: 'flex',
               flexDirection: 'column',
-              animation: 'slideInRight 0.2s ease-out',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Chat Drawer Header */}
+            {/* Drawer Header */}
             <div
               style={{
                 padding: '16px 20px',
                 borderBottom: '1px solid #DFE7F0',
                 display: 'flex',
-                alignItems: 'center',
                 justifyContent: 'space-between',
+                alignItems: 'center',
                 background: '#F8FAFC',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserAvatar
-                  avatarUrl={activeChatContact.avatar_url}
-                  name={activeChatContact.name}
-                  size={40}
-                />
+                <UserAvatar avatarUrl={activeChatContact.avatar_url} name={activeChatContact.name} size={40} />
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: 800, fontSize: '14.5px', color: '#0F172A' }}>
-                    {activeChatContact.name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span style={{ fontSize: '14.5px', fontWeight: 800, color: '#0F172A' }}>{activeChatContact.name}</span>
                     {activeChatContact.has_golden_tick && <GoldenTick size={14} />}
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: '#64748B' }}>
-                    <span>{activeChatContact.company}</span>
-                    <span>•</span>
-                    <span style={{ fontWeight: 700, color: activeChatContact.status === 'live' || activeChatContact.status === 'online' ? '#16A34A' : '#D97706' }}>
-                      {activeChatContact.status.toUpperCase()}
-                    </span>
+                  <div style={{ fontSize: '11px', color: '#16A34A', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A' }} />
+                    {activeChatContact.company || 'Carrier Member'}
                   </div>
                 </div>
               </div>
-
               <button
                 onClick={() => setActiveChatContact(null)}
-                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B', padding: '6px' }}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748B' }}
               >
-                <X size={18} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* Quick Freight Action Chips */}
-            <div style={{ padding: '8px 16px', background: '#FFFFFF', borderBottom: '1px solid #F1F5F9', display: 'flex', gap: '6px', overflowX: 'auto' }}>
+            {/* Messages Body */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {chatLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B' }}>
+                  <RefreshCw size={24} className="spin" style={{ margin: '0 auto' }} />
+                  <p style={{ fontSize: '12px', marginTop: '8px' }}>Loading conversation history...</p>
+                </div>
+              ) : chatMessages.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
+                  <MessageSquare size={32} style={{ margin: '0 auto', opacity: 0.5 }} />
+                  <p style={{ fontSize: '13px', marginTop: '8px', color: '#64748B', fontWeight: 600 }}>Start your freight conversation</p>
+                  <p style={{ fontSize: '11.5px', color: '#94A3B8' }}>Inquire about spot rates, container availability, or dispatch schedules.</p>
+                </div>
+              ) : (
+                chatMessages.map((msg) => {
+                  const isMe = msg.sender_id === user?.uid || msg.sender_id === 'me';
+                  return (
+                    <div
+                      key={msg.id}
+                      style={{
+                        alignSelf: isMe ? 'flex-end' : 'flex-start',
+                        maxWidth: '80%',
+                        background: isMe ? '#002b66' : '#F1F5F9',
+                        color: isMe ? '#FFFFFF' : '#0F172A',
+                        padding: '10px 14px',
+                        borderRadius: isMe ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
+                        fontSize: '13px',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      <div>{msg.content}</div>
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          color: isMe ? 'rgba(255,255,255,0.7)' : '#94A3B8',
+                          marginTop: '4px',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatMessagesEndRef} />
+            </div>
+
+            {/* Quick Freight Message Chips */}
+            <div style={{ padding: '8px 16px', background: '#F8FAFC', borderTop: '1px solid #DFE7F0', display: 'flex', gap: '6px', overflowX: 'auto' }}>
               {[
-                'Spot rate for 40HC?',
-                'Confirm vessel departure ETA',
-                'BL draft uploaded to Nexus',
-                'Customs clearance update',
-              ].map((chip) => (
+                'Sharing spot rates',
+                'Looking for 40ft container',
+                'Transit time inquiry',
+              ].map((chip, idx) => (
                 <button
-                  key={chip}
-                  onClick={() => handleSendChatMessage(chip)}
-                  disabled={chatSending}
+                  key={idx}
+                  onClick={() => setChatInputText(chip)}
                   style={{
-                    whiteSpace: 'nowrap',
                     fontSize: '11px',
                     fontWeight: 600,
-                    padding: '4px 8px',
-                    borderRadius: '50px',
-                    border: '1px solid #DFE7F0',
-                    background: '#F8FAFC',
-                    color: '#075985',
+                    padding: '3px 8px',
+                    borderRadius: '12px',
+                    border: '1px solid #CBD5E1',
+                    background: '#FFFFFF',
+                    color: '#475569',
+                    whiteSpace: 'nowrap',
                     cursor: 'pointer',
                   }}
                 >
@@ -1236,104 +2744,45 @@ export default function ContactsCrmPage() {
               ))}
             </div>
 
-            {/* Chat Messages Stream */}
-            <div style={{ flex: 1, padding: '20px 16px', overflowY: 'auto', background: '#F8FAFC', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {chatLoading ? (
-                <div style={{ textAlign: 'center', padding: '40px 0', color: '#64748B', fontSize: '13px' }}>
-                  <RefreshCw size={20} className="spin" style={{ margin: '0 auto 8px' }} />
-                  Loading message history...
-                </div>
-              ) : chatMessages.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px 16px', color: '#94A3B8' }}>
-                  <MessageSquare size={32} style={{ margin: '0 auto 8px', color: '#CBD5E1' }} />
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#475569' }}>No messages yet</p>
-                  <p style={{ fontSize: '11.5px', color: '#94A3B8', marginTop: '4px' }}>
-                    Send a quick freight inquiry or rate proposal to start the conversation.
-                  </p>
-                </div>
-              ) : (
-                chatMessages.map((msg) => {
-                  const isMine = msg.sender_id === user?.uid;
-                  return (
-                    <div
-                      key={msg.id}
-                      style={{
-                        alignSelf: isMine ? 'flex-end' : 'flex-start',
-                        maxWidth: '82%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: isMine ? 'flex-end' : 'flex-start',
-                      }}
-                    >
-                      <div
-                        style={{
-                          padding: '10px 14px',
-                          borderRadius: isMine ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                          background: isMine ? '#002b66' : '#FFFFFF',
-                          color: isMine ? '#FFFFFF' : '#0F172A',
-                          border: isMine ? 'none' : '1px solid #E2E8F0',
-                          fontSize: '13px',
-                          lineHeight: 1.45,
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        }}
-                      >
-                        {msg.content}
-                      </div>
-                      <span style={{ fontSize: '10px', color: '#94A3B8', marginTop: '3px', padding: '0 4px' }}>
-                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={chatMessagesEndRef} />
-            </div>
-
-            {/* Chat Input Bar */}
-            <div style={{ padding: '14px 16px', borderTop: '1px solid #DFE7F0', background: '#FFFFFF' }}>
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSendChatMessage();
+            {/* Input Footer */}
+            <form onSubmit={handleSendChatMessage} style={{ padding: '12px 16px', borderTop: '1px solid #DFE7F0', display: 'flex', gap: '8px' }}>
+              <input
+                type="text"
+                placeholder="Type your message..."
+                value={chatInputText}
+                onChange={(e) => setChatInputText(e.target.value)}
+                style={{
+                  flex: 1,
+                  padding: '10px 14px',
+                  fontSize: '13px',
+                  borderRadius: '8px',
+                  border: '1px solid #CBD5E1',
+                  outline: 'none',
                 }}
-                style={{ display: 'flex', gap: '8px' }}
+              />
+              <button
+                type="submit"
+                disabled={chatSending || !chatInputText.trim()}
+                style={{
+                  padding: '10px 16px',
+                  background: '#002b66',
+                  color: '#FFFFFF',
+                  borderRadius: '8px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  opacity: chatSending || !chatInputText.trim() ? 0.6 : 1,
+                }}
               >
-                <input
-                  type="text"
-                  placeholder="Type a message or container RFQ inquiry..."
-                  value={chatInputText}
-                  onChange={(e) => setChatInputText(e.target.value)}
-                  style={{
-                    flex: 1,
-                    padding: '10px 14px',
-                    fontSize: '13px',
-                    borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
-                    outline: 'none',
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={chatSending || !chatInputText.trim()}
-                  style={{
-                    background: '#002b66',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0 16px',
-                    cursor: chatSending || !chatInputText.trim() ? 'not-allowed' : 'pointer',
-                    opacity: chatSending || !chatInputText.trim() ? 0.6 : 1,
-                  }}
-                >
-                  <Send size={16} />
-                </button>
-              </form>
-            </div>
+                <Send size={15} />
+              </button>
+            </form>
           </div>
         </div>
       )}
 
-      {/* ── Add Contact Modal ────────────────────────────────────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────────────
+          ADD CONTACT MODAL
+      ──────────────────────────────────────────────────────────────────────── */}
       {showAddModal && (
         <div
           style={{
@@ -1363,23 +2812,20 @@ export default function ContactsCrmPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#002b66', margin: 0 }}>Add Freight Trade Contact</h2>
-                <p style={{ fontSize: '12px', color: '#64748B', marginTop: '2px', margin: 0 }}>Persist directly into PostgreSQL DBMS</p>
-              </div>
+              <h2 style={{ fontSize: '18px', fontWeight: 800, color: '#002b66', margin: 0 }}>Add New Freight Contact</h2>
               <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B' }}>
                 <X size={20} />
               </button>
             </div>
 
-            {/* Mode Toggle: From Directory vs Custom */}
+            {/* Mode Toggle: Link from FR8X Directory vs Manual Entry */}
             <div style={{ display: 'flex', background: '#F1F5F9', padding: '3px', borderRadius: '8px', marginBottom: '18px' }}>
               <button
                 type="button"
                 onClick={() => setAddMode('directory')}
                 style={{
                   flex: 1,
-                  padding: '7px 0',
+                  padding: '8px',
                   fontSize: '12.5px',
                   fontWeight: 700,
                   borderRadius: '6px',
@@ -1387,17 +2833,16 @@ export default function ContactsCrmPage() {
                   background: addMode === 'directory' ? '#FFFFFF' : 'transparent',
                   color: addMode === 'directory' ? '#002b66' : '#64748B',
                   cursor: 'pointer',
-                  boxShadow: addMode === 'directory' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                 }}
               >
-                Link FR8X Verified Member
+                Link FR8X Member
               </button>
               <button
                 type="button"
                 onClick={() => setAddMode('manual')}
                 style={{
                   flex: 1,
-                  padding: '7px 0',
+                  padding: '8px',
                   fontSize: '12.5px',
                   fontWeight: 700,
                   borderRadius: '6px',
@@ -1405,245 +2850,203 @@ export default function ContactsCrmPage() {
                   background: addMode === 'manual' ? '#FFFFFF' : 'transparent',
                   color: addMode === 'manual' ? '#002b66' : '#64748B',
                   cursor: 'pointer',
-                  boxShadow: addMode === 'manual' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
                 }}
               >
-                Custom Corporate Entry
+                Manual Corporate Entry
               </button>
             </div>
 
-            {addMode === 'directory' ? (
-              /* Mode 1: Search & Link FR8X Member */
-              <div>
-                <div style={{ position: 'relative', marginBottom: '12px' }}>
-                  <Search size={15} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
+            {/* Directory Search Section */}
+            {addMode === 'directory' && (
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '6px' }}>
+                  Search FR8X Verified Member Directory
+                </label>
+                <div style={{ position: 'relative' }}>
+                  <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8' }} />
                   <input
                     type="text"
-                    placeholder="Search verified members by name, company, city..."
+                    placeholder="Search member name or company..."
                     value={directorySearch}
                     onChange={(e) => setDirectorySearch(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '9px 12px 9px 36px',
-                      fontSize: '13px',
-                      borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
-                      outline: 'none',
-                    }}
+                    style={{ width: '100%', padding: '8px 10px 8px 32px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
                   />
                 </div>
 
-                {searchingDirectory && (
-                  <div style={{ textAlign: 'center', padding: '16px', color: '#64748B', fontSize: '12px' }}>
-                    <RefreshCw size={16} className="spin" style={{ margin: '0 auto 6px' }} />
-                    Searching verified members...
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '280px', overflowY: 'auto' }}>
-                  {directoryResults.map((p) => {
-                    const fullName = p.display_name || p.full_name || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Member';
-                    return (
+                {/* Directory Results List */}
+                {directoryResults.length > 0 && (
+                  <div style={{ marginTop: '8px', border: '1px solid #DFE7F0', borderRadius: '8px', overflow: 'hidden' }}>
+                    {directoryResults.map((m) => (
                       <div
-                        key={p.id}
+                        key={m.id}
+                        onClick={() => {
+                          setFormData({
+                            ...formData,
+                            name: m.full_name || m.display_name || 'Member',
+                            company: m.company || m.company_name || '',
+                            designation: m.designation || m.position || '',
+                            location: m.location || m.city || '',
+                            contact_profile_id: m.id,
+                          });
+                          setDirectorySearch('');
+                          setDirectoryResults([]);
+                          toast(`Selected ${m.full_name || m.display_name}`);
+                        }}
                         style={{
+                          padding: '10px 12px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between',
-                          padding: '10px 12px',
-                          border: '1px solid #E2E8F0',
-                          borderRadius: '8px',
-                          background: '#F8FAFC',
+                          borderBottom: '1px solid #F1F5F9',
+                          cursor: 'pointer',
+                          background: formData.contact_profile_id === m.id ? '#F0F9FF' : '#FFFFFF',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <UserAvatar avatarUrl={p.avatar_url} name={fullName} size={36} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <UserAvatar avatarUrl={m.avatar_url} name={m.full_name || m.display_name} size={32} />
                           <div>
-                            <div style={{ fontSize: '13px', fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              {fullName}
-                              {p.has_golden_tick && <GoldenTick size={13} />}
-                            </div>
-                            <div style={{ fontSize: '11px', color: '#64748B' }}>
-                              {p.company || p.company_name || 'Enterprise'} • {p.designation || 'Executive'}
-                            </div>
+                            <div style={{ fontSize: '12.5px', fontWeight: 700, color: '#0F172A' }}>{m.full_name || m.display_name}</div>
+                            <div style={{ fontSize: '11px', color: '#64748B' }}>{m.company || m.company_name} · {m.city}</div>
                           </div>
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              name: fullName,
-                              company: p.company || p.company_name || '',
-                              designation: p.designation || '',
-                              email: p.email || '',
-                              phone: p.phone || '',
-                              location: [p.city, p.country].filter(Boolean).join(', '),
-                              contact_profile_id: p.id,
-                            }));
-                            setAddMode('manual');
-                            toast(`Linked profile for ${fullName}. Review details and save.`);
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            background: '#002b66',
-                            color: '#FFFFFF',
-                            borderRadius: '6px',
-                            border: 'none',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          Select
-                        </button>
+                        <span style={{ fontSize: '11px', fontWeight: 700, color: '#0284C7' }}>Select</span>
                       </div>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ) : null}
+            )}
 
             {/* Form Fields */}
-            {(addMode === 'manual' || formData.contact_profile_id) && (
-              <form onSubmit={handleSaveNewContact} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Company</label>
-                    <input
-                      type="text"
-                      value={formData.company}
-                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Designation / Role</label>
-                    <input
-                      type="text"
-                      value={formData.designation}
-                      onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Category</label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
-                    >
-                      <option value="Freight Forwarder">Freight Forwarder</option>
-                      <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
-                      <option value="Customs Broker">Customs Broker</option>
-                      <option value="Shipper (BCO)">Shipper (BCO)</option>
-                      <option value="Transporter / Fleet">Transporter / Fleet</option>
-                      <option value="Port / Terminal">Port / Terminal</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Email</label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Phone / WhatsApp</label>
-                    <input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Deal Stage</label>
-                    <select
-                      value={formData.stage}
-                      onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
-                    >
-                      <option value="Active Partner">Active Partner</option>
-                      <option value="Rate Quoted">Rate Quoted</option>
-                      <option value="VIP / Key Account">VIP / Key Account</option>
-                      <option value="Prospect / Lead">Prospect / Lead</option>
-                      <option value="Carrier Partner">Carrier Partner</option>
-                      <option value="On Hold">On Hold</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Presence Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                      style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
-                    >
-                      <option value="live">🟢 Live / Online</option>
-                      <option value="away">🟡 Away</option>
-                      <option value="busy">🔴 Busy / In Auction</option>
-                      <option value="offline">⚪ Offline</option>
-                    </select>
-                  </div>
-                </div>
-
+            <form onSubmit={handleSaveNewContact} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Private CRM Trade Notes</label>
-                  <textarea
-                    rows={3}
-                    placeholder="E.g., Preferred routes (Nhava Sheva -> Jebel Ali), credit terms, standard container volumes..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', resize: 'vertical' }}
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
                   />
                 </div>
-
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    style={{ padding: '8px 14px', fontSize: '13px', fontWeight: 600, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 700, background: '#002b66', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                  >
-                    Save Contact to DBMS
-                  </button>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Company</label>
+                  <input
+                    type="text"
+                    value={formData.company}
+                    onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
                 </div>
-              </form>
-            )}
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Designation</label>
+                  <input
+                    type="text"
+                    value={formData.designation}
+                    onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Location / City</label>
+                  <input
+                    type="text"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Phone</label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1' }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Role Category</label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                  >
+                    <option value="Freight Forwarder">Freight Forwarder</option>
+                    <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
+                    <option value="Customs Broker">Customs Broker</option>
+                    <option value="Shipper (BCO)">Shipper (BCO)</option>
+                    <option value="Transporter / Fleet">Transporter / Fleet</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Deal Stage</label>
+                  <select
+                    value={formData.stage}
+                    onChange={(e) => setFormData({ ...formData, stage: e.target.value as any })}
+                    style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', background: '#FFFFFF' }}
+                  >
+                    <option value="Active Partner">Active Partner</option>
+                    <option value="Rate Quoted">Rate Quoted</option>
+                    <option value="VIP / Key Account">VIP / Key Account</option>
+                    <option value="Prospect / Lead">Prospect / Lead</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#475569', display: 'block', marginBottom: '4px' }}>Private CRM Notes</label>
+                <textarea
+                  rows={3}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid #CBD5E1', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  style={{ padding: '8px 14px', fontSize: '13px', fontWeight: 600, background: '#F1F5F9', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 700, background: '#002b66', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                >
+                  Save to DBMS
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
 
-      {/* ── Edit Contact Modal ────────────────────────────────────────────────── */}
-      {showEditModal && selectedContact && (
+      {/* ────────────────────────────────────────────────────────────────────────
+          EDIT CONTACT MODAL
+      ──────────────────────────────────────────────────────────────────────── */}
+      {showEditModal && (
         <div
           style={{
             position: 'fixed',
@@ -1713,8 +3116,6 @@ export default function ContactsCrmPage() {
                     <option value="Rate Quoted">Rate Quoted</option>
                     <option value="VIP / Key Account">VIP / Key Account</option>
                     <option value="Prospect / Lead">Prospect / Lead</option>
-                    <option value="Carrier Partner">Carrier Partner</option>
-                    <option value="On Hold">On Hold</option>
                   </select>
                 </div>
                 <div>
@@ -1762,7 +3163,9 @@ export default function ContactsCrmPage() {
         </div>
       )}
 
-      {/* ── Delete Contact Modal with Connection Management ──────────────────── */}
+      {/* ────────────────────────────────────────────────────────────────────────
+          DELETE CONTACT MODAL
+      ──────────────────────────────────────────────────────────────────────── */}
       {showDeleteModal && selectedContact && (
         <div
           style={{
@@ -1800,7 +3203,6 @@ export default function ContactsCrmPage() {
               Are you sure you want to remove <strong>{selectedContact.name}</strong> ({selectedContact.company}) from your contacts directory?
             </p>
 
-            {/* Checkbox to also remove DBMS connection */}
             {selectedContact.contact_profile_id && (
               <div
                 style={{

@@ -32,7 +32,7 @@ export interface PersistentConnectionRecord {
   requester_id: string;
   recipient_id: string;
   receiver_id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'withdrawn' | 'blocked';
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'withdrawn' | 'blocked' | 'hold';
   note?: string | null;
   message?: string | null;
   created_at: string;
@@ -480,7 +480,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
-      .eq('status', 'pending')
+      .in('status', ['pending', 'hold'])
       .order('created_at', { ascending: false })
       .limit(limit);
 
@@ -494,7 +494,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
           id: row.id,
           message: row.note || '',
           created_at: row.created_at || new Date().toISOString(),
-          status: 'pending',
+          status: row.status || 'pending',
           requester_id: userId,
           recipient_id: targetId,
           profiles: recProfile,
@@ -505,7 +505,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
           requester_id: userId,
           recipient_id: targetId,
           receiver_id: targetId,
-          status: 'pending',
+          status: (row.status as any) || 'pending',
           note: row.note,
           created_at: row.created_at,
           updated_at: row.updated_at || row.created_at,
@@ -520,7 +520,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   const disk = loadDiskStore();
   for (const c of disk.connections) {
     const reqId = (c.requester_id || '').toLowerCase();
-    if (aliasSet.has(reqId) && c.status === 'pending' && !seenIds.has(c.id)) {
+    if (aliasSet.has(reqId) && (c.status === 'pending' || c.status === 'hold') && !seenIds.has(c.id)) {
       seenIds.add(c.id);
       const targetId = c.recipient_id || c.receiver_id;
       const recProfile = await lookupProfileById(targetId, userToken);
@@ -528,7 +528,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
         id: c.id,
         message: c.note || c.message || '',
         created_at: c.created_at,
-        status: 'pending',
+        status: c.status,
         requester_id: userId,
         recipient_id: targetId,
         profiles: recProfile,
@@ -978,7 +978,7 @@ export async function acceptConnectionRequestBackend(
         error: 'You are not authorized to accept this connection request.',
       };
     }
-    if (targetRecord.status !== 'pending') {
+    if (targetRecord.status !== 'pending' && targetRecord.status !== 'hold') {
       if (targetRecord.status === 'accepted') {
         return { success: true };
       }
@@ -1016,6 +1016,12 @@ export async function acceptConnectionRequestBackend(
         .update({ status: 'accepted', updated_at: now })
         .eq('requester_id', actualSenderId)
         .or(orClauses);
+
+      // Synchronize canonical mutual connection in DBMS accepted_connections table
+      await client.from('accepted_connections').upsert([
+        { user_id: recipientId, connected_to: actualSenderId, created_at: now },
+        { user_id: actualSenderId, connected_to: recipientId, created_at: now },
+      ], { onConflict: 'user_id,connected_to' });
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase accept update warning:', err);
@@ -1357,6 +1363,192 @@ export async function declineConnectionRequestBackend(
   }
 
   return { success: true };
+}
+
+// ── Hold Connection Request Mutation ──────────────────────────────────────────
+
+export async function holdConnectionRequestBackend(
+  recipientId: string,
+  requestId?: string,
+  requesterId?: string,
+  userToken?: string
+): Promise<{ success: boolean; status?: string; message?: string; error?: string; code?: string }> {
+  initStore();
+  const now = new Date().toISOString();
+  const recipientAliases = await resolveUserAliases(recipientId, userToken);
+  const recipientAliasSet = new Set(recipientAliases.map((a) => a.toLowerCase()));
+
+  const disk = loadDiskStore();
+  let targetRecord: PersistentConnectionRecord | undefined;
+
+  if (requestId) {
+    targetRecord = disk.connections.find((c) => c.id === requestId || c.id.includes(requestId));
+    if (!targetRecord) {
+      const memReq = peopleDirectoryStore.getRequestById(requestId);
+      if (memReq) {
+        targetRecord = {
+          id: memReq.id,
+          requester_id: memReq.requester_id,
+          recipient_id: memReq.recipient_id,
+          receiver_id: memReq.recipient_id,
+          status: memReq.status as any,
+          created_at: memReq.created_at,
+          updated_at: memReq.updated_at,
+        };
+      }
+    }
+    if (!targetRecord) {
+      targetRecord = await findConnectionInSupabase(requestId, userToken);
+    }
+  }
+
+  if (!targetRecord && requesterId) {
+    targetRecord = disk.connections.find((c) => {
+      const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
+      const req = (c.requester_id || '').toLowerCase();
+      return (
+        recipientAliasSet.has(rec) &&
+        (req === requesterId.toLowerCase() || req.includes(requesterId.toLowerCase())) &&
+        (c.status === 'pending' || c.status === 'hold')
+      );
+    });
+  }
+
+  if (targetRecord) {
+    const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
+    if (!recipientAliasSet.has(targetRec)) {
+      return {
+        success: false,
+        code: 'FORBIDDEN',
+        error: 'You are not authorized to put this connection request on hold.',
+      };
+    }
+  } else {
+    return {
+      success: false,
+      code: 'NOT_FOUND',
+      error: 'Connection request not found.',
+    };
+  }
+
+  const actualReqId = targetRecord.id;
+
+  // 1. Update in Supabase `connections` table
+  try {
+    const client = getEffectiveSupabaseClient(userToken);
+    if (actualReqId && actualReqId.includes('-')) {
+      await client
+        .from('connections')
+        .update({ status: 'hold', updated_at: now })
+        .eq('id', actualReqId);
+    }
+  } catch (err) {
+    console.warn('[ConnectionsBackend] Supabase hold update warning:', err);
+  }
+
+  // 2. Update memory & disk
+  targetRecord.status = 'hold';
+  targetRecord.updated_at = now;
+  saveDiskStore(disk);
+  upsertMemoryConnection(targetRecord);
+
+  // 3. Mirror in peopleDirectoryStore
+  if (actualReqId) {
+    peopleDirectoryStore.holdRequest(recipientId, actualReqId);
+  }
+
+  return { success: true, status: 'hold', message: 'Connection request placed on hold for further review.' };
+}
+
+// ── Get Held Requests For User ────────────────────────────────────────────────
+
+export async function getHeldRequestsForUser(userId: string, limit = 50, userToken?: string) {
+  initStore();
+  const results: any[] = [];
+  const seenIds = new Set<string>();
+  const aliases = await resolveUserAliases(userId, userToken);
+  const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
+
+  // 1. Authoritative Supabase query from `connections` table
+  try {
+    const client = getEffectiveSupabaseClient(userToken);
+    const orClauses = aliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
+
+    const { data: dbRows, error: dbErr } = await client
+      .from('connections')
+      .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
+      .or(orClauses)
+      .eq('status', 'hold')
+      .order('updated_at', { ascending: false })
+      .limit(limit);
+
+    if (!dbErr && Array.isArray(dbRows)) {
+      for (const row of dbRows) {
+        if (!row.id || seenIds.has(row.id)) continue;
+        seenIds.add(row.id);
+        const reqProfile = await lookupProfileById(row.requester_id, userToken);
+        results.push({
+          id: row.id,
+          message: row.note || '',
+          created_at: row.created_at || new Date().toISOString(),
+          updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+          status: 'hold',
+          requester_id: row.requester_id,
+          recipient_id: row.recipient_id || userId,
+          profiles: reqProfile,
+        });
+      }
+    }
+  } catch (err) {
+    console.warn('[ConnectionsBackend] Supabase held query warning:', err);
+  }
+
+  // 2. Merge from persistent store
+  const disk = loadDiskStore();
+  for (const c of disk.connections) {
+    const recId = (c.recipient_id || '').toLowerCase();
+    const recvId = (c.receiver_id || '').toLowerCase();
+    if (
+      (aliasSet.has(recId) || aliasSet.has(recvId)) &&
+      c.status === 'hold' &&
+      !seenIds.has(c.id)
+    ) {
+      seenIds.add(c.id);
+      const reqProfile = await lookupProfileById(c.requester_id, userToken);
+      results.push({
+        id: c.id,
+        message: c.note || c.message || '',
+        created_at: c.created_at,
+        updated_at: c.updated_at || c.created_at,
+        status: 'hold',
+        requester_id: c.requester_id,
+        recipient_id: c.recipient_id || userId,
+        profiles: reqProfile,
+      });
+    }
+  }
+
+  // 3. Merge from peopleDirectoryStore fallback
+  for (const alias of aliases) {
+    const memHeld = peopleDirectoryStore.getHeld(alias);
+    for (const m of memHeld) {
+      if (!seenIds.has(m.id)) {
+        seenIds.add(m.id);
+        results.push({
+          id: m.id,
+          message: m.message || '',
+          created_at: m.created_at,
+          updated_at: m.updated_at,
+          status: 'hold',
+          requester_id: m.requester?.id || '',
+          recipient_id: userId,
+          profiles: normalizeMemberProfile(m.requester),
+        });
+      }
+    }
+  }
+
+  return results.slice(0, limit);
 }
 
 // ── Notifications Retrieval ──────────────────────────────────────────────────

@@ -233,7 +233,7 @@ export interface InMemRequest {
   id: string;
   requester_id: string;
   recipient_id: string;
-  status: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'withdrawn';
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'withdrawn' | 'hold';
   message?: string;
   created_at: string;
   updated_at: string;
@@ -512,7 +512,7 @@ class PeopleDirectoryStore {
 
   public acceptRequest(userId: string, requestId: string): boolean {
     const req = this.requests.get(requestId);
-    if (!req || req.recipient_id !== userId || req.status !== 'pending') return false;
+    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
 
     req.status = 'accepted';
     req.updated_at = new Date().toISOString();
@@ -535,7 +535,7 @@ class PeopleDirectoryStore {
       category: 'network',
       title: `${acceptorName} accepted your connection request`,
       description: 'You are now connected. Direct contact credentials and instant trade chat are unlocked.',
-      target_url: '/connections?tab=connections',
+      target_url: '/contacts?tab=all',
       related_id: `accepted_${requestId}`,
       read: false,
       metadata: {
@@ -551,9 +551,18 @@ class PeopleDirectoryStore {
     return true;
   }
 
+  public holdRequest(userId: string, requestId: string): boolean {
+    const req = this.requests.get(requestId);
+    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
+
+    req.status = 'hold';
+    req.updated_at = new Date().toISOString();
+    return true;
+  }
+
   public declineRequest(userId: string, requestId: string): boolean {
     const req = this.requests.get(requestId);
-    if (!req || req.recipient_id !== userId || req.status !== 'pending') return false;
+    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
 
     req.status = 'declined';
     req.updated_at = new Date().toISOString();
@@ -729,6 +738,17 @@ class PeopleDirectoryStore {
       if (req.requester_id === userId && (req.status === 'cancelled' || (req as any).status === 'withdrawn')) {
         const recipient = this.getMemberById(req.recipient_id) || undefined;
         list.push({ ...req, recipient });
+      }
+    }
+    return list;
+  }
+
+  public getHeld(userId: string): Array<InMemRequest & { requester?: DirectoryMember }> {
+    const list: Array<InMemRequest & { requester?: DirectoryMember }> = [];
+    for (const req of this.requests.values()) {
+      if (req.recipient_id === userId && req.status === 'hold') {
+        const requester = this.getMemberById(req.requester_id) || undefined;
+        list.push({ ...req, requester });
       }
     }
     return list;
