@@ -64,17 +64,23 @@ async function upstashCommand(command: string[]): Promise<any> {
   const { url, token } = getUpstashCredentials();
   if (!url || !token) return null;
 
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 1500);
+
   try {
     const res = await fetch(`${url.replace(/\/$/, '')}/${command.join('/')}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: 'no-store',
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) return null;
     const data = await res.json();
     return data.result;
   } catch (err: any) {
+    clearTimeout(timer);
     console.warn('[Redis] Upstash command error:', err.message);
     return null;
   }

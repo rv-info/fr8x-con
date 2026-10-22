@@ -60,7 +60,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, isLoading, isPublicPage, isGodfather, router]);
 
-  // Fallback watchdog: if stuck on loading/unauthenticated for > 3.5 seconds on a protected route, force redirect to /login
+  // Fallback watchdog: if stuck on loading/unauthenticated for > 25 seconds on a protected route, force redirect to /login
   React.useEffect(() => {
     if (isGodfather || isPublicPage) return;
     if (isLoading || !isAuthenticated) {
@@ -68,7 +68,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
         }
-      }, 3500);
+      }, 25000);
       return () => clearTimeout(timer);
     }
   }, [isLoading, isAuthenticated, isPublicPage, isGodfather]);
@@ -207,13 +207,27 @@ import { NetworkProvider } from '@/lib/context/NetworkContext';
 
 export function AppShell({ children }: AppShellProps) {
   React.useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      // Register Service Worker for HyperSpeed offline resilience
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch((err) => {
-          console.warn('[HyperSpeed PWA] Service worker registration deferred:', err);
+    if (typeof window !== 'undefined') {
+      // Actively purge any legacy v1/v2/hyperspeed caches to liberate users from stale HTML
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((key) => {
+            if (key !== 'fr8x-cache-v4.0.0') {
+              caches.delete(key).catch(() => {});
+            }
+          });
+        }).catch(() => {});
+      }
+
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            reg.update().catch(() => {});
+          }).catch((err) => {
+            console.warn('[HyperSpeed PWA] Service worker registration deferred:', err);
+          });
         });
-      });
+      }
     }
   }, []);
 

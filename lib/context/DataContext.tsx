@@ -523,106 +523,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (savedCars) setMasterCarriers(JSON.parse(savedCars));
     } catch {}
 
-    // 2. Adaptive revalidation against live Supabase PostgreSQL
+    // 2. Adaptive revalidation against live authoritative database
     async function revalidateLiveDatabase() {
       // Guard: only query live DB when authenticated (user.uid is non-empty)
       if (!user?.uid) return;
       try {
-        // Fetch feed posts from Supabase PostgreSQL
-        const cloudPosts = await postDbService.getPosts().catch(() => []);
+        const activeUid = user.uid;
+        const authHeaders: Record<string, string> = {
+          'x-fr8x-user-uid': activeUid,
+          'x-fr8x-session': activeUid,
+        };
 
-        if (!isMounted) return;
+        // Fetch feed posts immediately (primary UI surface)
+        fetch('/api/feed', { headers: authHeaders })
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (!isMounted) return;
+            if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
+              const apiPosts = data.posts.filter((p: FeedPost) => {
+                const id = String(p.id || '');
+                const author = String(p.author || '');
+                return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
+              });
+              setPosts((prev) => {
+                const map = new Map<string, FeedPost>();
+                prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
+                  .forEach((p) => map.set(String(p.id), p));
+                apiPosts.forEach((p: FeedPost) => map.set(String(p.id), p));
+                const merged = Array.from(map.values());
+                try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
+                return merged;
+              });
+            }
+          })
+          .catch(() => {});
 
-        if (Array.isArray(cloudPosts) && cloudPosts.length > 0) {
-          const validCloudPosts = cloudPosts.filter((p) => {
-            const id = String(p.id || '');
-            const author = String(p.author || (p as any).authorName || '');
-            return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
-          });
-          // Merge: use post ID as single dedup key — server is authoritative
-          setPosts((prev) => {
-            const map = new Map<string, FeedPost>();
-            prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
-              .forEach((p) => map.set(String(p.id), p));
-            validCloudPosts.forEach((p) => map.set(String(p.id), p));
-            const merged = Array.from(map.values());
-            try {
-              localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged));
-            } catch {}
-            return merged;
-          });
-        }
-
-        // Secondary data queries (auctions, rates)
+        // Stagger secondary data queries (auctions, rates, jobs, nexus) to keep 500kbps-1mbps connections blazing fast
         const fetchSecondary = async () => {
           if (!isMounted) return;
-          const [auctionsRes, ratesRes] = await Promise.allSettled([
-            auctionDbService.getAuctions(),
-            rateDbService.getRates(),
-          ]);
-
-          if (!isMounted) return;
-
-          if (auctionsRes.status === 'fulfilled' && Array.isArray(auctionsRes.value) && auctionsRes.value.length > 0) {
-            const cleanCloudAuctions = auctionsRes.value.filter((a) => !isDummyAuction(a));
-            setAuctions((prev) => {
-              const map = new Map<string, Auction>();
-              cleanCloudAuctions.forEach((a) => map.set(a.id, a));
-              prev.filter((a) => !isDummyAuction(a)).forEach((a) => {
-                if (!map.has(a.id)) {
-                  map.set(a.id, a);
-                }
-              });
-              const merged = Array.from(map.values());
-              try {
-                localStorage.setItem('fr8x_auctions', JSON.stringify(merged));
-              } catch {}
-              return merged;
-            });
-          }
-
-          if (ratesRes.status === 'fulfilled' && Array.isArray(ratesRes.value) && ratesRes.value.length > 0) {
-            const cleanCloudRates = ratesRes.value.filter((r) => !isDummyRate(r));
-            setRates((prev) => {
-              const map = new Map<string, RateItem>();
-              cleanCloudRates.forEach((r) => map.set(r.id, r));
-              prev.filter((r) => !isDummyRate(r)).forEach((r) => {
-                if (!map.has(r.id)) {
-                  map.set(r.id, r);
-                }
-              });
-              const merged = Array.from(map.values());
-              try {
-                localStorage.setItem('fr8x_rates', JSON.stringify(merged));
-                localStorage.setItem('fr8x_my_rates', JSON.stringify(merged.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted)));
-              } catch {}
-              return merged;
-            });
-            setMyRates((prev) => {
-              const myFromCloud = cleanCloudRates.filter((r) => r.ownerUid === user?.uid || r.isOwner || r.isSelfPosted);
-              const map = new Map<string, RateItem>();
-              myFromCloud.forEach((r) => map.set(r.id, r));
-              prev.filter((r) => !isDummyRate(r)).forEach((r) => {
-                if (!map.has(r.id)) {
-                  map.set(r.id, r);
-                }
-              });
-              const merged = Array.from(map.values());
-              try {
-                localStorage.setItem('fr8x_my_rates', JSON.stringify(merged));
-              } catch {}
-              return merged;
-            });
-          }
-
-          // 3. Revalidate from authoritative server-side PostgreSQL database
-          const activeUid = user?.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-          const authHeaders: Record<string, string> = activeUid
-            ? {
-                'x-fr8x-user-uid': activeUid,
-                'x-fr8x-session': activeUid,
-              }
-            : {};
 
           // Sync Reverse Auctions across devices
           fetch('/api/auctions', { headers: authHeaders })
@@ -793,12 +731,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
           }
         };
 
-        if (isLowBandwidth) {
-          // Defer heavy secondary queries on flaky 3G to keep main thread unblocked
-          setTimeout(fetchSecondary, 1000);
-        } else {
-          fetchSecondary();
-        }
+        // Defer secondary queries by 1200ms to keep initial paint and login completely unblocked
+        setTimeout(fetchSecondary, isLowBandwidth ? 2000 : 1200);
       } catch (err) {
         console.warn('[DataContext] SWR fallback active:', err);
       }

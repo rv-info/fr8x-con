@@ -222,20 +222,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // 3. Load directory members for global platform directory
-    fetch('/api/members')
-      .then((r) => r.json())
-      .then((data) => {
-        if (isSubscribed && data?.members && Array.isArray(data.members)) {
-          setAllUsers((prev) => {
-            const map = new Map<string, UserProfile>();
-            for (const u of prev) if (u.uid) map.set(u.uid, u);
-            for (const m of data.members) if (m.uid) map.set(m.uid, { ...map.get(m.uid), ...m });
-            return Array.from(map.values());
-          });
-        }
-      })
-      .catch(() => {});
+    // 3. Load directory members for global platform directory only if authenticated
+    const hasActiveSession = Boolean(typeof window !== 'undefined' && localStorage.getItem(ACTIVE_SESSION_KEY));
+    if (hasActiveSession) {
+      fetch('/api/members')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data) => {
+          if (isSubscribed && data?.members && Array.isArray(data.members)) {
+            setAllUsers((prev) => {
+              const map = new Map<string, UserProfile>();
+              for (const u of prev) if (u.uid) map.set(u.uid, u);
+              for (const m of data.members) if (m.uid) map.set(m.uid, { ...map.get(m.uid), ...m });
+              return Array.from(map.values());
+            });
+          }
+        })
+        .catch(() => {});
+    }
 
     return () => {
       isSubscribed = false;

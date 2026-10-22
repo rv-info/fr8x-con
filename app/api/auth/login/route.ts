@@ -65,10 +65,14 @@ export async function POST(req: NextRequest) {
 
     const supabase = createClient();
     try {
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      const authPromise = supabase.auth.signInWithPassword({
         email: targetEmail,
         password,
       });
+      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 3500)
+      );
+      const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
 
       if (!authError && authData?.user) {
         authSucceeded = true;
@@ -151,11 +155,15 @@ export async function POST(req: NextRequest) {
     // 2. Authoritative PostgreSQL Profile Check (or server store profile)
     let profileRow: any = null;
     try {
-      const { data } = await supabase
+      const profilePromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
+      const profileTimeout = new Promise<{ data: any }>((resolve) =>
+        setTimeout(() => resolve({ data: null }), 3000)
+      );
+      const { data } = await Promise.race([profilePromise, profileTimeout]);
       profileRow = data;
     } catch {
       // continue to fallback

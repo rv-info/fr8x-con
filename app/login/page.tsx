@@ -217,22 +217,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      // 1. Direct Supabase Authentication with Email & Password
-      if (id.includes('@')) {
-        try {
-          const authRes = await loginWithCredentials(id, password, remember);
-          if (authRes.success) {
-            setIsLoading(false);
-            toast(`Logged in successfully to FR8X Workspace as ${authRes.user?.displayName || id}.`);
-            router.push('/feeds');
-            return;
-          }
-        } catch {
-          // Fall through to server-side auth
-        }
-      }
-
-      // 2. Server-side authentication & attempt limiter (for server DBMS accounts or user IDs)
+      // Single-flight authoritative server-side authentication (ultra-low bandwidth optimized for 500kbps - 1mbps)
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -286,6 +271,9 @@ export default function LoginPage() {
           } catch {}
 
           toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
+          if (id.includes('@')) {
+            loginWithCredentials(id, password, remember).catch(() => {});
+          }
           router.push('/feeds');
         } else {
           setErrorMessage('Session initialization failed. Please try again.');
