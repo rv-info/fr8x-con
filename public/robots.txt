@@ -1,0 +1,23 @@
+# FR8X Robots.txt — Strict Fair-Use & Bot Crawling Directives
+# Prevents aggressive scraper bots from consuming serverless origin bandwidth
+
+User-agent: *
+# Disallow automated scraping of internal API routes
+Disallow: /api/
+# Disallow internal Next.js assets from redundant direct crawling
+Disallow: /_next/
+# Disallow internal operations & admin routes
+Disallow: /godfather/
+Disallow: /godfatheron
+Disallow: /GODFATHERON
+# Disallow search queries with dynamic parameters
+Disallow: /*?*
+
+# Allow indexing of public home, login, and static marketing info
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /privacy
+
+# Crawl delay to protect serverless concurrency limits
+Crawl-delay: 5

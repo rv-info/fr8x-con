@@ -178,7 +178,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           href="/download"
           onClick={handleLinkClick}
           className="sidelink"
-          title="Download FR8X Android Mobile App"
+          title="FR8X Mobile Console"
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -199,8 +199,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           <Smartphone size={15} style={{ flexShrink: 0, color: 'var(--color-primary, #147DAB)' }} />
           {!collapsed && (
             <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ color: 'var(--color-nav-active-text, #075985)', fontWeight: 600 }}>Android App</span>
-              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>v2.4 · Mobile Enterprise</span>
+              <span style={{ color: 'var(--color-nav-active-text, #075985)', fontWeight: 600 }}>Mobile Console</span>
+              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>Enterprise Suite</span>
             </div>
           )}
         </Link>

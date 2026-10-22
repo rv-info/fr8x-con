@@ -54,5 +54,6 @@ scratch/
 # Cloudflare Pages
 .cloudflare/
 
-# Android APK binaries (hosted externally on Google Drive)
+# Android APK binaries & Native App folder (kept externally, never in web origin)
 *.apk
+fr8x-android-app/

@@ -5,6 +5,11 @@
       "source": "/godfather/login",
       "destination": "/godfatheron",
       "permanent": true
+    },
+    {
+      "source": "/(.*).apk",
+      "destination": "/download",
+      "permanent": true
     }
   ],
   "headers": [

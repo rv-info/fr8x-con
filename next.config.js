@@ -79,6 +79,15 @@ const nextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/:file*.apk',
+        destination: '/download',
+        permanent: true,
+      },
+    ];
+  },
   async rewrites() {
     return [
       {
@@ -116,11 +125,11 @@ const nextConfig = {
         ],
       },
       {
-        source: '/(logo.png|icon.png|favicon.ico|favicon.png|apple-icon.png)',
+        source: '/(logo.svg|logo.png|icon.png|favicon.ico|favicon.png|apple-icon.png|mobile-app-icon.png|manifest.json|robots.txt)',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=86400, stale-while-revalidate=604800',
+            value: 'public, max-age=86400, s-maxage=31536000, stale-while-revalidate=604800',
           },
         ],
       },

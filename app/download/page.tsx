@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Smartphone, Download, CheckCircle2, ShieldCheck, Zap, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Smartphone, CheckCircle2, ShieldCheck, Zap, MessageSquare, ArrowLeft, Globe, Mail } from 'lucide-react';
 
 export default function DownloadPage() {
   return (
@@ -43,7 +43,7 @@ export default function DownloadPage() {
           background: '#ffffff',
           border: '1px solid #e2e8f0',
           borderRadius: '20px',
-          padding: '32px 28px',
+          padding: '36px 28px',
           boxShadow: '0 10px 30px rgba(15, 23, 42, 0.06)',
           textAlign: 'center',
         }}
@@ -72,63 +72,83 @@ export default function DownloadPage() {
           <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> Mobile Enterprise
         </h1>
         <p style={{ fontSize: '13.5px', color: '#64748b', marginTop: '6px', lineHeight: 1.5 }}>
-          Official Native Android Mobile Application for Global Container Freight &amp; Reverse Auctions
+          Enterprise Mobile Suite for Global Container Freight &amp; Reverse Auctions
         </p>
 
-        {/* Version Badge */}
+        {/* Enterprise Status Badge */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            background: 'rgba(16, 185, 129, 0.1)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
+            background: 'rgba(2, 132, 199, 0.08)',
+            border: '1px solid rgba(2, 132, 199, 0.25)',
             borderRadius: '50px',
-            padding: '5px 16px',
-            color: '#059669',
+            padding: '6px 18px',
+            color: '#0284c7',
             fontSize: '12px',
             fontWeight: 700,
             marginTop: '14px',
             marginBottom: '26px',
           }}
         >
-          <CheckCircle2 size={14} /> v2.4.0 Universal • Verified &amp; Signed • 14.0 MB
+          <CheckCircle2 size={14} /> Enterprise Managed Distribution • Verified Supply Chain
         </div>
 
-        {/* Primary Download Button (Hosted externally on Google Drive to prevent bandwidth limits) */}
-        <div>
-          <a
-            href={process.env.NEXT_PUBLIC_GDRIVE_APK_URL || 'https://drive.google.com/file/d/YOUR_GOOGLE_DRIVE_FILE_ID/view?usp=sharing'}
-            target="_blank"
-            rel="noopener noreferrer"
+        {/* Action Buttons: Launch Web Console or Request Access */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
+          <Link
+            href="/login"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '12px',
+              gap: '10px',
               width: '100%',
               maxWidth: '380px',
-              height: '52px',
+              height: '50px',
               borderRadius: '12px',
               background: '#002b66',
               color: '#ffffff',
-              fontSize: '15px',
+              fontSize: '14.5px',
               fontWeight: 800,
               textDecoration: 'none',
-              boxShadow: '0 6px 20px rgba(0, 43, 102, 0.25)',
+              boxShadow: '0 6px 20px rgba(0, 43, 102, 0.22)',
               transition: 'all 0.15s ease',
-              cursor: 'pointer',
             }}
           >
-            <Download size={20} />
-            DOWNLOAD APK VIA GOOGLE DRIVE
+            <Globe size={18} />
+            LAUNCH WEB CONSOLE (PWA)
+          </Link>
+
+          <a
+            href="mailto:support@fr8x.in?subject=FR8X%20Mobile%20Enterprise%20Access%20Request"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px',
+              width: '100%',
+              maxWidth: '380px',
+              height: '46px',
+              borderRadius: '12px',
+              background: '#f8fafc',
+              border: '1px solid #cbd5e1',
+              color: '#0f172a',
+              fontSize: '13.5px',
+              fontWeight: 700,
+              textDecoration: 'none',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            <Mail size={16} />
+            REQUEST ENTERPRISE MOBILE ACCESS
           </a>
         </div>
 
-        <p style={{ fontSize: '11px', color: '#64748b', marginTop: '10px' }}>
-          Hosted securely on Google Drive • No Google Play account required • Compatible with Android 5.0+ to 14+ / 15
+        <p style={{ fontSize: '11px', color: '#64748b', marginTop: '12px' }}>
+          Instant PWA mobile responsive access on iOS, Android, and Desktop • No local APK downloads required
         </p>
-
 
         {/* Feature Highlights Grid */}
         <div
@@ -149,10 +169,10 @@ export default function DownloadPage() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#002b66', fontWeight: 800, fontSize: '13px' }}>
-              <Zap size={16} /> 100% Standalone
+              <Zap size={16} /> 100% Cloud-Synchronized
             </div>
             <p style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
-              Completely self-contained. Runs directly on your device with zero external browser frames.
+              Runs with real-time Supabase edge sync, zero storage footprint on your device.
             </p>
           </div>
 
@@ -184,7 +204,7 @@ export default function DownloadPage() {
               <MessageSquare size={16} /> B2B Trade Chat
             </div>
             <p style={{ fontSize: '11.5px', color: '#64748b', marginTop: '4px' }}>
-              Direct messaging with Maersk, Hapag-Lloyd, Port CFS, and Customs Brokers with quick trade pills.
+              Direct messaging with Maersk, Hapag-Lloyd, Port CFS, and Customs Brokers with trade pills.
             </p>
           </div>
 
@@ -205,26 +225,23 @@ export default function DownloadPage() {
           </div>
         </div>
 
-        {/* 3-Step Installation Guide */}
+        {/* Enterprise Notice */}
         <div
           style={{
             marginTop: '28px',
-            background: '#ffffff',
-            border: '0.5px solid #cbd5e1',
+            background: '#f8fafc',
+            border: '0.5px solid #e2e8f0',
             borderRadius: '14px',
             padding: '18px 20px',
             textAlign: 'left',
           }}
         >
-          <h3 style={{ fontSize: '14px', fontWeight: 800, color: '#0f172a', marginBottom: '10px' }}>
-            Quick Installation Guide:
+          <h3 style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a', marginBottom: '6px' }}>
+            Enterprise Security &amp; Managed Distribution
           </h3>
-          <ol style={{ fontSize: '12.5px', color: '#475569', paddingLeft: '18px', lineHeight: 1.8 }}>
-            <li>Tap the <strong>DOWNLOAD APK VIA GOOGLE DRIVE</strong> button above on your Android phone.</li>
-            <li>In your phone&apos;s Downloads or Files app, tap <code style={{ color: '#002b66', fontWeight: 'bold' }}>FR8X-Android-Universal-Release.apk</code>.</li>
-            <li>If prompted with <em>&quot;Install unknown apps&quot;</em>, go to <strong>Settings</strong> &gt; enable <strong>&quot;Allow from this source&quot;</strong>, then tap <strong>Install</strong>.</li>
-
-          </ol>
+          <p style={{ fontSize: '11.5px', color: '#475569', lineHeight: 1.6 }}>
+            In accordance with FR8X Bank-Grade Security Architecture, native Android client packages are provisioned exclusively to verified corporate accounts via managed enterprise MDM channels. Public server origin downloads are disabled to protect network integrity.
+          </p>
         </div>
       </div>
     </div>
