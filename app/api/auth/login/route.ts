@@ -62,6 +62,8 @@ export async function POST(req: NextRequest) {
     let authSucceeded = false;
     let userId = '';
     let fallbackProfile: any = null;
+    let supabaseSession: any = null;
+    let authTimedOut = false;
 
     const supabase = createClient();
     try {
@@ -70,13 +72,16 @@ export async function POST(req: NextRequest) {
         password,
       });
       const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 3500)
+        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 8000)
       );
       const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
 
       if (!authError && authData?.user) {
         authSucceeded = true;
         userId = authData.user.id;
+        supabaseSession = authData.session;
+      } else if (authError?.message === 'Auth timeout') {
+        authTimedOut = true;
       }
     } catch {
       // Continue to server store fallback
@@ -123,6 +128,17 @@ export async function POST(req: NextRequest) {
     }
 
     if (!authSucceeded) {
+      if (authTimedOut) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: 'Authentication server took too long to respond. Please check your internet connection and retry.',
+            code: 'AUTH_TIMEOUT',
+          },
+          { status: 504 }
+        );
+      }
+
       const lockRes = recordFailedAttempt(lockKey);
 
       // Progressive delay to exponentially slow down brute force & credential stuffing
@@ -228,6 +244,8 @@ export async function POST(req: NextRequest) {
       sessionId,
       deviceId: clientDeviceId,
       expiresAt,
+      token: supabaseSession?.access_token || undefined,
+      refreshToken: supabaseSession?.refresh_token || undefined,
       email: user.email,
       displayName: user.displayName,
       firstName: user.firstName,

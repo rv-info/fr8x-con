@@ -271,8 +271,15 @@ export default function LoginPage() {
           } catch {}
 
           toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
-          if (id.includes('@')) {
-            loginWithCredentials(id, password, remember).catch(() => {});
+          if (json.token && json.refreshToken) {
+            try {
+              const { createClient } = await import('@/lib/supabase/client');
+              const supabase = createClient();
+              supabase.auth.setSession({
+                access_token: json.token,
+                refresh_token: json.refreshToken,
+              }).catch(() => {});
+            } catch {}
           }
           router.push('/feeds');
         } else {

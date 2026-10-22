@@ -52,6 +52,10 @@ self.addEventListener('fetch', (event) => {
   if (
     url.pathname === '/login' ||
     url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/api/auth/') ||
+    url.pathname.startsWith('/api/user/') ||
+    url.pathname.startsWith('/api/godfather/') ||
+    url.pathname.startsWith('/api/payments/') ||
     url.pathname.startsWith('/godfather')
   ) {
     return;

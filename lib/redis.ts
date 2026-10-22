@@ -147,7 +147,7 @@ export const redis = {
     if (url && token) {
       const count = await upstashCommand(['INCR', key]);
       if (count === 1) {
-        await upstashCommand(['EXPIRE', key, String(windowSeconds)]);
+        upstashCommand(['EXPIRE', key, String(windowSeconds)]).catch(() => {});
       }
       current = count || 1;
     } else {

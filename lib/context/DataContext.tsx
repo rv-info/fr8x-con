@@ -612,30 +612,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
             })
             .catch(() => {});
 
-          fetch('/api/feed', { headers: authHeaders })
-            .then((res) => res.json())
-            .then((data) => {
-              if (data?.success && Array.isArray(data.posts) && data.posts.length > 0) {
-                const apiPosts = data.posts.filter((p: FeedPost) => {
-                  const id = String(p.id || '');
-                  const author = String(p.author || '');
-                  return !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(id) && !DUMMY_PERSONAS.has(author);
-                });
-                // Server API merge: ID-based dedup only — server data is authoritative
-                setPosts((prev) => {
-                  const map = new Map<string, FeedPost>();
-                  // Keep local optimistic posts first
-                  prev.filter((p) => !/^post-(?:[1-9]|1[0-9]|2[0-2])$/.test(String(p.id)) && !DUMMY_PERSONAS.has(String(p.author)))
-                    .forEach((p) => map.set(String(p.id), p));
-                  // Server wins for matching IDs
-                  apiPosts.forEach((p: FeedPost) => map.set(String(p.id), p));
-                  const merged = Array.from(map.values());
-                  try { localStorage.setItem('fr8x_feed_posts', JSON.stringify(merged)); } catch {}
-                  return merged;
-                });
-              }
-            })
-            .catch(() => {});
 
           fetch('/api/jobs', { headers: authHeaders })
             .then((res) => res.json())

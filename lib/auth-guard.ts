@@ -273,23 +273,7 @@ export function authenticateUserSession(
     }
   }
 
-  // 3. Check client auth headers (x-fr8x-user-uid / x-fr8x-session)
-  if (!uid) {
-    const headerUid = req.headers.get('x-fr8x-user-uid') || req.headers.get('x-fr8x-session');
-    if (headerUid && headerUid.trim()) {
-      const cleanHeaderUid = headerUid.trim();
-      const knownUser = serverSecurityStore.getUser(cleanHeaderUid) || serverSecurityStore.getUserByEmailOrUid(cleanHeaderUid);
-      if (knownUser) {
-        uid = knownUser.uid;
-        tokenEmail = knownUser.email;
-        tokenRole = knownUser.role;
-        tokenCompanyId = knownUser.companyId;
-        tokenCompany = knownUser.company || knownUser.companyName;
-      } else {
-        uid = cleanHeaderUid;
-      }
-    }
-  }
+
 
   if (!uid) {
     return {

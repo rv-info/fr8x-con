@@ -225,6 +225,16 @@ export async function middleware(request: NextRequest) {
       c.name === '__Secure-FR8X-Godfather-Session'
   );
 
+  // Fast-path /login and auth APIs: never block on external Supabase Auth in Edge middleware
+  if (pathname === '/login' || pathname.startsWith('/api/auth/')) {
+    const res = NextResponse.next();
+    if (rateLimitStatus) {
+      res.headers.set('X-RateLimit-Limit', String(rateLimitStatus.limit));
+      res.headers.set('X-RateLimit-Remaining', String(rateLimitStatus.remaining));
+    }
+    return applySecurityHeaders(res, requestId);
+  }
+
   // If public route and no cookies present, skip expensive Supabase Auth round-trip
   if (isPublicRoute(pathname) && !hasAuthCookies) {
     const res = NextResponse.next();

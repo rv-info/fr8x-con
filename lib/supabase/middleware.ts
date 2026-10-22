@@ -26,8 +26,18 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Do not run on static assets
-  const user = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+  // Bounded timeout so slow or offline Supabase Auth never blocks Edge routing
+  let user: any = null;
+  try {
+    const authPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<any>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: new Error('Auth timeout') }), 2000)
+    );
+    const res = await Promise.race([authPromise, timeoutPromise]);
+    user = res?.data?.user || null;
+  } catch {
+    user = null;
+  }
 
-  return { supabaseResponse, user: user.data.user };
+  return { supabaseResponse, user };
 }
