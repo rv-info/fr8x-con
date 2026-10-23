@@ -45,6 +45,7 @@ import { resolveDisplayName } from '@/lib/utils';
 import { resolveCallerIdentity } from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 10;
 
 // ── Zod schema for query params ────────────────────────────────────────────────
 const SearchParamsSchema = z.object({

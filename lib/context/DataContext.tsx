@@ -783,12 +783,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
     window.addEventListener('fr8x_refresh_notifications', refreshNotifications);
 
-    // Fast background sync: poll DBMS every 8 seconds when tab is active
+    // Background sync: poll DBMS every 12 seconds when tab is active (conserves Vercel function quotas)
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         refreshNotifications();
       }
-    }, 8000);
+    }, 12000);
 
     return () => {
       isSubscribed = false;

@@ -24,6 +24,7 @@ import {
 } from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 10;
 
 export async function GET(req: NextRequest) {
   const caller = await resolveCallerIdentity(req);
@@ -32,7 +33,12 @@ export async function GET(req: NextRequest) {
   if (!userId) {
     return NextResponse.json(
       { success: false, error: 'Authentication required.', code: 'UNAUTHENTICATED' },
-      { status: 401 }
+      {
+        status: 401,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
     );
   }
 
@@ -44,12 +50,21 @@ export async function GET(req: NextRequest) {
     const list = await getNotificationsForUser(userId, limit, unreadOnly, caller.token);
     const unreadCount = list.filter((n) => !n.read).length;
 
-    return NextResponse.json({
-      success: true,
-      notifications: list,
-      unreadCount,
-      total: list.length,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        notifications: list,
+        unreadCount,
+        total: list.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'CDN-Cache-Control': 'no-store',
+          'Vercel-CDN-Cache-Control': 'no-store',
+        },
+      }
+    );
   } catch (err: any) {
     console.error('[API/notifications GET error]:', err);
     return NextResponse.json(

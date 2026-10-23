@@ -35,6 +35,7 @@ import {
 } from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 10;
 
 // ── Action schema ─────────────────────────────────────────────────────────────
 const ConnectionActionSchema = z.discriminatedUnion('action', [
