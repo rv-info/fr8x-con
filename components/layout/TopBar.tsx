@@ -840,7 +840,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
                               <small style={{ fontSize: '9px', color: 'var(--faint)' }}>{n.time}</small>
                               {n.actionLabel && n.targetUrl && (
-                                <Link href={n.targetUrl} className="badge blue" style={{ fontSize: '9px' }} onClick={() => setShowNotifications(false)}>
+                                <Link
+                                  href={n.targetUrl.startsWith('/connections') ? n.targetUrl.replace('/connections', '/people') : n.targetUrl}
+                                  className="badge blue"
+                                  style={{ fontSize: '9px' }}
+                                  onClick={() => setShowNotifications(false)}
+                                >
                                   {n.actionLabel}
                                 </Link>
                               )}

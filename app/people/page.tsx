@@ -197,15 +197,19 @@ function PeopleContent() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const cursorRef = useRef<string | null>(null);
 
   // ── Core search function ──────────────────────────────────────────────────
   const doSearch = useCallback(
     async (searchFilters: PeopleSearchFilters, append = false) => {
-      if (abortRef.current) abortRef.current.abort();
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
       abortRef.current = new AbortController();
 
       if (!append) {
         setLoading(true);
+        cursorRef.current = null;
         setCursor(null);
       } else {
         setLoadMore(true);
@@ -215,7 +219,7 @@ function PeopleContent() {
       try {
         const url = buildSearchUrl(
           searchFilters,
-          append ? cursor ?? undefined : undefined
+          append ? cursorRef.current ?? undefined : undefined
         );
 
         const authHeaders = getClientAuthHeaders(user?.uid);
@@ -259,6 +263,10 @@ function PeopleContent() {
         const nextCursorVal = data.pagination?.nextCursor ?? data.nextCursor ?? null;
         const countVal = data.count ?? rawRows.length;
 
+        cursorRef.current = nextCursorVal;
+        setHasMore(hasMoreVal);
+        setCursor(nextCursorVal);
+
         if (append) {
           setResults((prev) => [...prev, ...rows]);
         } else {
@@ -266,18 +274,21 @@ function PeopleContent() {
           setTotal(countVal);
           setSearched(true);
         }
-
-        setHasMore(hasMoreVal);
-        setCursor(nextCursorVal);
       } catch (e: unknown) {
-        if (e instanceof DOMException && e.name === 'AbortError') return;
+        const isAbort =
+          (e instanceof DOMException && e.name === 'AbortError') ||
+          (typeof e === 'object' &&
+            e !== null &&
+            ((e as { name?: string }).name === 'AbortError' ||
+              String((e as { message?: string }).message).toLowerCase().includes('abort')));
+        if (isAbort) return;
         setError('Search failed. Please try again.');
       } finally {
         setLoading(false);
         setLoadMore(false);
       }
     },
-    [cursor, user?.uid]
+    [user?.uid]
   );
 
   // Load connection tabs data
@@ -312,7 +323,18 @@ function PeopleContent() {
   useEffect(() => {
     doSearch({ q: '' }, false);
     loadConnectionsData();
-  }, [doSearch, loadConnectionsData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sync on auth resolution
+  const prevAuthUidRef = useRef<string | undefined>(user?.uid);
+  useEffect(() => {
+    if (user?.uid && user.uid !== prevAuthUidRef.current) {
+      prevAuthUidRef.current = user.uid;
+      loadConnectionsData();
+      doSearch(filters, false);
+    }
+  }, [user?.uid, loadConnectionsData, doSearch, filters]);
 
   // Listen to connection changes across tabs or window
   useEffect(() => {
@@ -942,6 +964,35 @@ function PeopleContent() {
                 }}
               >
                 Reset Search Filters
+              </button>
+            </div>
+          )}
+
+          {/* Pagination: Load More */}
+          {hasMore && (
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+              <button
+                type="button"
+                onClick={() => doSearch(filters, true)}
+                disabled={loadingMore}
+                style={{
+                  padding: '9px 24px',
+                  borderRadius: '8px',
+                  background: '#f8fafc',
+                  border: '1.5px solid #cbd5e1',
+                  color: '#002b66',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  cursor: loadingMore ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                {loadingMore && <Loader2 size={14} className="spin" />}
+                {loadingMore ? 'Loading more members…' : 'Load More Freight Professionals'}
               </button>
             </div>
           )}
