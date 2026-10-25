@@ -10,6 +10,7 @@ import {
   Gavel,
   BarChart3,
   Users,
+  BookUser,
 } from 'lucide-react';
 
 export function MobileNav() {
@@ -18,15 +19,16 @@ export function MobileNav() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/feeds', label: 'Feeds', icon: Rss },
+    { href: '/contacts', label: 'Contacts', icon: BookUser },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
-    { href: '/rates', label: 'Rates', icon: BarChart3 },
     { href: '/people', label: 'People', icon: Users },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
-    if (href === '/people') return pathname === '/people' || pathname.startsWith('/people') || pathname.startsWith('/connections') || pathname.startsWith('/contacts');
+    if (href === '/contacts') return pathname === '/contacts' || pathname.startsWith('/contacts/');
+    if (href === '/people') return pathname === '/people' || pathname.startsWith('/people') || pathname.startsWith('/connections');
     if (href === '/rates') return pathname === '/rates';
     if (href === '/feeds') return pathname === '/feeds';
     return pathname === href;
