@@ -209,11 +209,11 @@ import { NetworkProvider } from '@/lib/context/NetworkContext';
 export function AppShell({ children }: AppShellProps) {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Actively purge any legacy v1/v2/hyperspeed caches to liberate users from stale HTML
+      // Actively purge any legacy caches to liberate users from stale HTML
       if ('caches' in window) {
         caches.keys().then((keys) => {
           keys.forEach((key) => {
-            if (key !== 'fr8x-cache-v4.0.0') {
+            if (key !== 'fr8x-cache-v5.0.0') {
               caches.delete(key).catch(() => {});
             }
           });

@@ -160,6 +160,28 @@ export default function LoginPage() {
     return () => clearInterval(timer);
   }, [firstLoginCooldown]);
 
+  // Force immediate cache purge and SW update on login page so users never see stale UI
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('caches' in window) {
+        caches.keys().then((keys) => {
+          keys.forEach((key) => {
+            if (key !== 'fr8x-cache-v5.0.0') {
+              caches.delete(key).catch(() => {});
+            }
+          });
+        }).catch(() => {});
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+          for (const reg of registrations) {
+            reg.update().catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    }
+  }, []);
+
   // Read URL reason parameter (session_expired, inactivity, not_found)
   useEffect(() => {
     if (typeof window !== 'undefined') {
