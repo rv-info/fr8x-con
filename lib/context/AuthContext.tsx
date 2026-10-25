@@ -155,17 +155,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let isSubscribed = true;
     const supabase = createClient();
 
-    // 1. Initial Session Check
+    // 1. Initial Session Check with Fast Local Cache & Timeout
     supabase.auth.getSession().then(async ({ data: { session } }: any) => {
       if (!isSubscribed) return;
       if (session?.user && !checkIsSessionExpired()) {
+        // Fast restore from localStorage cache so UI renders immediately without waiting for slow network
         try {
-          const profile = await profileService.getProfile(session.user.id);
+          const cachedRaw = localStorage.getItem('fr8x_cached_user_profile');
+          if (cachedRaw) {
+            const cachedProfile = JSON.parse(cachedRaw);
+            if (cachedProfile && (cachedProfile.uid === session.user.id || cachedProfile.id === session.user.id)) {
+              setCurrentUser(cachedProfile);
+              currentUserRef.current = cachedProfile;
+              setUserStatusState('available');
+            }
+          }
+        } catch {}
+
+        if (currentUserRef.current) {
+          setIsLoading(false);
+        }
+
+        try {
+          const fetchPromise = profileService.getProfile(session.user.id);
+          const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 4000));
+          const profile = await Promise.race([fetchPromise, timeoutPromise]);
           if (isSubscribed && profile) {
             setCurrentUser(profile);
             currentUserRef.current = profile;
             setUserStatusState('available');
             try {
+              localStorage.setItem('fr8x_cached_user_profile', JSON.stringify(profile));
               localStorage.setItem(ACTIVE_SESSION_KEY, profile.uid);
               localStorage.setItem(STATUS_KEY, 'available');
               const now = Date.now().toString();
@@ -448,6 +468,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const now = Date.now().toString();
     try {
+      localStorage.setItem('fr8x_cached_user_profile', JSON.stringify(confirmed));
       localStorage.setItem(ACTIVE_SESSION_KEY, confirmed.uid);
       localStorage.setItem(STATUS_KEY, 'available');
       localStorage.setItem(SESSION_START_KEY, now);
@@ -545,6 +566,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const now = Date.now().toString();
       try {
+        localStorage.setItem('fr8x_cached_user_profile', JSON.stringify(activeProfile));
         localStorage.setItem(ACTIVE_SESSION_KEY, data.user.id);
         localStorage.setItem(STATUS_KEY, 'available');
         localStorage.setItem(SESSION_START_KEY, now);

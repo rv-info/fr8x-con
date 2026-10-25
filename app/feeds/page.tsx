@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { useData } from '@/lib/context/DataContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -785,27 +785,31 @@ export default function FeedsPage() {
   }, [posts, user, activeSurface]);
 
   // 2. Filter posts based on post type and universal search
-  const filteredPosts = rankedFeedPosts.filter((p) => {
-    if (clientHiddenPostIds.has(String(p.id))) {
-      return false;
-    }
+  const filteredPosts = useMemo<FeedPost[]>(() => {
+    const q = feedSearch.toLowerCase().trim();
+    return rankedFeedPosts.filter((p) => {
+      if (clientHiddenPostIds.has(String(p.id))) {
+        return false;
+      }
 
-    if (selectedPostType !== 'all' && (p.postType || 'general') !== selectedPostType) {
-      return false;
-    }
+      if (selectedPostType !== 'all' && (p.postType || 'general') !== selectedPostType) {
+        return false;
+      }
 
-    if (!feedSearch.trim()) return true;
-    const q = feedSearch.toLowerCase();
-    return (
-      (p.author || '').toLowerCase().includes(q) ||
-      (p.authorCompany || '').toLowerCase().includes(q) ||
-      (p.text || '').toLowerCase().includes(q) ||
-      (p.auctionRefId || '').toLowerCase().includes(q) ||
-      (p.tradeLane || '').toLowerCase().includes(q)
-    );
-  });
+      if (!q) return true;
+      return (
+        (p.author || '').toLowerCase().includes(q) ||
+        (p.authorCompany || '').toLowerCase().includes(q) ||
+        (p.text || '').toLowerCase().includes(q) ||
+        (p.auctionRefId || '').toLowerCase().includes(q) ||
+        (p.tradeLane || '').toLowerCase().includes(q)
+      );
+    });
+  }, [rankedFeedPosts, clientHiddenPostIds, selectedPostType, feedSearch]);
 
-  const displayedPosts = filteredPosts.slice(0, visiblePostCount);
+  const displayedPosts = useMemo<FeedPost[]>(() => {
+    return filteredPosts.slice(0, visiblePostCount);
+  }, [filteredPosts, visiblePostCount]);
 
   const handlePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -165,10 +165,9 @@ function PeopleContent() {
 
   const switchTab = (tab: PeopleTab) => {
     setActiveTab(tab);
-    if (tab === 'all') {
-      router.push('/people');
-    } else {
-      router.push(`/people?tab=${tab}`);
+    if (typeof window !== 'undefined') {
+      const newUrl = tab === 'all' ? '/people' : `/people?tab=${tab}`;
+      window.history.replaceState(null, '', newUrl);
     }
   };
 
@@ -291,15 +290,24 @@ function PeopleContent() {
     [user?.uid]
   );
 
-  // Load connection tabs data
+  // Load connection tabs data — AbortController + 15s timeout prevents infinite hangs
+  const connAbortRef = useRef<AbortController | null>(null);
   const loadConnectionsData = useCallback(async () => {
+    // Cancel any previous in-flight request
+    if (connAbortRef.current) connAbortRef.current.abort();
+    const controller = new AbortController();
+    connAbortRef.current = controller;
+    // 15-second hard timeout — loader ALWAYS closes
+    const timer = setTimeout(() => controller.abort(), 15000);
+
     setLoadingConnections(true);
     const authHeaders = getClientAuthHeaders(user?.uid);
+    const opts = { headers: authHeaders, credentials: 'include' as RequestCredentials, signal: controller.signal };
     try {
       const [connRes, incRes, outRes] = await Promise.all([
-        fetch('/api/people/connections?tab=connections', { headers: authHeaders, credentials: 'include' }),
-        fetch('/api/people/connections?tab=incoming', { headers: authHeaders, credentials: 'include' }),
-        fetch('/api/people/connections?tab=outgoing', { headers: authHeaders, credentials: 'include' }),
+        fetch('/api/people/connections?tab=connections', opts),
+        fetch('/api/people/connections?tab=incoming', opts),
+        fetch('/api/people/connections?tab=outgoing', opts),
       ]);
 
       if (connRes.ok) {
@@ -314,7 +322,14 @@ function PeopleContent() {
         const j = await outRes.json();
         if (j.success && Array.isArray(j.data)) setOutgoingList(j.data);
       }
-    } catch {} finally {
+    } catch (e: unknown) {
+      // AbortError is expected on timeout/cancel — silently ignore
+      const isAbort =
+        e instanceof DOMException && e.name === 'AbortError';
+      if (!isAbort) console.error('[loadConnectionsData]', e);
+    } finally {
+      clearTimeout(timer);
+      // ✅ Loader ALWAYS closes — no compromise
       setLoadingConnections(false);
     }
   }, [user?.uid]);
@@ -336,9 +351,14 @@ function PeopleContent() {
     }
   }, [user?.uid, loadConnectionsData, doSearch, filters]);
 
-  // Listen to connection changes across tabs or window
+  const localActionIdRef = useRef<string>('');
+
+  // Listen to connection changes across tabs or window (skip if self-triggered to avoid duplicate storms)
   useEffect(() => {
-    const handleConnChange = () => {
+    const handleConnChange = (e: any) => {
+      if (e?.detail?.originId && e.detail.originId === localActionIdRef.current) {
+        return; // Already refreshed by the initiating action
+      }
       loadConnectionsData();
       doSearch(filters, false);
       refreshNotifications();
@@ -387,12 +407,16 @@ function PeopleContent() {
         body: JSON.stringify({ action, ...payload }),
       });
       if (res.ok) {
-        await loadConnectionsData();
-        await doSearch(filters, false);
-        await refreshNotifications();
+        const originId = `act_${Date.now()}`;
+        localActionIdRef.current = originId;
+        await Promise.all([
+          loadConnectionsData(),
+          doSearch(filters, false),
+          refreshNotifications(),
+        ]);
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent(CONNECTIONS_CHANGED_EVENT));
-          window.dispatchEvent(new CustomEvent('fr8x_refresh_notifications'));
+          window.dispatchEvent(new CustomEvent(CONNECTIONS_CHANGED_EVENT, { detail: { originId } }));
+          window.dispatchEvent(new CustomEvent('fr8x_refresh_notifications', { detail: { originId } }));
         }
       }
     } catch {
@@ -651,13 +675,11 @@ function PeopleContent() {
             </div>
           )}
 
-          {/* Skeletons while initial loading */}
+          {/* FR8X loader while initial search runs */}
           {loading && results.length === 0 && (
-            <div className="people-table-container" style={{ padding: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#002b66', fontWeight: 600 }}>
-                <Loader2 size={16} className="spin" />
-                <span>Loading verified freight network members…</span>
-              </div>
+            <div className="fr8x-loader-overlay">
+              <div className="fr8x-loader" aria-label="Loading freight network members…" role="status" />
+              <p>Loading verified freight network members…</p>
             </div>
           )}
 
@@ -1006,9 +1028,9 @@ function PeopleContent() {
       {activeTab === 'connections' && (
         <div className="people-table-container">
           {loadingConnections ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-              <Loader2 size={18} className="spin" style={{ margin: '0 auto 8px', color: '#002b66' }} />
-              Loading your verified connections…
+            <div className="fr8x-loader-overlay">
+              <div className="fr8x-loader" aria-label="Loading connections…" role="status" />
+              <p>Loading your verified connections…</p>
             </div>
           ) : connectionsList.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
@@ -1148,9 +1170,9 @@ function PeopleContent() {
       {activeTab === 'incoming' && (
         <div className="people-table-container">
           {loadingConnections ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-              <Loader2 size={18} className="spin" style={{ margin: '0 auto 8px', color: '#002b66' }} />
-              Checking incoming requests…
+            <div className="fr8x-loader-overlay">
+              <div className="fr8x-loader" aria-label="Checking incoming requests…" role="status" />
+              <p>Checking incoming requests…</p>
             </div>
           ) : incomingList.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
@@ -1274,9 +1296,9 @@ function PeopleContent() {
       {activeTab === 'outgoing' && (
         <div className="people-table-container">
           {loadingConnections ? (
-            <div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
-              <Loader2 size={18} className="spin" style={{ margin: '0 auto 8px', color: '#002b66' }} />
-              Loading sent requests…
+            <div className="fr8x-loader-overlay">
+              <div className="fr8x-loader" aria-label="Loading sent requests…" role="status" />
+              <p>Loading sent requests…</p>
             </div>
           ) : outgoingList.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center' }}>
@@ -1382,7 +1404,14 @@ function PeopleContent() {
 
 export default function PeoplePage() {
   return (
-    <Suspense fallback={<div style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>Loading People Hub…</div>}>
+    <Suspense
+      fallback={
+        <div className="fr8x-loader-overlay" style={{ minHeight: '100vh' }}>
+          <div className="fr8x-loader" aria-label="Loading People Hub…" role="status" />
+          <p>Loading People &amp; Freight Network…</p>
+        </div>
+      }
+    >
       <PeopleContent />
     </Suspense>
   );

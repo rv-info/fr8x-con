@@ -771,10 +771,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
     syncConnectionsFromServer(user.uid);
     refreshNotifications();
 
+    let lastFocusSync = 0;
     const handleFocusOrVisible = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
-        refreshNotifications();
-        syncConnectionsFromServer(user.uid);
+        const now = Date.now();
+        if (now - lastFocusSync >= 45000) {
+          lastFocusSync = now;
+          refreshNotifications();
+          syncConnectionsFromServer(user.uid);
+        }
       }
     };
 
@@ -783,12 +788,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
     window.addEventListener('fr8x_refresh_notifications', refreshNotifications);
 
-    // Background sync: poll DBMS every 12 seconds when tab is active (conserves Vercel function quotas)
+    // Background sync: poll DBMS every 45 seconds when tab is active (conserves Vercel function quotas)
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         refreshNotifications();
       }
-    }, 12000);
+    }, 45000);
 
     return () => {
       isSubscribed = false;
@@ -972,18 +977,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Persist exclusively via server API (which handles Firestore sync server-side).
-    // Do NOT call upsertPostInDB here — that creates a second copy pulled back by SWR.
-    queueAction('create_post', newPost, user.uid);
+    // Persist exclusively via server API; queue to offline outbox only if offline or fetch fails
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    fetch('/api/feed', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
-      },
-      body: JSON.stringify(newPost),
-    }).catch(() => {});
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (isOnline) {
+      fetch('/api/feed', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify(newPost),
+      }).catch(() => {
+        queueAction('create_post', newPost, user.uid);
+      });
+    } else {
+      queueAction('create_post', newPost, user.uid);
+    }
     eventBus.recordEvent({
       eventType: 'post_create',
       actorId: user.uid,
@@ -1017,8 +1027,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
 
     const updated = { ...target, text: newText.trim(), updatedAt: new Date().toISOString() };
-    queueAction('edit_post', updated, user.uid);
-    upsertPostInDB(updated).catch(() => {});
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (!isOnline) {
+      queueAction('edit_post', updated, user.uid);
+    }
+    upsertPostInDB(updated).catch(() => {
+      if (isOnline) queueAction('edit_post', updated, user.uid);
+    });
     toast('Post updated.');
   };
 
@@ -2088,18 +2103,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server-side persistence across devices
+    // Server-side persistence across devices; queue to offline outbox only if offline or fetch fails
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    fetch('/api/auctions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
-      },
-      body: JSON.stringify(newAuction),
-    }).catch((err) => console.warn('[DataContext] Auction server save error:', err));
-
-    queueAction('create_auction', newAuction, user.uid);
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (isOnline) {
+      fetch('/api/auctions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify(newAuction),
+      }).catch((err) => {
+        console.warn('[DataContext] Auction server save error:', err);
+        queueAction('create_auction', newAuction, user.uid);
+      });
+    } else {
+      queueAction('create_auction', newAuction, user.uid);
+    }
     upsertAuctionInDB(newAuction).catch(() => {});
     eventBus.recordEvent({
       eventType: 'auction_create',
@@ -2348,17 +2369,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
     // Server persistence across devices
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    fetch('/api/rates', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
-      },
-      body: JSON.stringify(newRate),
-    }).catch(() => {});
-
-    // Cloud Firestore sync + offline outbox queue
-    queueAction('create_rate', newRate, user.uid);
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (isOnline) {
+      fetch('/api/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify(newRate),
+      }).catch(() => {
+        queueAction('create_rate', newRate, user.uid);
+      });
+    } else {
+      queueAction('create_rate', newRate, user.uid);
+    }
     upsertRateInDB(newRate).catch(() => {});
     eventBus.recordEvent({
       eventType: 'rate_edit',
@@ -2383,19 +2408,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server update
+    // Server update; queue to offline outbox only if offline or fetch fails
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    fetch('/api/rates', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
-      },
-      body: JSON.stringify({ id: rateId, ...updates, updatedAt: now }),
-    }).catch(() => {});
-
-    // Cloud Firestore sync + offline outbox queue
-    queueAction('update_rate', { id: rateId, ...updates, updatedAt: now }, user.uid);
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (isOnline) {
+      fetch('/api/rates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {}),
+        },
+        body: JSON.stringify({ id: rateId, ...updates, updatedAt: now }),
+      }).catch(() => {
+        queueAction('update_rate', { id: rateId, ...updates, updatedAt: now }, user.uid);
+      });
+    } else {
+      queueAction('update_rate', { id: rateId, ...updates, updatedAt: now }, user.uid);
+    }
     upsertRateInDB({ id: rateId, ...updates, updatedAt: now } as RateItem).catch(() => {});
     toast(`i-Rate ${rateId} updated.`);
   };
@@ -2412,15 +2441,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
       return next;
     });
 
-    // Server deletion
+    // Server deletion; queue to offline outbox only if offline or fetch fails
     const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-    fetch(`/api/rates?id=${encodeURIComponent(rateId)}`, {
-      method: 'DELETE',
-      headers: activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {},
-    }).catch(() => {});
-
-    // Cloud Firestore deletion + offline outbox queue
-    queueAction('delete_rate', { id: rateId }, user.uid);
+    const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+    if (isOnline) {
+      fetch(`/api/rates?id=${encodeURIComponent(rateId)}`, {
+        method: 'DELETE',
+        headers: activeUid ? { 'x-fr8x-user-uid': activeUid, 'x-fr8x-session': activeUid } : {},
+      }).catch(() => {
+        queueAction('delete_rate', { id: rateId }, user.uid);
+      });
+    } else {
+      queueAction('delete_rate', { id: rateId }, user.uid);
+    }
     deleteRateInDB(rateId).catch(() => {});
     toast(`Rate ${rateId} removed from inventory.`);
   };

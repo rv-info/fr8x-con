@@ -309,22 +309,39 @@ export async function syncConnectionsFromServer(uid: string, force = false): Pro
         });
       }
 
-      // Merge with any existing requests in local storage not yet overwritten
+      // Server is authoritative for current user's connections and requests.
+      const map = getConnectionsMap();
+      const connectedIdList: string[] =
+        connRes?.success && Array.isArray(connRes.data)
+          ? connRes.data.map((c: any) => c.connected_to || c.profiles?.id).filter(Boolean)
+          : (map[uid] || []);
+      const connectedIdSet = new Set(connectedIdList);
+
+      // Merge with existing requests in local storage for OTHER users only.
+      // For this uid, server is authoritative — avoid resurrecting accepted/cancelled requests as pending.
       const existing = getAllConnectionRequests();
       existing.forEach((r) => {
-        if (!seenReqIds.has(r.id)) {
+        const isSelfInvolved = r.fromUid === uid || r.toUid === uid;
+        if (!isSelfInvolved && !seenReqIds.has(r.id)) {
           allRequests.push(r);
         }
       });
 
+      // Filter out any ghost/duplicate requests where users are already connected
+      const deduplicatedRequests = allRequests.filter((r) => {
+        const otherUid = r.fromUid === uid ? r.toUid : r.fromUid;
+        if (connectedIdSet.has(otherUid) && r.status === 'pending') {
+          return false; // Already connected! Cannot have a pending request.
+        }
+        return true;
+      });
+
       // Save quietly without dispatching CONNECTIONS_CHANGED_EVENT to prevent recursive storms
-      saveConnectionRequests(allRequests, false);
+      saveConnectionRequests(deduplicatedRequests, false);
 
       // Sync connected map quietly
       if (connRes?.success && Array.isArray(connRes.data)) {
-        const map = getConnectionsMap();
-        const connectedIds = connRes.data.map((c: any) => c.connected_to || c.profiles?.id).filter(Boolean);
-        map[uid] = Array.from(new Set([...(map[uid] || []), ...connectedIds]));
+        map[uid] = Array.from(new Set([...(map[uid] || []), ...connectedIdList]));
         saveConnectionsMap(map, false);
       }
     } catch (err) {

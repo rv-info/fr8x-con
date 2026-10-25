@@ -27,6 +27,60 @@
   animation: spin 0.7s linear infinite;
 }
 
+/* ── FR8X Custom Loader (user-specified) ──────────────────────────────────── */
+/*
+ * Usage: <div class="fr8x-loader"></div>
+ * The loader is guaranteed to disappear the instant the parent component
+ * unmounts (driven by React conditional rendering: {loading && <div class="fr8x-loader" />})
+ */
+@keyframes l5 {
+  0%  { box-shadow: 20px 0 #002b66, -20px 0 #002b6622; background: #002b66  }
+  33% { box-shadow: 20px 0 #002b66, -20px 0 #002b6622; background: #002b6622 }
+  66% { box-shadow: 20px 0 #002b6622,-20px 0 #002b66;  background: #002b6622 }
+  100%{ box-shadow: 20px 0 #002b6622,-20px 0 #002b66;  background: #002b66   }
+}
+
+.fr8x-loader {
+  width: 15px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  animation: l5 1s infinite linear alternate;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* ── Triangle-style loader (user's exact spec) ─────────────────────────────── */
+@keyframes fr8x-tri {
+  0%   { clip-path: inset(0 100% 0 0); }
+  50%  { clip-path: inset(0 0 0 0); }
+  100% { clip-path: inset(0 0 0 100%); }
+}
+
+/* Full-page / section loading overlay */
+.fr8x-loader-overlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 40px 24px;
+  width: 100%;
+  min-height: 140px;
+  background: transparent;
+}
+
+.fr8x-loader-overlay .fr8x-loader {
+  width: 15px;
+}
+
+.fr8x-loader-overlay p {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: 600;
+  margin: 0;
+  text-align: center;
+}
+
 /* ── People Search Page ───────────────────────────────────────────────────── */
 .people-page {
   width: 100%;

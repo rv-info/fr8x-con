@@ -216,109 +216,139 @@ export default function LoginPage() {
 
     setIsLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+    let serverFailed = false;
+    let res: Response | null = null;
+    let json: any = null;
+
     try {
-      // Single-flight authoritative server-side authentication (ultra-low bandwidth optimized for 500kbps - 1mbps)
-      const res = await fetch('/api/auth/login', {
+      res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: id, password, deviceId: getOrCreateDeviceId() }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
+      json = await res.json().catch(() => null);
+    } catch {
+      clearTimeout(timeoutId);
+      serverFailed = true;
+    }
 
-      const json = await res.json();
-      setIsLoading(false);
-
-      if (res.ok && json.success) {
-        // AUTH-01: Intercept first-login 2FA challenge
-        if (json.firstLoginRequired) {
-          setFirstLoginChallengeToken(json.challengeToken || '');
-          setFirstLoginMaskedEmail(json.maskedEmail || json.email || id);
-          setFirstLoginOtp('');
-          setFirstLoginError('');
-          setFirstLoginCooldown(60);
-          setIsFirstLoginModalOpen(true);
-          toast('First-time authentication challenge sent to your corporate email.');
-          return;
-        }
-
-        // Server authenticated — hand off verified profile to client session
-        const loggedIn = login(id, remember, json, password);
-        if (loggedIn) {
-          // Record login incident into Godfather client audit ledger
-          try {
-            const existingAudit = JSON.parse(localStorage.getItem('fr8x_gf_audit_logs') || '[]');
-            const auditEntry = {
-              actionId: `ACT-LOG-${Date.now()}`,
-              actorUid: json.uid || id,
-              actorEmail: json.email || id,
-              actorName: json.displayName || id,
-              actorRole: 'user',
-              targetType: 'user',
-              targetId: json.email || id,
-              targetLabel: json.company || 'Enterprise Logistics',
-              actionType: 'USER_LOGIN',
-              reason: 'User authenticated into FR8X Workspace. Master Terms & Compliance Policy binding reaffirmed.',
-              beforeSnapshot: null,
-              afterSnapshot: {
-                loginAt: new Date().toISOString(),
-                email: json.email,
-                company: json.company,
-                sessionId: json.sessionId,
-              },
-              correlationId: `GF-LOG-${Date.now()}`,
-              createdAt: new Date().toISOString(),
-            };
-            localStorage.setItem('fr8x_gf_audit_logs', JSON.stringify([auditEntry, ...existingAudit].slice(0, 500)));
-          } catch {}
-
-          toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
-          if (json.token && json.refreshToken) {
-            try {
-              const { createClient } = await import('@/lib/supabase/client');
-              const supabase = createClient();
-              supabase.auth.setSession({
-                access_token: json.token,
-                refresh_token: json.refreshToken,
-              }).catch(() => {});
-            } catch {}
+    // Low-network recovery: if server proxy timed out or failed to reach, try direct Supabase auth
+    if (serverFailed || !res || (res.status >= 500 && (!json || json.code === 'AUTH_TIMEOUT'))) {
+      if (id.includes('@') && typeof loginWithCredentials === 'function') {
+        try {
+          const directRes = await loginWithCredentials(id, password, remember);
+          if (directRes && directRes.success) {
+            setIsLoading(false);
+            toast('Logged in successfully via low-network secure connection.');
+            router.push('/feeds');
+            return;
           }
-          router.push('/feeds');
-        } else {
-          setErrorMessage('Session initialization failed. Please try again.');
-        }
-      } else {
-        if (json.isPendingVerification) {
-          setPendingVerificationEmail(json.email || (id.includes('@') ? id : null));
-          setErrorMessage(json.error || 'Your account is pending email verification. Please check your email for your 15-minute verification link.');
-          return;
-        }
-
-        if (json.isBlocked || res.status === 403) {
-          setIsBlocked(true);
-          if (json.passwordResetRequired) {
-            const userTargetEmail = json.email || (id.includes('@') ? id : '');
-            setErrorMessage(
-              json.error ||
-                'Security Lock: 3 invalid attempts detected. A password reset OTP has been dispatched from the server to your registered email.'
-            );
-            setResetEmail(userTargetEmail);
-            setResetStep('otp');
-            setResetError('');
-            setIsForgotModalOpen(true);
-            toast('Password reset OTP dispatched from server. Please check your email.');
-          } else {
-            setErrorMessage(json.error || 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
-          }
-        } else {
-          const remainingMsg =
-            typeof json.attemptsRemaining === 'number'
-              ? ` (${json.attemptsRemaining} attempt${json.attemptsRemaining === 1 ? '' : 's'} remaining)`
-              : '';
-          setErrorMessage((json.error || 'Invalid credentials.') + remainingMsg);
+        } catch {
+          // fall through to general failure
         }
       }
-    } catch {
-      setIsLoading(false);
-      setErrorMessage('Unable to reach authentication server. Please check your connection and try again.');
+    }
+
+    setIsLoading(false);
+
+    if (serverFailed || !res || !json) {
+      setErrorMessage('Unable to reach authentication server. Please check your network connection and retry.');
+      return;
+    }
+
+    if (res.ok && json.success) {
+      // AUTH-01: Intercept first-login 2FA challenge
+      if (json.firstLoginRequired) {
+        setFirstLoginChallengeToken(json.challengeToken || '');
+        setFirstLoginMaskedEmail(json.maskedEmail || json.email || id);
+        setFirstLoginOtp('');
+        setFirstLoginError('');
+        setFirstLoginCooldown(60);
+        setIsFirstLoginModalOpen(true);
+        toast('First-time authentication challenge sent to your corporate email.');
+        return;
+      }
+
+      // Server authenticated — hand off verified profile to client session
+      const loggedIn = login(id, remember, json, password);
+      if (loggedIn) {
+        // Record login incident into Godfather client audit ledger
+        try {
+          const existingAudit = JSON.parse(localStorage.getItem('fr8x_gf_audit_logs') || '[]');
+          const auditEntry = {
+            actionId: `ACT-LOG-${Date.now()}`,
+            actorUid: json.uid || id,
+            actorEmail: json.email || id,
+            actorName: json.displayName || id,
+            actorRole: 'user',
+            targetType: 'user',
+            targetId: json.email || id,
+            targetLabel: json.company || 'Enterprise Logistics',
+            actionType: 'USER_LOGIN',
+            reason: 'User authenticated into FR8X Workspace. Master Terms & Compliance Policy binding reaffirmed.',
+            beforeSnapshot: null,
+            afterSnapshot: {
+              loginAt: new Date().toISOString(),
+              email: json.email,
+              company: json.company,
+              sessionId: json.sessionId,
+            },
+            correlationId: `GF-LOG-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+          };
+          localStorage.setItem('fr8x_gf_audit_logs', JSON.stringify([auditEntry, ...existingAudit].slice(0, 500)));
+        } catch {}
+
+        toast(`Logged in successfully to FR8X Workspace as ${json.displayName || id}.`);
+        if (json.token && json.refreshToken) {
+          try {
+            const { createClient } = await import('@/lib/supabase/client');
+            const supabase = createClient();
+            supabase.auth.setSession({
+              access_token: json.token,
+              refresh_token: json.refreshToken,
+            }).catch(() => {});
+          } catch {}
+        }
+        router.push('/feeds');
+      } else {
+        setErrorMessage('Session initialization failed. Please try again.');
+      }
+    } else {
+      if (json.isPendingVerification) {
+        setPendingVerificationEmail(json.email || (id.includes('@') ? id : null));
+        setErrorMessage(json.error || 'Your account is pending email verification. Please check your email for your 15-minute verification link.');
+        return;
+      }
+
+      if (json.isBlocked || res.status === 403) {
+        setIsBlocked(true);
+        if (json.passwordResetRequired) {
+          const userTargetEmail = json.email || (id.includes('@') ? id : '');
+          setErrorMessage(
+            json.error ||
+              'Security Lock: 3 invalid attempts detected. A password reset OTP has been dispatched from the server to your registered email.'
+          );
+          setResetEmail(userTargetEmail);
+          setResetStep('otp');
+          setResetError('');
+          setIsForgotModalOpen(true);
+          toast('Password reset OTP dispatched from server. Please check your email.');
+        } else {
+          setErrorMessage(json.error || 'ACCOUNT BLOCKED. CONTACT PLATFORM ADMINISTRATOR.');
+        }
+      } else {
+        const remainingMsg =
+          typeof json.attemptsRemaining === 'number'
+            ? ` (${json.attemptsRemaining} attempt${json.attemptsRemaining === 1 ? '' : 's'} remaining)`
+            : '';
+        setErrorMessage((json.error || 'Invalid credentials.') + remainingMsg);
+      }
     }
   };
 

@@ -277,60 +277,96 @@ Remarks & Terms  : ${r.remark || ''}
     return Array.from(map.values());
   }, [rates, myRates]);
 
-  const filteredRates = allAvailableRates.filter((r) => {
-    // 1. Global search query across all rate fields
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const textCorpus = (
-        (r.id || '') + ' ' +
-        (r.sp || '') + ' ' +
-        (r.carrier || '') + ' ' +
-        (r.por || '') + ' ' +
-        (r.pol || '') + ' ' +
-        (r.pod || '') + ' ' +
-        (r.fpod || '') + ' ' +
-        (r.route || '') + ' ' +
-        (r.remark || '') + ' ' +
-        (r.rateType || '') + ' ' +
-        (r.d20Type || '') + ' ' +
-        (r.h40Type || '')
-      ).toLowerCase();
-      if (!textCorpus.includes(q)) return false;
-    }
+  const myRateIdSet = React.useMemo(() => new Set(myRates.map((mr) => mr.id)), [myRates]);
+  const expiredRateIdSet = React.useMemo(() => new Set(expiredRateIds), [expiredRateIds]);
+  const rateIndexMap = React.useMemo(() => {
+    const m = new Map<string, number>();
+    allAvailableRates.forEach((r, idx) => {
+      if (r?.id) m.set(r.id, idx);
+    });
+    return m;
+  }, [allAvailableRates]);
 
-    // 2. Specific POL (Port of Loading / POR) corridor search
-    if (polSearch.trim()) {
-      const polQ = polSearch.toLowerCase().trim();
-      const matchesPol = (r.pol && r.pol.toLowerCase().includes(polQ)) || (r.por && r.por.toLowerCase().includes(polQ));
-      if (!matchesPol) return false;
-    }
+  const filteredRates = React.useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+    const polQ = polSearch.toLowerCase().trim();
+    const podQ = podSearch.toLowerCase().trim();
+    const seqQ = colSearch.seq ? colSearch.seq.toLowerCase() : '';
+    const spQ = colSearch.sp ? colSearch.sp.toLowerCase() : '';
+    const carrierQ = colSearch.carrier ? colSearch.carrier.toLowerCase() : '';
+    const porQ = colSearch.por ? colSearch.por.toLowerCase() : '';
+    const colPolQ = colSearch.pol ? colSearch.pol.toLowerCase() : '';
+    const colPodQ = colSearch.pod ? colSearch.pod.toLowerCase() : '';
+    const fpodQ = colSearch.fpod ? colSearch.fpod.toLowerCase() : '';
+    const routingQ = colSearch.routing ? colSearch.routing.toLowerCase() : '';
+    const remarksQ = colSearch.remarks ? colSearch.remarks.toLowerCase() : '';
 
-    // 3. Specific POD (Port of Discharge / FPOD) corridor search
-    if (podSearch.trim()) {
-      const podQ = podSearch.toLowerCase().trim();
-      const matchesPod = (r.pod && r.pod.toLowerCase().includes(podQ)) || (r.fpod && r.fpod.toLowerCase().includes(podQ));
-      if (!matchesPod) return false;
-    }
+    return allAvailableRates.filter((r) => {
+      // 1. Global search query across all rate fields
+      if (q) {
+        const textCorpus = (
+          (r.id || '') + ' ' +
+          (r.sp || '') + ' ' +
+          (r.carrier || '') + ' ' +
+          (r.por || '') + ' ' +
+          (r.pol || '') + ' ' +
+          (r.pod || '') + ' ' +
+          (r.fpod || '') + ' ' +
+          (r.route || '') + ' ' +
+          (r.remark || '') + ' ' +
+          (r.rateType || '') + ' ' +
+          (r.d20Type || '') + ' ' +
+          (r.h40Type || '')
+        ).toLowerCase();
+        if (!textCorpus.includes(q)) return false;
+      }
 
-    // Per-column search
-    if (colSearch.seq && !getRateSeq(r, allAvailableRates.indexOf(r)).toLowerCase().includes(colSearch.seq.toLowerCase())) return false;
-    if (colSearch.sp && !r.sp?.toLowerCase().includes(colSearch.sp.toLowerCase())) return false;
-    if (colSearch.carrier && !r.carrier?.toLowerCase().includes(colSearch.carrier.toLowerCase())) return false;
-    if (colSearch.por && !r.por?.toLowerCase().includes(colSearch.por.toLowerCase())) return false;
-    if (colSearch.pol && !r.pol?.toLowerCase().includes(colSearch.pol.toLowerCase())) return false;
-    if (colSearch.pod && !r.pod?.toLowerCase().includes(colSearch.pod.toLowerCase())) return false;
-    if (colSearch.fpod && !r.fpod?.toLowerCase().includes(colSearch.fpod.toLowerCase())) return false;
-    if (colSearch.routing && !r.route?.toLowerCase().includes(colSearch.routing.toLowerCase())) return false;
-    if (colSearch.remarks && !r.remark?.toLowerCase().includes(colSearch.remarks.toLowerCase())) return false;
+      // 2. Specific POL (Port of Loading / POR) corridor search
+      if (polQ) {
+        const matchesPol = (r.pol && r.pol.toLowerCase().includes(polQ)) || (r.por && r.por.toLowerCase().includes(polQ));
+        if (!matchesPol) return false;
+      }
 
-    if (activeTab === 'i') {
-      return myRates.some((mr) => mr.id === r.id) || r.isOwner || r.ownerUid === user.uid || r.isSelfPosted;
-    }
-    if (activeTab === 'expiring') {
-      return isExpiringSoon(r.valid) || expiredRateIds.includes(r.id);
-    }
-    return true;
-  });
+      // 3. Specific POD (Port of Discharge / FPOD) corridor search
+      if (podQ) {
+        const matchesPod = (r.pod && r.pod.toLowerCase().includes(podQ)) || (r.fpod && r.fpod.toLowerCase().includes(podQ));
+        if (!matchesPod) return false;
+      }
+
+      // Per-column search (O(1) index lookup)
+      if (seqQ) {
+        const idx = rateIndexMap.get(r.id) ?? 0;
+        if (!getRateSeq(r, idx).toLowerCase().includes(seqQ)) return false;
+      }
+      if (spQ && !r.sp?.toLowerCase().includes(spQ)) return false;
+      if (carrierQ && !r.carrier?.toLowerCase().includes(carrierQ)) return false;
+      if (porQ && !r.por?.toLowerCase().includes(porQ)) return false;
+      if (colPolQ && !r.pol?.toLowerCase().includes(colPolQ)) return false;
+      if (colPodQ && !r.pod?.toLowerCase().includes(colPodQ)) return false;
+      if (fpodQ && !r.fpod?.toLowerCase().includes(fpodQ)) return false;
+      if (routingQ && !r.route?.toLowerCase().includes(routingQ)) return false;
+      if (remarksQ && !r.remark?.toLowerCase().includes(remarksQ)) return false;
+
+      if (activeTab === 'i') {
+        return myRateIdSet.has(r.id) || r.isOwner || r.ownerUid === user.uid || r.isSelfPosted;
+      }
+      if (activeTab === 'expiring') {
+        return isExpiringSoon(r.valid) || expiredRateIdSet.has(r.id);
+      }
+      return true;
+    });
+  }, [
+    allAvailableRates,
+    searchQuery,
+    polSearch,
+    podSearch,
+    colSearch,
+    activeTab,
+    myRateIdSet,
+    expiredRateIdSet,
+    rateIndexMap,
+    user?.uid,
+  ]);
 
   // Reset pagination to page 1 whenever any search filter or tab changes
   React.useEffect(() => {

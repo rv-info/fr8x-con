@@ -331,6 +331,84 @@ export async function lookupProfileById(userId: string, userToken?: string): Pro
   return normalizeMemberProfile(null, userId);
 }
 
+export async function lookupProfilesBatch(
+  userIds: string[],
+  userToken?: string
+): Promise<Map<string, NormalizedProfileData>> {
+  const profileMap = new Map<string, NormalizedProfileData>();
+  if (!userIds || userIds.length === 0) return profileMap;
+
+  const uniqueIds = Array.from(new Set(userIds.map((id) => (id || '').trim()).filter(Boolean)));
+  const pendingIds: string[] = [];
+
+  for (const id of uniqueIds) {
+    // 1. Check in-memory peopleDirectoryStore
+    const mem = peopleDirectoryStore.getMemberById(id);
+    if (mem) {
+      profileMap.set(id, normalizeMemberProfile(mem, id));
+      continue;
+    }
+    // 2. Check serverSecurityStore
+    const secUser = serverSecurityStore.getUser(id) || serverSecurityStore.getUserByEmailOrUid(id);
+    if (secUser) {
+      profileMap.set(id, normalizeMemberProfile(secUser, id));
+      continue;
+    }
+    pendingIds.push(id);
+  }
+
+  if (pendingIds.length === 0) {
+    return profileMap;
+  }
+
+  // 3. Batch query Supabase profiles table in one shot
+  try {
+    const client = getEffectiveSupabaseClient(userToken);
+    const uuids = pendingIds.filter((id) =>
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    );
+    const emails = pendingIds.filter((id) => id.includes('@'));
+    const others = pendingIds.filter(
+      (id) => !uuids.includes(id) && !emails.includes(id)
+    );
+
+    const queryPromises: Promise<any>[] = [];
+
+    if (uuids.length > 0) {
+      queryPromises.push(client.from('profiles').select('*').in('id', uuids));
+    }
+    if (emails.length > 0) {
+      queryPromises.push(client.from('profiles').select('*').in('email', emails.map((e) => e.toLowerCase())));
+    }
+    if (others.length > 0) {
+      queryPromises.push(client.from('profiles').select('*').in('uid', others));
+    }
+
+    const results = await Promise.all(queryPromises);
+    for (const res of results) {
+      if (res && !res.error && Array.isArray(res.data)) {
+        for (const row of res.data) {
+          const prof = normalizeMemberProfile(row, row.id || row.uid);
+          if (row.id) profileMap.set(row.id, prof);
+          if (row.uid) profileMap.set(row.uid, prof);
+          if (row.email) profileMap.set(row.email.toLowerCase(), prof);
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[ConnectionsBackend] Batch lookup error:', err);
+  }
+
+  // Fallback for any IDs still not found
+  for (const id of uniqueIds) {
+    if (!profileMap.has(id)) {
+      profileMap.set(id, normalizeMemberProfile(null, id));
+    }
+  }
+
+  return profileMap;
+}
+
 export async function resolveUserAliases(userId: string, userToken?: string): Promise<string[]> {
   const aliases = new Set<string>();
   if (!userId) return [];
@@ -368,6 +446,7 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
   // 1. Authoritative Supabase query from `connections` table
+  let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
 
@@ -377,7 +456,7 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
       orClauses.push(`receiver_id.eq.${a}`);
     }
 
-    const { data: dbRows, error: dbErr } = await client
+    const { data, error: dbErr } = await client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses.join(','))
@@ -385,50 +464,58 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (!dbErr && Array.isArray(dbRows)) {
-      for (const row of dbRows) {
-        if (!row.id || seenIds.has(row.id)) continue;
-        seenIds.add(row.id);
-        const reqProfile = await lookupProfileById(row.requester_id, userToken);
-        results.push({
-          id: row.id,
-          message: row.note || '',
-          created_at: row.created_at || new Date().toISOString(),
-          status: 'pending',
-          requester_id: row.requester_id,
-          recipient_id: row.recipient_id || row.receiver_id || userId,
-          profiles: reqProfile,
-        });
-
-        // Mirror to memory
-        upsertMemoryConnection({
-          id: row.id,
-          requester_id: row.requester_id,
-          recipient_id: row.recipient_id || userId,
-          receiver_id: row.receiver_id || userId,
-          status: 'pending',
-          note: row.note,
-          created_at: row.created_at,
-          updated_at: row.updated_at || row.created_at,
-        });
-      }
+    if (!dbErr && Array.isArray(data)) {
+      dbRows = data;
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase incoming query warning:', err);
   }
 
-  // 2. Merge from persistent store
+  // 2. Disk store candidates
   const disk = loadDiskStore();
-  for (const c of disk.connections) {
+  const diskCandidates = disk.connections.filter((c) => {
     const recId = (c.recipient_id || '').toLowerCase();
     const recvId = (c.receiver_id || '').toLowerCase();
-    if (
-      (aliasSet.has(recId) || aliasSet.has(recvId)) &&
-      c.status === 'pending' &&
-      !seenIds.has(c.id)
-    ) {
+    return (aliasSet.has(recId) || aliasSet.has(recvId)) && c.status === 'pending';
+  });
+
+  // Batch resolve all needed requester profiles in a single query
+  const allRequesterIds = [
+    ...dbRows.map((r) => r.requester_id),
+    ...diskCandidates.map((c) => c.requester_id),
+  ].filter(Boolean);
+  const profileMap = await lookupProfilesBatch(allRequesterIds, userToken);
+
+  for (const row of dbRows) {
+    if (!row.id || seenIds.has(row.id)) continue;
+    seenIds.add(row.id);
+    const reqProfile = profileMap.get(row.requester_id) || normalizeMemberProfile(null, row.requester_id);
+    results.push({
+      id: row.id,
+      message: row.note || '',
+      created_at: row.created_at || new Date().toISOString(),
+      status: 'pending',
+      requester_id: row.requester_id,
+      recipient_id: row.recipient_id || row.receiver_id || userId,
+      profiles: reqProfile,
+    });
+
+    upsertMemoryConnection({
+      id: row.id,
+      requester_id: row.requester_id,
+      recipient_id: row.recipient_id || userId,
+      receiver_id: row.receiver_id || userId,
+      status: 'pending',
+      note: row.note,
+      created_at: row.created_at,
+      updated_at: row.updated_at || row.created_at,
+    });
+  }
+
+  for (const c of diskCandidates) {
+    if (!seenIds.has(c.id)) {
       seenIds.add(c.id);
-      const reqProfile = await lookupProfileById(c.requester_id, userToken);
+      const reqProfile = profileMap.get(c.requester_id) || normalizeMemberProfile(null, c.requester_id);
       results.push({
         id: c.id,
         message: c.note || c.message || '',
@@ -471,12 +558,12 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
   // 1. Authoritative Supabase query from `connections` table
+  let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
-
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
-    const { data: dbRows, error: dbErr } = await client
+    const { data, error: dbErr } = await client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
@@ -484,46 +571,59 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
       .order('created_at', { ascending: false })
       .limit(limit);
 
-    if (!dbErr && Array.isArray(dbRows)) {
-      for (const row of dbRows) {
-        if (!row.id || seenIds.has(row.id)) continue;
-        seenIds.add(row.id);
-        const targetId = row.recipient_id || row.receiver_id;
-        const recProfile = await lookupProfileById(targetId, userToken);
-        results.push({
-          id: row.id,
-          message: row.note || '',
-          created_at: row.created_at || new Date().toISOString(),
-          status: row.status || 'pending',
-          requester_id: userId,
-          recipient_id: targetId,
-          profiles: recProfile,
-        });
-
-        upsertMemoryConnection({
-          id: row.id,
-          requester_id: userId,
-          recipient_id: targetId,
-          receiver_id: targetId,
-          status: (row.status as any) || 'pending',
-          note: row.note,
-          created_at: row.created_at,
-          updated_at: row.updated_at || row.created_at,
-        });
-      }
+    if (!dbErr && Array.isArray(data)) {
+      dbRows = data;
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase outgoing query warning:', err);
   }
 
-  // 2. Merge from persistent store
+  // 2. Disk store candidates
   const disk = loadDiskStore();
-  for (const c of disk.connections) {
+  const diskCandidates = disk.connections.filter((c) => {
     const reqId = (c.requester_id || '').toLowerCase();
-    if (aliasSet.has(reqId) && (c.status === 'pending' || c.status === 'hold') && !seenIds.has(c.id)) {
+    return aliasSet.has(reqId) && (c.status === 'pending' || c.status === 'hold');
+  });
+
+  // Batch resolve all needed recipient profiles in a single query
+  const allRecipientIds = [
+    ...dbRows.map((r) => r.recipient_id || r.receiver_id),
+    ...diskCandidates.map((c) => c.recipient_id || c.receiver_id),
+  ].filter(Boolean);
+  const profileMap = await lookupProfilesBatch(allRecipientIds, userToken);
+
+  for (const row of dbRows) {
+    if (!row.id || seenIds.has(row.id)) continue;
+    seenIds.add(row.id);
+    const targetId = row.recipient_id || row.receiver_id;
+    const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
+    results.push({
+      id: row.id,
+      message: row.note || '',
+      created_at: row.created_at || new Date().toISOString(),
+      status: row.status || 'pending',
+      requester_id: userId,
+      recipient_id: targetId,
+      profiles: recProfile,
+    });
+
+    upsertMemoryConnection({
+      id: row.id,
+      requester_id: userId,
+      recipient_id: targetId,
+      receiver_id: targetId,
+      status: (row.status as any) || 'pending',
+      note: row.note,
+      created_at: row.created_at,
+      updated_at: row.updated_at || row.created_at,
+    });
+  }
+
+  for (const c of diskCandidates) {
+    if (!seenIds.has(c.id)) {
       seenIds.add(c.id);
       const targetId = c.recipient_id || c.receiver_id;
-      const recProfile = await lookupProfileById(targetId, userToken);
+      const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
       results.push({
         id: c.id,
         message: c.note || c.message || '',
@@ -566,6 +666,7 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
   // 1. Authoritative Supabase query from `connections` table
+  let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
 
@@ -576,7 +677,7 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
       orClauses.push(`receiver_id.eq.${a}`);
     }
 
-    const { data: dbRows, error: dbErr } = await client
+    const { data, error: dbErr } = await client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, created_at, updated_at')
       .or(orClauses.join(','))
@@ -584,49 +685,69 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
       .order('updated_at', { ascending: false })
       .limit(limit);
 
-    if (!dbErr && Array.isArray(dbRows)) {
-      for (const row of dbRows) {
-        const isRequester = aliasSet.has((row.requester_id || '').toLowerCase());
-        const otherId = isRequester ? (row.recipient_id || row.receiver_id) : row.requester_id;
-        if (!otherId || aliasSet.has(otherId.toLowerCase()) || seenTargets.has(otherId)) continue;
-        seenTargets.add(otherId);
-
-        const otherProfile = await lookupProfileById(otherId, userToken);
-        results.push({
-          id: row.id,
-          connected_at: row.updated_at || row.created_at || new Date().toISOString(),
-          connected_to: otherId,
-          profiles: otherProfile,
-        });
-
-        peopleDirectoryStore.upsertConnection(userId, otherId);
-      }
+    if (!dbErr && Array.isArray(data)) {
+      dbRows = data;
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase connections query warning:', err);
   }
 
-  // 2. Merge from persistent store
+  // 2. Disk store candidates
   const disk = loadDiskStore();
-  for (const c of disk.connections) {
-    if (c.status === 'accepted') {
-      const isReq = aliasSet.has((c.requester_id || '').toLowerCase());
-      const isRec = aliasSet.has((c.recipient_id || '').toLowerCase()) || aliasSet.has((c.receiver_id || '').toLowerCase());
-      let otherId: string | null = null;
-      if (isReq) otherId = c.recipient_id || c.receiver_id;
-      else if (isRec) otherId = c.requester_id;
+  const diskCandidates = disk.connections.filter((c) => c.status === 'accepted');
 
-      if (otherId && !aliasSet.has(otherId.toLowerCase()) && !seenTargets.has(otherId)) {
-        seenTargets.add(otherId);
-        const otherProfile = await lookupProfileById(otherId, userToken);
-        results.push({
-          id: c.id,
-          connected_at: c.updated_at || c.created_at,
-          connected_to: otherId,
-          profiles: otherProfile,
-        });
-        peopleDirectoryStore.upsertConnection(userId, otherId);
-      }
+  // Identify all partner IDs for batch loading
+  const neededPartnerIds: string[] = [];
+  for (const row of dbRows) {
+    const isRequester = aliasSet.has((row.requester_id || '').toLowerCase());
+    const otherId = isRequester ? (row.recipient_id || row.receiver_id) : row.requester_id;
+    if (otherId && !aliasSet.has(otherId.toLowerCase())) neededPartnerIds.push(otherId);
+  }
+  for (const c of diskCandidates) {
+    const isReq = aliasSet.has((c.requester_id || '').toLowerCase());
+    const isRec = aliasSet.has((c.recipient_id || '').toLowerCase()) || aliasSet.has((c.receiver_id || '').toLowerCase());
+    let otherId: string | null = null;
+    if (isReq) otherId = c.recipient_id || c.receiver_id;
+    else if (isRec) otherId = c.requester_id;
+    if (otherId && !aliasSet.has(otherId.toLowerCase())) neededPartnerIds.push(otherId);
+  }
+
+  const profileMap = await lookupProfilesBatch(neededPartnerIds, userToken);
+
+  for (const row of dbRows) {
+    const isRequester = aliasSet.has((row.requester_id || '').toLowerCase());
+    const otherId = isRequester ? (row.recipient_id || row.receiver_id) : row.requester_id;
+    if (!otherId || aliasSet.has(otherId.toLowerCase()) || seenTargets.has(otherId)) continue;
+    seenTargets.add(otherId);
+
+    const otherProfile = profileMap.get(otherId) || normalizeMemberProfile(null, otherId);
+    results.push({
+      id: row.id,
+      connected_at: row.updated_at || row.created_at || new Date().toISOString(),
+      connected_to: otherId,
+      profiles: otherProfile,
+    });
+
+    peopleDirectoryStore.upsertConnection(userId, otherId);
+  }
+
+  for (const c of diskCandidates) {
+    const isReq = aliasSet.has((c.requester_id || '').toLowerCase());
+    const isRec = aliasSet.has((c.recipient_id || '').toLowerCase()) || aliasSet.has((c.receiver_id || '').toLowerCase());
+    let otherId: string | null = null;
+    if (isReq) otherId = c.recipient_id || c.receiver_id;
+    else if (isRec) otherId = c.requester_id;
+
+    if (otherId && !aliasSet.has(otherId.toLowerCase()) && !seenTargets.has(otherId)) {
+      seenTargets.add(otherId);
+      const otherProfile = profileMap.get(otherId) || normalizeMemberProfile(null, otherId);
+      results.push({
+        id: c.id,
+        connected_at: c.updated_at || c.created_at,
+        connected_to: otherId,
+        profiles: otherProfile,
+      });
+      peopleDirectoryStore.upsertConnection(userId, otherId);
     }
   }
 
@@ -657,12 +778,12 @@ export async function getWithdrawnRequestsForUser(userId: string, limit = 50, us
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
   // 1. Authoritative Supabase query
+  let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
-
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
-    const { data: dbRows, error: dbErr } = await client
+    const { data, error: dbErr } = await client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
@@ -670,40 +791,49 @@ export async function getWithdrawnRequestsForUser(userId: string, limit = 50, us
       .order('updated_at', { ascending: false })
       .limit(limit);
 
-    if (!dbErr && Array.isArray(dbRows)) {
-      for (const row of dbRows) {
-        if (!row.id || seenIds.has(row.id)) continue;
-        seenIds.add(row.id);
-        const targetId = row.recipient_id || row.receiver_id;
-        const recProfile = await lookupProfileById(targetId, userToken);
-        results.push({
-          id: row.id,
-          message: row.note || '',
-          created_at: row.created_at || new Date().toISOString(),
-          updated_at: row.updated_at || row.created_at || new Date().toISOString(),
-          status: 'cancelled',
-          requester_id: userId,
-          recipient_id: targetId,
-          profiles: recProfile,
-        });
-      }
+    if (!dbErr && Array.isArray(data)) {
+      dbRows = data;
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase withdrawn query warning:', err);
   }
 
-  // 2. Merge from persistent store
+  // 2. Disk store candidates
   const disk = loadDiskStore();
-  for (const c of disk.connections) {
+  const diskCandidates = disk.connections.filter((c) => {
     const reqId = (c.requester_id || '').toLowerCase();
-    if (
-      aliasSet.has(reqId) &&
-      (c.status === 'cancelled' || c.status === 'rejected' || c.status === 'withdrawn') &&
-      !seenIds.has(c.id)
-    ) {
+    return aliasSet.has(reqId) && (c.status === 'cancelled' || c.status === 'rejected' || c.status === 'withdrawn');
+  });
+
+  // Batch resolve all partner profiles
+  const allTargetIds = [
+    ...dbRows.map((r) => r.recipient_id || r.receiver_id),
+    ...diskCandidates.map((c) => c.recipient_id || c.receiver_id),
+  ].filter(Boolean);
+  const profileMap = await lookupProfilesBatch(allTargetIds, userToken);
+
+  for (const row of dbRows) {
+    if (!row.id || seenIds.has(row.id)) continue;
+    seenIds.add(row.id);
+    const targetId = row.recipient_id || row.receiver_id;
+    const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
+    results.push({
+      id: row.id,
+      message: row.note || '',
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+      status: 'cancelled',
+      requester_id: userId,
+      recipient_id: targetId,
+      profiles: recProfile,
+    });
+  }
+
+  for (const c of diskCandidates) {
+    if (!seenIds.has(c.id)) {
       seenIds.add(c.id);
       const targetId = c.recipient_id || c.receiver_id;
-      const recProfile = await lookupProfileById(targetId, userToken);
+      const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
       results.push({
         id: c.id,
         message: c.note || c.message || '',
@@ -834,7 +964,7 @@ export async function sendConnectionRequestBackend(
       },
     ).select('id').single();
     const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
-      setTimeout(() => reject(new Error('Supabase request timed out')), 3000)
+      setTimeout(() => reject(new Error('Supabase request timed out')), 10000)
     );
     const res = await Promise.race([insertPromise, timeoutPromise]);
     if (res && (res as any).error) {
@@ -1470,11 +1600,12 @@ export async function getHeldRequestsForUser(userId: string, limit = 50, userTok
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
   // 1. Authoritative Supabase query from `connections` table
+  let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
     const orClauses = aliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
 
-    const { data: dbRows, error: dbErr } = await client
+    const { data, error: dbErr } = await client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
@@ -1482,22 +1613,8 @@ export async function getHeldRequestsForUser(userId: string, limit = 50, userTok
       .order('updated_at', { ascending: false })
       .limit(limit);
 
-    if (!dbErr && Array.isArray(dbRows)) {
-      for (const row of dbRows) {
-        if (!row.id || seenIds.has(row.id)) continue;
-        seenIds.add(row.id);
-        const reqProfile = await lookupProfileById(row.requester_id, userToken);
-        results.push({
-          id: row.id,
-          message: row.note || '',
-          created_at: row.created_at || new Date().toISOString(),
-          updated_at: row.updated_at || row.created_at || new Date().toISOString(),
-          status: 'hold',
-          requester_id: row.requester_id,
-          recipient_id: row.recipient_id || userId,
-          profiles: reqProfile,
-        });
-      }
+    if (!dbErr && Array.isArray(data)) {
+      dbRows = data;
     }
   } catch (err) {
     console.warn('[ConnectionsBackend] Supabase held query warning:', err);
@@ -1505,16 +1622,39 @@ export async function getHeldRequestsForUser(userId: string, limit = 50, userTok
 
   // 2. Merge from persistent store
   const disk = loadDiskStore();
-  for (const c of disk.connections) {
+  const diskCandidates = disk.connections.filter((c) => {
     const recId = (c.recipient_id || '').toLowerCase();
     const recvId = (c.receiver_id || '').toLowerCase();
-    if (
-      (aliasSet.has(recId) || aliasSet.has(recvId)) &&
-      c.status === 'hold' &&
-      !seenIds.has(c.id)
-    ) {
+    return (aliasSet.has(recId) || aliasSet.has(recvId)) && c.status === 'hold';
+  });
+
+  // Batch resolve all needed requester profiles in a single query
+  const allRequesterIds = [
+    ...dbRows.map((r) => r.requester_id),
+    ...diskCandidates.map((c) => c.requester_id),
+  ].filter(Boolean);
+  const profileMap = await lookupProfilesBatch(allRequesterIds, userToken);
+
+  for (const row of dbRows) {
+    if (!row.id || seenIds.has(row.id)) continue;
+    seenIds.add(row.id);
+    const reqProfile = profileMap.get(row.requester_id) || normalizeMemberProfile(null, row.requester_id);
+    results.push({
+      id: row.id,
+      message: row.note || '',
+      created_at: row.created_at || new Date().toISOString(),
+      updated_at: row.updated_at || row.created_at || new Date().toISOString(),
+      status: 'hold',
+      requester_id: row.requester_id,
+      recipient_id: row.recipient_id || userId,
+      profiles: reqProfile,
+    });
+  }
+
+  for (const c of diskCandidates) {
+    if (!seenIds.has(c.id)) {
       seenIds.add(c.id);
-      const reqProfile = await lookupProfileById(c.requester_id, userToken);
+      const reqProfile = profileMap.get(c.requester_id) || normalizeMemberProfile(null, c.requester_id);
       results.push({
         id: c.id,
         message: c.note || c.message || '',

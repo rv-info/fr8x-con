@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         password,
       });
       const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 8000)
+        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 15000)
       );
       const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
 
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         .eq('id', userId)
         .maybeSingle();
       const profileTimeout = new Promise<{ data: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null }), 3000)
+        setTimeout(() => resolve({ data: null }), 8000)
       );
       const { data } = await Promise.race([profilePromise, profileTimeout]);
       profileRow = data;
