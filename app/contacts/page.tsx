@@ -751,7 +751,7 @@ export default function ContactsCrmPage() {
   const activePartnerCount = useMemo(() => contacts.filter((c) => c.stage === 'Active Partner' || c.stage === 'VIP / Key Account').length, [contacts]);
 
   return (
-    <div style={{ maxWidth: '1440px', margin: '0 auto', padding: '24px 20px 80px', color: '#172B4D' }}>
+    <div style={{ width: '100%', maxWidth: '100%', margin: '0', padding: '16px 20px 80px', color: '#172B4D', boxSizing: 'border-box' }}>
       {/* ── CRM Top Header ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '18px' }}>
         <div>
