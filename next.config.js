@@ -83,7 +83,7 @@ const nextConfig = {
     return [
       {
         source: '/:file*.apk',
-        destination: '/download',
+        destination: '/login',
         permanent: true,
       },
     ];

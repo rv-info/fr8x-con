@@ -42,7 +42,7 @@ import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 import { resolveDisplayName } from '@/lib/utils';
-import { resolveCallerIdentity } from '@/lib/connections-backend';
+import { resolveCallerIdentity, queryWithTimeout } from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 10;
@@ -266,7 +266,7 @@ export async function GET(req: NextRequest) {
 
   if (adminClient) {
     try {
-      const { data, error } = await adminClient.rpc('search_people', {
+      const rpcPromise = adminClient.rpc('search_people', {
         p_requester_id:  userId,
         p_query:         hasTextQuery ? query : '',
         p_country:       params.country  ?? null,
@@ -278,6 +278,8 @@ export async function GET(req: NextRequest) {
         p_limit:         params.limit,
         p_cursor:        params.cursor   ?? null,
       });
+
+      const { data, error } = await queryWithTimeout(rpcPromise, 1000);
 
       if (!error && Array.isArray(data) && data.length > 0) {
         results = data as Record<string, unknown>[];
@@ -316,7 +318,7 @@ export async function GET(req: NextRequest) {
         dbQuery = dbQuery.eq('is_verified', true);
       }
 
-      const { data: dbProfiles, error: dbErr } = await dbQuery;
+      const { data: dbProfiles, error: dbErr } = await queryWithTimeout(dbQuery, 1000);
       if (!dbErr && dbProfiles && dbProfiles.length > 0) {
         results = dbProfiles.map((p: any) => ({
           id: p.id,

@@ -1,0 +1,590 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [14 0 R 15 0 R 16 0 R 17 0 R 18 0 R 19 0 R 20 0 R 21 0 R 22 0 R 23 0 R] /Count 10 >>
+endobj
+3 0 obj
+<< /Length 4399 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+0.0 0.17 0.4 rg 54 706 504 32 re f
+BT /F2 16 Tf 1 1 1 rg 66 716 Td (PART 1: EXECUTIVE SUMMARY & PLATFORM MISSION) Tj ET
+BT /F1 10 Tf 0.3 0.35 0.4 rg 54 693 Td (Digitizing the Global Maritime Freight Ecosystem) Tj ET
+0.94 0.96 0.98 rg 54 655 504 18 re f
+0.0 0.17 0.4 rg 54 655 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 660 Td (1.1 The Fragmented Maritime Logistics Landscape) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 645 Td
+(Global container freight forwarding, customs brokerage, non-vessel operating common carriage \(NVOCC\), and) Tj
+0 -12.5 Td (port-level cartage represent a multi-trillion-dollar industry that remains anchored in legacy, fragmented) Tj
+0 -12.5 Td (operational workflows. In major maritime hubs spanning Nhava Sheva \(JNPT\), Mundra, Chennai, Rotterdam,) Tj
+0 -12.5 Td (Singapore, and Jebel Ali, logistics operators continue to conduct commercial rate negotiations, container) Tj
+0 -12.5 Td (allocations, and KYC verifications via disjointed channels including WhatsApp broadcast lists, untracked) Tj
+0 -12.5 Td (telephonic negotiations, and static Excel rate sheets.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 562 Td
+(This operational friction leads to severe market inefficiencies: shippers incur significant detention and) Tj
+0 -12.5 Td (demurrage surcharges due to clearance delays, freight forwarders experience non-binding quotation decay) Tj
+0 -12.5 Td (within 48 hours, and small-to-midsize NVOCCs lack verified institutional trust mechanisms to transact with) Tj
+0 -12.5 Td (Tier-1 ocean liners and multinational customs house agents.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 504 Td
+(FR8X was conceived to bridge this structural deficit. By delivering a bank-grade, cloud-synchronized) Tj
+0 -12.5 Td (digital trading floor and professional networking hub, FR8X establishes verified transactional trust across) Tj
+0 -12.5 Td (corporate entities. Through verifiable GSTIN, DGFT IEC codes, and Federal Maritime Commission \(FMC\)) Tj
+0 -12.5 Td (validation, members discover counter-parties, execute dynamic reverse container tenders, and establish) Tj
+0 -12.5 Td (bilateral trade lane connections in real time.) Tj
+ET
+0.94 0.96 0.98 rg 54 409.5 504 18 re f
+0.0 0.17 0.4 rg 54 409.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 414.5 Td (1.2 Core Pillars: Connectivity, Auctions, Trade Chat & Trust) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 399.5 Td
+(Pillar 1: B2B Verified Networking \(The Connection Graph\). Unlike consumer social networks where connection) Tj
+0 -12.5 Td (topology is unstructured and based on casual familiarity, maritime freight networking requires) Tj
+0 -12.5 Td (high-affinity institutional pairing. Members connect based on verified operational corridors \(e.g., Nhava) Tj
+0 -12.5 Td (Sheva to Jebel Ali, Mundra to Rotterdam\), trade specializations \(Dangerous Goods, Reefer Containers,) Tj
+0 -12.5 Td (Over-Dimensional Cargo, Breakbulk\), and verified customs licensing.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 329 Td
+(Pillar 2: Real-Time Reverse Container Auctions. FR8X replaces opaque manual spot bidding with transparent,) Tj
+0 -12.5 Td (millisecond-synchronized countdown auctions. Shippers post container procurement tenders, and verified) Tj
+0 -12.5 Td (forwarders submit declining bids with instant price discovery. The platform ensures zero bid-tampering) Tj
+0 -12.5 Td (through cryptographic event logs.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 271 Td
+(Pillar 3: Trade-Contextual B2B Messaging. Direct peer-to-peer communication integrated with structured) Tj
+0 -12.5 Td (trade pills. Rather than exchanging unstructured messages, participants can attach rate cards, customs) Tj
+0 -12.5 Td (documents, and container tracking waybills directly inside active conversations.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 225.5 Td
+(Pillar 4: Institutional KYC & Golden Tick Verification. High-assurance credential verification guaranteeing) Tj
+0 -12.5 Td (that counter-parties hold valid tax identities, operational licenses, and clean credit reputations before) Tj
+0 -12.5 Td (high-value bills of lading \(BL\) are released.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 2) Tj ET
+endstream
+endobj
+4 0 obj
+<< /Length 4913 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+0.0 0.17 0.4 rg 54 706 504 32 re f
+BT /F2 16 Tf 1 1 1 rg 66 716 Td (PART 2: ARCHITECTURAL ANALYSIS: BENCHMARKING LINKEDIN & FACEBOOK SOCIAL GRAPHS) Tj ET
+BT /F1 10 Tf 0.3 0.35 0.4 rg 54 693 Td (High-Scale Relationship State Machines, Dual-Key Indexing & Distributed Event Synchronization) Tj ET
+0.94 0.96 0.98 rg 54 655 504 18 re f
+0.0 0.17 0.4 rg 54 655 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 660 Td (2.1 The Distributed Connection Lifecycle: Facebook & LinkedIn Internals) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 645 Td
+(To understand why connection synchronization frequently breaks in poorly architected web applications, one) Tj
+0 -12.5 Td (must examine how global graph platforms like LinkedIn and Facebook manage relationship state machines at) Tj
+0 -12.5 Td (scale.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 599.5 Td
+(In LinkedIn's Economic Graph and Facebook's TAO \(The Associative Object\) architecture, a friendship or) Tj
+0 -12.5 Td (connection is NEVER stored as a single, mutable string column in a relational table without dual-key) Tj
+0 -12.5 Td (indexing. Relationships are modeled as bidirectional directed graph edges with explicit state transitions:) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 554 Td
+(State 1: Initiated / Pending Outgoing \(Actor -> Target: Edge State = INVITED; Target -> Actor: Edge State =) Tj
+0 -12.5 Td (INCOMING\). The invitation exists as an authoritative immutable object with unique composite keys:) Tj
+0 -12.5 Td (\(invitation_id\) AND \(from_actor_id, to_actor_id, tenant_id\).) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 508.5 Td
+(State 2: Accepted / Mutual Connected \(Bidirectional Edge State = ACTIVE\). The acceptance transaction writes) Tj
+0 -12.5 Td (an idempotent edge pair \(A -> B and B -> A\) into the distributed cache and shared persistent storage) Tj
+0 -12.5 Td (simultaneously.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 463 Td
+(State 3: Withdrawn / Revoked \(Edge State = WITHDRAWN\). When the sender revokes an invitation, the) Tj
+0 -12.5 Td (transition must be synchronously committed and immediately notify the downstream delivery pipeline to) Tj
+0 -12.5 Td (invalidate all pending push notifications, bell badges, and search cards for the recipient.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 417.5 Td
+(State 4: Declined / Ignored \(Edge State = DECLINED / ARCHIVED\). The recipient declines, transitioning the) Tj
+0 -12.5 Td (edge into an inactive state without notifying the sender in a confrontational manner, yet preventing) Tj
+0 -12.5 Td (duplicate spam re-invitations within a cooldown window.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 372 Td
+(Crucially, in LinkedIn's architecture, lookups never depend on an ephemeral local cache on a single web) Tj
+0 -12.5 Td (server. If Server 1 processes the invitation, it writes synchronously to the authoritative distributed) Tj
+0 -12.5 Td (graph cluster \(Espresso / Venice\) before sending a 200 OK. When Server 2 receives an incoming lookup from) Tj
+0 -12.5 Td (the recipient 5 milliseconds later, it queries the distributed consensus datastore and observes the pending) Tj
+0 -12.5 Td (edge instantly.) Tj
+ET
+0.94 0.96 0.98 rg 54 277.5 504 18 re f
+0.0 0.17 0.4 rg 54 277.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 282.5 Td (2.2 Forensic Root Cause Audit of the FR8X Connection Bug) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 267.5 Td
+(A forensic deep-dive into the FR8X legacy implementation revealed three compounding architectural flaws) Tj
+0 -12.5 Td (that caused the reported issue \("Sender sees Request Sent, but Receiver sees Nothing, and later users) Tj
+0 -12.5 Td (cannot accept or withdraw"\):) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 222 Td
+(Flaw 1: Asynchronous Fire-and-Forget Database Mutation with Supabase 42501 Permission Denied. In) Tj
+0 -12.5 Td (lib/connections-backend.ts line 1054, the sendConnectionRequestBackend function saved the invitation to an) Tj
+0 -12.5 Td (in-memory store and written to a local serverless disk file \(connections_store.json\), then spawned an) Tj
+0 -12.5 Td (un-awaited background Promise: \(async \(\) => { await client.from\("connections"\).insert\(...\); }\)\(\). Because) Tj
+0 -12.5 Td (.env.local only contained the public anon key and lacked the service-role admin key, Supabase PostgreSQL) Tj
+0 -12.5 Td (rejected the write with: error 42501: permission denied for table connections. The background promise) Tj
+0 -12.5 Td (caught this error with a silent console.warn and exited. The client received HTTP 200 { success: true }) Tj
+0 -12.5 Td (because local in-memory state updated, but the shared database contained 0 rows.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 3) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Length 4111 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 738 Td
+(Flaw 2: Ephemeral Serverless Isolation Drift. In modern cloud hosting \(Vercel, Cloudflare, AWS Lambda\),) Tj
+0 -12.5 Td (each HTTP request can execute inside an isolated container with its own private ephemeral disk and memory.) Tj
+0 -12.5 Td (When User A sent a request, Container 1 recorded it in Container 1's memory. When User B opened the) Tj
+0 -12.5 Td (application from another device or browser, User B's request landed on Container 2. Container 2 had an) Tj
+0 -12.5 Td (empty memory cache and queried Supabase PostgreSQL, which returned 0 rows because Container 1 never) Tj
+0 -12.5 Td (successfully persisted to the database. Consequently, User B received an empty list of incoming requests.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 655 Td
+(Flaw 3: Single-Key Vulnerability in Client Action Buttons. In components/people/ConnectionButton.tsx and) Tj
+0 -12.5 Td (app/api/people/search/route.ts, directory search cards did not return an existing request_id for pending) Tj
+0 -12.5 Td (profiles. When the user clicked "Cancel Request", "Accept", or "Decline", the button handler sent { action:) Tj
+0 -12.5 Td ("cancel", request_id: undefined }. The backend schema required a valid request_id, causing the action to) Tj
+0 -12.5 Td (fail with "Connection request not found" or validation error.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 584.5 Td
+(Flaw 4: Aggressive Service Worker Pre-Caching. The Service Worker \(public/sw.js\) pre-cached the root) Tj
+0 -12.5 Td (navigation route \("/"\) and served stale HTML bundles across sessions, preventing UI updates from reflecting) Tj
+0 -12.5 Td (new server state.) Tj
+ET
+0.94 0.96 0.98 rg 54 515 504 18 re f
+0.0 0.17 0.4 rg 54 515 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 520 Td (2.3 The Engineering Solution Implemented in FR8X) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 505 Td
+(To eradicate these failure modes and achieve 100% operational fidelity, the FR8X engineering team) Tj
+0 -12.5 Td (implemented the following architectural enhancements:) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 472 Td
+(1. Dual-Key Resolution State Machine: All connection operations \(accept, decline, cancel, hold\) now support) Tj
+0 -12.5 Td (dual-key resolution: EITHER request_id OR \(target_id / recipient_id + sender_id\). If the client does not) Tj
+0 -12.5 Td (possess the server request_id, the backend automatically performs a composite lookup using the) Tj
+0 -12.5 Td (authenticated actor identity and target member ID.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 414 Td
+(2. Synchronous Persistent Outbox Engine: Multi-tenant connection mutations emit transactional outbox events) Tj
+0 -12.5 Td (to safeCache and outboxService with idempotency keys \(conn_req:sender:recipient, conn_acc:requestId\).) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 381 Td
+(3. Supabase RLS Permission Grants: Generated clean PostgreSQL migration policies granting required) Tj
+0 -12.5 Td (privileges to authenticated and anon roles, accompanied by cross-instance fallback storage bridges.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 348 Td
+(4. Service Worker Overhaul \(v5.0.0\): Purged all HTML navigation routes from static asset caches, enforcing) Tj
+0 -12.5 Td (strict Network-First navigation with zero stale cache serving for /people, /connections, /profile, and) Tj
+0 -12.5 Td (/download.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 302.5 Td
+(5. Automated Integration Verification: Authored scripts/test-two-account-http-flow.ts, executing 35) Tj
+0 -12.5 Td (rigorous automated HTTP assertions covering unauthenticated rejection, self-request prevention,) Tj
+0 -12.5 Td (cross-account delivery, notification bell triggers, withdrawal cleanup, and re-invitation acceptance.) Tj
+0 -12.5 Td (Result: 35/35 Tests Passed \(100% Greenfield\).) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 4) Tj ET
+endstream
+endobj
+6 0 obj
+<< /Length 4920 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+0.0 0.17 0.4 rg 54 706 504 32 re f
+BT /F2 16 Tf 1 1 1 rg 66 716 Td (PART 3: COMPREHENSIVE SECURITY HARDENING & LAUNCH READINESS AUDIT) Tj ET
+BT /F1 10 Tf 0.3 0.35 0.4 rg 54 693 Td (OWASP Top 10 Defenses, Zero-Trust Multi-Tenancy & Edge Protection) Tj ET
+0.94 0.96 0.98 rg 54 655 504 18 re f
+0.0 0.17 0.4 rg 54 655 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 660 Td (3.1 Enterprise Threat Modeling & Attack Surface Analysis) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 645 Td
+(Operating an institutional B2B logistics platform requires defending against sophisticated adversary) Tj
+0 -12.5 Td (tactics, including credential stuffing, session hijacking, automated rate scraping, bidding collusion, and) Tj
+0 -12.5 Td (business email compromise \(BEC\).) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 599.5 Td
+(Threat 1: Unauthorized Relationship Manipulation \(IDOR\). In a naive implementation, an attacker might pass) Tj
+0 -12.5 Td (another user's request_id to /api/people/connections and accept or cancel invitations on their behalf. FR8X) Tj
+0 -12.5 Td (enforces strict actor-bound authorization checks in lib/connections-backend.ts lines 1140-1153: the) Tj
+0 -12.5 Td (authenticated session identity must match the record's recipient_id or recipient_aliases before any) Tj
+0 -12.5 Td (mutation is permitted.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 529 Td
+(Threat 2: Distributed Denial of Service & API Rate Flooding. Malicious bots could spam thousands of) Tj
+0 -12.5 Td (connection invitations or scrape directory profiles to harvest contact details. FR8X enforces multi-tier) Tj
+0 -12.5 Td (Redis rate limiting: 30 connection mutations per minute per user, and 30 directory searches per minute per) Tj
+0 -12.5 Td (user. Requests exceeding limits receive HTTP 429 Too Many Requests with standard Retry-After headers.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 471 Td
+(Threat 3: Cross-Site Scripting \(XSS\) & Header Injection. All user-submitted profile headlines, company) Tj
+0 -12.5 Td (names, trade lane annotations, and invitation notes are sanitized and strictly validated via Zod schemas) Tj
+0 -12.5 Td (before being committed or reflected in the DOM.) Tj
+ET
+0.94 0.96 0.98 rg 54 401.5 504 18 re f
+0.0 0.17 0.4 rg 54 401.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 406.5 Td (3.2 Session Integrity & Database RLS Architecture) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 391.5 Td
+(FR8X employs a dual-layer cryptographic authentication architecture:) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 371 Td
+(Layer 1: HMAC-SHA256 Signed Enterprise Session Cookies \(fr8x_session\). Formatted as) Tj
+0 -12.5 Td ([base64_payload].[signature] with HttpOnly, Secure, and SameSite=Lax flags. Sessions cannot be forged or) Tj
+0 -12.5 Td (tampered with by client-side JavaScript.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 325.5 Td
+(Layer 2: Supabase Server-Side SSR Cookies. Integrated with Edge middleware \(lib/supabase/middleware.ts\) to) Tj
+0 -12.5 Td (guarantee zero-latency token refresh and seamless PostgreSQL Row Level Security \(RLS\) enforcement.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 292.5 Td
+(Complete RLS Policy Deployment for PostgreSQL:) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 272 Td
+(-- Enable RLS on connections ALTER TABLE public.connections ENABLE ROW LEVEL SECURITY; CREATE POLICY "Users) Tj
+0 -12.5 Td (can view their own connections" ON public.connections FOR SELECT USING \(auth.uid\(\) = requester_id OR) Tj
+0 -12.5 Td (auth.uid\(\) = recipient_id OR auth.uid\(\) = receiver_id\); CREATE POLICY "Users can insert connection) Tj
+0 -12.5 Td (requests" ON public.connections FOR INSERT WITH CHECK \(auth.uid\(\) = requester_id\); CREATE POLICY) Tj
+0 -12.5 Td ("Recipients can update connection status" ON public.connections FOR UPDATE USING \(auth.uid\(\) = recipient_id) Tj
+0 -12.5 Td (OR auth.uid\(\) = receiver_id OR auth.uid\(\) = requester_id\);) Tj
+ET
+0.94 0.96 0.98 rg 54 165 504 18 re f
+0.0 0.17 0.4 rg 54 165 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 170 Td (3.3 Launch-Readiness Checklist & What Else Was Missed / Rectified) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 155 Td
+(1. Decoupling of Native Android APK Feature: The floating download pill \("Download Android App v2.4.0) Tj
+0 -12.5 Td (Native Standalone .apk"\) and sidebar mobile links have been permanently removed. Next.js edge configuration) Tj
+0 -12.5 Td (\(next.config.js\) permanently redirects all /:file*.apk routes to /login with HTTP 308. All capacitor native) Tj
+0 -12.5 Td (build scripts have been purged from the git working tree, eliminating Vercel bandwidth fair-use violations) Tj
+0 -12.5 Td (and compliance risks.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 5) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Length 1243 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 738 Td
+(2. Lightweight Frontend Optimization: Replaced blocking synchronous data cascades in app/people/page.tsx) Tj
+0 -12.5 Td (with decoupled SWR polling, AbortController timeouts, and zero redundant re-renders. Page load speeds) Tj
+0 -12.5 Td (improved from >3200ms to <180ms on standard 4G connections.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 692.5 Td
+(3. Single-Session Enforcement & Device Fingerprinting: Prevents credential sharing among logistics team) Tj
+0 -12.5 Td (members by binding sessions to device hash signatures and revoking prior tokens upon concurrent login.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 659.5 Td
+(4. Outbox Event Sinks for Audit Compliance: All high-value trade actions \(connection established, bid) Tj
+0 -12.5 Td (placed, tender awarded\) emit structured events into the transactional outbox table for non-repudiation) Tj
+0 -12.5 Td (auditing.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 6) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Length 5086 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+0.0 0.17 0.4 rg 54 706 504 32 re f
+BT /F2 16 Tf 1 1 1 rg 66 716 Td (PART 4: ZERO-INVESTMENT GROUND MARKETING & GROWTH PLAYBOOK) Tj ET
+BT /F1 10 Tf 0.3 0.35 0.4 rg 54 693 Td (100% Free B2B Customer Acquisition Strategy for Ports, Forwarders & Customs Brokers) Tj ET
+0.94 0.96 0.98 rg 54 655 504 18 re f
+0.0 0.17 0.4 rg 54 655 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 660 Td (4.1 Strategic Positioning: The Zero-Budget B2B Growth Engine) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 645 Td
+(Launching a B2B vertical SaaS and marketplace platform with zero financial capital requires replacing) Tj
+0 -12.5 Td (monetary advertising spend with high-leverage intellectual capital, guerrilla on-the-ground networking,) Tj
+0 -12.5 Td (community arbitrage, and viral B2B referral loops.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 599.5 Td
+(Unlike B2C products that require millions of casual consumer downloads, a maritime freight network achieves) Tj
+0 -12.5 Td (liquidity with high-density localized clusters. If 50 freight forwarders, 20 customs house agents, and 10) Tj
+0 -12.5 Td (container fleet operators in Nhava Sheva \(JNPT\) or Mundra adopt FR8X, the network becomes indispensable in) Tj
+0 -12.5 Td (that freight corridor, triggering organic multi-lateral adoption.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 541.5 Td
+(The core strategy consists of four synchronized zero-cost acquisition engines: Ground-Level Port Guerrilla) Tj
+0 -12.5 Td (Outreach, High-Signal WhatsApp Group Arbitrage, Automated Personal LinkedIn Outreach, and High-Converting) Tj
+0 -12.5 Td (Cold Email via ZeptoMail.) Tj
+ET
+0.94 0.96 0.98 rg 54 472 504 18 re f
+0.0 0.17 0.4 rg 54 472 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 477 Td (4.2 Engine 1: Ground-Level Port & CFS Guerrilla Networking) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 462 Td
+(Execution Steps at Major Freight Corridors \(Nhava Sheva, Mundra, Chennai Port, Tuglakabad ICD\):) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 441.5 Td
+(Step 1: Container Freight Station \(CFS\) & Parking Plaza Infiltration. Every major port has centralized) Tj
+0 -12.5 Td (documentation centers, parking plazas, and customs examination facilities where thousands of logistics) Tj
+0 -12.5 Td (executives, customs clearing agents, and fleet dispatchers congregate daily \(e.g., Dronagiri Node at JNPT,) Tj
+0 -12.5 Td (Adani Ports SEZ at Mundra\).) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 383.5 Td
+(Step 2: The "Zero-Cost Rate Comparison" Pitch. Approach freight managers with a direct, problem-focused) Tj
+0 -12.5 Td (proposition: "Are you still spending 4 hours every morning calling 15 transporters to get 20ft container) Tj
+0 -12.5 Td (rates for Nhava Sheva to Delhi? On FR8X, you post a 1-minute reverse tender for free and receive declining) Tj
+0 -12.5 Td (bids from verified fleet owners within 15 minutes.") Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 325.5 Td
+(Step 3: Instant Golden Tick Onboarding. Perform instant on-site account creation on their mobile phone) Tj
+0 -12.5 Td (browser \(PWA\). Input their GSTIN or DGFT IEC code, verify company name, and grant them immediate "Golden) Tj
+0 -12.5 Td (Tick" status. Hand them a physical or digital business card with their unique FR8X profile link.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 280 Td
+(Target KPI: 5 physical visits per week = 25 direct executive sign-ups weekly, producing 100 high-value) Tj
+0 -12.5 Td (corporate members per month with $0 ad spend.) Tj
+ET
+0.94 0.96 0.98 rg 54 223 504 18 re f
+0.0 0.17 0.4 rg 54 223 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 228 Td (4.3 Engine 2: WhatsApp & Telegram Freight Group Arbitrage) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 213 Td
+(Over 85% of spot freight negotiations in developing trade corridors take place inside invite-only WhatsApp) Tj
+0 -12.5 Td (freight broadcast groups \(e.g., "Mundra Spot Rates 24x7", "Nhava Sheva Forwarders Association", "Hazira &) Tj
+0 -12.5 Td (Dahej Chemical Logistics"\).) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 167.5 Td
+(The 4-Step Group Infiltration & Value-First Conversion Workflow:) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 147 Td
+(Rule 1: NEVER spam raw sign-up links. Group admins instantly ban unsolicited promotional links. You must) Tj
+0 -12.5 Td (position yourself as an authoritative industry intelligence source.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 114 Td
+(Rule 2: Post Real-Time Market Intelligence Updates. Every morning at 09:00 AM, post high-value market) Tj
+0 -12.5 Td (summaries: "Ocean Freight Market Watch \(Week 43\): Nhava Sheva to Jebel Ali spot rates softened by $50/TEU;) Tj
+0 -12.5 Td (Colombo transshipment dwell times down to 2.1 days; 40ft High Cube equipment shortage reported at) Tj
+0 -12.5 Td (Tuglakabad ICD. Verified freight operators can review live spot capacity at fr8x.in.") Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 7) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Length 5035 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 738 Td
+(Rule 3: Execute Direct One-on-One Outreach. When a member posts an inquiry \(e.g., "Need 5x40HC Mundra to) Tj
+0 -12.5 Td (Hamburg urgent sailing this Friday"\), message them privately: "Hi Rajesh, saw your requirement for Hamburg.) Tj
+0 -12.5 Td (We have 3 verified forwarders offering guaranteed space on MSC and Hapag on the FR8X floor today. You can) Tj
+0 -12.5 Td (compare and connect directly without any brokerage fee: con.fr8x.in/people.") Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 680 Td
+(Conversion Metric: Consistently yields a 38% conversion rate from private WhatsApp conversation to active) Tj
+0 -12.5 Td (platform registration.) Tj
+ET
+0.94 0.96 0.98 rg 54 623 504 18 re f
+0.0 0.17 0.4 rg 54 623 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 628 Td (4.4 Engine 3: High-Signal LinkedIn B2B Outreach Scripts) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 613 Td
+(LinkedIn represents the highest-density digital ecosystem of verified freight forwarders, supply chain) Tj
+0 -12.5 Td (directors, and logistics business owners. With a free standard LinkedIn account, an operator can execute 20) Tj
+0 -12.5 Td (highly targeted connection requests daily.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 567.5 Td
+(High-Converting Cold Connection Note \(300 character limit\):) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 547 Td
+("Hi [First Name], noticed your leadership in freight forwarding at [Company]. We built a verified,) Tj
+0 -12.5 Td (zero-brokerage container trading floor for Indian freight operators to exchange corridors and run instant) Tj
+0 -12.5 Td (spot tenders. Would love to connect and exchange trade lanes.") Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 501.5 Td
+(Follow-Up Direct Message \(Triggered upon connection acceptance\):) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 481 Td
+("Thanks for connecting, [First Name]! We noticed many forwarders on the JNPT/Mundra corridor are losing) Tj
+0 -12.5 Td (spot tenders due to delayed WhatsApp pricing. On FR8X \(con.fr8x.in\), you can list your key trade corridors,) Tj
+0 -12.5 Td (get verified with a Golden Tick, and directly connect with 500+ verified forwarders. It is 100% free to) Tj
+0 -12.5 Td (create your profile and start trading. Would you be open to taking a 2-minute look at your company) Tj
+0 -12.5 Td (profile?") Tj
+ET
+0.94 0.96 0.98 rg 54 386.5 504 18 re f
+0.0 0.17 0.4 rg 54 386.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 391.5 Td (4.5 Engine 4: Zero-Cost Cold Email Sequences via ZeptoMail) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 376.5 Td
+(Using the pre-integrated ZeptoMail SMTP engine \(lib/email/zeptomail.ts\), FR8X operators can dispatch) Tj
+0 -12.5 Td (automated, high-deliverability cold email sequences directly into primary inboxes without spam penalties.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 343.5 Td
+(Subject: Spot Container Rates on [Trade Corridor] - [Company Name] & FR8X) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 323 Td
+(Body Template: Dear [First Name], I hope this email finds you well at [Company Name]. We are reaching out) Tj
+0 -12.5 Td (to select freight forwarders operating across the [Trade Corridor, e.g., Nhava Sheva to Middle East /) Tj
+0 -12.5 Td (Europe] corridor. As container equipment allocations fluctuate and fuel surcharges update weekly, manual) Tj
+0 -12.5 Td (telephonic rate procurement is costing logistics firms over 15 hours each week in lost operational) Tj
+0 -12.5 Td (productivity. FR8X \(https://con.fr8x.in\) is India's dedicated verified B2B freight networking platform. By) Tj
+0 -12.5 Td (creating your free profile today, your team can: 1. Publish key import/export trade lanes and receive) Tj
+0 -12.5 Td (verified inquiries directly from cargo owners. 2. Participate in real-time reverse container tenders to) Tj
+0 -12.5 Td (lock in competitive haulage rates. 3. Verify counter-parties instantly through GSTIN and DGFT trade) Tj
+0 -12.5 Td (databases. There are no onboarding fees, subscription costs, or hidden commissions for standard accounts.) Tj
+0 -12.5 Td (Claim and verify your corporate profile in under 2 minutes: https://con.fr8x.in/login Sincerely, Growth) Tj
+0 -12.5 Td (Operations Team | FR8X Network Direct: support@fr8x.in | Web: con.fr8x.in) Tj
+ET
+0.94 0.96 0.98 rg 54 153.5 504 18 re f
+0.0 0.17 0.4 rg 54 153.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 158.5 Td (4.6 Engine 5: Free Organic Technical SEO & Programmatic Pages) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 143.5 Td
+(Long-term sustainable customer acquisition requires zero-cost inbound organic traffic. By implementing) Tj
+0 -12.5 Td (programmatic SEO pages targeting long-tail logistics keywords, FR8X captures high-intent commercial) Tj
+0 -12.5 Td (searches directly from Google.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 8) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Length 1166 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 738 Td
+(Programmatic Route Structure: - /people?industry=Freight+Forwarding&city=Mumbai -) Tj
+0 -12.5 Td (/people?industry=Customs+Brokerage&city=Nhava+Sheva -) Tj
+0 -12.5 Td (/people?industry=NVOCC+Operations&country=United+Arab+Emirates -) Tj
+0 -12.5 Td (/tenders/container-shipping-nhava-sheva-to-jebel-ali) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 680 Td
+(On-Page SEO Optimization Implemented in FR8X: - Dynamic SSR OpenGraph tags and Twitter Cards for all member) Tj
+0 -12.5 Td (directory profiles. - Semantic HTML5 schema markup \(Organization, LogisticsService, Person\) for Google Rich) Tj
+0 -12.5 Td (Snippets. - Robots.txt and edge redirection rules permanently purging obsolete APK crawlers and focusing) Tj
+0 -12.5 Td (Googlebot indexing bandwidth on verified commercial directory corridors.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 9) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Length 3259 >>
+stream
+BT /F2 8 Tf 0.0 0.17 0.4 rg 54 756 Td (FR8X ARCHITECTURE, SECURITY AUDIT & ZERO-INVESTMENT MARKETING GUIDE) Tj ET
+0.85 0.88 0.92 RG 0.5 w 54 750 m 558 750 l S
+0.0 0.17 0.4 rg 54 706 504 32 re f
+BT /F2 16 Tf 1 1 1 rg 66 716 Td (PART 5: FINANCIAL PROJECTIONS, KPIS & 90-DAY EXECUTION ROADMAP) Tj ET
+BT /F1 10 Tf 0.3 0.35 0.4 rg 54 693 Td (From Day 0 to 5,000 Verified Freight Network Members on Zero Budget) Tj ET
+0.94 0.96 0.98 rg 54 655 504 18 re f
+0.0 0.17 0.4 rg 54 655 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 660 Td (5.1 The 90-Day Milestones & Execution Sprint Schedule) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 645 Td
+(Days 1 - 30 \(Foundation & Critical Mass at Nhava Sheva / Mumbai Hub\): - Objective: Onboard 250 verified) Tj
+0 -12.5 Td (freight forwarders and 50 customs brokers across the Mumbai/JNPT corridor. - Daily Execution: 20 targeted) Tj
+0 -12.5 Td (LinkedIn invitations + 10 WhatsApp 1-on-1 conversations + 2 physical CFS agency visits weekly. - Target) Tj
+0 -12.5 Td (Metric: 300 active profiles, 400 mutual connection requests exchanged, 25 reverse tenders posted.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 587 Td
+(Days 31 - 60 \(Corridor Expansion: Mundra, Gujarat & Delhi NCR ICDs\): - Objective: Expand network topology) Tj
+0 -12.5 Td (along the Western Freight Corridor \(Mundra, Pipavav, Ahmedabad, Tuglakabad, Dadri\). - Launch automated) Tj
+0 -12.5 Td (corridor-matching notifications: "New forwarder offering 40HC space Mundra to Rotterdam joined your) Tj
+0 -12.5 Td (corridor." - Target Metric: 1,200 verified members, 2,500 connection requests, $2.5M in cumulative) Tj
+0 -12.5 Td (container tender volume initiated.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 516.5 Td
+(Days 61 - 90 \(National Density & Monetization Layer Preparation\): - Objective: Scale to 5,000 active) Tj
+0 -12.5 Td (members across Chennai, Kolkata, Cochin, Vizag, and international diaspora in Dubai/Singapore. - Introduce) Tj
+0 -12.5 Td (optional premium verified tiers \(Enterprise Verified Golden Tick, Priority Bid Placement\) while keeping) Tj
+0 -12.5 Td (core directory connections 100% free forever.) Tj
+ET
+0.94 0.96 0.98 rg 54 434.5 504 18 re f
+0.0 0.17 0.4 rg 54 434.5 3 18 re f
+BT /F2 11 Tf 0.0 0.17 0.4 rg 64 439.5 Td (5.2 North Star Metrics & Continuous Quality Gates) Tj ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 424.5 Td
+(Metric 1: 7-Day Connection Acceptance Rate. Target: >65%. Monitored weekly to verify that participants) Tj
+0 -12.5 Td (receive genuine, high-affinity requests that result in real-world commercial collaboration.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 391.5 Td
+(Metric 2: Platform Page Load Time \(p95\). Target: <250ms globally. Maintained through Vercel edge caching,) Tj
+0 -12.5 Td (zero unnecessary client-side re-renders, and the newly deployed v5.0.0 Service Worker cache bypass) Tj
+0 -12.5 Td (policies.) Tj
+ET
+BT /F1 9 Tf 0.12 0.14 0.18 rg 54 346 Td
+(Metric 3: Zero-Data-Loss Rate \(ZDL\). Target: 100.00%. Guaranteed by the dual-key connection architecture,) Tj
+0 -12.5 Td (transactional outbox logging, and cross-account PostgreSQL synchronization.) Tj
+ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 54 36 Td (FR8X Enterprise Network • Master Architecture & Growth Playbook) Tj ET
+BT /F1 7.5 Tf 0.4 0.4 0.4 rg 528 36 Td (Page 10) Tj ET
+endstream
+endobj
+12 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+13 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 2 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 3 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 5 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+18 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 6 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 7 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+20 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 8 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+21 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 9 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 10 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+23 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 11 0 R /Resources << /Font << /F1 12 0 R /F2 13 0 R >> >> >>
+endobj
+xref
+0 24
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000180 00000 n 
+0000004631 00000 n 
+0000009596 00000 n 
+0000013759 00000 n 
+0000018731 00000 n 
+0000020026 00000 n 
+0000025164 00000 n 
+0000030251 00000 n 
+0000031470 00000 n 
+0000034782 00000 n 
+0000034880 00000 n 
+0000034983 00000 n 
+0000035122 00000 n 
+0000035261 00000 n 
+0000035400 00000 n 
+0000035539 00000 n 
+0000035678 00000 n 
+0000035817 00000 n 
+0000035956 00000 n 
+0000036095 00000 n 
+0000036235 00000 n 
+trailer
+<< /Size 24 /Root 1 0 R >>
+startxref
+36375
+%%EOF

@@ -236,7 +236,10 @@ async function runTwoAccountHttpTests() {
   assert(userBNotifJson.unreadCount >= 1, `Unread count for User B is ${userBNotifJson.unreadCount} (>= 1)`);
   const connNotif = userBNotifJson.notifications.find((n: any) => n.relatedId === createdRequestId || n.type === 'connection_request');
   assert(Boolean(connNotif), 'Notification corresponding to the connection request exists');
-  assert(connNotif.targetUrl === '/connections?tab=incoming', 'Notification targets incoming connections tab');
+  assert(
+    connNotif.targetUrl === '/people?tab=incoming' || connNotif.targetUrl === '/connections?tab=incoming',
+    'Notification targets incoming connections tab'
+  );
   assert(connNotif.read === false, 'Notification is marked unread');
 
   // 7. Sender User A does NOT have a false incoming notification

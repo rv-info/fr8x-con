@@ -46,19 +46,23 @@ const ConnectionActionSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action:     z.literal('accept'),
-    request_id: z.string().min(1, 'request_id is required'),
+    request_id: z.string().optional(),
+    target_id:  z.string().optional(),
   }),
   z.object({
     action:     z.literal('decline'),
-    request_id: z.string().min(1, 'request_id is required'),
+    request_id: z.string().optional(),
+    target_id:  z.string().optional(),
   }),
   z.object({
     action:     z.literal('reject'),
-    request_id: z.string().min(1, 'request_id is required'),
+    request_id: z.string().optional(),
+    target_id:  z.string().optional(),
   }),
   z.object({
     action:     z.literal('hold'),
-    request_id: z.string().min(1, 'request_id is required'),
+    request_id: z.string().optional(),
+    target_id:  z.string().optional(),
   }),
   z.object({
     action:     z.literal('cancel'),
@@ -251,7 +255,7 @@ export async function POST(req: NextRequest) {
         result = await acceptConnectionRequestBackend(
           userId,
           action.request_id,
-          undefined,
+          action.target_id,
           caller.token
         );
         break;
@@ -262,7 +266,7 @@ export async function POST(req: NextRequest) {
         result = await declineConnectionRequestBackend(
           userId,
           action.request_id,
-          undefined,
+          action.target_id,
           caller.token
         );
         break;
@@ -272,7 +276,7 @@ export async function POST(req: NextRequest) {
         result = await holdConnectionRequestBackend(
           userId,
           action.request_id,
-          undefined,
+          action.target_id,
           caller.token
         );
         break;
@@ -340,13 +344,14 @@ export async function POST(req: NextRequest) {
         idempotencyKey: `conn_req:${userId}:${targetId}`,
       }).catch(() => {});
     } else if (action.action === 'accept') {
+      const effReqId = action.request_id || (result?.request_id as string) || `req_${Date.now()}`;
       safeCache.invalidateUser(userId);
       outboxService.recordEvent({
         eventType: 'connection.accepted',
         aggregateType: 'connection',
-        aggregateId: action.request_id,
-        payload: { recipient_id: userId, request_id: action.request_id },
-        idempotencyKey: `conn_acc:${action.request_id}`,
+        aggregateId: effReqId,
+        payload: { recipient_id: userId, request_id: effReqId },
+        idempotencyKey: `conn_acc:${effReqId}`,
       }).catch(() => {});
     } else if (action.action === 'remove') {
       safeCache.invalidateUser(userId);

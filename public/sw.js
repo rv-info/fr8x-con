@@ -1,9 +1,8 @@
-// FR8X Enterprise Service Worker v4.0.0
+// FR8X Enterprise Service Worker v5.0.0
 // Ultra-low latency caching, instant cache-purging for stale assets, and offline fallback.
 
-const CACHE_NAME = 'fr8x-cache-v4.0.0';
+const CACHE_NAME = 'fr8x-cache-v5.0.0';
 const STATIC_ASSETS = [
-  '/',
   '/logo.png',
   '/icon.png',
   '/favicon.ico',
@@ -11,7 +10,7 @@ const STATIC_ASSETS = [
   '/apple-icon.png',
 ];
 
-// Pre-cache core app essentials on install
+// Pre-cache core app essentials on install (assets only, NEVER HTML pages)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
@@ -48,9 +47,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // SECURITY & FRESHNESS: Never cache sensitive auth, admin, or API mutations
+  // SECURITY & FRESHNESS: Never cache sensitive auth, admin, navigation hubs, or API mutations
   if (
+    url.pathname === '/' ||
     url.pathname === '/login' ||
+    url.pathname === '/people' ||
+    url.pathname.startsWith('/people/') ||
+    url.pathname === '/connections' ||
+    url.pathname.startsWith('/connections/') ||
+    url.pathname === '/download' ||
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/api/auth/') ||
     url.pathname.startsWith('/api/user/') ||

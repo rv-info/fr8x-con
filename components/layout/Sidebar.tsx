@@ -18,7 +18,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-  Smartphone,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -173,36 +172,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
 
       {/* Sidebar Footer */}
       <div className="sidefoot">
-        <Link
-          href="/download"
-          onClick={handleLinkClick}
-          className="sidelink"
-          title="FR8X Mobile Console"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: collapsed ? '8px 0' : '7px 10px',
-            marginBottom: '10px',
-            background: 'var(--color-secondary-accent, #E5F3FC)',
-            border: '1px solid var(--color-border, #DFE7F0)',
-            borderRadius: '6px',
-            color: 'var(--color-nav-active-text, #075985)',
-            fontWeight: 600,
-            fontSize: '11px',
-            textDecoration: 'none',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          <Smartphone size={15} style={{ flexShrink: 0, color: 'var(--color-primary, #147DAB)' }} />
-          {!collapsed && (
-            <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
-              <span style={{ color: 'var(--color-nav-active-text, #075985)', fontWeight: 600 }}>Mobile Console</span>
-              <span style={{ fontSize: '9px', color: 'var(--color-text-secondary, #52657D)', fontWeight: 500 }}>Enterprise Suite</span>
-            </div>
-          )}
-        </Link>
 
         <Link
           href="/profile"

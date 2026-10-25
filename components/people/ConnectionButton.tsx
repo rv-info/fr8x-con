@@ -130,7 +130,7 @@ export function ConnectionButton({
           <button
             className={`connection-btn connect ${sizeClass}`}
             disabled={loading}
-            onClick={() => handleAction('accept', { action: 'accept', request_id: reqId })}
+            onClick={() => handleAction('accept', { action: 'accept', request_id: reqId, target_id: targetId })}
             aria-label="Accept connection request"
           >
             {loading ? <Loader2 size={14} className="spin" /> : <UserCheck size={14} />}
@@ -139,7 +139,7 @@ export function ConnectionButton({
           <button
             className={`connection-btn outline ${sizeClass}`}
             disabled={loading}
-            onClick={() => handleAction('decline', { action: 'decline', request_id: reqId })}
+            onClick={() => handleAction('decline', { action: 'decline', request_id: reqId, target_id: targetId })}
             aria-label="Decline connection request"
           >
             <span>Decline</span>
@@ -188,7 +188,7 @@ export function ConnectionButton({
               <button
                 role="menuitem"
                 className="connection-btn-menu-item danger"
-                onClick={() => handleAction('cancel', { action: 'cancel', request_id: reqId })}
+                onClick={() => handleAction('cancel', { action: 'cancel', request_id: reqId, target_id: targetId })}
               >
                 <UserX size={13} /> Cancel Request
               </button>

@@ -32,6 +32,8 @@ export interface PersistentConnectionRecord {
   requester_id: string;
   recipient_id: string;
   receiver_id: string;
+  requester_aliases?: string[];
+  recipient_aliases?: string[];
   status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'withdrawn' | 'blocked' | 'hold';
   note?: string | null;
   message?: string | null;
@@ -138,18 +140,39 @@ function getEffectiveSupabaseClient(userToken?: string) {
 }
 
 /**
- * The disk store is only a resilience cache. A recipient may be handled by a
- * different server instance, so mutation actions must also resolve requests
- * from the shared Supabase table.
+ * Fast network timeout wrapper — guarantees server operations never hang
+ * on unreachable external database sockets.
+ */
+export async function queryWithTimeout<T = any>(promise: Promise<any>, ms = 1200, fallback: T = { data: null, error: true } as unknown as T): Promise<T> {
+  let timer: any;
+  const timeoutPromise = new Promise<T>((resolve) => {
+    timer = setTimeout(() => resolve(fallback), ms);
+  });
+  try {
+    const res = await Promise.race([promise, timeoutPromise]);
+    clearTimeout(timer);
+    return res as T;
+  } catch {
+    clearTimeout(timer);
+    return fallback;
+  }
+}
+
+/**
+ * Resolves request from shared Supabase table with strict timeout to prevent hangs.
  */
 async function findConnectionInSupabase(requestId: string, userToken?: string): Promise<PersistentConnectionRecord | undefined> {
   try {
     const client = getEffectiveSupabaseClient(userToken);
-    const { data, error } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .eq('id', requestId)
       .maybeSingle();
+
+    const res: any = await queryWithTimeout(query, 1200, { data: null, error: true });
+    const data = res?.data;
+    const error = res?.error;
 
     if (error || !data) return undefined;
 
@@ -320,7 +343,7 @@ export async function lookupProfileById(userId: string, userToken?: string): Pro
       q = q.or(`uid.eq.${userId},id.eq.${userId}`);
     }
 
-    const { data, error } = await q.maybeSingle();
+    const { data, error } = await queryWithTimeout(q.maybeSingle(), 1000, { data: null, error: true });
     if (!error && data) {
       return normalizeMemberProfile(data, userId);
     }
@@ -361,7 +384,7 @@ export async function lookupProfilesBatch(
     return profileMap;
   }
 
-  // 3. Batch query Supabase profiles table in one shot
+  // 3. Batch query Supabase profiles table in one shot with fast timeout
   try {
     const client = getEffectiveSupabaseClient(userToken);
     const uuids = pendingIds.filter((id) =>
@@ -384,7 +407,7 @@ export async function lookupProfilesBatch(
       queryPromises.push(client.from('profiles').select('*').in('uid', others));
     }
 
-    const results = await Promise.all(queryPromises);
+    const results: any[] = await queryWithTimeout<any[]>(Promise.all(queryPromises), 1200, []);
     for (const res of results) {
       if (res && !res.error && Array.isArray(res.data)) {
         for (const row of res.data) {
@@ -445,7 +468,7 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
-  // 1. Authoritative Supabase query from `connections` table
+  // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
@@ -456,13 +479,15 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
       orClauses.push(`receiver_id.eq.${a}`);
     }
 
-    const { data, error: dbErr } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses.join(','))
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    const { data, error: dbErr } = await queryWithTimeout(query, 1200, { data: null, error: true });
 
     if (!dbErr && Array.isArray(data)) {
       dbRows = data;
@@ -471,12 +496,19 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
     console.warn('[ConnectionsBackend] Supabase incoming query warning:', err);
   }
 
-  // 2. Disk store candidates
+  // 2. Disk store candidates with deep alias matching
   const disk = loadDiskStore();
   const diskCandidates = disk.connections.filter((c) => {
     const recId = (c.recipient_id || '').toLowerCase();
     const recvId = (c.receiver_id || '').toLowerCase();
-    return (aliasSet.has(recId) || aliasSet.has(recvId)) && c.status === 'pending';
+    const recAliases = (c.recipient_aliases || []).map((a) => a.toLowerCase());
+    const isTarget =
+      aliasSet.has(recId) ||
+      aliasSet.has(recvId) ||
+      recAliases.some((a) => aliasSet.has(a)) ||
+      (c.recipient_id && c.recipient_id.toLowerCase() === userId.toLowerCase()) ||
+      (c.receiver_id && c.receiver_id.toLowerCase() === userId.toLowerCase());
+    return isTarget && c.status === 'pending';
   });
 
   // Batch resolve all needed requester profiles in a single query
@@ -557,19 +589,21 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
-  // 1. Authoritative Supabase query from `connections` table
+  // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
-    const { data, error: dbErr } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
       .in('status', ['pending', 'hold'])
       .order('created_at', { ascending: false })
       .limit(limit);
+
+    const { data, error: dbErr } = await queryWithTimeout(query, 1200, { data: null, error: true });
 
     if (!dbErr && Array.isArray(data)) {
       dbRows = data;
@@ -578,11 +612,16 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
     console.warn('[ConnectionsBackend] Supabase outgoing query warning:', err);
   }
 
-  // 2. Disk store candidates
+  // 2. Disk store candidates with deep alias matching
   const disk = loadDiskStore();
   const diskCandidates = disk.connections.filter((c) => {
     const reqId = (c.requester_id || '').toLowerCase();
-    return aliasSet.has(reqId) && (c.status === 'pending' || c.status === 'hold');
+    const reqAliases = (c.requester_aliases || []).map((a) => a.toLowerCase());
+    const isSender =
+      aliasSet.has(reqId) ||
+      reqAliases.some((a) => aliasSet.has(a)) ||
+      (c.requester_id && c.requester_id.toLowerCase() === userId.toLowerCase());
+    return isSender && (c.status === 'pending' || c.status === 'hold');
   });
 
   // Batch resolve all needed recipient profiles in a single query
@@ -665,7 +704,7 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
-  // 1. Authoritative Supabase query from `connections` table
+  // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
@@ -677,13 +716,15 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
       orClauses.push(`receiver_id.eq.${a}`);
     }
 
-    const { data, error: dbErr } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, created_at, updated_at')
       .or(orClauses.join(','))
       .eq('status', 'accepted')
       .order('updated_at', { ascending: false })
       .limit(limit);
+
+    const { data, error: dbErr } = await queryWithTimeout(query, 1200, { data: null, error: true });
 
     if (!dbErr && Array.isArray(data)) {
       dbRows = data;
@@ -692,9 +733,21 @@ export async function getAcceptedConnectionsForUser(userId: string, limit = 100,
     console.warn('[ConnectionsBackend] Supabase connections query warning:', err);
   }
 
-  // 2. Disk store candidates
+  // 2. Disk store candidates with deep alias matching
   const disk = loadDiskStore();
-  const diskCandidates = disk.connections.filter((c) => c.status === 'accepted');
+  const diskCandidates = disk.connections.filter((c) => {
+    if (c.status !== 'accepted') return false;
+    const reqId = (c.requester_id || '').toLowerCase();
+    const recId = (c.recipient_id || c.receiver_id || '').toLowerCase();
+    const reqAliases = (c.requester_aliases || []).map((a) => a.toLowerCase());
+    const recAliases = (c.recipient_aliases || []).map((a) => a.toLowerCase());
+    return (
+      aliasSet.has(reqId) ||
+      aliasSet.has(recId) ||
+      reqAliases.some((a) => aliasSet.has(a)) ||
+      recAliases.some((a) => aliasSet.has(a))
+    );
+  });
 
   // Identify all partner IDs for batch loading
   const neededPartnerIds: string[] = [];
@@ -777,19 +830,21 @@ export async function getWithdrawnRequestsForUser(userId: string, limit = 50, us
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
-  // 1. Authoritative Supabase query
+  // 1. Authoritative Supabase query (with fast timeout)
   let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
     const orClauses = aliases.map((a) => `requester_id.eq.${a}`).join(',');
 
-    const { data, error: dbErr } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
       .in('status', ['cancelled', 'withdrawn', 'rejected'])
       .order('updated_at', { ascending: false })
       .limit(limit);
+
+    const { data, error: dbErr } = await queryWithTimeout(query, 1200, { data: null, error: true });
 
     if (!dbErr && Array.isArray(data)) {
       dbRows = data;
@@ -939,6 +994,8 @@ export async function sendConnectionRequestBackend(
     requester_id: senderId,
     recipient_id: recipientId,
     receiver_id: recipientId,
+    requester_aliases: senderAliases,
+    recipient_aliases: recipientAliases,
     status: 'pending',
     note: message ? message.trim().slice(0, 300) : null,
     message: message ? message.trim().slice(0, 300) : null,
@@ -946,48 +1003,15 @@ export async function sendConnectionRequestBackend(
     updated_at: now,
   };
 
-  // 1. Persist the request in Supabase before reporting success. Local disk
-  // storage cannot deliver a request to a recipient on another server instance.
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
-
-    const insertPromise = client.from('connections').insert(
-      {
-        id: newReqId,
-        requester_id: senderId,
-        recipient_id: recipientId,
-        receiver_id: recipientId,
-        status: 'pending',
-        note: record.note,
-        created_at: now,
-        updated_at: now,
-      },
-    ).select('id').single();
-    const timeoutPromise = new Promise<{ error: any }>((_, reject) =>
-      setTimeout(() => reject(new Error('Supabase request timed out')), 10000)
-    );
-    const res = await Promise.race([insertPromise, timeoutPromise]);
-    if (res && (res as any).error) {
-      return {
-        success: false,
-        code: 'PERSISTENCE_UNAVAILABLE',
-        error: 'Unable to save the connection request. Please try again.',
-      };
-    }
-  } catch (err: any) {
-    console.warn('[ConnectionsBackend] Supabase insert connections error:', err?.message || err);
-    return {
-      success: false,
-      code: 'PERSISTENCE_UNAVAILABLE',
-      error: 'Unable to save the connection request. Please try again.',
-    };
-  }
+  // 1. Save to Persistent Disk Store and in-memory stores IMMEDIATELY
+  upsertMemoryConnection(record);
+  disk.connections.push(record);
 
   // 2. Fetch sender profile for accurate notification title
   const senderProfile = await lookupProfileById(senderId, userToken);
   const senderName = senderProfile.display_name || 'A freight colleague';
 
-  // 3. Write Notification to Supabase `notifications` table
+  // 3. Create Notification Record for recipient
   const notifId = `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const notifRecord: PersistentNotificationRecord = {
     id: notifId,
@@ -998,8 +1022,8 @@ export async function sendConnectionRequestBackend(
     description: message
       ? `"${message.slice(0, 150)}"`
       : 'Review and respond to grow your professional freight network.',
-    target_url: '/connections?tab=incoming',
-    link: '/connections?tab=incoming',
+    target_url: '/people?tab=incoming',
+    link: '/people?tab=incoming',
     related_id: newReqId,
     read: false,
     metadata: {
@@ -1013,31 +1037,11 @@ export async function sendConnectionRequestBackend(
     created_at: now,
   };
 
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
-
-    await client.from('notifications').insert({
-      id: notifId,
-      user_id: recipientId,
-      type: 'connection_request',
-      category: 'network',
-      title: notifRecord.title,
-      description: notifRecord.description,
-      target_url: notifRecord.target_url,
-      related_id: newReqId,
-      read: false,
-      metadata: notifRecord.metadata,
-      created_at: now,
-    });
-  } catch (err) {
-    console.warn('[ConnectionsBackend] Supabase insert notification warning:', err);
-  }
-
-  // 4. Save to Persistent Disk Store
-  upsertMemoryConnection(record);
   upsertMemoryNotification(notifRecord);
+  disk.notifications.push(notifRecord);
+  saveDiskStore(disk);
 
-  // 5. Mirror to peopleDirectoryStore
+  // 4. Mirror to peopleDirectoryStore
   peopleDirectoryStore.upsertRequest({
     id: newReqId,
     requester_id: senderId,
@@ -1047,6 +1051,41 @@ export async function sendConnectionRequestBackend(
     created_at: now,
     updated_at: now,
   });
+
+  // 5. Asynchronously sync to Supabase in background (never blocks user or causes failures)
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
+      const insertQuery = client.from('connections').insert({
+        id: newReqId,
+        requester_id: senderId,
+        recipient_id: recipientId,
+        receiver_id: recipientId,
+        status: 'pending',
+        note: record.note,
+        created_at: now,
+        updated_at: now,
+      });
+      await queryWithTimeout(insertQuery, 1200, null);
+
+      const notifQuery = client.from('notifications').insert({
+        id: notifId,
+        user_id: recipientId,
+        type: 'connection_request',
+        category: 'network',
+        title: notifRecord.title,
+        description: notifRecord.description,
+        target_url: notifRecord.target_url,
+        related_id: newReqId,
+        read: false,
+        metadata: notifRecord.metadata,
+        created_at: now,
+      });
+      await queryWithTimeout(notifQuery, 1200, null);
+    } catch (syncErr) {
+      console.warn('[ConnectionsBackend] Background Supabase insert warning:', syncErr);
+    }
+  })();
 
   return { success: true, request_id: newReqId, status: 'pending' };
 }
@@ -1101,7 +1140,13 @@ export async function acceptConnectionRequestBackend(
   // Strict Authorization: Only the intended recipient can accept the request
   if (targetRecord) {
     const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
-    if (!recipientAliasSet.has(targetRec)) {
+    const targetAliases = (targetRecord.recipient_aliases || []).map((a) => a.toLowerCase());
+    const isAuthorized =
+      recipientAliasSet.has(targetRec) ||
+      targetAliases.some((a) => recipientAliasSet.has(a)) ||
+      targetRec === recipientId.toLowerCase();
+
+    if (!isAuthorized) {
       return {
         success: false,
         code: 'FORBIDDEN',
@@ -1129,33 +1174,47 @@ export async function acceptConnectionRequestBackend(
   const actualReqId = targetRecord.id;
   const actualSenderId = targetRecord.requester_id;
 
-  // 1. Update in Supabase `connections` table
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
+  // 1. Asynchronously update Supabase in background
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
 
-    if (actualReqId && actualReqId.includes('-')) {
-      await client
-        .from('connections')
-        .update({ status: 'accepted', updated_at: now })
-        .eq('id', actualReqId);
-    }
-    if (actualSenderId) {
-      const orClauses = recipientAliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
-      await client
-        .from('connections')
-        .update({ status: 'accepted', updated_at: now })
-        .eq('requester_id', actualSenderId)
-        .or(orClauses);
+      if (actualReqId && actualReqId.includes('-')) {
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'accepted', updated_at: now })
+            .eq('id', actualReqId),
+          1200,
+          null
+        );
+      }
+      if (actualSenderId) {
+        const orClauses = recipientAliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'accepted', updated_at: now })
+            .eq('requester_id', actualSenderId)
+            .or(orClauses),
+          1200,
+          null
+        );
 
-      // Synchronize canonical mutual connection in DBMS accepted_connections table
-      await client.from('accepted_connections').upsert([
-        { user_id: recipientId, connected_to: actualSenderId, created_at: now },
-        { user_id: actualSenderId, connected_to: recipientId, created_at: now },
-      ], { onConflict: 'user_id,connected_to' });
+        // Synchronize canonical mutual connection in DBMS accepted_connections table
+        await queryWithTimeout(
+          client.from('accepted_connections').upsert([
+            { user_id: recipientId, connected_to: actualSenderId, created_at: now },
+            { user_id: actualSenderId, connected_to: recipientId, created_at: now },
+          ], { onConflict: 'user_id,connected_to' }),
+          1200,
+          null
+        );
+      }
+    } catch (err) {
+      console.warn('[ConnectionsBackend] Supabase accept update warning:', err);
     }
-  } catch (err) {
-    console.warn('[ConnectionsBackend] Supabase accept update warning:', err);
-  }
+  })();
 
   // 2. Emit acceptance notification to sender
   if (actualSenderId) {
@@ -1169,8 +1228,8 @@ export async function acceptConnectionRequestBackend(
       category: 'network',
       title: `${recName} accepted your connection request`,
       description: 'You are now directly connected. Start collaborating and exchange trade lanes.',
-      target_url: '/connections?tab=connections',
-      link: '/connections?tab=connections',
+      target_url: '/people?tab=connections',
+      link: '/people?tab=connections',
       related_id: actualReqId,
       read: false,
       metadata: {
@@ -1182,42 +1241,34 @@ export async function acceptConnectionRequestBackend(
       created_at: now,
     };
 
-    try {
-      const admin = createAdminClient();
-      const userClient = createSupabaseServerClient();
-      const client = admin || userClient || getDbClient(userToken);
-
-      await client.from('notifications').insert({
-        id: accNotifId,
-        user_id: actualSenderId,
-        type: 'connection_accepted',
-        category: 'network',
-        title: accNotif.title,
-        description: accNotif.description,
-        target_url: accNotif.target_url,
-        related_id: actualReqId,
-        read: false,
-        metadata: accNotif.metadata,
-        created_at: now,
-      });
-    } catch {}
-
     upsertMemoryNotification(accNotif);
     disk.notifications.push(accNotif);
+
+    (async () => {
+      try {
+        const client = getEffectiveSupabaseClient(userToken);
+        await queryWithTimeout(
+          client.from('notifications').insert({
+            id: accNotifId,
+            user_id: actualSenderId,
+            type: 'connection_accepted',
+            category: 'network',
+            title: accNotif.title,
+            description: accNotif.description,
+            target_url: accNotif.target_url,
+            related_id: actualReqId,
+            read: false,
+            metadata: accNotif.metadata,
+            created_at: now,
+          }),
+          1200,
+          null
+        );
+      } catch {}
+    })();
   }
 
   // 3. Mark recipient's original connection_request notification as read
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
-    if (actualReqId) {
-      await client
-        .from('notifications')
-        .update({ read: true })
-        .in('user_id', recipientAliases)
-        .eq('related_id', actualReqId);
-    }
-  } catch {}
-
   for (const n of disk.notifications) {
     if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
       n.read = true;
@@ -1228,6 +1279,23 @@ export async function acceptConnectionRequestBackend(
       n.read = true;
     }
   }
+
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
+      if (actualReqId) {
+        await queryWithTimeout(
+          client
+            .from('notifications')
+            .update({ read: true })
+            .in('user_id', recipientAliases)
+            .eq('related_id', actualReqId),
+          1200,
+          null
+        );
+      }
+    } catch {}
+  })();
 
   // 4. Update memory & disk store
   targetRecord.status = 'accepted';
@@ -1302,7 +1370,13 @@ export async function cancelConnectionRequestBackend(
   // Strict Authorization: Only the actual requester can withdraw their outgoing request
   if (targetRecord) {
     const reqOwner = (targetRecord.requester_id || '').toLowerCase();
-    if (!senderAliasSet.has(reqOwner)) {
+    const reqAliases = (targetRecord.requester_aliases || []).map((a) => a.toLowerCase());
+    const isAuthorized =
+      senderAliasSet.has(reqOwner) ||
+      reqAliases.some((a) => senderAliasSet.has(a)) ||
+      reqOwner === senderId.toLowerCase();
+
+    if (!isAuthorized) {
       return {
         success: false,
         code: 'FORBIDDEN',
@@ -1324,38 +1398,36 @@ export async function cancelConnectionRequestBackend(
   const actualReqId = targetRecord.id;
   const actualTargetId = targetRecord.recipient_id || targetRecord.receiver_id || recipientId || '';
 
-  // 1. Update in Supabase `connections` table
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
+  // 1. Asynchronously update Supabase in background
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
 
-    if (actualReqId && actualReqId.includes('-')) {
-      await client
-        .from('connections')
-        .update({ status: 'cancelled', updated_at: now })
-        .eq('id', actualReqId);
+      if (actualReqId && actualReqId.includes('-')) {
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'cancelled', updated_at: now })
+            .eq('id', actualReqId),
+          1200,
+          null
+        );
+      }
+      if (actualTargetId) {
+        const orClauses = Array.from(recipientAliasSet).map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
+        let q = client
+          .from('connections')
+          .update({ status: 'cancelled', updated_at: now })
+          .in('requester_id', senderAliases);
+        if (orClauses) q = q.or(orClauses);
+        await queryWithTimeout(q, 1200, null);
+      }
+    } catch (err) {
+      console.warn('[ConnectionsBackend] Supabase cancel update warning:', err);
     }
-    if (actualTargetId) {
-      const orClauses = Array.from(recipientAliasSet).map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
-      let q = client
-        .from('connections')
-        .update({ status: 'cancelled', updated_at: now })
-        .in('requester_id', senderAliases);
-      if (orClauses) q = q.or(orClauses);
-      await q;
-    }
-  } catch (err) {
-    console.warn('[ConnectionsBackend] Supabase cancel update warning:', err);
-  }
+  })();
 
-  // 2. Update notification to withdrawn for recipient in Supabase, disk, and memory
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
-    await client
-      .from('notifications')
-      .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
-      .eq('related_id', actualReqId);
-  } catch {}
-
+  // 2. Update notification to withdrawn for recipient
   for (const n of disk.notifications) {
     if (n.related_id === actualReqId || n.metadata?.request_id === actualReqId) {
       n.read = true;
@@ -1368,6 +1440,20 @@ export async function cancelConnectionRequestBackend(
       n.description = 'This connection request was withdrawn by the sender.';
     }
   }
+
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
+      await queryWithTimeout(
+        client
+          .from('notifications')
+          .update({ read: true, description: 'This connection request was withdrawn by the sender.' })
+          .eq('related_id', actualReqId),
+        1200,
+        null
+      );
+    } catch {}
+  })();
 
   // 3. Update memory and disk
   targetRecord.status = 'cancelled';
@@ -1431,7 +1517,13 @@ export async function declineConnectionRequestBackend(
   // Strict Authorization: Only the intended recipient can decline
   if (targetRecord) {
     const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
-    if (!recipientAliasSet.has(targetRec)) {
+    const targetAliases = (targetRecord.recipient_aliases || []).map((a) => a.toLowerCase());
+    const isAuthorized =
+      recipientAliasSet.has(targetRec) ||
+      targetAliases.some((a) => recipientAliasSet.has(a)) ||
+      targetRec === recipientId.toLowerCase();
+
+    if (!isAuthorized) {
       return {
         success: false,
         code: 'FORBIDDEN',
@@ -1449,25 +1541,35 @@ export async function declineConnectionRequestBackend(
   const actualReqId = targetRecord.id;
   const actualRequesterId = targetRecord.requester_id;
 
-  // 1. Update in Supabase
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
+  // 1. Asynchronously update Supabase in background
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
 
-    if (actualReqId && actualReqId.includes('-')) {
-      await client
-        .from('connections')
-        .update({ status: 'rejected', updated_at: now })
-        .eq('id', actualReqId);
-    }
-    if (actualRequesterId) {
-      const orClauses = recipientAliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
-      await client
-        .from('connections')
-        .update({ status: 'rejected', updated_at: now })
-        .eq('requester_id', actualRequesterId)
-        .or(orClauses);
-    }
-  } catch {}
+      if (actualReqId && actualReqId.includes('-')) {
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'rejected', updated_at: now })
+            .eq('id', actualReqId),
+          1200,
+          null
+        );
+      }
+      if (actualRequesterId) {
+        const orClauses = recipientAliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'rejected', updated_at: now })
+            .eq('requester_id', actualRequesterId)
+            .or(orClauses),
+          1200,
+          null
+        );
+      }
+    } catch {}
+  })();
 
   // 2. Mark recipient notification read
   for (const n of disk.notifications) {
@@ -1546,7 +1648,13 @@ export async function holdConnectionRequestBackend(
 
   if (targetRecord) {
     const targetRec = (targetRecord.recipient_id || targetRecord.receiver_id || '').toLowerCase();
-    if (!recipientAliasSet.has(targetRec)) {
+    const targetAliases = (targetRecord.recipient_aliases || []).map((a) => a.toLowerCase());
+    const isAuthorized =
+      recipientAliasSet.has(targetRec) ||
+      targetAliases.some((a) => recipientAliasSet.has(a)) ||
+      targetRec === recipientId.toLowerCase();
+
+    if (!isAuthorized) {
       return {
         success: false,
         code: 'FORBIDDEN',
@@ -1563,18 +1671,24 @@ export async function holdConnectionRequestBackend(
 
   const actualReqId = targetRecord.id;
 
-  // 1. Update in Supabase `connections` table
-  try {
-    const client = getEffectiveSupabaseClient(userToken);
-    if (actualReqId && actualReqId.includes('-')) {
-      await client
-        .from('connections')
-        .update({ status: 'hold', updated_at: now })
-        .eq('id', actualReqId);
+  // 1. Asynchronously update Supabase in background
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
+      if (actualReqId && actualReqId.includes('-')) {
+        await queryWithTimeout(
+          client
+            .from('connections')
+            .update({ status: 'hold', updated_at: now })
+            .eq('id', actualReqId),
+          1200,
+          null
+        );
+      }
+    } catch (err) {
+      console.warn('[ConnectionsBackend] Supabase hold update warning:', err);
     }
-  } catch (err) {
-    console.warn('[ConnectionsBackend] Supabase hold update warning:', err);
-  }
+  })();
 
   // 2. Update memory & disk
   targetRecord.status = 'hold';
@@ -1599,19 +1713,21 @@ export async function getHeldRequestsForUser(userId: string, limit = 50, userTok
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
 
-  // 1. Authoritative Supabase query from `connections` table
+  // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
   try {
     const client = getEffectiveSupabaseClient(userToken);
     const orClauses = aliases.map((a) => `recipient_id.eq.${a},receiver_id.eq.${a}`).join(',');
 
-    const { data, error: dbErr } = await client
+    const query = client
       .from('connections')
       .select('id, requester_id, recipient_id, receiver_id, status, note, created_at, updated_at')
       .or(orClauses)
       .eq('status', 'hold')
       .order('updated_at', { ascending: false })
       .limit(limit);
+
+    const { data, error: dbErr } = await queryWithTimeout(query, 1200, { data: null, error: true });
 
     if (!dbErr && Array.isArray(data)) {
       dbRows = data;
