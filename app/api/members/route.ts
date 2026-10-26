@@ -60,6 +60,13 @@ export async function GET(req: NextRequest) {
             email: row.email,
           });
 
+          // Block synthetic Mumbai fallback duplicate for Kumar R
+          const rowCity = (row.city || '').toLowerCase();
+          const rowLoc = (row.location || '').toLowerCase();
+          if (resolvedMemberName.toLowerCase().includes('kumar r') && (rowCity.includes('mumbai') || rowLoc.includes('mumbai'))) {
+            continue;
+          }
+
           const normMemberName = resolvedMemberName.toLowerCase().trim();
           const normMemberCompany = (row.company_name || '').toLowerCase().trim();
 
@@ -197,7 +204,7 @@ export async function GET(req: NextRequest) {
     const sanitized = allRecords
       .filter((u) => {
         if (isTestOrDummyAccount(u)) return false;
-        if (excludeSelf && isSelfProfile(user, u)) return false;
+        if (excludeSelf && (isSelfProfile(user, u) || (u.uid && callerUid && u.uid.toLowerCase() === callerUid.toLowerCase()))) return false;
         return true;
       })
       .map((u) => {

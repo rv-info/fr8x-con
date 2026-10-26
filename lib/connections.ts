@@ -17,7 +17,7 @@ const USERS_STORAGE_KEY = 'fr8x_all_users_v2';
 
 export const CONNECTIONS_CHANGED_EVENT = 'fr8x_connections_changed';
 
-function dispatchConnectionsChanged() {
+export function dispatchConnectionsChanged() {
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new CustomEvent(CONNECTIONS_CHANGED_EVENT));
   }
@@ -126,10 +126,14 @@ export function getConnectionRequests(uid: string, altId?: string, email?: strin
   const all = getAllConnectionRequests();
   const incoming = all.filter((r) => {
     const to = (r.toUid || '').trim().toLowerCase();
+    const from = (r.fromUid || '').trim().toLowerCase();
+    if (isConnected(from, to)) return false;
     return uids.has(to) && r.status === 'pending';
   });
   const outgoing = all.filter((r) => {
+    const to = (r.toUid || '').trim().toLowerCase();
     const from = (r.fromUid || '').trim().toLowerCase();
+    if (isConnected(from, to)) return false;
     return uids.has(from) && r.status === 'pending';
   });
   const withdrawn = all.filter((r) => {

@@ -689,7 +689,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 }
               }}
               aria-label="View notifications"
-              title="Notifications (Live DBMS Synchronized)"
+              title="Notifications"
             >
               <Bell size={15} />
               {unreadCount > 0 && (
@@ -748,7 +748,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           animation: 'pulse 1.8s infinite',
                         }}
                       />
-                      Live DBMS
+                      Live
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -762,7 +762,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           setIsSyncingNotifs(false);
                         }
                       }}
-                      title="Sync immediately with DBMS"
+                      title="Sync notifications"
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',

@@ -31,6 +31,7 @@ import {
   cancelConnectionRequestBackend,
   declineConnectionRequestBackend,
   holdConnectionRequestBackend,
+  removeConnectionBackend,
   normalizeMemberProfile,
 } from '@/lib/connections-backend';
 
@@ -293,8 +294,7 @@ export async function POST(req: NextRequest) {
       }
 
       case 'remove': {
-        peopleDirectoryStore.removeConnection(userId, action.target_id);
-        result = { success: true };
+        result = await removeConnectionBackend(userId, action.target_id, caller.token);
         break;
       }
 

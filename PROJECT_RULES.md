@@ -321,5 +321,21 @@ Before "Done"    → Empirical proof captured
 
 ---
 
+## Mandatory Vercel Resource Protection Policy (CRITICAL & ENFORCED)
+
+**Zero Unbounded Compute, Functions, Queries, or Polling**:
+- **NO FEATURE, CODE CHANGE, API ENDPOINT, DATABASE QUERY, BACKGROUND JOB, OR THIRD-PARTY INTEGRATION MAY BE DEPLOYED IF IT INTRODUCES UNBOUNDED RESOURCE CONSUMPTION OR BYPASSES ESTABLISHED RESOURCE PROTECTION CONTROLS.**
+- All coding agents and engineers **MUST** follow: [`VERCEL_RESOURCE_PROTECTION_POLICY.md`](VERCEL_RESOURCE_PROTECTION_POLICY.md).
+- **Hard Boundaries**:
+  1. Every database query must specify `.limit()` (maximum 50 default). Never run full-table scans.
+  2. Every API route must declare `export const maxDuration = 10;`.
+  3. No client-side polling interval $< 60,000 \text{ ms}$ for API requests. Zero periodic pings to dynamic routes.
+  4. Static routes must have CDN `Cache-Control` headers and avoid uncached `force-dynamic`.
+  5. Never weaken or bypass RLS, rate limiting, or authentication.
+- Verification Suite: `npx -y tsx scripts/verify-vercel-resource-protection.ts`.
+
+---
+
 *GSD Methodology — Model-Agnostic Edition*
 *Reference implementation for multi-LLM environments*
+

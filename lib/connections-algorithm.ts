@@ -163,9 +163,27 @@ export function isSelfProfile(
   const myCompany = (me.company || (me as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
   const targetCompany = (target.company || (target as any).company_name || '').toString().trim().toLowerCase().replace(/\s+/g, ' ');
 
-  if (myName && targetName && myName === targetName && myName !== 'fr8x member') {
-    if (myCompany && targetCompany && (myCompany === targetCompany || myCompany.includes(targetCompany) || targetCompany.includes(myCompany))) {
-      return true;
+  // Direct normalized display name match:
+  // Disallow recommending identical human identities to each other (prevent self-recommendations)
+  if (
+    myName &&
+    targetName &&
+    myName === targetName &&
+    myName !== 'fr8x member' &&
+    myName !== 'freight professional' &&
+    myName !== 'user'
+  ) {
+    return true;
+  }
+
+  // Cross-match if company or first+last tokens strongly match
+  if (myName && targetName && myCompany && targetCompany) {
+    if (myCompany === targetCompany || myCompany.includes(targetCompany) || targetCompany.includes(myCompany)) {
+      const myTokens = myName.split(' ').filter(Boolean);
+      const targetTokens = targetName.split(' ').filter(Boolean);
+      if (myTokens.length > 0 && targetTokens.length > 0 && myTokens[0] === targetTokens[0]) {
+        return true;
+      }
     }
   }
 
@@ -174,7 +192,7 @@ export function isSelfProfile(
 
 /**
  * Filter to permanently block test fixtures, automated dummy accounts,
- * and sample records from surfacing in production directory or recommendations.
+ * pilot fixtures, and sample records from surfacing in production directory or recommendations.
  */
 export function isTestOrDummyAccount(
   user?: Partial<UserProfile> | Record<string, any> | null
@@ -189,19 +207,24 @@ export function isTestOrDummyAccount(
     .trim();
   const company = (user.company || (user as any).company_name || '').toString().toLowerCase().trim();
   const designation = (user.designation || (user as any).position || (user as any).headline || '').toString().toLowerCase().trim();
+  const city = ((user as any).city || '').toString().toLowerCase().trim();
+  const location = ((user as any).location || '').toString().toLowerCase().trim();
 
   // 1. UID test patterns
   if (['u-arjun', 'u-sarah', 'u-kiran', 'u-elena', 'u-david', 'u-vikram', 'u-ananya', 'u-suspended-01', 'u-chen', 'u-vikas', 'usr_raivega_mgt'].includes(uid)) return true;
-  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp|su|exp)[-_0-9]/i.test(uid)) return true;
+  if (/^(u-)?(lockout|sureset|test|pilot|tmp|dummy|fixture|temp|su|exp)[-_0-9.]/i.test(uid)) return true;
   if (/^usr_(compliance|commerce)_[0-9]+/i.test(uid)) return true;
   if (/^u-[a-z]+-[0-9]{10,}/i.test(uid)) return true;
+  if (/[0-9]{10,}/.test(uid) && (uid.includes('pilot') || uid.includes('test'))) return true;
+  if (uid.includes('pilot.') || uid.includes('pilot_') || uid.includes('pilot-') || uid.includes('pilotuser')) return true;
 
   // 2. Email test patterns
   if (email.includes('@example.com') || email.includes('@test.') || email.includes('.test@') || email.includes('test.pilot') || email.endsWith('.local') || email.endsWith('@enterprise.local')) return true;
-  if (/^(lockout|sureset|test|tester|dummy|temp|sample|mock|single-use|delivery-test|otprate)[-_0-9.]/i.test(email)) return true;
+  if (/^(lockout|sureset|test|tester|dummy|temp|sample|mock|single-use|delivery-test|otprate|pilot)[-_0-9.]/i.test(email)) return true;
   if (email.includes('operations.test') || email.includes('test_') || email.includes('test-') || email.includes('+test')) return true;
+  if (/pilot.*@/i.test(email)) return true;
 
-  // 3. Name test patterns
+  // 3. Name test patterns (block Pilot User, numeric timestamps, and test fixtures)
   if (
     name.includes('test discovery') ||
     name.includes('operations test') ||
@@ -209,14 +232,26 @@ export function isTestOrDummyAccount(
     name.includes('test user') ||
     name.includes('mock user') ||
     name.includes('dummy user') ||
+    name.includes('pilot user') ||
+    name.includes('pilot.user') ||
+    name.includes('pilot_user') ||
+    name.startsWith('pilot.') ||
+    /\bpilot\b/i.test(name) ||
     name.includes('fixture') ||
     name.includes('sample user')
   ) {
     return true;
   }
   if (/^test\b/i.test(name) || /\btest$/i.test(name) || name === 'test') return true;
+  // Block any username that has an attached numeric timestamp/generator digits (e.g. "Pilot User 1792347563667")
+  if (/\b\d{6,}\b/.test(name) || /\d{8,}/.test(name)) return true;
 
-  // 4. Company test patterns
+  // 4. Block synthetic Mumbai duplicate fixture (seed without verified email or auth UID)
+  if (name.includes('kumar r') && !email && (city.includes('mumbai') || location.includes('mumbai'))) {
+    return true;
+  }
+
+  // 5. Company test patterns
   if (
     company.includes('fr8x test') ||
     company.includes('test co') ||
@@ -228,7 +263,7 @@ export function isTestOrDummyAccount(
     return true;
   }
 
-  // 5. Designation test patterns
+  // 6. Designation test patterns
   if (designation.includes('test controller') || designation.includes('dummy')) return true;
 
   return false;

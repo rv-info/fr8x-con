@@ -12,6 +12,7 @@ import path from 'path';
 import { getDbClient, createAdminClient, createClient as createSupabaseServerClient } from '@/lib/supabase/server';
 import { getAllPresence } from '@/lib/db/presence';
 import { peopleDirectoryStore } from '@/lib/people-directory';
+import { getAcceptedConnectionsForUser, removeConnectionBackend } from '@/lib/connections-backend';
 
 export interface ContactRecord {
   id: string;
@@ -117,19 +118,15 @@ export async function getUserContacts(userId: string, userToken?: string): Promi
     presenceMap = await getAllPresence();
   } catch {}
 
-  // Fetch accepted connections from DBMS to ensure full two-way synchronicity
+  // Fetch accepted connections from authoritative network backend
   let acceptedConnections: any[] = [];
   try {
-    const { data: conns } = await client
-      .from('accepted_connections')
-      .select('connected_to, created_at, profiles:connected_to(id, display_name, full_name, first_name, last_name, company, company_name, designation, headline, avatar_url, is_verified, has_golden_tick, city, country, email, phone)')
-      .eq('user_id', userId);
-
+    const conns = await getAcceptedConnectionsForUser(userId, 100, userToken);
     if (Array.isArray(conns)) {
       acceptedConnections = conns;
     }
-  } catch {
-    // Check peopleDirectoryStore memory fallback
+  } catch (err) {
+    console.warn('[Contacts] getAcceptedConnectionsForUser fallback warning:', err);
     try {
       const memoryConns = peopleDirectoryStore.getConnections(userId);
       acceptedConnections = memoryConns.map((p: any) => ({
@@ -154,7 +151,7 @@ export async function getUserContacts(userId: string, userToken?: string): Promi
     contactMap.set(key, c);
   }
 
-  // 2. Merge all accepted connections from DBMS so every connection is in the CRM
+  // 2. Merge all accepted connections so every connection is in the CRM
   for (const conn of acceptedConnections) {
     const profile = conn.profiles;
     if (!profile) continue;
@@ -368,27 +365,14 @@ export async function deleteContact(
     console.warn('[lib/db/contacts] Supabase delete warning:', err.message);
   }
 
-  // 2. If requested to delete DBMS connection, remove from accepted_connections and directory
+  // 2. If requested to delete connection, remove from connections backend
   let connectionRemoved = false;
   if (deleteConnection && targetProfileId) {
     try {
-      await client
-        .from('accepted_connections')
-        .delete()
-        .eq('user_id', userId)
-        .eq('connected_to', targetProfileId);
-
-      await client
-        .from('accepted_connections')
-        .delete()
-        .eq('user_id', targetProfileId)
-        .eq('connected_to', userId);
-
-      // Invalidate memory store
-      peopleDirectoryStore.removeConnection(userId, targetProfileId);
+      await removeConnectionBackend(userId, targetProfileId, userToken);
       connectionRemoved = true;
     } catch (err: any) {
-      console.warn('[lib/db/contacts] Remove DBMS connection warning:', err.message);
+      console.warn('[lib/db/contacts] Remove connection warning:', err?.message);
     }
   }
 

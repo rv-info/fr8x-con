@@ -47,6 +47,7 @@ import { useToast } from '@/lib/context/ToastContext';
 import { UserAvatar } from '@/components/ui/UserAvatar';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { ContactRecord } from '@/lib/db/contacts';
+import { getClientAuthHeaders, CONNECTIONS_CHANGED_EVENT, dispatchConnectionsChanged } from '@/lib/connections';
 
 type MainContactTab = 'all' | 'discover' | 'incoming' | 'outgoing' | 'held';
 type ViewMode = 'grid' | 'table';
@@ -142,6 +143,29 @@ export default function ContactsCrmPage() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [requestBusyId, setRequestBusyId] = useState<string | null>(null);
 
+  // Active filtered requests (excludes accepted, cancelled, withdrawn, or already in CRM)
+  const activeIncomingRequests = useMemo(() => {
+    return incomingRequests.filter((req) => {
+      if (!req || req.status === 'accepted' || req.status === 'cancelled' || req.status === 'withdrawn' || req.status === 'declined') return false;
+      const fromId = (req.profiles?.id || req.requester_id || '').toLowerCase();
+      if (fromId && contacts.some((c) => (c.id || '').toLowerCase() === fromId || (c.email && req.profiles?.email && c.email.toLowerCase() === req.profiles.email.toLowerCase()))) {
+        return false;
+      }
+      return true;
+    });
+  }, [incomingRequests, contacts]);
+
+  const activeOutgoingRequests = useMemo(() => {
+    return outgoingRequests.filter((req) => {
+      if (!req || req.status === 'accepted' || req.status === 'cancelled' || req.status === 'withdrawn') return false;
+      const recId = (req.profiles?.id || req.recipient_id || '').toLowerCase();
+      if (recId && contacts.some((c) => (c.id || '').toLowerCase() === recId || (c.email && req.profiles?.email && c.email.toLowerCase() === req.profiles.email.toLowerCase()))) {
+        return false;
+      }
+      return true;
+    });
+  }, [outgoingRequests, contacts]);
+
   // Network Discovery State
   const [directoryMembers, setDirectoryMembers] = useState<ProfileSnippet[]>([]);
   const [discoverSearch, setDiscoverSearch] = useState('');
@@ -218,7 +242,8 @@ export default function ContactsCrmPage() {
     else setLoadingContacts(true);
 
     try {
-      const res = await fetch('/api/contacts', { credentials: 'include' });
+      const authHeaders = getClientAuthHeaders(user?.uid);
+      const res = await fetch('/api/contacts', { headers: authHeaders, credentials: 'include' });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setContacts(json.data);
@@ -229,16 +254,17 @@ export default function ContactsCrmPage() {
       setLoadingContacts(false);
       setRefreshing(false);
     }
-  }, [toast]);
+  }, [toast, user?.uid]);
 
   // ── Fetch Network Requests (Incoming, Outgoing, Held) ──────────────────────
   const fetchNetworkRequests = useCallback(async () => {
     setLoadingRequests(true);
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const [inRes, outRes, heldRes] = await Promise.all([
-        fetch('/api/people/connections?tab=incoming', { credentials: 'include' }),
-        fetch('/api/people/connections?tab=outgoing', { credentials: 'include' }),
-        fetch('/api/people/connections?tab=held', { credentials: 'include' }),
+        fetch('/api/people/connections?tab=incoming', { headers: authHeaders, credentials: 'include' }),
+        fetch('/api/people/connections?tab=outgoing', { headers: authHeaders, credentials: 'include' }),
+        fetch('/api/people/connections?tab=held', { headers: authHeaders, credentials: 'include' }),
       ]);
 
       const [inJson, outJson, heldJson] = await Promise.all([
@@ -248,10 +274,18 @@ export default function ContactsCrmPage() {
       ]);
 
       if (inJson.success && Array.isArray(inJson.data)) {
-        setIncomingRequests(inJson.data);
+        const pendingIncoming = inJson.data.filter((r: any) => {
+          if (!r || r.status === 'accepted' || r.status === 'cancelled' || r.status === 'withdrawn') return false;
+          return true;
+        });
+        setIncomingRequests(pendingIncoming);
       }
       if (outJson.success && Array.isArray(outJson.data)) {
-        setOutgoingRequests(outJson.data);
+        const pendingOutgoing = outJson.data.filter((r: any) => {
+          if (!r || r.status === 'accepted' || r.status === 'cancelled' || r.status === 'withdrawn') return false;
+          return true;
+        });
+        setOutgoingRequests(pendingOutgoing);
       }
       if (heldJson.success && Array.isArray(heldJson.data)) {
         setHeldRequests(heldJson.data);
@@ -261,7 +295,7 @@ export default function ContactsCrmPage() {
     } finally {
       setLoadingRequests(false);
     }
-  }, []);
+  }, [user?.uid]);
 
   // ── Fetch Discovery Members ────────────────────────────────────────────────
   const fetchDiscoveryMembers = useCallback(async (query = '', role = 'all') => {
@@ -289,6 +323,24 @@ export default function ContactsCrmPage() {
     fetchNetworkRequests();
   }, [fetchContacts, fetchNetworkRequests]);
 
+  // Real-time synchronization: listen for connection events across tabs & components
+  useEffect(() => {
+    const handleSync = () => {
+      fetchNetworkRequests();
+      fetchContacts(true);
+    };
+
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleSync);
+    window.addEventListener('fr8x_refresh_notifications', handleSync);
+    window.addEventListener('focus', handleSync);
+
+    return () => {
+      window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleSync);
+      window.removeEventListener('fr8x_refresh_notifications', handleSync);
+      window.removeEventListener('focus', handleSync);
+    };
+  }, [fetchNetworkRequests, fetchContacts]);
+
   // Load discovery members when tab changes or search filters change
   useEffect(() => {
     if (activeMainTab === 'discover') {
@@ -299,7 +351,7 @@ export default function ContactsCrmPage() {
     }
   }, [activeMainTab, discoverSearch, discoverRole, fetchDiscoveryMembers]);
 
-  // ── Handle Own Presence Status Toggle in DBMS ──────────────────────────────
+  // ── Handle Own Presence Status Toggle ──────────────────────────────────────
   const handleUpdateMyPresence = async (status: 'live' | 'away' | 'busy' | 'offline') => {
     if (!user?.uid || updatingPresence) return;
     setUpdatingPresence(true);
@@ -319,7 +371,7 @@ export default function ContactsCrmPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast(`Status updated to ${status.toUpperCase()} in DBMS`);
+        toast(`Status updated to ${status.toUpperCase()}`);
       }
     } catch {
       toast('Presence update failed');
@@ -331,22 +383,27 @@ export default function ContactsCrmPage() {
   // ── Connection Actions: Accept, Hold, Decline, Withdraw ────────────────────
   const handleAcceptRequest = async (requestId: string, requesterName: string) => {
     setRequestBusyId(requestId);
+    setIncomingRequests((prev) => prev.filter((r) => r.id !== requestId));
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/people/connections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({ action: 'accept', request_id: requestId }),
       });
       const json = await res.json();
       if (json.success) {
         toast(`Connected with ${requesterName}! Added to Contacts CRM.`);
+        dispatchConnectionsChanged();
         await Promise.all([fetchNetworkRequests(), fetchContacts(true)]);
       } else {
         toast(json.error || 'Failed to accept connection request.');
+        await fetchNetworkRequests();
       }
     } catch {
       toast('Network error accepting request.');
+      await fetchNetworkRequests();
     } finally {
       setRequestBusyId(null);
     }
@@ -355,15 +412,17 @@ export default function ContactsCrmPage() {
   const handleHoldRequest = async (requestId: string, requesterName: string) => {
     setRequestBusyId(requestId);
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/people/connections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({ action: 'hold', request_id: requestId }),
       });
       const json = await res.json();
       if (json.success) {
         toast(`Request from ${requesterName} kept on hold for review.`);
+        dispatchConnectionsChanged();
         await fetchNetworkRequests();
       } else {
         toast(json.error || 'Failed to hold connection request.');
@@ -377,22 +436,27 @@ export default function ContactsCrmPage() {
 
   const handleDeclineRequest = async (requestId: string, requesterName: string) => {
     setRequestBusyId(requestId);
+    setIncomingRequests((prev) => prev.filter((r) => r.id !== requestId));
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/people/connections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({ action: 'decline', request_id: requestId }),
       });
       const json = await res.json();
       if (json.success) {
         toast(`Connection request from ${requesterName} declined.`);
+        dispatchConnectionsChanged();
         await fetchNetworkRequests();
       } else {
         toast(json.error || 'Failed to decline request.');
+        await fetchNetworkRequests();
       }
     } catch {
       toast('Network error declining request.');
+      await fetchNetworkRequests();
     } finally {
       setRequestBusyId(null);
     }
@@ -400,25 +464,31 @@ export default function ContactsCrmPage() {
 
   const handleWithdrawRequest = async (requestId: string, targetName: string) => {
     setRequestBusyId(requestId);
+    // Optimistic removal so user never experiences UI lag or ghost items
+    setOutgoingRequests((prev) => prev.filter((r) => r.id !== requestId));
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/people/connections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({ action: 'cancel', request_id: requestId }),
       });
       const json = await res.json();
       if (json.success) {
         toast(`Connection request to ${targetName} withdrawn.`);
+        dispatchConnectionsChanged();
         await fetchNetworkRequests();
         if (activeMainTab === 'discover') {
           fetchDiscoveryMembers(discoverSearch, discoverRole);
         }
       } else {
         toast(json.error || 'Failed to withdraw request.');
+        await fetchNetworkRequests();
       }
     } catch {
       toast('Network error withdrawing request.');
+      await fetchNetworkRequests();
     } finally {
       setRequestBusyId(null);
     }
@@ -428,9 +498,10 @@ export default function ContactsCrmPage() {
     if (!sendConnectTarget) return;
     setSendingConnect(true);
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/people/connections', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({
           action: 'send',
@@ -443,6 +514,7 @@ export default function ContactsCrmPage() {
         toast(`Connection invitation sent to ${resolveMemberName(sendConnectTarget)}!`);
         setSendConnectTarget(null);
         setSendConnectNote('');
+        dispatchConnectionsChanged();
         await fetchNetworkRequests();
         fetchDiscoveryMembers(discoverSearch, discoverRole);
       } else {
@@ -494,16 +566,17 @@ export default function ContactsCrmPage() {
     };
 
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/contacts', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
       const json = await res.json();
 
       if (json.success) {
-        toast(`Contact "${payload.name}" saved to DBMS`);
+        toast(`Contact "${payload.name}" saved successfully`);
         setShowAddModal(false);
         resetForm();
         fetchContacts(true);
@@ -537,16 +610,17 @@ export default function ContactsCrmPage() {
     };
 
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/contacts', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
       const json = await res.json();
 
       if (json.success) {
-        toast(`Contact "${payload.name}" updated in DBMS`);
+        toast(`Contact "${payload.name}" updated successfully`);
         setShowEditModal(false);
         fetchContacts(true);
       } else {
@@ -562,9 +636,11 @@ export default function ContactsCrmPage() {
     if (!selectedContact) return;
 
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const url = `/api/contacts?id=${selectedContact.id}&deleteConnection=${deleteWithConnection ? 'true' : 'false'}`;
       const res = await fetch(url, {
         method: 'DELETE',
+        headers: authHeaders,
         credentials: 'include',
       });
       const json = await res.json();
@@ -594,9 +670,10 @@ export default function ContactsCrmPage() {
     );
 
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       await fetch('/api/contacts', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({ id: contact.id, is_favorite: updatedFav }),
       });
@@ -613,7 +690,8 @@ export default function ContactsCrmPage() {
     setChatMessages([]);
 
     try {
-      const res = await fetch(`/api/contacts/chat?contactId=${contact.id}`, { credentials: 'include' });
+      const authHeaders = getClientAuthHeaders(user?.uid);
+      const res = await fetch(`/api/contacts/chat?contactId=${contact.id}`, { headers: authHeaders, credentials: 'include' });
       const json = await res.json();
       if (json.success && Array.isArray(json.data)) {
         setChatMessages(json.data);
@@ -646,9 +724,10 @@ export default function ContactsCrmPage() {
     setChatMessages((prev) => [...prev, optimisticMsg]);
 
     try {
+      const authHeaders = getClientAuthHeaders(user?.uid);
       const res = await fetch('/api/contacts/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders },
         credentials: 'include',
         body: JSON.stringify({
           contactId: activeChatContact.id,
@@ -760,7 +839,7 @@ export default function ContactsCrmPage() {
               Contacts &amp; Network CRM
             </h1>
             <span style={{ fontSize: '11px', fontWeight: 700, background: '#E5F3FC', color: '#075985', padding: '2px 8px', borderRadius: '12px' }}>
-              PostgreSQL Connected
+              Network Connected
             </span>
           </div>
           <p style={{ fontSize: '13px', color: '#52657D', marginTop: '4px', margin: 0 }}>
@@ -799,7 +878,7 @@ export default function ContactsCrmPage() {
                 background: myPresence === 'live' ? '#DCFCE7' : 'transparent',
                 color: myPresence === 'live' ? '#15803D' : '#64748B',
               }}
-              title="Set to Live / Online in DBMS"
+              title="Set to Live / Online"
             >
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16A34A' }} />
               Live
@@ -819,7 +898,7 @@ export default function ContactsCrmPage() {
                 background: myPresence === 'away' ? '#FEF3C7' : 'transparent',
                 color: myPresence === 'away' ? '#B45309' : '#64748B',
               }}
-              title="Set to Away in DBMS"
+              title="Set to Away"
             >
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#F59E0B' }} />
               Away
@@ -839,7 +918,7 @@ export default function ContactsCrmPage() {
                 background: myPresence === 'busy' ? '#FEE2E2' : 'transparent',
                 color: myPresence === 'busy' ? '#B91C1C' : '#64748B',
               }}
-              title="Set to Busy in DBMS"
+              title="Set to Busy"
             >
               <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#EF4444' }} />
               Busy
@@ -967,7 +1046,7 @@ export default function ContactsCrmPage() {
         >
           <Inbox size={16} />
           <span>Requests Recd</span>
-          {incomingRequests.length > 0 && (
+          {activeIncomingRequests.length > 0 && (
             <span
               style={{
                 fontSize: '11px',
@@ -979,7 +1058,7 @@ export default function ContactsCrmPage() {
                 animation: 'pulse 1.8s infinite',
               }}
             >
-              {incomingRequests.length}
+              {activeIncomingRequests.length}
             </span>
           )}
         </button>
@@ -1005,7 +1084,7 @@ export default function ContactsCrmPage() {
         >
           <Send size={15} />
           <span>Requests Sent</span>
-          {outgoingRequests.length > 0 && (
+          {activeOutgoingRequests.length > 0 && (
             <span
               style={{
                 fontSize: '11px',
@@ -1016,7 +1095,7 @@ export default function ContactsCrmPage() {
                 fontWeight: 800,
               }}
             >
-              {outgoingRequests.length}
+              {activeOutgoingRequests.length}
             </span>
           )}
         </button>
@@ -1085,7 +1164,7 @@ export default function ContactsCrmPage() {
                 {contacts.length}
               </div>
               <div style={{ fontSize: '11px', color: '#64748B', marginTop: '4px' }}>
-                Synchronized with DBMS connections
+                Verified network connections
               </div>
             </div>
 
@@ -1252,7 +1331,7 @@ export default function ContactsCrmPage() {
                     color: '#475569',
                     cursor: 'pointer',
                   }}
-                  title="Refresh from DBMS"
+                  title="Refresh contacts"
                 >
                   <RefreshCw size={14} className={refreshing ? 'spin' : ''} />
                 </button>
@@ -1288,7 +1367,7 @@ export default function ContactsCrmPage() {
           {loadingContacts ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
               <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading trade contacts from DBMS...</p>
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading trade contacts...</p>
             </div>
           ) : filteredContacts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
@@ -1461,7 +1540,7 @@ export default function ContactsCrmPage() {
                         </span>
                         {contact.is_connection && (
                           <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#EEF2FF', color: '#4338CA' }}>
-                            DBMS Peer
+                            Verified Contact
                           </span>
                         )}
                       </div>
@@ -1984,7 +2063,7 @@ export default function ContactsCrmPage() {
                 Incoming Connection Requests
               </h2>
               <p style={{ fontSize: '13px', color: '#64748B', marginTop: '2px', margin: 0 }}>
-                Review incoming requests. You can accept to connect in DBMS, keep on hold for due diligence, or decline.
+                Review incoming requests. You can accept to connect, keep on hold for due diligence, or decline.
               </p>
             </div>
             <button
@@ -2010,9 +2089,9 @@ export default function ContactsCrmPage() {
           {loadingRequests ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
               <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading incoming requests from DBMS...</p>
+              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading incoming requests...</p>
             </div>
-          ) : incomingRequests.length === 0 ? (
+          ) : activeIncomingRequests.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
               <Inbox size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No pending requests</h3>
@@ -2037,7 +2116,7 @@ export default function ContactsCrmPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {incomingRequests.map((req) => {
+              {activeIncomingRequests.map((req) => {
                 const p = req.profiles;
                 const name = resolveMemberName(p);
                 const subline = resolveMemberSubline(p);
@@ -2220,7 +2299,7 @@ export default function ContactsCrmPage() {
               <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
               <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading sent requests...</p>
             </div>
-          ) : outgoingRequests.length === 0 ? (
+          ) : activeOutgoingRequests.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
               <Send size={36} style={{ margin: '0 auto', color: '#94A3B8' }} />
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#0F172A', marginTop: '12px' }}>No outgoing requests pending</h3>
@@ -2245,7 +2324,7 @@ export default function ContactsCrmPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {outgoingRequests.map((req) => {
+              {activeOutgoingRequests.map((req) => {
                 const p = req.profiles;
                 const name = resolveMemberName(p);
                 const subline = resolveMemberSubline(p);
@@ -3035,7 +3114,7 @@ export default function ContactsCrmPage() {
                   type="submit"
                   style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 700, background: '#002b66', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
-                  Save to DBMS
+                  Save Contact
                 </button>
               </div>
             </form>
@@ -3155,7 +3234,7 @@ export default function ContactsCrmPage() {
                   type="submit"
                   style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 700, background: '#002b66', color: '#FFFFFF', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
                 >
-                  Save Changes to DBMS
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -3220,10 +3299,10 @@ export default function ContactsCrmPage() {
                     onChange={(e) => setDeleteWithConnection(e.target.checked)}
                     style={{ width: '16px', height: '16px', accentColor: '#002b66' }}
                   />
-                  <span>Also remove connection relationship in DBMS</span>
+                  <span>Also remove connection relationship</span>
                 </label>
                 <p style={{ fontSize: '11px', color: '#64748B', marginTop: '4px', margin: '4px 0 0 24px' }}>
-                  Unfriends/disconnects this user from your verified PostgreSQL connection network.
+                  Unfriends/disconnects this user from your verified connection network.
                 </p>
               </div>
             )}

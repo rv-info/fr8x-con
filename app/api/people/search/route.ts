@@ -42,7 +42,13 @@ import { peopleDirectoryStore, DirectoryMember } from '@/lib/people-directory';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 import { resolveDisplayName } from '@/lib/utils';
-import { resolveCallerIdentity, queryWithTimeout } from '@/lib/connections-backend';
+import {
+  resolveCallerIdentity,
+  queryWithTimeout,
+  getAcceptedConnectionsForUser,
+  getOutgoingRequestsForUser,
+  getIncomingRequestsForUser,
+} from '@/lib/connections-backend';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 10;
@@ -68,7 +74,7 @@ const SAFE_FIELDS = [
   'location', 'city', 'country',
   'avatar_url', 'is_verified', 'has_golden_tick',
   'skills', 'specializations', 'key_trade_lanes', 'bio', 'summary', 'experiences', 'privacy_settings',
-  'rank', 'connection_status', 'mutual_count',
+  'rank', 'connection_status', 'mutual_count', 'request_id',
 ] as const;
 
 type SafeField = typeof SAFE_FIELDS[number];
@@ -119,6 +125,7 @@ function sanitizeRow(row: Record<string, unknown>): Record<SafeField, unknown> {
   out.company = company;
   out.location = location;
   out.connection_status = connectionStatus;
+  out.request_id = (row.request_id as string) || null;
   out.specializations = Array.isArray(row.specializations) ? row.specializations : [];
   out.key_trade_lanes = Array.isArray(row.key_trade_lanes) ? row.key_trade_lanes : [];
   out.skills = Array.isArray(row.skills) ? row.skills : [];
@@ -187,7 +194,8 @@ export async function GET(req: NextRequest) {
   // 1. Caller identity resolution (HMAC cookie, Supabase session, x-fr8x-user-uid header, or guest fallback)
   const caller = await resolveCallerIdentity(req);
   const userId = caller.userId || 'guest_viewer';
-  const currentUser = caller.profile || { uid: userId, email: caller.userEmail };
+  const user = caller.profile || { uid: userId, email: caller.userEmail };
+  const currentUser = user;
 
   // 2. Rate limiting: 60 searches per minute per identified user
   if (caller.userId) {
@@ -358,16 +366,69 @@ export async function GET(req: NextRequest) {
     results = fallbackResults as unknown as Record<string, unknown>[];
   }
 
-  // 6. Deduplicate by unique person ID, filter out self and test/dummy profiles, and sanitize
+  // 6. Deduplicate by unique person ID, filter out self and test/dummy profiles
   const seenMemberIds = new Set<string>();
   const deduplicatedResults = results.filter((r) => {
     const memId = String(r.id || r.user_id || '').toLowerCase();
     if (!memId || seenMemberIds.has(memId)) return false;
     if (isTestOrDummyAccount(r)) return false;
-    if (userId !== 'guest_viewer' && isSelfProfile(currentUser, r as any)) return false;
+    if (userId !== 'guest_viewer' && (isSelfProfile(user, r as any) || memId === userId.toLowerCase())) return false;
     seenMemberIds.add(memId);
     return true;
   });
+
+  // 6b. Dynamic connection status reconciliation against authoritative stores
+  if (userId && userId !== 'guest_viewer') {
+    try {
+      const [acceptedConns, outgoingReqs, incomingReqs] = await Promise.all([
+        getAcceptedConnectionsForUser(userId, 100, caller.token),
+        getOutgoingRequestsForUser(userId, 50, caller.token),
+        getIncomingRequestsForUser(userId, 50, caller.token),
+      ]);
+
+      const connectedIdSet = new Set<string>();
+      const connectedNameSet = new Set<string>();
+      for (const c of acceptedConns) {
+        if (c.connected_to) connectedIdSet.add(String(c.connected_to).toLowerCase());
+        if (c.profiles?.id) connectedIdSet.add(String(c.profiles.id).toLowerCase());
+        const cName = (c.profiles?.display_name || c.profiles?.full_name || '').toLowerCase().trim();
+        if (cName && cName !== 'freight professional' && cName !== 'fr8x member') {
+          connectedNameSet.add(cName);
+        }
+      }
+
+      const outgoingMap = new Map<string, string>(); // targetId -> requestId
+      for (const o of outgoingReqs) {
+        const oTarget = String(o.recipient_id || o.profiles?.id || '').toLowerCase();
+        if (oTarget) outgoingMap.set(oTarget, o.id);
+      }
+
+      const incomingMap = new Map<string, string>(); // senderId -> requestId
+      for (const inc of incomingReqs) {
+        const incSender = String(inc.requester_id || inc.profiles?.id || '').toLowerCase();
+        if (incSender) incomingMap.set(incSender, inc.id);
+      }
+
+      for (const r of deduplicatedResults) {
+        const rId = String(r.id || r.user_id || '').toLowerCase();
+        const rName = String(r.full_name || r.display_name || '').toLowerCase().trim();
+
+        if (connectedIdSet.has(rId) || (rName && connectedNameSet.has(rName))) {
+          r.connection_status = 'connected';
+        } else if (outgoingMap.has(rId)) {
+          r.connection_status = 'pending_sent';
+          r.request_id = outgoingMap.get(rId);
+        } else if (incomingMap.has(rId)) {
+          r.connection_status = 'pending_received';
+          r.request_id = incomingMap.get(rId);
+        } else if (!r.connection_status || r.connection_status === 'none') {
+          r.connection_status = 'not_connected';
+        }
+      }
+    } catch (statusErr) {
+      console.warn('[PeopleSearch] Connection status reconciliation warning:', statusErr);
+    }
+  }
 
   const sanitized = deduplicatedResults.map(sanitizeRow);
 

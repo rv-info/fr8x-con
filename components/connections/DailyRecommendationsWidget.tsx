@@ -136,20 +136,31 @@ export function DailyRecommendationsWidget({
         return;
       }
       const [membersRes, profileRes] = await Promise.all([
-        fetch('/api/members?limit=100').then((r) => r.json()).catch(() => null),
+        fetch('/api/members?limit=100&excludeSelf=true', {
+          headers: {
+            'x-fr8x-user-uid': myUid,
+            'x-fr8x-session': myUid,
+          },
+          credentials: 'include',
+        }).then((r) => r.json()).catch(() => null),
         fetch(`/api/user/profile?uid=${encodeURIComponent(myUid)}`).then((r) => r.json()).catch(() => null),
         syncConnectionsFromServer(myUid),
       ]);
 
-      if (membersRes && Array.isArray(membersRes.members)) {
-        const safeCandidates = membersRes.members.filter(
-          (m: any) => !isSelfProfile(currentUser, m) && !isTestOrDummyAccount(m)
-        );
-        setCandidates(safeCandidates);
-      }
-
+      const activeProfile = profileRes?.success && profileRes?.user ? profileRes.user : currentUser;
       if (profileRes?.success && profileRes?.user) {
         setHydratedSelf(profileRes.user);
+      }
+
+      if (membersRes && Array.isArray(membersRes.members)) {
+        const safeCandidates = membersRes.members.filter(
+          (m: any) =>
+            !isSelfProfile(currentUser, m) && !isTestOrDummyAccount(m) &&
+            !isSelfProfile(activeProfile, m) &&
+            m.uid !== myUid &&
+            m.uid !== currentUser.uid
+        );
+        setCandidates(safeCandidates);
       } else if (membersRes && Array.isArray(membersRes.members)) {
         const selfFromDbms = membersRes.members.find((m: any) => isSelfProfile(currentUser, m) || m.uid === myUid || m.uid === currentUser.uid);
         if (selfFromDbms) {
@@ -639,7 +650,13 @@ export function DailyRecommendationsWidget({
                         fontWeight: 800,
                       }}
                     >
-                      {uName.slice(0, 2).toUpperCase()}
+                      {(() => {
+                        const parts = uName.trim().split(/\s+/).filter(Boolean);
+                        if (parts.length >= 2) {
+                          return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+                        }
+                        return (parts[0] ? parts[0].slice(0, 2) : 'U').toUpperCase();
+                      })()}
                     </div>
                   )}
                 </div>
@@ -688,7 +705,7 @@ export function DailyRecommendationsWidget({
                   >
                     {u.company || 'Enterprise'}
                   </span>
-                  {u.city && (
+                  {(u.location || u.city) && (
                     <span
                       style={{
                         display: 'flex',
@@ -697,9 +714,13 @@ export function DailyRecommendationsWidget({
                         fontSize: '10px',
                         color: '#64748b',
                         marginTop: '2px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
                       }}
                     >
-                      <MapPin size={10} /> {u.city}, {u.country || 'India'}
+                      <MapPin size={10} style={{ flexShrink: 0 }} />{' '}
+                      {u.location || [u.city, u.state, u.country || 'India'].filter(Boolean).join(', ')}
                     </span>
                   )}
                 </div>

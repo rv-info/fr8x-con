@@ -208,8 +208,8 @@ function CompaniesKYCContent() {
         showToast(
           'success',
           editModal.isNew
-            ? `Master entity "${editModal.company.legalName}" registered in DBMS.`
-            : `Entity "${editModal.company.legalName}" updated in DBMS.`
+            ? `Master entity "${editModal.company.legalName}" registered in Corporate Registry.`
+            : `Entity "${editModal.company.legalName}" updated in Corporate Registry.`
         );
         setEditModal({ isOpen: false, company: null, isNew: false });
         fetchDbmsCompanies();
@@ -217,7 +217,7 @@ function CompaniesKYCContent() {
         showToast('error', data.error || 'Failed to save master company.');
       }
     } catch (err: any) {
-      showToast('error', err.message || 'Network error saving company to DBMS.');
+      showToast('error', err.message || 'Network error saving company to Corporate Registry.');
     } finally {
       setIsSavingDbms(false);
     }
@@ -423,7 +423,7 @@ function CompaniesKYCContent() {
           }`}
         >
           <Database className="lucide w-4 h-4 text-emerald-400" />
-          <span>DBMS Master Company Register & Duplicate Governance</span>
+          <span>Master Company Register & Duplicate Governance</span>
           <span className="gf-badge gf-badge-amber text-[9px] font-bold">
             GODFATHER EXCLUSIVE
           </span>
@@ -877,9 +877,9 @@ function CompaniesKYCContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="gf-card p-3 flex items-center justify-between border-l-4 border-l-sky-600">
               <div>
-                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">DBMS Master Entities</div>
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Master Entities</div>
                 <div className="text-xl font-mono font-bold text-slate-900 mt-0.5">{dbmsCompanies.length}</div>
-                <div className="text-[9px] text-slate-500">Persisted in DBMS companies.json</div>
+                <div className="text-[9px] text-slate-500">Corporate Registry Directory</div>
               </div>
               <div className="w-9 h-9 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
                 <Database className="lucide w-4 h-4" />
@@ -970,7 +970,7 @@ function CompaniesKYCContent() {
                 onClick={fetchDbmsCompanies}
                 disabled={isLoadingDbms}
                 className="gf-btn gf-btn-secondary flex items-center gap-1.5 cursor-pointer"
-                title="Refresh DBMS Registry"
+                title="Refresh Registry"
               >
                 <RefreshCw className={`lucide w-3 h-3 ${isLoadingDbms ? 'animate-spin' : ''}`} />
                 <span>Refresh</span>
@@ -1010,7 +1010,7 @@ function CompaniesKYCContent() {
                 className="gf-btn gf-btn-primary flex items-center gap-1.5 font-bold cursor-pointer"
               >
                 <Plus className="lucide w-3.5 h-3.5" />
-                <span>Register Master Entity in DBMS</span>
+                <span>Register Master Entity</span>
               </button>
             </div>
           </div>
@@ -1182,7 +1182,7 @@ function CompaniesKYCContent() {
                                 type="button"
                                 onClick={() => setEditModal({ isOpen: true, company: { ...comp }, isNew: false })}
                                 className="gf-btn gf-btn-secondary h-[24px] text-[10px] py-0 px-2 flex items-center gap-1 cursor-pointer"
-                                title="Edit master details in DBMS"
+                                title="Edit master details"
                               >
                                 <Edit3 className="lucide w-3 h-3" />
                                 <span>Edit</span>
@@ -1415,7 +1415,7 @@ function CompaniesKYCContent() {
                   <AlertTriangle className="lucide w-3.5 h-3.5 text-amber-700" />
                   <span>Consolidation & Duplicate Resolution Policy</span>
                 </div>
-                Merging consolidates member accounts and booking privileges into the canonical master company. The source duplicate entity will be marked as an archived alias pointing to the canonical master in DBMS.
+                Merging consolidates member accounts and booking privileges into the canonical master company. The source duplicate entity will be marked as an archived alias pointing to the canonical master in the corporate registry.
               </div>
 
               {/* Source Entity */}
@@ -1502,7 +1502,7 @@ function CompaniesKYCContent() {
                 <Database className="lucide w-4 h-4 text-emerald-400" />
                 <span>
                   {editModal.isNew
-                    ? 'Register Master Corporate Entity in DBMS'
+                    ? 'Register Master Corporate Entity'
                     : `Edit Master Entity: ${editModal.company.legalName}`}
                 </span>
               </div>
@@ -1876,7 +1876,7 @@ function CompaniesKYCContent() {
                   className="gf-btn gf-btn-primary flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   <Check className="lucide w-3.5 h-3.5" />
-                  <span>{isSavingDbms ? 'Saving to DBMS...' : 'Save to DBMS Registry'}</span>
+                  <span>{isSavingDbms ? 'Saving...' : 'Save to Corporate Registry'}</span>
                 </button>
               </div>
             </form>
@@ -1893,7 +1893,7 @@ export default function CompaniesKYCPage() {
       fallback={
         <div className="p-6 text-slate-500 font-mono text-xs flex items-center gap-2">
           <Database className="w-4 h-4 text-emerald-600 animate-spin" />
-          <span>Loading DBMS & KYC Registry...</span>
+          <span>Loading Corporate & KYC Registry...</span>
         </div>
       }
     >

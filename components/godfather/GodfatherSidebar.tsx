@@ -28,7 +28,7 @@ const NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Users & Profiles', href: '/godfather/operations/users', icon: Users },
       { label: 'Companies & KYC', href: '/godfather/operations/companies', icon: Building },
-      { label: 'DBMS Master Registry', href: '/godfather/operations/companies?tab=master_dbms', icon: Database },
+      { label: 'Corporate Master Registry', href: '/godfather/operations/companies?tab=master_dbms', icon: Database },
       { label: 'Auctions & Bids', href: '/godfather/operations/auctions', icon: Gavel },
       { label: 'Rates & Imports', href: '/godfather/operations/rates', icon: DollarSign },
       { label: 'Jobs & Advertisements', href: '/godfather/operations/jobs', icon: Briefcase },

@@ -15,13 +15,13 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
   const ALERTS = [
     {
       id: 'alt-1',
-      type: 'dbms',
-      title: 'DBMS Master Registry Synchronized',
+      type: 'registry',
+      title: 'Master Registry Synchronized',
       desc: 'Authoritative company & user stores linked with FR8X Cloud persistence.',
       time: 'Live',
       link: '/godfather/operations/companies',
       icon: Building,
-      badge: 'DBMS Active',
+      badge: 'Active',
       color: 'green',
     },
     {

@@ -24,10 +24,11 @@ const suites = [
   { name: 'Phase 20: Correct Connection Workflow, Professional Messaging, Company Profiles & UI Logic', file: 'scripts/test-connection-lifecycle-and-company-fixes.ts' },
   { name: 'Phase 21: Registration Integrity, Forensic De-duplication, Godfather Audit, Notification Center, Search History & Rich Post Formatting', file: 'scripts/test-integrity-forensics-and-enhancements.ts' },
   { name: 'Phase 22: Connection Requests, Recipient Visibility & Database-Backed Notification Bell', file: 'scripts/test-connection-workflow-root-cause.ts' },
+  { name: 'Phase 23: Vercel Resource Protection & Quota Defense Governance', file: 'scripts/verify-vercel-resource-protection.js' },
 ];
 
 console.log('╔══════════════════════════════════════════════════════════════════╗');
-console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-22)     ║');
+console.log('║        FR8X MASTER ARCHITECTURAL QUALITY GATES (PHASES 7-23)     ║');
 console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
 let allPassed = true;

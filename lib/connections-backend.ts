@@ -465,8 +465,42 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   initStore();
   const results: any[] = [];
   const seenIds = new Set<string>();
+  const resolvedIds = new Set<string>();
+  const acceptedPartnerIds = new Set<string>();
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
+
+  // 0. Pre-scan disk store to identify all resolved requests and accepted partners
+  const disk = loadDiskStore();
+  for (const c of disk.connections) {
+    const reqId = (c.requester_id || '').toLowerCase();
+    const recId = (c.recipient_id || c.receiver_id || '').toLowerCase();
+    const reqAliases = (c.requester_aliases || []).map((a) => a.toLowerCase());
+    const recAliases = (c.recipient_aliases || []).map((a) => a.toLowerCase());
+
+    const isUserInvolved =
+      aliasSet.has(reqId) ||
+      aliasSet.has(recId) ||
+      reqAliases.some((a) => aliasSet.has(a)) ||
+      recAliases.some((a) => aliasSet.has(a));
+
+    if (isUserInvolved) {
+      if (c.status === 'accepted') {
+        const partner = aliasSet.has(recId) || recAliases.some((a) => aliasSet.has(a)) ? reqId : recId;
+        if (partner) acceptedPartnerIds.add(partner.toLowerCase());
+        resolvedIds.add(c.id);
+      } else if (c.status === 'cancelled' || c.status === 'withdrawn' || c.status === 'declined' || c.status === 'rejected') {
+        resolvedIds.add(c.id);
+      }
+    }
+  }
+
+  // Also include accepted connections from in-memory directory store
+  for (const alias of aliases) {
+    for (const memConn of peopleDirectoryStore.getConnections(alias)) {
+      if (memConn?.id) acceptedPartnerIds.add(memConn.id.toLowerCase());
+    }
+  }
 
   // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
@@ -497,7 +531,6 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   }
 
   // 2. Disk store candidates with deep alias matching
-  const disk = loadDiskStore();
   const diskCandidates = disk.connections.filter((c) => {
     const recId = (c.recipient_id || '').toLowerCase();
     const recvId = (c.receiver_id || '').toLowerCase();
@@ -519,7 +552,10 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   const profileMap = await lookupProfilesBatch(allRequesterIds, userToken);
 
   for (const row of dbRows) {
-    if (!row.id || seenIds.has(row.id)) continue;
+    if (!row.id || seenIds.has(row.id) || resolvedIds.has(row.id)) continue;
+    const senderId = (row.requester_id || '').toLowerCase();
+    if (acceptedPartnerIds.has(senderId)) continue;
+
     seenIds.add(row.id);
     const reqProfile = profileMap.get(row.requester_id) || normalizeMemberProfile(null, row.requester_id);
     results.push({
@@ -545,37 +581,45 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
   }
 
   for (const c of diskCandidates) {
-    if (!seenIds.has(c.id)) {
-      seenIds.add(c.id);
-      const reqProfile = profileMap.get(c.requester_id) || normalizeMemberProfile(null, c.requester_id);
-      results.push({
-        id: c.id,
-        message: c.note || c.message || '',
-        created_at: c.created_at,
-        status: 'pending',
-        requester_id: c.requester_id,
-        recipient_id: c.recipient_id || userId,
-        profiles: reqProfile,
-      });
-    }
+    if (seenIds.has(c.id) || resolvedIds.has(c.id)) continue;
+    const senderId = (c.requester_id || '').toLowerCase();
+    if (acceptedPartnerIds.has(senderId)) continue;
+
+    seenIds.add(c.id);
+    const reqProfile = profileMap.get(c.requester_id) || normalizeMemberProfile(null, c.requester_id);
+    results.push({
+      id: c.id,
+      message: c.note || c.message || '',
+      created_at: c.created_at,
+      status: 'pending',
+      requester_id: c.requester_id,
+      recipient_id: c.recipient_id || userId,
+      profiles: reqProfile,
+    });
   }
 
   // 3. Merge from peopleDirectoryStore in-memory fallback
   for (const alias of aliases) {
     const memIncoming = peopleDirectoryStore.getIncoming(alias);
     for (const m of memIncoming) {
-      if (!seenIds.has(m.id)) {
-        seenIds.add(m.id);
-        results.push({
-          id: m.id,
-          message: m.message || '',
-          created_at: m.created_at,
-          status: m.status,
-          requester_id: m.requester?.id || '',
-          recipient_id: userId,
-          profiles: normalizeMemberProfile(m.requester),
-        });
+      if (seenIds.has(m.id) || resolvedIds.has(m.id)) continue;
+      const senderId = (m.requester?.id || m.requester_id || '').toLowerCase();
+      if (acceptedPartnerIds.has(senderId) || peopleDirectoryStore.isConnected(alias, senderId)) {
+        m.status = 'accepted';
+        continue;
       }
+      if (m.status !== 'pending' && m.status !== 'hold') continue;
+
+      seenIds.add(m.id);
+      results.push({
+        id: m.id,
+        message: m.message || '',
+        created_at: m.created_at,
+        status: m.status,
+        requester_id: m.requester?.id || '',
+        recipient_id: userId,
+        profiles: normalizeMemberProfile(m.requester),
+      });
     }
   }
 
@@ -586,8 +630,42 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   initStore();
   const results: any[] = [];
   const seenIds = new Set<string>();
+  const resolvedIds = new Set<string>();
+  const acceptedPartnerIds = new Set<string>();
   const aliases = await resolveUserAliases(userId, userToken);
   const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
+
+  // 0. Pre-scan disk store to identify all resolved requests and accepted partners
+  const disk = loadDiskStore();
+  for (const c of disk.connections) {
+    const reqId = (c.requester_id || '').toLowerCase();
+    const recId = (c.recipient_id || c.receiver_id || '').toLowerCase();
+    const reqAliases = (c.requester_aliases || []).map((a) => a.toLowerCase());
+    const recAliases = (c.recipient_aliases || []).map((a) => a.toLowerCase());
+
+    const isUserInvolved =
+      aliasSet.has(reqId) ||
+      aliasSet.has(recId) ||
+      reqAliases.some((a) => aliasSet.has(a)) ||
+      recAliases.some((a) => aliasSet.has(a));
+
+    if (isUserInvolved) {
+      if (c.status === 'accepted') {
+        const partner = aliasSet.has(reqId) || reqAliases.some((a) => aliasSet.has(a)) ? recId : reqId;
+        if (partner) acceptedPartnerIds.add(partner.toLowerCase());
+        resolvedIds.add(c.id);
+      } else if (c.status === 'cancelled' || c.status === 'withdrawn' || c.status === 'declined' || c.status === 'rejected') {
+        resolvedIds.add(c.id);
+      }
+    }
+  }
+
+  // Also include accepted connections from in-memory directory store
+  for (const alias of aliases) {
+    for (const memConn of peopleDirectoryStore.getConnections(alias)) {
+      if (memConn?.id) acceptedPartnerIds.add(memConn.id.toLowerCase());
+    }
+  }
 
   // 1. Authoritative Supabase query from `connections` table (with fast timeout)
   let dbRows: any[] = [];
@@ -613,7 +691,6 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   }
 
   // 2. Disk store candidates with deep alias matching
-  const disk = loadDiskStore();
   const diskCandidates = disk.connections.filter((c) => {
     const reqId = (c.requester_id || '').toLowerCase();
     const reqAliases = (c.requester_aliases || []).map((a) => a.toLowerCase());
@@ -632,9 +709,11 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   const profileMap = await lookupProfilesBatch(allRecipientIds, userToken);
 
   for (const row of dbRows) {
-    if (!row.id || seenIds.has(row.id)) continue;
-    seenIds.add(row.id);
+    if (!row.id || seenIds.has(row.id) || resolvedIds.has(row.id)) continue;
     const targetId = row.recipient_id || row.receiver_id;
+    if (!targetId || acceptedPartnerIds.has(targetId.toLowerCase())) continue;
+
+    seenIds.add(row.id);
     const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
     results.push({
       id: row.id,
@@ -659,38 +738,45 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
   }
 
   for (const c of diskCandidates) {
-    if (!seenIds.has(c.id)) {
-      seenIds.add(c.id);
-      const targetId = c.recipient_id || c.receiver_id;
-      const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
-      results.push({
-        id: c.id,
-        message: c.note || c.message || '',
-        created_at: c.created_at,
-        status: c.status,
-        requester_id: userId,
-        recipient_id: targetId,
-        profiles: recProfile,
-      });
-    }
+    if (seenIds.has(c.id) || resolvedIds.has(c.id)) continue;
+    const targetId = c.recipient_id || c.receiver_id;
+    if (!targetId || acceptedPartnerIds.has(targetId.toLowerCase())) continue;
+
+    seenIds.add(c.id);
+    const recProfile = profileMap.get(targetId) || normalizeMemberProfile(null, targetId);
+    results.push({
+      id: c.id,
+      message: c.note || c.message || '',
+      created_at: c.created_at,
+      status: c.status,
+      requester_id: userId,
+      recipient_id: targetId,
+      profiles: recProfile,
+    });
   }
 
   // 3. Merge from peopleDirectoryStore fallback
   for (const alias of aliases) {
     const memOutgoing = peopleDirectoryStore.getOutgoing(alias);
     for (const m of memOutgoing) {
-      if (!seenIds.has(m.id)) {
-        seenIds.add(m.id);
-        results.push({
-          id: m.id,
-          message: m.message || '',
-          created_at: m.created_at,
-          status: m.status,
-          requester_id: userId,
-          recipient_id: m.recipient?.id || '',
-          profiles: normalizeMemberProfile(m.recipient),
-        });
+      if (seenIds.has(m.id) || resolvedIds.has(m.id)) continue;
+      const targetId = (m.recipient?.id || m.recipient_id || '').toLowerCase();
+      if (acceptedPartnerIds.has(targetId) || peopleDirectoryStore.isConnected(alias, targetId)) {
+        m.status = 'accepted';
+        continue;
       }
+      if (m.status !== 'pending' && m.status !== 'hold') continue;
+
+      seenIds.add(m.id);
+      results.push({
+        id: m.id,
+        message: m.message || '',
+        created_at: m.created_at,
+        status: m.status,
+        requester_id: userId,
+        recipient_id: m.recipient?.id || '',
+        profiles: normalizeMemberProfile(m.recipient),
+      });
     }
   }
 
@@ -1300,6 +1386,12 @@ export async function acceptConnectionRequestBackend(
   // 4. Update memory & disk store
   targetRecord.status = 'accepted';
   targetRecord.updated_at = now;
+  const diskIndex = disk.connections.findIndex((c) => c.id === targetRecord!.id);
+  if (diskIndex >= 0) {
+    disk.connections[diskIndex] = targetRecord;
+  } else {
+    disk.connections.push(targetRecord);
+  }
   saveDiskStore(disk);
   upsertMemoryConnection(targetRecord);
 
@@ -1458,6 +1550,12 @@ export async function cancelConnectionRequestBackend(
   // 3. Update memory and disk
   targetRecord.status = 'cancelled';
   targetRecord.updated_at = now;
+  const diskIndexCancel = disk.connections.findIndex((c) => c.id === targetRecord!.id);
+  if (diskIndexCancel >= 0) {
+    disk.connections[diskIndexCancel] = targetRecord;
+  } else {
+    disk.connections.push(targetRecord);
+  }
   saveDiskStore(disk);
   upsertMemoryConnection(targetRecord);
 
@@ -1586,6 +1684,12 @@ export async function declineConnectionRequestBackend(
   // 3. Update memory & disk
   targetRecord.status = 'rejected';
   targetRecord.updated_at = now;
+  const diskIndexDecline = disk.connections.findIndex((c) => c.id === targetRecord!.id);
+  if (diskIndexDecline >= 0) {
+    disk.connections[diskIndexDecline] = targetRecord;
+  } else {
+    disk.connections.push(targetRecord);
+  }
   saveDiskStore(disk);
   upsertMemoryConnection(targetRecord);
 
@@ -1693,6 +1797,12 @@ export async function holdConnectionRequestBackend(
   // 2. Update memory & disk
   targetRecord.status = 'hold';
   targetRecord.updated_at = now;
+  const diskIndexHold = disk.connections.findIndex((c) => c.id === targetRecord!.id);
+  if (diskIndexHold >= 0) {
+    disk.connections[diskIndexHold] = targetRecord;
+  } else {
+    disk.connections.push(targetRecord);
+  }
   saveDiskStore(disk);
   upsertMemoryConnection(targetRecord);
 
@@ -2049,4 +2159,64 @@ function upsertMemoryNotification(record: PersistentNotificationRecord) {
     disk.notifications.unshift(record);
   }
   saveDiskStore(disk);
+}
+
+export async function removeConnectionBackend(
+  userId: string,
+  targetId: string,
+  userToken?: string
+): Promise<{ success: boolean; error?: string }> {
+  initStore();
+  const aliases = await resolveUserAliases(userId, userToken);
+  const targetAliases = await resolveUserAliases(targetId, userToken);
+  const aliasSet = new Set(aliases.map((a) => a.toLowerCase()));
+  const targetSet = new Set(targetAliases.map((a) => a.toLowerCase()));
+
+  // 1. Supabase deletion
+  (async () => {
+    try {
+      const client = getEffectiveSupabaseClient(userToken);
+      const orClauses: string[] = [];
+      for (const a of aliases) {
+        for (const ta of targetAliases) {
+          orClauses.push(`and(requester_id.eq.${a},recipient_id.eq.${ta})`);
+          orClauses.push(`and(requester_id.eq.${ta},recipient_id.eq.${a})`);
+          orClauses.push(`and(requester_id.eq.${a},receiver_id.eq.${ta})`);
+          orClauses.push(`and(requester_id.eq.${ta},receiver_id.eq.${a})`);
+        }
+      }
+      if (orClauses.length > 0) {
+        await queryWithTimeout(
+          client.from('connections').delete().or(orClauses.join(',')),
+          1500,
+          null
+        );
+      }
+    } catch (err: any) {
+      console.warn('[ConnectionsBackend] removeConnection Supabase warning:', err?.message);
+    }
+  })();
+
+  // 2. Remove from disk store
+  const disk = loadDiskStore();
+  const initialLen = disk.connections.length;
+  disk.connections = disk.connections.filter((c) => {
+    const req = (c.requester_id || '').toLowerCase();
+    const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
+    const isConn = (aliasSet.has(req) && targetSet.has(rec)) || (targetSet.has(req) && aliasSet.has(rec));
+    return !isConn;
+  });
+  if (disk.connections.length !== initialLen) {
+    saveDiskStore(disk);
+  }
+
+  // 3. Remove from memory and peopleDirectoryStore
+  for (const a of aliases) {
+    for (const ta of targetAliases) {
+      peopleDirectoryStore.removeConnection(a, ta);
+      peopleDirectoryStore.removeConnection(ta, a);
+    }
+  }
+
+  return { success: true };
 }

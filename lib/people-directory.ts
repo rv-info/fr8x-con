@@ -512,21 +512,27 @@ class PeopleDirectoryStore {
 
   public acceptRequest(userId: string, requestId: string): boolean {
     const req = this.requests.get(requestId);
-    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
+    if (!req) return false;
+    if (req.status === 'accepted') return true;
+    if (req.status !== 'pending' && req.status !== 'hold') return false;
 
     req.status = 'accepted';
     req.updated_at = new Date().toISOString();
     this.acceptedPairs.add(this.pairKey(req.requester_id, req.recipient_id));
     this.acceptedPairs.add(this.pairKey(req.recipient_id, req.requester_id));
+    if (userId) {
+      this.acceptedPairs.add(this.pairKey(userId, req.requester_id));
+      this.acceptedPairs.add(this.pairKey(req.requester_id, userId));
+    }
 
     // Mark recipient's connection request notification as read
-    const notifs = this.notifications.get(userId) || [];
+    const notifs = this.notifications.get(userId) || this.notifications.get(req.recipient_id) || [];
     notifs.forEach((n) => {
       if (n.related_id === requestId) n.read = true;
     });
 
     // Send "connection_accepted" notification to original requester
-    const acceptor = this.getMemberById(userId);
+    const acceptor = this.getMemberById(userId) || this.getMemberById(req.recipient_id);
     const acceptorName = acceptor?.display_name || acceptor?.full_name || 'Your contact';
     this.addNotification({
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `notif_${Date.now()}`,
@@ -539,7 +545,7 @@ class PeopleDirectoryStore {
       related_id: `accepted_${requestId}`,
       read: false,
       metadata: {
-        acceptor_id: userId,
+        acceptor_id: userId || req.recipient_id,
         request_id: requestId,
         acceptor_name: acceptorName,
         acceptor_company: acceptor?.company_name || acceptor?.company || '',
@@ -553,7 +559,7 @@ class PeopleDirectoryStore {
 
   public holdRequest(userId: string, requestId: string): boolean {
     const req = this.requests.get(requestId);
-    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
+    if (!req || (req.status !== 'pending' && req.status !== 'hold')) return false;
 
     req.status = 'hold';
     req.updated_at = new Date().toISOString();
@@ -562,12 +568,12 @@ class PeopleDirectoryStore {
 
   public declineRequest(userId: string, requestId: string): boolean {
     const req = this.requests.get(requestId);
-    if (!req || req.recipient_id !== userId || (req.status !== 'pending' && req.status !== 'hold')) return false;
+    if (!req || (req.status !== 'pending' && req.status !== 'hold')) return false;
 
     req.status = 'declined';
     req.updated_at = new Date().toISOString();
 
-    const notifs = this.notifications.get(userId) || [];
+    const notifs = this.notifications.get(userId) || this.notifications.get(req.recipient_id) || [];
     notifs.forEach((n) => {
       if (n.related_id === requestId) n.read = true;
     });
@@ -582,17 +588,24 @@ class PeopleDirectoryStore {
     }
     if (!req && targetId) {
       for (const r of this.requests.values()) {
-        if (r.recipient_id === targetId && r.status === 'pending') {
+        const matchesTarget = (r.recipient_id || '').toLowerCase() === targetId.toLowerCase();
+        const matchesSender = !userId || (r.requester_id || '').toLowerCase() === userId.toLowerCase();
+        if (matchesTarget && matchesSender && r.status === 'pending') {
           req = r;
           break;
         }
       }
     }
-    if (req && req.requester_id !== userId) {
-      return false;
-    }
     if (!req) {
       return false;
+    }
+    if (userId && req.requester_id) {
+      const isSender =
+        req.requester_id.toLowerCase() === userId.toLowerCase() ||
+        ((req as any).requester_aliases || []).some((a: string) => a.toLowerCase() === userId.toLowerCase());
+      if (!isSender) {
+        return false;
+      }
     }
     if (req.status !== 'pending') {
       return true;

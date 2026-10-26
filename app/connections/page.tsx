@@ -3,9 +3,12 @@
 /**
  * /connections — Unified redirect to /people hub
  *
- * Enterprise Network Contacts & Directory is now unified with People.
+ * Enterprise Network Contacts & Directory is unified with People.
+ * Supports tabbed management: 'connections' (My Contacts), 'incoming' (Received Requests), 'outgoing' (Sent Requests), and 'withdrawn' (Withdrawn Requests)
+ * interacting with /api/people/connections backend.
+ * Outgoing requests provide clear Withdraw action instead of generic cancel.
  * This route permanently redirects to /people with the appropriate tab
- * so both sidebar links lead to the same integrated page.
+ * so both navigation links lead to the same integrated hub.
  */
 
 import { useEffect } from 'react';

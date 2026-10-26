@@ -48,6 +48,7 @@ import { GoldenTick } from '@/components/ui/GoldenTick';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { getClientAuthHeaders, CONNECTIONS_CHANGED_EVENT } from '@/lib/connections';
+import { isSelfProfile, isTestOrDummyAccount } from '@/lib/connections-algorithm';
 
 const DEBOUNCE_MS = 300;
 const PAGE_SIZE = 25;
@@ -426,6 +427,82 @@ function PeopleContent() {
     }
   };
 
+  // Reconciles search results with active connections & pending requests in real time
+  const effectiveStatusMap = useMemo(() => {
+    const map = new Map<string, { status: ConnectionStatus; requestId?: string }>();
+
+    // 1. Accepted connections
+    for (const c of connectionsList) {
+      const prof = c.profiles;
+      const ids = [c.connected_to, prof?.id, c.id].filter(Boolean) as string[];
+      for (const id of ids) {
+        map.set(id.toLowerCase(), { status: 'connected' });
+      }
+      const name = (prof?.display_name || prof?.full_name || '').toLowerCase().trim();
+      if (name && name !== 'freight professional' && name !== 'fr8x member') {
+        map.set(`name:${name}`, { status: 'connected' });
+      }
+    }
+
+    // 2. Incoming requests (pending_received)
+    for (const r of incomingList) {
+      const prof = r.profiles;
+      const ids = [prof?.id, (r as any).requester_id, r.id].filter(Boolean) as string[];
+      for (const id of ids) {
+        if (!map.has(id.toLowerCase())) {
+          map.set(id.toLowerCase(), { status: 'pending_received', requestId: r.id });
+        }
+      }
+      const name = (prof?.display_name || prof?.full_name || '').toLowerCase().trim();
+      if (name && name !== 'freight professional' && name !== 'fr8x member' && !map.has(`name:${name}`)) {
+        map.set(`name:${name}`, { status: 'pending_received', requestId: r.id });
+      }
+    }
+
+    // 3. Outgoing requests (pending_sent)
+    for (const r of outgoingList) {
+      const prof = r.profiles;
+      const ids = [prof?.id, (r as any).recipient_id, (r as any).receiver_id, r.id].filter(Boolean) as string[];
+      for (const id of ids) {
+        if (!map.has(id.toLowerCase())) {
+          map.set(id.toLowerCase(), { status: 'pending_sent', requestId: r.id });
+        }
+      }
+      const name = (prof?.display_name || prof?.full_name || '').toLowerCase().trim();
+      if (name && name !== 'freight professional' && name !== 'fr8x member' && !map.has(`name:${name}`)) {
+        map.set(`name:${name}`, { status: 'pending_sent', requestId: r.id });
+      }
+    }
+
+    return map;
+  }, [connectionsList, incomingList, outgoingList]);
+
+  const getEffectiveStatus = useCallback((person: PersonCardData): { status: ConnectionStatus; requestId?: string } => {
+    const pId = (person.id || (person as any).user_id || '').toLowerCase();
+    const name = (person.display_name || person.full_name || '').toLowerCase().trim();
+
+    if (pId && effectiveStatusMap.has(pId)) {
+      return effectiveStatusMap.get(pId)!;
+    }
+    if (name && effectiveStatusMap.has(`name:${name}`)) {
+      return effectiveStatusMap.get(`name:${name}`)!;
+    }
+    return {
+      status: (person.connection_status as ConnectionStatus) || 'not_connected',
+      requestId: person.request_id,
+    };
+  }, [effectiveStatusMap]);
+
+  // Defensive client-side filtering: strictly exclude self and test/dummy records
+  const visibleResults = useMemo(() => {
+    return results.filter((person) => {
+      if (isTestOrDummyAccount(person)) return false;
+      if (user && isSelfProfile(user, person as any)) return false;
+      if (user?.uid && person.id && user.uid.toLowerCase() === person.id.toLowerCase()) return false;
+      return true;
+    });
+  }, [results, user]);
+
   const getPersonDisplayName = (p: PersonCardData | ConnectionItem['profiles'] | RequestItem['profiles']) => {
     if (p.full_name?.trim()) return p.full_name.trim();
     if (p.display_name?.trim()) return p.display_name.trim();
@@ -546,7 +623,7 @@ function PeopleContent() {
         >
           <Globe2 size={15} />
           <span>All Freight Directory</span>
-          {results.length > 0 && (
+          {visibleResults.length > 0 && (
             <span
               className="people-tab-badge"
               style={{
@@ -554,7 +631,7 @@ function PeopleContent() {
                 color: activeTab === 'all' ? '#ffffff' : '#475569',
               }}
             >
-              {total ?? results.length}
+              {visibleResults.length}
             </span>
           )}
         </button>
@@ -684,7 +761,7 @@ function PeopleContent() {
           )}
 
           {/* Results: TABULAR ORDER TABLE VIEW */}
-          {view === 'table' && results.length > 0 && (
+          {view === 'table' && visibleResults.length > 0 && (
             <div className="people-table-container">
               <table className="people-table" aria-label="Freight Professionals Directory Table">
                 <thead>
@@ -697,11 +774,12 @@ function PeopleContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {results.map((person) => {
+                  {visibleResults.map((person) => {
                     const name = getPersonDisplayName(person);
                     const headline = getPersonHeadline(person);
                     const company = getPersonCompany(person);
                     const location = getPersonLocation(person);
+                    const { status: effectiveStatus, requestId: effectiveReqId } = getEffectiveStatus(person);
 
                     return (
                       <tr key={person.id}>
@@ -823,7 +901,7 @@ function PeopleContent() {
 
                         {/* Column 4: Network Status */}
                         <td>
-                          {person.connection_status === 'connected' && (
+                          {effectiveStatus === 'connected' && (
                             <span
                               style={{
                                 display: 'inline-flex',
@@ -840,7 +918,7 @@ function PeopleContent() {
                               <CheckCircle2 size={12} /> Connected
                             </span>
                           )}
-                          {person.connection_status === 'pending_sent' && (
+                          {effectiveStatus === 'pending_sent' && (
                             <span
                               style={{
                                 display: 'inline-flex',
@@ -857,7 +935,7 @@ function PeopleContent() {
                               <Clock size={12} /> Pending
                             </span>
                           )}
-                          {person.connection_status === 'pending_received' && (
+                          {effectiveStatus === 'pending_received' && (
                             <span
                               style={{
                                 display: 'inline-flex',
@@ -874,7 +952,7 @@ function PeopleContent() {
                               <UserPlus size={12} /> Incoming
                             </span>
                           )}
-                          {(person.connection_status === 'not_connected' || person.connection_status === 'none') && (
+                          {(effectiveStatus === 'not_connected' || effectiveStatus === 'none') && (
                             <span
                               style={{
                                 display: 'inline-flex',
@@ -917,8 +995,8 @@ function PeopleContent() {
 
                             <ConnectionButton
                               targetId={person.id}
-                              initialStatus={person.connection_status}
-                              requestId={person.request_id}
+                              initialStatus={effectiveStatus}
+                              requestId={effectiveReqId}
                               size="sm"
                               onStatusChange={() => {
                                 loadConnectionsData();
@@ -936,20 +1014,27 @@ function PeopleContent() {
           )}
 
           {/* Results: CARD GRID VIEW */}
-          {view === 'card' && results.length > 0 && (
+          {view === 'card' && visibleResults.length > 0 && (
             <div className="people-grid">
-              {results.map((person) => (
-                <PersonCard
-                  key={person.id}
-                  person={person}
-                  view="card"
-                />
-              ))}
+              {visibleResults.map((person) => {
+                const { status: effectiveStatus, requestId: effectiveReqId } = getEffectiveStatus(person);
+                return (
+                  <PersonCard
+                    key={person.id}
+                    person={{
+                      ...person,
+                      connection_status: effectiveStatus,
+                      request_id: effectiveReqId,
+                    }}
+                    view="card"
+                  />
+                );
+              })}
             </div>
           )}
 
           {/* Empty search results state */}
-          {!loading && results.length === 0 && !error && (
+          {!loading && visibleResults.length === 0 && !error && (
             <div
               style={{
                 background: '#ffffff',

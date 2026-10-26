@@ -6,7 +6,7 @@
  * All mutations go to POST /api/people/connections.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   UserPlus, UserCheck, Clock, UserX, MessageSquare, Shield,
   Loader2, ChevronDown,
@@ -59,6 +59,15 @@ export function ConnectionButton({
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
   const [showMenu, setShowMenu] = useState(false);
+
+  // Sync internal state whenever props update
+  useEffect(() => {
+    setStatus(initialStatus);
+  }, [initialStatus]);
+
+  useEffect(() => {
+    setReqId(requestId);
+  }, [requestId]);
 
   const handleAction = useCallback(async (
     action: string,
