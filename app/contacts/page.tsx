@@ -48,6 +48,8 @@ import { UserAvatar } from '@/components/ui/UserAvatar';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { ContactRecord } from '@/lib/db/contacts';
 import { getClientAuthHeaders, CONNECTIONS_CHANGED_EVENT, dispatchConnectionsChanged } from '@/lib/connections';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type MainContactTab = 'all' | 'discover' | 'incoming' | 'outgoing' | 'held';
 type ViewMode = 'grid' | 'table';
@@ -66,6 +68,7 @@ interface ChatMessage {
 
 interface ProfileSnippet {
   id: string;
+  email?: string | null;
   display_name?: string | null;
   full_name?: string | null;
   first_name?: string | null;
@@ -1363,11 +1366,10 @@ export default function ContactsCrmPage() {
             </div>
           </div>
 
-          {/* Contacts List / Grid View */}
+          {/* Contacts List / Grid View with Skeleton Screen (Principle 1) */}
           {loadingContacts ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
-              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading trade contacts...</p>
+            <div style={{ padding: '8px 0' }}>
+              <SkeletonScreen type="card" count={4} label="Loading trade contacts…" />
             </div>
           ) : filteredContacts.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
@@ -1851,11 +1853,10 @@ export default function ContactsCrmPage() {
             </div>
           </div>
 
-          {/* Members Discovery Grid */}
+          {/* Members Discovery Grid with Skeleton Screen (Principle 1) */}
           {loadingDiscover ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
-              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Searching verified freight directory...</p>
+            <div style={{ padding: '8px 0' }}>
+              <SkeletonScreen type="card" count={4} label="Searching verified freight directory…" />
             </div>
           ) : directoryMembers.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
@@ -2087,9 +2088,8 @@ export default function ContactsCrmPage() {
           </div>
 
           {loadingRequests ? (
-            <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>
-              <RefreshCw size={28} className="spin" style={{ margin: '0 auto', color: '#002b66' }} />
-              <p style={{ marginTop: '12px', fontSize: '13.5px', color: '#64748B', fontWeight: 600 }}>Loading incoming requests...</p>
+            <div style={{ padding: '8px 0' }}>
+              <SkeletonScreen type="row" count={3} label="Loading incoming requests…" />
             </div>
           ) : activeIncomingRequests.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '60px 20px', background: '#FFFFFF', borderRadius: '12px', border: '1px solid #DFE7F0' }}>

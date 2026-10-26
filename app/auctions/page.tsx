@@ -7,6 +7,8 @@ import { useCurrency } from '@/lib/context/CurrencyContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { ProfileLink } from '@/components/ui/ProfileLink';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
@@ -40,7 +42,7 @@ import { Auction, SubmittedBid } from '@/lib/types';
 import { formatNumber } from '@/lib/utils';
 
 export default function AuctionsPage() {
-  const { auctions, mySubmittedBids, updateAuctionStatus, cancelAuction } = useData();
+  const { auctions, mySubmittedBids, updateAuctionStatus, cancelAuction, isHydrated } = useData();
   const { format } = useCurrency();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -745,7 +747,13 @@ export default function AuctionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {currentTabAuctions().length === 0 ? (
+                {!isHydrated ? (
+                  <tr>
+                    <td colSpan={9} style={{ padding: '24px 16px' }}>
+                      <SkeletonScreen type="table" count={4} label="Loading reverse auctions table…" />
+                    </td>
+                  </tr>
+                ) : currentTabAuctions().length === 0 ? (
                   <tr>
                     <td colSpan={9} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
@@ -880,7 +888,11 @@ export default function AuctionsPage() {
 
           {/* Mobile Auction Cards (< 1024px) */}
           <div className="auctions-mobile-cards">
-            {currentTabAuctions().length === 0 ? (
+            {!isHydrated ? (
+              <div style={{ padding: '8px 0' }}>
+                <SkeletonScreen type="auction" count={3} label="Loading reverse auctions…" />
+              </div>
+            ) : currentTabAuctions().length === 0 ? (
               <div style={{ textAlign: 'center', padding: '36px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
                 <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
                   <Gavel size={22} />

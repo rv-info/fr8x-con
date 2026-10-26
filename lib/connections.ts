@@ -80,6 +80,8 @@ export function areUsersConnected(uidA: string, uidB: string): boolean {
   return listA.includes(b) || listB.includes(a);
 }
 
+export const isConnected = areUsersConnected;
+
 // ── Connection Requests ─────────────────────────────────────────────────────
 
 export function getAllConnectionRequests(): ConnectionRequest[] {

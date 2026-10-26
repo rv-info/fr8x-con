@@ -10,6 +10,8 @@ import { Modal } from '@/components/ui/Modal';
 import { ProfileLink } from '@/components/ui/ProfileLink';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 import { PostDetailModal } from '@/components/ui/PostDetailModal';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { parseRichText } from '@/lib/utils';
@@ -305,6 +307,7 @@ export default function FeedsPage() {
     addNestedReply,
     jobs,
     addJob,
+    isHydrated,
   } = useData();
 
   const { user, allUsers, updateUser } = useAuth();
@@ -1932,15 +1935,17 @@ export default function FeedsPage() {
           }
         />
 
-        {/* Post Items in Large Spacious Cards (No Like/Dislike) */}
-        {displayedPosts.length === 0 ? (
-          <div className="card" style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--mut)' }}>
-            <MessageCircle size={36} style={{ margin: '0 auto 12px', opacity: 0.3 }} />
-            <b style={{ fontSize: '15px' }}>No posts found matching criteria</b>
-            <p style={{ fontSize: '12px', marginTop: '4px' }}>
-              Try adjusting your search query or category filters.
-            </p>
+        {/* Post Items in Large Spacious Cards with Progressive Skeleton Loading (Principle 1 & 2) */}
+        {!isHydrated ? (
+          <div style={{ marginBottom: '16px' }}>
+            <SkeletonScreen type="feed" count={3} label="Loading logistics community feed…" />
           </div>
+        ) : displayedPosts.length === 0 ? (
+          <EmptyState
+            icon={<MessageCircle size={36} />}
+            title="No posts found matching criteria"
+            description="Try adjusting your search query or category filters, or publish your first logistics industry update."
+          />
         ) : (
           displayedPosts.map((post, postIndex) => {
             const isOwner = post.authorUid === user.uid;

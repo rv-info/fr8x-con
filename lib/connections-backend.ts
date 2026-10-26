@@ -489,7 +489,7 @@ export async function getIncomingRequestsForUser(userId: string, limit = 50, use
         const partner = aliasSet.has(recId) || recAliases.some((a) => aliasSet.has(a)) ? reqId : recId;
         if (partner) acceptedPartnerIds.add(partner.toLowerCase());
         resolvedIds.add(c.id);
-      } else if (c.status === 'cancelled' || c.status === 'withdrawn' || c.status === 'declined' || c.status === 'rejected') {
+      } else if (['cancelled', 'withdrawn', 'declined', 'rejected'].includes(c.status as string)) {
         resolvedIds.add(c.id);
       }
     }
@@ -654,7 +654,7 @@ export async function getOutgoingRequestsForUser(userId: string, limit = 50, use
         const partner = aliasSet.has(reqId) || reqAliases.some((a) => aliasSet.has(a)) ? recId : reqId;
         if (partner) acceptedPartnerIds.add(partner.toLowerCase());
         resolvedIds.add(c.id);
-      } else if (c.status === 'cancelled' || c.status === 'withdrawn' || c.status === 'declined' || c.status === 'rejected') {
+      } else if (['cancelled', 'withdrawn', 'declined', 'rejected'].includes(c.status as string)) {
         resolvedIds.add(c.id);
       }
     }

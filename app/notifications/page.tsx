@@ -24,6 +24,8 @@ import {
   ExternalLink,
   Filter,
 } from 'lucide-react';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useData } from '@/lib/context/DataContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { NotificationCategory, AppNotification } from '@/lib/types';
@@ -49,6 +51,7 @@ export default function NotificationCenterPage() {
     markAllNotificationsRead,
     clearNotification,
     clearAllNotifications,
+    isHydrated,
   } = useData();
 
   const [activeCategory, setActiveCategory] = useState<string>('all');
@@ -305,39 +308,18 @@ export default function NotificationCenterPage() {
         </label>
       </div>
 
-      {/* Notifications List */}
+      {/* Notifications List with Progressive Skeleton Loading (Principle 1 & 2) */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        {filteredNotifications.length === 0 ? (
-          <div
-            style={{
-              padding: '60px 20px',
-              textAlign: 'center',
-              background: 'var(--bg-card)',
-              border: '1px dashed var(--border)',
-              borderRadius: '12px',
-            }}
-          >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                background: 'var(--bg-faint)',
-                color: 'var(--mut)',
-                display: 'grid',
-                placeItems: 'center',
-                margin: '0 auto 12px',
-              }}
-            >
-              <Bell size={24} />
-            </div>
-            <h3 style={{ fontSize: '15px', fontWeight: 600, margin: '0 0 4px', color: 'var(--ink)' }}>
-              No notifications found
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--mut)', margin: 0 }}>
-              {unreadOnly ? 'You have no unread notifications.' : 'When someone connects with you or bids on a tender, you will see it here.'}
-            </p>
+        {!isHydrated ? (
+          <div style={{ padding: '8px 0' }}>
+            <SkeletonScreen type="row" count={4} label="Loading notifications…" />
           </div>
+        ) : filteredNotifications.length === 0 ? (
+          <EmptyState
+            icon={<Bell size={32} />}
+            title="No notifications found"
+            description={unreadOnly ? 'You have caught up with all unread alerts.' : 'When members connect with you, submit bids on your reverse auctions, or publish trade updates, alerts will appear here.'}
+          />
         ) : (
           filteredNotifications.map((n) => {
             const cat = CATEGORY_MAP[n.category] || CATEGORY_MAP.system;

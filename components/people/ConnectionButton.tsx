@@ -73,12 +73,32 @@ export function ConnectionButton({
     action: string,
     body: Record<string, string | undefined>
   ) => {
+    // 1. Determine optimistic target state
+    const optimisticStatus: ConnectionStatus =
+      action === 'send'     ? 'pending_sent' :
+      action === 'accept'   ? 'connected' :
+      action === 'decline'  ? 'none' :
+      action === 'cancel'   ? 'none' :
+      action === 'remove'   ? 'none' :
+      action === 'block'    ? 'blocked' :
+      action === 'unblock'  ? 'none' :
+      status;
+
+    // 2. Snapshot current state for rollback
+    const previousStatus = status;
+    const previousReqId = reqId;
+
+    // 3. Immediately update UI (Optimistic update — Principle 3)
+    setStatus(optimisticStatus);
+    onStatusChange?.(optimisticStatus);
     setLoading(true);
     setError(null);
+    setShowMenu(false);
+
     try {
       const data = await callConnectionsAPI(body);
-      // Map returned status to local state
-      const newStatus =
+      // Map authoritative returned status to reconcile local state
+      const confirmedStatus =
         data.status === 'pending'    ? 'pending_sent' :
         data.status === 'accepted'   ? 'connected'    :
         data.status === 'declined'   ? 'none'         :
@@ -86,17 +106,22 @@ export function ConnectionButton({
         action === 'remove'          ? 'none'         :
         action === 'block'           ? 'blocked'      :
         action === 'unblock'         ? 'none'         :
-        status;
+        optimisticStatus;
+
       if (data.request_id) setReqId(data.request_id);
-      setStatus(newStatus as ConnectionStatus);
-      onStatusChange?.(newStatus as ConnectionStatus);
+      setStatus(confirmedStatus as ConnectionStatus);
+      onStatusChange?.(confirmedStatus as ConnectionStatus);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Something went wrong.');
+      // 4. Safe Rollback on rejection (Preserves data integrity)
+      setStatus(previousStatus);
+      setReqId(previousReqId);
+      onStatusChange?.(previousStatus);
+      const msg = e instanceof Error ? e.message : 'Unable to complete connection request. Please check your connection and retry.';
+      setError(msg);
     } finally {
       setLoading(false);
-      setShowMenu(false);
     }
-  }, [status, onStatusChange]);
+  }, [status, reqId, onStatusChange]);
 
   const sizeClass =
     size === 'sm' ? 'connection-btn-sm' :
@@ -106,11 +131,11 @@ export function ConnectionButton({
   if (status === 'self') return null;
 
   return (
-    <div className={`connection-btn-wrapper ${className}`} style={{ position: 'relative', display: 'inline-flex', gap: 4 }}>
+    <div className={`connection-btn-wrapper min-h-[44px] ${className}`} style={{ position: 'relative', display: 'inline-flex', gap: 4, alignItems: 'center' }}>
       {/* Primary action button */}
       {(status === 'none' || status === 'not_connected') && (
         <button
-          className={`connection-btn connect ${sizeClass}`}
+          className={`connection-btn connect min-h-[44px] px-4 py-2 ${sizeClass}`}
           disabled={loading}
           onClick={() => handleAction('send', { action: 'send', target_id: targetId })}
           aria-label="Send connection request"

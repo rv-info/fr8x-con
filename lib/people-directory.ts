@@ -677,6 +677,10 @@ class PeopleDirectoryStore {
     return { status: 'none' };
   }
 
+  public isConnected(userId: string, targetId: string): boolean {
+    return this.getConnectionStatus(userId, targetId).status === 'connected';
+  }
+
   public getConnections(userId: string): DirectoryMember[] {
     const list: DirectoryMember[] = [];
     const all = this.getAllMembers();

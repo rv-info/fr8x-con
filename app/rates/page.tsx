@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { useNetwork } from '@/lib/context/NetworkContext';
 import { Modal } from '@/components/ui/Modal';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
 import { RateItem } from '@/lib/types';
@@ -85,7 +87,7 @@ const RATE_TYPE_OPTIONS = [
 
 export default function RatesPage() {
 
-  const { rates, myRates, addMyRate, updateMyRate, deleteMyRate, clearAllMyRates, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes, recordRecentAction } = useData();
+  const { rates, myRates, addMyRate, updateMyRate, deleteMyRate, clearAllMyRates, bulkImportRates, bulkUpdateRates, masterCarriers, masterLocations, masterEquipment, masterTaxCodes, recordRecentAction, isHydrated } = useData();
   const { isLowBandwidth } = useNetwork();
   const { format } = useCurrency();
   const { user } = useAuth();
@@ -1895,7 +1897,13 @@ Remarks & Terms  : ${r.remark || ''}
                 </tr>
               </thead>
               <tbody>
-                {filteredRates.length === 0 ? (
+                {!isHydrated ? (
+                  <tr>
+                    <td colSpan={19} style={{ padding: '24px 16px' }}>
+                      <SkeletonScreen type="table" count={5} label="Loading freight rates table…" />
+                    </td>
+                  </tr>
+                ) : filteredRates.length === 0 ? (
                   <tr>
                     <td colSpan={19} style={{ textAlign: 'center', padding: '48px 16px', color: '#64748b' }}>
                       <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', color: '#64748b' }}>
@@ -2269,7 +2277,12 @@ Remarks & Terms  : ${r.remark || ''}
             </button>
           )}
 
-          {filteredRates.length === 0 ? (
+          {/* Mobile Card List with Skeleton Loading (Principle 1 & 2) */}
+          {!isHydrated ? (
+            <div style={{ padding: '8px 0' }}>
+              <SkeletonScreen type="card" count={3} label="Loading rates cards…" />
+            </div>
+          ) : filteredRates.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 16px', background: '#ffffff', borderRadius: '8px', border: '1px dashed #cbd5e1', margin: '8px 0' }}>
               <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: '#64748b' }}>
                 <FileSpreadsheet size={22} />

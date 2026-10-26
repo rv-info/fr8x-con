@@ -5,6 +5,8 @@ import { useData } from '@/lib/context/DataContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { Modal } from '@/components/ui/Modal';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { JobPost } from '@/lib/types';
@@ -34,7 +36,7 @@ import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
 
 export default function JobsPage() {
-  const { jobs, addJob, deleteJob } = useData();
+  const { jobs, addJob, deleteJob, isHydrated } = useData();
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -450,19 +452,19 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Jobs Grid */}
-      {filteredJobs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '48px', background: '#fff', borderRadius: 10, border: '1px solid var(--line)' }}>
-          <Briefcase size={32} style={{ margin: '0 auto 12px', opacity: 0.25, display: 'block' }} />
-          <b style={{ display: 'block', marginBottom: '6px' }}>No jobs found</b>
-          <small style={{ color: 'var(--mut)' }}>
-            {searchQuery ? `No results for "${searchQuery}"` : 'No jobs match the selected filters.'}
-          </small>
-          <br />
-          <button className="btn primary sm" style={{ marginTop: '12px' }} onClick={() => setShowCreateModal(true)}>
-            Post the First Job
-          </button>
+      {/* Jobs Grid with Progressive Skeleton Loading (Principle 1 & 2) */}
+      {!isHydrated ? (
+        <div style={{ padding: '8px 0' }}>
+          <SkeletonScreen type="card" count={3} label="Loading logistics job listings…" />
         </div>
+      ) : filteredJobs.length === 0 ? (
+        <EmptyState
+          icon={<Briefcase size={32} />}
+          title={searchQuery ? `No jobs matching "${searchQuery}"` : 'No job postings found'}
+          description={searchQuery ? 'Try clearing your search term or selecting another location.' : 'Be the first freight company to post an opening for logistics talent.'}
+          actionLabel="Post a Job"
+          onAction={() => setShowCreateModal(true)}
+        />
       ) : (
         <div className="jobs-grid">
           {filteredJobs.map((job) => (

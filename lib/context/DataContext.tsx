@@ -303,6 +303,9 @@ interface DataContextType {
   masterCommodities: CommodityMasterItem[];
   masterIncoterms: IncotermMasterItem[];
   masterTaxCodes: TaxSACMasterItem[];
+  // Loading & Hydration State for Progressive Response & Skeleton Screens
+  isLoading: boolean;
+  isHydrated: boolean;
   // Offline Drafts & Recently Viewed (Low-Bandwidth / Offline-First)
   saveDraftAction: (id: string, type: 'auction' | 'rate' | 'post' | 'shipment', data: any) => Promise<void>;
   getDraftAction: <T = any>(id: string) => Promise<T | null>;
@@ -328,6 +331,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [rates, setRates] = useState<RateItem[]>([]);
   const [myRates, setMyRates] = useState<RateItem[]>([]);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
 
   // Master Data States with Live Synchronizer
   const [masterLocations, setMasterLocations] = useState<LocationMasterItem[]>(MASTER_LOCATIONS);
@@ -523,6 +528,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const savedCars = localStorage.getItem('fr8x_gf_master_carriers');
       if (savedCars) setMasterCarriers(JSON.parse(savedCars));
     } catch {}
+
+    // Mark local client cache hydration complete (Principle 1 & 2)
+    if (isMounted) {
+      setIsHydrated(true);
+      setIsLoading(false);
+    }
 
     // 2. Adaptive revalidation against live authoritative database
     async function revalidateLiveDatabase() {
@@ -2678,6 +2689,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       masterCommodities,
       masterIncoterms,
       masterTaxCodes,
+      isLoading,
+      isHydrated,
       saveDraftAction: async (id, type, data) => {
         await saveDraft(id, type, data);
       },
@@ -2714,6 +2727,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       masterCommodities,
       masterIncoterms,
       masterTaxCodes,
+      isLoading,
+      isHydrated,
     ]
   );
 

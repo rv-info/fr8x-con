@@ -13,6 +13,7 @@ import {
   Gavel,
   BarChart3,
   Users,
+  UserPlus,
   BookUser,
   Briefcase,
   User,

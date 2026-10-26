@@ -27,9 +27,11 @@ import {
 } from 'lucide-react';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function DashboardPage() {
-  const { auctions, mySubmittedBids, rates, notifications, jobs, posts } = useData();
+  const { auctions, mySubmittedBids, rates, notifications, jobs, posts, isHydrated } = useData();
   const { user } = useAuth();
 
   // KPI calculations
@@ -143,20 +145,38 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Grid */}
-      <div className="dashboard-kpi-grid">
-        {kpis.map((kpi) => (
-          <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card">
-            <div className="dashboard-kpi-icon" style={{ background: kpi.color + '18', color: kpi.color }}>
-              {kpi.icon}
+      {/* KPI Section with Progressive Skeleton Loading (Principle 1 & 7 - Miller's Law) */}
+      {!isHydrated ? (
+        <div style={{ marginBottom: '18px' }}>
+          <SkeletonScreen type="kpi" count={8} label="Loading key performance metrics…" />
+        </div>
+      ) : (
+        <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div role="region" aria-label="Operational Activity & Financial Performance">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }} title="Operational Activity & Financial Performance">
+                Operational Activity &amp; Financial Performance
+              </span>
+              <span className="badge green font-mono" style={{ fontSize: '10px' }} title="Trust & Compliance">
+                Trust &amp; Compliance Active
+              </span>
             </div>
-            <div>
-              <div className="dashboard-kpi-value">{kpi.value}</div>
-              <div className="dashboard-kpi-label">{kpi.label}</div>
+            <div className="dashboard-kpi-grid">
+              {kpis.map((kpi) => (
+                <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card" aria-label={`${kpi.label}: ${kpi.value}`}>
+                  <div className="dashboard-kpi-icon" style={{ background: kpi.color + '18', color: kpi.color }} aria-hidden="true">
+                    {kpi.icon}
+                  </div>
+                  <div>
+                    <div className="dashboard-kpi-value">{kpi.value}</div>
+                    <div className="dashboard-kpi-label">{kpi.label}</div>
+                  </div>
+                </Link>
+              ))}
             </div>
-          </Link>
-        ))}
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Main Content */}
       <div className="dashboard-main-grid">
@@ -167,24 +187,29 @@ export default function DashboardPage() {
           <div className="card">
             <div className="cardhead">
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <Clock size={14} style={{ color: 'var(--red)' }} />
+                <Clock size={14} style={{ color: 'var(--red)' }} aria-hidden="true" />
                 <b>Upcoming Deadlines</b>
               </div>
               <span className="sub">{upcomingDeadlines.length} item{upcomingDeadlines.length !== 1 ? 's' : ''}</span>
             </div>
-            {upcomingDeadlines.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
-                <CheckCircle2 size={22} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.4 }} />
-                No upcoming deadlines
+            {!isHydrated ? (
+              <div style={{ padding: '12px' }}>
+                <SkeletonScreen type="row" count={3} label="Loading upcoming deadlines…" />
               </div>
+            ) : upcomingDeadlines.length === 0 ? (
+              <EmptyState
+                icon={<CheckCircle2 size={24} style={{ color: 'var(--green, #16a34a)' }} />}
+                title="No upcoming deadlines"
+                description="All your active reverse auctions and freight rate validity windows are in good standing."
+              />
             ) : (
               <div>
                 {upcomingDeadlines.map((dl) => (
-                  <Link key={dl.id} href={dl.href} className="deadline-item">
-                    <div className={`deadline-dot ${dl.urgency === 'high' ? 'red' : 'amber'}`} />
+                  <Link key={dl.id} href={dl.href} className="deadline-item" aria-label={`${dl.title}: ${dl.detail}`}>
+                    <div className={`deadline-dot ${dl.urgency === 'high' ? 'red' : 'amber'}`} aria-hidden="true" />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <span style={{ color: dl.urgency === 'high' ? 'var(--red)' : 'var(--amber)' }}>
+                        <span style={{ color: dl.urgency === 'high' ? 'var(--red)' : 'var(--amber)' }} aria-hidden="true">
                           {dl.icon}
                         </span>
                         <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{dl.title}</b>
@@ -193,7 +218,7 @@ export default function DashboardPage() {
                         {dl.detail}
                       </small>
                     </div>
-                    <ArrowRight size={13} style={{ color: 'var(--faint)', flexShrink: 0 }} />
+                    <ArrowRight size={13} style={{ color: 'var(--faint)', flexShrink: 0 }} aria-hidden="true" />
                   </Link>
                 ))}
               </div>
@@ -204,20 +229,28 @@ export default function DashboardPage() {
           <div className="card">
             <div className="cardhead">
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <Activity size={14} style={{ color: 'var(--brand)' }} />
+                <Activity size={14} style={{ color: 'var(--brand)' }} aria-hidden="true" />
                 <b>Recent Activity</b>
               </div>
               <Link href="/feeds" style={{ fontSize: '11px', color: 'var(--brand)' }}>View all</Link>
             </div>
-            {recentActivity.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
-                No recent activity
+            {!isHydrated ? (
+              <div style={{ padding: '12px' }}>
+                <SkeletonScreen type="row" count={3} label="Loading recent activity…" />
               </div>
+            ) : recentActivity.length === 0 ? (
+              <EmptyState
+                icon={<Activity size={24} />}
+                title="No recent notifications"
+                description="Platform updates, rate requests, and bid alerts will appear here in real-time."
+                actionLabel="Explore Feed"
+                actionHref="/feeds"
+              />
             ) : (
               <div>
                 {recentActivity.map((n) => (
                   <div key={n.id} className="activity-item">
-                    <div className={`activity-dot ${n.read ? 'grey' : 'blue'}`} />
+                    <div className={`activity-dot ${n.read ? 'grey' : 'blue'}`} aria-hidden="true" />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>{n.title}</b>
                       <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -239,22 +272,25 @@ export default function DashboardPage() {
           <div className="card">
             <div className="cardhead">
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <Gavel size={14} style={{ color: 'var(--brand)' }} />
+                <Gavel size={14} style={{ color: 'var(--brand)' }} aria-hidden="true" />
                 <b>My Auctions</b>
               </div>
-              <Link href="/auctions" className="btn secondary sm">
-                <Plus size={12} /> New
+              <Link href="/auctions/create" className="btn secondary sm" style={{ minHeight: '30px' }}>
+                <Plus size={12} aria-hidden="true" /> New
               </Link>
             </div>
-            {myPostedAuctions.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
-                <Gavel size={22} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.3 }} />
-                No auctions yet
-                <br />
-                <Link href="/auctions/create" className="btn primary sm" style={{ marginTop: '8px', display: 'inline-flex' }}>
-                  Create Auction
-                </Link>
+            {!isHydrated ? (
+              <div style={{ padding: '12px' }}>
+                <SkeletonScreen type="row" count={2} label="Loading your auctions…" />
               </div>
+            ) : myPostedAuctions.length === 0 ? (
+              <EmptyState
+                icon={<Gavel size={24} />}
+                title="No auctions posted yet"
+                description="Publish an auction to receive competitive bids from verified logistics partners."
+                actionLabel="Create Auction"
+                actionHref="/auctions/create"
+              />
             ) : (
               <div>
                 {myPostedAuctions.slice(0, 4).map((a) => (
@@ -270,7 +306,7 @@ export default function DashboardPage() {
                         {a.shipment.pol} → {a.shipment.pod} · {a.bidsSubmittedCount} bid{a.bidsSubmittedCount !== 1 ? 's' : ''}
                       </small>
                     </div>
-                    <Link href="/auctions" style={{ fontSize: '10px', color: 'var(--brand)', flexShrink: 0 }}>View</Link>
+                    <Link href="/auctions" style={{ fontSize: '10px', color: 'var(--brand)', flexShrink: 0, padding: '4px' }}>View</Link>
                   </div>
                 ))}
                 {myPostedAuctions.length > 4 && (
@@ -288,15 +324,23 @@ export default function DashboardPage() {
           <div className="card">
             <div className="cardhead">
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <TrendingUp size={14} style={{ color: 'var(--teal)' }} />
+                <TrendingUp size={14} style={{ color: 'var(--teal)' }} aria-hidden="true" />
                 <b>My Bids</b>
               </div>
               <span className="badge green" style={{ fontSize: '9px' }}>{bidsWon} Won</span>
             </div>
-            {mySubmittedBids.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
-                No bids submitted yet
+            {!isHydrated ? (
+              <div style={{ padding: '12px' }}>
+                <SkeletonScreen type="row" count={2} label="Loading your bids…" />
               </div>
+            ) : mySubmittedBids.length === 0 ? (
+              <EmptyState
+                icon={<TrendingUp size={24} />}
+                title="No bids submitted yet"
+                description="Bid on live shipper shipments to expand your freight contract volume."
+                actionLabel="Browse Auctions"
+                actionHref="/auctions"
+              />
             ) : (
               <div>
                 {mySubmittedBids.slice(0, 3).map((b) => {
@@ -325,24 +369,38 @@ export default function DashboardPage() {
           <div className="card">
             <div className="cardhead">
               <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                <Briefcase size={14} style={{ color: '#0891b2' }} />
+                <Briefcase size={14} style={{ color: '#0891b2' }} aria-hidden="true" />
                 <b>Latest Jobs</b>
               </div>
               <Link href="/jobs" style={{ fontSize: '11px', color: 'var(--brand)' }}>View all</Link>
             </div>
-            <div>
-              {jobs.slice(0, 3).map((job) => (
-                <div key={job.id} className="dashboard-auction-row">
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <b style={{ fontSize: '11.5px', color: 'var(--ink)', display: 'block' }}>{job.title}</b>
-                    <small style={{ fontSize: '10px', color: 'var(--mut)' }}>
-                      {job.company} · {job.location}
-                    </small>
+            {!isHydrated ? (
+              <div style={{ padding: '12px' }}>
+                <SkeletonScreen type="row" count={2} label="Loading jobs…" />
+              </div>
+            ) : jobs.length === 0 ? (
+              <EmptyState
+                icon={<Briefcase size={24} />}
+                title="No job listings found"
+                description="Freight and shipping career opportunities will appear here."
+                actionLabel="Post a Job"
+                actionHref="/jobs"
+              />
+            ) : (
+              <div>
+                {jobs.slice(0, 3).map((job) => (
+                  <div key={job.id} className="dashboard-auction-row">
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <b style={{ fontSize: '11.5px', color: 'var(--ink)', display: 'block' }}>{job.title}</b>
+                      <small style={{ fontSize: '10px', color: 'var(--mut)' }}>
+                        {job.company} · {job.location}
+                      </small>
+                    </div>
+                    <span style={{ fontSize: '9.5px', color: 'var(--faint)', flexShrink: 0 }}>{job.postedDate}</span>
                   </div>
-                  <span style={{ fontSize: '9.5px', color: 'var(--faint)', flexShrink: 0 }}>{job.postedDate}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
