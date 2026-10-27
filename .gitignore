@@ -51,8 +51,10 @@ data/
 .agents/
 scratch/
 
-# Cloudflare Pages
+# Cloudflare Pages & Workers
 .cloudflare/
+.open-next/
+.wrangler/
 
 # Android APK binaries & Native App folder (kept externally, never in web origin)
 *.apk
