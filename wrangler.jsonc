@@ -18,5 +18,18 @@
   ],
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://haarbaqeuuirwkhmefev.supabase.co",
+    "NEXT_PUBLIC_APP_URL": "https://con.fr8x.in",
+    "APP_URL": "https://con.fr8x.in",
+    "ALLOW_DEV_EMAIL_FALLBACK": "false",
+    "ZEPTO_MAIL_API_URL": "https://api.zeptomail.in/v1.1/email",
+    "ZEPTO_MAIL_AGENT": "FR8X_PRODUCTION",
+    "ZEPTO_MAIL_AGENT_ALIAS": "1581021668e479ce",
+    "ZEPTO_MAIL_FROM_NAME": "FR8X",
+    "ZEPTO_MAIL_PASSWORD_FROM": "password@fr8x.in",
+    "ZEPTO_MAIL_SUPPORT_FROM": "support@fr8x.in",
+    "ZEPTO_MAIL_TECH_FROM": "tech@fr8x.in"
   }
 }

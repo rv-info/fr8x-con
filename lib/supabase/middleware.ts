@@ -7,28 +7,32 @@ export async function updateSession(request: NextRequest) {
   });
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  const supabase = createServerClient(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({
-          request,
-        });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        );
-      },
-    },
-  });
+  if (!publishableKey) {
+    return { supabaseResponse, user: null };
+  }
 
   // Bounded timeout so slow or offline Supabase Auth never blocks Edge routing
   let user: any = null;
   try {
+    const supabase = createServerClient(url, publishableKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          supabaseResponse = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    });
+
     const authPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<any>((resolve) =>
       setTimeout(() => resolve({ data: { user: null }, error: new Error('Auth timeout') }), 2000)

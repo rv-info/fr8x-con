@@ -14,11 +14,10 @@
     "db:push": "npx -y tsx scripts/push-supabase-schema.ts",
     "db:verify": "npx -y tsx scripts/push-supabase-schema.ts --verify-only",
     "generate:branding": "npx -y tsx scripts/generate-branding-assets.ts",
-    "build:worker": "npx -p wrangler -p @opennextjs/cloudflare opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
-    "preview:worker": "npx -p wrangler -p @opennextjs/cloudflare opennextjs-cloudflare preview",
-    "deploy:worker": "npx -p wrangler -p @opennextjs/cloudflare opennextjs-cloudflare deploy",
-    "cloudflare:build": "npx -p wrangler -p @opennextjs/cloudflare opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
-    "pages:build": "npx @cloudflare/next-on-pages"
+    "build:worker": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
+    "preview:worker": "opennextjs-cloudflare preview",
+    "deploy:worker": "opennextjs-cloudflare deploy",
+    "cloudflare:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
@@ -41,6 +40,7 @@
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "docx": "^9.7.1",
+    "esbuild": "^0.28.2",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.24",
     "pg": "^8.23.1",

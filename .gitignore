@@ -49,6 +49,10 @@ next-env.d.ts
 data/
 .knox/
 .agents/
+.agent/
+agent/
+.claude/
+skills-lock.json
 scratch/
 
 # Cloudflare Pages & Workers

@@ -9,7 +9,7 @@ export function createClient() {
     // Safe fallback when executed outside active Next.js request store (e.g. test scripts)
   }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
 
   return createServerClient(url, publishableKey, {
     cookies: {
@@ -63,7 +63,7 @@ export function getDbClient(userToken?: string) {
   if (admin) return admin;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
   const options: any = {
     auth: { autoRefreshToken: false, persistSession: false },
