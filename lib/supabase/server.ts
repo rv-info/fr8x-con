@@ -8,8 +8,16 @@ export function createClient() {
   } catch {
     // Safe fallback when executed outside active Next.js request store (e.g. test scripts)
   }
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    'https://haarbaqeuuirwkhmefev.supabase.co';
+  const publishableKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    'placeholder';
 
   return createServerClient(url, publishableKey, {
     cookies: {
@@ -43,7 +51,7 @@ export function createAdminClient() {
   const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!secretKey) return null;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
   return createSupabaseClient(url, secretKey, {
     auth: { autoRefreshToken: false, persistSession: false },
@@ -62,8 +70,16 @@ export function getDbClient(userToken?: string) {
   const admin = createAdminClient();
   if (admin) return admin;
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://haarbaqeuuirwkhmefev.supabase.co';
-  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
+  const url =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    'https://haarbaqeuuirwkhmefev.supabase.co';
+  const publishableKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    'placeholder';
   const { createClient: createSupabaseClient } = require('@supabase/supabase-js');
   const options: any = {
     auth: { autoRefreshToken: false, persistSession: false },
