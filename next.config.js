@@ -192,8 +192,8 @@ const nextConfig = {
               "font-src 'self' https://fonts.gstatic.com",
               // Images: self + Supabase Storage + data URIs
               "img-src 'self' data: blob: https://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co",
-              // XHR/fetch: self + Supabase + Razorpay
-              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co wss://haarbaqeuuirwkhmefev.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com",
+              // XHR/fetch: self + Supabase + Razorpay + ZeptoMail + Currency APIs
+              "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co wss://haarbaqeuuirwkhmefev.supabase.co https://api.razorpay.com https://lumberjack.razorpay.com https://api.zeptomail.in https://open.er-api.com https://api.exchangerate-api.com https://api.frankfurter.dev https://cdn.jsdelivr.net",
               // Frames: Razorpay checkout modal
               "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
               // Objects: none
