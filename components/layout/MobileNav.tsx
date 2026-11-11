@@ -8,9 +8,7 @@ import {
   Rss,
   Globe2,
   Gavel,
-  BarChart3,
   Users,
-  BookUser,
 } from 'lucide-react';
 
 export function MobileNav() {
@@ -19,18 +17,29 @@ export function MobileNav() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/feeds', label: 'Feeds', icon: Rss },
-    { href: '/contacts', label: 'Contacts', icon: BookUser },
+    { href: '/nexus', label: 'Nexus', icon: Globe2 },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
-    { href: '/people', label: 'People', icon: Users },
+    { href: '/network', label: 'Network', icon: Users },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
-    if (href === '/contacts') return pathname === '/contacts' || pathname.startsWith('/contacts/');
-    if (href === '/people') return pathname === '/people' || pathname.startsWith('/people') || pathname.startsWith('/connections');
-    if (href === '/rates') return pathname === '/rates';
-    if (href === '/feeds') return pathname === '/feeds';
+    if (href === '/network' || href === '/people' || href === '/connections' || href === '/contacts') {
+      return (
+        pathname === '/network' ||
+        pathname.startsWith('/network/') ||
+        pathname === '/people' ||
+        pathname.startsWith('/people') ||
+        pathname === '/connections' ||
+        pathname.startsWith('/connections') ||
+        pathname === '/contacts' ||
+        pathname.startsWith('/contacts')
+      );
+    }
+    if (href === '/nexus') return pathname === '/nexus' || pathname.startsWith('/nexus');
+    if (href === '/rates') return pathname === '/rates' || pathname.startsWith('/rates');
+    if (href === '/feeds') return pathname === '/feeds' || pathname.startsWith('/feeds');
     return pathname === href;
   };
 

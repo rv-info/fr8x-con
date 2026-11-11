@@ -1,14 +1,13 @@
 'use client';
 
 /**
- * /connections — Unified redirect to /people hub
+ * /connections — Unified redirect to /network hub
  *
- * Enterprise Network Contacts & Directory is unified with People.
+ * Enterprise Network Contacts & Directory is consolidated into /network.
  * Supports tabbed management: 'connections' (My Contacts), 'incoming' (Received Requests), 'outgoing' (Sent Requests), and 'withdrawn' (Withdrawn Requests)
  * interacting with /api/people/connections backend.
  * Outgoing requests provide clear Withdraw action instead of generic cancel.
- * This route permanently redirects to /people with the appropriate tab
- * so both navigation links lead to the same integrated hub.
+ * This route permanently redirects to /network with the appropriate tab.
  */
 
 import { useEffect } from 'react';
@@ -21,8 +20,11 @@ function ConnectionsRedirect() {
   const tab = searchParams.get('tab') ?? 'connections';
 
   useEffect(() => {
-    // Replace rather than push — avoids a dead back-button stop
-    router.replace(`/people?tab=${tab}`);
+    if (tab === 'incoming' || tab === 'outgoing' || tab === 'withdrawn') {
+      router.replace(`/network?tab=requests&filter=${tab}`);
+    } else {
+      router.replace(`/network?tab=connections`);
+    }
   }, [router, tab]);
 
   return (
@@ -34,13 +36,12 @@ function ConnectionsRedirect() {
         alignItems: 'center',
         justifyContent: 'center',
         gap: '20px',
-        background: '#f8fafc',
+        background: '#ffffff',
       }}
     >
-      {/* FR8X custom loader */}
       <div className="fr8x-loader" aria-label="Loading Enterprise Network…" role="status" />
-      <p style={{ fontSize: '13px', color: '#64748b', fontWeight: 600 }}>
-        Opening Enterprise Network Contacts &amp; Directory…
+      <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
+        Redirecting to Unified Network…
       </p>
     </div>
   );
@@ -56,10 +57,10 @@ export default function ConnectionsPage() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            background: '#f8fafc',
+            background: '#ffffff',
           }}
         >
-          <div className="fr8x-loader" aria-label="Loading…" role="status" />
+          <div className="fr8x-loader" />
         </div>
       }
     >

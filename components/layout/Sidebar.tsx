@@ -13,8 +13,6 @@ import {
   Gavel,
   BarChart3,
   Users,
-  UserPlus,
-  BookUser,
   Briefcase,
   User,
   PanelLeftClose,
@@ -53,9 +51,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
     },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/rates', label: 'Rates', icon: BarChart3 },
-    { href: '/people', label: 'People', icon: Users },
-    { href: '/connections', label: 'Connections', icon: UserPlus },
-    { href: '/contacts', label: 'Contact', icon: BookUser },
+    // Consolidated Network Hub: Replaced separate href: '/people', href: '/connections', and href: '/contacts' with unified href: '/network'
+    { href: '/network', label: 'Network', icon: Users },
     { href: '/jobs', label: 'Jobs', icon: Briefcase },
     { href: '/profile', label: 'Profile', icon: User },
   ];
@@ -63,9 +60,18 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions')  return pathname === '/auctions'  || pathname.startsWith('/auctions/');
-    if (href === '/people')    return pathname === '/people'    || pathname.startsWith('/people/');
-    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/');
-    if (href === '/contacts')  return pathname === '/contacts'  || pathname.startsWith('/contacts/');
+    if (href === '/network' || href === '/people' || href === '/connections' || href === '/contacts') {
+      return (
+        pathname === '/network' ||
+        pathname.startsWith('/network/') ||
+        pathname === '/people' ||
+        pathname.startsWith('/people/') ||
+        pathname === '/connections' ||
+        pathname.startsWith('/connections/') ||
+        pathname === '/contacts' ||
+        pathname.startsWith('/contacts/')
+      );
+    }
     return pathname === href;
   };
 
@@ -212,7 +218,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #1168d7, #099889)',
+                  background: '#0F172A',
                   color: '#ffffff',
                   fontWeight: 800,
                   fontSize: '11px',
