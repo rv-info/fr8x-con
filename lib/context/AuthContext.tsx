@@ -617,7 +617,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       setIsLoading(true);
-      const supabase = createClient();
 
       const displayName = resolveDisplayName(
         {
@@ -640,6 +639,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const resolvedState = profile.state || '';
       const resolvedCountry = profile.country || 'India';
       const resolvedPostalCode = profile.postalCode || '';
+
+      // Primary: Authoritative Server-Side Registration API (/api/auth/register)
+      try {
+        const regRes = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: profile.firstName || displayName.split(' ')[0] || '',
+            lastName: profile.lastName || displayName.split(' ').slice(1).join(' ') || '',
+            displayName,
+            email: cleanEmail,
+            password,
+            company: cleanCompany,
+            companyId: profile.companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
+            mobile: cleanMobile,
+            isdCode: resolvedIsdCode,
+            designation: profile.designation || 'Freight Procurement Manager',
+            position: profile.position || profile.designation || 'Manager',
+            department: profile.department || 'Logistics & Supply Chain',
+            city: resolvedCity,
+            state: resolvedState,
+            country: resolvedCountry,
+            address: resolvedAddress,
+            registeredAddress: profile.registeredAddress || resolvedAddress,
+            formattedAddress: resolvedAddress,
+            postalCode: resolvedPostalCode,
+            timezone: resolvedTimezone,
+            gstn: resolvedGstn,
+            pan: resolvedPan,
+            iec: resolvedIec,
+            mto: resolvedMto,
+            role: profile.role === 'user' ? 'user' : 'company_admin',
+            plan: profile.plan || 'trial',
+            termsAccepted: Boolean((profile as any).termsAccepted ?? true),
+            termsVersion: (profile as any).termsVersion || 'v3.2',
+          }),
+        });
+
+        const regData = await regRes.json();
+        if (regRes.status === 201 && regData.success) {
+          const registeredUser: UserProfile = {
+            ...GUEST_USER,
+            uid: regData.user?.uid || `u-${Date.now().toString(36)}`,
+            email: cleanEmail,
+            displayName,
+            firstName: profile.firstName || displayName.split(' ')[0] || '',
+            lastName: profile.lastName || displayName.split(' ').slice(1).join(' ') || '',
+            company: cleanCompany,
+            companyName: cleanCompany,
+            companyId: regData.user?.companyId || profile.companyId || '',
+            role: (profile.role === 'user' ? 'user' : 'company_admin') as any,
+            plan: (profile.plan || 'trial') as any,
+            mobile: cleanMobile,
+            phone: cleanMobile,
+            isdCode: resolvedIsdCode,
+            designation: profile.designation || 'Freight Procurement Manager',
+            city: resolvedCity,
+            state: resolvedState,
+            country: resolvedCountry,
+            address: resolvedAddress,
+            postalCode: resolvedPostalCode,
+            timezone: resolvedTimezone,
+            status: 'pending_verification' as any,
+            isVerified: false,
+            email_verified: false,
+          };
+          setCurrentUser(registeredUser);
+          setUserStatusState('available');
+          const now = Date.now().toString();
+          try {
+            localStorage.setItem(ACTIVE_SESSION_KEY, registeredUser.uid);
+            localStorage.setItem(STATUS_KEY, 'available');
+            localStorage.setItem(SESSION_START_KEY, now);
+            localStorage.setItem(LAST_ACTIVITY_KEY, now);
+          } catch {}
+          return { success: true, user: registeredUser };
+        } else if (regData && !regData.success) {
+          return { success: false, error: regData.error || 'Registration failed.' };
+        }
+      } catch (apiErr: any) {
+        console.warn('[AuthContext] /api/auth/register fetch failed, attempting client fallback:', apiErr.message);
+      }
+
+      const supabase = createClient();
 
       const { data, error } = await supabase.auth.signUp({
         email: cleanEmail,

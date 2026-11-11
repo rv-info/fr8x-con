@@ -621,6 +621,10 @@ export default function RegisterPage() {
 
   // Fetch cities when countryCode changes
   useEffect(() => {
+    if (!countryCode) {
+      setIsLoadingCities(false);
+      return;
+    }
     let isMounted = true;
     setIsLoadingCities(true);
     fetch(`/api/geo/cities?country=${encodeURIComponent(countryCode)}&limit=250`)

@@ -4,6 +4,7 @@ import { serverSecurityStore } from '@/lib/server-auth-store';
 import { isCorporateEmail } from '@/lib/utils';
 import { createSignedSessionToken } from '@/lib/crypto';
 import { EmailService } from '@/lib/email-service';
+import { createAdminClient } from '@/lib/supabase/server';
 
 /**
  * POST /api/auth/register
@@ -21,8 +22,26 @@ export async function POST(req: NextRequest) {
       company,
       companyId,
       mobile,
+      isdCode,
       designation,
+      position,
+      department,
+      city,
+      state,
+      country,
+      address,
+      registeredAddress,
+      formattedAddress,
+      postalCode,
+      timezone,
+      gstn,
+      pan,
+      iec,
+      iecCode,
+      mto,
+      mtoNumber,
       role,
+      plan,
     } = body;
 
     if (!email || !password || !company || !firstName) {
@@ -45,8 +64,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use canonical Supabase Auth UID if provided; otherwise fallback to secure generated UID
-    const uid = body.uid ? String(body.uid).trim() : `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
     const displayName = `${firstName} ${lastName || ''}`.trim();
     const host = req.headers.get('host');
     const proto = req.headers.get('x-forwarded-proto') || (host?.includes('localhost') ? 'http' : 'https');
@@ -59,6 +76,49 @@ export async function POST(req: NextRequest) {
 
     // Disallow unverified privilege elevation (only 'company_admin' or 'user' allowed on registration)
     const assignedRole = role === 'user' ? 'user' : 'company_admin';
+    const resolvedCompanyId = companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`;
+    const resolvedAddress = (registeredAddress || formattedAddress || address || '').trim();
+    const resolvedIec = (iec || iecCode || '').trim();
+
+    // Attempt authoritative Supabase Auth creation if admin client available
+    let uid = body.uid ? String(body.uid).trim() : '';
+    const adminClient = createAdminClient();
+    if (adminClient) {
+      try {
+        const { data: authUser, error: authErr } = await adminClient.auth.admin.createUser({
+          email: cleanEmail,
+          password,
+          email_confirm: false,
+          user_metadata: {
+            displayName,
+            firstName: firstName.trim(),
+            lastName: (lastName || '').trim(),
+            company: company.trim(),
+            companyId: resolvedCompanyId,
+            mobile: mobile ? mobile.trim() : undefined,
+            designation: designation || 'Freight Procurement Manager',
+            role: assignedRole,
+          },
+        });
+        if (authUser?.user?.id) {
+          uid = authUser.user.id;
+        } else if (authErr && authErr.message?.toLowerCase().includes('already')) {
+          return NextResponse.json(
+            {
+              success: false,
+              error: `An account with this email (${cleanEmail}) is already registered. Please sign in instead.`,
+            },
+            { status: 409 }
+          );
+        }
+      } catch (authCreateErr: any) {
+        console.warn('[RegisterAPI] Supabase auth.admin.createUser warning:', authCreateErr.message);
+      }
+    }
+
+    if (!uid) {
+      uid = `u-${Date.now().toString(36)}-${crypto.randomBytes(4).toString('hex')}`;
+    }
 
     // Register user with email_verified = false and generate 15-minute hashed verification challenge
     const result = serverSecurityStore.registerUser(
@@ -67,10 +127,25 @@ export async function POST(req: NextRequest) {
         email: cleanEmail,
         password,
         displayName,
+        firstName: firstName.trim(),
+        lastName: (lastName || '').trim(),
         company: company.trim(),
-        companyId: companyId || `CMP-${Math.floor(10000 + Math.random() * 90000)}`,
+        companyId: resolvedCompanyId,
         role: assignedRole,
         mobile: mobile ? mobile.trim() : undefined,
+        phone: mobile ? mobile.trim() : undefined,
+        designation: designation || position || 'Freight Procurement Manager',
+        city: city ? String(city).trim() : undefined,
+        state: state ? String(state).trim() : undefined,
+        country: country ? String(country).trim() : undefined,
+        address: resolvedAddress || undefined,
+        formattedAddress: resolvedAddress || undefined,
+        postalCode: postalCode ? String(postalCode).trim() : undefined,
+        timezone: timezone ? String(timezone).trim() : undefined,
+        gstn: gstn ? String(gstn).trim() : undefined,
+        pan: pan ? String(pan).trim() : undefined,
+        iec: resolvedIec || undefined,
+        plan: plan || 'trial',
       },
       { origin }
     );

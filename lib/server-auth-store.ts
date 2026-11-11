@@ -1150,10 +1150,25 @@ class ServerSecurityStore {
       email: string;
       password: string;
       displayName: string;
+      firstName?: string;
+      lastName?: string;
       company: string;
       companyId: string;
       role?: 'company_admin' | 'user' | 'billing_admin';
       mobile?: string;
+      phone?: string;
+      designation?: string;
+      city?: string;
+      state?: string;
+      country?: string;
+      address?: string;
+      formattedAddress?: string;
+      postalCode?: string;
+      timezone?: string;
+      gstn?: string;
+      pan?: string;
+      iec?: string;
+      plan?: string;
     },
     options?: { skipVerification?: boolean; origin?: string; firstLoginCompleted?: boolean }
   ): {
@@ -1236,13 +1251,27 @@ class ServerSecurityStore {
       salt: 'pbkdf2_managed', // Salt is embedded in passwordHash for PBKDF2
       passwordHash: hashPassword(user.password), // PBKDF2 hash, format: pbkdf2:<salt>:<hash>
       displayName: user.displayName,
+      firstName: user.firstName,
+      lastName: user.lastName,
       company: user.company,
       companyId: user.companyId,
       role: user.role || 'company_admin',
-      plan: 'trial',
+      plan: user.plan || 'trial',
       status: initialStatus,
       email_verified: emailVerified,
       mobile: user.mobile,
+      phone: user.phone || user.mobile,
+      designation: user.designation,
+      city: user.city,
+      state: user.state,
+      country: user.country,
+      address: user.address,
+      formattedAddress: user.formattedAddress || user.address,
+      postalCode: user.postalCode,
+      timezone: user.timezone,
+      gstn: user.gstn,
+      pan: user.pan,
+      iec: user.iec,
       failedLoginAttempts: 0,
       firstLoginCompleted: options?.firstLoginCompleted ?? false,
       emailVerificationExpiresAt: isVerificationRequired ? tokenExpiresAt : undefined,
@@ -1261,11 +1290,26 @@ class ServerSecurityStore {
         passwordHash: record.passwordHash,
         salt: record.salt,
         displayName: record.displayName,
+        firstName: record.firstName,
+        lastName: record.lastName,
         company: record.company,
         companyId: record.companyId,
         role: record.role,
         status: record.status,
         mobile: record.mobile,
+        phone: record.phone,
+        designation: record.designation,
+        city: record.city,
+        state: record.state,
+        country: record.country,
+        address: record.address,
+        formattedAddress: record.formattedAddress,
+        postalCode: record.postalCode,
+        timezone: record.timezone,
+        gstn: record.gstn,
+        pan: record.pan,
+        iec: record.iec,
+        plan: record.plan,
         email_verified: record.email_verified,
         emailVerificationExpiresAt: record.emailVerificationExpiresAt,
         emailVerifiedAt: record.emailVerifiedAt,

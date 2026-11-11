@@ -48,6 +48,17 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const supabaseUrl =
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env.SUPABASE_URL ||
+    'https://haarbaqeuuirwkhmefev.supabase.co';
+  const supabaseAnonKey =
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY ||
+    '';
+
   return (
     <html lang="en">
       <head>
@@ -64,6 +75,15 @@ export default function RootLayout({
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        />
+        <script
+          id="fr8x-public-env"
+          dangerouslySetInnerHTML={{
+            __html: `window.__FR8X_ENV__ = {
+              NEXT_PUBLIC_SUPABASE_URL: ${JSON.stringify(supabaseUrl)},
+              NEXT_PUBLIC_SUPABASE_ANON_KEY: ${JSON.stringify(supabaseAnonKey)}
+            };`,
+          }}
         />
       </head>
       <body>
