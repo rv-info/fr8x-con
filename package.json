@@ -16,7 +16,7 @@
     "generate:branding": "npx -y tsx scripts/generate-branding-assets.ts",
     "build:worker": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
     "preview:worker": "opennextjs-cloudflare preview",
-    "deploy:worker": "opennextjs-cloudflare deploy --keep-vars",
+    "deploy:worker": "opennextjs-cloudflare deploy -- --keep-vars",
     "cloudflare:build": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion"
   },
   "dependencies": {
