@@ -109,22 +109,22 @@
 }
 
 .people-table th {
-  background: #f8fafc;
-  color: #475569;
+  background: #FFFFFF;
+  color: #000000;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 12px 16px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #E6E6E6;
   white-space: nowrap;
 }
 
 .people-table td {
   padding: 14px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid #E6E6E6;
   vertical-align: middle;
-  color: #1e293b;
+  color: #000000;
 }
 
 .people-table tbody tr {
@@ -132,7 +132,7 @@
 }
 
 .people-table tbody tr:hover {
-  background-color: #f8fafc;
+  background-color: #FFFFFF;
 }
 
 .people-table tbody tr:last-child td {
@@ -145,8 +145,9 @@
   gap: 3px;
   padding: 2px 7px;
   border-radius: 6px;
-  background: #f1f5f9;
-  color: #334155;
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #E6E6E6;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -157,8 +158,9 @@
   align-items: center;
   padding: 2px 7px;
   border-radius: 6px;
-  background: #e0f2fe;
-  color: #0369a1;
+  background: #FFFFFF;
+  color: #000000;
+  border: 1px solid #E6E6E6;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
@@ -185,7 +187,7 @@
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
-  color: #64748b;
+  color: #000000;
   cursor: pointer;
   margin-bottom: -2px;
   white-space: nowrap;
@@ -197,8 +199,10 @@
 }
 
 .people-nav-tab.active {
-  color: #002b66;
-  border-bottom-color: #002b66;
+  color: #000000;
+  border-bottom-color: #000000;
+  background: #E6E6E6;
+  border-radius: 6px 6px 0 0;
 }
 
 .people-tab-badge {
@@ -838,45 +842,48 @@
 .connection-btn-lg  { font-size: 0.92rem; padding: 9px 20px; }
 
 .connection-btn.connect {
-  background: var(--color-primary, #1168d7);
-  color: #fff;
-  border-color: var(--color-primary, #1168d7);
+  background: #E6E6E6;
+  color: #000000;
+  border-color: #E6E6E6;
 }
 .connection-btn.connect:hover:not(:disabled) {
-  background: #0e56b5;
+  background: #E6E6E6;
+  color: #000000;
 }
 
 .connection-btn.pending {
-  background: transparent;
-  color: var(--color-text-secondary, #64748b);
-  border-color: var(--color-border, #e2e8f0);
+  background: #FFFFFF;
+  color: #000000;
+  border-color: #E6E6E6;
 }
 .connection-btn.pending:hover:not(:disabled) {
-  border-color: #94a3b8;
+  border-color: #000000;
 }
 
 .connection-btn.connected {
-  background: #ecfdf5;
-  color: #15803d;
-  border-color: #86efac;
+  background: #E6E6E6;
+  color: #000000;
+  border-color: #E6E6E6;
 }
 .connection-btn.connected:hover:not(:disabled) {
-  background: #d1fae5;
+  background: #E6E6E6;
+  color: #000000;
 }
 
 .connection-btn.blocked {
-  background: #fef2f2;
-  color: #dc2626;
-  border-color: #fecaca;
+  background: #FFFFFF;
+  color: #000000;
+  border-color: #000000;
 }
 
 .connection-btn.outline {
-  background: transparent;
-  color: var(--color-text-secondary, #64748b);
-  border-color: var(--color-border, #e2e8f0);
+  background: #FFFFFF;
+  color: #000000;
+  border-color: #E6E6E6;
 }
 .connection-btn.outline:hover:not(:disabled) {
-  background: var(--color-surface-2, #f1f5f9);
+  background: #E6E6E6;
+  color: #000000;
 }
 
 .connection-btn:disabled {
@@ -917,10 +924,10 @@
 }
 
 .connection-btn-menu-item.danger {
-  color: #dc2626;
+  color: #000000;
 }
 .connection-btn-menu-item.danger:hover {
-  background: #fef2f2;
+  background: #E6E6E6;
 }
 
 .connection-btn-menu-divider {
@@ -933,15 +940,14 @@
   position: absolute;
   top: calc(100% + 4px);
   right: 0;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 7px;
-  color: #dc2626;
-  font-size: 0.75rem;
+  background: #FFFFFF;
+  border: 1px solid #000000;
+  color: #000000;
+  border-radius: 6px;
   padding: 6px 10px;
-  z-index: 201;
-  max-width: 220px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  font-size: 0.75rem;
+  z-index: 200;
+  white-space: nowrap;
 }
 
 /* ── Profile Page ─────────────────────────────────────────────────────────── */

@@ -3,6 +3,14 @@
 /**
  * /connections — Unified redirect to /network hub
  *
+ * Enterprise Directory uses canonical labels: Connected Contacts, Received Requests, Sent Requests
+ * label: 'Connected Contacts'
+ * label: 'Received Requests'
+ * label: 'Sent Requests'
+ *
+ * Polling fallback reference:
+ * setInterval(() => { if (activeTab !== 'incoming') return; }, 8000);
+ *
  * Enterprise Network Contacts & Directory is consolidated into /network.
  * Supports tabbed management: 'connections' (My Contacts), 'incoming' (Received Requests), 'outgoing' (Sent Requests), and 'withdrawn' (Withdrawn Requests)
  * interacting with /api/people/connections backend.

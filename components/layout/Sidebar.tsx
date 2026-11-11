@@ -122,7 +122,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               fontSize: collapsed ? '9px' : '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#002b66',
+              color: '#000000',
               lineHeight: 1,
               textTransform: 'uppercase',
             }}
@@ -218,8 +218,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#0F172A',
-                  color: '#ffffff',
+                  background: '#E6E6E6',
+                  color: '#000000',
+                  border: '1px solid #E6E6E6',
                   fontWeight: 800,
                   fontSize: '11px',
                 }}

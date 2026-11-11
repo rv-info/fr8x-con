@@ -53,8 +53,8 @@ export function RecommendedSection() {
   return (
     <section className="people-recommended-section" aria-label="Recommended professionals">
       <div className="people-recommended-header" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-        <Sparkles size={16} style={{ color: 'var(--color-primary, #2563eb)' }} aria-hidden="true" />
-        <h2 style={{ fontSize: '1rem', fontWeight: 600, margin: 0 }}>People You May Know</h2>
+        <Sparkles size={16} style={{ color: '#000000' }} aria-hidden="true" />
+        <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0, color: '#000000' }}>People You May Know</h2>
       </div>
 
       <div
@@ -76,6 +76,9 @@ export function RecommendedSection() {
               flexDirection: 'column',
               justifyContent: 'space-between',
               position: 'relative',
+              background: '#FFFFFF',
+              border: '1px solid #E6E6E6',
+              borderRadius: '6px',
             }}
           >
             <div>
@@ -83,25 +86,25 @@ export function RecommendedSection() {
                 <UserAvatar name={person.full_name} avatarUrl={person.avatar_url ?? undefined} size={44} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
-                    href={`/people/${person.id}`}
-                    style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'inherit', textDecoration: 'none' }}
+                    href={`/network/${person.id}`}
+                    style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#000000', textDecoration: 'none' }}
                   >
                     {person.full_name}
                     {person.has_golden_tick && (
-                      <span className="golden-tick-badge" title="Golden Tick" style={{ marginLeft: 4 }}>★</span>
+                      <span className="golden-tick-badge" title="Golden Tick" style={{ marginLeft: 4, color: '#000000' }}>★</span>
                     )}
                     {person.is_verified && !person.has_golden_tick && (
-                      <span className="verified-badge" title="Verified" style={{ marginLeft: 4 }}>✓</span>
+                      <span className="verified-badge" title="Verified" style={{ marginLeft: 4, color: '#000000' }}>✓</span>
                     )}
                   </Link>
                   {person.headline && (
-                    <p style={{ fontSize: '0.8125rem', color: 'var(--color-text-muted, #64748b)', margin: '0.125rem 0' }}>
+                    <p style={{ fontSize: '0.8125rem', color: '#000000', margin: '0.125rem 0' }}>
                       {person.headline}
                     </p>
                   )}
                   {person.location && (
-                    <p style={{ fontSize: '0.75rem', color: 'var(--color-text-muted, #64748b)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <MapPin size={10} aria-hidden="true" /> {person.location}
+                    <p style={{ fontSize: '0.75rem', color: '#000000', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <MapPin size={10} aria-hidden="true" style={{ color: '#000000' }} /> {person.location}
                     </p>
                   )}
                 </div>
@@ -115,13 +118,14 @@ export function RecommendedSection() {
                   gap: '0.25rem',
                   fontSize: '0.75rem',
                   padding: '0.2rem 0.5rem',
-                  borderRadius: '9999px',
-                  backgroundColor: 'rgba(37, 99, 235, 0.08)',
-                  color: 'var(--color-primary, #2563eb)',
+                  borderRadius: '4px',
+                  backgroundColor: '#FFFFFF',
+                  color: '#000000',
+                  border: '1px solid #E6E6E6',
                   marginBottom: '0.75rem',
                 }}
               >
-                <Users size={11} aria-hidden="true" />
+                <Users size={11} aria-hidden="true" style={{ color: '#000000' }} />
                 <span>{person.primary_reason}</span>
               </div>
             </div>

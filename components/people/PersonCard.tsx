@@ -84,7 +84,7 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
 
         <div className="person-card-body">
           <div className="person-card-header">
-            <Link href={`/people/${person.id}`} className="person-name-link" tabIndex={0}>
+            <Link href={`/network/${person.id}`} className="person-name-link" tabIndex={0}>
               {name}
               {person.has_golden_tick && (
                 <span className="golden-tick-badge" title="Golden Tick — Verified Premium Member" aria-label="Verified premium member">★</span>
@@ -116,7 +116,7 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
 
         <div className="person-card-actions">
           <Link
-            href={`/people/${person.id}`}
+            href={`/network/${person.id}`}
             className="person-view-btn"
             aria-label={`View ${name}'s profile`}
           >
@@ -161,7 +161,7 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
       {/* Info */}
       <div className="person-card-info">
         <Link
-          href={`/people/${person.id}`}
+          href={`/network/${person.id}`}
           className="person-name-link"
           tabIndex={0}
         >
@@ -213,7 +213,7 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
       {/* Actions */}
       <div className="person-card-footer">
         <Link
-          href={`/people/${person.id}`}
+          href={`/network/${person.id}`}
           className="person-view-btn full"
           aria-label={`View ${name}'s profile`}
         >

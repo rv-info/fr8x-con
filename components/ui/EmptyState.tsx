@@ -40,7 +40,7 @@ export function EmptyState({
         textAlign: 'center',
         background: '#ffffff',
         borderRadius: '8px',
-        border: '1px solid var(--fr8x-outline, #e2e8f0)',
+        border: '1px solid #E6E6E6',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,8 +52,8 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            color: 'var(--brand, #1168d7)',
-            opacity: 0.85,
+            color: '#000000',
+            opacity: 1,
             marginBottom: '4px',
             display: 'flex',
             alignItems: 'center',
@@ -65,12 +65,11 @@ export function EmptyState({
         </div>
       )}
       <h3
-        className="text-slate-900"
         style={{
           margin: 0,
           fontSize: '14px',
           fontWeight: 700,
-          color: 'var(--ink, #0f172a)',
+          color: '#000000',
         }}
       >
         {title}
@@ -80,7 +79,7 @@ export function EmptyState({
           style={{
             margin: '0 0 10px 0',
             fontSize: '12px',
-            color: 'var(--mut, #64748b)',
+            color: '#000000',
             maxWidth: '380px',
             lineHeight: 1.5,
           }}
@@ -111,6 +110,10 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
+                  background: '#E6E6E6',
+                  color: '#000000',
+                  border: '1px solid #E6E6E6',
+                  borderRadius: '4px',
                 }}
               >
                 {actionLabel}
@@ -126,6 +129,10 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
+                  background: '#E6E6E6',
+                  color: '#000000',
+                  border: '1px solid #E6E6E6',
+                  borderRadius: '4px',
                 }}
               >
                 {actionLabel}

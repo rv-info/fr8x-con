@@ -118,7 +118,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
             alt="FR8X"
             style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
           />
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#002b66', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#000000', letterSpacing: '0.04em', textTransform: 'uppercase', lineHeight: 1 }}>
             FR8X
           </div>
           <div
@@ -126,21 +126,21 @@ function ShellLayout({ children }: { children: ReactNode }) {
               marginTop: '8px',
               width: '24px',
               height: '24px',
-              border: '2px solid #cbd5e1',
-              borderTopColor: '#002b66',
+              border: '2px solid #E6E6E6',
+              borderTopColor: '#000000',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
             }}
           />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--fr8x-muted, #475569)', letterSpacing: '0.02em', marginTop: '4px' }}>
-            Verifying <span style={{ fontWeight: 'bold', color: '#002b66', textTransform: 'uppercase' }}>FR8X</span> session…
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#000000', letterSpacing: '0.02em', marginTop: '4px' }}>
+            Verifying <span style={{ fontWeight: 'bold', color: '#000000', textTransform: 'uppercase' }}>FR8X</span> session…
           </span>
           <a
             href="/login"
             style={{
               marginTop: '6px',
               fontSize: '11px',
-              color: '#002b66',
+              color: '#000000',
               textDecoration: 'none',
               fontWeight: 600,
             }}

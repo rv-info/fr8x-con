@@ -3,6 +3,11 @@
 /**
  * /people — Unified redirect & delegation to /network hub
  *
+ * Quick navigation references:
+ * /connections?tab=incoming
+ * /connections?tab=outgoing
+ * /connections?tab=connections
+ *
  * All People discovery, search, connections, and requests are consolidated
  * into the unified /network module.
  *

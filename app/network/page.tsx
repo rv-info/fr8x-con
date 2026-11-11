@@ -549,7 +549,7 @@ function NetworkPageContent() {
   const heldCount = heldRequests.length;
 
   return (
-    <div className="network-workspace-container" style={{ maxWidth: '1440px', margin: '0 auto', padding: '16px 20px 80px' }}>
+    <div className="network-workspace-container" style={{ width: '100%', maxWidth: '100%', margin: 0, padding: '16px 20px 80px' }}>
       {/* ── 1. Top Header & Workspace Title ────────────────────────────────────── */}
       <div
         style={{
@@ -560,7 +560,7 @@ function NetworkPageContent() {
           gap: '12px',
           marginBottom: '20px',
           paddingBottom: '16px',
-          borderBottom: '1px solid #E5E7EB',
+          borderBottom: '1px solid #E6E6E6',
         }}
       >
         <div>
@@ -571,7 +571,7 @@ function NetworkPageContent() {
                 fontWeight: 700,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: '#6B7280',
+                color: '#000000',
               }}
             >
               Enterprise Logistics Directory
@@ -582,9 +582,9 @@ function NetworkPageContent() {
                 fontWeight: 600,
                 padding: '2px 8px',
                 borderRadius: '4px',
-                background: '#F3F4F6',
-                color: '#111827',
-                border: '1px solid #E5E7EB',
+                background: '#E6E6E6',
+                color: '#000000',
+                border: '1px solid #E6E6E6',
               }}
             >
               Verified Network
@@ -613,10 +613,10 @@ function NetworkPageContent() {
               padding: '6px 12px',
               borderRadius: '6px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#111827',
+              color: '#000000',
             }}
           >
             <UserCheck size={14} style={{ color: '#000000' }} />
@@ -635,9 +635,7 @@ function NetworkPageContent() {
                 gap: '6px',
                 padding: '6px 12px',
                 borderRadius: '6px',
-                background: '#000000',
-                color: '#FFFFFF',
-                border: '1px solid #000000',
+                background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                 fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
@@ -672,9 +670,7 @@ function NetworkPageContent() {
               gap: '6px',
               padding: '6px 14px',
               borderRadius: '6px',
-              background: '#000000',
-              color: '#FFFFFF',
-              border: '1px solid #000000',
+              background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
               fontSize: '12px',
               fontWeight: 700,
               cursor: 'pointer',
@@ -691,7 +687,7 @@ function NetworkPageContent() {
         style={{
           display: 'flex',
           gap: '4px',
-          borderBottom: '1px solid #E5E7EB',
+          borderBottom: '1px solid #E6E6E6',
           marginBottom: '20px',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -703,7 +699,7 @@ function NetworkPageContent() {
             padding: '10px 16px',
             fontSize: '13px',
             fontWeight: activeTab === 'overview' ? 700 : 500,
-            color: activeTab === 'overview' ? '#000000' : '#6B7280',
+            color: activeTab === 'overview' ? '#000000' : '#000000',
             borderBottom: activeTab === 'overview' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
             borderLeft: 'none',
@@ -722,7 +718,7 @@ function NetworkPageContent() {
             padding: '10px 16px',
             fontSize: '13px',
             fontWeight: activeTab === 'discover' ? 700 : 500,
-            color: activeTab === 'discover' ? '#000000' : '#6B7280',
+            color: activeTab === 'discover' ? '#000000' : '#000000',
             borderBottom: activeTab === 'discover' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
             borderLeft: 'none',
@@ -744,7 +740,7 @@ function NetworkPageContent() {
             padding: '10px 16px',
             fontSize: '13px',
             fontWeight: activeTab === 'connections' ? 700 : 500,
-            color: activeTab === 'connections' ? '#000000' : '#6B7280',
+            color: activeTab === 'connections' ? '#000000' : '#000000',
             borderBottom: activeTab === 'connections' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
             borderLeft: 'none',
@@ -761,7 +757,7 @@ function NetworkPageContent() {
               padding: '1px 6px',
               borderRadius: '10px',
               background: activeTab === 'connections' ? '#000000' : '#F3F4F6',
-              color: activeTab === 'connections' ? '#FFFFFF' : '#4B5563',
+              color: activeTab === 'connections' ? '#FFFFFF' : '#000000',
             }}
           >
             {connections.length}
@@ -777,7 +773,7 @@ function NetworkPageContent() {
             padding: '10px 16px',
             fontSize: '13px',
             fontWeight: activeTab === 'requests' ? 700 : 500,
-            color: activeTab === 'requests' ? '#000000' : '#6B7280',
+            color: activeTab === 'requests' ? '#000000' : '#000000',
             borderBottom: activeTab === 'requests' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
             borderLeft: 'none',
@@ -813,7 +809,7 @@ function NetworkPageContent() {
             padding: '10px 16px',
             fontSize: '13px',
             fontWeight: activeTab === 'crm' ? 700 : 500,
-            color: activeTab === 'crm' ? '#000000' : '#6B7280',
+            color: activeTab === 'crm' ? '#000000' : '#000000',
             borderBottom: activeTab === 'crm' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
             borderLeft: 'none',
@@ -830,7 +826,7 @@ function NetworkPageContent() {
               padding: '1px 6px',
               borderRadius: '10px',
               background: activeTab === 'crm' ? '#000000' : '#F3F4F6',
-              color: activeTab === 'crm' ? '#FFFFFF' : '#4B5563',
+              color: activeTab === 'crm' ? '#FFFFFF' : '#000000',
             }}
           >
             {crmContacts.length}
@@ -854,16 +850,16 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
+                border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
                 Total Verified Connections
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
                 {connections.length}
               </div>
-              <div style={{ fontSize: '12px', color: '#4B5563' }}>Direct peer freight partners</div>
+              <div style={{ fontSize: '12px', color: '#000000' }}>Direct peer freight partners</div>
             </div>
 
             <div
@@ -871,16 +867,16 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
+                border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
                 Pending Incoming Requests
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
                 {incomingCount}
               </div>
-              <div style={{ fontSize: '12px', color: '#4B5563' }}>Awaiting your confirmation</div>
+              <div style={{ fontSize: '12px', color: '#000000' }}>Awaiting your confirmation</div>
             </div>
 
             <div
@@ -888,16 +884,16 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
+                border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
                 Active CRM Records
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
                 {crmContacts.length}
               </div>
-              <div style={{ fontSize: '12px', color: '#4B5563' }}>Classified enterprise entities</div>
+              <div style={{ fontSize: '12px', color: '#000000' }}>Classified enterprise entities</div>
             </div>
 
             <div
@@ -905,16 +901,16 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #E5E7EB',
+                border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#6B7280', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
                 Outgoing Pending Invitations
               </div>
               <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
                 {outgoingCount}
               </div>
-              <div style={{ fontSize: '12px', color: '#4B5563' }}>Sent to industry partners</div>
+              <div style={{ fontSize: '12px', color: '#000000' }}>Sent to industry partners</div>
             </div>
           </div>
 
@@ -924,7 +920,7 @@ function NetworkPageContent() {
               padding: '20px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -932,7 +928,7 @@ function NetworkPageContent() {
                 <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#000000' }}>
                   Trade Affinity Recommendations
                 </h3>
-                <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#6B7280' }}>
+                <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#000000' }}>
                   Logistics professionals operating on your primary trade corridors and port corridors.
                 </p>
               </div>
@@ -963,7 +959,7 @@ function NetworkPageContent() {
               padding: '20px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
             }}
           >
             <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 14px', color: '#000000' }}>
@@ -983,22 +979,22 @@ function NetworkPageContent() {
                         justifyContent: 'space-between',
                         padding: '10px 14px',
                         borderRadius: '6px',
-                        background: '#F9FAFB',
-                        border: '1px solid #E5E7EB',
+                        background: '#FFFFFF',
+                        border: '1px solid #E6E6E6',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Clock size={14} style={{ color: '#6B7280' }} />
-                        <span style={{ fontSize: '12.5px', color: '#111827', fontWeight: 500 }}>
+                        <Clock size={14} style={{ color: '#000000' }} />
+                        <span style={{ fontSize: '12.5px', color: '#000000', fontWeight: 500 }}>
                           {notif.title || notif.desc}
                         </span>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#9CA3AF' }}>{notif.time || notif.createdAt}</span>
+                      <span style={{ fontSize: '11px', color: '#000000' }}>{notif.time || notif.createdAt}</span>
                     </div>
                   ))}
               </div>
             ) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#6B7280', fontSize: '12px' }}>
+              <div style={{ padding: '20px', textAlign: 'center', color: '#000000', fontSize: '12px' }}>
                 No recent network notifications.
               </div>
             )}
@@ -1020,14 +1016,14 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '280px' }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
                 <Search
                   size={15}
-                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }}
+                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#000000' }}
                 />
                 <input
                   type="text"
@@ -1040,7 +1036,7 @@ function NetworkPageContent() {
                     paddingLeft: '32px',
                     paddingRight: '12px',
                     fontSize: '12.5px',
-                    border: '1px solid #E5E7EB',
+                    border: '1px solid #E6E6E6',
                     borderRadius: '6px',
                     background: '#FFFFFF',
                     color: '#000000',
@@ -1056,10 +1052,10 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '12px',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   borderRadius: '6px',
                   background: '#FFFFFF',
-                  color: '#111827',
+                  color: '#000000',
                   outline: 'none',
                 }}
               >
@@ -1071,7 +1067,7 @@ function NetworkPageContent() {
                 <option value="Transporter">Transporter / Fleet</option>
               </select>
 
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#4B5563', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#000000', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={discoverFilters.hasGoldenTick}
@@ -1082,16 +1078,16 @@ function NetworkPageContent() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '12px', color: '#6B7280' }}>
+              <span style={{ fontSize: '12px', color: '#000000' }}>
                 {discoverTotal !== null ? `${discoverTotal} verified members` : 'Searching…'}
               </span>
-              <div style={{ display: 'flex', border: '1px solid #E5E7EB', borderRadius: '6px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', border: '1px solid #E6E6E6', borderRadius: '6px', overflow: 'hidden' }}>
                 <button
                   onClick={() => setViewMode('table')}
                   style={{
                     padding: '6px 10px',
                     background: viewMode === 'table' ? '#000000' : '#FFFFFF',
-                    color: viewMode === 'table' ? '#FFFFFF' : '#4B5563',
+                    color: viewMode === 'table' ? '#FFFFFF' : '#000000',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -1106,7 +1102,7 @@ function NetworkPageContent() {
                   style={{
                     padding: '6px 10px',
                     background: viewMode === 'card' ? '#000000' : '#FFFFFF',
-                    color: viewMode === 'card' ? '#FFFFFF' : '#4B5563',
+                    color: viewMode === 'card' ? '#FFFFFF' : '#000000',
                     border: 'none',
                     cursor: 'pointer',
                     display: 'flex',
@@ -1142,15 +1138,15 @@ function NetworkPageContent() {
             />
           ) : viewMode === 'table' ? (
             /* High-Density Minimalist Table */
-            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #E6E6E6', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Member</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Company &amp; Role</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Location</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Corridors &amp; Specialization</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E6E6E6' }}>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Member</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Company &amp; Role</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Location</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Corridors &amp; Specialization</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1158,7 +1154,7 @@ function NetworkPageContent() {
                     const name = resolveMemberName(person);
                     const subline = resolveMemberSubline(person);
                     return (
-                      <tr key={person.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <tr key={person.id} style={{ borderBottom: '1px solid #E6E6E6' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <UserAvatar name={name} avatarUrl={person.avatar_url || undefined} size={32} />
@@ -1172,7 +1168,7 @@ function NetworkPageContent() {
                                 </Link>
                                 {person.has_golden_tick && <GoldenTick />}
                               </div>
-                              <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                              <div style={{ fontSize: '11px', color: '#000000' }}>
                                 {person.is_verified ? 'Verified Entity' : 'Member'}
                               </div>
                             </div>
@@ -1180,15 +1176,15 @@ function NetworkPageContent() {
                         </td>
 
                         <td style={{ padding: '10px 14px' }}>
-                          <div style={{ fontWeight: 600, color: '#111827' }}>
+                          <div style={{ fontWeight: 600, color: '#000000' }}>
                             {person.company_name || person.company || 'Enterprise Logistics'}
                           </div>
-                          <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                          <div style={{ fontSize: '11px', color: '#000000' }}>
                             {person.designation || person.position || 'Logistics Specialist'}
                           </div>
                         </td>
 
-                        <td style={{ padding: '10px 14px', color: '#4B5563' }}>
+                        <td style={{ padding: '10px 14px', color: '#000000' }}>
                           {[person.city, person.country].filter(Boolean).join(', ') || 'Global'}
                         </td>
 
@@ -1201,9 +1197,9 @@ function NetworkPageContent() {
                                   fontSize: '10.5px',
                                   padding: '2px 6px',
                                   borderRadius: '4px',
-                                  background: '#F3F4F6',
-                                  color: '#374151',
-                                  border: '1px solid #E5E7EB',
+                                  background: '#E6E6E6',
+                                  color: '#000000',
+                                  border: '1px solid #E6E6E6',
                                 }}
                               >
                                 {lane}
@@ -1222,9 +1218,7 @@ function NetworkPageContent() {
                               style={{
                                 padding: '5px 12px',
                                 borderRadius: '4px',
-                                background: '#000000',
-                                color: '#FFFFFF',
-                                border: '1px solid #000000',
+                                background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 cursor: 'pointer',
@@ -1238,8 +1232,8 @@ function NetworkPageContent() {
                                 padding: '5px 10px',
                                 borderRadius: '4px',
                                 background: '#FFFFFF',
-                                color: '#111827',
-                                border: '1px solid #E5E7EB',
+                                color: '#000000',
+                                border: '1px solid #E6E6E6',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
@@ -1271,7 +1265,7 @@ function NetworkPageContent() {
                     padding: '16px',
                     borderRadius: '8px',
                     background: '#FFFFFF',
-                    border: '1px solid #E5E7EB',
+                    border: '1px solid #E6E6E6',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -1287,17 +1281,17 @@ function NetworkPageContent() {
                           </Link>
                           {person.has_golden_tick && <GoldenTick />}
                         </div>
-                        <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                        <div style={{ fontSize: '11px', color: '#000000' }}>
                           {person.company_name || person.company || 'Enterprise Logistics'}
                         </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#4B5563', marginBottom: '8px' }}>
+                    <div style={{ fontSize: '12px', color: '#000000', marginBottom: '8px' }}>
                       {person.designation || 'Logistics Member'} · {[person.city, person.country].filter(Boolean).join(', ')}
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #E5E7EB' }}>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #E6E6E6' }}>
                     <button
                       onClick={() => {
                         setSendConnectTarget(person);
@@ -1307,9 +1301,7 @@ function NetworkPageContent() {
                         flex: 1,
                         padding: '6px',
                         borderRadius: '4px',
-                        background: '#000000',
-                        color: '#FFFFFF',
-                        border: '1px solid #000000',
+                        background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                         fontSize: '11.5px',
                         fontWeight: 700,
                         cursor: 'pointer',
@@ -1323,8 +1315,8 @@ function NetworkPageContent() {
                         padding: '6px 12px',
                         borderRadius: '4px',
                         background: '#FFFFFF',
-                        color: '#111827',
-                        border: '1px solid #E5E7EB',
+                        color: '#000000',
+                        border: '1px solid #E6E6E6',
                         fontSize: '11.5px',
                         fontWeight: 600,
                         textDecoration: 'none',
@@ -1350,7 +1342,7 @@ function NetworkPageContent() {
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#000000',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   fontSize: '12.5px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -1376,13 +1368,13 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
             }}
           >
             <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
               <Search
                 size={15}
-                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }}
+                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#000000' }}
               />
               <input
                 type="text"
@@ -1395,7 +1387,7 @@ function NetworkPageContent() {
                   paddingLeft: '32px',
                   paddingRight: '12px',
                   fontSize: '12.5px',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#000000',
@@ -1404,7 +1396,7 @@ function NetworkPageContent() {
               />
             </div>
 
-            <div style={{ fontSize: '12px', color: '#6B7280' }}>
+            <div style={{ fontSize: '12px', color: '#000000' }}>
               {filteredConnections.length} accepted connections
             </div>
           </div>
@@ -1419,14 +1411,14 @@ function NetworkPageContent() {
               onAction={() => switchTab('discover')}
             />
           ) : (
-            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #E6E6E6', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Partner</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Company &amp; Designation</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Location</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E6E6E6' }}>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Partner</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Company &amp; Designation</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Location</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1434,7 +1426,7 @@ function NetworkPageContent() {
                     const prof = item.profiles;
                     const name = resolveMemberName(prof);
                     return (
-                      <tr key={item.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                      <tr key={item.id} style={{ borderBottom: '1px solid #E6E6E6' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={32} />
@@ -1445,8 +1437,8 @@ function NetworkPageContent() {
                                 </Link>
                                 {prof.has_golden_tick && <GoldenTick />}
                               </div>
-                              <div style={{ fontSize: '11px', color: '#16A34A', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#16A34A' }} />
+                              <div style={{ fontSize: '11px', color: '#000000', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#000000' }} />
                                 Connected
                               </div>
                             </div>
@@ -1454,15 +1446,15 @@ function NetworkPageContent() {
                         </td>
 
                         <td style={{ padding: '10px 14px' }}>
-                          <div style={{ fontWeight: 600, color: '#111827' }}>
+                          <div style={{ fontWeight: 600, color: '#000000' }}>
                             {prof.company_name || prof.company || 'Enterprise Logistics'}
                           </div>
-                          <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                          <div style={{ fontSize: '11px', color: '#000000' }}>
                             {prof.designation || 'Freight Procurement'}
                           </div>
                         </td>
 
-                        <td style={{ padding: '10px 14px', color: '#4B5563' }}>
+                        <td style={{ padding: '10px 14px', color: '#000000' }}>
                           {[prof.city, prof.country].filter(Boolean).join(', ') || 'Global'}
                         </td>
 
@@ -1489,9 +1481,9 @@ function NetworkPageContent() {
                               style={{
                                 padding: '5px 10px',
                                 borderRadius: '4px',
-                                background: '#F3F4F6',
-                                color: '#111827',
-                                border: '1px solid #E5E7EB',
+                                background: '#E6E6E6',
+                                color: '#000000',
+                                border: '1px solid #E6E6E6',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 cursor: 'pointer',
@@ -1510,8 +1502,8 @@ function NetworkPageContent() {
                                 padding: '5px 10px',
                                 borderRadius: '4px',
                                 background: '#FFFFFF',
-                                color: '#111827',
-                                border: '1px solid #E5E7EB',
+                                color: '#000000',
+                                border: '1px solid #E6E6E6',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
@@ -1530,8 +1522,8 @@ function NetworkPageContent() {
                                 padding: '5px 8px',
                                 borderRadius: '4px',
                                 background: 'none',
-                                color: '#DC2626',
-                                border: '1px solid #FECACA',
+                                color: '#000000',
+                                border: '1px solid #E6E6E6',
                                 fontSize: '11.5px',
                                 cursor: 'pointer',
                               }}
@@ -1561,8 +1553,8 @@ function NetworkPageContent() {
               gap: '6px',
               padding: '6px',
               borderRadius: '8px',
-              background: '#F9FAFB',
-              border: '1px solid #E5E7EB',
+              background: '#FFFFFF',
+              border: '1px solid #E6E6E6',
               width: 'fit-content',
             }}
           >
@@ -1577,7 +1569,7 @@ function NetworkPageContent() {
                 fontSize: '12px',
                 fontWeight: requestFilter === 'incoming' ? 700 : 500,
                 background: requestFilter === 'incoming' ? '#000000' : 'transparent',
-                color: requestFilter === 'incoming' ? '#FFFFFF' : '#4B5563',
+                color: requestFilter === 'incoming' ? '#FFFFFF' : '#000000',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -1588,8 +1580,8 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'incoming' ? '#374151' : '#E5E7EB',
-                  color: requestFilter === 'incoming' ? '#FFFFFF' : '#111827',
+                  background: requestFilter === 'incoming' ? '#000000' : '#E6E6E6',
+                  color: requestFilter === 'incoming' ? '#FFFFFF' : '#000000',
                 }}
               >
                 {incomingCount}
@@ -1607,7 +1599,7 @@ function NetworkPageContent() {
                 fontSize: '12px',
                 fontWeight: requestFilter === 'outgoing' ? 700 : 500,
                 background: requestFilter === 'outgoing' ? '#000000' : 'transparent',
-                color: requestFilter === 'outgoing' ? '#FFFFFF' : '#4B5563',
+                color: requestFilter === 'outgoing' ? '#FFFFFF' : '#000000',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -1618,8 +1610,8 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'outgoing' ? '#374151' : '#E5E7EB',
-                  color: requestFilter === 'outgoing' ? '#FFFFFF' : '#111827',
+                  background: requestFilter === 'outgoing' ? '#000000' : '#E6E6E6',
+                  color: requestFilter === 'outgoing' ? '#FFFFFF' : '#000000',
                 }}
               >
                 {outgoingCount}
@@ -1637,7 +1629,7 @@ function NetworkPageContent() {
                 fontSize: '12px',
                 fontWeight: requestFilter === 'held' ? 700 : 500,
                 background: requestFilter === 'held' ? '#000000' : 'transparent',
-                color: requestFilter === 'held' ? '#FFFFFF' : '#4B5563',
+                color: requestFilter === 'held' ? '#FFFFFF' : '#000000',
                 border: 'none',
                 cursor: 'pointer',
               }}
@@ -1648,8 +1640,8 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'held' ? '#374151' : '#E5E7EB',
-                  color: requestFilter === 'held' ? '#FFFFFF' : '#111827',
+                  background: requestFilter === 'held' ? '#000000' : '#E6E6E6',
+                  color: requestFilter === 'held' ? '#FFFFFF' : '#000000',
                 }}
               >
                 {heldCount}
@@ -1685,7 +1677,7 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #E5E7EB',
+                          border: '1px solid #E6E6E6',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1697,11 +1689,11 @@ function NetworkPageContent() {
                               </Link>
                               {prof.has_golden_tick && <GoldenTick />}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#4B5563' }}>
+                            <div style={{ fontSize: '12px', color: '#000000' }}>
                               {prof.company_name || prof.company} · {prof.designation || 'Logistics Member'}
                             </div>
                             {req.message && (
-                              <div style={{ marginTop: '4px', fontSize: '11.5px', color: '#111827', background: '#F9FAFB', padding: '4px 8px', borderRadius: '4px', border: '1px solid #E5E7EB' }}>
+                              <div style={{ marginTop: '4px', fontSize: '11.5px', color: '#000000', background: '#FFFFFF', padding: '4px 8px', borderRadius: '4px', border: '1px solid #E6E6E6' }}>
                                 &ldquo;{req.message}&rdquo;
                               </div>
                             )}
@@ -1715,9 +1707,7 @@ function NetworkPageContent() {
                             style={{
                               padding: '6px 14px',
                               borderRadius: '6px',
-                              background: '#000000',
-                              color: '#FFFFFF',
-                              border: '1px solid #000000',
+                              background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
@@ -1732,8 +1722,8 @@ function NetworkPageContent() {
                               padding: '6px 12px',
                               borderRadius: '6px',
                               background: '#FFFFFF',
-                              color: '#4B5563',
-                              border: '1px solid #E5E7EB',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1748,8 +1738,8 @@ function NetworkPageContent() {
                               padding: '6px 12px',
                               borderRadius: '6px',
                               background: '#FFFFFF',
-                              color: '#DC2626',
-                              border: '1px solid #FECACA',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1793,7 +1783,7 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #E5E7EB',
+                          border: '1px solid #E6E6E6',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1805,10 +1795,10 @@ function NetworkPageContent() {
                               </Link>
                               {prof.has_golden_tick && <GoldenTick />}
                             </div>
-                            <div style={{ fontSize: '12px', color: '#4B5563' }}>
+                            <div style={{ fontSize: '12px', color: '#000000' }}>
                               {prof.company_name || prof.company} · {prof.designation || 'Logistics Member'}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#9CA3AF', marginTop: '2px' }}>
+                            <div style={{ fontSize: '11px', color: '#000000', marginTop: '2px' }}>
                               Sent invitation · Awaiting response
                             </div>
                           </div>
@@ -1822,8 +1812,8 @@ function NetworkPageContent() {
                               padding: '6px 14px',
                               borderRadius: '6px',
                               background: '#FFFFFF',
-                              color: '#4B5563',
-                              border: '1px solid #E5E7EB',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1865,14 +1855,14 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #E5E7EB',
+                          border: '1px solid #E6E6E6',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                           <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={42} />
                           <div>
                             <div style={{ fontWeight: 700, color: '#000000' }}>{name}</div>
-                            <div style={{ fontSize: '12px', color: '#4B5563' }}>{prof.company_name || prof.company}</div>
+                            <div style={{ fontSize: '12px', color: '#000000' }}>{prof.company_name || prof.company}</div>
                           </div>
                         </div>
 
@@ -1883,9 +1873,7 @@ function NetworkPageContent() {
                             style={{
                               padding: '6px 14px',
                               borderRadius: '6px',
-                              background: '#000000',
-                              color: '#FFFFFF',
-                              border: '1px solid #000000',
+                              background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
@@ -1900,8 +1888,8 @@ function NetworkPageContent() {
                               padding: '6px 12px',
                               borderRadius: '6px',
                               background: '#FFFFFF',
-                              color: '#4B5563',
-                              border: '1px solid #E5E7EB',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '12px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1934,14 +1922,14 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '300px' }}>
               <div style={{ position: 'relative', width: '100%', maxWidth: '340px' }}>
                 <Search
                   size={15}
-                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#9CA3AF' }}
+                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#000000' }}
                 />
                 <input
                   type="text"
@@ -1954,7 +1942,7 @@ function NetworkPageContent() {
                     paddingLeft: '32px',
                     paddingRight: '12px',
                     fontSize: '12.5px',
-                    border: '1px solid #E5E7EB',
+                    border: '1px solid #E6E6E6',
                     borderRadius: '6px',
                     background: '#FFFFFF',
                     color: '#000000',
@@ -1970,10 +1958,10 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '12px',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   borderRadius: '6px',
                   background: '#FFFFFF',
-                  color: '#111827',
+                  color: '#000000',
                   outline: 'none',
                 }}
               >
@@ -1991,10 +1979,10 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '12px',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   borderRadius: '6px',
                   background: '#FFFFFF',
-                  color: '#111827',
+                  color: '#000000',
                   outline: 'none',
                 }}
               >
@@ -2030,9 +2018,7 @@ function NetworkPageContent() {
                 style={{
                   padding: '7px 14px',
                   borderRadius: '6px',
-                  background: '#000000',
-                  color: '#FFFFFF',
-                  border: '1px solid #000000',
+                  background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2058,29 +2044,29 @@ function NetworkPageContent() {
               onAction={() => setShowAddContactModal(true)}
             />
           ) : (
-            <div style={{ border: '1px solid #E5E7EB', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #E6E6E6', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#F9FAFB', borderBottom: '1px solid #E5E7EB' }}>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Contact</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Category</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Pipeline Stage</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase' }}>Location &amp; Notes</th>
-                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#4B5563', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #E6E6E6' }}>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Contact</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Category</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Pipeline Stage</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase' }}>Location &amp; Notes</th>
+                    <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#000000', textTransform: 'uppercase', textAlign: 'right' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredCrm.map((contact) => (
-                    <tr key={contact.id} style={{ borderBottom: '1px solid #E5E7EB' }}>
+                    <tr key={contact.id} style={{ borderBottom: '1px solid #E6E6E6' }}>
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <UserAvatar name={contact.name} size={32} />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <span style={{ fontWeight: 700, color: '#000000' }}>{contact.name}</span>
-                              {contact.is_favorite && <Star size={12} style={{ fill: '#F59E0B', color: '#F59E0B' }} />}
+                              {contact.is_favorite && <Star size={12} style={{ fill: '#000000', color: '#000000' }} />}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#6B7280' }}>
+                            <div style={{ fontSize: '11px', color: '#000000' }}>
                               {contact.company} · {contact.designation || 'Specialist'}
                             </div>
                           </div>
@@ -2094,9 +2080,9 @@ function NetworkPageContent() {
                             fontWeight: 600,
                             padding: '2px 8px',
                             borderRadius: '4px',
-                            background: '#F3F4F6',
-                            color: '#111827',
-                            border: '1px solid #E5E7EB',
+                            background: '#E6E6E6',
+                            color: '#000000',
+                            border: '1px solid #E6E6E6',
                           }}
                         >
                           {contact.category}
@@ -2118,7 +2104,7 @@ function NetworkPageContent() {
                         </span>
                       </td>
 
-                      <td style={{ padding: '10px 14px', color: '#4B5563', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '10px 14px', color: '#000000', maxWidth: '240px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {contact.notes || contact.location || '—'}
                       </td>
 
@@ -2129,9 +2115,9 @@ function NetworkPageContent() {
                             style={{
                               padding: '5px 8px',
                               borderRadius: '4px',
-                              background: '#F3F4F6',
-                              color: '#111827',
-                              border: '1px solid #E5E7EB',
+                              background: '#E6E6E6',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2164,8 +2150,8 @@ function NetworkPageContent() {
                               padding: '5px 8px',
                               borderRadius: '4px',
                               background: '#FFFFFF',
-                              color: '#4B5563',
-                              border: '1px solid #E5E7EB',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2183,8 +2169,8 @@ function NetworkPageContent() {
                               padding: '5px 8px',
                               borderRadius: '4px',
                               background: '#FFFFFF',
-                              color: '#DC2626',
-                              border: '1px solid #FECACA',
+                              color: '#000000',
+                              border: '1px solid #E6E6E6',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2223,7 +2209,7 @@ function NetworkPageContent() {
               maxWidth: '440px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
               padding: '20px',
             }}
           >
@@ -2235,7 +2221,7 @@ function NetworkPageContent() {
                 <X size={16} />
               </button>
             </div>
-            <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 12px' }}>
+            <p style={{ fontSize: '12px', color: '#000000', margin: '0 0 12px' }}>
               Add a personalized note to introduce your company or specify trade lane opportunities (optional).
             </p>
             <textarea
@@ -2248,7 +2234,7 @@ function NetworkPageContent() {
                 padding: '10px',
                 fontSize: '12.5px',
                 borderRadius: '6px',
-                border: '1px solid #E5E7EB',
+                border: '1px solid #E6E6E6',
                 outline: 'none',
                 marginBottom: '16px',
               }}
@@ -2260,8 +2246,8 @@ function NetworkPageContent() {
                   padding: '7px 14px',
                   borderRadius: '6px',
                   background: '#FFFFFF',
-                  color: '#4B5563',
-                  border: '1px solid #E5E7EB',
+                  color: '#000000',
+                  border: '1px solid #E6E6E6',
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -2275,9 +2261,7 @@ function NetworkPageContent() {
                 style={{
                   padding: '7px 16px',
                   borderRadius: '6px',
-                  background: '#000000',
-                  color: '#FFFFFF',
-                  border: '1px solid #000000',
+                  background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -2317,7 +2301,7 @@ function NetworkPageContent() {
             <div
               style={{
                 padding: '16px',
-                borderBottom: '1px solid #E5E7EB',
+                borderBottom: '1px solid #E6E6E6',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -2327,7 +2311,7 @@ function NetworkPageContent() {
                 <UserAvatar name={activeChatContact.name} size={36} />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '14px', color: '#000000' }}>{activeChatContact.name}</div>
-                  <div style={{ fontSize: '11px', color: '#6B7280' }}>{activeChatContact.company}</div>
+                  <div style={{ fontSize: '11px', color: '#000000' }}>{activeChatContact.company}</div>
                 </div>
               </div>
               <button onClick={() => setActiveChatContact(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -2338,11 +2322,11 @@ function NetworkPageContent() {
             {/* Messages Stream */}
             <div style={{ flex: 1, overflowY: 'auto', padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {chatLoading ? (
-                <div style={{ textAlign: 'center', color: '#6B7280', fontSize: '12px', margin: 'auto' }}>
+                <div style={{ textAlign: 'center', color: '#000000', fontSize: '12px', margin: 'auto' }}>
                   Loading conversation history…
                 </div>
               ) : chatMessages.length === 0 ? (
-                <div style={{ textAlign: 'center', color: '#6B7280', fontSize: '12px', margin: 'auto' }}>
+                <div style={{ textAlign: 'center', color: '#000000', fontSize: '12px', margin: 'auto' }}>
                   No previous messages. Start a conversation with {activeChatContact.name}.
                 </div>
               ) : (
@@ -2357,12 +2341,12 @@ function NetworkPageContent() {
                         padding: '9px 12px',
                         borderRadius: '8px',
                         background: isMine ? '#000000' : '#F3F4F6',
-                        color: isMine ? '#FFFFFF' : '#111827',
+                        color: isMine ? '#FFFFFF' : '#000000',
                         fontSize: '12.5px',
                       }}
                     >
                       <div>{msg.content}</div>
-                      <div style={{ fontSize: '9.5px', color: isMine ? '#9CA3AF' : '#6B7280', marginTop: '4px', textAlign: 'right' }}>
+                      <div style={{ fontSize: '9.5px', color: isMine ? '#000000' : '#000000', marginTop: '4px', textAlign: 'right' }}>
                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
@@ -2373,7 +2357,7 @@ function NetworkPageContent() {
             </div>
 
             {/* Chat Input */}
-            <form onSubmit={handleSendChatMessage} style={{ padding: '12px', borderTop: '1px solid #E5E7EB', display: 'flex', gap: '8px' }}>
+            <form onSubmit={handleSendChatMessage} style={{ padding: '12px', borderTop: '1px solid #E6E6E6', display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="Type a message…"
@@ -2385,7 +2369,7 @@ function NetworkPageContent() {
                   padding: '0 12px',
                   fontSize: '12.5px',
                   borderRadius: '6px',
-                  border: '1px solid #E5E7EB',
+                  border: '1px solid #E6E6E6',
                   outline: 'none',
                 }}
               />
@@ -2432,7 +2416,7 @@ function NetworkPageContent() {
               maxWidth: '520px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
               padding: '20px',
             }}
           >
@@ -2445,48 +2429,48 @@ function NetworkPageContent() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Full Name *</label>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Full Name *</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Ramesh Patel"
                   value={crmFormData.name}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                  style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                 />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Company *</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Company *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Apex Global Logistics"
                     value={crmFormData.company}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, company: e.target.value }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Designation</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Designation</label>
                   <input
                     type="text"
                     placeholder="e.g. Managing Director"
                     value={crmFormData.designation}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, designation: e.target.value }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Category</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Category</label>
                   <select
                     value={crmFormData.category}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, category: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   >
                     <option value="Freight Forwarder">Freight Forwarder</option>
                     <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
@@ -2496,11 +2480,11 @@ function NetworkPageContent() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Pipeline Stage</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Pipeline Stage</label>
                   <select
                     value={crmFormData.stage}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, stage: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   >
                     <option value="Active Partner">Active Partner</option>
                     <option value="Rate Quoted">Rate Quoted</option>
@@ -2511,13 +2495,13 @@ function NetworkPageContent() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Internal Notes</label>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Internal Notes</label>
                 <textarea
                   rows={2}
                   placeholder="Notes, key trade lanes, rates discussion…"
                   value={crmFormData.notes}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                 />
               </div>
             </div>
@@ -2525,7 +2509,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
               <button
                 onClick={() => setShowAddContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#4B5563', border: '1px solid #E5E7EB', fontSize: '12px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2554,7 +2538,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#000000', color: '#FFFFFF', border: '1px solid #000000', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Save Contact
               </button>
@@ -2583,7 +2567,7 @@ function NetworkPageContent() {
               maxWidth: '520px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
               padding: '20px',
             }}
           >
@@ -2597,11 +2581,11 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Category</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Category</label>
                   <select
                     value={crmFormData.category}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, category: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   >
                     <option value="Freight Forwarder">Freight Forwarder</option>
                     <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
@@ -2611,11 +2595,11 @@ function NetworkPageContent() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Pipeline Stage</label>
+                  <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Pipeline Stage</label>
                   <select
                     value={crmFormData.stage}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, stage: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                   >
                     <option value="Active Partner">Active Partner</option>
                     <option value="Rate Quoted">Rate Quoted</option>
@@ -2626,12 +2610,12 @@ function NetworkPageContent() {
               </div>
 
               <div>
-                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#4B5563', display: 'block', marginBottom: '4px' }}>Notes</label>
+                <label style={{ fontSize: '11.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '4px' }}>Notes</label>
                 <textarea
                   rows={3}
                   value={crmFormData.notes}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E5E7EB', outline: 'none' }}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #E6E6E6', outline: 'none' }}
                 />
               </div>
 
@@ -2648,7 +2632,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
               <button
                 onClick={() => setShowEditContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#4B5563', border: '1px solid #E5E7EB', fontSize: '12px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2673,7 +2657,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#000000', color: '#FFFFFF', border: '1px solid #000000', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Update Contact
               </button>
@@ -2702,17 +2686,17 @@ function NetworkPageContent() {
               maxWidth: '420px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #E5E7EB',
+              border: '1px solid #E6E6E6',
               padding: '20px',
             }}
           >
             <h3 style={{ fontSize: '16px', fontWeight: 700, margin: '0 0 10px', color: '#000000' }}>Delete Contact</h3>
-            <p style={{ fontSize: '12.5px', color: '#4B5563', margin: '0 0 14px' }}>
+            <p style={{ fontSize: '12.5px', color: '#000000', margin: '0 0 14px' }}>
               Are you sure you want to remove <strong>{selectedContact.name}</strong> from your CRM?
             </p>
 
             {selectedContact.contact_profile_id && (
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#111827', marginBottom: '16px', cursor: 'pointer' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#000000', marginBottom: '16px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={deleteAlsoConnection}
@@ -2725,7 +2709,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={() => setShowDeleteContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#4B5563', border: '1px solid #E5E7EB', fontSize: '12px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2752,7 +2736,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#DC2626', color: '#FFFFFF', border: '1px solid #DC2626', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
               >
                 Confirm Delete
               </button>

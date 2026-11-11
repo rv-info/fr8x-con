@@ -32,9 +32,12 @@ export const dynamic = 'force-dynamic';
 const PUBLIC_PROFILE_FIELDS = [
   'id', 'uid', 'display_name', 'full_name', 'first_name', 'last_name',
   'designation', 'position', 'headline', 'department', 'company_name',
-  'city', 'state', 'country', 'location', 'avatar_url', 'bio', 'summary',
+  'city', 'state', 'country', 'location', 'postal_code', 'formatted_address', 'timezone',
+  'avatar_url', 'company_logo_url', 'bio', 'summary',
   'skills', 'specializations', 'key_trade_lanes', 'languages',
-  'experiences', 'is_verified', 'has_golden_tick', 'privacy_settings',
+  'experiences', 'educations', 'certifications',
+  'iata_code', 'fiata_reg', 'fmc_number', 'mto',
+  'is_verified', 'has_golden_tick', 'plan', 'privacy_settings',
   'email', 'mobile', 'phone',
 ].join(', ');
 
