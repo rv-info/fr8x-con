@@ -49,13 +49,13 @@
 ## 3. Migration Order & Rollout Plan
 
 1. **Step 1:** Apply migration [`supabase/migrations/20261019000000_canonical_relationships_and_chat.sql`](file:///D:/fr8x-con/supabase/migrations/20261019000000_canonical_relationships_and_chat.sql) via Supabase CLI or SQL Editor in production.
-2. **Step 2:** Deploy application updates to Vercel production.
+2. **Step 2:** Deploy application updates to Cloudflare Workers production.
 3. **Step 3:** Legacy data in `public.connections` is automatically reconciled into `public.connection_requests` and `public.accepted_connections` without downtime or data deletion.
 4. **Step 4:** Verify live health and WebSocket Realtime delivery on `https://con.fr8x.in`.
 
 ### Rollback Plan
 - All schema additions are additive (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`).
-- If rollback of application code is needed, previous Vercel deployment can be instantly redeployed without rolling back database migrations.
+- If rollback of application code is needed, previous Cloudflare Workers deployment can be instantly redeployed without rolling back database migrations.
 - If migration rollback is desired:
   ```sql
   DROP TABLE IF EXISTS public.messages CASCADE;

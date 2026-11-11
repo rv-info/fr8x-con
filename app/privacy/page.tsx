@@ -355,7 +355,7 @@ export default function PrivacyPolicyPage() {
             </p>
             <ul className="list-disc pl-5 text-xs text-slate-600 space-y-1">
               <li><strong>Database &amp; Storage:</strong> Supabase Inc. (AWS Mumbai / Singapore infrastructure with encryption at rest).</li>
-              <li><strong>Hosting &amp; Edge:</strong> Vercel Inc. (Edge serverless routing with global TLS termination).</li>
+              <li><strong>Hosting &amp; Edge:</strong> Cloudflare, Inc. (Global Edge Workers routing with global TLS termination).</li>
               <li><strong>Transactional Email:</strong> Resend / Nodemailer relay (Strict DKIM/SPF/DMARC authenticated relays for OTPs and security notices).</li>
             </ul>
           </div>

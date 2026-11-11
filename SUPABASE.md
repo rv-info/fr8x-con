@@ -1,7 +1,7 @@
 ﻿# FR8X CON — Supabase Database Architecture
 **Last Updated:** 2026-10-05
 **Project:** `fr8x-con` (https://haarbaqeuuirwkhmefev.supabase.co)
-**Architecture:** Next.js → Supabase Auth + PostgreSQL + Supabase Storage → Vercel
+**Architecture:** Next.js → Supabase Auth + PostgreSQL + Supabase Storage → Cloudflare Workers
 
 ---
 
@@ -163,11 +163,11 @@ No local emulator required — dev connects to hosted Supabase project directly.
 
 ---
 
-## Deployment (Vercel)
+## Deployment (Cloudflare Workers)
 
-1. Push to `main` → Vercel auto-deploys
-2. Ensure Vercel Environment Variables include all three Supabase keys
-3. `SUPABASE_SERVICE_ROLE_KEY` must be set as a **Server** (not preview/client) env var
+1. Push to `main` → Cloudflare Workers auto-deploys via Workers Builds
+2. Ensure Cloudflare Workers Variables & Secrets include all required Supabase keys
+3. `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` must be set as an encrypted Secret
 
 ---
 
@@ -180,4 +180,4 @@ No local emulator required — dev connects to hosted Supabase project directly.
 | Profile not loading after login | profiles row missing | Verify `on_auth_user_created` trigger exists in Supabase Dashboard → Database → Functions |
 | `new row violates RLS` | Wrong owner uid | Confirm `auth.uid()` matches the record's owner column |
 | `column X does not exist` | Old column name in code | Reference `lib/supabase/types.ts` for exact column names |
-| `SUPABASE_SERVICE_ROLE_KEY missing` | Not in Vercel env | Add in Vercel → Settings → Environment Variables (Server) |
+| `SUPABASE_SERVICE_ROLE_KEY missing` | Not in Cloudflare env | Add in Cloudflare Workers → Settings → Variables & Secrets |

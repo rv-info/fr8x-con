@@ -153,8 +153,8 @@ const categories = ['network', 'auctions', 'bids', 'chat', 'feeds', 'jobs', 'sys
    ```bash
    npx supabase db push
    ```
-2. **Deploy Vercel Frontend:**
-   Push the verified commits to GitHub main branch to trigger Vercel deployment for https://con.fr8x.in.
+2. **Deploy Cloudflare Workers Frontend:**
+   Push the verified commits to GitHub main branch to trigger Cloudflare Workers deployment for https://con.fr8x.in.
 3. **Post-Deployment Verification:**
    Log into two accounts on `con.fr8x.in`:
    - Send request from Account A to Account B inside Search modal.

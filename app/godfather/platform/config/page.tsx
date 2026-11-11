@@ -100,7 +100,7 @@ export default function SystemConfigPage() {
           </div>
           <div className="min-w-0">
             <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Edge CDN & Gateway</div>
-            <div className="text-sm font-bold text-slate-900 font-mono truncate">Vercel Enterprise Edge</div>
+            <div className="text-sm font-bold text-slate-900 font-mono truncate">Cloudflare Global Edge</div>
             <div className="text-xs text-purple-700 font-mono font-semibold flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-purple-500 inline-block" />
               Status: 100% Operational

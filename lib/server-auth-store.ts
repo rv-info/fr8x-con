@@ -393,7 +393,7 @@ if (process.env.NODE_ENV === 'production') {
   if (!KMS_KEY || KMS_KEY === DEFAULT_HEX) {
     console.error(
       '[ServerSecurityStore] CRITICAL: GODFATHER_KMS_ENCRYPTION_KEY is using the default fallback value in production. ' +
-      'All field-encrypted data is at risk. Set a unique 64-hex-char key in Vercel environment variables immediately.'
+      'All field-encrypted data is at risk. Set a unique 64-hex-char key in Cloudflare environment variables immediately.'
     );
   }
 }

@@ -174,4 +174,4 @@ To apply these fixes to the production database hosted at `https://con.fr8x.in`:
    git commit -m "fix(connections): resolve withdrawal, notification sync, and connection received views"
    git push origin main
    ```
-   Vercel will trigger an automatic production build and deployment.
+   Cloudflare Workers will trigger an automatic production build and deployment.

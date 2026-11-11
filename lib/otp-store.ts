@@ -4,13 +4,13 @@
  * Distributed OTP store abstraction.
  *
  * Adapter priority (first available wins):
- *   1. Vercel KV  — set KV_REST_API_URL + KV_REST_API_TOKEN (recommended for Vercel)
- *   2. ioredis    — set REDIS_URL (e.g. redis://host:6379 or Upstash URL)
- *   3. In-Memory  — dev/local only. NOT suitable for Vercel (state lost on each invocation).
+ *   1. REST KV   — set KV_REST_API_URL + KV_REST_API_TOKEN (e.g. Upstash Redis REST)
+ *   2. ioredis   — set REDIS_URL (e.g. redis://host:6379 or Upstash URL)
+ *   3. In-Memory — dev/local only.
  *
  * PRODUCTION REQUIREMENT: Set at least one of the above to ensure the
  * 3-OTP-per-24h rate limit and 60-second cooldown are shared across all
- * Vercel serverless function invocations.
+ * edge worker invocations.
  */
 
 type OtpRecord = { salt: string; hash: string; expiresAt: string };
@@ -25,7 +25,7 @@ const memStore = new Map<string, OtpRecord>();
 const memTimestamps = new Map<string, number[]>();
 const memCooldowns = new Map<string, number>();
 
-// ── Vercel KV client (lazy, optional) ────────────────────────────────────────
+// ── REST KV client (lazy, optional) ──────────────────────────────────────────
 let kvClient: any = null;
 let kvInitAttempted = false;
 
@@ -39,8 +39,8 @@ function safeDynamicRequire(modName: string): any {
 }
 
 async function executeKvRestCommand(...args: (string | number)[]): Promise<any> {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null;
   const res = await fetch(url, {
     method: 'POST',
@@ -80,26 +80,17 @@ const restKvClient = {
   },
 };
 
-async function getVercelKV(): Promise<any> {
+async function getRestKV(): Promise<any> {
   if (kvClient) return kvClient;
   if (kvInitAttempted) return null;
   kvInitAttempted = true;
 
-  // Vercel KV requires both KV_REST_API_URL and KV_REST_API_TOKEN
-  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) return null;
+  const url = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
 
-  try {
-    // Dynamic import if @vercel/kv is installed
-    const kvModule = safeDynamicRequire('@vercel/kv');
-    if (kvModule?.kv) {
-      kvClient = kvModule.kv;
-      console.log('[OTP Store] Using @vercel/kv package adapter.');
-      return kvClient;
-    }
-  } catch {}
-
-  // Zero-dependency HTTP REST adapter for Vercel KV / Upstash
-  console.log('[OTP Store] Using zero-dependency Vercel KV REST API adapter.');
+  // Zero-dependency HTTP REST adapter for Upstash / Redis REST
+  console.log('[OTP Store] Using zero-dependency REST KV API adapter.');
   kvClient = restKvClient;
   return kvClient;
 }
@@ -138,14 +129,14 @@ export const otpStore = {
     const fullKey = `${KEY_PREFIX}${key}`;
     const serialized = JSON.stringify(record);
 
-    // Try Vercel KV first
-    const kv = await getVercelKV();
+    // Try REST KV first
+    const kv = await getRestKV();
     if (kv) {
       try {
         await kv.setex(fullKey, OTP_TTL_SECONDS, serialized);
         return;
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV set failed:', err.message);
+        console.error('[OTP Store] REST KV set failed:', err.message);
       }
     }
 
@@ -174,14 +165,14 @@ export const otpStore = {
   async get(key: string): Promise<OtpRecord | null> {
     const fullKey = `${KEY_PREFIX}${key}`;
 
-    // Try Vercel KV first
-    const kv = await getVercelKV();
+    // Try REST KV first
+    const kv = await getRestKV();
     if (kv) {
       try {
         const raw = await kv.get(fullKey);
         return raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV get failed:', err.message);
+        console.error('[OTP Store] REST KV get failed:', err.message);
       }
     }
 
@@ -203,14 +194,14 @@ export const otpStore = {
   async delete(key: string): Promise<void> {
     const fullKey = `${KEY_PREFIX}${key}`;
 
-    // Try Vercel KV first
-    const kv = await getVercelKV();
+    // Try REST KV first
+    const kv = await getRestKV();
     if (kv) {
       try {
         await kv.del(fullKey);
         return;
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV delete failed:', err.message);
+        console.error('[OTP Store] REST KV delete failed:', err.message);
       }
     }
 
@@ -241,8 +232,8 @@ export const otpStore = {
     const key = `rate:send:${identifier.trim().toLowerCase()}`;
     const fullKey = `${KEY_PREFIX}${key}`;
 
-    // 1. Vercel KV
-    const kv = await getVercelKV();
+    // 1. REST KV
+    const kv = await getRestKV();
     if (kv) {
       try {
         const count = await kv.incr(fullKey);
@@ -253,7 +244,7 @@ export const otpStore = {
         const remaining = Math.max(0, maxSends - count);
         return { allowed, remaining, count };
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV recordOtpSend failed:', err.message);
+        console.error('[OTP Store] REST KV recordOtpSend failed:', err.message);
       }
     }
 
@@ -300,8 +291,8 @@ export const otpStore = {
     const key = `cooldown:${identifier.trim().toLowerCase()}`;
     const fullKey = `${KEY_PREFIX}${key}`;
 
-    // 1. Vercel KV
-    const kv = await getVercelKV();
+    // 1. REST KV
+    const kv = await getRestKV();
     if (kv) {
       try {
         const ttl = await kv.ttl(fullKey);
@@ -310,7 +301,7 @@ export const otpStore = {
         }
         return { inCooldown: false, waitSeconds: 0 };
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV checkCooldown failed:', err.message);
+        console.error('[OTP Store] REST KV checkCooldown failed:', err.message);
       }
     }
 
@@ -350,13 +341,13 @@ export const otpStore = {
     const key = `cooldown:${identifier.trim().toLowerCase()}`;
     const fullKey = `${KEY_PREFIX}${key}`;
 
-    const kv = await getVercelKV();
+    const kv = await getRestKV();
     if (kv) {
       try {
         await kv.setex(fullKey, cooldownSeconds, '1');
         return;
       } catch (err: any) {
-        console.error('[OTP Store] Vercel KV recordCooldown failed:', err.message);
+        console.error('[OTP Store] REST KV recordCooldown failed:', err.message);
       }
     }
 

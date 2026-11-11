@@ -1,7 +1,7 @@
 /**
  * FR8X Next.js Edge Middleware — High-Performance Route Gate & Rate Limiter
  * =========================================================================
- * Runs on the Vercel Edge Runtime with sub-millisecond execution overhead (<1MB).
+ * Runs on the Cloudflare Workers / Edge Runtime with sub-millisecond execution overhead (<1MB).
  *
  * KEY AUDITS & CORRECTIONS:
  * 1. Closes API route exemption: Enforces sliding-window rate limiting on public
@@ -170,7 +170,7 @@ export function applySecurityHeaders(res: NextResponse, requestId?: string): Nex
   );
   const csp = [
     "default-src 'self'",
-    `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://va.vercel-scripts.com https://checkout.razorpay.com`,
+    `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://checkout.razorpay.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com data:",
     "img-src 'self' data: blob: https://*.supabase.co https://haarbaqeuuirwkhmefev.supabase.co https://images.unsplash.com",
@@ -192,7 +192,7 @@ export async function middleware(request: NextRequest) {
     request.headers.get('x-request-id') ||
     `req_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 7)}`;
 
-  // Extract client IP address accurately behind CDN/Vercel proxies
+  // Extract client IP address accurately behind CDN proxies
   const forwardedFor = request.headers.get('x-forwarded-for');
   const clientIp = forwardedFor ? forwardedFor.split(',')[0].trim() : '127.0.0.1';
 

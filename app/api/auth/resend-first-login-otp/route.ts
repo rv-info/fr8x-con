@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     const cleanEmail = tokenCheck.payload.email.toLowerCase();
 
-    // Distributed 60-second cooldown check (Vercel KV / Redis / in-memory)
+    // Distributed 60-second cooldown check (Redis / in-memory)
     const cd = await otpStore.checkCooldown(`first_login:${cleanEmail}`, 60);
     if (cd.inCooldown) {
       return NextResponse.json(

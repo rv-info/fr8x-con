@@ -1,7 +1,7 @@
 # FR8X — Architecture & Technology Stack
 
 ## 1. High-Level Architecture Overview
-FR8X is architected as a modern, high-performance, full-stack Next.js web application deployed to Vercel, integrated with Google Firebase services for authentication, real-time data persistence, file storage, and serverless compute functions.
+FR8X is architected as a modern, high-performance, full-stack Next.js web application deployed to Cloudflare Workers, integrated with Supabase PostgreSQL and Google Firebase services for authentication, real-time data persistence, file storage, and serverless compute functions.
 
 ```
 +-------------------------------------------------------------------------------+
@@ -14,7 +14,7 @@ FR8X is architected as a modern, high-performance, full-stack Next.js web applic
                  |                                             |
                  v                                             v
 +-----------------------------------+     +-----------------------------------+
-|       VERCEL / EDGE RUNTIME       |     |        FIREBASE ECOSYSTEM         |
+|    CLOUDFLARE WORKERS / EDGE      |     |        FIREBASE ECOSYSTEM         |
 |  - Next.js SSR / Static Cache     |     |  - Firebase Authentication        |
 |  - Secure API Routes (/api/*)     |     |  - Cloud Firestore (Real-time DB) |
 |  - Rate Limiting & Edge Headers   |     |  - Firebase Cloud Storage         |
@@ -47,7 +47,7 @@ FR8X is architected as a modern, high-performance, full-stack Next.js web applic
 | **Geolocation & Maps** | Google Maps JavaScript & Places Autocomplete API | Standardized address resolution, UN/LOCODE geocoding, and IANA timezone resolution. |
 | **Serverless Backend** | Next.js API Routes / Firebase Functions v2 | Atomic transaction handling, OTP verification, bidding rank computations, and payment webhooks. |
 | **Local Operations** | Docker & Docker Compose + Firebase Emulator Suite | Fully isolated local development environment simulating Auth, Firestore, Storage, and Functions. |
-| **Hosting & CI/CD** | Vercel + GitHub Actions | Instant global edge deployment, preview branches, and automated lint/test validation. |
+| **Hosting & CI/CD** | Cloudflare Workers + GitHub Actions | Instant global edge deployment, preview branches, and automated lint/test validation. |
 
 ---
 
@@ -101,7 +101,7 @@ fr8x/
 ├── storage.rules                        # Firebase Storage Security Rules
 ├── Dockerfile                           # Production multi-stage Docker build
 ├── docker-compose.yml                   # Docker Compose for local Firebase Emulator
-├── vercel.json                          # Vercel deployment and security headers
+├── wrangler.jsonc                       # Cloudflare Workers configuration & assets binding
 ├── .env.example                         # Environment variables template
 └── package.json                         # Project dependencies and build scripts
 ```

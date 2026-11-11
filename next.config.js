@@ -180,12 +180,12 @@ const nextConfig = {
           },
           {
             // Content Security Policy — blocks XSS injection.
-            // Configured for Supabase, Google Fonts, Vercel, and Razorpay.
+            // Configured for Supabase, Google Fonts, and Razorpay.
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              // Scripts: self + Vercel analytics + Razorpay checkout
-              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://va.vercel-scripts.com https://checkout.razorpay.com`,
+              // Scripts: self + Razorpay checkout
+              `script-src 'self' 'unsafe-inline' ${process.env.NODE_ENV === 'production' ? '' : "'unsafe-eval'"} https://checkout.razorpay.com`,
               // Styles: self + Google Fonts
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // Fonts

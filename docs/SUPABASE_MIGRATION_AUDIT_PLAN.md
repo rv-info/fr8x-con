@@ -59,9 +59,9 @@ the updated values appear temporarily in the UI, but upon page refresh, re-login
    - When updating the profile, the client writes to `users/{authUid}`, while the server API `/api/user/profile` writes to `serverSecurityStore` keyed by `resolvedTargetUid` (`u-rajat`).
    - When fetching, if a query uses the Firebase Auth UID against a store expecting `u-rajat` (or vice versa), the lookup fails or falls back to default/empty values.
 
-2. **Ephemeral Serverless Storage on Vercel**:
+2. **Ephemeral Edge/Serverless Storage**:
    - `lib/dbms/server-dbms.ts` stores user records in `path.join(process.env.TMPDIR || '/tmp', 'fr8x-dbms', 'dbms', 'users.json')`.
-   - On Vercel, serverless function instances are stateless and ephemeral. A write to `/tmp` on one instance is **never shared** with another instance and disappears upon container recycle/cold start.
+   - On serverless/edge environments, function instances are stateless and ephemeral. A write to `/tmp` on one instance is **never shared** with another instance and disappears upon container recycle/cold start.
    - Subsequent `GET /api/user/profile` calls hit different serverless instances that only see initial build-time seed data, immediately clobbering the freshly saved profile.
 
 3. **Competing State Hydration & Race Conditions**:

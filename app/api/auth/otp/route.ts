@@ -6,7 +6,7 @@ import { authenticateUserSession } from '@/lib/auth-guard';
 /**
  * POST /api/auth/otp
  * Generates and dispatches secure 6-digit OTP via Zoho ZeptoMail REST API (password@fr8x.in)
- * with distributed Vercel KV / Redis / in-memory rate limiting and 60-second cooldowns.
+ * with distributed Redis / in-memory rate limiting and 60-second cooldowns.
  * Also supports verifying submitted OTP when `otp` is included in the payload.
  */
 export async function POST(req: NextRequest) {

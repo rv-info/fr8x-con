@@ -396,7 +396,7 @@ async function buildDoc() {
                 bulletPara("Statutory KYC Engine:", "lib/utils/statutory-kyc.ts, app/register/page.tsx (2,440 lines)"),
                 bulletPara("Corridor Affinity Scoring Engine:", "lib/connections-algorithm.ts (497 lines)"),
                 bulletPara("SEO & Metadata Configuration:", "config/seo.ts, config/site-metadata.ts"),
-                bulletPara("Production Vercel Config & Headers:", "vercel.json (CSP, HSTS, X-Frame-Options)"),
+                bulletPara("Production Edge Config & Headers:", "wrangler.jsonc & Edge Security Headers"),
                 bulletPara("Automated Test Suite Status:", "scripts/verify-all-gates.ts (100% Passed across 7 phases)")
             ]
         }]

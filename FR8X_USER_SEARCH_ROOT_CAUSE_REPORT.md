@@ -14,7 +14,7 @@ A critical incident was reported on `https://con.fr8x.in`: when authenticated us
 Forensic debugging verified that:
 1. The search modal rendered in the UI is `SearchConnectionsModal.tsx`, which queries `GET /api/members?q=...` (not `/api/people/search`).
 2. Live production HTTP testing against `https://con.fr8x.in/api/members` yielded **HTTP 401 Unauthorized** (`code: 'UNAUTHENTICATED'`) for real logged-in users because `authenticateUserSession(req)` in `lib/auth-guard.ts` exclusively checked the internal `fr8x_session` HMAC cookie and completely rejected standard Supabase Auth session cookies (`sb-*-auth-token`).
-3. Furthermore, `/api/members` queried only an in-memory Node.js `serverSecurityStore`, which is always empty across ephemeral serverless invocations on Vercel and never queried PostgreSQL `public.profiles`.
+3. Furthermore, `/api/members` queried only an in-memory Node.js `serverSecurityStore`, which is always empty across ephemeral serverless invocations on Cloudflare Workers and never queried PostgreSQL `public.profiles`.
 4. When the authenticated user Kumar R searched for `"kumar"`, the frontend candidate-generation loop deliberately excluded the current user (`m.uid !== currentUser.uid`) so users do not connect with themselves. Because self-exclusion stripped Kumar R and the backend returned no other users due to the 401/empty store, the UI collapsed to a generic **“No connection candidates found”** with zero explanation.
 5. In addition, `public.profiles` in the live database schema lacks a `full_name` column (possessing `display_name`, `first_name`, and `last_name`), which caused raw SQL queries selecting `full_name` to fail with PostgreSQL error `42703`.
 
@@ -34,9 +34,9 @@ All root causes have been surgically repaired, validated via new regression test
   ```
 
 ### Root Cause B: Ephemeral In-Memory Store Query in `/api/members/route.ts`
-- **Mechanism**: On Vercel Serverless Lambdas, server memory is isolated and ephemeral.
+- **Mechanism**: On Cloudflare Workers Serverless Lambdas, server memory is isolated and ephemeral.
 - **Defect**: `/api/members/route.ts` line 20 queried `serverSecurityStore.getAllRegisteredUsers()`, an in-memory `Map` containing 0 users upon cold start. It never executed a query against PostgreSQL `public.profiles`.
-- **Evidence**: On production Vercel lambdas, `getAllRegisteredUsers().length` was consistently `0`.
+- **Evidence**: On production Cloudflare Workers lambdas, `getAllRegisteredUsers().length` was consistently `0`.
 
 ### Root Cause C: Self-Exclusion Without Informative UX
 - **Mechanism**: In `SearchConnectionsModal.tsx` line 101:

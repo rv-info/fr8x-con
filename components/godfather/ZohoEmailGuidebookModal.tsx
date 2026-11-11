@@ -469,7 +469,7 @@ export function ZohoEmailGuidebookModal({ isOpen, onClose }: ZohoEmailGuidebookM
                   <span>Step 7: Configure Environment Variables (.env.local)</span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  Add the following environment variables to your production host (Vercel, Docker, Kubernetes, or <code className="text-sky-300 font-mono">.env.local</code>):
+                  Add the following environment variables to your production host (Cloudflare Workers, Docker, Kubernetes, or <code className="text-sky-300 font-mono">.env.local</code>):
                 </p>
 
                 <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl space-y-2">

@@ -799,7 +799,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     window.addEventListener(CONNECTIONS_CHANGED_EVENT, refreshNotifications);
     window.addEventListener('fr8x_refresh_notifications', refreshNotifications);
 
-    // Background sync: poll DBMS every 45 seconds when tab is active (conserves Vercel function quotas)
+    // Background sync: poll DBMS every 45 seconds when tab is active (conserves edge worker function quotas)
     const interval = setInterval(() => {
       if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
         refreshNotifications();

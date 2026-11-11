@@ -76,7 +76,7 @@
 1. **Root Cause Confirmed**:
    - `SearchConnectionsModal.tsx` queries `GET /api/members?q=...`.
    - On production, `/api/members` returned HTTP 401 Unauthorized because `authenticateUserSession(req)` only accepted `fr8x_session` cookies and ignored Supabase Auth session cookies (`sb-*-auth-token`).
-   - On Vercel serverless, `/api/members` queried an empty in-memory Node.js `serverSecurityStore` instead of PostgreSQL `public.profiles`.
+   - On Cloudflare Workers serverless, `/api/members` queried an empty in-memory Node.js `serverSecurityStore` instead of PostgreSQL `public.profiles`.
    - When user Kumar R searched for `"kumar"`, self-exclusion stripped his own profile from candidates, yielding 0 results with no explanation.
    - `public.profiles` lacks a `full_name` column (possessing `display_name`, `first_name`, and `last_name`), which caused raw SQL queries selecting `full_name` to fail with error `42703`.
 2. **Repairs Applied**:

@@ -307,7 +307,7 @@ export const activeOtpStore = new Map<string, { salt: string; hash: string; expi
 
 /**
  * Returns the CSRF signing secret from env, falling back to session secret.
- * Set CSRF_SECRET in Vercel environment variables for production.
+ * Set CSRF_SECRET in Cloudflare environment variables for production.
  */
 function getCsrfSecret(): string {
   return (

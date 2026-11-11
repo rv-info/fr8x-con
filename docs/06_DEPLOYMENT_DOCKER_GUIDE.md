@@ -81,9 +81,9 @@ services:
 
 ---
 
-## 3. Vercel & Production Environment Configuration
-In production on Vercel:
-1. Link GitHub repository `fr8x-con`.
+## 3. Production Environment Configuration (Cloudflare Workers)
+In production on Cloudflare Workers:
+1. Link GitHub repository `rv-info/fr8x-con`.
 2. Configure Custom Domain: `con.fr8x.in`.
 3. Set Production Environment Variables:
    - `NEXT_PUBLIC_FIREBASE_API_KEY`

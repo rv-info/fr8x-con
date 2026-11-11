@@ -58,7 +58,7 @@ To maintain security boundaries and cost efficiency, FR8X utilizes 3 dedicated m
 
 | Mailbox Address | Platform Role | Operational Policy | Security Controls |
 | :--- | :--- | :--- | :--- |
-| **`password@fr8x.in`** | **System & Auth Engine** | Automated sending of OTPs, password resets, email verification, and security challenges. Never used manually by a human operator in webmail UI. | App-Password authenticated over TLS/SSL port 465. Stored in Vercel/Firebase Secrets as `ZOHO_SMTP_PASSWORD`. |
+| **`password@fr8x.in`** | **System & Auth Engine** | Automated sending of OTPs, password resets, email verification, and security challenges. Never used manually by a human operator in webmail UI. | App-Password authenticated over TLS/SSL port 465. Stored in Cloudflare Secrets as `ZOHO_SMTP_PASSWORD`. |
 | **`support@fr8x.in`** | **Customer & Member Support** | Inbound customer enquiries, platform support ticket ingestion, automated acknowledgements. | Shared mailbox with delegated support specialists. Optional Zoho Desk integration. |
 | **`tech@fr8x.in`** | **GODFATHER Operator & Alerts** | Human-controlled super-admin identity, GODFATHER account provisioning, Step-Up verification challenges, and automated security event alerts. | Mandatory Hardware FIDO2 / TOTP MFA. Monitored 24/7 for brute-force lockouts and KYC alerts. |
 

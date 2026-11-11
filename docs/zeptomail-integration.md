@@ -35,7 +35,7 @@ Recipient Mailbox
 
 ## 2. Required Environment Variables
 
-The following variables should be added to your deployment environment (Vercel, Cloud Run, VPS, or `.env.local` for local development):
+The following variables should be added to your deployment environment (Cloudflare Workers, Cloud Run, VPS, or `.env.local` for local development):
 
 | Variable Name | Required | Default / Recommended Value | Description |
 | :--- | :---: | :--- | :--- |
@@ -62,7 +62,7 @@ Template values are committed in `.env.example`. Never commit the actual `.env` 
    - Click **Generate Token** (or use existing agent Send Mail Token).
 2. Copy the token into your secrets management provider:
    - **Local Development**: Add `ZEPTO_MAIL_API_KEY=<TOKEN>` into `.env.local` (which is in `.gitignore`).
-   - **Vercel / Cloud Run / Kubernetes / AWS**: Add `ZEPTO_MAIL_API_KEY` as a production Server Environment Variable.
+   - **Cloudflare Workers / Cloud Run / Kubernetes / AWS**: Add `ZEPTO_MAIL_API_KEY` as a production Server Secret / Environment Variable.
 3. **DO NOT** prefix the value with `NEXT_PUBLIC_`.
 
 ---
