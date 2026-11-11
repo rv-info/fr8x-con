@@ -98,8 +98,18 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
     // Multi-tier reliable free APIs that require no API keys
     const customApiBase = process.env.NEXT_PUBLIC_CURRENCY_API_BASE_URL;
+    let customEndpointUrl = '';
+    if (customApiBase) {
+      if (customApiBase.includes('.json') || customApiBase.includes('/USD') || customApiBase.includes('/latest')) {
+        customEndpointUrl = customApiBase;
+      } else if (customApiBase.includes('exchangerate-api')) {
+        customEndpointUrl = `${customApiBase.replace(/\/$/, '')}/latest/USD`;
+      } else {
+        customEndpointUrl = `${customApiBase.replace(/\/$/, '')}/currencies/usd.json`;
+      }
+    }
     const endpoints = [
-      ...(customApiBase ? [{ url: `${customApiBase.replace(/\/$/, '')}/currencies/usd.json`, source: 'Custom Currency API (Live)' }] : []),
+      ...(customEndpointUrl ? [{ url: customEndpointUrl, source: 'Custom Currency API (Live)' }] : []),
       { url: 'https://open.er-api.com/v6/latest/USD', source: 'Open ER (Live Interbank)' },
       { url: 'https://api.exchangerate-api.com/v4/latest/USD', source: 'ExchangeRate-API (Live)' },
       { url: 'https://api.frankfurter.dev/v1/latest?base=USD', source: 'Frankfurter ECB (Live)' },
