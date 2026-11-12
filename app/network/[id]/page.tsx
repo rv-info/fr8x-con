@@ -398,10 +398,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span
             style={{
-              fontSize: '11px',
-              fontWeight: 800,
-              textTransform: 'uppercase',
-              letterSpacing: '0.06em',
+              fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em',
               color: '#000000',
             }}
           >
@@ -430,7 +427,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
 
         <div style={{ flex: 1, minWidth: '280px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>
-            <h1 style={{ fontSize: '26px', fontWeight: 800, margin: 0, color: '#000000', letterSpacing: '-0.02em' }}>
+            <h1 style={{ fontSize: '28px', fontWeight: 700, margin: 0, color: '#000000', letterSpacing: '-0.02em', lineHeight: 1.25 }}>
               {name}
             </h1>
             {profile.has_golden_tick && <GoldenTick size={20} />}
@@ -470,7 +467,7 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           </div>
 
           {headline && (
-            <p style={{ fontSize: '14.5px', fontWeight: 600, color: '#000000', margin: '4px 0 10px' }}>
+            <p style={{ fontSize: '15px', fontWeight: 500, color: '#000000', margin: '4px 0 10px', lineHeight: 1.4 }}>
               {headline}
             </p>
           )}

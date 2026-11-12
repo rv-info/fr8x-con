@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @import './people-network.css';
 
 @font-face {
@@ -23,10 +24,66 @@
 }
 
 :root {
-  --font: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
-  --gf-font: 'Nunito Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --gf-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --gf-font-mono: 'JetBrains Mono', Consolas, Monaco, monospace;
+
+  /* ==========================================================================
+     FR8X REFINED ENTERPRISE TYPOGRAPHY TOKENS
+     ========================================================================== */
+  --type-page-title-size: 28px;
+  --type-page-title-weight: 700;
+  --type-page-title-lh: 1.25;
+  --type-page-title-tracking: -0.02em;
+
+  --type-section-title-size: 17px;
+  --type-section-title-weight: 600;
+  --type-section-title-lh: 1.35;
+  --type-section-title-tracking: -0.01em;
+
+  --type-card-title-size: 14.5px;
+  --type-card-title-weight: 600;
+  --type-card-title-lh: 1.35;
+  --type-card-title-tracking: -0.005em;
+
+  --type-body-size: 14px;
+  --type-body-weight: 400;
+  --type-body-lh: 1.5;
+  --type-body-tracking: 0;
+
+  --type-nav-size: 13.5px;
+  --type-nav-weight: 500;
+  --type-nav-lh: 1.3;
+  --type-nav-tracking: 0;
+
+  --type-label-size: 12.5px;
+  --type-label-weight: 600;
+  --type-label-lh: 1.3;
+  --type-label-tracking: 0.01em;
+
+  --type-input-size: 14px;
+  --type-input-weight: 400;
+  --type-input-lh: 1.4;
+
+  --type-table-text-size: 13.5px;
+  --type-table-text-weight: 400;
+  --type-table-text-lh: 1.45;
+
+  --type-table-header-size: 12px;
+  --type-table-header-weight: 600;
+  --type-table-header-lh: 1.3;
+  --type-table-header-tracking: 0.04em;
+
+  --type-secondary-size: 12.5px;
+  --type-secondary-weight: 400;
+  --type-secondary-lh: 1.4;
+
+  --type-kpi-size: 28px;
+  --type-kpi-weight: 700;
+  --type-kpi-lh: 1.15;
+  --type-kpi-tracking: -0.02em;
+
 
   /* ==========================================================================
      FR8X NON-NEGOTIABLE THREE-COLOUR DESIGN SYSTEM (#000000, #FFFFFF, #E6E6E6)
@@ -435,8 +492,14 @@ a {
   }
 
   .sidebar-wrapper .navlabel {
-    display: block !important;
-  }
+  color: var(--fr8x-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 8px 8px 4px;
+  font-weight: 600;
+  line-height: 1.3;
+}
 
   .sidebar-wrapper .nav {
     display: flex !important;
@@ -638,20 +701,23 @@ a {
 
 .workspace small {
   display: block;
-  font-size: 8.5px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--fr8x-muted);
   text-transform: uppercase;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .workspace strong {
-  font-size: 11px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--fr8x-text);
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.35;
 }
 
 .navlabel {
@@ -674,16 +740,17 @@ a {
   align-items: center;
   gap: 8px;
   width: 100%;
-  height: 35px;
+  height: 36px;
   background: transparent;
   border: 1px solid transparent;
   border-left: 3px solid transparent;
   border-radius: 6px;
   padding: 0 10px;
-  color: #52657D;
+  color: #000000;
   text-align: left;
   font-weight: 500;
-  font-size: 12px;
+  font-size: 13.5px;
+  letter-spacing: -0.005em;
   text-decoration: none;
   box-sizing: border-box;
   transition: all 0.15s ease-in-out;
@@ -801,24 +868,26 @@ a.gf-nav-link[aria-current="page"] {
 
 .user b {
   color: var(--fr8x-text);
-  font-size: 11.5px;
+  font-size: 13px;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
 .user small {
   color: var(--fr8x-muted);
-  font-size: 10px;
+  font-size: 12px;
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 1px;
+  line-height: 1.3;
 }
 
 .avatar {
@@ -897,8 +966,8 @@ img.profile-img-avatar,
   width: 100%;
   padding: 6px 8px;
   text-align: left;
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 12.5px;
+  font-weight: 500;
   border-radius: 6px;
   transition: all 0.15s ease;
   cursor: pointer;
@@ -907,7 +976,7 @@ img.profile-img-avatar,
   overflow: hidden;
   text-overflow: ellipsis;
   text-decoration: none;
-  height: 30px;
+  height: 32px;
 }
 
 .sidelink:hover {
@@ -931,10 +1000,10 @@ img.profile-img-avatar,
 
 .crumb {
   color: var(--fr8x-muted);
-  font-size: 11.5px;
+  font-size: 13px;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .crumb b {
@@ -955,13 +1024,14 @@ img.profile-img-avatar,
 }
 
 .topsearch input {
-  height: 29px;
+  height: 32px;
   width: 100%;
   padding: 0 8px 0 28px;
   border: 1px solid var(--fr8x-outline);
   background: var(--fr8x-input);
   border-radius: 6px;
-  font-size: 11.5px;
+  font-size: 13px;
+  font-weight: 400;
   color: var(--fr8x-text);
   transition: border-color 0.15s;
 }
@@ -978,7 +1048,7 @@ img.profile-img-avatar,
   gap: 8px;
   align-items: center;
   color: var(--fr8x-muted);
-  font-size: 11px;
+  font-size: 12.5px;
   white-space: nowrap;
 }
 
@@ -10683,6 +10753,11 @@ html, body, #__next, .app, main, .view, .gf-layout, .gf-main, .gf-content,
   color: #000000 !important;
 }
 
+/* Universal Typography & Font Family */
+*, *::before, *::after {
+  font-family: var(--font) !important;
+}
+
 /* Universal Text & Icons: BLACK */
 h1, h2, h3, h4, h5, h6, p, span, label, strong, b, em, small, a, li, th, td,
 svg, .gs-icon, .net-pill-text {
@@ -10690,12 +10765,57 @@ svg, .gs-icon, .net-pill-text {
   fill: currentColor;
 }
 
-/* Universal Buttons: LIGHT GREY Background, BLACK Text, LIGHT GREY Border */
+/* Headings Hierarchy */
+h1, .page-title, .gf-page-title {
+  font-size: var(--type-page-title-size, 28px) !important;
+  font-weight: var(--type-page-title-weight, 700) !important;
+  line-height: var(--type-page-title-lh, 1.25) !important;
+  letter-spacing: var(--type-page-title-tracking, -0.02em) !important;
+}
+
+h2, .section-title, .gf-section-header {
+  font-size: var(--type-section-title-size, 17px) !important;
+  font-weight: var(--type-section-title-weight, 600) !important;
+  line-height: var(--type-section-title-lh, 1.35) !important;
+  letter-spacing: var(--type-section-title-tracking, -0.01em) !important;
+}
+
+h3, .card-title, .gf-card-title {
+  font-size: var(--type-card-title-size, 14.5px) !important;
+  font-weight: var(--type-card-title-weight, 600) !important;
+  line-height: var(--type-card-title-lh, 1.35) !important;
+  letter-spacing: var(--type-card-title-tracking, -0.005em) !important;
+}
+
+p, .body-text {
+  font-size: var(--type-body-size, 14px);
+  font-weight: var(--type-body-weight, 400);
+  line-height: var(--type-body-lh, 1.5);
+}
+
+label, .form-label {
+  font-size: var(--type-label-size, 12.5px) !important;
+  font-weight: var(--type-label-weight, 600) !important;
+  line-height: var(--type-label-lh, 1.3) !important;
+  letter-spacing: var(--type-label-tracking, 0.01em) !important;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Universal Buttons: LIGHT GREY Background, BLACK Text, LIGHT GREY Border, Vertically Centered */
 button:not([disabled]), .btn, .gf-btn, .button, .connection-btn,
 input[type="button"], input[type="submit"], input[type="reset"] {
   background-color: #E6E6E6 !important;
   color: #000000 !important;
   border-color: #E6E6E6 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  vertical-align: middle !important;
+  line-height: 1 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  text-decoration: none;
 }
 
 /* Universal Inputs & Selects: WHITE Background, BLACK Text, LIGHT GREY Border */
@@ -10704,11 +10824,51 @@ textarea, select {
   background-color: #FFFFFF !important;
   color: #000000 !important;
   border-color: #E6E6E6 !important;
+  font-size: var(--type-input-size, 14px) !important;
+  font-weight: var(--type-input-weight, 400) !important;
+  line-height: var(--type-input-lh, 1.4) !important;
 }
 
 input:focus, textarea:focus, select:focus {
   outline: 1px solid #000000 !important;
   border-color: #000000 !important;
+}
+
+/* Table Presentation */
+table, .table {
+  font-size: var(--type-table-text-size, 13.5px);
+  line-height: var(--type-table-text-lh, 1.45);
+}
+
+th {
+  font-size: var(--type-table-header-size, 12px) !important;
+  font-weight: var(--type-table-header-weight, 600) !important;
+  line-height: var(--type-table-header-lh, 1.3) !important;
+  letter-spacing: var(--type-table-header-tracking, 0.04em) !important;
+  text-transform: uppercase !important;
+}
+
+td {
+  font-size: var(--type-table-text-size, 13.5px);
+  font-weight: var(--type-table-text-weight, 400);
+  line-height: var(--type-table-text-lh, 1.45);
+  vertical-align: middle;
+}
+
+/* KPI Values */
+.kpi-value {
+  font-size: var(--type-kpi-size, 28px) !important;
+  font-weight: var(--type-kpi-weight, 700) !important;
+  line-height: var(--type-kpi-lh, 1.15) !important;
+  letter-spacing: var(--type-kpi-tracking, -0.02em) !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+/* Secondary & Meta Information */
+small, .secondary-text, .meta-text {
+  font-size: var(--type-secondary-size, 12.5px) !important;
+  font-weight: var(--type-secondary-weight, 400) !important;
+  line-height: var(--type-secondary-lh, 1.4) !important;
 }
 
 /* Universal Borders & Separators: LIGHT GREY */
@@ -10721,4 +10881,26 @@ hr, .divider, .separator, .border-t, .border-b, .border-l, .border-r {
   background-color: #FFFFFF !important;
   color: #000000 !important;
   border: 1px solid #E6E6E6 !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+}
+
+/* Responsive Headings Scaling */
+@media (max-width: 1024px) {
+  h1, .page-title, .gf-page-title {
+    font-size: 24px !important;
+  }
+  h2, .section-title, .gf-section-header {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  h1, .page-title, .gf-page-title {
+    font-size: 21px !important;
+  }
+  h2, .section-title, .gf-section-header {
+    font-size: 15px !important;
+  }
 }

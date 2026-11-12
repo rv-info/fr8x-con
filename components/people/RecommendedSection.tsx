@@ -87,7 +87,7 @@ export function RecommendedSection() {
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
                     href={`/network/${person.id}`}
-                    style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#000000', textDecoration: 'none' }}
+                    style={{ fontWeight: 600, fontSize: '14.5px', color: '#000000', textDecoration: 'none', lineHeight: 1.35, letterSpacing: '-0.005em' }}
                   >
                     {person.full_name}
                     {person.has_golden_tick && (
@@ -98,13 +98,13 @@ export function RecommendedSection() {
                     )}
                   </Link>
                   {person.headline && (
-                    <p style={{ fontSize: '0.8125rem', color: '#000000', margin: '0.125rem 0' }}>
+                    <p style={{ fontSize: '12.5px', color: '#000000', margin: '2px 0 4px', lineHeight: 1.4 }}>
                       {person.headline}
                     </p>
                   )}
                   {person.location && (
-                    <p style={{ fontSize: '0.75rem', color: '#000000', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                      <MapPin size={10} aria-hidden="true" style={{ color: '#000000' }} /> {person.location}
+                    <p style={{ fontSize: '12px', color: '#000000', margin: 0, display: 'flex', alignItems: 'center', gap: '0.25rem', lineHeight: 1.3 }}>
+                      <MapPin size={11} aria-hidden="true" style={{ color: '#000000' }} /> {person.location}
                     </p>
                   )}
                 </div>
@@ -116,13 +116,15 @@ export function RecommendedSection() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.25rem',
-                  fontSize: '0.75rem',
-                  padding: '0.2rem 0.5rem',
+                  fontSize: '11.5px',
+                  fontWeight: 500,
+                  padding: '3px 8px',
                   borderRadius: '4px',
                   backgroundColor: '#FFFFFF',
                   color: '#000000',
                   border: '1px solid #E6E6E6',
                   marginBottom: '0.75rem',
+                  lineHeight: 1,
                 }}
               >
                 <Users size={11} aria-hidden="true" style={{ color: '#000000' }} />

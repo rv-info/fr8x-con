@@ -567,11 +567,7 @@ function NetworkPageContent() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
             <span
               style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                color: '#000000',
+                fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#000000',
               }}
             >
               Enterprise Logistics Directory
@@ -592,11 +588,7 @@ function NetworkPageContent() {
           </div>
           <h1
             style={{
-              fontSize: '24px',
-              fontWeight: 800,
-              color: '#000000',
-              letterSpacing: '-0.02em',
-              margin: 0,
+              fontSize: '28px', fontWeight: 700, color: '#000000', letterSpacing: '-0.02em', lineHeight: 1.25, margin: 0,
             }}
           >
             Network
@@ -636,9 +628,7 @@ function NetworkPageContent() {
                 padding: '6px 12px',
                 borderRadius: '6px',
                 background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-                fontSize: '12px',
-                fontWeight: 700,
-                cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
               }}
             >
               <span>{incomingCount} Pending Requests</span>
@@ -671,9 +661,7 @@ function NetworkPageContent() {
               padding: '6px 14px',
               borderRadius: '6px',
               background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
+              fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
             }}
           >
             <Plus size={14} />
@@ -697,8 +685,7 @@ function NetworkPageContent() {
           onClick={() => switchTab('overview')}
           style={{
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: activeTab === 'overview' ? 700 : 500,
+            fontSize: '13.5px', fontWeight: activeTab === 'overview' ? 600 : 500, letterSpacing: '-0.005em',
             color: activeTab === 'overview' ? '#000000' : '#000000',
             borderBottom: activeTab === 'overview' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
@@ -716,8 +703,7 @@ function NetworkPageContent() {
           onClick={() => switchTab('discover')}
           style={{
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: activeTab === 'discover' ? 700 : 500,
+            fontSize: '13.5px', fontWeight: activeTab === 'discover' ? 600 : 500, letterSpacing: '-0.005em',
             color: activeTab === 'discover' ? '#000000' : '#000000',
             borderBottom: activeTab === 'discover' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
@@ -738,8 +724,7 @@ function NetworkPageContent() {
             alignItems: 'center',
             gap: '6px',
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: activeTab === 'connections' ? 700 : 500,
+            fontSize: '13.5px', fontWeight: activeTab === 'connections' ? 600 : 500, letterSpacing: '-0.005em',
             color: activeTab === 'connections' ? '#000000' : '#000000',
             borderBottom: activeTab === 'connections' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
@@ -756,7 +741,7 @@ function NetworkPageContent() {
               fontSize: '11px',
               padding: '1px 6px',
               borderRadius: '10px',
-              background: activeTab === 'connections' ? '#000000' : '#F3F4F6',
+              background: activeTab === 'connections' ? '#000000' : '#E6E6E6',
               color: activeTab === 'connections' ? '#FFFFFF' : '#000000',
             }}
           >
@@ -771,8 +756,7 @@ function NetworkPageContent() {
             alignItems: 'center',
             gap: '6px',
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: activeTab === 'requests' ? 700 : 500,
+            fontSize: '13.5px', fontWeight: activeTab === 'requests' ? 600 : 500, letterSpacing: '-0.005em',
             color: activeTab === 'requests' ? '#000000' : '#000000',
             borderBottom: activeTab === 'requests' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
@@ -807,8 +791,7 @@ function NetworkPageContent() {
             alignItems: 'center',
             gap: '6px',
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: activeTab === 'crm' ? 700 : 500,
+            fontSize: '13.5px', fontWeight: activeTab === 'crm' ? 600 : 500, letterSpacing: '-0.005em',
             color: activeTab === 'crm' ? '#000000' : '#000000',
             borderBottom: activeTab === 'crm' ? '2px solid #000000' : '2px solid transparent',
             background: 'none',
@@ -825,7 +808,7 @@ function NetworkPageContent() {
               fontSize: '11px',
               padding: '1px 6px',
               borderRadius: '10px',
-              background: activeTab === 'crm' ? '#000000' : '#F3F4F6',
+              background: activeTab === 'crm' ? '#000000' : '#E6E6E6',
               color: activeTab === 'crm' ? '#FFFFFF' : '#000000',
             }}
           >
@@ -853,13 +836,13 @@ function NetworkPageContent() {
                 border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Total Verified Connections
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#000000', margin: '4px 0', lineHeight: 1.15, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
                 {connections.length}
               </div>
-              <div style={{ fontSize: '12px', color: '#000000' }}>Direct peer freight partners</div>
+              <div style={{ fontSize: '12.5px', color: '#000000', lineHeight: 1.4 }}>Direct peer freight partners</div>
             </div>
 
             <div
@@ -870,13 +853,13 @@ function NetworkPageContent() {
                 border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Pending Incoming Requests
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#000000', margin: '4px 0', lineHeight: 1.15, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
                 {incomingCount}
               </div>
-              <div style={{ fontSize: '12px', color: '#000000' }}>Awaiting your confirmation</div>
+              <div style={{ fontSize: '12.5px', color: '#000000', lineHeight: 1.4 }}>Awaiting your confirmation</div>
             </div>
 
             <div
@@ -887,13 +870,13 @@ function NetworkPageContent() {
                 border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Active CRM Records
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#000000', margin: '4px 0', lineHeight: 1.15, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
                 {crmContacts.length}
               </div>
-              <div style={{ fontSize: '12px', color: '#000000' }}>Classified enterprise entities</div>
+              <div style={{ fontSize: '12.5px', color: '#000000', lineHeight: 1.4 }}>Classified enterprise entities</div>
             </div>
 
             <div
@@ -904,13 +887,13 @@ function NetworkPageContent() {
                 border: '1px solid #E6E6E6',
               }}
             >
-              <div style={{ fontSize: '11px', fontWeight: 600, color: '#000000', textTransform: 'uppercase' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                 Outgoing Pending Invitations
               </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#000000', margin: '4px 0' }}>
+              <div style={{ fontSize: '28px', fontWeight: 700, color: '#000000', margin: '4px 0', lineHeight: 1.15, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
                 {outgoingCount}
               </div>
-              <div style={{ fontSize: '12px', color: '#000000' }}>Sent to industry partners</div>
+              <div style={{ fontSize: '12.5px', color: '#000000', lineHeight: 1.4 }}>Sent to industry partners</div>
             </div>
           </div>
 
@@ -925,7 +908,7 @@ function NetworkPageContent() {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
               <div>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#000000' }}>
+                <h3 style={{ fontSize: '17px', fontWeight: 600, margin: 0, color: '#000000', letterSpacing: '-0.01em', lineHeight: 1.35 }}>
                   Trade Affinity Recommendations
                 </h3>
                 <p style={{ margin: '3px 0 0', fontSize: '12px', color: '#000000' }}>
@@ -962,7 +945,7 @@ function NetworkPageContent() {
               border: '1px solid #E6E6E6',
             }}
           >
-            <h3 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 14px', color: '#000000' }}>
+            <h3 style={{ fontSize: '17px', fontWeight: 600, margin: '0 0 14px', color: '#000000', letterSpacing: '-0.01em', lineHeight: 1.35 }}>
               Recent Network Activity &amp; Notifications
             </h3>
             {notifications && notifications.length > 0 ? (
@@ -1032,10 +1015,7 @@ function NetworkPageContent() {
                   onChange={(e) => setDiscoverFilters((prev) => ({ ...prev, q: e.target.value }))}
                   style={{
                     width: '100%',
-                    height: '36px',
-                    paddingLeft: '32px',
-                    paddingRight: '12px',
-                    fontSize: '12.5px',
+                    height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '14px', fontWeight: 400, lineHeight: 1.4,
                     border: '1px solid #E6E6E6',
                     borderRadius: '6px',
                     background: '#FFFFFF',
@@ -1383,10 +1363,7 @@ function NetworkPageContent() {
                 onChange={(e) => setConnectionSearch(e.target.value)}
                 style={{
                   width: '100%',
-                  height: '36px',
-                  paddingLeft: '32px',
-                  paddingRight: '12px',
-                  fontSize: '12.5px',
+                  height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '14px', fontWeight: 400, lineHeight: 1.4,
                   border: '1px solid #E6E6E6',
                   borderRadius: '6px',
                   background: '#FFFFFF',
@@ -1708,9 +1685,7 @@ function NetworkPageContent() {
                               padding: '6px 14px',
                               borderRadius: '6px',
                               background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
+                              fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                             }}
                           >
                             Accept
@@ -1874,9 +1849,7 @@ function NetworkPageContent() {
                               padding: '6px 14px',
                               borderRadius: '6px',
                               background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-                              fontSize: '12px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
+                              fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                             }}
                           >
                             Accept
@@ -1938,10 +1911,7 @@ function NetworkPageContent() {
                   onChange={(e) => setCrmSearch(e.target.value)}
                   style={{
                     width: '100%',
-                    height: '36px',
-                    paddingLeft: '32px',
-                    paddingRight: '12px',
-                    fontSize: '12.5px',
+                    height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '14px', fontWeight: 400, lineHeight: 1.4,
                     border: '1px solid #E6E6E6',
                     borderRadius: '6px',
                     background: '#FFFFFF',
@@ -2019,9 +1989,7 @@ function NetworkPageContent() {
                   padding: '7px 14px',
                   borderRadius: '6px',
                   background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
@@ -2262,9 +2230,7 @@ function NetworkPageContent() {
                   padding: '7px 16px',
                   borderRadius: '6px',
                   background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  cursor: 'pointer',
+                  fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                 }}
               >
                 {sendingConnect ? 'Sending…' : 'Send Invitation'}
@@ -2340,7 +2306,7 @@ function NetworkPageContent() {
                         maxWidth: '80%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        background: isMine ? '#000000' : '#F3F4F6',
+                        background: isMine ? '#000000' : '#E6E6E6',
                         color: isMine ? '#FFFFFF' : '#000000',
                         fontSize: '12.5px',
                       }}
@@ -2538,7 +2504,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Save Contact
               </button>
@@ -2657,7 +2623,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Update Contact
               </button>
@@ -2736,7 +2702,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', fontSize: '13px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Confirm Delete
               </button>
