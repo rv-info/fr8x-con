@@ -1,0 +1,306 @@
+[
+  {
+    "page": "login",
+    "url": "/login",
+    "renderedUrl": "http://localhost:3000/login",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "login-desktop.png"
+  },
+  {
+    "page": "login",
+    "url": "/login",
+    "renderedUrl": "http://localhost:3000/login",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "login-tablet.png"
+  },
+  {
+    "page": "login",
+    "url": "/login",
+    "renderedUrl": "http://localhost:3000/login",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "login-mobile.png"
+  },
+  {
+    "page": "register",
+    "url": "/register",
+    "renderedUrl": "http://localhost:3000/register",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "register-desktop.png"
+  },
+  {
+    "page": "register",
+    "url": "/register",
+    "renderedUrl": "http://localhost:3000/register",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "register-tablet.png"
+  },
+  {
+    "page": "register",
+    "url": "/register",
+    "renderedUrl": "http://localhost:3000/register",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "register-mobile.png"
+  },
+  {
+    "page": "reset-password",
+    "url": "/reset-password",
+    "renderedUrl": "http://localhost:3000/reset-password",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "reset-password-desktop.png"
+  },
+  {
+    "page": "download",
+    "url": "/download",
+    "renderedUrl": "http://localhost:3000/login",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "download-desktop.png"
+  },
+  {
+    "page": "download",
+    "url": "/download",
+    "renderedUrl": "http://localhost:3000/login",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "download-mobile.png"
+  },
+  {
+    "page": "privacy",
+    "url": "/privacy",
+    "renderedUrl": "http://localhost:3000/privacy",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "privacy-desktop.png"
+  },
+  {
+    "page": "terms",
+    "url": "/terms",
+    "renderedUrl": "http://localhost:3000/terms",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "terms-desktop.png"
+  },
+  {
+    "page": "dashboard",
+    "url": "/dashboard",
+    "renderedUrl": "http://localhost:3000/dashboard",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "dashboard-desktop.png"
+  },
+  {
+    "page": "dashboard",
+    "url": "/dashboard",
+    "renderedUrl": "http://localhost:3000/dashboard",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "dashboard-tablet.png"
+  },
+  {
+    "page": "dashboard",
+    "url": "/dashboard",
+    "renderedUrl": "http://localhost:3000/dashboard",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "dashboard-mobile.png"
+  },
+  {
+    "page": "feeds",
+    "url": "/feeds",
+    "renderedUrl": "http://localhost:3000/feeds",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "feeds-desktop.png"
+  },
+  {
+    "page": "feeds",
+    "url": "/feeds",
+    "renderedUrl": "http://localhost:3000/feeds",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "feeds-tablet.png"
+  },
+  {
+    "page": "feeds",
+    "url": "/feeds",
+    "renderedUrl": "http://localhost:3000/feeds",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "feeds-mobile.png"
+  },
+  {
+    "page": "nexus",
+    "url": "/nexus",
+    "renderedUrl": "http://localhost:3000/nexus",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "nexus-desktop.png"
+  },
+  {
+    "page": "nexus",
+    "url": "/nexus",
+    "renderedUrl": "http://localhost:3000/nexus",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "nexus-tablet.png"
+  },
+  {
+    "page": "nexus",
+    "url": "/nexus",
+    "renderedUrl": "http://localhost:3000/nexus",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "nexus-mobile.png"
+  },
+  {
+    "page": "auctions",
+    "url": "/auctions",
+    "renderedUrl": "http://localhost:3000/auctions",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "auctions-desktop.png"
+  },
+  {
+    "page": "auctions",
+    "url": "/auctions",
+    "renderedUrl": "http://localhost:3000/auctions",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "auctions-tablet.png"
+  },
+  {
+    "page": "auctions",
+    "url": "/auctions",
+    "renderedUrl": "http://localhost:3000/auctions",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "auctions-mobile.png"
+  },
+  {
+    "page": "auctions-create",
+    "url": "/auctions/create",
+    "renderedUrl": "http://localhost:3000/auctions/create",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "auctions-create-desktop.png"
+  },
+  {
+    "page": "rates",
+    "url": "/rates",
+    "renderedUrl": "http://localhost:3000/rates",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "rates-desktop.png"
+  },
+  {
+    "page": "rates",
+    "url": "/rates",
+    "renderedUrl": "http://localhost:3000/rates",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "rates-tablet.png"
+  },
+  {
+    "page": "rates",
+    "url": "/rates",
+    "renderedUrl": "http://localhost:3000/rates",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "rates-mobile.png"
+  },
+  {
+    "page": "network",
+    "url": "/network",
+    "renderedUrl": "http://localhost:3000/network",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "network-desktop.png"
+  },
+  {
+    "page": "network",
+    "url": "/network",
+    "renderedUrl": "http://localhost:3000/network",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "network-tablet.png"
+  },
+  {
+    "page": "network",
+    "url": "/network",
+    "renderedUrl": "http://localhost:3000/network",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "network-mobile.png"
+  },
+  {
+    "page": "jobs",
+    "url": "/jobs",
+    "renderedUrl": "http://localhost:3000/jobs",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "jobs-desktop.png"
+  },
+  {
+    "page": "jobs",
+    "url": "/jobs",
+    "renderedUrl": "http://localhost:3000/jobs",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "jobs-tablet.png"
+  },
+  {
+    "page": "jobs",
+    "url": "/jobs",
+    "renderedUrl": "http://localhost:3000/jobs",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "jobs-mobile.png"
+  },
+  {
+    "page": "profile",
+    "url": "/profile",
+    "renderedUrl": "http://localhost:3000/profile",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "profile-desktop.png"
+  },
+  {
+    "page": "profile",
+    "url": "/profile",
+    "renderedUrl": "http://localhost:3000/profile",
+    "viewport": "tablet",
+    "status": 200,
+    "screenshot": "profile-tablet.png"
+  },
+  {
+    "page": "profile",
+    "url": "/profile",
+    "renderedUrl": "http://localhost:3000/profile",
+    "viewport": "mobile",
+    "status": 200,
+    "screenshot": "profile-mobile.png"
+  },
+  {
+    "page": "notifications",
+    "url": "/notifications",
+    "renderedUrl": "http://localhost:3000/notifications",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "notifications-desktop.png"
+  },
+  {
+    "page": "godfather-login",
+    "url": "/godfather/login",
+    "renderedUrl": "http://localhost:3000/godfather/login",
+    "viewport": "desktop",
+    "status": 200,
+    "screenshot": "godfather-login-desktop.png"
+  }
+]

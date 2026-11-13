@@ -203,6 +203,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCurrentUser(null);
         currentUserRef.current = null;
         setUserStatusState('offline');
+      } else if (!session && !checkIsSessionExpired()) {
+        try {
+          const cachedRaw = localStorage.getItem('fr8x_cached_user_profile');
+          const activeUid = localStorage.getItem(ACTIVE_SESSION_KEY);
+          if (cachedRaw && activeUid) {
+            const cachedProfile = JSON.parse(cachedRaw);
+            if (cachedProfile && (cachedProfile.uid === activeUid || cachedProfile.id === activeUid)) {
+              setCurrentUser(cachedProfile);
+              currentUserRef.current = cachedProfile;
+              setUserStatusState('available');
+            }
+          }
+        } catch {}
       }
       if (isSubscribed) setIsLoading(false);
     }).catch(() => {

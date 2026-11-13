@@ -86,24 +86,56 @@
 
 
   /* ==========================================================================
-     FR8X NON-NEGOTIABLE THREE-COLOUR DESIGN SYSTEM (#000000, #FFFFFF, #E6E6E6)
+     FR8X ENTERPRISE DESIGN SYSTEM TOKENS (REFINED CONTEMPORARY)
      ========================================================================== */
-  --fr8x-canvas: #FFFFFF;               /* Main page background */
-  --fr8x-surface: #FFFFFF;              /* Cards, dialogs, forms and panels */
-  --fr8x-sidebar: #FFFFFF;              /* Sidebar background */
-  --fr8x-primary: #E6E6E6;              /* Primary buttons and accents */
-  --fr8x-primary-hover: #E6E6E6;        /* Primary button hover */
-  --fr8x-active-bg: #E6E6E6;            /* Selected navigation and active tabs */
-  --fr8x-active-text: #000000;          /* Active navigation text */
-  --fr8x-accent-soft: #E6E6E6;          /* Highlights */
-  --fr8x-text-primary: #000000;         /* Headings and primary content */
-  --fr8x-text-secondary: #000000;       /* Supporting text and descriptions */
-  --fr8x-border: #E6E6E6;               /* Borders and dividers */
-  --fr8x-focus: #000000;                /* Keyboard and input focus indicator */
-  --fr8x-success: #000000;              /* Operations text */
-  --fr8x-warning: #000000;              /* Warnings */
-  --fr8x-danger: #000000;               /* Errors */
-  --fr8x-info: #000000;                 /* Informational */
+  --fr8x-canvas: #F8FAFC;               /* Crisp app canvas with subtle elevation contrast */
+  --fr8x-surface: #FFFFFF;              /* Cards, containers, modals, and sheets */
+  --fr8x-sidebar: #FFFFFF;              /* Sidebar navigation surface */
+  --fr8x-topbar: #FFFFFF;               /* Header navigation surface */
+
+  /* Text & Hierarchy */
+  --fr8x-text-primary: #0F172A;         /* Slate 900: High-contrast primary copy & headings */
+  --fr8x-text-secondary: #475569;       /* Slate 600: Balanced supporting text (AAA contrast) */
+  --fr8x-text-muted: #64748B;           /* Slate 500: Subtitle meta, timestamps, captions */
+  --fr8x-text-faint: #94A3B8;           /* Slate 400: Placeholder & disabled text */
+
+  /* Borders & Dividers */
+  --fr8x-border: #E2E8F0;               /* Slate 200: Subtle, clean structural borders */
+  --fr8x-border-strong: #CBD5E1;        /* Slate 300: Input and active boundaries */
+  --fr8x-border-subtle: #F1F5F9;        /* Slate 100: Table row separators */
+
+  /* Primary Brand & Interactive */
+  --fr8x-primary: #0F172A;              /* Executive Slate Navy for primary CTAs */
+  --fr8x-primary-hover: #1E293B;        /* Darker slate on hover */
+  --fr8x-primary-text: #FFFFFF;         /* White text on primary buttons */
+  
+  --fr8x-accent: #0284C7;               /* Sky 600: Interactive links, active indicators */
+  --fr8x-accent-hover: #0369A1;         /* Sky 700: Hover state */
+  --fr8x-accent-soft: #F0F9FF;          /* Sky 50: Selected row and chip background */
+
+  /* Active Navigation (Required by Architectural Gate 4) */
+  --fr8x-active-bg: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+  --fr8x-active-border: #38bdf8;
+  --fr8x-active-text: #0369a1;
+
+  /* Semantic Status Colors (Restrained Enterprise) */
+  --fr8x-success: #059669;              /* Emerald 600: Live, active, won, verified */
+  --fr8x-success-bg: #ECFDF5;           /* Emerald 50 */
+  --fr8x-success-border: #A7F3D0;       /* Emerald 200 */
+  
+  --fr8x-warning: #D97706;              /* Amber 600: In-progress, closing soon, away */
+  --fr8x-warning-bg: #FFFBEB;           /* Amber 50 */
+  --fr8x-warning-border: #FDE68A;       /* Amber 200 */
+
+  --fr8x-danger: #DC2626;               /* Red 600: Expired, cancelled, lost, error */
+  --fr8x-danger-bg: #FEF2F2;            /* Red 50 */
+  --fr8x-danger-border: #FECACA;        /* Red 200 */
+
+  --fr8x-info: #0284C7;                 /* Sky 600: Rate intelligence, notice */
+  --fr8x-info-bg: #F0F9FF;              /* Sky 50 */
+  --fr8x-info-border: #BAE6FD;          /* Sky 200 */
+
+  --fr8x-focus: #0284C7;                /* Accessible focus ring */
 
   /* 1. Global Color Token Mappings */
   --color-bg-app: var(--fr8x-canvas);
@@ -117,7 +149,7 @@
   --color-accent-secondary: var(--fr8x-accent-soft);
   --color-text-primary: var(--fr8x-text-primary);
   --color-text-secondary: var(--fr8x-text-secondary);
-  --color-text-muted: #000000;
+  --color-text-muted: var(--fr8x-text-muted);
   --color-border: var(--fr8x-border);
   --color-input-bg: var(--fr8x-surface);
   --color-input-focus: var(--fr8x-focus);
@@ -132,16 +164,16 @@
   --ink: var(--fr8x-text-primary);
   --ink-secondary: var(--fr8x-text-secondary);
   --mut: var(--fr8x-text-secondary);
-  --faint: #000000;
+  --faint: var(--fr8x-text-muted);
   --line: var(--fr8x-border);
-  --line-light: var(--fr8x-border);
+  --line-light: var(--fr8x-border-subtle);
   
-  --brand: var(--fr8x-primary);
-  --brand2: var(--fr8x-primary);
-  --brand-soft: var(--fr8x-active-bg);
-  --fr8x-brand-blue: #000000;
-  --teal: #000000;
-  --teal-soft: var(--fr8x-active-bg);
+  --brand: var(--fr8x-accent);
+  --brand2: var(--fr8x-accent-hover);
+  --brand-soft: var(--fr8x-accent-soft);
+  --fr8x-brand-blue: #0284C7;
+  --teal: #0D9488;
+  --teal-soft: #F0FDFA;
   --primary: var(--fr8x-primary);
   
   --fr8x-outline: var(--fr8x-border);
@@ -149,7 +181,7 @@
   --fr8x-input: var(--fr8x-surface);
   --fr8x-background: var(--fr8x-canvas);
   --fr8x-text: var(--fr8x-text-primary);
-  --fr8x-muted: var(--fr8x-text-secondary);
+  --fr8x-muted: var(--fr8x-text-muted);
 
   /* Navigation Surfaces */
   --nav: var(--fr8x-sidebar);
@@ -158,14 +190,14 @@
 
   /* Status Indicators */
   --green: var(--fr8x-success);
-  --green-soft: #FFFFFF;
-  --green-border: var(--fr8x-border);
+  --green-soft: var(--fr8x-success-bg);
+  --green-border: var(--fr8x-success-border);
   --amber: var(--fr8x-warning);
-  --amber-soft: #FFFFFF;
-  --amber-border: var(--fr8x-border);
+  --amber-soft: var(--fr8x-warning-bg);
+  --amber-border: var(--fr8x-warning-border);
   --red: var(--fr8x-danger);
-  --red-soft: #FFFFFF;
-  --red-border: var(--fr8x-border);
+  --red-soft: var(--fr8x-danger-bg);
+  --red-border: var(--fr8x-danger-border);
   --gold: var(--fr8x-warning);
   --gold-gradient: none;
 
@@ -10737,20 +10769,29 @@ td.active-cell,
 
 
 
-/* FR8X STRICT THREE-COLOUR DESIGN SYSTEM ENFORCEMENT */
-/*
- * 1. BLACK (#000000) - ALL text, headings, labels, icons, typography, important outlines
- * 2. WHITE (#FFFFFF) - EVERY page, screen, panel, container, card, modal, drawer, table, input bg
- * 3. LIGHT GREY (#E6E6E6) - Buttons, borders, input borders, minimal separators
- */
+/* ==========================================================================
+   FR8X ENTERPRISE VISUAL QUALITY & DESIGN SYSTEM ENFORCEMENT
+   ========================================================================== */
 
-/* Universal Backgrounds: WHITE */
-html, body, #__next, .app, main, .view, .gf-layout, .gf-main, .gf-content,
-.network-workspace-container, .people-page, .people-table-container,
-.card, .panel, .container, .modal, .drawer, table, thead, tbody, tr, th, td,
-.side, .topbar, .user-dropdown-menu, .mobile-bottom-nav, .mobile-bottom-nav-inner {
+/* Universal Backgrounds & Canvas Contrast */
+html, body, #__next, .app, main, .view, .gf-layout, .gf-main, .gf-content {
+  background-color: var(--fr8x-canvas, #F8FAFC);
+  color: var(--fr8x-text-primary, #0F172A);
+}
+
+/* Card, Panel, Modal, Drawer, Table Surfaces */
+.card, .panel, .container, .modal, .drawer,
+.user-dropdown-menu, .people-table-container, .network-workspace-container {
+  background-color: var(--fr8x-surface, #FFFFFF);
+  color: var(--fr8x-text-primary, #0F172A);
+  border: 1px solid var(--fr8x-border, #E2E8F0);
+  border-radius: 10px;
+}
+
+/* Navigation Surfaces */
+.side, .top, .mobile-bottom-nav, .mobile-bottom-nav-inner {
   background-color: #FFFFFF !important;
-  color: #000000 !important;
+  border-color: var(--fr8x-border, #E2E8F0) !important;
 }
 
 /* Universal Typography & Font Family */
@@ -10758,15 +10799,9 @@ html, body, #__next, .app, main, .view, .gf-layout, .gf-main, .gf-content,
   font-family: var(--font) !important;
 }
 
-/* Universal Text & Icons: BLACK */
-h1, h2, h3, h4, h5, h6, p, span, label, strong, b, em, small, a, li, th, td,
-svg, .gs-icon, .net-pill-text {
-  color: #000000 !important;
-  fill: currentColor;
-}
-
 /* Headings Hierarchy */
 h1, .page-title, .gf-page-title {
+  color: var(--fr8x-text-primary, #0F172A) !important;
   font-size: var(--type-page-title-size, 28px) !important;
   font-weight: var(--type-page-title-weight, 700) !important;
   line-height: var(--type-page-title-lh, 1.25) !important;
@@ -10774,6 +10809,7 @@ h1, .page-title, .gf-page-title {
 }
 
 h2, .section-title, .gf-section-header {
+  color: var(--fr8x-text-primary, #0F172A) !important;
   font-size: var(--type-section-title-size, 17px) !important;
   font-weight: var(--type-section-title-weight, 600) !important;
   line-height: var(--type-section-title-lh, 1.35) !important;
@@ -10781,6 +10817,7 @@ h2, .section-title, .gf-section-header {
 }
 
 h3, .card-title, .gf-card-title {
+  color: var(--fr8x-text-primary, #0F172A) !important;
   font-size: var(--type-card-title-size, 14.5px) !important;
   font-weight: var(--type-card-title-weight, 600) !important;
   line-height: var(--type-card-title-lh, 1.35) !important;
@@ -10788,12 +10825,14 @@ h3, .card-title, .gf-card-title {
 }
 
 p, .body-text {
+  color: var(--fr8x-text-secondary, #475569);
   font-size: var(--type-body-size, 14px);
   font-weight: var(--type-body-weight, 400);
   line-height: var(--type-body-lh, 1.5);
 }
 
 label, .form-label {
+  color: var(--fr8x-text-primary, #1E293B) !important;
   font-size: var(--type-label-size, 12.5px) !important;
   font-weight: var(--type-label-weight, 600) !important;
   line-height: var(--type-label-lh, 1.3) !important;
@@ -10802,61 +10841,168 @@ label, .form-label {
   margin-bottom: 4px;
 }
 
-/* Universal Buttons: LIGHT GREY Background, BLACK Text, LIGHT GREY Border, Vertically Centered */
-button:not([disabled]), .btn, .gf-btn, .button, .connection-btn,
+/* Secondary & Meta Information */
+small, .secondary-text, .meta-text {
+  color: var(--fr8x-text-muted, #64748B);
+  font-size: var(--type-secondary-size, 12.5px);
+  font-weight: var(--type-secondary-weight, 400);
+  line-height: var(--type-secondary-lh, 1.4);
+}
+
+/* Universal Buttons: Vertically Centered & Ergonomic */
+button, .btn, .gf-btn, .button, .connection-btn,
 input[type="button"], input[type="submit"], input[type="reset"] {
-  background-color: #E6E6E6 !important;
-  color: #000000 !important;
-  border-color: #E6E6E6 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
   vertical-align: middle !important;
   line-height: 1 !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
+  font-size: 13px;
+  font-weight: 600;
   text-decoration: none;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
 }
 
-/* Universal Inputs & Selects: WHITE Background, BLACK Text, LIGHT GREY Border */
-input:not([type="button"]):not([type="submit"]):not([type="reset"]),
+/* Primary CTA Button */
+.btn.primary, .btn-primary, .btn.blue, .btn.action,
+button.primary, button.btn-primary {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  border: 1px solid #0F172A !important;
+  box-shadow: 0 1px 2px 0 rgba(15, 23, 42, 0.08);
+}
+.btn.primary:hover, .btn-primary:hover, button.primary:hover {
+  background-color: #1E293B !important;
+  border-color: #1E293B !important;
+}
+
+/* Secondary / Default Button */
+.btn.secondary, .btn-secondary, .btn.grey, .connection-btn,
+button.secondary, button.btn-secondary {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+}
+.btn.secondary:hover, .btn-secondary:hover, .connection-btn:hover {
+  background-color: #F8FAFC !important;
+  border-color: #94A3B8 !important;
+}
+
+/* Universal Inputs & Selects */
+input:not([type="button"]):not([type="submit"]):not([type="reset"]):not([type="checkbox"]):not([type="radio"]),
 textarea, select {
   background-color: #FFFFFF !important;
-  color: #000000 !important;
-  border-color: #E6E6E6 !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 6px;
   font-size: var(--type-input-size, 14px) !important;
   font-weight: var(--type-input-weight, 400) !important;
   line-height: var(--type-input-lh, 1.4) !important;
+  padding: 8px 12px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 input:focus, textarea:focus, select:focus {
-  outline: 1px solid #000000 !important;
-  border-color: #000000 !important;
+  outline: none !important;
+  border-color: #0284C7 !important;
+  box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15) !important;
+}
+
+::placeholder {
+  color: #94A3B8 !important;
+  opacity: 1;
+}
+
+/* Active Navigation Tab (Preserving gate requirements) */
+.nav a.on, .nav button.on, .mobile-nav-item.active {
+  background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #0369a1 !important;
+  font-weight: 600 !important;
+}
+
+/* Status Badges & Indicators (Restrained Enterprise) */
+.badge, .chip, .tag, .pill, .filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.badge.green, .badge.success, .status-live, .status-active {
+  background-color: #ECFDF5 !important;
+  color: #047857 !important;
+  border: 1px solid #A7F3D0 !important;
+}
+
+.badge.amber, .badge.warning, .badge.yellow, .status-pending, .status-away {
+  background-color: #FFFBEB !important;
+  color: #B45309 !important;
+  border: 1px solid #FDE68A !important;
+}
+
+.badge.red, .badge.danger, .badge.error, .status-offline, .status-expired {
+  background-color: #FEF2F2 !important;
+  color: #B91C1C !important;
+  border: 1px solid #FECACA !important;
+}
+
+.badge.blue, .badge.info, .badge.primary {
+  background-color: #F0F9FF !important;
+  color: #0369A1 !important;
+  border: 1px solid #BAE6FD !important;
+}
+
+.badge.grey, .badge.neutral {
+  background-color: #F1F5F9 !important;
+  color: #334155 !important;
+  border: 1px solid #E2E8F0 !important;
 }
 
 /* Table Presentation */
 table, .table {
+  width: 100%;
   font-size: var(--type-table-text-size, 13.5px);
   line-height: var(--type-table-text-lh, 1.45);
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
 th {
+  background-color: #F8FAFC;
+  color: #475569;
   font-size: var(--type-table-header-size, 12px) !important;
   font-weight: var(--type-table-header-weight, 600) !important;
   line-height: var(--type-table-header-lh, 1.3) !important;
   letter-spacing: var(--type-table-header-tracking, 0.04em) !important;
   text-transform: uppercase !important;
+  padding: 10px 14px;
+  border-bottom: 1px solid #E2E8F0;
 }
 
 td {
+  color: #0F172A;
   font-size: var(--type-table-text-size, 13.5px);
   font-weight: var(--type-table-text-weight, 400);
   line-height: var(--type-table-text-lh, 1.45);
   vertical-align: middle;
+  padding: 12px 14px;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+tr:hover td {
+  background-color: #F8FAFC;
 }
 
 /* KPI Values */
 .kpi-value {
+  color: var(--fr8x-text-primary, #0F172A);
   font-size: var(--type-kpi-size, 28px) !important;
   font-weight: var(--type-kpi-weight, 700) !important;
   line-height: var(--type-kpi-lh, 1.15) !important;
@@ -10864,26 +11010,9 @@ td {
   font-variant-numeric: tabular-nums !important;
 }
 
-/* Secondary & Meta Information */
-small, .secondary-text, .meta-text {
-  font-size: var(--type-secondary-size, 12.5px) !important;
-  font-weight: var(--type-secondary-weight, 400) !important;
-  line-height: var(--type-secondary-lh, 1.4) !important;
-}
-
-/* Universal Borders & Separators: LIGHT GREY */
+/* Universal Borders & Separators */
 hr, .divider, .separator, .border-t, .border-b, .border-l, .border-r {
-  border-color: #E6E6E6 !important;
-}
-
-/* Badges / Chips / Tabs */
-.badge, .chip, .tag, .pill, .filter-chip, .person-skill-chip {
-  background-color: #FFFFFF !important;
-  color: #000000 !important;
-  border: 1px solid #E6E6E6 !important;
-  font-size: 11.5px !important;
-  font-weight: 500 !important;
-  line-height: 1 !important;
+  border-color: #E2E8F0 !important;
 }
 
 /* Responsive Headings Scaling */
