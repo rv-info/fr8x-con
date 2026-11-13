@@ -7,18 +7,18 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import {
-  LayoutDashboard,
-  Rss,
-  Globe2,
-  Gavel,
-  BarChart3,
-  Users,
-  Briefcase,
-  User,
-  PanelLeftClose,
-  PanelLeftOpen,
-  LogOut,
-} from 'lucide-react';
+  BiSpeedometer2 as LayoutDashboard,
+  BiRss as Rss,
+  BiGlobe2 as Globe2,
+  BiHammer as Gavel,
+  BiBarChartLine as BarChart3,
+  BiPeople as Users,
+  BiBriefcase as Briefcase,
+  BiPerson as User,
+  BiChevronBarLeft as PanelLeftClose,
+  BiChevronBarRight as PanelLeftOpen,
+  BiBoxArrowRight as LogOut,
+} from '@/components/ui/BootstrapIcons';
 
 interface SidebarProps {
   isCollapsed: boolean;

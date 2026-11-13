@@ -4,12 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Rss,
-  Globe2,
-  Gavel,
-  Users,
-} from 'lucide-react';
+  BiHouse as LayoutDashboard,
+  BiRss as Rss,
+  BiGlobe2 as Globe2,
+  BiHammer as Gavel,
+  BiPeople as Users,
+} from '@/components/ui/BootstrapIcons';
 
 export function MobileNav() {
   const pathname = usePathname();
