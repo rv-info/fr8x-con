@@ -107,7 +107,8 @@ async function setupAuth(context, page) {
       const url = `http://localhost:3000${pageInfo.path}`;
       try {
         const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25000 });
-        await page.waitForTimeout(2000);
+        const waitTime = (pageInfo.name === 'rates' || pageInfo.name === 'jobs' || pageInfo.name === 'profile') ? 4500 : 2500;
+        await page.waitForTimeout(waitTime);
 
         const currentUrl = page.url();
         const screenshotFileName = `${pageInfo.name}-${vpKey}.png`;

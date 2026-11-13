@@ -40,7 +40,7 @@ export function EmptyState({
         textAlign: 'center',
         background: '#ffffff',
         borderRadius: '8px',
-        border: '1px solid #E6E6E6',
+        border: '1px solid #E2E8F0',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,7 +52,7 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            color: '#000000',
+            color: '#64748B',
             opacity: 1,
             marginBottom: '4px',
             display: 'flex',
@@ -68,8 +68,8 @@ export function EmptyState({
         style={{
           margin: 0,
           fontSize: '14px',
-          fontWeight: 700,
-          color: '#000000',
+          fontWeight: 600,
+          color: '#111827',
         }}
       >
         {title}
@@ -78,8 +78,8 @@ export function EmptyState({
         <p
           style={{
             margin: '0 0 10px 0',
-            fontSize: '12px',
-            color: '#000000',
+            fontSize: '12.5px',
+            color: '#475569',
             maxWidth: '380px',
             lineHeight: 1.5,
           }}
@@ -103,17 +103,18 @@ export function EmptyState({
             actionHref ? (
               <Link
                 href={actionHref}
-                className="btn primary sm min-h-[44px]"
+                className="btn primary sm min-h-[38px]"
                 style={{
-                  minHeight: '44px',
+                  minHeight: '38px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
-                  borderRadius: '4px',
+                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  color: '#111827',
+                  border: '1px solid #111827',
+                  borderRadius: '6px',
                 }}
               >
                 {actionLabel}
@@ -122,17 +123,18 @@ export function EmptyState({
               <button
                 type="button"
                 onClick={onAction}
-                className="btn primary sm min-h-[44px]"
+                className="btn primary sm min-h-[38px]"
                 style={{
-                  minHeight: '44px',
+                  minHeight: '38px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
-                  borderRadius: '4px',
+                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  color: '#111827',
+                  border: '1px solid #111827',
+                  borderRadius: '6px',
                 }}
               >
                 {actionLabel}
@@ -144,13 +146,18 @@ export function EmptyState({
             secondaryActionHref ? (
               <Link
                 href={secondaryActionHref}
-                className="btn secondary sm min-h-[44px]"
+                className="btn secondary sm min-h-[38px]"
                 style={{
-                  minHeight: '44px',
+                  minHeight: '38px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '0 14px',
-                  fontWeight: 600,
+                  fontWeight: 500,
+                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  color: '#475569',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '6px',
                 }}
               >
                 {secondaryActionLabel}
@@ -159,13 +166,18 @@ export function EmptyState({
               <button
                 type="button"
                 onClick={onSecondaryAction}
-                className="btn secondary sm min-h-[44px]"
+                className="btn secondary sm min-h-[38px]"
                 style={{
-                  minHeight: '44px',
+                  minHeight: '38px',
                   display: 'inline-flex',
                   alignItems: 'center',
                   padding: '0 14px',
-                  fontWeight: 600,
+                  fontWeight: 500,
+                  fontSize: '13px',
+                  background: '#FFFFFF',
+                  color: '#475569',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '6px',
                 }}
               >
                 {secondaryActionLabel}

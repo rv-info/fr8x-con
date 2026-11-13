@@ -74,11 +74,11 @@ export default function NotificationCenterPage() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'rgba(17,104,215,0.1)', color: '#1168d7', display: 'grid', placeItems: 'center' }}>
-              <Bell size={20} />
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#FFFFFF', border: '1px solid #BAE6FD', color: '#0284C7', display: 'grid', placeItems: 'center' }}>
+              <Bell size={18} />
             </div>
             <div>
-              <h1 style={{ fontSize: '20px', fontWeight: 800, margin: 0, color: 'var(--ink)' }}>
+              <h1 style={{ fontSize: '25px', fontWeight: 300, margin: 0, color: 'var(--ink)' }}>
                 Notification Center
               </h1>
               <p style={{ fontSize: '13px', color: 'var(--mut)', margin: '2px 0 0' }}>
@@ -98,12 +98,12 @@ export default function NotificationCenterPage() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 fontSize: '12px',
                 fontWeight: 600,
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                color: 'var(--brand)',
+                background: '#FFFFFF',
+                border: '1px solid #CBD5E1',
+                color: '#111827',
                 cursor: 'pointer',
               }}
             >
@@ -119,12 +119,12 @@ export default function NotificationCenterPage() {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '8px 14px',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 fontSize: '12px',
                 fontWeight: 600,
-                background: 'rgba(239, 68, 68, 0.08)',
-                border: '1px solid rgba(239, 68, 68, 0.2)',
-                color: '#ef4444',
+                background: '#FFFFFF',
+                border: '1px solid #FECACA',
+                color: '#DC2626',
                 cursor: 'pointer',
               }}
             >
@@ -137,19 +137,19 @@ export default function NotificationCenterPage() {
       {/* Preservation & Integrity Notice */}
       <div
         style={{
-          background: 'rgba(17, 104, 215, 0.04)',
-          border: '1px solid rgba(17, 104, 215, 0.15)',
-          borderRadius: '10px',
+          background: '#FFFFFF',
+          border: '1px solid #BAE6FD',
+          borderRadius: '8px',
           padding: '12px 16px',
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
           marginBottom: '20px',
-          fontSize: '12px',
+          fontSize: '12.5px',
           color: 'var(--mut)',
         }}
       >
-        <Info size={18} style={{ color: '#1168d7', flexShrink: 0 }} />
+        <Info size={18} style={{ color: '#0284C7', flexShrink: 0 }} />
         <div>
           <b style={{ color: 'var(--ink)' }}>Data Preservation Notice:</b> Clearing a notification only dismisses the alert from your notification center. It does <span style={{ textDecoration: 'underline' }}>not</span> delete or cancel the underlying connection, tender bid, feed post, or account security event.
         </div>
