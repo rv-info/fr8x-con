@@ -93,14 +93,14 @@ export default function DashboardPage() {
   const recentActivity = notifications.slice(0, 6);
 
   const kpis = [
-    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={16} />, color: '#1168d7', href: '/auctions' },
-    { label: 'My Posted', value: myPostedActive, icon: <Activity size={16} />, color: '#099889', href: '/auctions' },
-    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={16} />, color: '#7c3aed', href: '/auctions' },
-    { label: 'Bids Won', value: bidsWon, icon: <Award size={16} />, color: '#d97706', href: '/auctions' },
-    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={16} />, color: '#64748b', href: '/auctions' },
-    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={16} />, color: '#dc2626', href: '/feeds' },
-    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={16} />, color: '#059669', href: '/feeds' },
-    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={16} />, color: '#0891b2', href: '/jobs' },
+    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/auctions' },
+    { label: 'My Posted', value: myPostedActive, icon: <Activity size={18} strokeWidth={1.8} />, color: '#059669', href: '/auctions' },
+    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/auctions' },
+    { label: 'Bids Won', value: bidsWon, icon: <Award size={18} strokeWidth={1.8} />, color: '#D97706', href: '/auctions' },
+    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={18} strokeWidth={1.8} />, color: '#64748B', href: '/auctions' },
+    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={18} strokeWidth={1.8} />, color: '#DC2626', href: '/feeds' },
+    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={18} strokeWidth={1.8} />, color: '#059669', href: '/feeds' },
+    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/jobs' },
   ];
 
   const quickActions = [
@@ -119,12 +119,12 @@ export default function DashboardPage() {
             {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, letterSpacing: '-0.02em', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#111827' }}>
               Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
               {user.firstName}
               {user.hasGoldenTick && <GoldenTick />}
             </h1>
-            <p style={{ margin: '3px 0 0', color: 'var(--mut)', fontSize: '12px' }}>
+            <p style={{ margin: '4px 0 0', color: 'var(--fr8x-text-secondary, #475569)', fontSize: '13px', fontWeight: 400 }}>
               {user.designation} · {user.company}
             </p>
             <div style={{ marginTop: '6px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -136,7 +136,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {quickActions.map((qa) => (
             <Link key={qa.href} href={qa.href} className={`btn ${qa.primary ? 'primary' : 'secondary'}`}>
               {qa.icon} {qa.label}
@@ -154,17 +154,17 @@ export default function DashboardPage() {
         <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div role="region" aria-label="Operational Activity & Financial Performance">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--mut)', textTransform: 'uppercase', letterSpacing: '0.05em' }} title="Operational Activity & Financial Performance">
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--fr8x-text-secondary, #475569)', textTransform: 'uppercase', letterSpacing: '0.04em' }} title="Operational Activity & Financial Performance">
                 Operational Activity &amp; Financial Performance
               </span>
-              <span className="badge green font-mono" style={{ fontSize: '10px' }} title="Trust & Compliance">
+              <span className="badge green font-mono" style={{ fontSize: '10.5px' }} title="Trust & Compliance">
                 Trust &amp; Compliance Active
               </span>
             </div>
             <div className="dashboard-kpi-grid">
               {kpis.map((kpi) => (
                 <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card" aria-label={`${kpi.label}: ${kpi.value}`}>
-                  <div className="dashboard-kpi-icon" style={{ background: kpi.color + '18', color: kpi.color }} aria-hidden="true">
+                  <div className="dashboard-kpi-icon" style={{ background: '#FFFFFF', color: kpi.color, border: '1px solid #E2E8F0' }} aria-hidden="true">
                     {kpi.icon}
                   </div>
                   <div>

@@ -7,18 +7,18 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import {
-  BiSpeedometer2 as LayoutDashboard,
-  BiRss as Rss,
-  BiGlobe2 as Globe2,
-  BiHammer as Gavel,
-  BiBarChartLine as BarChart3,
-  BiPeople as Users,
-  BiBriefcase as Briefcase,
-  BiPerson as User,
-  BiChevronBarLeft as PanelLeftClose,
-  BiChevronBarRight as PanelLeftOpen,
-  BiBoxArrowRight as LogOut,
-} from '@/components/ui/BootstrapIcons';
+  LayoutDashboard,
+  Rss,
+  Globe,
+  Gavel,
+  BarChart3,
+  Users,
+  Briefcase,
+  User,
+  PanelLeftClose,
+  PanelLeftOpen,
+  LogOut,
+} from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -46,7 +46,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
     {
       href: '/nexus',
       label: 'Nexus',
-      icon: Globe2,
+      icon: Globe,
       badge: nexusUnreadCount > 0 ? String(nexusUnreadCount) : undefined,
     },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
@@ -158,6 +158,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
+          const iconSize = collapsed ? 19 : 18;
 
           return (
             <Link
@@ -172,7 +173,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 padding: collapsed ? '0' : '0 11px',
               }}
             >
-              <Icon size={16} />
+              <Icon size={iconSize} strokeWidth={1.8} className="nav-icon" />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
             </Link>
@@ -218,10 +219,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
-                  fontWeight: 800,
+                  background: '#FFFFFF',
+                  color: '#111827',
+                  border: '1px solid #E2E8F0',
+                  fontWeight: 600,
                   fontSize: '11px',
                 }}
               >
@@ -252,7 +253,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
           >
-            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            {collapsed ? <PanelLeftOpen size={16} strokeWidth={1.8} /> : <PanelLeftClose size={16} strokeWidth={1.8} />}
             {!collapsed && <span>Collapse sidebar</span>}
           </button>
         )}
@@ -267,7 +268,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="Sign out"
           style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
         >
-          <LogOut size={16} />
+          <LogOut size={16} strokeWidth={1.8} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>

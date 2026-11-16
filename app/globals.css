@@ -808,7 +808,7 @@ a.gf-nav-link[aria-current="page"] {
   /* Design System: Rectangular #E5F3FC background with #075985 text and #147DAB left border indicator */
   background: var(--fr8x-active-bg, linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%)) !important;
   border: 1px solid #38bdf8;
-  border-left: 3px solid var(--fr8x-primary, #147DAB) !important;
+  border-left: 3px solid var(--fr8x-accent, #0284C7) !important;
   border-radius: 6px;
   color: var(--fr8x-active-text, #0369a1) !important;
   font-weight: 700;
@@ -819,7 +819,8 @@ a.gf-nav-link[aria-current="page"] {
 .nav button[aria-current="page"] svg, .nav a[aria-current="page"] svg,
 .gf-nav-link.active svg,
 .gf-nav-link.active .lucide {
-  color: var(--fr8x-primary, #147DAB) !important;
+  color: var(--fr8x-accent, #0284C7) !important;
+  stroke: var(--fr8x-accent, #0284C7) !important;
 }
 
 .nav em {
@@ -10948,12 +10949,129 @@ input:focus, textarea:focus, select:focus {
    border: 1px solid #38bdf8
    color: #0369a1
 */
-.nav a.on, .nav button.on, .mobile-nav-item.active, [aria-current="page"] {
+.nav a.on,
+.nav button.on,
+.mobile-nav-item.active,
+[aria-current="page"],
+.tab.active,
+.tabs button.active,
+.tabs a.active,
+.feed-tab-btn.active,
+.auctions-tab-btn.active,
+.bidding-tab-btn.active,
+.rates-mobile-tab-btn.active {
   background-color: #FFFFFF !important;
   background: #FFFFFF !important;
   border: 1px solid #38bdf8 !important;
+  border-left: 3px solid #0284C7 !important;
+  border-radius: 6px !important;
   color: #0369a1 !important;
   font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.1) !important;
+}
+
+/* Selected Active Navigation Icons: High-Visibility Sky Blue Accent (#0284C7) */
+.nav a.on svg,
+.nav button.on svg,
+.nav a[aria-current="page"] svg,
+.nav button[aria-current="page"] svg,
+.mobile-nav-item.active svg,
+[aria-current="page"] svg,
+.nav a.on .lucide,
+.nav button.on .lucide,
+.mobile-nav-item.active .lucide,
+[aria-current="page"] .lucide,
+.tab.active svg,
+.tab.active .lucide,
+.feed-tab-btn.active svg,
+.feed-tab-btn.active .lucide,
+.auctions-tab-btn.active svg,
+.auctions-tab-btn.active .lucide {
+  color: #0284C7 !important;
+  stroke: #0284C7 !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Collapsed Sidebar Navigation Precision & Sizing */
+.side.is-collapsed .nav a,
+.side.is-collapsed .nav button {
+  justify-content: center !important;
+  padding: 0 !important;
+  width: 44px !important;
+  height: 38px !important;
+  margin: 0 auto !important;
+  border-radius: 6px !important;
+}
+
+.side.is-collapsed .nav a.on,
+.side.is-collapsed .nav button.on,
+.side.is-collapsed .nav a[aria-current="page"] {
+  border: 1px solid #38bdf8 !important;
+  border-left: 1px solid #38bdf8 !important;
+  background-color: #FFFFFF !important;
+  background: #FFFFFF !important;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.12) !important;
+}
+
+.side.is-collapsed .nav a.on svg,
+.side.is-collapsed .nav a.on .lucide {
+  color: #0284C7 !important;
+  stroke: #0284C7 !important;
+  width: 19px !important;
+  height: 19px !important;
+}
+
+/* Inactive Sidebar & Navigation Icons: Crisp Slate-500 (#64748B) */
+.side .nav a:not(.on):not([aria-current="page"]) svg,
+.side .nav a:not(.on):not([aria-current="page"]) .lucide,
+.side .sidefoot a:not(.on) svg,
+.side .sidefoot button svg,
+.side .sidefoot .lucide,
+.mobile-nav-item:not(.active) svg,
+.mobile-nav-item:not(.active) .lucide {
+  color: #64748B !important;
+  stroke: #64748B !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.side .nav a:not(.on):not([aria-current="page"]):hover svg,
+.side .nav a:not(.on):not([aria-current="page"]):hover .lucide,
+.side .sidefoot a:hover svg,
+.side .sidefoot button:hover svg {
+  color: #111827 !important;
+  stroke: #111827 !important;
+}
+
+/* Inactive tabs across all modules: Pure White Background, Slate 200 Border, High Contrast */
+.tab:not(.active):not(.on),
+.tabs button:not(.active):not(.on),
+.tabs a:not(.active):not(.on),
+.feed-tab-btn:not(.active),
+.auctions-tab-btn:not(.active),
+.bidding-tab-btn:not(.active),
+.rates-mobile-tab-btn:not(.active) {
+  background-color: #FFFFFF !important;
+  background: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #475569 !important;
+  font-weight: 500 !important;
+}
+
+.tab:not(.active):not(.on):hover,
+.tabs button:not(.active):not(.on):hover,
+.tabs a:not(.active):not(.on):hover,
+.feed-tab-btn:not(.active):hover,
+.auctions-tab-btn:not(.active):hover,
+.bidding-tab-btn:not(.active):hover,
+.rates-mobile-tab-btn:not(.active):hover {
+  background-color: #FFFFFF !important;
+  background: #FFFFFF !important;
+  border-color: #CBD5E1 !important;
+  color: #111827 !important;
 }
 
 /* Status Badges & Indicators: Pure White Backgrounds, Semantic Borders & Text ONLY */
@@ -11082,7 +11200,7 @@ label, .label, .field-label, .form-label {
 }
 
 /* Secondary Icons */
-svg.icon-secondary, .text-secondary svg, .side .nav a svg:not(.on svg) {
+svg.icon-secondary, .text-secondary svg {
   color: var(--fr8x-icon-secondary, #64748B);
 }
 
@@ -11093,32 +11211,16 @@ hr, .divider, .separator, .border-t, .border-b, .border-l, .border-r {
 
 /* Universal Container Backgrounds: Strictly Pure White (#FFFFFF) */
 .app, .view, .main, main, .view-container,
-.gf-main, .gf-main-container, .gf-content-viewport,
-.sidebar-wrapper, .side, .top, .brand, .workspace,
-.card, .panel, .login-card, .login-viewport, .reg-container, .reg-viewport,
-.gf-app-layout, .gf-sidebar, .gf-topbar,
+.card, .panel, .dashboard-kpi-card, .dashboard-welcome,
 .modal-content, .drawer, .dropdown-menu, .popover,
-.kpi-tile, .summary-card, .stat-card, .dashboard-kpi-card, .dashboard-welcome,
-.empty-state, .fr8x-empty-state, .notice-box {
+.side, .top, .brand, .workspace, .sidefoot,
+.feed-card, .auction-card, .rate-card, .job-card, .profile-card,
+.activity-item, .deadline-item, .dashboard-auction-row {
   background-color: #FFFFFF !important;
-  background: #FFFFFF !important;
 }
 
-/* Responsive Headings Scaling */
-@media (max-width: 1024px) {
-  h1, .page-title, .gf-page-title {
-    font-size: 22px !important;
-  }
-  h2, .section-title, .gf-section-header {
-    font-size: 15px !important;
-  }
-}
-
-@media (max-width: 768px) {
-  h1, .page-title, .gf-page-title {
-    font-size: 20px !important;
-  }
-  h2, .section-title, .gf-section-header {
-    font-size: 14px !important;
-  }
+/* Universal Page Canvas */
+body, html {
+  background-color: #FFFFFF !important;
+  color: #111827 !important;
 }
