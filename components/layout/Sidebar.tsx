@@ -18,7 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-} from '@/components/ui/BootstrapIcons';
+} from 'lucide-react';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -119,10 +119,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           />
           <span
             style={{
-              fontSize: '10px',
+              fontSize: collapsed ? '9px' : '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#111827',
+              color: '#000000',
               lineHeight: 1,
               textTransform: 'uppercase',
             }}
@@ -158,7 +158,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
-          const iconSize = 16;
+          const iconSize = collapsed ? 19 : 18;
 
           return (
             <Link
@@ -173,7 +173,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 padding: collapsed ? '0' : '0 11px',
               }}
             >
-              <Icon size={iconSize} className="nav-icon" />
+              <Icon size={iconSize} strokeWidth={1.8} className="nav-icon" />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
             </Link>
@@ -221,9 +221,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   justifyContent: 'center',
                   background: '#FFFFFF',
                   color: '#111827',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #E2E8F0',
                   fontWeight: 600,
-                  fontSize: '10px',
+                  fontSize: '11px',
                 }}
               >
                 {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
@@ -253,7 +253,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
           >
-            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+            {collapsed ? <PanelLeftOpen size={16} strokeWidth={1.8} /> : <PanelLeftClose size={16} strokeWidth={1.8} />}
             {!collapsed && <span>Collapse sidebar</span>}
           </button>
         )}
@@ -268,7 +268,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="Sign out"
           style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
         >
-          <LogOut size={16} />
+          <LogOut size={16} strokeWidth={1.8} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>

@@ -24,17 +24,15 @@ import {
   Award,
   Activity,
   Zap,
-} from '@/components/ui/BootstrapIcons';
+} from 'lucide-react';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { useTheme } from '@/lib/theme';
 
 export default function DashboardPage() {
   const { auctions, mySubmittedBids, rates, notifications, jobs, posts, isHydrated } = useData();
   const { user } = useAuth();
-  const { theme, occasionGreeting } = useTheme();
 
   // KPI calculations
   const activeAuctions = auctions.filter((a) => a.status === 'Live').length;
@@ -95,21 +93,21 @@ export default function DashboardPage() {
   const recentActivity = notifications.slice(0, 6);
 
   const kpis = [
-    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={13} />, color: '#3FA66B', href: '/auctions' },
-    { label: 'My Posted', value: myPostedActive, icon: <Activity size={13} />, color: '#111827', href: '/auctions' },
-    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={13} />, color: '#3FA66B', href: '/auctions' },
-    { label: 'Bids Won', value: bidsWon, icon: <Award size={13} />, color: '#3FA66B', href: '/auctions' },
-    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={13} />, color: '#4B5563', href: '/auctions' },
-    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={13} />, color: '#4B5563', href: '/feeds' },
-    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={13} />, color: '#111827', href: '/feeds' },
-    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={13} />, color: '#3FA66B', href: '/jobs' },
+    { label: 'Active Auctions', value: activeAuctions, icon: <Gavel size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/auctions' },
+    { label: 'My Posted', value: myPostedActive, icon: <Activity size={18} strokeWidth={1.8} />, color: '#059669', href: '/auctions' },
+    { label: 'Bids Submitted', value: bidsParticipated, icon: <TrendingUp size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/auctions' },
+    { label: 'Bids Won', value: bidsWon, icon: <Award size={18} strokeWidth={1.8} />, color: '#D97706', href: '/auctions' },
+    { label: 'Drafts', value: myPostedDrafts, icon: <FileText size={18} strokeWidth={1.8} />, color: '#64748B', href: '/auctions' },
+    { label: 'Unread Alerts', value: unreadNotifs, icon: <Bell size={18} strokeWidth={1.8} />, color: '#DC2626', href: '/feeds' },
+    { label: 'Saved Posts', value: savedPosts, icon: <Bookmark size={18} strokeWidth={1.8} />, color: '#059669', href: '/feeds' },
+    { label: 'Active Jobs', value: jobs.filter((j) => j.status === 'active').length, icon: <Briefcase size={18} strokeWidth={1.8} />, color: '#0284C7', href: '/jobs' },
   ];
 
   const quickActions = [
-    { label: 'Create Auction', href: '/auctions/create', icon: <Gavel size={12} />, primary: true },
-    { label: 'Browse Rates', href: '/rates', icon: <BarChart3 size={12} />, primary: false },
-    { label: 'View Nexus', href: '/nexus', icon: <Globe2 size={12} />, primary: false },
-    { label: 'Browse Jobs', href: '/jobs', icon: <Briefcase size={12} />, primary: false },
+    { label: 'Create Auction', href: '/auctions/create', icon: <Gavel size={15} />, primary: true },
+    { label: 'Browse Rates', href: '/rates', icon: <BarChart3 size={15} />, primary: false },
+    { label: 'View Nexus', href: '/nexus', icon: <Globe2 size={15} />, primary: false },
+    { label: 'Browse Jobs', href: '/jobs', icon: <Briefcase size={15} />, primary: false },
   ];
 
   return (
@@ -121,31 +119,26 @@ export default function DashboardPage() {
             {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           <div>
-            <h1 style={{ fontSize: '16px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '6px', color: '#111827' }}>
+            <h1 style={{ fontSize: '24px', fontWeight: 600, letterSpacing: '-0.02em', margin: 0, display: 'flex', alignItems: 'center', gap: '8px', color: '#111827' }}>
               Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}
               {user.firstName}
               {user.hasGoldenTick && <GoldenTick />}
             </h1>
-            <p style={{ margin: '2px 0 0', color: '#4B5563', fontSize: '10px', fontWeight: 400 }}>
+            <p style={{ margin: '4px 0 0', color: 'var(--fr8x-text-secondary, #475569)', fontSize: '13px', fontWeight: 400 }}>
               {user.designation} · {user.company}
             </p>
-            <div style={{ marginTop: '5px', display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '6px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
               <LocalTimeBadge timezone={user.timezone} />
-              <span className={`badge ${user.plan === 'premium' ? 'amber' : 'blue'}`} style={{ fontSize: '10px' }}>
+              <span className={`badge ${user.plan === 'premium' ? 'amber' : 'blue'}`}>
                 {user.plan.toUpperCase()} PLAN
               </span>
-              {occasionGreeting && (
-                <span className="badge amber" style={{ fontSize: '10px', background: theme.colors.activeBackground, color: theme.colors.primary, borderColor: theme.colors.borderPrimary }}>
-                  {occasionGreeting}
-                </span>
-              )}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
           {quickActions.map((qa) => (
-            <Link key={qa.href} href={qa.href} className={`btn ${qa.primary ? 'primary' : 'secondary'}`} style={{ fontSize: '10px', fontWeight: 600, padding: '5px 10px', borderRadius: '4px' }}>
+            <Link key={qa.href} href={qa.href} className={`btn ${qa.primary ? 'primary' : 'secondary'}`}>
               {qa.icon} {qa.label}
             </Link>
           ))}
@@ -154,29 +147,29 @@ export default function DashboardPage() {
 
       {/* KPI Section with Progressive Skeleton Loading (Principle 1 & 7 - Miller's Law) */}
       {!isHydrated ? (
-        <div style={{ marginBottom: '14px' }}>
+        <div style={{ marginBottom: '18px' }}>
           <SkeletonScreen type="kpi" count={8} label="Loading key performance metrics…" />
         </div>
       ) : (
-        <div style={{ marginBottom: '14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div style={{ marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div role="region" aria-label="Operational Activity & Financial Performance">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <span style={{ fontSize: '10px', fontWeight: 600, color: '#111827' }} title="Operational Activity & Financial Performance">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--fr8x-text-secondary, #475569)', textTransform: 'uppercase', letterSpacing: '0.04em' }} title="Operational Activity & Financial Performance">
                 Operational Activity &amp; Financial Performance
               </span>
-              <span className="badge green" style={{ fontSize: '10px' }} title="Trust & Compliance">
+              <span className="badge green font-mono" style={{ fontSize: '10.5px' }} title="Trust & Compliance">
                 Trust &amp; Compliance Active
               </span>
             </div>
             <div className="dashboard-kpi-grid">
               {kpis.map((kpi) => (
-                <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card" aria-label={`${kpi.label}: ${kpi.value}`} style={{ background: '#FFFFFF', border: '1px solid #DDE7E1', borderRadius: '6px', padding: '10px 12px' }}>
-                  <div className="dashboard-kpi-icon" style={{ background: '#FFFFFF', color: kpi.color, border: '1px solid #DDE7E1', width: '28px', height: '28px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+                <Link key={kpi.label} href={kpi.href} className="dashboard-kpi-card" aria-label={`${kpi.label}: ${kpi.value}`}>
+                  <div className="dashboard-kpi-icon" style={{ background: '#FFFFFF', color: kpi.color, border: '1px solid #E2E8F0' }} aria-hidden="true">
                     {kpi.icon}
                   </div>
                   <div>
-                    <div className="dashboard-kpi-value" style={{ fontSize: '14px', fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>{kpi.value}</div>
-                    <div className="dashboard-kpi-label" style={{ fontSize: '10px', fontWeight: 400, color: '#4B5563', marginTop: '2px' }}>{kpi.label}</div>
+                    <div className="dashboard-kpi-value">{kpi.value}</div>
+                    <div className="dashboard-kpi-label">{kpi.label}</div>
                   </div>
                 </Link>
               ))}
@@ -219,9 +212,9 @@ export default function DashboardPage() {
                         <span style={{ color: dl.urgency === 'high' ? 'var(--red)' : 'var(--amber)' }} aria-hidden="true">
                           {dl.icon}
                         </span>
-                        <b style={{ fontSize: '10px', color: 'var(--ink)' }}>{dl.title}</b>
+                        <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{dl.title}</b>
                       </div>
-                      <small style={{ fontSize: '10px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
+                      <small style={{ fontSize: '10.5px', color: 'var(--mut)', display: 'block', marginTop: '2px' }}>
                         {dl.detail}
                       </small>
                     </div>
@@ -239,7 +232,7 @@ export default function DashboardPage() {
                 <Activity size={14} style={{ color: 'var(--brand)' }} aria-hidden="true" />
                 <b>Recent Activity</b>
               </div>
-              <Link href="/feeds" style={{ fontSize: '10px', color: 'var(--brand)' }}>View all</Link>
+              <Link href="/feeds" style={{ fontSize: '11px', color: 'var(--brand)' }}>View all</Link>
             </div>
             {!isHydrated ? (
               <div style={{ padding: '12px' }}>
@@ -259,8 +252,8 @@ export default function DashboardPage() {
                   <div key={n.id} className="activity-item">
                     <div className={`activity-dot ${n.read ? 'grey' : 'blue'}`} aria-hidden="true" />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <b style={{ fontSize: '10px', color: 'var(--ink)' }}>{n.title}</b>
-                      <small style={{ display: 'block', fontSize: '10px', color: 'var(--mut)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>{n.title}</b>
+                      <small style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {n.desc}
                       </small>
                     </div>
@@ -304,8 +297,8 @@ export default function DashboardPage() {
                   <div key={a.id} className="dashboard-auction-row">
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <b style={{ fontSize: '10px', color: 'var(--ink)' }}>{a.title}</b>
-                        <span className={`badge ${a.status === 'Live' ? 'green' : a.status === 'Draft' ? 'grey' : a.status === 'Awarded' ? 'blue' : a.status === 'Expired' ? 'amber' : 'red'}`} style={{ fontSize: '10px' }}>
+                        <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>{a.title}</b>
+                        <span className={`badge ${a.status === 'Live' ? 'green' : a.status === 'Draft' ? 'grey' : a.status === 'Awarded' ? 'blue' : a.status === 'Expired' ? 'amber' : 'red'}`} style={{ fontSize: '9px' }}>
                           {a.status}
                         </span>
                       </div>
@@ -318,7 +311,7 @@ export default function DashboardPage() {
                 ))}
                 {myPostedAuctions.length > 4 && (
                   <div style={{ padding: '8px 14px', textAlign: 'center' }}>
-                    <Link href="/auctions" style={{ fontSize: '10px', color: 'var(--brand)' }}>
+                    <Link href="/auctions" style={{ fontSize: '11px', color: 'var(--brand)' }}>
                       View all {myPostedAuctions.length} auctions →
                     </Link>
                   </div>
@@ -334,7 +327,7 @@ export default function DashboardPage() {
                 <TrendingUp size={14} style={{ color: 'var(--teal)' }} aria-hidden="true" />
                 <b>My Bids</b>
               </div>
-              <span className="badge green" style={{ fontSize: '10px' }}>{bidsWon} Won</span>
+              <span className="badge green" style={{ fontSize: '9px' }}>{bidsWon} Won</span>
             </div>
             {!isHydrated ? (
               <div style={{ padding: '12px' }}>
@@ -355,14 +348,14 @@ export default function DashboardPage() {
                   return (
                     <div key={b.id} className="dashboard-auction-row">
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <b style={{ fontSize: '10px', color: 'var(--ink)' }}>
+                        <b style={{ fontSize: '11.5px', color: 'var(--ink)' }}>
                           {auction?.title || b.auctionId}
                         </b>
                         <small style={{ display: 'block', fontSize: '10px', color: 'var(--mut)', marginTop: '2px' }}>
                           USD ${b.grandTotalUSD.toFixed(0)} · Rank #{b.rank}
                         </small>
                       </div>
-                      <span className={`badge ${b.status === 'winning' ? 'green' : b.status === 'outbid' ? 'amber' : 'grey'}`} style={{ fontSize: '10px' }}>
+                      <span className={`badge ${b.status === 'winning' ? 'green' : b.status === 'outbid' ? 'amber' : 'grey'}`} style={{ fontSize: '9px' }}>
                         {b.status === 'winning' ? 'WON' : b.status.toUpperCase()}
                       </span>
                     </div>
@@ -379,7 +372,7 @@ export default function DashboardPage() {
                 <Briefcase size={14} style={{ color: '#0891b2' }} aria-hidden="true" />
                 <b>Latest Jobs</b>
               </div>
-              <Link href="/jobs" style={{ fontSize: '10px', color: 'var(--brand)' }}>View all</Link>
+              <Link href="/jobs" style={{ fontSize: '11px', color: 'var(--brand)' }}>View all</Link>
             </div>
             {!isHydrated ? (
               <div style={{ padding: '12px' }}>
@@ -398,7 +391,7 @@ export default function DashboardPage() {
                 {jobs.slice(0, 3).map((job) => (
                   <div key={job.id} className="dashboard-auction-row">
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <b style={{ fontSize: '10px', color: 'var(--ink)', display: 'block' }}>{job.title}</b>
+                      <b style={{ fontSize: '11.5px', color: 'var(--ink)', display: 'block' }}>{job.title}</b>
                       <small style={{ fontSize: '10px', color: 'var(--mut)' }}>
                         {job.company} · {job.location}
                       </small>

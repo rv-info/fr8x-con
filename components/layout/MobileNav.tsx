@@ -9,7 +9,7 @@ import {
   Globe,
   Gavel,
   Users,
-} from '@/components/ui/BootstrapIcons';
+} from 'lucide-react';
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -56,7 +56,7 @@ export function MobileNav() {
               className={`mobile-nav-item ${active ? 'active' : ''}`}
             >
               <div className="mobile-nav-icon-wrapper">
-                <Icon size={16} />
+                <Icon size={18} strokeWidth={1.8} />
                 {active && <span className="mobile-nav-active-dot" />}
               </div>
               <span className="mobile-nav-label">{item.label}</span>
