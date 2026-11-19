@@ -116,7 +116,7 @@ export default function DashboardPage() {
       <div className="dashboard-welcome">
         <div className="dashboard-welcome-left">
           <div className="avatar big" style={{ flexShrink: 0 }}>
-            {user.displayName.split(' ').map((p) => p[0]).join('').substring(0, 2).toUpperCase()}
+            {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User').split(' ').map((p: string) => p[0]).join('').substring(0, 2).toUpperCase()}
           </div>
           <div>
             <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>

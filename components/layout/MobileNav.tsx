@@ -13,6 +13,16 @@ import {
 
 export function MobileNav() {
   const pathname = usePathname();
+  const [isMobile, setIsMobile] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 900);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
@@ -21,6 +31,10 @@ export function MobileNav() {
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/network', label: 'Network', icon: Users },
   ];
+
+  if (!isMobile) {
+    return null;
+  }
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';

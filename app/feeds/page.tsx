@@ -1419,7 +1419,13 @@ export default function FeedsPage() {
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '24px', fontWeight: 800 }}>
-                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                  {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
+                    .split(' ')
+                    .map((p: string) => p[0])
+                    .filter(Boolean)
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase() || 'U'}
                 </div>
               )}
             </div>
@@ -1877,7 +1883,13 @@ export default function FeedsPage() {
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '13px', fontWeight: 800 }}>
-                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                  {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
+                    .split(' ')
+                    .map((p: string) => p[0])
+                    .filter(Boolean)
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase() || 'U'}
                 </div>
               )}
             </div>

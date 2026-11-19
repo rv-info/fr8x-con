@@ -893,11 +893,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
-                  {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                  {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
+                    .split(' ')
+                    .map((p: string) => p[0])
+                    .filter(Boolean)
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase() || 'U'}
                 </div>
               )}
-              <span className="user-name-text">{user.displayName}</span>
-              {user.hasGoldenTick && <GoldenTick />}
+              <span className="user-name-text">{user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}</span>
+              {user?.hasGoldenTick && <GoldenTick />}
               <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron" />
             </button>
 
@@ -905,16 +911,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #DDE7E1' }}>
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)', display: 'flex', gap: '10px', alignItems: 'center' }}>
                   {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={user.avatarUrl} alt={user?.displayName || 'User'} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
-                      {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                      {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
+                        .split(' ')
+                        .map((p: string) => p[0])
+                        .filter(Boolean)
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase() || 'U'}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
-                      {user.displayName}
-                      {user.hasGoldenTick && <GoldenTick size={13} />}
+                      {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
+                      {user?.hasGoldenTick && <GoldenTick size={13} />}
                     </b>
                     <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
                       {user.designation}

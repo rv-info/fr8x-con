@@ -225,7 +225,13 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   fontSize: '11px',
                 }}
               >
-                {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
+                {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
+                  .split(' ')
+                  .map((p: string) => p[0])
+                  .filter(Boolean)
+                  .join('')
+                  .substring(0, 2)
+                  .toUpperCase() || 'U'}
               </div>
             )}
           </div>
@@ -233,9 +239,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             <div className="user-meta" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
               <b>
                 <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  {user.displayName}
+                  {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
                 </span>
-                {user.hasGoldenTick && <GoldenTick />}
+                {user?.hasGoldenTick && <GoldenTick />}
               </b>
               <small style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                 {user.designation}
