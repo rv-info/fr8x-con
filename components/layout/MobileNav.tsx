@@ -4,12 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard,
-  Rss,
-  Globe,
-  Gavel,
-  Users,
-} from 'lucide-react';
+  BiHouse as LayoutDashboard,
+  BiRss as Rss,
+  BiGlobe2 as Globe2,
+  BiHammer as Gavel,
+  BiPeople as Users,
+} from '@/components/ui/BootstrapIcons';
 
 export function MobileNav() {
   const pathname = usePathname();
@@ -17,7 +17,7 @@ export function MobileNav() {
   const navItems = [
     { href: '/dashboard', label: 'Home', icon: LayoutDashboard },
     { href: '/feeds', label: 'Feeds', icon: Rss },
-    { href: '/nexus', label: 'Nexus', icon: Globe },
+    { href: '/nexus', label: 'Nexus', icon: Globe2 },
     { href: '/auctions', label: 'Auctions', icon: Gavel },
     { href: '/network', label: 'Network', icon: Users },
   ];
@@ -56,7 +56,7 @@ export function MobileNav() {
               className={`mobile-nav-item ${active ? 'active' : ''}`}
             >
               <div className="mobile-nav-icon-wrapper">
-                <Icon size={18} strokeWidth={1.8} />
+                <Icon size={17} />
                 {active && <span className="mobile-nav-active-dot" />}
               </div>
               <span className="mobile-nav-label">{item.label}</span>
