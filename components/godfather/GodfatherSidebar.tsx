@@ -9,7 +9,7 @@ import {
   CreditCard, Receipt, Percent, Scale, Bell, Mail, FileText,
   Key, Sliders, ChevronDown, ChevronRight, ShieldCheck,
   AlertOctagon, LayoutDashboard, Search, Lock, UserX,
-  KeyRound, Smartphone, ShieldAlert, History, Sparkles, TrendingUp, Send, Palette,
+  KeyRound, Smartphone, ShieldAlert, History, Sparkles, TrendingUp, Send,
 } from 'lucide-react';
 import { useGodfatherAuth, PlatformEnvironment } from '@/lib/godfather/context/GodfatherAuthContext';
 
@@ -79,7 +79,6 @@ const NAV_SECTIONS: NavSection[] = [
       { label: 'Data & Audit Logs', href: '/godfather/platform/audit', icon: FileText },
       { label: 'Access Control & Roles', href: '/godfather/platform/access', icon: Key },
       { label: 'Feature Flags & Config', href: '/godfather/platform/config', icon: Sliders },
-      { label: 'Theme & Occasions Studio', href: '/godfather/platform/theme', icon: Palette },
     ],
   },
 ];

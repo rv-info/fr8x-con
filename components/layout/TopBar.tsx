@@ -14,7 +14,6 @@ import {
 } from '@/lib/utils';
 import Link from 'next/link';
 import { NetworkStatusPill } from './NetworkStatusPill';
-import { ThemeSwitcherModal } from '@/components/ui/ThemeSwitcherModal';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 
@@ -26,7 +25,7 @@ import {
   BiCalculator as Calculator,
   BiXLg as X,
   BiSearch as Search,
-  BiGavel as Gavel,
+  BiHammer as Gavel,
   BiBarChartLine as BarChart3,
   BiPeople as Users,
   BiGlobe2 as Globe2,
@@ -470,9 +469,6 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </button>
 
         <div className="topright">
-          {/* Theme & Festival Occasion Selector */}
-          <ThemeSwitcherModal />
-
           {/* User Availability Status (Live / Away / 2G) */}
           <NetworkStatusPill />
 
