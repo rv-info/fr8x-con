@@ -37,28 +37,36 @@ export const BiSpeedometer2 = createIcon(
   </>
 );
 
-// rss
+// rss (Refined Open Outline Wave - No Box Frame)
 export const BiRss = createIcon(
   'rss',
   <>
-    <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z"/>
-  <path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1"/>
+    <circle cx="3.5" cy="12.5" r="1.2" />
+    <path d="M2.5 7.5a5.5 5.5 0 0 1 5.5 5.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M2.5 3a10 10 0 0 1 10 10" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </>
 );
 
-// globe2
+
+// globe2 (Refined Outline World)
 export const BiGlobe2 = createIcon(
   'globe2',
   <>
-    <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855q-.215.403-.395.872c.705.157 1.472.257 2.282.287zM4.249 3.539q.214-.577.481-1.078a7 7 0 0 1 .597-.933A7 7 0 0 0 3.051 3.05q.544.277 1.198.49zM3.509 7.5c.036-1.07.188-2.087.436-3.008a9 9 0 0 1-1.565-.667A6.96 6.96 0 0 0 1.018 7.5zm1.4-2.741a12.3 12.3 0 0 0-.4 2.741H7.5V5.091c-.91-.03-1.783-.145-2.591-.332M8.5 5.09V7.5h2.99a12.3 12.3 0 0 0-.399-2.741c-.808.187-1.681.301-2.591.332zM4.51 8.5c.035.987.176 1.914.399 2.741A13.6 13.6 0 0 1 7.5 10.91V8.5zm3.99 0v2.409c.91.03 1.783.145 2.591.332.223-.827.364-1.754.4-2.741zm-3.282 3.696q.18.469.395.872c.552 1.035 1.218 1.65 1.887 1.855V11.91c-.81.03-1.577.13-2.282.287zm.11 2.276a7 7 0 0 1-.598-.933 9 9 0 0 1-.481-1.079 8.4 8.4 0 0 0-1.198.49 7 7 0 0 0 2.276 1.522zm-1.383-2.964A13.4 13.4 0 0 1 3.508 8.5h-2.49a6.96 6.96 0 0 0 1.362 3.675c.47-.258.995-.482 1.565-.667m6.728 2.964a7 7 0 0 0 2.275-1.521 8.4 8.4 0 0 0-1.197-.49 9 9 0 0 1-.481 1.078 7 7 0 0 1-.597.933M8.5 11.909v3.014c.67-.204 1.335-.82 1.887-1.855q.216-.403.395-.872A12.6 12.6 0 0 0 8.5 11.91zm3.555-.401c.57.185 1.095.409 1.565.667A6.96 6.96 0 0 0 14.982 8.5h-2.49a13.4 13.4 0 0 1-.437 3.008M14.982 7.5a6.96 6.96 0 0 0-1.362-3.675c-.47.258-.995.482-1.565.667.248.92.4 1.938.437 3.008zM11.27 2.461q.266.502.482 1.078a8.4 8.4 0 0 0 1.196-.49 7 7 0 0 0-2.275-1.52c.218.283.418.597.597.932m-.488 1.343a8 8 0 0 0-.395-.872C9.835 1.897 9.17 1.282 8.5 1.077V4.09c.81-.03 1.577-.13 2.282-.287z"/>
+    <circle cx="8" cy="8" r="6.8" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <line x1="1.2" y1="8" x2="14.8" y2="8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <ellipse cx="8" cy="8" rx="3.5" ry="6.8" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <line x1="8" y1="1.2" x2="8" y2="14.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </>
 );
 
-// globe
+// globe (Refined Clean Outline Sphere)
 export const BiGlobe = createIcon(
   'globe',
   <>
-    <path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m7.5-6.923c-.67.204-1.335.82-1.887 1.855A8 8 0 0 0 5.145 4H7.5zM4.09 4a9.3 9.3 0 0 1 .64-1.539 7 7 0 0 1 .597-.933A7.03 7.03 0 0 0 2.255 4zm-.582 3.5c.03-.877.138-1.718.312-2.5H1.674a7 7 0 0 0-.656 2.5zM4.847 5a12.5 12.5 0 0 0-.338 2.5H7.5V5zM8.5 5v2.5h2.99a12.5 12.5 0 0 0-.337-2.5zM4.51 8.5a12.5 12.5 0 0 0 .337 2.5H7.5V8.5zm3.99 0V11h2.653c.187-.765.306-1.608.338-2.5zM5.145 12q.208.58.468 1.068c.552 1.035 1.218 1.65 1.887 1.855V12zm.182 2.472a7 7 0 0 1-.597-.933A9.3 9.3 0 0 1 4.09 12H2.255a7 7 0 0 0 3.072 2.472M3.82 11a13.7 13.7 0 0 1-.312-2.5h-2.49c.062.89.291 1.733.656 2.5zm6.853 3.472A7 7 0 0 0 13.745 12H11.91a9.3 9.3 0 0 1-.64 1.539 7 7 0 0 1-.597.933M8.5 12v2.923c.67-.204 1.335-.82 1.887-1.855q.26-.487.468-1.068zm3.68-1h2.146c.365-.767.594-1.61.656-2.5h-2.49a13.7 13.7 0 0 1-.312 2.5m2.802-3.5a7 7 0 0 0-.656-2.5H12.18c.174.782.282 1.623.312 2.5zM11.27 2.461c.247.464.462.98.64 1.539h1.835a7 7 0 0 0-3.072-2.472c.218.284.418.598.597.933M10.855 4a8 8 0 0 0-.468-1.068C9.835 1.897 9.17 1.282 8.5 1.077V4z"/>
+    <circle cx="8" cy="8" r="6.8" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <line x1="1.2" y1="8" x2="14.8" y2="8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <ellipse cx="8" cy="8" rx="3.5" ry="6.8" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <line x1="8" y1="1.2" x2="8" y2="14.8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </>
 );
 
@@ -69,6 +77,16 @@ export const BiHammer = createIcon(
     <path d="M9.972 2.508a.5.5 0 0 0-.16-.556l-.178-.129a5 5 0 0 0-2.076-.783C6.215.862 4.504 1.229 2.84 3.133H1.786a.5.5 0 0 0-.354.147L.146 4.567a.5.5 0 0 0 0 .706l2.571 2.579a.5.5 0 0 0 .708 0l1.286-1.29a.5.5 0 0 0 .146-.353V5.57l8.387 8.873A.5.5 0 0 0 14 14.5l1.5-1.5a.5.5 0 0 0 .017-.689l-9.129-8.63c.747-.456 1.772-.839 3.112-.839a.5.5 0 0 0 .472-.334"/>
   </>
 );
+// gavel (Authentic Legal Auction Gavel Outline - Matching Outline Weight)
+export const BiGavel = createIcon(
+  'gavel',
+  <>
+    <path d="M14.5 2.1a1 1 0 0 0-1.4 0L11.7 3.5 13 4.8l1.4-1.4a1 1 0 0 0 0-1.3z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="m11 4.2-2.3-2.3a.7.7 0 0 0-1 0l-.8.8a.7.7 0 0 0 0 1l.6.6-5.8 5.8a1 1 0 0 0 0 1.4l1.4 1.4a1 1 0 0 0 1.4 0l5.8-5.8.6.6a.7.7 0 0 0 1 0l.8-.8a.7.7 0 0 0 0-1L11 5.6z" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M1 14.5h8" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+  </>
+);
+
 
 // bar-chart-line
 export const BiBarChartLine = createIcon(
@@ -78,27 +96,34 @@ export const BiBarChartLine = createIcon(
   </>
 );
 
-// people
+// people (Users - Clean Outline Duo)
 export const BiPeople = createIcon(
   'people',
   <>
-    <path d="M15 14s1 0 1-1-1-4-5-4-5 3-5 4 1 1 1 1zm-7.978-1L7 12.996c.001-.264.167-1.03.76-1.72C8.312 10.629 9.282 10 11 10c1.717 0 2.687.63 3.24 1.276.593.69.758 1.457.76 1.72l-.008.002-.014.002zM11 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4m3-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0M6.936 9.28a6 6 0 0 0-1.23-.247A7 7 0 0 0 5 9c-4 0-5 3-5 4q0 1 1 1h4.216A2.24 2.24 0 0 1 5 13c0-1.01.377-2.042 1.09-2.904.243-.294.526-.569.846-.816M4.92 10A5.5 5.5 0 0 0 4 13H1c0-.26.164-1.03.76-1.724.545-.636 1.492-1.256 3.16-1.275ZM1.5 5.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-2a2 2 0 1 0 0 4 2 2 0 0 0 0-4"/>
+    <path d="M10.5 14v-1.2a2.3 2.3 0 0 0-2.3-2.3H4.8a2.3 2.3 0 0 0-2.3 2.3V14" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="6.5" cy="5" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M13.5 14v-1a2 2 0 0 0-1.6-1.9" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <path d="M10 2.8a2 2 0 0 1 0 4.4" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
   </>
 );
 
-// briefcase
+// briefcase (Refined Outline Briefcase)
 export const BiBriefcase = createIcon(
   'briefcase',
   <>
-    <path d="M6.5 1A1.5 1.5 0 0 0 5 2.5V3H1.5A1.5 1.5 0 0 0 0 4.5v8A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 14.5 3H11v-.5A1.5 1.5 0 0 0 9.5 1zm0 1h3a.5.5 0 0 1 .5.5V3H6v-.5a.5.5 0 0 1 .5-.5m1.886 6.914L15 7.151V12.5a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5V7.15l6.614 1.764a1.5 1.5 0 0 0 .772 0M1.5 4h13a.5.5 0 0 1 .5.5v1.616L8.129 7.948a.5.5 0 0 1-.258 0L1 6.116V4.5a.5.5 0 0 1 .5-.5"/>
+    <rect x="2" y="4" width="12" height="10" rx="1.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M5.5 4V2.5A1.5 1.5 0 0 1 7 1h2a1.5 1.5 0 0 1 1.5 1.5V4" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="2" y1="8" x2="14" y2="8" stroke="currentColor" strokeWidth="1.2" />
+    <path d="M7 8v1.5a1 1 0 0 0 2 0V8" fill="none" stroke="currentColor" strokeWidth="1.2" />
   </>
 );
 
-// person
+// person (Profile - Clean Outline User)
 export const BiPerson = createIcon(
   'person',
   <>
-    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+    <path d="M13.5 14.5v-1.5a3.5 3.5 0 0 0-3.5-3.5h-4A3.5 3.5 0 0 0 2.5 13v1.5" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="8" cy="4.8" r="2.8" fill="none" stroke="currentColor" strokeWidth="1.2" />
   </>
 );
 
@@ -629,12 +654,12 @@ export const BiShip = createIcon(
 );
 
 // Standard Compatibility Aliases
-export const LayoutDashboard = BiSpeedometer2;
+export const LayoutDashboard = BiColumnsGap;
 export const Speedometer2 = BiSpeedometer2;
 export const Rss = BiRss;
 export const Globe2 = BiGlobe2;
 export const Globe = BiGlobe;
-export const Gavel = BiHammer;
+export const Gavel = BiGavel;
 export const Hammer = BiHammer;
 export const BarChart3 = BiBarChartLine;
 export const BarChartLine = BiBarChartLine;

@@ -4,6 +4,7 @@ import React, { useState, ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { AuthProvider } from '@/lib/context/AuthContext';
 import { ToastProvider } from '@/lib/context/ToastContext';
+import { ThemeProvider } from '@/lib/theme';
 import { CurrencyProvider } from '@/lib/context/CurrencyContext';
 import { DataProvider } from '@/lib/context/DataContext';
 import { ChatProvider } from '@/lib/context/ChatContext';
@@ -235,15 +236,17 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <ToastProvider>
       <NetworkProvider>
-        <AuthProvider>
-          <CurrencyProvider>
-            <DataProvider>
-              <ChatProvider>
-                <ShellLayout>{children}</ShellLayout>
-              </ChatProvider>
-            </DataProvider>
-          </CurrencyProvider>
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <CurrencyProvider>
+              <DataProvider>
+                <ChatProvider>
+                  <ShellLayout>{children}</ShellLayout>
+                </ChatProvider>
+              </DataProvider>
+            </CurrencyProvider>
+          </AuthProvider>
+        </ThemeProvider>
       </NetworkProvider>
     </ToastProvider>
   );
