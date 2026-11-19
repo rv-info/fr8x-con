@@ -1,0 +1,303 @@
+[
+  {
+    "route": "dashboard",
+    "metrics": {
+      "url": "http://localhost:3000/dashboard",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(238, 244, 255)",
+        "color": "rgb(37, 99, 235)",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-speedometer2 nav-icon",
+        "iconColor": "rgb(37, 99, 235)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(229, 231, 235)",
+        "borderRadius": "6px"
+      },
+      "table": null,
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": null
+    }
+  },
+  {
+    "route": "feeds",
+    "metrics": {
+      "url": "http://localhost:3000/feeds",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "nexus",
+    "metrics": {
+      "url": "http://localhost:3000/nexus",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(238, 244, 255)",
+        "color": "rgb(37, 99, 235)",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-globe nav-icon",
+        "iconColor": "rgb(37, 99, 235)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(229, 231, 235)",
+        "borderRadius": "6px"
+      },
+      "table": null,
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "auctions",
+    "metrics": {
+      "url": "http://localhost:3000/auctions",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(238, 244, 255)",
+        "color": "rgb(37, 99, 235)",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-hammer nav-icon",
+        "iconColor": "rgb(37, 99, 235)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(229, 231, 235)",
+        "borderRadius": "6px"
+      },
+      "table": {
+        "thFontSize": "11px",
+        "thFontWeight": "600",
+        "tdFontSize": "11px",
+        "tdBorderBottom": "1px solid rgb(234, 236, 240)"
+      },
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "rates",
+    "metrics": {
+      "url": "http://localhost:3000/rates",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(238, 244, 255)",
+        "color": "rgb(37, 99, 235)",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-bar-chart-line nav-icon",
+        "iconColor": "rgb(37, 99, 235)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(229, 231, 235)",
+        "borderRadius": "6px"
+      },
+      "table": {
+        "thFontSize": "11px",
+        "thFontWeight": "600",
+        "tdFontSize": "11px",
+        "tdBorderBottom": "1px solid rgb(234, 236, 240)"
+      },
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "500",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "network",
+    "metrics": {
+      "url": "http://localhost:3000/network",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "jobs",
+    "metrics": {
+      "url": "http://localhost:3000/jobs",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(238, 244, 255)",
+        "color": "rgb(37, 99, 235)",
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-briefcase nav-icon",
+        "iconColor": "rgb(37, 99, 235)"
+      },
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "profile",
+    "metrics": {
+      "url": "http://localhost:3000/profile",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "login",
+    "metrics": {
+      "url": "http://localhost:3000/login",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "register",
+    "metrics": {
+      "url": "http://localhost:3000/register",
+      "fontFamily": "Calibri, Arial, Helvetica, sans-serif",
+      "backgroundColor": "rgb(255, 255, 255)",
+      "textColor": "rgb(37, 43, 54)",
+      "h1": {
+        "fontSize": "16px",
+        "fontWeight": "700",
+        "color": "rgb(37, 43, 54)"
+      },
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "11px",
+        "fontWeight": "600",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "11px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  }
+]
