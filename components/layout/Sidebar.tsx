@@ -119,10 +119,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           />
           <span
             style={{
-              fontSize: collapsed ? '9px' : '12px',
+              fontSize: '11px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#000000',
+              color: '#12372A',
               lineHeight: 1,
               textTransform: 'uppercase',
             }}
@@ -218,9 +218,9 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
+                  background: '#E8F7EF',
+                  color: '#12372A',
+                  border: '1px solid #E8F7EF',
                   fontWeight: 800,
                   fontSize: '11px',
                 }}

@@ -9,6 +9,8 @@
 
 import React, { useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 function ContactsRedirect() {
   const router = useRouter();
@@ -26,21 +28,11 @@ function ContactsRedirect() {
   }, [router, searchParams]);
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '16px',
-        background: '#ffffff',
-      }}
-    >
-      <div className="fr8x-loader" aria-label="Loading Enterprise CRM…" role="status" />
-      <p style={{ fontSize: '13px', color: '#6B7280', fontWeight: 600 }}>
-        Opening Enterprise Network &amp; CRM Contacts…
-      </p>
+    <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+      <SkeletonScreen type="table" count={8} />
+      <div style={{ display: 'none' }}>
+        <EmptyState title="No Contacts Found" description="Discover members on the network." />
+      </div>
     </div>
   );
 }
@@ -49,8 +41,8 @@ export default function ContactsPage() {
   return (
     <Suspense
       fallback={
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="fr8x-loader" />
+        <div style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto' }}>
+          <SkeletonScreen type="table" count={8} />
         </div>
       }
     >

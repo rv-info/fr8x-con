@@ -40,7 +40,7 @@ export function EmptyState({
         textAlign: 'center',
         background: '#ffffff',
         borderRadius: '8px',
-        border: '1px solid #E6E6E6',
+        border: '1px solid #DDE7E1',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,7 +52,7 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            color: '#000000',
+            color: '#12372A',
             opacity: 1,
             marginBottom: '4px',
             display: 'flex',
@@ -65,11 +65,12 @@ export function EmptyState({
         </div>
       )}
       <h3
+        className="text-slate-900"
         style={{
           margin: 0,
-          fontSize: '14px',
+          fontSize: '11px',
           fontWeight: 700,
-          color: '#000000',
+          color: '#12372A',
         }}
       >
         {title}
@@ -78,8 +79,8 @@ export function EmptyState({
         <p
           style={{
             margin: '0 0 10px 0',
-            fontSize: '12px',
-            color: '#000000',
+            fontSize: '11px',
+            color: '#12372A',
             maxWidth: '380px',
             lineHeight: 1.5,
           }}
@@ -110,9 +111,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
+                  background: '#DDE7E1',
+                  color: '#12372A',
+                  border: '1px solid #DDE7E1',
                   borderRadius: '4px',
                 }}
               >
@@ -129,9 +130,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#E6E6E6',
-                  color: '#000000',
-                  border: '1px solid #E6E6E6',
+                  background: '#DDE7E1',
+                  color: '#12372A',
+                  border: '1px solid #DDE7E1',
                   borderRadius: '4px',
                 }}
               >

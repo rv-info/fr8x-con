@@ -169,14 +169,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   }, []);
 
   const categoryMap: Record<string, { icon: React.ReactNode; color: string }> = {
-    network: { icon: <Users size={13} />, color: '#000000' },
-    auctions: { icon: <Gavel size={13} />, color: '#000000' },
-    bids: { icon: <Gavel size={13} />, color: '#000000' },
-    chat: { icon: <MessageSquare size={13} />, color: '#000000' },
-    feeds: { icon: <Globe2 size={13} />, color: '#000000' },
-    jobs: { icon: <Briefcase size={13} />, color: '#000000' },
-    system: { icon: <Bell size={13} />, color: '#000000' },
-    subscription: { icon: <Users size={13} />, color: '#000000' },
+    network: { icon: <Users size={13} />, color: '#12372A' },
+    auctions: { icon: <Gavel size={13} />, color: '#12372A' },
+    bids: { icon: <Gavel size={13} />, color: '#12372A' },
+    chat: { icon: <MessageSquare size={13} />, color: '#12372A' },
+    feeds: { icon: <Globe2 size={13} />, color: '#12372A' },
+    jobs: { icon: <Briefcase size={13} />, color: '#12372A' },
+    system: { icon: <Bell size={13} />, color: '#12372A' },
+    subscription: { icon: <Users size={13} />, color: '#12372A' },
   };
 
   // Group notifications by category (including enterprise network connections)
@@ -227,8 +227,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             background: 'none',
                             border: 'none',
                             cursor: 'pointer',
-                            fontSize: '10.5px',
-                            color: '#000000',
+                            fontSize: '11px',
+                            color: '#12372A',
                             fontWeight: 600,
                           }}
                         >
@@ -283,7 +283,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </div>
                 </div>
               ) : totalResultsCount === 0 ? (
-                <div style={{ padding: '24px 14px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
+                <div style={{ padding: '24px 14px', textAlign: 'center', color: 'var(--mut)', fontSize: '11px' }}>
                   <Search size={22} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.35 }} />
                   No records matching &ldquo;{globalSearchQuery}&rdquo;
                   <br />
@@ -296,12 +296,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Ports & Terminals ({matchedLocations.length})</div>
                       {matchedLocations.map((l) => (
                         <Link key={l.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ fontSize: '13px' }}>{getLocationTypeIcon(l.type)}</span>
+                          <span className="gs-icon" style={{ fontSize: '11px' }}>{getLocationTypeIcon(l.type)}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>
                               {getLocationTypeIcon(l.type)} {l.unLocode} · {l.name}
                             </div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
                               {l.country} ({l.region}) · {l.type} · {Object.entries(l.capabilities).filter(([_, v]) => v).map(([k]) => k.replace('is', '')).join('/')}
                             </small>
                           </div>
@@ -315,12 +315,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Ocean Carriers ({matchedCarriers.length})</div>
                       {matchedCarriers.map((c) => (
                         <Link key={c.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ fontSize: '13px' }}>{getCarrierTypeIcon(c.type)}</span>
+                          <span className="gs-icon" style={{ fontSize: '11px' }}>{getCarrierTypeIcon(c.type)}</span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>
                               {getCarrierTypeIcon(c.type)} {c.name} ({c.scacCode} · {c.type})
                             </div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
                               {c.alliance} · Fleet: {c.fleetTEU || 'N/A'} · {c.country}
                             </small>
                           </div>
@@ -334,10 +334,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Auctions ({matchedAuctions.length})</div>
                       {matchedAuctions.map((a) => (
                         <Link key={a.id} href={`/auctions/${a.id}`} className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#000000' }}><Gavel size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><Gavel size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{a.id} · {a.title}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{a.shipment.pol} → {a.shipment.pod} · Status: {a.status}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{a.id} · {a.title}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{a.shipment.pol} → {a.shipment.pod} · Status: {a.status}</small>
                           </div>
                         </Link>
                       ))}
@@ -349,10 +349,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Rates ({matchedRates.length})</div>
                       {matchedRates.map((r) => (
                         <Link key={r.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#000000' }}><BarChart3 size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><BarChart3 size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{r.carrier} ({r.sp}) · 40HC: ${r.h40} USD</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{r.pol} → {r.pod} · Valid till {r.valid}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{r.carrier} ({r.sp}) · 40HC: ${r.h40} USD</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{r.pol} → {r.pod} · Valid till {r.valid}</small>
                           </div>
                         </Link>
                       ))}
@@ -364,10 +364,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Jobs ({matchedJobs.length})</div>
                       {matchedJobs.map((j) => (
                         <Link key={j.id} href="/jobs" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#000000' }}><Briefcase size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><Briefcase size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{j.title} · {j.company}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{j.location} · {j.packageDetails}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{j.title} · {j.company}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{j.location} · {j.packageDetails}</small>
                           </div>
                         </Link>
                       ))}
@@ -379,10 +379,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Nexus Topics ({matchedTopics.length})</div>
                       {matchedTopics.map((t) => (
                         <Link key={t.id} href="/nexus" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#000000' }}><Globe2 size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><Globe2 size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{t.title}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{t.category} · by {t.author}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{t.title}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{t.category} · by {t.author}</small>
                           </div>
                         </Link>
                       ))}
@@ -402,12 +402,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             setPreviewPassportUid(u.uid);
                           }}
                         >
-                          <span className="gs-icon" style={{ color: '#000000' }}><Users size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><Users size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{resolveDisplayName(u)} · {u.company}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>{u.designation} · {u.city}, {u.country}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{resolveDisplayName(u)} · {u.company}</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{u.designation} · {u.city}, {u.country}</small>
                           </div>
-                          <span className="badge blue" style={{ fontSize: '9.5px' }}>View Passport</span>
+                          <span className="badge blue" style={{ fontSize: '11px' }}>View Passport</span>
                         </div>
                       ))}
                     </div>
@@ -418,10 +418,10 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <div className="gs-section-label">Feed Posts ({matchedPosts.length})</div>
                       {matchedPosts.map((p) => (
                         <Link key={p.id} href="/feeds" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#000000' }}><MessageSquare size={13} /></span>
+                          <span className="gs-icon" style={{ color: '#12372A' }}><MessageSquare size={13} /></span>
                           <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '12px', color: 'var(--ink)' }}>{p.author} ({p.authorCompany})</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '10.5px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.text}</small>
+                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{p.author} ({p.authorCompany})</div>
+                            <small style={{ color: 'var(--mut)', fontSize: '11px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.text}</small>
                           </div>
                         </Link>
                       ))}
@@ -503,14 +503,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                 <div className="conv-body">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="badge green" style={{ fontSize: '9px', fontWeight: 700 }}>
+                    <span className="badge green" style={{ fontSize: '11px', fontWeight: 700 }}>
                       🟢 {isLiveRates ? 'LIVE INTERBANK FEED' : 'FOREX SYNCED'}
                     </span>
-                    <span style={{ fontSize: '10px', color: 'var(--mut)' }}>{lastUpdatedTime}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--mut)' }}>{lastUpdatedTime}</span>
                   </div>
 
                   <div style={{ marginBottom: '10px' }}>
-                    <small style={{ color: 'var(--mut)', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700 }}>
+                    <small style={{ color: 'var(--mut)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700 }}>
                       Workspace Active Currency
                     </small>
                     <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
@@ -537,11 +537,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           onClick={() => setCalcSourceAmount(amt)}
                           style={{
                             padding: '2px 7px',
-                            fontSize: '10px',
+                            fontSize: '11px',
                             fontWeight: calcSourceAmount === amt ? 700 : 500,
                             borderRadius: '4px',
                             border: calcSourceAmount === amt ? '1px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                            background: calcSourceAmount === amt ? '#E6E6E6' : '#ffffff',
+                            background: calcSourceAmount === amt ? '#DDE7E1' : '#ffffff',
                             color: calcSourceAmount === amt ? 'var(--brand)' : 'var(--fr8x-text)',
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
@@ -554,7 +554,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                     <div className="calc-row">
                       <div>
-                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '3px' }}>Amount</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>Amount</label>
                         <input
                           type="number"
                           value={calcSourceAmount}
@@ -564,17 +564,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             boxSizing: 'border-box',
                             padding: '6px 10px',
                             height: '34px',
-                            fontSize: '12.5px',
+                            fontSize: '11px',
                             fontWeight: 600,
                             borderRadius: '6px',
-                            border: '1px solid #E6E6E6',
+                            border: '1px solid #DDE7E1',
                             background: '#ffffff',
-                            color: '#000000',
+                            color: '#12372A',
                           }}
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '3px' }}>From</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>From</label>
                         <SearchableDropdown
                           options={Object.entries(availableCurrencies).map(([c, info]) => ({
                             value: c,
@@ -607,7 +607,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                     <div className="calc-row">
                       <div>
-                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '3px' }}>Converted Amount</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>Converted Amount</label>
                         <div
                           style={{
                             width: '100%',
@@ -617,11 +617,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             display: 'flex',
                             alignItems: 'center',
                             background: '#ffffff',
-                            border: '1px solid #E6E6E6',
+                            border: '1px solid #DDE7E1',
                             borderRadius: '6px',
                             fontWeight: 800,
-                            color: '#000000',
-                            fontSize: '13px',
+                            color: '#12372A',
+                            fontSize: '11px',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -631,7 +631,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         </div>
                       </div>
                       <div>
-                        <label style={{ fontSize: '10.5px', fontWeight: 600, color: '#000000', display: 'block', marginBottom: '3px' }}>To</label>
+                        <label style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', display: 'block', marginBottom: '3px' }}>To</label>
                         <SearchableDropdown
                           options={Object.entries(availableCurrencies).map(([c, info]) => ({
                             value: c,
@@ -647,19 +647,19 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     </div>
 
                     {/* Live Reciprocal & Calculation Options */}
-                    <div style={{ background: '#ffffff', border: '1px solid #E6E6E6', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-text)' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid #DDE7E1', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--fr8x-text)' }}>
                         <span>Direct: <b>1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}</b></span>
                         <span>Inverse: <b>1 {calcTargetCurrency} = {(1 / (directRate || 1)).toFixed(4)} {calcSourceCurrency}</b></span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #E6E6E6' }}>
-                        <span style={{ fontSize: '9.5px', color: 'var(--mut)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #DDE7E1' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
                           Live Forex Rate · Real-time Interbank Feed
                         </span>
                         <button
                           type="button"
                           onClick={() => refreshLiveRates()}
-                          style={{ fontSize: '9.5px', color: 'var(--brand)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                          style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
                         >
                           Sync Now
                         </button>
@@ -703,8 +703,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     height: '16px',
                     padding: '0 4px',
                     borderRadius: '8px',
-                    background: '#000000', color: '#ffffff',
-                    fontSize: '9.5px',
+                    background: '#3FA66B', color: '#ffffff',
+                    fontSize: '11px',
                     fontWeight: 800,
                     display: 'flex',
                     alignItems: 'center',
@@ -723,14 +723,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               <div className="notifications-dropdown">
                 <div className="notif-header">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <b style={{ fontSize: '12px' }}>Notifications</b>
+                    <b style={{ fontSize: '11px' }}>Notifications</b>
                     <span
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        fontSize: '9px',
-                        color: '#000000', background: '#E6E6E6',
+                        fontSize: '11px',
+                        color: '#12372A', background: '#DDE7E1',
                         padding: '1px 6px',
                         borderRadius: '10px',
                         fontWeight: 700,
@@ -742,7 +742,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           width: '5px',
                           height: '5px',
                           borderRadius: '50%',
-                          background: '#000000',
+                          background: '#12372A',
                           display: 'inline-block',
                           animation: 'pulse 1.8s infinite',
                         }}
@@ -766,7 +766,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '3px',
-                        fontSize: '10px',
+                        fontSize: '11px',
                         color: 'var(--brand)',
                         fontWeight: 600,
                         background: 'none',
@@ -780,13 +780,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       {isSyncingNotifs ? 'Syncing…' : 'Sync'}
                     </button>
                     {unreadCount > 0 && (
-                      <span className="badge blue" style={{ fontSize: '9px' }}>{unreadCount} Unread</span>
+                      <span className="badge blue" style={{ fontSize: '11px' }}>{unreadCount} Unread</span>
                     )}
                     {unreadCount > 0 && (
                       <button
                         onClick={() => markAllNotificationsRead()}
                         title="Mark all as read"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: 'var(--brand)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--brand)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <CheckCheck size={12} /> All Read
                       </button>
@@ -795,7 +795,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <button
                         onClick={() => clearAllNotifications()}
                         title="Clear all notifications"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '10px', color: '#000000', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#12372A', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <Trash2 size={12} /> Clear All
                       </button>
@@ -818,7 +818,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
                 <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
                   {notifications.length === 0 ? (
-                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '12px' }}>
+                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '11px' }}>
                       No notifications yet
                     </div>
                   ) : (
@@ -835,14 +835,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           </span>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <b style={{ fontSize: '11.5px', display: 'block', color: 'var(--ink)' }}>{n.title}</b>
-                            <p style={{ fontSize: '10.5px', color: 'var(--mut)', margin: '2px 0 0', lineHeight: '1.4' }}>{n.desc}</p>
+                            <p style={{ fontSize: '11px', color: 'var(--mut)', margin: '2px 0 0', lineHeight: '1.4' }}>{n.desc}</p>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px' }}>
-                              <small style={{ fontSize: '9px', color: 'var(--faint)' }}>{n.time}</small>
+                              <small style={{ fontSize: '11px', color: 'var(--faint)' }}>{n.time}</small>
                               {n.actionLabel && n.targetUrl && (
                                 <Link
                                   href={n.targetUrl.startsWith('/connections') ? n.targetUrl.replace('/connections', '/network') : n.targetUrl.startsWith('/people') ? n.targetUrl.replace('/people', '/network') : n.targetUrl}
                                   className="badge blue"
-                                  style={{ fontSize: '9px' }}
+                                  style={{ fontSize: '11px' }}
                                   onClick={() => setShowNotifications(false)}
                                 >
                                   {n.actionLabel}
@@ -892,7 +892,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', display: 'grid', placeItems: 'center', fontSize: '9.5px', fontWeight: 800 }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
                   {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
                 </div>
               )}
@@ -902,28 +902,28 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #E6E6E6' }}>
+              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #DDE7E1' }}>
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)', display: 'flex', gap: '10px', alignItems: 'center' }}>
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#E6E6E6', color: '#000000', border: '1px solid #E6E6E6', display: 'grid', placeItems: 'center', fontSize: '14px', fontWeight: 800 }}>
+                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
                       {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <b style={{ fontSize: '13px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
+                    <b style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
                       {user.displayName}
                       {user.hasGoldenTick && <GoldenTick size={13} />}
                     </b>
                     <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
                       {user.designation}
                     </small>
-                    <small style={{ fontSize: '10.5px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                    <small style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block' }}>
                       {user.company}
                     </small>
                     <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span className="badge" style={{ fontSize: '9px', fontWeight: 700 }}>
+                      <span className="badge" style={{ fontSize: '11px', fontWeight: 700 }}>
                         {user.plan.toUpperCase()} PLAN
                       </span>
                     </div>
@@ -935,7 +935,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
                   >
                     <UserIcon size={14} />
                     <span>Freight Passport & Profile</span>
@@ -945,7 +945,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
                   >
                     <ShieldCheck size={14} />
                     <span>KYC & Accreditations</span>
@@ -955,7 +955,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/dashboard"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
                   >
                     <Settings size={14} />
                     <span>Workspace Preferences</span>
@@ -970,7 +970,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       logout();
                     }}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#000000' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px', color: '#12372A' }}
                   >
                     <LogOut size={14} />
                     <span>Sign Out</span>
