@@ -119,10 +119,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           />
           <span
             style={{
-              fontSize: collapsed ? '9px' : '12px',
+              fontSize: '9px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#000000',
+              color: '#12372A',
               lineHeight: 1,
               textTransform: 'uppercase',
             }}
@@ -220,10 +220,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   alignItems: 'center',
                   justifyContent: 'center',
                   background: '#FFFFFF',
-                  color: '#111827',
-                  border: '1px solid #E2E8F0',
+                  color: '#12372A',
+                  border: '1px solid #DDE7E1',
                   fontWeight: 600,
-                  fontSize: '11px',
+                  fontSize: '9px',
                 }}
               >
                 {user.displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}

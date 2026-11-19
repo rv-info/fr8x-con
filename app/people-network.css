@@ -34,10 +34,10 @@
  * unmounts (driven by React conditional rendering: {loading && <div class="fr8x-loader" />})
  */
 @keyframes l5 {
-  0%  { box-shadow: 20px 0 #002b66, -20px 0 #002b6622; background: #002b66  }
-  33% { box-shadow: 20px 0 #002b66, -20px 0 #002b6622; background: #002b6622 }
-  66% { box-shadow: 20px 0 #002b6622,-20px 0 #002b66;  background: #002b6622 }
-  100%{ box-shadow: 20px 0 #002b6622,-20px 0 #002b66;  background: #002b66   }
+  0%  { box-shadow: 20px 0 #12372A, -20px 0 #12372A22; background: #12372A  }
+  33% { box-shadow: 20px 0 #12372A, -20px 0 #12372A22; background: #12372A22 }
+  66% { box-shadow: 20px 0 #12372A22,-20px 0 #12372A;  background: #12372A22 }
+  100%{ box-shadow: 20px 0 #12372A22,-20px 0 #12372A;  background: #12372A   }
 }
 
 .fr8x-loader {
@@ -94,7 +94,7 @@
 .people-table-container {
   width: 100%;
   background: var(--color-surface, #ffffff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
@@ -171,7 +171,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #DDE7E1;
   margin-bottom: 20px;
   overflow-x: auto;
   padding-bottom: 2px;
@@ -250,7 +250,7 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 8px;
   padding: 2px;
   background: var(--color-surface, #f8fafc);
@@ -306,7 +306,7 @@
 /* ── Person Card (Grid) ───────────────────────────────────────────────────── */
 .person-card-grid {
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 14px;
   padding: 20px 16px 16px;
   display: flex;
@@ -337,7 +337,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #2563eb;
+  background: #3FA66B;
   color: #fff;
   font-size: 11px;
   display: flex;
@@ -425,7 +425,7 @@
 /* ── Person Card (List) ───────────────────────────────────────────────────── */
 .person-card-list {
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 10px;
   padding: 12px 16px;
   display: flex;
@@ -522,7 +522,7 @@
   font-size: 12px;
 }
 .verified-badge {
-  color: #2563eb;
+  color: #3FA66B;
   font-size: 11px;
   font-weight: 700;
 }
@@ -534,7 +534,7 @@
 
 .skeleton-circle {
   border-radius: 50%;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, #DDE7E1 25%, #f1f5f9 50%, #DDE7E1 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
   flex-shrink: 0;
@@ -542,7 +542,7 @@
 
 .skeleton-bar {
   border-radius: 6px;
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background: linear-gradient(90deg, #DDE7E1 25%, #f1f5f9 50%, #DDE7E1 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -562,7 +562,7 @@
   align-items: center;
   gap: 8px;
   background: var(--color-surface, #fff);
-  border: 1.5px solid var(--color-border, #e2e8f0);
+  border: 1.5px solid var(--color-border, #DDE7E1);
   border-radius: 10px;
   padding: 0 8px 0 12px;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -616,7 +616,7 @@
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--color-text-secondary, #64748b);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 7px;
   background: var(--color-surface, #fff);
   padding: 6px 10px;
@@ -642,7 +642,7 @@
 
 .people-filter-panel {
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 10px;
   padding: 16px;
   margin-top: 8px;
@@ -907,7 +907,7 @@
   top: calc(100% + 4px);
   right: 0;
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   min-width: 175px;
@@ -943,7 +943,7 @@
 
 .connection-btn-menu-divider {
   height: 1px;
-  background: var(--color-border, #e2e8f0);
+  background: var(--color-border, #DDE7E1);
   margin: 2px 0;
 }
 
@@ -981,7 +981,7 @@
 
 .profile-hero {
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 14px;
   padding: 28px 24px 22px;
   display: flex;
@@ -1002,7 +1002,7 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: #2563eb;
+  background: #3FA66B;
   color: #fff;
   font-size: 12px;
   display: flex;
@@ -1075,7 +1075,7 @@
 
 .profile-section {
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 12px;
   padding: 18px 20px;
 }
@@ -1219,7 +1219,7 @@
 .connections-tabs {
   display: flex;
   gap: 2px;
-  border-bottom: 1.5px solid var(--color-border, #e2e8f0);
+  border-bottom: 1.5px solid var(--color-border, #DDE7E1);
   margin-bottom: 16px;
   overflow-x: auto;
 }
@@ -1315,7 +1315,7 @@
   align-items: center;
   gap: 12px;
   background: var(--color-surface, #fff);
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #DDE7E1);
   border-radius: 10px;
   padding: 14px 16px;
   transition: box-shadow 0.15s;
@@ -1395,7 +1395,7 @@
   padding: 6px 12px;
   border-radius: 7px;
   cursor: pointer;
-  border: 1.5px solid var(--color-border, #e2e8f0);
+  border: 1.5px solid var(--color-border, #DDE7E1);
   background: var(--color-surface, #fff);
   color: var(--color-text-secondary, #64748b);
   transition: all 0.15s;
