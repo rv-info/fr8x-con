@@ -1130,7 +1130,7 @@ export default function CreateReverseAuctionPage() {
                   <div key={row.id} className="auctions-create-card">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', paddingBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <span style={{ fontSize: '11px', fontWeight: 800, background: '#0f172a', color: '#ffffff', borderRadius: '4px', padding: '2px 6px' }}>
+                        <span style={{ fontSize: '11px', fontWeight: 800, background: '#E8F7EF', color: '#12372A', border: '1px solid #3FA66B', borderRadius: '4px', padding: '2px 6px' }}>
                           #{idx + 1}
                         </span>
                         <b style={{ fontSize: '12px', color: 'var(--ink)' }}>{row.equipmentType.split(' (')[0]}</b>
