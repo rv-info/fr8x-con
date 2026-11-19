@@ -158,13 +158,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 1. Initial Session Check with Fast Local Cache & Timeout
     supabase.auth.getSession().then(async ({ data: { session } }: any) => {
       if (!isSubscribed) return;
-      if (session?.user && !checkIsSessionExpired()) {
+      const hasActiveSession = Boolean(typeof window !== 'undefined' && localStorage.getItem(ACTIVE_SESSION_KEY));
+      if ((session?.user || hasActiveSession) && !checkIsSessionExpired()) {
         // Fast restore from localStorage cache so UI renders immediately without waiting for slow network
         try {
           const cachedRaw = localStorage.getItem('fr8x_cached_user_profile');
           if (cachedRaw) {
             const cachedProfile = JSON.parse(cachedRaw);
-            if (cachedProfile && (cachedProfile.uid === session.user.id || cachedProfile.id === session.user.id)) {
+            if (cachedProfile && (cachedProfile.uid || cachedProfile.id)) {
               setCurrentUser(cachedProfile);
               currentUserRef.current = cachedProfile;
               setUserStatusState('available');
@@ -176,27 +177,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
         }
 
-        try {
-          const fetchPromise = profileService.getProfile(session.user.id);
-          const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 4000));
-          const profile = await Promise.race([fetchPromise, timeoutPromise]);
-          if (isSubscribed && profile) {
-            setCurrentUser(profile);
-            currentUserRef.current = profile;
-            setUserStatusState('available');
-            try {
-              localStorage.setItem('fr8x_cached_user_profile', JSON.stringify(profile));
-              localStorage.setItem(ACTIVE_SESSION_KEY, profile.uid);
-              localStorage.setItem(STATUS_KEY, 'available');
-              const now = Date.now().toString();
-              localStorage.setItem(LAST_ACTIVITY_KEY, now);
-              if (!localStorage.getItem(SESSION_START_KEY)) {
-                localStorage.setItem(SESSION_START_KEY, now);
-              }
-            } catch {}
+        if (session?.user) {
+          try {
+            const fetchPromise = profileService.getProfile(session.user.id);
+            const timeoutPromise = new Promise<null>((res) => setTimeout(() => res(null), 4000));
+            const profile = await Promise.race([fetchPromise, timeoutPromise]);
+            if (isSubscribed && profile) {
+              setCurrentUser(profile);
+              currentUserRef.current = profile;
+              setUserStatusState('available');
+              try {
+                localStorage.setItem('fr8x_cached_user_profile', JSON.stringify(profile));
+                localStorage.setItem(ACTIVE_SESSION_KEY, profile.uid);
+                localStorage.setItem(STATUS_KEY, 'available');
+                const now = Date.now().toString();
+                localStorage.setItem(LAST_ACTIVITY_KEY, now);
+                if (!localStorage.getItem(SESSION_START_KEY)) {
+                  localStorage.setItem(SESSION_START_KEY, now);
+                }
+              } catch {}
+            }
+          } catch (fetchErr) {
+            console.warn('[AuthContext] Error loading initial profile:', fetchErr);
           }
-        } catch (fetchErr) {
-          console.warn('[AuthContext] Error loading initial profile:', fetchErr);
         }
       } else if (session && checkIsSessionExpired()) {
         supabase.auth.signOut().catch(() => {});

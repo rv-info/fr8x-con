@@ -288,8 +288,8 @@ export default function SearchableDropdown({
           opacity: disabled ? 0.6 : 1,
           boxSizing: 'border-box',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
-          fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
-          fontSize: '11pt',
+          fontFamily: 'Calibri, sans-serif',
+          fontSize: '11px',
           ...triggerStyle,
         }}
       >
@@ -298,11 +298,11 @@ export default function SearchableDropdown({
             renderTriggerValue(selectedOption, value)
           ) : (
             <>
-              {selectedOption?.flag && <span style={{ fontSize: '13pt', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
+              {selectedOption?.flag && <span style={{ fontSize: '11px', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
               <span
                 style={{
-                  fontSize: '11pt',
-                  fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                  fontSize: '11px',
+                  fontFamily: 'Calibri, sans-serif',
                   color: selectedOption ? 'var(--fr8x-text, #1e293b)' : 'var(--fr8x-muted, #64748b)',
                   fontWeight: selectedOption ? 500 : 400,
                   whiteSpace: 'nowrap',
@@ -313,7 +313,7 @@ export default function SearchableDropdown({
                 {selectedOption ? selectedOption.label : value || placeholder}
               </span>
               {showSubLabelInTrigger && selectedOption?.subLabel && (
-                <span style={{ fontSize: '9.5pt', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   ({selectedOption.subLabel})
                 </span>
               )}
@@ -420,7 +420,7 @@ export default function SearchableDropdown({
                   height: '34px',
                   paddingLeft: '32px',
                   paddingRight: '10px',
-                  fontSize: '11pt',
+                  fontSize: '11px',
                   fontWeight: 600,
                   color: '#0f172a',
                   background: '#ffffff',
@@ -428,7 +428,7 @@ export default function SearchableDropdown({
                   borderRadius: '4px',
                   outline: 'none',
                   boxSizing: 'border-box',
-                  fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                  fontFamily: 'Calibri, sans-serif',
                 }}
                 onFocus={(e) => (e.target.style.borderColor = '#0284c7')}
                 onBlur={(e) => (e.target.style.borderColor = '#94a3b8')}
@@ -466,8 +466,8 @@ export default function SearchableDropdown({
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '8px 12px',
-                        fontSize: '11pt',
-                        fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
+                        fontSize: '11px',
+                        fontFamily: 'Calibri, sans-serif',
                         color: isSelected ? '#0284c7' : '#1e293b',
                         fontWeight: isSelected ? 700 : 400,
                         cursor: 'pointer',
@@ -481,10 +481,10 @@ export default function SearchableDropdown({
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {opt.flag && <span style={{ fontSize: '13pt', lineHeight: 1 }}>{opt.flag}</span>}
-                        <span style={{ fontSize: '11pt' }}>{opt.label}</span>
+                        {opt.flag && <span style={{ fontSize: '11px', lineHeight: 1 }}>{opt.flag}</span>}
+                        <span style={{ fontSize: '11px' }}>{opt.label}</span>
                         {opt.subLabel && (
-                          <span style={{ fontSize: '9.5pt', color: '#64748b' }}>
+                          <span style={{ fontSize: '11px', color: '#64748b' }}>
                             {opt.subLabel}
                           </span>
                         )}
@@ -499,7 +499,7 @@ export default function SearchableDropdown({
                   <div
                     style={{
                       padding: '6px 12px',
-                      fontSize: '9.5pt',
+                      fontSize: '11px',
                       color: '#64748b',
                       background: '#f8fafc',
                       borderTop: '1px solid #e2e8f0',
@@ -516,7 +516,7 @@ export default function SearchableDropdown({
                 style={{
                   padding: '16px 12px',
                   textAlign: 'center',
-                  fontSize: '13px',
+                  fontSize: '11px',
                   color: '#64748b',
                 }}
               >
@@ -532,7 +532,7 @@ export default function SearchableDropdown({
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '4px',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
