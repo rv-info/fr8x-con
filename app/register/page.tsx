@@ -1167,13 +1167,13 @@ export default function RegisterPage() {
             {/* One User, One Login Policy Banner */}
             <div
               style={{
-                padding: '10px 14px',
-                borderRadius: '6px',
-                background: '#FFFFFF',
-                border: '1px solid #A7F3D0',
-                color: '#059669',
-                fontSize: '12.5px',
-                fontFamily: 'var(--font)',
+                padding: '8px 12px',
+                borderRadius: '4px',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                color: '#166534',
+                fontSize: '11pt',
+                fontFamily: "Calibri, 'Segoe UI', Arial, sans-serif",
                 marginBottom: '14px',
                 display: 'flex',
                 alignItems: 'center',
@@ -1181,7 +1181,7 @@ export default function RegisterPage() {
                 lineHeight: 1.4,
               }}
             >
-              <ShieldCheck size={16} style={{ flexShrink: 0, color: '#059669' }} />
+              <ShieldCheck size={16} style={{ flexShrink: 0, color: '#16a34a' }} />
               <span>
                 <strong>One User, One Login Policy:</strong> Each logistics professional is permitted strictly one active account. Multi-accounting across different organizations or within the same organization is strictly prohibited.
               </span>
