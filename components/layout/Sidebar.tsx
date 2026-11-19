@@ -18,7 +18,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   LogOut,
-} from 'lucide-react';
+} from '@/components/ui/BootstrapIcons';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -158,7 +158,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
-          const iconSize = collapsed ? 19 : 18;
+          const iconSize = 16;
 
           return (
             <Link
@@ -173,7 +173,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 padding: collapsed ? '0' : '0 11px',
               }}
             >
-              <Icon size={iconSize} strokeWidth={1.8} className="nav-icon" />
+              <Icon size={iconSize} className="nav-icon" />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
             </Link>
@@ -253,7 +253,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
           >
-            {collapsed ? <PanelLeftOpen size={16} strokeWidth={1.8} /> : <PanelLeftClose size={16} strokeWidth={1.8} />}
+            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
             {!collapsed && <span>Collapse sidebar</span>}
           </button>
         )}
@@ -268,7 +268,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="Sign out"
           style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
         >
-          <LogOut size={16} strokeWidth={1.8} />
+          <LogOut size={16} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>

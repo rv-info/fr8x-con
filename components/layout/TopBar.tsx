@@ -37,14 +37,12 @@ import {
   BiBoxArrowRight as LogOut,
   BiTrash as Trash2,
   BiArrowRepeat as RefreshCw,
-} from '@/components/ui/BootstrapIcons';
-import {
   Check,
   MessageSquare,
   Anchor,
   Ship,
   Clock,
-} from 'lucide-react';
+} from '@/components/ui/BootstrapIcons';
 
 interface TopBarProps {
   activePageTitle: string;
