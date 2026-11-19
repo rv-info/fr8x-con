@@ -1,0 +1,287 @@
+[
+  {
+    "route": "dashboard",
+    "metrics": {
+      "url": "http://localhost:3000/dashboard",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": {
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "color": "rgb(18, 55, 42)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(232, 247, 239)",
+        "color": "rgb(18, 55, 42)",
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-speedometer2 nav-icon",
+        "iconColor": "rgb(63, 166, 107)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(221, 231, 225)",
+        "borderRadius": "6px"
+      },
+      "table": null,
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgb(63, 166, 107)",
+        "color": "rgb(255, 255, 255)",
+        "borderRadius": "4px"
+      },
+      "input": null
+    }
+  },
+  {
+    "route": "feeds",
+    "metrics": {
+      "url": "http://localhost:3000/feeds",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": null,
+      "activeNav": {
+        "backgroundColor": "rgb(232, 247, 239)",
+        "color": "rgb(18, 55, 42)",
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-rss nav-icon",
+        "iconColor": "rgb(63, 166, 107)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(221, 231, 225)",
+        "borderRadius": "6px"
+      },
+      "table": null,
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgb(63, 166, 107)",
+        "color": "rgb(255, 255, 255)",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "9px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "nexus",
+    "metrics": {
+      "url": "http://localhost:3000/nexus",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "auctions",
+    "metrics": {
+      "url": "http://localhost:3000/auctions",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "rates",
+    "metrics": {
+      "url": "http://localhost:3000/rates",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": {
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "color": "rgb(18, 55, 42)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(232, 247, 239)",
+        "color": "rgb(18, 55, 42)",
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-bar-chart-line nav-icon",
+        "iconColor": "rgb(63, 166, 107)"
+      },
+      "card": {
+        "backgroundColor": "rgb(255, 255, 255)",
+        "border": "1px solid rgb(221, 231, 225)",
+        "borderRadius": "6px"
+      },
+      "table": {
+        "thFontSize": "9px",
+        "thFontWeight": "600",
+        "tdFontSize": "9px",
+        "tdBorderBottom": "1px solid rgb(227, 236, 231)"
+      },
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgb(63, 166, 107)",
+        "color": "rgb(255, 255, 255)",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "9px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "network",
+    "metrics": {
+      "url": "http://localhost:3000/network",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": {
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "color": "rgb(18, 55, 42)"
+      },
+      "activeNav": {
+        "backgroundColor": "rgb(232, 247, 239)",
+        "color": "rgb(18, 55, 42)",
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "borderRadius": "4px",
+        "iconTag": "svg",
+        "iconClass": "bi bi-people nav-icon",
+        "iconColor": "rgb(63, 166, 107)"
+      },
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgba(0, 0, 0, 0)",
+        "color": "rgb(18, 55, 42)",
+        "borderRadius": "4px"
+      },
+      "input": null
+    }
+  },
+  {
+    "route": "jobs",
+    "metrics": {
+      "url": "http://localhost:3000/jobs",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "profile",
+    "metrics": {
+      "url": "http://localhost:3000/profile",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": null,
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": null,
+      "input": null
+    }
+  },
+  {
+    "route": "login",
+    "metrics": {
+      "url": "http://localhost:3000/login",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": {
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "color": "rgb(18, 55, 42)"
+      },
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "color": "rgb(17, 24, 39)",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "9px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  },
+  {
+    "route": "register",
+    "metrics": {
+      "url": "http://localhost:3000/register",
+      "fontFamily": "Calibri, sans-serif",
+      "fontSize": "9px",
+      "backgroundColor": "rgb(250, 251, 247)",
+      "textColor": "rgb(18, 55, 42)",
+      "h1": {
+        "fontSize": "9px",
+        "fontWeight": "700",
+        "color": "rgb(18, 55, 42)"
+      },
+      "activeNav": null,
+      "card": null,
+      "table": null,
+      "button": {
+        "fontSize": "9px",
+        "fontWeight": "600",
+        "backgroundColor": "rgb(255, 255, 255)",
+        "color": "rgb(17, 24, 39)",
+        "borderRadius": "4px"
+      },
+      "input": {
+        "fontSize": "9px",
+        "borderRadius": "4px",
+        "border": "1px solid rgb(223, 231, 240)"
+      }
+    }
+  }
+]
