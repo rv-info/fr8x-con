@@ -59,6 +59,7 @@ import { GoldenTick } from '@/components/ui/GoldenTick';
 import { SearchFilters, PeopleSearchFilters } from '@/components/people/SearchFilters';
 import { PersonCard, PersonCardData } from '@/components/people/PersonCard';
 import { ConnectionButton, ConnectionStatus } from '@/components/people/ConnectionButton';
+import { SearchConnectionsModal } from '@/components/connections/SearchConnectionsModal';
 import { RecommendedSection } from '@/components/people/RecommendedSection';
 import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -252,7 +253,9 @@ function NetworkPageContent() {
   const [sendConnectNote, setSendConnectNote] = useState('');
   const [sendingConnect, setSendingConnect] = useState(false);
 
+  const [showSearchConnectionsModal, setShowSearchConnectionsModal] = useState(false);
   const [showAddContactModal, setShowAddContactModal] = useState(false);
+  const [hideConnectedInDiscover, setHideConnectedInDiscover] = useState(false);
   const [showEditContactModal, setShowEditContactModal] = useState(false);
   const [showDeleteContactModal, setShowDeleteContactModal] = useState(false);
   const [selectedContact, setSelectedContact] = useState<ContactRecord | null>(null);
@@ -531,6 +534,46 @@ function NetworkPageContent() {
       return true;
     });
   }, [crmContacts, categoryFilter, stageFilter, presenceFilter, crmSearch]);
+
+  
+  // ── Authoritative Connection Relationship Indexing ───────────────────────────
+  const connectedUserIdsSet = useMemo(() => {
+    const set = new Set<string>();
+    connections.forEach((c) => {
+      if (c.profiles?.id) set.add(c.profiles.id.toLowerCase());
+      if (c.connected_to) set.add(c.connected_to.toLowerCase());
+    });
+    return set;
+  }, [connections]);
+
+  const outgoingRequestMap = useMemo(() => {
+    const map = new Map<string, string>(); // targetId -> requestId
+    outgoingRequests.forEach((r) => {
+      if (r.profiles?.id) map.set(r.profiles.id.toLowerCase(), r.id);
+      if (r.recipient_id) map.set(r.recipient_id.toLowerCase(), r.id);
+    });
+    return map;
+  }, [outgoingRequests]);
+
+  const incomingRequestMap = useMemo(() => {
+    const map = new Map<string, string>(); // senderId -> requestId
+    incomingRequests.forEach((r) => {
+      if (r.profiles?.id) map.set(r.profiles.id.toLowerCase(), r.id);
+      if (r.requester_id) map.set(r.requester_id.toLowerCase(), r.id);
+    });
+    return map;
+  }, [incomingRequests]);
+
+  const getMemberRelationship = useCallback((targetId: string): { status: ConnectionStatus; requestId?: string } => {
+    if (!targetId || !user?.uid) return { status: 'none' };
+    const tId = targetId.toLowerCase();
+    const uId = user.uid.toLowerCase();
+    if (tId === uId) return { status: 'self' };
+    if (connectedUserIdsSet.has(tId)) return { status: 'connected' };
+    if (outgoingRequestMap.has(tId)) return { status: 'pending_sent', requestId: outgoingRequestMap.get(tId) };
+    if (incomingRequestMap.has(tId)) return { status: 'pending_received', requestId: incomingRequestMap.get(tId) };
+    return { status: 'none' };
+  }, [user?.uid, connectedUserIdsSet, outgoingRequestMap, incomingRequestMap]);
 
   // ── Filtered Connections ────────────────────────────────────────────────────
   const filteredConnections = useMemo(() => {
@@ -1057,6 +1100,15 @@ function NetworkPageContent() {
                 />
                 <span>Golden Tick Only</span>
               </label>
+
+              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#1B2B4B', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={hideConnectedInDiscover}
+                  onChange={(e) => setHideConnectedInDiscover(e.target.checked)}
+                />
+                <span>Hide Connected</span>
+              </label>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1132,7 +1184,7 @@ function NetworkPageContent() {
                   </tr>
                 </thead>
                 <tbody>
-                  {discoverResults.map((person) => {
+                  {discoverResults.filter((p) => !hideConnectedInDiscover || !connectedUserIdsSet.has(p.id.toLowerCase())).map((person) => {
                     const name = resolveMemberName(person);
                     const subline = resolveMemberSubline(person);
                     return (
@@ -1192,22 +1244,80 @@ function NetworkPageContent() {
 
                         <td style={{ padding: '10px 14px', textAlign: 'right' }}>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                            <button
-                              onClick={() => {
-                                setSendConnectTarget(person);
-                                setSendConnectNote('');
-                              }}
-                              style={{
-                                padding: '5px 12px',
-                                borderRadius: '4px',
-                                background: '#F8FAFD', color: '#1B2B4B', border: '1px solid #E2E8F0',
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                              }}
-                            >
-                              Connect
-                            </button>
+                            {(() => {
+                              const rel = getMemberRelationship(person.id);
+                              if (rel.status === 'connected') {
+                                return (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '4px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '11px', fontWeight: 700 }}>
+                                    <CheckCircle2 size={12} /> Connected
+                                  </span>
+                                );
+                              }
+                              if (rel.status === 'pending_sent') {
+                                return (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 8px', borderRadius: '4px', background: '#F8FAFD', color: '#4A5568', border: '1px solid #CBD5E0', fontSize: '11px', fontWeight: 600 }}>
+                                      <Clock size={12} /> Request Sent
+                                    </span>
+                                    {rel.requestId && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleConnectionAction('withdraw', rel.requestId)}
+                                        style={{ background: 'none', border: 'none', color: '#B91C1C', cursor: 'pointer', fontSize: '11px', fontWeight: 600, textDecoration: 'underline' }}
+                                        title="Cancel connection invitation"
+                                      >
+                                        Withdraw
+                                      </button>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              if (rel.status === 'pending_received') {
+                                return (
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleConnectionAction('accept', rel.requestId)}
+                                      style={{ padding: '5px 10px', borderRadius: '4px', background: '#1B2B4B', color: '#FFFFFF', border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                    >
+                                      <Check size={12} /> Accept
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleConnectionAction('decline', rel.requestId)}
+                                      style={{ padding: '5px 8px', borderRadius: '4px', background: '#FFFFFF', color: '#4A5568', border: '1px solid #CBD5E0', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                      Decline
+                                    </button>
+                                  </div>
+                                );
+                              }
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSendConnectTarget(person);
+                                    setSendConnectNote('');
+                                  }}
+                                  style={{
+                                    padding: '5px 12px',
+                                    borderRadius: '4px',
+                                    background: '#1B2B4B',
+                                    color: '#FFFFFF',
+                                    border: 'none',
+                                    fontSize: '11.5px',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                  }}
+                                >
+                                  <UserPlus size={12} /> Connect
+                                </button>
+                              );
+                            })()}
+
                             <Link
                               href={`/network/${person.id}`}
                               style={{
@@ -1240,7 +1350,7 @@ function NetworkPageContent() {
                 gap: '14px',
               }}
             >
-              {discoverResults.map((person) => (
+              {discoverResults.filter((p) => !hideConnectedInDiscover || !connectedUserIdsSet.has(p.id.toLowerCase())).map((person) => (
                 <div
                   key={person.id}
                   style={{
@@ -1273,24 +1383,81 @@ function NetworkPageContent() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #EDF2F7' }}>
-                    <button
-                      onClick={() => {
-                        setSendConnectTarget(person);
-                        setSendConnectNote('');
-                      }}
-                      style={{
-                        flex: 1,
-                        padding: '6px',
-                        borderRadius: '4px',
-                        background: '#F8FAFD', color: '#1B2B4B', border: '1px solid #E2E8F0',
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      Connect
-                    </button>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #EDF2F7', alignItems: 'center' }}>
+                    {(() => {
+                      const rel = getMemberRelationship(person.id);
+                      if (rel.status === 'connected') {
+                        return (
+                          <span style={{ flex: 1, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '4px', padding: '6px', borderRadius: '4px', background: '#ECFDF5', color: '#065F46', border: '1px solid #A7F3D0', fontSize: '11px', fontWeight: 700 }}>
+                            <CheckCircle2 size={12} /> Connected
+                          </span>
+                        );
+                      }
+                      if (rel.status === 'pending_sent') {
+                        return (
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '4px' }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 6px', borderRadius: '4px', background: '#F8FAFD', color: '#4A5568', border: '1px solid #CBD5E0', fontSize: '10.5px', fontWeight: 600 }}>
+                              <Clock size={11} /> Request Sent
+                            </span>
+                            {rel.requestId && (
+                              <button
+                                type="button"
+                                onClick={() => handleConnectionAction('withdraw', rel.requestId)}
+                                style={{ background: 'none', border: 'none', color: '#B91C1C', cursor: 'pointer', fontSize: '10.5px', fontWeight: 600, textDecoration: 'underline' }}
+                              >
+                                Withdraw
+                              </button>
+                            )}
+                          </div>
+                        );
+                      }
+                      if (rel.status === 'pending_received') {
+                        return (
+                          <div style={{ flex: 1, display: 'flex', gap: '4px' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleConnectionAction('accept', rel.requestId)}
+                              style={{ flex: 1, padding: '5px', borderRadius: '4px', background: '#1B2B4B', color: '#FFFFFF', border: 'none', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleConnectionAction('decline', rel.requestId)}
+                              style={{ padding: '5px 8px', borderRadius: '4px', background: '#FFFFFF', color: '#4A5568', border: '1px solid #CBD5E0', fontSize: '11px', cursor: 'pointer' }}
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        );
+                      }
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSendConnectTarget(person);
+                            setSendConnectNote('');
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '6px',
+                            borderRadius: '4px',
+                            background: '#1B2B4B',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '4px',
+                          }}
+                        >
+                          <UserPlus size={12} /> Connect
+                        </button>
+                      );
+                    })()}
                     <Link
                       href={`/network/${person.id}`}
                       style={{

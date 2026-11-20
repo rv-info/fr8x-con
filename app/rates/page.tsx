@@ -11,6 +11,7 @@ import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
+import { RatesEditorModal } from '@/components/rates/RatesEditorModal';
 import { RateItem } from '@/lib/types';
 
 import {
@@ -106,6 +107,7 @@ export default function RatesPage() {
   const [searchMode, setSearchMode] = useState<'corridor' | 'global'>('corridor');
   const [mobileEditorOpen, setMobileEditorOpen] = useState(false);
   const [editorVisible, setEditorVisible] = useState(true);
+  const [showRatesEditorModal, setShowRatesEditorModal] = useState(false);
 
   // Dynamic Rates Pagination State (Adaptive for low bandwidth / 2G)
   const [ratesPage, setRatesPage] = useState(1);
@@ -1275,227 +1277,8 @@ Remarks & Terms  : ${r.remark || ''}
         </div>
       </div>
 
-      {/* Rate Content Layout: Full width for All/Expiring tabs, Split Editor for My i-Rates */}
-      <div className={activeTab === 'i' && editorVisible ? 'rateeditor' : 'rateeditor-full'}>
-        {/* Left Form: RATES EDITOR available in My i-Rates tab */}
-        {activeTab === 'i' && editorVisible && (
-          <div className={`card ${!mobileEditorOpen ? 'hidden-on-mobile' : ''}`} style={{ alignSelf: 'flex-start', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
-            <div className="cardhead" style={{ background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <b style={{ color: 'var(--fr8x-text)', fontSize: '13px', letterSpacing: '0.5px' }}>RATES EDITOR</b>
-                <span className="badge" style={{ background: '#e2e8f0', color: 'var(--fr8x-text)', fontSize: '10px', fontWeight: 800, borderRadius: '4px' }}>
-                  My i-Rate
-                </span>
-              </div>
-              <button
-                type="button"
-                className="btn secondary sm"
-                style={{ fontSize: '10px', padding: '2px 6px', borderRadius: '3px' }}
-                onClick={() => setEditorVisible(false)}
-                title="Collapse editor panel"
-              >
-                ◀ Hide
-              </button>
-            </div>
-
-            <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {/* Active Editing Indicator Banner */}
-              {editingRateId ? (
-                <div style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '4px', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '11px', color: '#92400e', fontWeight: 600 }}>
-                    Editing Rate: <b>{editingRateId}</b>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => { setEditingRateId(null); handleClearForm(); }}
-                    style={{ background: 'none', border: 'none', color: '#b91c1c', cursor: 'pointer', fontWeight: 700, fontSize: '11px', textDecoration: 'underline' }}
-                  >
-                    Cancel Edit
-                  </button>
-                </div>
-              ) : (
-                <div style={{ fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>
-                  Create a new self-posted rate, or click any row in the table to load and update.
-                </div>
-              )}
-
-              {/* Row 1: CARRIER search with 3-letter typeahead */}
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px', alignItems: 'center' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '3px', textAlign: 'center' }}>CARRIER *</label>
-                <CarrierSearch value={carrier} onChange={setCarrier} placeholder="Carrier" />
-              </div>
-
-              {/* Row 2: POR + POL — 3-letter port search */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POR</label>
-                  <PortSearch value={por} onChange={setPor} placeholder="POR" />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POL *</label>
-                  <PortSearch value={pol} onChange={setPol} placeholder="POL" />
-                </div>
-              </div>
-
-              {/* Row 3: POD + FPOD — 3-letter port search */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>POD *</label>
-                  <PortSearch value={pod} onChange={setPod} placeholder="POD" />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '44px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 4px', borderRadius: '3px', textAlign: 'center' }}>FPOD</label>
-                  <PortSearch value={fpod} onChange={setFpod} placeholder="FPOD" />
-                </div>
-              </div>
-
-              {/* Row 4: 20 TYPE (All Container Types Dropdown) + 20 [USD] */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>20 TYPE</label>
-                  <SearchableDropdown
-                    options={CONTAINER_20_OPTIONS}
-                    value={d20Type}
-                    onChange={setD20Type}
-                    searchPlaceholder="20' size…"
-                    style={{ fontSize: '11px' }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--brand)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>{d20Type || '20DV'} ($) *</label>
-                  <input
-                    className="input"
-                    style={{ fontSize: '12px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 700, width: '100%', boxSizing: 'border-box' }}
-                    type="number"
-                    placeholder="e.g. 1480"
-                    value={d20}
-                    onChange={(e) => setD20(e.target.value === '' ? '' : Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              {/* Row 5: 40 TYPE (All Container Types Dropdown) + 40HC [USD] */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '48px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>40 TYPE</label>
-                  <SearchableDropdown
-                    options={CONTAINER_40_OPTIONS}
-                    value={h40Type}
-                    onChange={setH40Type}
-                    searchPlaceholder="40' size…"
-                    style={{ fontSize: '11px' }}
-                  />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '62px 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '10.5px', fontWeight: 700, color: 'var(--teal)', background: '#e8ecf5', padding: '5px 2px', borderRadius: '3px', textAlign: 'center' }}>{h40Type || '40HC'} ($) *</label>
-                  <input
-                    className="input"
-                    style={{ fontSize: '12px', height: '36px', padding: '0 8px', borderRadius: '3px', fontWeight: 700, width: '100%', boxSizing: 'border-box' }}
-                    type="number"
-                    placeholder="e.g. 2320"
-                    value={h40}
-                    onChange={(e) => setH40(e.target.value === '' ? '' : Number(e.target.value))}
-                  />
-                </div>
-              </div>
-
-              {/* Row 6: FREE TIME + VALIDITY */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>FREE TIME</label>
-                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="e.g. 14 days combined" value={freeTime} onChange={(e) => setFreeTime(e.target.value)} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>VALIDITY *</label>
-                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} type="date" value={validDate} onChange={(e) => setValidDate(e.target.value)} />
-                </div>
-              </div>
-
-              {/* Row 7: TRANSIT + ROUTING */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>TRANSIT</label>
-                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="e.g. 29 days" value={transitTime} onChange={(e) => setTransitTime(e.target.value)} />
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>ROUTING</label>
-                  <input className="input" style={{ fontSize: '11px', height: '36px', padding: '0 6px', borderRadius: '3px' }} placeholder="Direct / TS" value={routing} onChange={(e) => setRouting(e.target.value)} />
-                </div>
-              </div>
-
-              {/* Row 8: VALIDITY TYPE */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', alignItems: 'center' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', alignItems: 'center' }}>
-                  <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 6px', borderRadius: '3px', textAlign: 'center' }}>RATE TYPE</label>
-                  <SearchableDropdown
-                    options={RATE_TYPE_OPTIONS}
-                    value={rateType}
-                    onChange={setRateType}
-                    searchPlaceholder="Search rate type…"
-                    style={{ fontSize: '11px' }}
-                  />
-                </div>
-                <div />
-              </div>
-
-              {/* Row 9: REMARKS full width */}
-              <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '4px', alignItems: 'flex-start' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--ink)', background: '#e8ecf5', padding: '5px 8px', borderRadius: '3px', textAlign: 'center', alignSelf: 'flex-start', marginTop: '2px' }}>REMARKS</label>
-                <textarea className="input" style={{ fontSize: '11px', padding: '6px 8px', resize: 'vertical', borderRadius: '3px' }} rows={2} placeholder="Surcharges, inclusions, conditions…" value={remarks} onChange={(e) => setRemarks(e.target.value)} />
-              </div>
-
-              {/* Action Buttons: SAVE | UPDATE | CLEAR | DUPLICATE AS NEW */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginTop: '4px' }}>
-                <button
-                  type="button"
-                  className="btn primary"
-                  style={{ fontSize: '11.5px', padding: '8px 0', fontWeight: 700, borderRadius: '4px' }}
-                  onClick={handleSaveIRate}
-                >
-                  {editingRateId ? 'SAVE AS NEW' : 'SAVE RATE'}
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  style={{
-                    fontSize: '11.5px',
-                    padding: '8px 0',
-                    fontWeight: 700,
-                    borderRadius: '4px',
-                    background: editingRateId ? '#fef3c7' : undefined,
-                    color: editingRateId ? '#92400e' : undefined,
-                    borderColor: editingRateId ? '#f59e0b' : undefined,
-                  }}
-                  onClick={() => {
-                    if (!editingRateId) {
-                      toast('Select a rate from the table below to load into the editor before clicking UPDATE.');
-                      return;
-                    }
-                    handleSaveIRate();
-                  }}
-                >
-                  {editingRateId ? `UPDATE (${editingRateId})` : 'UPDATE'}
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px' }}
-                  onClick={handleClearForm}
-                >
-                  CLEAR
-                </button>
-                <button
-                  type="button"
-                  className="btn secondary"
-                  style={{ fontSize: '11.5px', padding: '7px 0', fontWeight: 600, borderRadius: '4px' }}
-                  onClick={handleDuplicateSelected}
-                >
-                  DUPLICATE AS NEW
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Rate Content Layout: Full Width Clean Viewport */}
+      <div className="rateeditor-full">
         {/* Main Table: Rates Matrix */}
         <div className="card" style={{ width: '100%', overflow: 'hidden', border: '1px solid var(--fr8x-outline)', borderRadius: '4px' }}>
           <div className="cardhead" style={{ flexWrap: 'wrap', gap: '8px', background: '#f8fafc', borderBottom: '1px solid var(--fr8x-outline)', borderRadius: '4px 4px 0 0' }}>
@@ -1526,16 +1309,19 @@ Remarks & Terms  : ${r.remark || ''}
                 {allAvailableRates.filter((r) => isExpiringSoon(r.valid)).length})
               </button>
 
-              {activeTab === 'i' && (
-                <button
-                  type="button"
-                  className="btn secondary sm"
-                  style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '6px' }}
-                  onClick={() => setEditorVisible(!editorVisible)}
-                >
-                  {editorVisible ? '◀ Hide Editor' : '▶ Show Rates Editor'}
-                </button>
-              )}
+              <button
+                type="button"
+                className="btn secondary sm"
+                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                onClick={() => {
+                  setEditingRateId(null);
+                  handleClearForm();
+                  setShowRatesEditorModal(true);
+                }}
+                title="Open Rates Editor modal to create or edit rates"
+              >
+                <span>▶ Show Rates Editor</span>
+              </button>
 
               {activeTab === 'i' && myRates.length > 0 && (
                 <button
@@ -1817,27 +1603,27 @@ Remarks & Terms  : ${r.remark || ''}
 
           {/* Full-width rates table fitting screen wide without text wrap */}
           <div className="tablewrap flush" style={{ overflowX: 'auto', width: '100%' }}>
-            <table className="table rates-compact-table" style={{ fontSize: '12px', tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', minWidth: '1780px' }}>
+            <table className="table rates-compact-table" style={{ fontSize: '11.5px', tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', minWidth: '1200px' }}>
               <colgroup>
-                <col style={{ width: '45px' }} />
-                <col style={{ width: '135px' }} />
-                <col style={{ width: '150px' }} />
+                <col style={{ width: '36px' }} />
+                <col style={{ width: '68px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '50px' }} />
+                <col style={{ width: '70px' }} />
+                <col style={{ width: '75px' }} />
+                <col style={{ width: '75px' }} />
+                <col style={{ width: '70px' }} />
+                <col style={{ width: '85px' }} />
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '85px' }} />
+                <col style={{ width: '60px' }} />
                 <col style={{ width: '55px' }} />
-                <col style={{ width: '125px' }} />
-                <col style={{ width: '125px' }} />
-                <col style={{ width: '125px' }} />
-                <col style={{ width: '125px' }} />
-                <col style={{ width: '105px' }} />
-                <col style={{ width: '95px' }} />
-                <col style={{ width: '105px' }} />
-                <col style={{ width: '95px' }} />
-                <col style={{ width: '85px' }} />
-                <col style={{ width: '100px' }} />
-                <col style={{ width: '85px' }} />
+                <col style={{ width: '75px' }} />
                 <col style={{ width: '65px' }} />
-                <col style={{ width: '135px' }} />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '190px' }} />
+                <col style={{ width: '45px' }} />
+                <col style={{ width: '70px' }} />
+                <col style={{ width: '110px' }} />
+                <col style={{ width: '85px' }} />
               </colgroup>
               <thead>
                 {/* Header row — clean, high-contrast, zero-curve, 1px outline */}
@@ -1977,6 +1763,7 @@ Remarks & Terms  : ${r.remark || ''}
                         className={isCompared ? 'compared-row' : ''}
                         style={{ background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#fff' : '#f7f9fd', cursor: 'pointer' }}
                         onClick={() => {
+                          setShowRatesEditorModal(true);
                           setCarrier(rate.carrier);
                           setPor(rate.por || '');
                           setPol(rate.pol);
@@ -2273,9 +2060,7 @@ Remarks & Terms  : ${r.remark || ''}
             <button
               type="button"
               className="mobile-editor-toggle-btn"
-              onClick={() => setMobileEditorOpen(!mobileEditorOpen)}
-            >
-              <span>{mobileEditorOpen ? '▲ Hide Rates Editor' : '▼ Open Rates Editor (+ Add New i-Rate)'}</span>
+              onClick={() => { setEditingRateId(null); handleClearForm(); setShowRatesEditorModal(true); }}><span>+ Open Rates Editor (+ Add New i-Rate)</span>
             </button>
           )}
 
@@ -2302,7 +2087,7 @@ Remarks & Terms  : ${r.remark || ''}
                   type="button"
                   className="btn primary sm"
                   style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px' }}
-                  onClick={() => setMobileEditorOpen(true)}
+                  onClick={() => { setEditingRateId(null); handleClearForm(); setShowRatesEditorModal(true); }}
                 >
                   <Plus size={13} /> Open Rates Editor
                 </button>

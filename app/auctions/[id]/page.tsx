@@ -657,6 +657,136 @@ export default function BidRoomPage() {
             </div>
           </div>
 
+          {isAuctionOwner ? (
+            /* OWNER VIEW: Tendered Bids & Forwarder Standing Ledger */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Owner Governance Notice Banner */}
+              <div
+                style={{
+                  backgroundColor: '#EEF2F7',
+                  border: '1.5px solid #CBD5E0',
+                  borderRadius: '6px',
+                  padding: '14px 18px',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+                }}
+              >
+                <ShieldCheck size={22} color="#1B2B4B" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <b style={{ color: '#1B2B4B', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
+                    AUCTION OWNER TENDER MANAGEMENT CONSOLE
+                  </b>
+                  <p style={{ margin: 0, color: '#4A5568', fontSize: '12px', lineHeight: 1.45 }}>
+                    You published this reverse auction on behalf of <b>{auction.creatorCompany || user?.company || 'Your Organization'}</b>. Under reverse-auction anti-collusion integrity rules, the auction creator and owning company members are strictly prohibited from submitting competing bids against their own auction. Use this console to evaluate incoming competitive offers from verified freight forwarders and award the tender.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tendered Bids & Standings Ledger */}
+              <div style={{ border: '1.5px solid #CBD5E0', borderRadius: '6px', background: '#FFFFFF', overflow: 'hidden' }}>
+                <div
+                  style={{
+                    background: '#1B2B4B',
+                    color: '#FFFFFF',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Gavel size={15} />
+                    <b style={{ fontSize: '12px', letterSpacing: '0.5px' }}>
+                      TENDERED BIDS &amp; AUDITED STANDINGS (LOWEST OFFER L1)
+                    </b>
+                  </div>
+                  <span style={{ fontSize: '11px', background: 'rgba(255, 255, 255, 0.2)', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                    {currentBids.length} Bid{currentBids.length === 1 ? '' : 's'} Received
+                  </span>
+                </div>
+
+                {currentBids.length === 0 ? (
+                  <div style={{ padding: '48px 20px', textAlign: 'center', color: '#64748B' }}>
+                    <Activity size={32} color="#94A3B8" style={{ margin: '0 auto 10px', display: 'block' }} />
+                    <b style={{ fontSize: '14px', color: '#1E293B', display: 'block', marginBottom: '4px' }}>
+                      No Bids Received Yet
+                    </b>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#64748B' }}>
+                      This reverse auction is live on the network. Competitive bids from independent freight forwarders will populate here in real time.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr style={{ background: '#F8FAFD', borderBottom: '1px solid #CBD5E0', textAlign: 'left' }}>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>RANK</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>BIDDER / FORWARDER</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>CARRIER</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B', textAlign: 'right' }}>OFFER AMOUNT (USD)</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B' }}>SUBMITTED</th>
+                          <th style={{ padding: '10px 12px', fontWeight: 700, color: '#1B2B4B', textAlign: 'right' }}>ACTIONS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentBids
+                          .slice()
+                          .sort((a, b) => Number(a.grandTotalUSD || 0) - Number(b.grandTotalUSD || 0))
+                          .map((b, idx) => (
+                            <tr key={b.id || idx} style={{ borderBottom: '1px solid #E2E8F0', background: idx === 0 ? '#F0FDF4' : '#FFFFFF' }}>
+                              <td style={{ padding: '10px 12px' }}>
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    padding: '2px 8px',
+                                    borderRadius: '4px',
+                                    fontWeight: 800,
+                                    fontSize: '11px',
+                                    background: idx === 0 ? '#16A34A' : '#64748B',
+                                    color: '#FFFFFF',
+                                  }}
+                                >
+                                  L{idx + 1}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <b>{b.bidderCompany || 'Verified Freight Forwarder'}</b>
+                                  <GoldenTick size={13} />
+                                </div>
+                              </td>
+                              <td style={{ padding: '10px 12px', color: '#4A5568' }}>
+                                {b.evidenceDocket?.proposedCarrier || (b.charges?.[0] as any)?.carrier || 'Premier Carrier'}
+                              </td>
+                              <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: 700, color: '#1B2B4B', fontSize: '13px' }}>
+                                ${Number(b.grandTotalUSD || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: '#64748B' }}>
+                                {b.submittedAt ? new Date(b.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                              </td>
+                              <td style={{ padding: '10px 12px', textAlign: 'right' }}>
+                                <button
+                                  type="button"
+                                  className="btn primary sm"
+                                  onClick={() => toast(`Tender awarded to ${b.bidderCompany || 'L1 Bidder'}. Official contract generated.`)}
+                                  style={{ padding: '4px 10px', fontSize: '11px', fontWeight: 700, background: '#1B2B4B', borderColor: '#1B2B4B' }}
+                                >
+                                  Award Tender
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            /* BIDDER VIEW: Routing Proposal & Charge Breakdown Table */
+            <>
           {/* BIDDER PROPOSAL INPUTS: ROUTING & FREE TIME (Requirement 1) */}
           <div className="card" style={{ padding: '14px 16px', background: '#ffffff', border: '1.5px solid #94a3b8' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid var(--line)', paddingBottom: '8px' }}>
@@ -1306,38 +1436,18 @@ export default function BidRoomPage() {
                 </div>
 
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  {isAuctionOwner ? (
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        padding: '7px 16px',
-                        backgroundColor: '#EEF1F7',
-                        color: '#1B2B4B',
-                        border: '1px solid #CBD5E0',
-                        borderRadius: '4px',
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        fontFamily: 'Calibri, Arial, sans-serif',
-                      }}
-                    >
-                      <ShieldCheck size={14} /> Auction Owner (Bidding Restricted)
-                    </div>
-                  ) : (
-                    <>
-                      <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '4px' }} onClick={() => toast('Edit mode active.')}>
-                        EDIT
-                      </button>
-                      <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? '#1B2B4B' : '#94a3b8', borderRadius: '4px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
-                        <Gavel size={13} /> Confirm &amp; Submit Bid
-                      </button>
-                    </>
-                  )}
+                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '4px' }} onClick={() => toast('Edit mode active.')}>
+                    EDIT
+                  </button>
+                  <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? '#1B2B4B' : '#94a3b8', borderRadius: '4px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
+                    <Gavel size={13} /> Confirm &amp; Submit Bid
+                  </button>
                 </div>
               </div>
             </div>
           </div>
+            </>
+          )}
         </div>
       )}
 
@@ -1619,48 +1729,63 @@ export default function BidRoomPage() {
 
       {/* Sticky Bottom Action Bar (Requirement 2) */}
       <div className="actionbar" style={{ background: '#ffffff', borderTop: '1.5px solid var(--line)', padding: '12px 20px' }}>
-        <div>
-          <small style={{ display: 'block', color: 'var(--ink)', fontSize: '12px' }}>
-            Current Competition Ceiling: <b>${ceiling.toFixed(2)} USD</b>
-          </small>
-          <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
-            Bidder identity protected under FR8X verified anonymized sourcing protocol.
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ textAlign: 'right' }}>
-            <small style={{ color: 'var(--mut)', display: 'block', fontSize: '10px', fontWeight: 700 }}>
-              YOUR TOTAL OFFER
-            </small>
-            <b style={{ fontSize: '18px', color: '#0f172a' }}>
-              ${grandTotalUSD.toFixed(2)} USD
-            </b>
-          </div>
-          {isAuctionOwner ? (
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '9px 20px',
-                backgroundColor: '#EEF1F7',
-                color: '#1B2B4B',
-                border: '1px solid #CBD5E0',
-                borderRadius: '4px',
-                fontSize: '12px',
-                fontWeight: 700,
-                fontFamily: 'Calibri, Arial, sans-serif',
-              }}
-            >
-              <ShieldCheck size={14} /> Auction Owner
+        {isAuctionOwner ? (
+          <>
+            <div>
+              <small style={{ display: 'block', color: 'var(--ink)', fontSize: '12px', fontWeight: 700 }}>
+                Reverse Auction Owner Console · {currentBids.length} Bid{currentBids.length === 1 ? '' : 's'} Received
+              </small>
+              <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+                {currentBids.length > 0
+                  ? `Lowest competitive offer: $${Math.min(...currentBids.map((b) => Number(b.grandTotalUSD || 0))).toFixed(2)} USD (L1)`
+                  : 'Awaiting incoming forwarder tenders · Real-time cryptographic ledger'}
+              </span>
             </div>
-          ) : (
-            <button className="btn primary" onClick={() => setShowConfirmModal(true)} style={{ fontSize: '12px', padding: '9px 20px', fontWeight: 800, borderRadius: '4px' }}>
-              <Gavel size={14} /> Confirm &amp; Submit Bid
-            </button>
-          )}
-        </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 16px',
+                  backgroundColor: '#1B2B4B',
+                  color: '#FFFFFF',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  fontFamily: 'Calibri, Arial, sans-serif',
+                }}
+              >
+                <ShieldCheck size={14} /> Owner Tender Console Active
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <small style={{ display: 'block', color: 'var(--ink)', fontSize: '12px' }}>
+                Current Competition Ceiling: <b>${ceiling.toFixed(2)} USD</b>
+              </small>
+              <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
+                Bidder identity protected under FR8X verified anonymized sourcing protocol.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ textAlign: 'right' }}>
+                <small style={{ color: 'var(--mut)', display: 'block', fontSize: '10px', fontWeight: 700 }}>
+                  YOUR TOTAL OFFER
+                </small>
+                <b style={{ fontSize: '18px', color: '#0f172a' }}>
+                  ${grandTotalUSD.toFixed(2)} USD
+                </b>
+              </div>
+              <button className="btn primary" onClick={() => setShowConfirmModal(true)} style={{ fontSize: '12px', padding: '9px 20px', fontWeight: 800, borderRadius: '4px' }}>
+                <Gavel size={14} /> Confirm &amp; Submit Bid
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Confirmation Modal (Requirement 2) */}

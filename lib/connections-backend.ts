@@ -1039,7 +1039,7 @@ export async function sendConnectionRequestBackend(
 
   const disk = loadDiskStore();
 
-  // Check if existing pending or accepted connection between any aliases
+  // Check if existing pending or accepted connection between any aliases in disk store
   const existingConn = disk.connections.find((c) => {
     const req = (c.requester_id || '').toLowerCase();
     const rec = (c.recipient_id || c.receiver_id || '').toLowerCase();
@@ -1059,6 +1059,51 @@ export async function sendConnectionRequestBackend(
       return { success: true, request_id: existingConn.id, status: 'accepted' };
     }
     return { success: false, error: 'A pending request already exists.', code: 'DUPLICATE_REQUEST' };
+  }
+
+  // Also verify against Supabase connections and accepted_connections table
+  try {
+    const client = getEffectiveSupabaseClient(userToken);
+    const sId = senderId.toLowerCase();
+    const rId = recipientId.toLowerCase();
+    const { data: dbAccepted } = await queryWithTimeout<any>(
+      client
+        .from('accepted_connections')
+        .select('user_id, connected_to')
+        .or(`and(user_id.eq.${sId},connected_to.eq.${rId}),and(user_id.eq.${rId},connected_to.eq.${sId})`)
+        .limit(1),
+      1200,
+      { data: null }
+    );
+    if (dbAccepted && Array.isArray(dbAccepted) && dbAccepted.length > 0) {
+      return { success: false, error: 'You are already connected to this member.', code: 'ALREADY_CONNECTED' };
+    }
+
+    const { data: dbConn } = await queryWithTimeout<any>(
+      client
+        .from('connections')
+        .select('id, requester_id, recipient_id, receiver_id, status')
+        .or(`and(requester_id.eq.${sId},or(recipient_id.eq.${rId},receiver_id.eq.${rId})),and(requester_id.eq.${rId},or(recipient_id.eq.${sId},receiver_id.eq.${sId}))`)
+        .limit(1),
+      1200,
+      { data: null }
+    );
+    if (dbConn && Array.isArray(dbConn) && dbConn.length > 0) {
+      const match = dbConn[0];
+      if (match.status === 'accepted') {
+        return { success: false, error: 'You are already connected to this member.', code: 'ALREADY_CONNECTED' };
+      }
+      if (match.status === 'pending') {
+        const isReverse = (match.requester_id || '').toLowerCase() === rId;
+        if (isReverse) {
+          await acceptConnectionRequestBackend(senderId, match.id, undefined, userToken);
+          return { success: true, request_id: match.id, status: 'accepted' };
+        }
+        return { success: false, error: 'A pending request already exists.', code: 'DUPLICATE_REQUEST' };
+      }
+    }
+  } catch (dbCheckErr) {
+    // Proceed with validated disk records
   }
 
   // Remove any stale cancelled or rejected entries between these users so they can cleanly reconnect
@@ -2188,6 +2233,21 @@ export async function removeConnectionBackend(
       if (orClauses.length > 0) {
         await queryWithTimeout(
           client.from('connections').delete().or(orClauses.join(',')),
+          1500,
+          null
+        );
+      }
+      // Delete bidirectional pairs from accepted_connections
+      const acceptedOrClauses: string[] = [];
+      for (const a of aliases) {
+        for (const ta of targetAliases) {
+          acceptedOrClauses.push(`and(user_id.eq.${a},connected_to.eq.${ta})`);
+          acceptedOrClauses.push(`and(user_id.eq.${ta},connected_to.eq.${a})`);
+        }
+      }
+      if (acceptedOrClauses.length > 0) {
+        await queryWithTimeout(
+          client.from('accepted_connections').delete().or(acceptedOrClauses.join(',')),
           1500,
           null
         );
