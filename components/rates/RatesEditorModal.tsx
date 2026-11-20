@@ -111,28 +111,38 @@ export function RatesEditorModal({
   const [remarks, setRemarks] = useState(initialData?.remarks || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sync state when initialData or editingRateId changes
+  const prevOpenRef = React.useRef(isOpen);
+  const prevEditingIdRef = React.useRef(editingRateId);
+
+  // Sync state when modal opens or editing rate changes
   useEffect(() => {
-    if (initialData) {
-      setCarrier(initialData.carrier || '');
-      setPor(initialData.por || '');
-      setPol(initialData.pol || '');
-      setPod(initialData.pod || '');
-      setFpod(initialData.fpod || '');
-      setD20(initialData.d20 ?? '');
-      setD20Type(initialData.d20Type || '20DV');
-      setH40(initialData.h40 ?? '');
-      setH40Type(initialData.h40Type || '40HC');
-      setFreeTime(initialData.freeTime || '');
-      setValidDate(initialData.validDate || '');
-      setTransitTime(initialData.transitTime || '');
-      setRouting(initialData.routing || '');
-      setRateType(initialData.rateType || 'Direct Spot');
-      setRemarks(initialData.remarks || '');
-    } else {
-      handleClearForm(false);
+    const justOpened = isOpen && !prevOpenRef.current;
+    const editingIdChanged = editingRateId !== prevEditingIdRef.current;
+    prevOpenRef.current = isOpen;
+    prevEditingIdRef.current = editingRateId;
+
+    if (isOpen && (justOpened || editingIdChanged)) {
+      if (editingRateId && initialData) {
+        setCarrier(initialData.carrier || '');
+        setPor(initialData.por || '');
+        setPol(initialData.pol || '');
+        setPod(initialData.pod || '');
+        setFpod(initialData.fpod || '');
+        setD20(initialData.d20 ?? '');
+        setD20Type(initialData.d20Type || '20DV');
+        setH40(initialData.h40 ?? '');
+        setH40Type(initialData.h40Type || '40HC');
+        setFreeTime(initialData.freeTime || '');
+        setValidDate(initialData.validDate || '');
+        setTransitTime(initialData.transitTime || '');
+        setRouting(initialData.routing || '');
+        setRateType(initialData.rateType || 'Direct Spot');
+        setRemarks(initialData.remarks || '');
+      } else if (!editingRateId && justOpened) {
+        handleClearForm(false);
+      }
     }
-  }, [initialData, editingRateId]);
+  }, [isOpen, editingRateId, initialData]);
 
   const isDirty = useMemo(() => {
     return Boolean(
@@ -305,9 +315,9 @@ export function RatesEditorModal({
       <div
         className="rates-editor-modal-container"
         style={{
-          width: '100%',
-          maxWidth: '840px',
-          maxHeight: '92vh',
+          width: '90%',
+          maxWidth: '1200px',
+          maxHeight: '90vh',
           backgroundColor: '#FFFFFF',
           borderRadius: '8px',
           border: '1px solid #CBD5E0',
@@ -419,10 +429,11 @@ export function RatesEditorModal({
         >
           {/* Two-Column Responsive Grid on Desktop */}
           <div
+            className="rates-editor-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-              gap: '14px',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(420px, 1fr))',
+              gap: '16px',
             }}
           >
             {/* Column 1: Carrier & Route Geography */}

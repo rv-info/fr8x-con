@@ -399,7 +399,7 @@ Remarks & Terms  : ${r.remark || ''}
     }
   };
 
-  const handleClearForm = () => {
+  const handleClearForm = (showToast = false) => {
     setCarrier('');
     setPor('');
     setPol('');
@@ -416,7 +416,9 @@ Remarks & Terms  : ${r.remark || ''}
     setRateType('Direct Spot');
     setRemarks('');
     setEditingRateId(null);
-    toast('Form reset to clean state.');
+    if (showToast) {
+      toast('Form reset to clean state.');
+    }
   };
 
   const handleDuplicateSelected = () => {
@@ -1189,6 +1191,99 @@ Remarks & Terms  : ${r.remark || ''}
         </Modal>
       )}
 
+      {/* EXTENDED-VIEW RATES EDITOR MODAL */}
+      <RatesEditorModal
+        isOpen={showRatesEditorModal}
+        onClose={() => setShowRatesEditorModal(false)}
+        editingRateId={editingRateId}
+        initialData={{
+          carrier,
+          por,
+          pol,
+          pod,
+          fpod,
+          d20,
+          d20Type,
+          h40,
+          h40Type,
+          freeTime,
+          validDate,
+          transitTime,
+          routing,
+          rateType,
+          remarks,
+        }}
+        onSave={async (data) => {
+          addMyRate({
+            carrier: data.carrier,
+            por: data.por,
+            pol: data.pol,
+            pod: data.pod,
+            fpod: data.fpod,
+            d20: Number(data.d20),
+            d20Type: data.d20Type,
+            h40: Number(data.h40),
+            h40Type: data.h40Type,
+            ft: data.freeTime,
+            tt: data.transitTime,
+            valid: data.validDate,
+            rateType: data.rateType,
+            route: data.routing,
+            remark: data.remarks,
+          });
+          setEditingRateId(null);
+          handleClearForm(false);
+          setShowRatesEditorModal(false);
+          toast('New custom i-Rate saved to workspace.');
+        }}
+        onUpdate={async (rateId, data) => {
+          updateMyRate(rateId, {
+            carrier: data.carrier,
+            por: data.por,
+            pol: data.pol,
+            pod: data.pod,
+            fpod: data.fpod,
+            d20: Number(data.d20),
+            d20Type: data.d20Type,
+            h40: Number(data.h40),
+            h40Type: data.h40Type,
+            ft: data.freeTime,
+            tt: data.transitTime,
+            valid: data.validDate,
+            rateType: data.rateType,
+            route: data.routing,
+            remark: data.remarks,
+          });
+          setEditingRateId(null);
+          handleClearForm(false);
+          setShowRatesEditorModal(false);
+          toast(`Rate ${rateId} updated successfully.`);
+        }}
+        onDuplicate={async (data) => {
+          addMyRate({
+            carrier: data.carrier,
+            por: data.por,
+            pol: data.pol,
+            pod: data.pod,
+            fpod: data.fpod,
+            d20: Number(data.d20),
+            d20Type: data.d20Type,
+            h40: Number(data.h40),
+            h40Type: data.h40Type,
+            ft: data.freeTime,
+            tt: data.transitTime,
+            valid: data.validDate,
+            rateType: data.rateType,
+            route: data.routing,
+            remark: data.remarks,
+          });
+          setEditingRateId(null);
+          handleClearForm(false);
+          setShowRatesEditorModal(false);
+          toast('Rate duplicated and saved as new distinct i-Rate.');
+        }}
+      />
+
       {/* Header */}
       <div className="head">
         <div>
@@ -1315,7 +1410,7 @@ Remarks & Terms  : ${r.remark || ''}
                 style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 onClick={() => {
                   setEditingRateId(null);
-                  handleClearForm();
+                  handleClearForm(false);
                   setShowRatesEditorModal(true);
                 }}
                 title="Open Rates Editor modal to create or edit rates"
@@ -2060,7 +2155,7 @@ Remarks & Terms  : ${r.remark || ''}
             <button
               type="button"
               className="mobile-editor-toggle-btn"
-              onClick={() => { setEditingRateId(null); handleClearForm(); setShowRatesEditorModal(true); }}><span>+ Open Rates Editor (+ Add New i-Rate)</span>
+              onClick={() => { setEditingRateId(null); handleClearForm(false); setShowRatesEditorModal(true); }}><span>+ Open Rates Editor (+ Add New i-Rate)</span>
             </button>
           )}
 
@@ -2087,7 +2182,7 @@ Remarks & Terms  : ${r.remark || ''}
                   type="button"
                   className="btn primary sm"
                   style={{ fontSize: '11.5px', padding: '6px 14px', borderRadius: '5px' }}
-                  onClick={() => { setEditingRateId(null); handleClearForm(); setShowRatesEditorModal(true); }}
+                  onClick={() => { setEditingRateId(null); handleClearForm(false); setShowRatesEditorModal(true); }}
                 >
                   <Plus size={13} /> Open Rates Editor
                 </button>
