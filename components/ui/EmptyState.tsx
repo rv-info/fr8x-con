@@ -40,7 +40,7 @@ export function EmptyState({
         textAlign: 'center',
         background: '#ffffff',
         borderRadius: '8px',
-        border: '1px solid #D6E2DA',
+        border: '1px solid #E2E8F0',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -52,7 +52,7 @@ export function EmptyState({
       {icon && (
         <div
           style={{
-            color: '#12372A',
+            color: '#1B2B4B',
             opacity: 1,
             marginBottom: '4px',
             display: 'flex',
@@ -68,9 +68,9 @@ export function EmptyState({
         className="text-slate-900"
         style={{
           margin: 0,
-          fontSize: '11px',
+          fontSize: '12px',
           fontWeight: 700,
-          color: '#12372A',
+          color: '#1B2B4B',
         }}
       >
         {title}
@@ -79,8 +79,8 @@ export function EmptyState({
         <p
           style={{
             margin: '0 0 10px 0',
-            fontSize: '11px',
-            color: '#12372A',
+            fontSize: '12px',
+            color: '#1B2B4B',
             maxWidth: '380px',
             lineHeight: 1.5,
           }}
@@ -111,9 +111,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#3FA66B',
+                  background: '#47799E',
                   color: '#FFFFFF',
-                  border: '1px solid #3FA66B',
+                  border: '1px solid #47799E',
                   borderRadius: '4px',
                 }}
               >
@@ -130,9 +130,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#3FA66B',
+                  background: '#47799E',
                   color: '#FFFFFF',
-                  border: '1px solid #3FA66B',
+                  border: '1px solid #47799E',
                   borderRadius: '4px',
                 }}
               >

@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { buildRouteMetadata } from '@/config/seo';
+import { Footer } from '@/components/layout/Footer';
 import {
   ShieldCheck,
   Lock,
@@ -466,6 +467,7 @@ export default function PrivacyPolicyPage() {
           </p>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

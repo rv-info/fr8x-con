@@ -17,7 +17,7 @@ export function MobileNav() {
 
   React.useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 900);
+      setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);

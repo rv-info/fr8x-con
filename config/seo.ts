@@ -82,6 +82,7 @@ export const robotsPolicy = {
         '/about',
         '/privacy',
         '/terms',
+        '/sitemap',
         '/contact',
       ],
       disallow: [
@@ -145,6 +146,22 @@ export const routeSeoConfigs: Record<string, RouteSeoConfig> = {
       'FR8X privacy principles, statutory data compliance, cryptographic access safeguards, and business records retention standards.',
     priority: 0.3,
     changeFrequency: 'monthly',
+  },
+  terms: {
+    path: '/terms',
+    title: 'Master Terms of Service & Commercial Agreement',
+    description:
+      'Contractual terms, reverse auction tender conditions, and platform rules for FR8X logistics ecosystem.',
+    priority: 0.4,
+    changeFrequency: 'monthly',
+  },
+  sitemap: {
+    path: '/sitemap',
+    title: 'FR8X Application Sitemap & Public Navigation Index',
+    description:
+      'Complete public navigation index and sitemap for FR8X multimodal freight logistics workspace.',
+    priority: 0.5,
+    changeFrequency: 'weekly',
   },
   login: {
     path: '/login',

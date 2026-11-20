@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ShieldCheck, ArrowLeft, Scale, Globe, FileText, AlertTriangle, Building2, CreditCard, Lock } from 'lucide-react';
+import { Footer } from '@/components/layout/Footer';
 
 export default function TermsPage() {
   return (
@@ -242,6 +243,7 @@ export default function TermsPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

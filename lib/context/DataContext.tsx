@@ -2253,6 +2253,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast('This auction is no longer open for bidding.');
       return false;
     }
+    // Prevent auction creator & owning company members from submitting bids on their own auction
+    const isOwner = targetAuction.creatorUid === user.uid ||
+                    (targetAuction as any).creator_uid === user.uid ||
+                    (Boolean(targetAuction.creatorCompany && user.company) &&
+                     targetAuction.creatorCompany?.trim().toLowerCase() === user.company?.trim().toLowerCase());
+    if (isOwner) {
+      toast('Auction creators and company members are not permitted to submit bids on their own auctions.');
+      return false;
+    }
     const configuredLimit = Number(targetAuction.rules?.bidLimit);
     const bidLimit = ([1, 3, 5] as number[]).includes(configuredLimit) ? configuredLimit : 5;
     const alreadySubmitted = (targetAuction.bids || []).filter((bid) => bid.bidderUid === user.uid).length;

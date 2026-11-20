@@ -145,6 +145,16 @@ export default function BidRoomPage() {
   const auction = liveAuction || initialAuction;
   const currentBids = liveBids.length > 0 ? liveBids : auction?.bids || [];
 
+  // OWNERSHIP & SELF-BID RESTRICTION: Auction creator & owning company cannot bid
+  const isAuctionOwner = Boolean(
+    user && auction && (
+      auction.creatorUid === user.uid ||
+      (auction as any).creator_uid === user.uid ||
+      (Boolean(auction.creatorCompany && user.company) &&
+       auction.creatorCompany?.trim().toLowerCase() === user.company?.trim().toLowerCase())
+    )
+  );
+
   // Record Recently Viewed in IndexedDB Cache (Low-Bandwidth / Offline-First)
   useEffect(() => {
     if (auction?.id) {
@@ -1295,13 +1305,35 @@ export default function BidRoomPage() {
                   </small>
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px' }}>
-                  <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '0px' }} onClick={() => toast('Edit mode active.')}>
-                    EDIT
-                  </button>
-                  <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? 'var(--fr8x-outline)' : '#94a3b8', borderRadius: '0px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
-                    <Gavel size={13} /> Confirm &amp; Submit Bid
-                  </button>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {isAuctionOwner ? (
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '7px 16px',
+                        backgroundColor: '#EEF1F7',
+                        color: '#1B2B4B',
+                        border: '1px solid #CBD5E0',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        fontFamily: 'Calibri, Arial, sans-serif',
+                      }}
+                    >
+                      <ShieldCheck size={14} /> Auction Owner (Bidding Restricted)
+                    </div>
+                  ) : (
+                    <>
+                      <button className="btn secondary" style={{ fontSize: '12px', padding: '7px 14px', fontWeight: 700, borderRadius: '4px' }} onClick={() => toast('Edit mode active.')}>
+                        EDIT
+                      </button>
+                      <button className="btn primary" disabled={bidsRemaining === 0} style={{ fontSize: '12px', padding: '7px 18px', fontWeight: 800, background: bidsRemaining ? '#1B2B4B' : '#94a3b8', borderRadius: '4px', cursor: bidsRemaining ? 'pointer' : 'not-allowed' }} onClick={() => setShowConfirmModal(true)}>
+                        <Gavel size={13} /> Confirm &amp; Submit Bid
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -1605,9 +1637,29 @@ export default function BidRoomPage() {
               ${grandTotalUSD.toFixed(2)} USD
             </b>
           </div>
-          <button className="btn primary" onClick={() => setShowConfirmModal(true)} style={{ fontSize: '12.5px', padding: '9px 20px', fontWeight: 800 }}>
-            <Gavel size={14} /> Confirm &amp; Submit Bid
-          </button>
+          {isAuctionOwner ? (
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '9px 20px',
+                backgroundColor: '#EEF1F7',
+                color: '#1B2B4B',
+                border: '1px solid #CBD5E0',
+                borderRadius: '4px',
+                fontSize: '12px',
+                fontWeight: 700,
+                fontFamily: 'Calibri, Arial, sans-serif',
+              }}
+            >
+              <ShieldCheck size={14} /> Auction Owner
+            </div>
+          ) : (
+            <button className="btn primary" onClick={() => setShowConfirmModal(true)} style={{ fontSize: '12px', padding: '9px 20px', fontWeight: 800, borderRadius: '4px' }}>
+              <Gavel size={14} /> Confirm &amp; Submit Bid
+            </button>
+          )}
         </div>
       </div>
 

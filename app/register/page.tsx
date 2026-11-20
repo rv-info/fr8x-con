@@ -281,7 +281,7 @@ function TnCModal({
                 setChecked(e.target.checked);
                 setHasRead(true);
               }}
-              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#0ea5e9', cursor: 'pointer' }}
+              style={{ width: '16px', height: '16px', marginTop: '1px', flexShrink: 0, accentColor: '#1B2B4B', cursor: 'pointer' }}
             />
             <span style={{ fontSize: '13px', color: '#334155', lineHeight: 1.5 }}>
               I have read and understood the FR8X Master Terms of Service, Commercial Agreement, Trade Compliance Policy, and Privacy Policy, and I agree to be legally bound by them on behalf of the corporate entity I represent.
@@ -2208,7 +2208,7 @@ export default function RegisterPage() {
                     height: '18px',
                     marginTop: '2px',
                     flexShrink: 0,
-                    accentColor: '#0ea5e9',
+                    accentColor: '#1B2B4B',
                     cursor: 'pointer',
                   }}
                 />

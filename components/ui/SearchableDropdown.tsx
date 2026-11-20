@@ -280,8 +280,8 @@ export default function SearchableDropdown({
           height: triggerHeight || '38px',
           minHeight: triggerHeight || '38px',
           padding: '0 10px',
-          background: disabled ? '#FAFBF7' : '#ffffff',
-          border: isOpen ? '1px solid #3FA66B' : '1px solid #D6E2DA',
+          background: disabled ? '#F8FAFD' : '#ffffff',
+          border: isOpen ? '1px solid #47799E' : '1px solid #E2E8F0',
           borderRadius: '4px',
           boxShadow: isOpen ? '0 0 0 2px rgba(63, 166, 107, 0.22)' : 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
@@ -289,7 +289,7 @@ export default function SearchableDropdown({
           boxSizing: 'border-box',
           transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
           fontFamily: 'Calibri, sans-serif',
-          fontSize: '11px',
+          fontSize: '12px',
           ...triggerStyle,
         }}
       >
@@ -298,10 +298,10 @@ export default function SearchableDropdown({
             renderTriggerValue(selectedOption, value)
           ) : (
             <>
-              {selectedOption?.flag && <span style={{ fontSize: '11px', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
+              {selectedOption?.flag && <span style={{ fontSize: '12px', lineHeight: 1, flexShrink: 0 }}>{selectedOption.flag}</span>}
               <span
                 style={{
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontFamily: 'Calibri, sans-serif',
                   color: selectedOption ? 'var(--fr8x-text, #1e293b)' : 'var(--fr8x-muted, #64748b)',
                   fontWeight: selectedOption ? 500 : 400,
@@ -313,7 +313,7 @@ export default function SearchableDropdown({
                 {selectedOption ? selectedOption.label : value || placeholder}
               </span>
               {showSubLabelInTrigger && selectedOption?.subLabel && (
-                <span style={{ fontSize: '11px', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontSize: '12px', color: '#94a3b8', marginLeft: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   ({selectedOption.subLabel})
                 </span>
               )}
@@ -371,7 +371,7 @@ export default function SearchableDropdown({
             minWidth: popoverMinWidth || '100%',
             maxHeight: `${(maxHeight || 300) + 65}px`,
             background: '#ffffff',
-            border: '1px solid #C5D5CB',
+            border: '1px solid #CBD5E0',
             borderRadius: '4px',
             boxShadow: '0 8px 24px rgba(18, 55, 42, 0.12)',
             zIndex: 99999,
@@ -385,8 +385,8 @@ export default function SearchableDropdown({
           <div
             style={{
               padding: '8px',
-              borderBottom: '1px solid #C5D5CB',
-              background: '#FAFBF7',
+              borderBottom: '1px solid #CBD5E0',
+              background: '#F8FAFD',
               flexShrink: 0,
             }}
           >
@@ -399,7 +399,7 @@ export default function SearchableDropdown({
             >
               <Search
                 size={14}
-                color="#66736D"
+                color="#4A5568"
                 style={{
                   position: 'absolute',
                   left: '10px',
@@ -420,18 +420,18 @@ export default function SearchableDropdown({
                   height: '34px',
                   paddingLeft: '32px',
                   paddingRight: '10px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 600,
-                  color: '#12372A',
+                  color: '#1B2B4B',
                   background: '#ffffff',
-                  border: '1px solid #D6E2DA',
+                  border: '1px solid #E2E8F0',
                   borderRadius: '4px',
                   outline: 'none',
                   boxSizing: 'border-box',
                   fontFamily: 'Calibri, sans-serif',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#3FA66B')}
-                onBlur={(e) => (e.target.style.borderColor = '#D6E2DA')}
+                onFocus={(e) => (e.target.style.borderColor = '#47799E')}
+                onBlur={(e) => (e.target.style.borderColor = '#E2E8F0')}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -446,7 +446,7 @@ export default function SearchableDropdown({
               overflowY: 'auto',
               padding: '4px 0',
               scrollbarWidth: 'thin',
-              scrollbarColor: '#D6E2DA #FAFBF7',
+              scrollbarColor: '#E2E8F0 #F8FAFD',
               flex: 1,
             }}
           >
@@ -466,31 +466,31 @@ export default function SearchableDropdown({
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         padding: '8px 12px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontFamily: 'Calibri, sans-serif',
-                        color: '#12372A',
+                        color: '#1B2B4B',
                         fontWeight: isSelected ? 600 : 400,
                         cursor: 'pointer',
                         background: isHighlighted
-                          ? '#FAFBF7'
+                          ? '#F8FAFD'
                           : isSelected
-                          ? '#E8F7EF'
+                          ? '#EEF1F7'
                           : 'transparent',
                         transition: 'background-color 0.1s ease',
                       }}
                       onMouseEnter={() => setHighlightedIndex(idx)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {opt.flag && <span style={{ fontSize: '11px', lineHeight: 1 }}>{opt.flag}</span>}
-                        <span style={{ fontSize: '11px' }}>{opt.label}</span>
+                        {opt.flag && <span style={{ fontSize: '12px', lineHeight: 1 }}>{opt.flag}</span>}
+                        <span style={{ fontSize: '12px' }}>{opt.label}</span>
                         {opt.subLabel && (
-                          <span style={{ fontSize: '11px', color: '#66736D' }}>
+                          <span style={{ fontSize: '12px', color: '#4A5568' }}>
                             {opt.subLabel}
                           </span>
                         )}
                       </div>
                       {isSelected && (
-                        <Check size={14} color="#3FA66B" style={{ flexShrink: 0 }} />
+                        <Check size={14} color="#47799E" style={{ flexShrink: 0 }} />
                       )}
                     </div>
                   );
@@ -499,10 +499,10 @@ export default function SearchableDropdown({
                   <div
                     style={{
                       padding: '6px 12px',
-                      fontSize: '11px',
-                      color: '#66736D',
-                      background: '#FAFBF7',
-                      borderTop: '1px solid #E3ECE7',
+                      fontSize: '12px',
+                      color: '#4A5568',
+                      background: '#F8FAFD',
+                      borderTop: '1px solid #EDF2F7',
                       textAlign: 'center',
                       fontStyle: 'italic',
                     }}
@@ -516,8 +516,8 @@ export default function SearchableDropdown({
                 style={{
                   padding: '16px 12px',
                   textAlign: 'center',
-                  fontSize: '11px',
-                  color: '#66736D',
+                  fontSize: '12px',
+                  color: '#4A5568',
                 }}
               >
                 <div>{emptyMessage}</div>
@@ -532,7 +532,7 @@ export default function SearchableDropdown({
                       color: '#ffffff',
                       border: 'none',
                       borderRadius: '4px',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}

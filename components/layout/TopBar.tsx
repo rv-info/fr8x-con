@@ -169,14 +169,14 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   }, []);
 
   const categoryMap: Record<string, { icon: React.ReactNode; color: string }> = {
-    network: { icon: <Users size={13} />, color: '#12372A' },
-    auctions: { icon: <Gavel size={13} />, color: '#12372A' },
-    bids: { icon: <Gavel size={13} />, color: '#12372A' },
-    chat: { icon: <MessageSquare size={13} />, color: '#12372A' },
-    feeds: { icon: <Globe2 size={13} />, color: '#12372A' },
-    jobs: { icon: <Briefcase size={13} />, color: '#12372A' },
-    system: { icon: <Bell size={13} />, color: '#12372A' },
-    subscription: { icon: <Users size={13} />, color: '#12372A' },
+    network: { icon: <Users size={13} />, color: '#1B2B4B' },
+    auctions: { icon: <Gavel size={13} />, color: '#1B2B4B' },
+    bids: { icon: <Gavel size={13} />, color: '#1B2B4B' },
+    chat: { icon: <MessageSquare size={13} />, color: '#1B2B4B' },
+    feeds: { icon: <Globe2 size={13} />, color: '#1B2B4B' },
+    jobs: { icon: <Briefcase size={13} />, color: '#1B2B4B' },
+    system: { icon: <Bell size={13} />, color: '#1B2B4B' },
+    subscription: { icon: <Users size={13} />, color: '#1B2B4B' },
   };
 
   // Group notifications by category (including enterprise network connections)
@@ -440,7 +440,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
       )}
 
-      <header className="top">
+      <header className="top" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', fontFamily: 'Calibri, Arial, sans-serif', fontSize: '12px' }}>
         {/* Mobile FR8X brand icon linked to homepage */}
         <Link
           href="/"
@@ -703,7 +703,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     height: '16px',
                     padding: '0 4px',
                     borderRadius: '8px',
-                    background: '#3FA66B', color: '#ffffff',
+                    background: '#E53E3E', color: '#ffffff',
                     fontSize: '11px',
                     fontWeight: 800,
                     display: 'flex',
@@ -743,7 +743,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           width: '5px',
                           height: '5px',
                           borderRadius: '50%',
-                          background: '#12372A',
+                          background: '#1B2B4B',
                           display: 'inline-block',
                           animation: 'pulse 1.8s infinite',
                         }}
@@ -893,7 +893,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#E8F7EF', color: '#12372A', border: '1px solid #B7DCC7', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#EEF1F7', color: '#1B2B4B', border: '1px solid #E2E8F0', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 800, fontFamily: 'Calibri, Arial, sans-serif' }}>
                   {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
                     .split(' ')
                     .map((p: string) => p[0])
@@ -909,12 +909,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #D6E2DA' }}>
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid #C5D5CB', background: '#FAFBF7', display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #E2E8F0' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFD', display: 'flex', gap: '10px', alignItems: 'center' }}>
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user?.displayName || 'User'} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#E8F7EF', color: '#12372A', border: '1px solid #B7DCC7', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
+                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#EEF1F7', color: '#1B2B4B', border: '1px solid #E2E8F0', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 800, fontFamily: 'Calibri, Arial, sans-serif' }}>
                       {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
                         .split(' ')
                         .map((p: string) => p[0])
@@ -983,7 +983,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       logout();
                     }}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px', color: '#12372A' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#1B2B4B', fontFamily: 'Calibri, Arial, sans-serif' }}
                   >
                     <LogOut size={14} />
                     <span>Sign Out</span>

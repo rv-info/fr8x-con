@@ -4,6 +4,7 @@ import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/au
 import { redis } from '@/lib/redis';
 
 export const runtime = 'nodejs';
+export const maxDuration = 10;
 
 /**
  * POST /api/auctions/bid
@@ -88,10 +89,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Anti-shill bidding protection: auction creator cannot bid on their own reverse auction
-    if (auction.creator_uid === callerUid || (auction as any).creator_id === callerUid) {
+    // Anti-shill bidding & self-participation protection: auction creator & owning company cannot bid
+    const { data: bidderProfile } = await supabase
+      .from('profiles')
+      .select('company, company_name, organization')
+      .eq('id', callerUid)
+      .maybeSingle();
+
+    const bidderCompany = (
+      bidderProfile?.company ||
+      bidderProfile?.company_name ||
+      bidderProfile?.organization ||
+      (sessionAuth.user as any)?.company ||
+      (sessionAuth.user as any)?.companyName ||
+      ''
+    ).trim().toLowerCase();
+
+    const auctionCompany = (
+      auction.creator_company ||
+      (auction as any).company_name ||
+      ''
+    ).trim().toLowerCase();
+
+    const isSelfBid =
+      auction.creator_uid === callerUid ||
+      (auction as any).creator_id === callerUid ||
+      (auctionCompany.length > 0 && bidderCompany.length > 0 && auctionCompany === bidderCompany);
+
+    if (isSelfBid) {
       return NextResponse.json(
-        { success: false, error: 'Forbidden: Auction creator is not eligible to submit bids on their own reverse auction.' },
+        {
+          success: false,
+          error: 'Forbidden: Auction creator and owning company members are not eligible to submit bids on their own reverse auction.',
+          code: 'SELF_BID_PROHIBITED',
+        },
         { status: 403 }
       );
     }

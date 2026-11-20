@@ -788,7 +788,10 @@ export default function AuctionsPage() {
                   </tr>
                 ) : (
                   currentTabAuctions().map((auction) => {
-                    const isPostingParty = auction.creatorUid === user?.uid;
+                    const isPostingParty =
+                      auction.creatorUid === user?.uid ||
+                      (Boolean(auction.creatorCompany && user?.company) &&
+                        auction.creatorCompany?.trim().toLowerCase() === user.company?.trim().toLowerCase());
                     const canCancel = auction.status !== 'Cancelled' && (isPostingParty || (user as any)?.role === 'super_admin' || (user as any)?.role === 'company_admin');
                     return (
                     <tr key={auction.id}>
@@ -909,7 +912,10 @@ export default function AuctionsPage() {
               </div>
             ) : (
               currentTabAuctions().map((auction) => {
-                const isPostingParty = auction.creatorUid === user?.uid;
+                const isPostingParty =
+                  auction.creatorUid === user?.uid ||
+                  (Boolean(auction.creatorCompany && user?.company) &&
+                    auction.creatorCompany?.trim().toLowerCase() === user.company?.trim().toLowerCase());
                 const canCancel = auction.status !== 'Cancelled' && (isPostingParty || (user as any)?.role === 'super_admin' || (user as any)?.role === 'company_admin');
                 return (
                   <div key={`mob-auc-${auction.id}`} className="auction-mobile-card">

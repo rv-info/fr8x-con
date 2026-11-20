@@ -82,7 +82,10 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   };
 
   return (
-    <aside className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}>
+    <aside
+      className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}
+      style={{ backgroundColor: '#EEF2F7', borderRight: '1px solid #E2E8F0' }}
+    >
       {/* Brand Header */}
       <div
         className="brand"
@@ -90,6 +93,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           justifyContent: collapsed ? 'center' : 'space-between',
           padding: collapsed ? '4px 0 10px' : '4px 6px 10px',
           alignItems: 'center',
+          backgroundColor: '#FFFFFF',
+          borderBottom: '1px solid #E2E8F0',
         }}
       >
         <Link
@@ -119,12 +124,13 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           />
           <span
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#12372A',
+              color: '#1B2B4B',
               lineHeight: 1,
               textTransform: 'uppercase',
+              fontFamily: 'Calibri, Arial, sans-serif',
             }}
           >
             FR8X
@@ -170,9 +176,15 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               style={{
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 padding: collapsed ? '0' : '0 11px',
+                ...(active
+                  ? { backgroundColor: '#1B2B4B', color: '#FFFFFF', borderRadius: '4px' }
+                  : { color: '#1A2332' }),
+                fontFamily: 'Calibri, Arial, sans-serif',
+                fontSize: '12px',
+                fontWeight: 500,
               }}
             >
-              <Icon size={16} />
+              <Icon size={16} style={{ color: active ? '#FFFFFF' : '#1B2B4B' }} />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
             </Link>
@@ -218,11 +230,12 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  background: '#E8F7EF',
-                  color: '#12372A',
-                  border: '1px solid #E8F7EF',
+                  background: '#EEF1F7',
+                  color: '#1B2B4B',
+                  border: '1px solid #EEF1F7',
                   fontWeight: 800,
-                  fontSize: '11px',
+                  fontSize: '12px',
+                  fontFamily: 'Calibri, Arial, sans-serif',
                 }}
               >
                 {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
