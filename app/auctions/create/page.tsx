@@ -1685,15 +1685,15 @@ export default function CreateReverseAuctionPage() {
                   )}
 
                   {/* Search Input */}
-                  <div style={{ position: 'relative', marginBottom: '8px' }}>
+                  <div className="search-icon-wrap" style={{ position: 'relative', marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
+                    <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mut)', pointerEvents: 'none', zIndex: 2 }} />
                     <input
-                      className="input"
-                      style={{ height: '28px', fontSize: '11px', paddingLeft: '24px' }}
+                      className="input search-input-field has-leading-icon"
+                      style={{ height: '28px', fontSize: '11px', paddingLeft: '28px', paddingRight: '8px', width: '100%', boxSizing: 'border-box' }}
                       placeholder="Search company, carrier or city..."
                       value={bidderSearchQuery}
                       onChange={(e) => setBidderSearchQuery(e.target.value)}
                     />
-                    <Search size={11} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--mut)' }} />
                   </div>
 
                   {/* Bidder List */}

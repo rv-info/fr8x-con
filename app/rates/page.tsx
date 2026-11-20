@@ -1775,23 +1775,25 @@ Remarks & Terms  : ${r.remark || ''}
                 </div>
               </div>
             ) : (
-              <div style={{ position: 'relative' }}>
-                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none' }} />
+              <div className="search-icon-wrap" style={{ position: 'relative', width: '100%' }}>
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748b', pointerEvents: 'none', zIndex: 2 }} />
                 <input
                   type="text"
+                  className="search-input-field has-leading-icon"
                   placeholder="Global Search: Carrier, Port, Container Type, Route, Remarks…"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{
                     width: '100%',
                     height: '32px',
-                    padding: '0 28px 0 30px',
+                    padding: '0 28px 0 32px',
                     fontSize: '11.5px',
                     border: '1px solid var(--fr8x-outline, #cbd5e1)',
                     borderRadius: '6px',
                     background: '#ffffff',
                     color: 'var(--fr8x-text)',
                     outline: 'none',
+                    boxSizing: 'border-box',
                   }}
                 />
                 {searchQuery && (

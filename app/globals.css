@@ -3492,7 +3492,7 @@ input, select, textarea, .input, .select, .reg-input, .login-card input {
   border: 1px solid #E2E8F0 !important;
   border-radius: 4px !important;
   color: #1B2B4B !important;
-  padding: 6px 8px !important;
+  padding: 6px 8px;
   line-height: 1.35 !important;
   outline: none;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -3501,6 +3501,150 @@ input, select, textarea, .input, .select, .reg-input, .login-card input {
 input:focus, select:focus, textarea:focus, .input:focus, .select:focus, .reg-input:focus, .login-card input:focus {
   border-color: #47799E !important;
   box-shadow: 0 0 0 2px rgba(63, 166, 107, 0.22) !important;
+}
+
+/* ==========================================================================
+   UNIVERSAL LEADING-ICON & SEARCH INPUT ARCHITECTURE (Zero Text Overlaps)
+   ========================================================================== */
+
+/* Universal classes for any input that has a leading icon */
+.has-leading-icon,
+.input-with-leading-icon,
+.input-with-icon,
+.port-search-input,
+.carrier-search-input,
+.dropdown-search-input,
+.search-input-field,
+.feed-search-box input,
+.gf-command-input-wrap input {
+  padding-left: 32px !important;
+}
+
+/* Specific compact port and carrier search inputs */
+.port-search-input,
+.carrier-search-input {
+  padding-left: 28px !important;
+  padding-right: 6px !important;
+}
+
+/* Container wrappers for input + leading icon */
+.input-icon-wrap,
+.input-with-icon-wrap,
+.search-icon-wrap,
+.port-search-wrap,
+.carrier-search-wrap,
+.feed-search-box,
+.gf-command-input-wrap {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+/* Positioning of leading icons inside input wrappers */
+.input-icon-wrap > svg,
+.input-icon-wrap > .field-icon,
+.input-icon-wrap > .lucide,
+.input-with-icon-wrap > svg,
+.search-icon-wrap > svg,
+.search-icon-wrap > .search-icon,
+.feed-search-box > svg,
+.feed-search-box > .search-icon,
+.gf-command-input-wrap > svg {
+  position: absolute !important;
+  left: 10px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #64748B !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+.port-search-wrap > svg,
+.carrier-search-wrap > svg {
+  position: absolute !important;
+  left: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #64748B !important;
+  pointer-events: none !important;
+  z-index: 2 !important;
+}
+
+/* Ensure inputs inside wrappers stretch cleanly and maintain padding */
+.input-icon-wrap > input,
+.input-with-icon-wrap > input,
+.search-icon-wrap > input {
+  padding-left: 32px !important;
+  width: 100% !important;
+}
+
+.port-search-wrap > input,
+.carrier-search-wrap > input {
+  padding-left: 28px !important;
+  width: 100% !important;
+}
+
+/* People search bar transparent embedded input */
+.people-search-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 0 !important;
+  box-shadow: none !important;
+}
+
+/* Seamless embedded search input (like in TopBar or CommandPalette) */
+.global-search-input-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+}
+
+.global-search-input-row input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 6px 0 !important;
+  font-size: 13px !important;
+  box-shadow: none !important;
+}
+
+.gf-command-input-wrap {
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+  background: #FFFFFF !important;
+}
+
+.gf-command-input-wrap svg {
+  position: absolute !important;
+  left: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: #94A3B8 !important;
+  pointer-events: none !important;
+}
+
+.gf-command-input-wrap input {
+  flex: 1 !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding-left: 32px !important;
+  font-size: 14px !important;
+  box-shadow: none !important;
+}
+
+/* Inputs with trailing icons (e.g. search icon on right) */
+.has-trailing-icon,
+.input-with-trailing-icon {
+  padding-right: 32px !important;
 }
 
 ::placeholder {

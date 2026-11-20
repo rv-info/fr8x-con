@@ -1,0 +1,33 @@
+{
+  "timestamp": "2026-11-20T07:32:11.157Z",
+  "total": 2,
+  "failures": 0,
+  "results": [
+    {
+      "viewport": "desktop",
+      "page": "/jobs",
+      "field": "jobSearch",
+      "placeholder": "Search jobs, companies, skills…",
+      "paddingLeft": "32px",
+      "hasIcon": true,
+      "iconInfo": {
+        "relativeLeft": 10,
+        "relativeRight": 23
+      },
+      "overlap": false
+    },
+    {
+      "viewport": "tablet",
+      "page": "/jobs",
+      "field": "jobSearch",
+      "placeholder": "Search jobs, companies, skills…",
+      "paddingLeft": "32px",
+      "hasIcon": true,
+      "iconInfo": {
+        "relativeLeft": 10,
+        "relativeRight": 23
+      },
+      "overlap": false
+    }
+  ]
+}

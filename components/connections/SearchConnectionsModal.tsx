@@ -427,25 +427,29 @@ export function SearchConnectionsModal({
       <div style={{ display: 'flex', flexDirection: 'column', height: '100%', flex: 1, gap: '14px', minHeight: 0 }}>
         {/* Search Bar & Stats */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ position: 'relative' }}>
+          <div className="search-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
             <Search
               size={15}
               style={{
                 position: 'absolute',
                 left: '12px',
-                top: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 color: '#64748b',
+                pointerEvents: 'none',
+                zIndex: 2,
               }}
             />
             <input
               type="text"
+              className="search-input-field has-leading-icon"
               placeholder="Search by name, company, ex-company, city, college, degree, or certification (e.g., Maersk, IIFT, FIATA, Mumbai)..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               style={{
                 width: '100%',
                 boxSizing: 'border-box',
-                padding: '10px 36px 10px 36px',
+                padding: '10px 16px 10px 38px',
                 fontSize: '13px',
                 borderRadius: '8px',
                 border: '1.5px solid #cbd5e1',

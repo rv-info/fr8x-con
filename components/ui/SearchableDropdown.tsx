@@ -391,24 +391,30 @@ export default function SearchableDropdown({
             }}
           >
             <div
+              className="search-icon-wrap"
               style={{
                 position: 'relative',
                 display: 'flex',
                 alignItems: 'center',
+                width: '100%',
               }}
             >
               <Search
-                size={14}
-                color="#4A5568"
+                size={13}
+                color="#64748B"
                 style={{
                   position: 'absolute',
                   left: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
                   pointerEvents: 'none',
+                  zIndex: 2,
                 }}
               />
               <input
                 ref={searchInputRef}
                 type="text"
+                className="dropdown-search-input has-leading-icon"
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);

@@ -426,11 +426,11 @@ export default function JobsPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: 0, flexWrap: 'wrap' }}>
-          <div style={{ position: 'relative', minWidth: '200px', flex: 1 }}>
-            <Search size={13} style={{ position: 'absolute', left: 9, top: 10, color: 'var(--mut)' }} />
+          <div className="search-icon-wrap" style={{ position: 'relative', minWidth: '200px', flex: 1, display: 'flex', alignItems: 'center' }}>
+            <Search size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--mut)', pointerEvents: 'none', zIndex: 2 }} />
             <input
-              className="input"
-              style={{ paddingLeft: 28 }}
+              className="input search-input-field has-leading-icon"
+              style={{ paddingLeft: 32, width: '100%', boxSizing: 'border-box' }}
               placeholder="Search jobs, companies, skills…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

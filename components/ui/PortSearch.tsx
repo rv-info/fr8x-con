@@ -57,17 +57,37 @@ export function PortSearch({ value, onChange, placeholder = 'Type 3 letters…',
   }, []);
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', ...style }}>
-      <div style={{ position: 'relative' }}>
-        <Search size={11} style={{ position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mut)', pointerEvents: 'none' }} />
+    <div ref={wrapRef} style={{ position: 'relative', width: '100%', ...style }}>
+      <div className="port-search-wrap input-with-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+        <Search
+          size={12}
+          style={{
+            position: 'absolute',
+            left: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#64748B',
+            pointerEvents: 'none',
+            zIndex: 2,
+            flexShrink: 0,
+          }}
+        />
         <input
-          className="input"
+          className="input port-search-input has-leading-icon"
           value={query}
           onChange={handleChange}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
           placeholder={placeholder}
           autoComplete="off"
-          style={{ paddingLeft: '22px', fontSize: '11px', height: '32px', ...inputStyle }}
+          style={{
+            paddingLeft: '28px',
+            paddingRight: '6px',
+            fontSize: '11px',
+            height: '32px',
+            width: '100%',
+            boxSizing: 'border-box',
+            ...inputStyle,
+          }}
         />
       </div>
       {open && results.length > 0 && (
@@ -165,17 +185,37 @@ export function CarrierSearch({ value, onChange, placeholder = 'Type carrier nam
   }, []);
 
   return (
-    <div ref={wrapRef} style={{ position: 'relative', ...style }}>
-      <div style={{ position: 'relative' }}>
-        <Search size={11} style={{ position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mut)', pointerEvents: 'none' }} />
+    <div ref={wrapRef} style={{ position: 'relative', width: '100%', ...style }}>
+      <div className="port-search-wrap input-with-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center', width: '100%' }}>
+        <Search
+          size={12}
+          style={{
+            position: 'absolute',
+            left: '8px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            color: '#64748B',
+            pointerEvents: 'none',
+            zIndex: 2,
+            flexShrink: 0,
+          }}
+        />
         <input
-          className="input"
+          className="input port-search-input has-leading-icon"
           value={query}
           onChange={handleChange}
           onFocus={() => { if (results.length > 0) setOpen(true); }}
           placeholder={placeholder}
           autoComplete="off"
-          style={{ paddingLeft: '22px', fontSize: '11px', height: '32px', ...inputStyle }}
+          style={{
+            paddingLeft: '28px',
+            paddingRight: '6px',
+            fontSize: '11px',
+            height: '32px',
+            width: '100%',
+            boxSizing: 'border-box',
+            ...inputStyle,
+          }}
         />
       </div>
       {open && results.length > 0 && (

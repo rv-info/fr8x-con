@@ -1594,17 +1594,18 @@ export default function FeedsPage() {
             )}
 
             {/* Filter contacts input */}
-            <div style={{ position: 'relative', marginBottom: '8px' }}>
-              <Search size={11} style={{ position: 'absolute', left: '8px', top: '8px', color: 'var(--fr8x-muted)' }} />
+            <div className="search-icon-wrap" style={{ position: 'relative', marginBottom: '8px', display: 'flex', alignItems: 'center' }}>
+              <Search size={12} style={{ position: 'absolute', left: '8px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fr8x-muted)', pointerEvents: 'none', zIndex: 2 }} />
               <input
                 type="text"
+                className="search-input-field has-leading-icon"
                 placeholder="Filter contacts..."
                 value={contactRailSearch}
                 onChange={(e) => setContactRailSearch(e.target.value)}
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
-                  padding: '5px 6px 5px 24px',
+                  padding: '5px 6px 5px 28px',
                   fontSize: '11px',
                   borderRadius: '5px',
                   border: '1px solid var(--fr8x-outline, #cbd5e1)',
@@ -3027,17 +3028,18 @@ export default function FeedsPage() {
 
             {/* Search contacts input */}
             <div className="field" style={{ margin: 0 }}>
-              <div style={{ position: 'relative' }}>
-                <Search size={13} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--fr8x-muted)' }} />
+              <div className="search-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fr8x-muted)', pointerEvents: 'none', zIndex: 2 }} />
                 <input
                   type="text"
+                  className="search-input-field has-leading-icon"
                   placeholder="🔍 Search contacts..."
                   value={sendContactSearch}
                   onChange={(e) => setSendContactSearch(e.target.value)}
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',
-                    padding: '6px 10px 6px 30px',
+                    padding: '6px 10px 6px 32px',
                     fontSize: '12px',
                     borderRadius: '6px',
                     border: '1px solid var(--fr8x-outline, #cbd5e1)',
@@ -3610,17 +3612,18 @@ export default function FeedsPage() {
             {manageContactsTab === 'discover' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1, minHeight: 0 }}>
                 {/* Search Bar */}
-                <div style={{ position: 'relative' }}>
-                  <Search size={13} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--fr8x-muted)' }} />
+                <div className="search-icon-wrap" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--fr8x-muted)', pointerEvents: 'none', zIndex: 2 }} />
                   <input
                     type="text"
+                    className="search-input-field has-leading-icon"
                     placeholder="Search by name, company, role, city, or country…"
                     value={discoverMemberSearch}
                     onChange={(e) => setDiscoverMemberSearch(e.target.value)}
                     style={{
                       width: '100%',
                       boxSizing: 'border-box',
-                      padding: '7px 8px 7px 30px',
+                      padding: '7px 8px 7px 32px',
                       fontSize: '12px',
                       borderRadius: '6px',
                       border: '1px solid var(--fr8x-outline, #cbd5e1)',

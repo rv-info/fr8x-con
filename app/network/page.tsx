@@ -1003,13 +1003,14 @@ function NetworkPageContent() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '280px' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
+              <div className="search-icon-wrap" style={{ position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center' }}>
                 <Search
-                  size={15}
-                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#1B2B4B' }}
+                  size={14}
+                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none', zIndex: 2 }}
                 />
                 <input
                   type="text"
+                  className="search-input-field has-leading-icon"
                   placeholder="Search freight professionals by name, company, skill…"
                   value={discoverFilters.q}
                   onChange={(e) => setDiscoverFilters((prev) => ({ ...prev, q: e.target.value }))}
@@ -1021,6 +1022,7 @@ function NetworkPageContent() {
                     background: '#FFFFFF',
                     color: '#1B2B4B',
                     outline: 'none',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>
@@ -1351,13 +1353,14 @@ function NetworkPageContent() {
               border: '1px solid #E2E8F0',
             }}
           >
-            <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
+            <div className="search-icon-wrap" style={{ position: 'relative', width: '100%', maxWidth: '380px', display: 'flex', alignItems: 'center' }}>
               <Search
-                size={15}
-                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#1B2B4B' }}
+                size={14}
+                style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none', zIndex: 2 }}
               />
               <input
                 type="text"
+                className="search-input-field has-leading-icon"
                 placeholder="Search connected partners…"
                 value={connectionSearch}
                 onChange={(e) => setConnectionSearch(e.target.value)}
@@ -1369,6 +1372,7 @@ function NetworkPageContent() {
                   background: '#FFFFFF',
                   color: '#1B2B4B',
                   outline: 'none',
+                  boxSizing: 'border-box',
                 }}
               />
             </div>
@@ -1899,13 +1903,14 @@ function NetworkPageContent() {
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '300px' }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '340px' }}>
+              <div className="search-icon-wrap" style={{ position: 'relative', width: '100%', maxWidth: '340px', display: 'flex', alignItems: 'center' }}>
                 <Search
-                  size={15}
-                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#1B2B4B' }}
+                  size={14}
+                  style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#64748B', pointerEvents: 'none', zIndex: 2 }}
                 />
                 <input
                   type="text"
+                  className="search-input-field has-leading-icon"
                   placeholder="Search CRM by partner, company, tag…"
                   value={crmSearch}
                   onChange={(e) => setCrmSearch(e.target.value)}
@@ -1917,6 +1922,7 @@ function NetworkPageContent() {
                     background: '#FFFFFF',
                     color: '#1B2B4B',
                     outline: 'none',
+                    boxSizing: 'border-box',
                   }}
                 />
               </div>

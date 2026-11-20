@@ -1564,10 +1564,11 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
           </button>
         </div>
 
-        <div className="feed-search-box" style={{ width: '340px' }}>
+        <div className="feed-search-box search-icon-wrap" style={{ width: '340px' }}>
           <Search size={14} className="search-icon" />
           <input
             type="text"
+            className="search-input-field has-leading-icon"
             placeholder="Search Nexus by keyword, company, port…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
