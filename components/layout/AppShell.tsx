@@ -126,7 +126,7 @@ function ShellLayout({ children }: { children: ReactNode }) {
               marginTop: '8px',
               width: '24px',
               height: '24px',
-              border: '2px solid #DDE7E1',
+              border: '2px solid #D6E2DA',
               borderTopColor: '#3FA66B',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',

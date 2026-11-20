@@ -560,7 +560,7 @@ function NetworkPageContent() {
           gap: '12px',
           marginBottom: '20px',
           paddingBottom: '16px',
-          borderBottom: '1px solid #DDE7E1',
+          borderBottom: '1px solid #C5D5CB',
         }}
       >
         <div>
@@ -578,9 +578,9 @@ function NetworkPageContent() {
                 fontWeight: 600,
                 padding: '2px 8px',
                 borderRadius: '4px',
-                background: '#DDE7E1',
+                background: '#FAFBF7',
                 color: '#12372A',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
               }}
             >
               Verified Network
@@ -605,7 +605,7 @@ function NetworkPageContent() {
               padding: '6px 12px',
               borderRadius: '6px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               fontSize: '11px',
               fontWeight: 600,
               color: '#12372A',
@@ -627,7 +627,7 @@ function NetworkPageContent() {
                 gap: '6px',
                 padding: '6px 12px',
                 borderRadius: '6px',
-                background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                 fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
               }}
             >
@@ -660,7 +660,7 @@ function NetworkPageContent() {
               gap: '6px',
               padding: '6px 14px',
               borderRadius: '6px',
-              background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+              background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
               fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
             }}
           >
@@ -675,7 +675,7 @@ function NetworkPageContent() {
         style={{
           display: 'flex',
           gap: '4px',
-          borderBottom: '1px solid #DDE7E1',
+          borderBottom: '1px solid #C5D5CB',
           marginBottom: '20px',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -808,7 +808,7 @@ function NetworkPageContent() {
               fontSize: '11px',
               padding: '1px 6px',
               borderRadius: '10px',
-              background: activeTab === 'crm' ? '#12372A' : '#DDE7E1',
+              background: activeTab === 'crm' ? '#3FA66B' : '#E8F7EF',
               color: activeTab === 'crm' ? '#FFFFFF' : '#12372A',
             }}
           >
@@ -833,7 +833,7 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
               }}
             >
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -850,7 +850,7 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
               }}
             >
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -867,7 +867,7 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
               }}
             >
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -884,7 +884,7 @@ function NetworkPageContent() {
                 padding: '16px',
                 borderRadius: '8px',
                 background: '#FFFFFF',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
               }}
             >
               <div style={{ fontSize: '11px', fontWeight: 600, color: '#12372A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -903,7 +903,7 @@ function NetworkPageContent() {
               padding: '20px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -942,7 +942,7 @@ function NetworkPageContent() {
               padding: '20px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
             }}
           >
             <h3 style={{ fontSize: '11px', fontWeight: 600, margin: '0 0 14px', color: '#12372A', letterSpacing: '-0.01em', lineHeight: 1.35 }}>
@@ -963,7 +963,7 @@ function NetworkPageContent() {
                         padding: '10px 14px',
                         borderRadius: '6px',
                         background: '#FFFFFF',
-                        border: '1px solid #DDE7E1',
+                        border: '1px solid #D6E2DA',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -999,7 +999,7 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '280px' }}>
@@ -1016,7 +1016,7 @@ function NetworkPageContent() {
                   style={{
                     width: '100%',
                     height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '11px', fontWeight: 400, lineHeight: 1.4,
-                    border: '1px solid #DDE7E1',
+                    border: '1px solid #D6E2DA',
                     borderRadius: '6px',
                     background: '#FFFFFF',
                     color: '#12372A',
@@ -1032,7 +1032,7 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '11px',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
@@ -1061,7 +1061,7 @@ function NetworkPageContent() {
               <span style={{ fontSize: '11px', color: '#12372A' }}>
                 {discoverTotal !== null ? `${discoverTotal} verified members` : 'Searching…'}
               </span>
-              <div style={{ display: 'flex', border: '1px solid #DDE7E1', borderRadius: '6px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', border: '1px solid #D6E2DA', borderRadius: '6px', overflow: 'hidden' }}>
                 <button
                   onClick={() => setViewMode('table')}
                   style={{
@@ -1118,10 +1118,10 @@ function NetworkPageContent() {
             />
           ) : viewMode === 'table' ? (
             /* High-Density Minimalist Table */
-            <div style={{ border: '1px solid #DDE7E1', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #D6E2DA', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #DDE7E1' }}>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #C5D5CB' }}>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Member</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Company &amp; Role</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Location</th>
@@ -1134,7 +1134,7 @@ function NetworkPageContent() {
                     const name = resolveMemberName(person);
                     const subline = resolveMemberSubline(person);
                     return (
-                      <tr key={person.id} style={{ borderBottom: '1px solid #DDE7E1' }}>
+                      <tr key={person.id} style={{ borderBottom: '1px solid #C5D5CB' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <UserAvatar name={name} avatarUrl={person.avatar_url || undefined} size={32} />
@@ -1177,9 +1177,9 @@ function NetworkPageContent() {
                                   fontSize: '10.5px',
                                   padding: '2px 6px',
                                   borderRadius: '4px',
-                                  background: '#DDE7E1',
+                                  background: '#FAFBF7',
                                   color: '#12372A',
-                                  border: '1px solid #DDE7E1',
+                                  border: '1px solid #D6E2DA',
                                 }}
                               >
                                 {lane}
@@ -1198,7 +1198,7 @@ function NetworkPageContent() {
                               style={{
                                 padding: '5px 12px',
                                 borderRadius: '4px',
-                                background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                                background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 cursor: 'pointer',
@@ -1213,7 +1213,7 @@ function NetworkPageContent() {
                                 borderRadius: '4px',
                                 background: '#FFFFFF',
                                 color: '#12372A',
-                                border: '1px solid #DDE7E1',
+                                border: '1px solid #D6E2DA',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
@@ -1245,7 +1245,7 @@ function NetworkPageContent() {
                     padding: '16px',
                     borderRadius: '8px',
                     background: '#FFFFFF',
-                    border: '1px solid #DDE7E1',
+                    border: '1px solid #D6E2DA',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
@@ -1271,7 +1271,7 @@ function NetworkPageContent() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #DDE7E1' }}>
+                  <div style={{ display: 'flex', gap: '6px', marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #E3ECE7' }}>
                     <button
                       onClick={() => {
                         setSendConnectTarget(person);
@@ -1281,7 +1281,7 @@ function NetworkPageContent() {
                         flex: 1,
                         padding: '6px',
                         borderRadius: '4px',
-                        background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                        background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                         fontSize: '11.5px',
                         fontWeight: 700,
                         cursor: 'pointer',
@@ -1296,7 +1296,7 @@ function NetworkPageContent() {
                         borderRadius: '4px',
                         background: '#FFFFFF',
                         color: '#12372A',
-                        border: '1px solid #DDE7E1',
+                        border: '1px solid #D6E2DA',
                         fontSize: '11.5px',
                         fontWeight: 600,
                         textDecoration: 'none',
@@ -1322,7 +1322,7 @@ function NetworkPageContent() {
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   fontSize: '11px',
                   fontWeight: 700,
                   cursor: 'pointer',
@@ -1348,7 +1348,7 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
             }}
           >
             <div style={{ position: 'relative', width: '100%', maxWidth: '380px' }}>
@@ -1364,7 +1364,7 @@ function NetworkPageContent() {
                 style={{
                   width: '100%',
                   height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '11px', fontWeight: 400, lineHeight: 1.4,
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
@@ -1388,10 +1388,10 @@ function NetworkPageContent() {
               onAction={() => switchTab('discover')}
             />
           ) : (
-            <div style={{ border: '1px solid #DDE7E1', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #D6E2DA', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #DDE7E1' }}>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #C5D5CB' }}>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Partner</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Company &amp; Designation</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Location</th>
@@ -1403,7 +1403,7 @@ function NetworkPageContent() {
                     const prof = item.profiles;
                     const name = resolveMemberName(prof);
                     return (
-                      <tr key={item.id} style={{ borderBottom: '1px solid #DDE7E1' }}>
+                      <tr key={item.id} style={{ borderBottom: '1px solid #C5D5CB' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                             <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={32} />
@@ -1458,9 +1458,9 @@ function NetworkPageContent() {
                               style={{
                                 padding: '5px 10px',
                                 borderRadius: '4px',
-                                background: '#DDE7E1',
+                                background: '#FAFBF7',
                                 color: '#12372A',
-                                border: '1px solid #DDE7E1',
+                                border: '1px solid #D6E2DA',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 cursor: 'pointer',
@@ -1480,7 +1480,7 @@ function NetworkPageContent() {
                                 borderRadius: '4px',
                                 background: '#FFFFFF',
                                 color: '#12372A',
-                                border: '1px solid #DDE7E1',
+                                border: '1px solid #D6E2DA',
                                 fontSize: '11.5px',
                                 fontWeight: 600,
                                 textDecoration: 'none',
@@ -1500,7 +1500,7 @@ function NetworkPageContent() {
                                 borderRadius: '4px',
                                 background: 'none',
                                 color: '#12372A',
-                                border: '1px solid #DDE7E1',
+                                border: '1px solid #D6E2DA',
                                 fontSize: '11.5px',
                                 cursor: 'pointer',
                               }}
@@ -1531,7 +1531,7 @@ function NetworkPageContent() {
               padding: '6px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               width: 'fit-content',
             }}
           >
@@ -1557,7 +1557,7 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'incoming' ? '#12372A' : '#DDE7E1',
+                  background: requestFilter === 'incoming' ? '#3FA66B' : '#E8F7EF',
                   color: requestFilter === 'incoming' ? '#FFFFFF' : '#12372A',
                 }}
               >
@@ -1587,7 +1587,7 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'outgoing' ? '#12372A' : '#DDE7E1',
+                  background: requestFilter === 'outgoing' ? '#3FA66B' : '#E8F7EF',
                   color: requestFilter === 'outgoing' ? '#FFFFFF' : '#12372A',
                 }}
               >
@@ -1617,7 +1617,7 @@ function NetworkPageContent() {
                   fontSize: '10.5px',
                   padding: '1px 5px',
                   borderRadius: '10px',
-                  background: requestFilter === 'held' ? '#12372A' : '#DDE7E1',
+                  background: requestFilter === 'held' ? '#3FA66B' : '#E8F7EF',
                   color: requestFilter === 'held' ? '#FFFFFF' : '#12372A',
                 }}
               >
@@ -1654,7 +1654,7 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #DDE7E1',
+                          border: '1px solid #D6E2DA',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1670,7 +1670,7 @@ function NetworkPageContent() {
                               {prof.company_name || prof.company} · {prof.designation || 'Logistics Member'}
                             </div>
                             {req.message && (
-                              <div style={{ marginTop: '4px', fontSize: '11.5px', color: '#12372A', background: '#FFFFFF', padding: '4px 8px', borderRadius: '4px', border: '1px solid #DDE7E1' }}>
+                              <div style={{ marginTop: '4px', fontSize: '11.5px', color: '#12372A', background: '#FFFFFF', padding: '4px 8px', borderRadius: '4px', border: '1px solid #D6E2DA' }}>
                                 &ldquo;{req.message}&rdquo;
                               </div>
                             )}
@@ -1684,7 +1684,7 @@ function NetworkPageContent() {
                             style={{
                               padding: '6px 14px',
                               borderRadius: '6px',
-                              background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                              background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                               fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                             }}
                           >
@@ -1698,7 +1698,7 @@ function NetworkPageContent() {
                               borderRadius: '6px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1714,7 +1714,7 @@ function NetworkPageContent() {
                               borderRadius: '6px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1758,7 +1758,7 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #DDE7E1',
+                          border: '1px solid #D6E2DA',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1788,7 +1788,7 @@ function NetworkPageContent() {
                               borderRadius: '6px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1830,7 +1830,7 @@ function NetworkPageContent() {
                           padding: '16px',
                           borderRadius: '8px',
                           background: '#FFFFFF',
-                          border: '1px solid #DDE7E1',
+                          border: '1px solid #D6E2DA',
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1848,7 +1848,7 @@ function NetworkPageContent() {
                             style={{
                               padding: '6px 14px',
                               borderRadius: '6px',
-                              background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                              background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                               fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                             }}
                           >
@@ -1862,7 +1862,7 @@ function NetworkPageContent() {
                               borderRadius: '6px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11px',
                               fontWeight: 600,
                               cursor: 'pointer',
@@ -1895,7 +1895,7 @@ function NetworkPageContent() {
               padding: '14px',
               borderRadius: '8px',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '300px' }}>
@@ -1912,7 +1912,7 @@ function NetworkPageContent() {
                   style={{
                     width: '100%',
                     height: '38px', paddingLeft: '34px', paddingRight: '12px', fontSize: '11px', fontWeight: 400, lineHeight: 1.4,
-                    border: '1px solid #DDE7E1',
+                    border: '1px solid #D6E2DA',
                     borderRadius: '6px',
                     background: '#FFFFFF',
                     color: '#12372A',
@@ -1928,7 +1928,7 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '11px',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
@@ -1949,7 +1949,7 @@ function NetworkPageContent() {
                   height: '36px',
                   padding: '0 10px',
                   fontSize: '11px',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
@@ -1988,7 +1988,7 @@ function NetworkPageContent() {
                 style={{
                   padding: '7px 14px',
                   borderRadius: '6px',
-                  background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                  background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                   fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -2012,10 +2012,10 @@ function NetworkPageContent() {
               onAction={() => setShowAddContactModal(true)}
             />
           ) : (
-            <div style={{ border: '1px solid #DDE7E1', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
+            <div style={{ border: '1px solid #D6E2DA', borderRadius: '8px', overflow: 'hidden', background: '#FFFFFF' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left' }}>
                 <thead>
-                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #DDE7E1' }}>
+                  <tr style={{ background: '#FFFFFF', borderBottom: '1px solid #C5D5CB' }}>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Contact</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Category</th>
                     <th style={{ padding: '10px 14px', fontSize: '11px', fontWeight: 700, color: '#12372A', textTransform: 'uppercase' }}>Pipeline Stage</th>
@@ -2025,7 +2025,7 @@ function NetworkPageContent() {
                 </thead>
                 <tbody>
                   {filteredCrm.map((contact) => (
-                    <tr key={contact.id} style={{ borderBottom: '1px solid #DDE7E1' }}>
+                    <tr key={contact.id} style={{ borderBottom: '1px solid #C5D5CB' }}>
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                           <UserAvatar name={contact.name} size={32} />
@@ -2048,9 +2048,9 @@ function NetworkPageContent() {
                             fontWeight: 600,
                             padding: '2px 8px',
                             borderRadius: '4px',
-                            background: '#DDE7E1',
+                            background: '#FAFBF7',
                             color: '#12372A',
-                            border: '1px solid #DDE7E1',
+                            border: '1px solid #D6E2DA',
                           }}
                         >
                           {contact.category}
@@ -2083,9 +2083,9 @@ function NetworkPageContent() {
                             style={{
                               padding: '5px 8px',
                               borderRadius: '4px',
-                              background: '#DDE7E1',
+                              background: '#FAFBF7',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2119,7 +2119,7 @@ function NetworkPageContent() {
                               borderRadius: '4px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2138,7 +2138,7 @@ function NetworkPageContent() {
                               borderRadius: '4px',
                               background: '#FFFFFF',
                               color: '#12372A',
-                              border: '1px solid #DDE7E1',
+                              border: '1px solid #D6E2DA',
                               fontSize: '11.5px',
                               cursor: 'pointer',
                             }}
@@ -2177,7 +2177,7 @@ function NetworkPageContent() {
               maxWidth: '440px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               padding: '20px',
             }}
           >
@@ -2202,7 +2202,7 @@ function NetworkPageContent() {
                 padding: '10px',
                 fontSize: '11px',
                 borderRadius: '6px',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
                 outline: 'none',
                 marginBottom: '16px',
               }}
@@ -2215,7 +2215,7 @@ function NetworkPageContent() {
                   borderRadius: '6px',
                   background: '#FFFFFF',
                   color: '#12372A',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   fontSize: '11px',
                   fontWeight: 600,
                   cursor: 'pointer',
@@ -2229,7 +2229,7 @@ function NetworkPageContent() {
                 style={{
                   padding: '7px 16px',
                   borderRadius: '6px',
-                  background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1',
+                  background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA',
                   fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer',
                 }}
               >
@@ -2267,7 +2267,7 @@ function NetworkPageContent() {
             <div
               style={{
                 padding: '16px',
-                borderBottom: '1px solid #DDE7E1',
+                borderBottom: '1px solid #C5D5CB',
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -2306,7 +2306,7 @@ function NetworkPageContent() {
                         maxWidth: '80%',
                         padding: '9px 12px',
                         borderRadius: '8px',
-                        background: isMine ? '#12372A' : '#DDE7E1',
+                        background: isMine ? '#E8F7EF' : '#FAFBF7',
                         color: isMine ? '#FFFFFF' : '#12372A',
                         fontSize: '11px',
                       }}
@@ -2323,7 +2323,7 @@ function NetworkPageContent() {
             </div>
 
             {/* Chat Input */}
-            <form onSubmit={handleSendChatMessage} style={{ padding: '12px', borderTop: '1px solid #DDE7E1', display: 'flex', gap: '8px' }}>
+            <form onSubmit={handleSendChatMessage} style={{ padding: '12px', borderTop: '1px solid #E3ECE7', display: 'flex', gap: '8px' }}>
               <input
                 type="text"
                 placeholder="Type a message…"
@@ -2335,7 +2335,7 @@ function NetworkPageContent() {
                   padding: '0 12px',
                   fontSize: '11px',
                   borderRadius: '6px',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   outline: 'none',
                 }}
               />
@@ -2382,7 +2382,7 @@ function NetworkPageContent() {
               maxWidth: '520px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               padding: '20px',
             }}
           >
@@ -2402,7 +2402,7 @@ function NetworkPageContent() {
                   placeholder="e.g. Ramesh Patel"
                   value={crmFormData.name}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                  style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                 />
               </div>
 
@@ -2415,7 +2415,7 @@ function NetworkPageContent() {
                     placeholder="e.g. Apex Global Logistics"
                     value={crmFormData.company}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, company: e.target.value }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   />
                 </div>
                 <div>
@@ -2425,7 +2425,7 @@ function NetworkPageContent() {
                     placeholder="e.g. Managing Director"
                     value={crmFormData.designation}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, designation: e.target.value }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   />
                 </div>
               </div>
@@ -2436,7 +2436,7 @@ function NetworkPageContent() {
                   <select
                     value={crmFormData.category}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, category: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   >
                     <option value="Freight Forwarder">Freight Forwarder</option>
                     <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
@@ -2450,7 +2450,7 @@ function NetworkPageContent() {
                   <select
                     value={crmFormData.stage}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, stage: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   >
                     <option value="Active Partner">Active Partner</option>
                     <option value="Rate Quoted">Rate Quoted</option>
@@ -2467,7 +2467,7 @@ function NetworkPageContent() {
                   placeholder="Notes, key trade lanes, rates discussion…"
                   value={crmFormData.notes}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                 />
               </div>
             </div>
@@ -2475,7 +2475,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
               <button
                 onClick={() => setShowAddContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2504,7 +2504,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Save Contact
               </button>
@@ -2533,7 +2533,7 @@ function NetworkPageContent() {
               maxWidth: '520px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               padding: '20px',
             }}
           >
@@ -2551,7 +2551,7 @@ function NetworkPageContent() {
                   <select
                     value={crmFormData.category}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, category: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   >
                     <option value="Freight Forwarder">Freight Forwarder</option>
                     <option value="Shipping Line / Carrier">Shipping Line / Carrier</option>
@@ -2565,7 +2565,7 @@ function NetworkPageContent() {
                   <select
                     value={crmFormData.stage}
                     onChange={(e) => setCrmFormData((prev) => ({ ...prev, stage: e.target.value as any }))}
-                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                    style={{ width: '100%', height: '36px', padding: '0 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                   >
                     <option value="Active Partner">Active Partner</option>
                     <option value="Rate Quoted">Rate Quoted</option>
@@ -2581,7 +2581,7 @@ function NetworkPageContent() {
                   rows={3}
                   value={crmFormData.notes}
                   onChange={(e) => setCrmFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #DDE7E1', outline: 'none' }}
+                  style={{ width: '100%', padding: '8px 10px', fontSize: '11px', borderRadius: '6px', border: '1px solid #D6E2DA', outline: 'none' }}
                 />
               </div>
 
@@ -2598,7 +2598,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '16px' }}>
               <button
                 onClick={() => setShowEditContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2623,7 +2623,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Update Contact
               </button>
@@ -2652,7 +2652,7 @@ function NetworkPageContent() {
               maxWidth: '420px',
               background: '#FFFFFF',
               borderRadius: '8px',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               padding: '20px',
             }}
           >
@@ -2675,7 +2675,7 @@ function NetworkPageContent() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
               <button
                 onClick={() => setShowDeleteContactModal(false)}
-                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: '6px', background: '#FFFFFF', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -2702,7 +2702,7 @@ function NetworkPageContent() {
                     toast(err.message);
                   }
                 }}
-                style={{ padding: '7px 16px', borderRadius: '6px', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
+                style={{ padding: '7px 16px', borderRadius: '6px', background: '#FAFBF7', color: '#12372A', border: '1px solid #D6E2DA', fontSize: '11px', fontWeight: 600, lineHeight: 1, cursor: 'pointer' }}
               >
                 Confirm Delete
               </button>

@@ -67,7 +67,7 @@ export function NetworkStatusPill() {
 
   const pillBg = '#FFFFFF';
 
-  const pillBorder = '#DDE7E1';
+  const pillBorder = '#D6E2DA';
 
   const pillText = '#12372A';
 
@@ -126,7 +126,7 @@ export function NetworkStatusPill() {
             background: '#ffffff',
             borderRadius: '8px',
             boxShadow: '0 10px 25px -5px rgba(18, 55, 42, 0.12), 0 8px 10px -6px rgba(18, 55, 42, 0.05)',
-            border: '1px solid #DDE7E1',
+            border: '1px solid #D6E2DA',
             zIndex: 1000,
             padding: '6px',
             fontSize: '11px',
@@ -137,7 +137,7 @@ export function NetworkStatusPill() {
           <div
             style={{
               padding: '6px 8px 6px',
-              borderBottom: '1px solid #DDE7E1',
+              borderBottom: '1px solid #C5D5CB',
               marginBottom: '4px',
               display: 'flex',
               alignItems: 'center',
@@ -179,7 +179,7 @@ export function NetworkStatusPill() {
                 padding: '6px 8px',
                 background: '#FAFBF7',
                 borderRadius: '6px',
-                border: '1px solid #DDE7E1',
+                border: '1px solid #D6E2DA',
                 fontSize: '11px',
                 color: '#12372A',
                 marginBottom: '6px',

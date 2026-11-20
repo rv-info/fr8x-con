@@ -77,7 +77,7 @@ export function RecommendedSection() {
               justifyContent: 'space-between',
               position: 'relative',
               background: '#FFFFFF',
-              border: '1px solid #DDE7E1',
+              border: '1px solid #D6E2DA',
               borderRadius: '6px',
             }}
           >
@@ -122,7 +122,7 @@ export function RecommendedSection() {
                   borderRadius: '4px',
                   backgroundColor: '#FFFFFF',
                   color: '#12372A',
-                  border: '1px solid #DDE7E1',
+                  border: '1px solid #D6E2DA',
                   marginBottom: '0.75rem',
                   lineHeight: 1,
                 }}

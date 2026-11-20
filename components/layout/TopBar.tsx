@@ -540,9 +540,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             fontSize: '11px',
                             fontWeight: calcSourceAmount === amt ? 700 : 500,
                             borderRadius: '4px',
-                            border: calcSourceAmount === amt ? '1px solid var(--brand)' : '1px solid var(--fr8x-outline)',
-                            background: calcSourceAmount === amt ? '#DDE7E1' : '#ffffff',
-                            color: calcSourceAmount === amt ? 'var(--brand)' : 'var(--fr8x-text)',
+                            border: calcSourceAmount === amt ? '1px solid #B7DCC7' : '1px solid #D6E2DA',
+                            background: calcSourceAmount === amt ? '#E8F7EF' : '#ffffff',
+                            color: calcSourceAmount === amt ? '#12372A' : '#66736D',
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
                           }}
@@ -567,7 +567,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             fontSize: '11px',
                             fontWeight: 600,
                             borderRadius: '6px',
-                            border: '1px solid #DDE7E1',
+                            border: '1px solid #D6E2DA',
                             background: '#ffffff',
                             color: '#12372A',
                           }}
@@ -617,7 +617,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             display: 'flex',
                             alignItems: 'center',
                             background: '#ffffff',
-                            border: '1px solid #DDE7E1',
+                            border: '1px solid #D6E2DA',
                             borderRadius: '6px',
                             fontWeight: 800,
                             color: '#12372A',
@@ -647,12 +647,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     </div>
 
                     {/* Live Reciprocal & Calculation Options */}
-                    <div style={{ background: '#ffffff', border: '1px solid #DDE7E1', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
+                    <div style={{ background: '#ffffff', border: '1px solid #D6E2DA', borderRadius: '6px', padding: '6px 8px', marginTop: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', color: 'var(--fr8x-text)' }}>
                         <span>Direct: <b>1 {calcSourceCurrency} = {directRate.toFixed(4)} {calcTargetCurrency}</b></span>
                         <span>Inverse: <b>1 {calcTargetCurrency} = {(1 / (directRate || 1)).toFixed(4)} {calcSourceCurrency}</b></span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #DDE7E1' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid #E3ECE7' }}>
                         <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
                           Live Forex Rate · Real-time Interbank Feed
                         </span>
@@ -730,7 +730,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         alignItems: 'center',
                         gap: '4px',
                         fontSize: '11px',
-                        color: '#12372A', background: '#DDE7E1',
+                        color: '#12372A', background: '#E8F7EF',
+                        border: '1px solid #B7DCC7',
                         padding: '1px 6px',
                         borderRadius: '10px',
                         fontWeight: 700,
@@ -892,7 +893,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               {user.avatarUrl ? (
                 <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
               ) : (
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
+                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#E8F7EF', color: '#12372A', border: '1px solid #B7DCC7', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
                   {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
                     .split(' ')
                     .map((p: string) => p[0])
@@ -908,12 +909,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #DDE7E1' }}>
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)', display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #D6E2DA' }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid #C5D5CB', background: '#FAFBF7', display: 'flex', gap: '10px', alignItems: 'center' }}>
                   {user.avatarUrl ? (
                     <img src={user.avatarUrl} alt={user?.displayName || 'User'} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
                   ) : (
-                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#DDE7E1', color: '#12372A', border: '1px solid #DDE7E1', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
+                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#E8F7EF', color: '#12372A', border: '1px solid #B7DCC7', display: 'grid', placeItems: 'center', fontSize: '11px', fontWeight: 800 }}>
                       {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
                         .split(' ')
                         .map((p: string) => p[0])

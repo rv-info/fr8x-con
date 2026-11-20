@@ -40,7 +40,7 @@ export function EmptyState({
         textAlign: 'center',
         background: '#ffffff',
         borderRadius: '8px',
-        border: '1px solid #DDE7E1',
+        border: '1px solid #D6E2DA',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -111,9 +111,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#DDE7E1',
-                  color: '#12372A',
-                  border: '1px solid #DDE7E1',
+                  background: '#3FA66B',
+                  color: '#FFFFFF',
+                  border: '1px solid #3FA66B',
                   borderRadius: '4px',
                 }}
               >
@@ -130,9 +130,9 @@ export function EmptyState({
                   alignItems: 'center',
                   padding: '0 16px',
                   fontWeight: 600,
-                  background: '#DDE7E1',
-                  color: '#12372A',
-                  border: '1px solid #DDE7E1',
+                  background: '#3FA66B',
+                  color: '#FFFFFF',
+                  border: '1px solid #3FA66B',
                   borderRadius: '4px',
                 }}
               >

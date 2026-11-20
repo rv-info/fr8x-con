@@ -280,10 +280,10 @@ export default function SearchableDropdown({
           height: triggerHeight || '38px',
           minHeight: triggerHeight || '38px',
           padding: '0 10px',
-          background: disabled ? '#f9fafb' : '#ffffff',
-          border: isOpen ? '1px solid var(--brand, #1985a1)' : '1px solid var(--fr8x-outline, #c5c3c6)',
+          background: disabled ? '#FAFBF7' : '#ffffff',
+          border: isOpen ? '1px solid #3FA66B' : '1px solid #D6E2DA',
           borderRadius: '4px',
-          boxShadow: isOpen ? '0 0 0 2px rgba(25, 133, 161, 0.15)' : 'none',
+          boxShadow: isOpen ? '0 0 0 2px rgba(63, 166, 107, 0.22)' : 'none',
           cursor: disabled ? 'not-allowed' : 'pointer',
           opacity: disabled ? 0.6 : 1,
           boxSizing: 'border-box',
@@ -371,9 +371,9 @@ export default function SearchableDropdown({
             minWidth: popoverMinWidth || '100%',
             maxHeight: `${(maxHeight || 300) + 65}px`,
             background: '#ffffff',
-            border: '1.5px solid #0284c7',
+            border: '1px solid #C5D5CB',
             borderRadius: '4px',
-            boxShadow: '0 16px 36px -4px rgba(0, 0, 0, 0.35), 0 8px 16px -4px rgba(0, 0, 0, 0.2)',
+            boxShadow: '0 8px 24px rgba(18, 55, 42, 0.12)',
             zIndex: 99999,
             overflow: 'hidden',
             boxSizing: 'border-box',
@@ -385,8 +385,8 @@ export default function SearchableDropdown({
           <div
             style={{
               padding: '8px',
-              borderBottom: '1px solid #e2e8f0',
-              background: '#f8fafc',
+              borderBottom: '1px solid #C5D5CB',
+              background: '#FAFBF7',
               flexShrink: 0,
             }}
           >
@@ -399,7 +399,7 @@ export default function SearchableDropdown({
             >
               <Search
                 size={14}
-                color="#475569"
+                color="#66736D"
                 style={{
                   position: 'absolute',
                   left: '10px',
@@ -422,16 +422,16 @@ export default function SearchableDropdown({
                   paddingRight: '10px',
                   fontSize: '11px',
                   fontWeight: 600,
-                  color: '#0f172a',
+                  color: '#12372A',
                   background: '#ffffff',
-                  border: '1px solid #94a3b8',
+                  border: '1px solid #D6E2DA',
                   borderRadius: '4px',
                   outline: 'none',
                   boxSizing: 'border-box',
                   fontFamily: 'Calibri, sans-serif',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#0284c7')}
-                onBlur={(e) => (e.target.style.borderColor = '#94a3b8')}
+                onFocus={(e) => (e.target.style.borderColor = '#3FA66B')}
+                onBlur={(e) => (e.target.style.borderColor = '#D6E2DA')}
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
@@ -446,7 +446,7 @@ export default function SearchableDropdown({
               overflowY: 'auto',
               padding: '4px 0',
               scrollbarWidth: 'thin',
-              scrollbarColor: '#94a3b8 #f1f5f9',
+              scrollbarColor: '#D6E2DA #FAFBF7',
               flex: 1,
             }}
           >
@@ -468,13 +468,13 @@ export default function SearchableDropdown({
                         padding: '8px 12px',
                         fontSize: '11px',
                         fontFamily: 'Calibri, sans-serif',
-                        color: isSelected ? '#0284c7' : '#1e293b',
-                        fontWeight: isSelected ? 700 : 400,
+                        color: '#12372A',
+                        fontWeight: isSelected ? 600 : 400,
                         cursor: 'pointer',
                         background: isHighlighted
-                          ? '#f1f5f9'
+                          ? '#FAFBF7'
                           : isSelected
-                          ? '#f0f9ff'
+                          ? '#E8F7EF'
                           : 'transparent',
                         transition: 'background-color 0.1s ease',
                       }}
@@ -484,13 +484,13 @@ export default function SearchableDropdown({
                         {opt.flag && <span style={{ fontSize: '11px', lineHeight: 1 }}>{opt.flag}</span>}
                         <span style={{ fontSize: '11px' }}>{opt.label}</span>
                         {opt.subLabel && (
-                          <span style={{ fontSize: '11px', color: '#64748b' }}>
+                          <span style={{ fontSize: '11px', color: '#66736D' }}>
                             {opt.subLabel}
                           </span>
                         )}
                       </div>
                       {isSelected && (
-                        <Check size={14} color="#0284c7" style={{ flexShrink: 0 }} />
+                        <Check size={14} color="#3FA66B" style={{ flexShrink: 0 }} />
                       )}
                     </div>
                   );
@@ -500,9 +500,9 @@ export default function SearchableDropdown({
                     style={{
                       padding: '6px 12px',
                       fontSize: '11px',
-                      color: '#64748b',
-                      background: '#f8fafc',
-                      borderTop: '1px solid #e2e8f0',
+                      color: '#66736D',
+                      background: '#FAFBF7',
+                      borderTop: '1px solid #E3ECE7',
                       textAlign: 'center',
                       fontStyle: 'italic',
                     }}
@@ -517,7 +517,7 @@ export default function SearchableDropdown({
                   padding: '16px 12px',
                   textAlign: 'center',
                   fontSize: '11px',
-                  color: '#64748b',
+                  color: '#66736D',
                 }}
               >
                 <div>{emptyMessage}</div>
