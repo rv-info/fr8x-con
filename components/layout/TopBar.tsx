@@ -17,6 +17,7 @@ import { useRouter } from 'next/navigation';
 import { NetworkStatusPill } from './NetworkStatusPill';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { useChat } from '@/lib/context/ChatContext';
 import { useToast } from '@/lib/context/ToastContext';
 import {
@@ -946,9 +947,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                               setShowGlobalSearch(false);
                             }}
                           >
-                            <span className="gs-icon">
-                              <UserIcon size={14} />
-                            </span>
+                            <UserAvatar
+                              name={pName}
+                              avatarUrl={p.avatarUrl}
+                              companyLogoUrl={p.companyLogoUrl}
+                              companyName={p.company}
+                              size={28}
+                            />
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <span>{pName}</span>
@@ -1678,19 +1683,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               className="user-top-btn"
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '22px', height: '22px', borderRadius: '50%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#EEF1F7', color: '#1B2B4B', border: '1px solid #E2E8F0', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 800, fontFamily: 'Calibri, Arial, sans-serif' }}>
-                  {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
-                    .split(' ')
-                    .map((p: string) => p[0])
-                    .filter(Boolean)
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase() || 'U'}
-                </div>
-              )}
+              <UserAvatar user={user} size={22} />
               <span className="user-name-text">{user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}</span>
               {user?.hasGoldenTick && <GoldenTick />}
               <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron" />
@@ -1699,19 +1692,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showUserDropdown && (
               <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #E2E8F0' }}>
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFD', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt={user?.displayName || 'User'} className="profile-img-avatar" style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '40px', height: '40px', minWidth: '40px', borderRadius: '50%', background: '#EEF1F7', color: '#1B2B4B', border: '1px solid #E2E8F0', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 800, fontFamily: 'Calibri, Arial, sans-serif' }}>
-                      {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
-                        .split(' ')
-                        .map((p: string) => p[0])
-                        .filter(Boolean)
-                        .join('')
-                        .substring(0, 2)
-                        .toUpperCase() || 'U'}
-                    </div>
-                  )}
+                  <UserAvatar user={user} size={40} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <b style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
                       {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}

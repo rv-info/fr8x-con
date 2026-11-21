@@ -83,7 +83,13 @@ export function RecommendedSection() {
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                <UserAvatar name={person.full_name} avatarUrl={person.avatar_url ?? undefined} size={44} />
+                <UserAvatar
+                  name={person.full_name}
+                  avatarUrl={person.avatar_url ?? undefined}
+                  companyLogoUrl={(person as any).company_logo_url || (person as any).companyLogoUrl || undefined}
+                  companyName={(person as any).company_name || person.company || undefined}
+                  size={44}
+                />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <Link
                     href={`/network/${person.id}`}

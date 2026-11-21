@@ -423,7 +423,13 @@ export default function NetworkPersonProfilePage({ params }: { params: { id: str
           boxSizing: 'border-box',
         }}
       >
-        <UserAvatar name={name} avatarUrl={profile.avatar_url ?? undefined} size={92} />
+        <UserAvatar
+          name={name}
+          avatarUrl={profile.avatar_url ?? undefined}
+          companyLogoUrl={profile.company_logo_url ?? (profile as any).companyLogoUrl ?? undefined}
+          companyName={profile.company_name ?? (profile as any).company ?? undefined}
+          size={92}
+        />
 
         <div style={{ flex: 1, minWidth: '280px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '4px' }}>

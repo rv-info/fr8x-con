@@ -38,6 +38,7 @@ import {
 } from '@/lib/utils/statutory-kyc';
 import { compressImage } from '@/lib/utils/image-utils';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   getAllGlobalCountries,
   getStatesForCountry,
@@ -3388,22 +3389,12 @@ export default function ProfilePage() {
             >
               {/* Header inside preview */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div
-                  style={{
-                    width: '40px',
-                    height: '40px',
-                    borderRadius: '50%',
-                    background: '#00a3c4',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                    fontSize: '14px',
-                  }}
-                >
-                  {user.firstName?.[0] || 'U'}{user.lastName?.[0] || ''}
-                </div>
+                <UserAvatar
+                  user={user}
+                  avatarUrl={effectiveAvatarUrl || undefined}
+                  companyLogoUrl={effectiveCompanyLogoUrl || undefined}
+                  size={44}
+                />
                 <div>
                   <div style={{ fontSize: '13px', fontWeight: 800, color: 'var(--fr8x-text)' }}>
                     {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'Enterprise Member')}

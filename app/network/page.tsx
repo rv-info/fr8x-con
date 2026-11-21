@@ -1191,7 +1191,13 @@ function NetworkPageContent() {
                       <tr key={person.id} style={{ borderBottom: '1px solid #CBD5E0' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <UserAvatar name={name} avatarUrl={person.avatar_url || undefined} size={32} />
+                            <UserAvatar
+                              name={name}
+                              avatarUrl={person.avatar_url || (person as any).avatarUrl || undefined}
+                              companyLogoUrl={(person as any).company_logo_url || (person as any).companyLogoUrl || undefined}
+                              companyName={person.company_name || (person as any).company || undefined}
+                              size={32}
+                            />
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <Link
@@ -1365,7 +1371,13 @@ function NetworkPageContent() {
                 >
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                      <UserAvatar name={resolveMemberName(person)} avatarUrl={person.avatar_url || undefined} size={40} />
+                      <UserAvatar
+                        name={resolveMemberName(person)}
+                        avatarUrl={person.avatar_url || (person as any).avatarUrl || undefined}
+                        companyLogoUrl={(person as any).company_logo_url || (person as any).companyLogoUrl || undefined}
+                        companyName={person.company_name || (person as any).company || undefined}
+                        size={40}
+                      />
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                           <Link href={`/network/${person.id}`} style={{ fontWeight: 700, color: '#1B2B4B', textDecoration: 'none' }}>
@@ -1577,7 +1589,13 @@ function NetworkPageContent() {
                       <tr key={item.id} style={{ borderBottom: '1px solid #CBD5E0' }}>
                         <td style={{ padding: '10px 14px' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={32} />
+                            <UserAvatar
+                              name={name}
+                              avatarUrl={prof.avatar_url || (prof as any).avatarUrl || undefined}
+                              companyLogoUrl={(prof as any).company_logo_url || (prof as any).companyLogoUrl || undefined}
+                              companyName={prof.company_name || (prof as any).company || undefined}
+                              size={32}
+                            />
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                                 <Link href={`/network/${prof.id}`} style={{ fontWeight: 700, color: '#1B2B4B', textDecoration: 'none' }}>
@@ -1829,7 +1847,13 @@ function NetworkPageContent() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={42} />
+                          <UserAvatar
+                            name={name}
+                            avatarUrl={prof.avatar_url || (prof as any).avatarUrl || undefined}
+                            companyLogoUrl={(prof as any).company_logo_url || (prof as any).companyLogoUrl || undefined}
+                            companyName={prof.company_name || prof.company || undefined}
+                            size={42}
+                          />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <Link href={`/network/${prof.id}`} style={{ fontWeight: 700, color: '#1B2B4B', textDecoration: 'none' }}>
@@ -1933,7 +1957,13 @@ function NetworkPageContent() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={42} />
+                          <UserAvatar
+                            name={name}
+                            avatarUrl={prof.avatar_url || (prof as any).avatarUrl || undefined}
+                            companyLogoUrl={(prof as any).company_logo_url || (prof as any).companyLogoUrl || undefined}
+                            companyName={prof.company_name || prof.company || undefined}
+                            size={42}
+                          />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                               <Link href={`/network/${prof.id}`} style={{ fontWeight: 700, color: '#1B2B4B', textDecoration: 'none' }}>
@@ -2005,7 +2035,13 @@ function NetworkPageContent() {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <UserAvatar name={name} avatarUrl={prof.avatar_url || undefined} size={42} />
+                          <UserAvatar
+                            name={name}
+                            avatarUrl={prof.avatar_url || (prof as any).avatarUrl || undefined}
+                            companyLogoUrl={(prof as any).company_logo_url || (prof as any).companyLogoUrl || undefined}
+                            companyName={prof.company_name || prof.company || undefined}
+                            size={42}
+                          />
                           <div>
                             <div style={{ fontWeight: 700, color: '#1B2B4B' }}>{name}</div>
                             <div style={{ fontSize: '12px', color: '#1B2B4B' }}>{prof.company_name || prof.company}</div>
@@ -2201,7 +2237,13 @@ function NetworkPageContent() {
                     <tr key={contact.id} style={{ borderBottom: '1px solid #CBD5E0' }}>
                       <td style={{ padding: '10px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <UserAvatar name={contact.name} size={32} />
+                          <UserAvatar
+                            name={contact.name}
+                            avatarUrl={(contact as any).avatar_url || (contact as any).avatarUrl || undefined}
+                            companyLogoUrl={(contact as any).company_logo_url || (contact as any).companyLogoUrl || undefined}
+                            companyName={contact.company || undefined}
+                            size={32}
+                          />
                           <div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                               <span style={{ fontWeight: 700, color: '#1B2B4B' }}>{contact.name}</span>
@@ -2447,7 +2489,13 @@ function NetworkPageContent() {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <UserAvatar name={activeChatContact.name} size={36} />
+                <UserAvatar
+                  name={activeChatContact.name}
+                  avatarUrl={(activeChatContact as any).avatar_url || (activeChatContact as any).avatarUrl || undefined}
+                  companyLogoUrl={(activeChatContact as any).company_logo_url || (activeChatContact as any).companyLogoUrl || undefined}
+                  companyName={activeChatContact.company || undefined}
+                  size={36}
+                />
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{activeChatContact.name}</div>
                   <div style={{ fontSize: '12px', color: '#1B2B4B' }}>{activeChatContact.company}</div>

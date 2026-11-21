@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   BiSpeedometer2 as LayoutDashboard,
   BiRss as Rss,
@@ -202,52 +203,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="View profile"
           style={{ justifyContent: collapsed ? 'center' : 'flex-start', textDecoration: 'none' }}
         >
-          <div
-            className="avatar borderless"
-            style={{
-              width: '28px',
-              height: '28px',
-              minWidth: '28px',
-              minHeight: '28px',
-              maxWidth: '28px',
-              maxHeight: '28px',
-              flex: '0 0 28px',
-              aspectRatio: '1 / 1',
-              padding: 0,
-              overflow: 'hidden',
-              borderRadius: '50%',
-              border: 'none',
-              background: 'transparent',
-            }}
-          >
-            {user.avatarUrl ? (
-              <img src={user.avatarUrl} alt={user.displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: '#EEF1F7',
-                  color: '#1B2B4B',
-                  border: '1px solid #EEF1F7',
-                  fontWeight: 800,
-                  fontSize: '12px',
-                  fontFamily: 'Calibri, Arial, sans-serif',
-                }}
-              >
-                {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User')
-                  .split(' ')
-                  .map((p: string) => p[0])
-                  .filter(Boolean)
-                  .join('')
-                  .substring(0, 2)
-                  .toUpperCase() || 'U'}
-              </div>
-            )}
-          </div>
+          <UserAvatar user={user} size={28} />
           {!collapsed && (
             <div className="user-meta" style={{ overflow: 'hidden', flex: 1, minWidth: 0 }}>
               <b>

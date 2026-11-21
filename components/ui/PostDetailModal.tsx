@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Modal } from './Modal';
 import { GoldenTick } from './GoldenTick';
 import { LocalTimeBadge } from './LocalTimeBadge';
+import { UserAvatar } from './UserAvatar';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { useChat } from '@/lib/context/ChatContext';
@@ -201,22 +202,14 @@ export function PostDetailModal({
         >
           {/* Author info */}
           <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-            <div
-              className="avatar big"
-              style={{ width: '52px', height: '52px', padding: 0, overflow: 'hidden', cursor: 'pointer' }}
-              onClick={() => onOpenProfile(post.author)}
-            >
-              {(() => {
-                const photo = post.author === user?.displayName ? user?.avatarUrl : post.authorPhotoUrl;
-                if (photo) {
-                  return <img src={photo} alt={post.author} className="profile-img-avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-                }
-                return (
-                  <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '18px', fontWeight: 800 }}>
-                    {post.author.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
-                  </div>
-                );
-              })()}
+            <div style={{ cursor: 'pointer', flexShrink: 0 }} onClick={() => onOpenProfile(post.author)}>
+              <UserAvatar
+                avatarUrl={post.author === user?.displayName ? (user?.avatarUrl || post.authorPhotoUrl) : post.authorPhotoUrl}
+                companyLogoUrl={post.author === user?.displayName ? (user?.companyLogoUrl || post.authorCompanyLogoUrl) : post.authorCompanyLogoUrl}
+                name={post.author}
+                companyName={post.authorCompany || (post as any).company}
+                size={52}
+              />
             </div>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -423,15 +416,13 @@ export function PostDetailModal({
                   {/* Tier 1 Comment Header */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                      <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
-                        {comment.author === user?.displayName && user?.avatarUrl ? (
-                          <img src={user.avatarUrl} alt={comment.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
-                        ) : (
-                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9.5px', fontWeight: 800 }}>
-                            {comment.author.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
-                          </div>
-                        )}
-                      </div>
+                      <UserAvatar
+                        avatarUrl={comment.author === user?.displayName ? user?.avatarUrl : (comment as any).authorPhotoUrl || (comment as any).avatarUrl}
+                        companyLogoUrl={comment.author === user?.displayName ? user?.companyLogoUrl : (comment as any).companyLogoUrl}
+                        name={comment.author}
+                        companyName={(comment as any).company}
+                        size={22}
+                      />
                       <b
                         style={{ fontSize: '13px', color: 'var(--ink)', cursor: 'pointer' }}
                         onClick={() => onOpenProfile(comment.author)}
@@ -504,15 +495,13 @@ export function PostDetailModal({
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <div className="avatar" style={{ width: '20px', height: '20px', padding: 0, overflow: 'hidden' }}>
-                              {reply.author === user?.displayName && user?.avatarUrl ? (
-                                <img src={user.avatarUrl} alt={reply.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
-                              ) : (
-                                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9px', fontWeight: 800 }}>
-                                  {reply.author.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
-                                </div>
-                              )}
-                            </div>
+                            <UserAvatar
+                              avatarUrl={reply.author === user?.displayName ? user?.avatarUrl : (reply as any).authorPhotoUrl || (reply as any).avatarUrl}
+                              companyLogoUrl={reply.author === user?.displayName ? user?.companyLogoUrl : (reply as any).companyLogoUrl}
+                              name={reply.author}
+                              companyName={(reply as any).company}
+                              size={20}
+                            />
                             <b
                               style={{ fontSize: '12px', color: 'var(--ink)', cursor: 'pointer' }}
                               onClick={() => onOpenProfile(reply.author)}
@@ -572,15 +561,13 @@ export function PostDetailModal({
                               {reply.replies.map((nested) => (
                                 <div key={nested.id} style={{ background: '#ffffff', padding: '8px 10px', borderRadius: '6px', border: '1px solid var(--line-light)' }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    <div className="avatar" style={{ width: '18px', height: '18px', padding: 0, overflow: 'hidden' }}>
-                                      {nested.author === user?.displayName && user?.avatarUrl ? (
-                                        <img src={user.avatarUrl} alt={nested.author} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
-                                      ) : (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '8px', fontWeight: 800 }}>
-                                          {nested.author.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase() || 'U'}
-                                        </div>
-                                      )}
-                                    </div>
+                                    <UserAvatar
+                                      avatarUrl={nested.author === user?.displayName ? user?.avatarUrl : (nested as any).authorPhotoUrl || (nested as any).avatarUrl}
+                                      companyLogoUrl={nested.author === user?.displayName ? user?.companyLogoUrl : (nested as any).companyLogoUrl}
+                                      name={nested.author}
+                                      companyName={(nested as any).company}
+                                      size={18}
+                                    />
                                     <b
                                       style={{ fontSize: '11.5px', color: 'var(--ink)', cursor: 'pointer' }}
                                       onClick={() => onOpenProfile(nested.author)}

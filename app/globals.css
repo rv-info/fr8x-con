@@ -4359,3 +4359,49 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   color: #94A3B8 !important;
   letter-spacing: 0.3px !important;
 }
+
+/* ==========================================================================
+   FR8X GLOBAL PROFILE PICTURE & OVERLAPPING COMPANY LOGO STANDARD
+   ========================================================================== */
+.fr8x-user-avatar {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  overflow: visible !important;
+  vertical-align: middle !important;
+}
+
+.fr8x-avatar-circle {
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.fr8x-avatar-circle img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center !important;
+  display: block !important;
+}
+
+.fr8x-avatar-company-logo {
+  box-sizing: border-box !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #FFFFFF !important;
+  overflow: hidden !important;
+}
+
+.fr8x-avatar-company-logo img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+  background: transparent !important;
+}

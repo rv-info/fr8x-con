@@ -29,6 +29,7 @@ import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 
 export default function DashboardPage() {
   const { auctions, mySubmittedBids, rates, notifications, jobs, posts, isHydrated } = useData();
@@ -115,9 +116,7 @@ export default function DashboardPage() {
       {/* Welcome Header */}
       <div className="dashboard-welcome">
         <div className="dashboard-welcome-left">
-          <div className="avatar big" style={{ flexShrink: 0 }}>
-            {(user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User').split(' ').map((p: string) => p[0]).join('').substring(0, 2).toUpperCase()}
-          </div>
+          <UserAvatar user={user} size={54} style={{ flexShrink: 0 }} />
           <div>
             <h1 style={{ fontSize: '18px', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
               Good {new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 17 ? 'afternoon' : 'evening'},{' '}

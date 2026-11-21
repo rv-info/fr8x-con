@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { UserProfile } from '@/lib/types';
 import { GoldenTick } from '@/components/ui/GoldenTick';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   calculateConnectionAffinity,
   getDailyConnectionRecommendations,
@@ -621,44 +622,16 @@ export function DailyRecommendationsWidget({
               {/* User Bio Header */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                 <div
-                  className="avatar"
                   onClick={() => onViewProfile(u.uid, uName)}
-                  style={{
-                    width: '42px',
-                    height: '42px',
-                    padding: 0,
-                    overflow: 'hidden',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    flexShrink: 0,
-                    border: '1.5px solid #cbd5e1',
-                  }}
+                  style={{ cursor: 'pointer', flexShrink: 0 }}
                 >
-                  {u.avatarUrl ? (
-                    <img src={u.avatarUrl} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        background: 'linear-gradient(135deg, #1168d7, #099889)',
-                        color: '#ffffff',
-                        fontSize: '14px',
-                        fontWeight: 800,
-                      }}
-                    >
-                      {(() => {
-                        const parts = uName.trim().split(/\s+/).filter(Boolean);
-                        if (parts.length >= 2) {
-                          return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-                        }
-                        return (parts[0] ? parts[0].slice(0, 2) : 'U').toUpperCase();
-                      })()}
-                    </div>
-                  )}
+                  <UserAvatar
+                    avatarUrl={u.avatarUrl}
+                    companyLogoUrl={u.companyLogoUrl || (u as any).company_logo_url}
+                    name={uName}
+                    companyName={u.company}
+                    size={42}
+                  />
                 </div>
 
                 <div style={{ minWidth: 0, flex: 1 }}>

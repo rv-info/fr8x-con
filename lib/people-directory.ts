@@ -31,6 +31,9 @@ export interface DirectoryMember {
   phone?: string;
   mobile?: string;
   avatar_url?: string;
+  avatarUrl?: string;
+  company_logo_url?: string;
+  companyLogoUrl?: string;
   bio?: string;
   summary?: string;
   is_verified: boolean;

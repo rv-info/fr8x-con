@@ -4,6 +4,7 @@ import React, { useMemo } from 'react';
 import { Modal } from './Modal';
 import { LocalTimeBadge } from './LocalTimeBadge';
 import { GoldenTick } from './GoldenTick';
+import { UserAvatar } from './UserAvatar';
 import { useChat } from '@/lib/context/ChatContext';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
@@ -859,41 +860,13 @@ export function ProfilePreviewModal({
             border: '1px solid var(--line)',
           }}
         >
-          <div
-            className="avatar big"
-            style={{ width: '58px', height: '58px', padding: 0, overflow: 'hidden', flexShrink: 0 }}
-          >
-            {resolvedAvatar ? (
-              <img
-                src={resolvedAvatar}
-                alt={resolvedName}
-                className="profile-img-avatar"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, #1168d7, #099889)',
-                  color: '#ffffff',
-                  fontSize: '20px',
-                  fontWeight: 800,
-                }}
-              >
-                {resolvedName
-                  .split(' ')
-                  .map((p: string) => p[0])
-                  .filter(Boolean)
-                  .join('')
-                  .substring(0, 2)
-                  .toUpperCase() || 'P'}
-              </div>
-            )}
-          </div>
+          <UserAvatar
+            name={resolvedName}
+            avatarUrl={resolvedAvatar}
+            companyLogoUrl={resolvedCompanyLogo}
+            companyName={resolvedCompany}
+            size={58}
+          />
 
           <div style={{ flex: 1, minWidth: '220px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
@@ -1429,15 +1402,13 @@ export function ProfilePreviewModal({
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <div className="avatar" style={{ width: '40px', height: '40px', padding: 0, overflow: 'hidden' }}>
-              {resolvedAvatar ? (
-                <img src={resolvedAvatar} alt={resolvedName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#fff', fontSize: '14px', fontWeight: 700 }}>
-                  {resolvedName.slice(0, 2).toUpperCase()}
-                </div>
-              )}
-            </div>
+            <UserAvatar
+              name={resolvedName}
+              avatarUrl={resolvedAvatar}
+              companyLogoUrl={resolvedCompanyLogo}
+              companyName={resolvedCompany}
+              size={40}
+            />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700, fontSize: '13px', color: 'var(--ink)' }}>{resolvedName}</div>
               <div style={{ fontSize: '11px', color: 'var(--mut)' }}>{resolvedRole} · {resolvedCompany}</div>

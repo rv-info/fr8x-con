@@ -79,6 +79,8 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
         <UserAvatar
           name={name}
           avatarUrl={person.avatar_url ?? undefined}
+          companyLogoUrl={(person as any).company_logo_url || (person as any).companyLogoUrl || undefined}
+          companyName={person.company_name || (person as any).company || undefined}
           size={40}
         />
 
@@ -145,6 +147,8 @@ export function PersonCard({ person, view = 'card', className = '' }: PersonCard
         <UserAvatar
           name={name}
           avatarUrl={person.avatar_url ?? undefined}
+          companyLogoUrl={(person as any).company_logo_url || (person as any).companyLogoUrl || undefined}
+          companyName={person.company_name || (person as any).company || undefined}
           size={64}
         />
         {person.is_verified && (

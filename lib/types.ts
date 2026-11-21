@@ -56,10 +56,12 @@ export interface ConnectionRequest {
   senderRole?: string;
   senderCompany?: string;
   senderAvatarUrl?: string;
+  senderCompanyLogoUrl?: string;
   senderEmail?: string;
   recipientName?: string;
   recipientCompany?: string;
   recipientAvatarUrl?: string;
+  recipientCompanyLogoUrl?: string;
   note?: string;
   status: ConnectionRequestStatus;
   createdAt: string;
@@ -748,6 +750,7 @@ export interface ChatContact {
   unreadCount: number;
   hasGoldenTick?: boolean;
   avatarUrl?: string;
+  companyLogoUrl?: string;
   contextRecord?: {
     type: 'auction' | 'rate' | 'job' | 'company';
     id: string;

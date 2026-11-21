@@ -23,6 +23,7 @@ import {
 import { Modal } from '@/components/ui/Modal';
 import { UserProfile } from '@/lib/types';
 import { GoldenTick } from '@/components/ui/GoldenTick';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import {
   calculateConnectionAffinity,
   MatchReason,
@@ -698,42 +699,20 @@ export function SearchConnectionsModal({
                     {/* Candidate Identity */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', flex: 1, minWidth: 0 }}>
                       <div
-                        className="avatar"
                         onClick={() => {
                           onClose();
                           if (onViewProfile) onViewProfile(candidate.uid, cName);
                           else if (typeof window !== 'undefined') window.location.href = `/people/${candidate.uid}`;
                         }}
-                        style={{
-                          width: '46px',
-                          height: '46px',
-                          padding: 0,
-                          overflow: 'hidden',
-                          borderRadius: '50%',
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                          border: '1.5px solid #cbd5e1',
-                        }}
+                        style={{ cursor: 'pointer', flexShrink: 0 }}
                       >
-                        {candidate.avatarUrl ? (
-                          <img src={candidate.avatarUrl} alt={cName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        ) : (
-                          <div
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              background: 'linear-gradient(135deg, #1168d7, #099889)',
-                              color: '#ffffff',
-                              fontSize: '15px',
-                              fontWeight: 800,
-                            }}
-                          >
-                            {cName.slice(0, 2).toUpperCase()}
-                          </div>
-                        )}
+                        <UserAvatar
+                          avatarUrl={candidate.avatarUrl}
+                          companyLogoUrl={candidate.companyLogoUrl || (candidate as any).company_logo_url}
+                          name={cName}
+                          companyName={candidate.company}
+                          size={46}
+                        />
                       </div>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
