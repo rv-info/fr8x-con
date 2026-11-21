@@ -1521,7 +1521,7 @@ export default function FeedsPage() {
           <div className="cardhead" style={{ fontSize: '12px' }}>
             <b>Quick Shortcuts</b>
           </div>
-          <div style={{ padding: '6px' }}>
+          <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <Link href="/auctions/create" className="feed-shortcut-link">
               <Gavel size={15} color="var(--brand)" />
               <span>Create Reverse Auction</span>
@@ -1535,9 +1535,10 @@ export default function FeedsPage() {
               <span>Trade Careers</span>
             </Link>
             <button
+              type="button"
               onClick={() => setShowJobCreateModal(true)}
               className="feed-shortcut-link"
-              style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+              style={{ width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
               <Plus size={15} color="var(--brand)" />
               <span>Post a Job</span>

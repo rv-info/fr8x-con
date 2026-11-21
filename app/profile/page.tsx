@@ -2038,304 +2038,268 @@ export default function ProfilePage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
           {/* Avatar + Background CO Symbol + User Info */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
-            {/* 5-Layer Stack: 1. Card Bg | 2. CO Symbol | 3. Circular Avatar | 4. GoldenTick Badge | 5. Camera/Edit Controls */}
-            <div
-              style={{
-                position: 'relative',
-                width: '106px',
-                height: '106px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              {/* LAYER 2: Subtle Geometric "CO" Background Symbol (40% larger than 76px avatar = 106px diameter) */}
-              <div
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  borderRadius: '50%',
-                  background: 'var(--fr8x-input)',
-                  border: '1px dashed var(--fr8x-outline)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  zIndex: 1,
-                  userSelect: 'none',
-                  pointerEvents: 'none',
-                }}
-              >
-                <span
+            {/* DUAL MEDIA CONTROLS: 1. Profile Picture & 2. Company Logo (Identical 88px x 88px Balanced Architecture) */}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '20px', flexWrap: 'wrap' }}>
+              {/* Media Box 1: Profile Picture */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div
                   style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '32px',
-                    fontWeight: 900,
-                    letterSpacing: '-0.06em',
-                    color: 'var(--fr8x-container)',
-                    lineHeight: 1,
-                  }}
-                >
-                  CO
-                </span>
-              </div>
-
-              {/* LAYER 3: Circular Avatar (Reduced by exactly 10%: 84px -> 75.6px ≈ 76px) */}
-              <div
-                style={{
-                  position: 'relative',
-                  width: '76px',
-                  height: '76px',
-                  borderRadius: '50%',
-                  zIndex: 2,
-                  boxShadow: 'var(--sh)',
-                }}
-              >
-                {effectiveAvatarUrl ? (
-                  <img
-                    src={effectiveAvatarUrl}
-                    alt="Profile"
-                    style={{
-                      width: '76px',
-                      height: '76px',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '2px solid #fff',
-                      display: 'block',
-                    }}
-                  />
-                ) : (
-                  <div
-                    className="avatar hero"
-                    style={{
-                      width: '76px',
-                      height: '76px',
-                      fontSize: '24px',
-                      borderRadius: '50%',
-                      background: 'var(--fr8x-outline)',
-                      border: '2px solid #fff',
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: '#fff',
-                      fontWeight: 800,
-                    }}
-                  >
-                    {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'U').split(' ').map((p: string) => p[0] || '').join('').substring(0, 2).toUpperCase()}
-                  </div>
-                )}
-
-                {/* LAYER 4: Verified / Premium Brand Asset Badge */}
-                {user.hasGoldenTick && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      right: '-2px',
-                      zIndex: 3,
-                    }}
-                  >
-                    <GoldenTick size={20} title="FR8X Premium Verified" />
-                  </div>
-                )}
-
-                {/* LAYER 5: Camera / Upload Profile Photo Trigger */}
-                <label
-                  style={{
-                    position: 'absolute',
-                    bottom: '-2px',
-                    right: '-2px',
-                    background: 'var(--fr8x-outline)',
-                    color: '#fff',
-                    borderRadius: '50%',
-                    width: '22px',
-                    height: '22px',
+                    position: 'relative',
+                    width: '88px',
+                    height: '88px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #E2E8F0',
+                    background: '#FAFBFD',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    cursor: 'pointer',
-                    boxShadow: 'var(--sh)',
-                    border: '1.5px solid #fff',
-                    zIndex: 4,
-                  }}
-                  title="Upload profile photo"
-                >
-                  <Camera size={10} />
-                  <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
-                </label>
-
-                {/* Remove Profile Photo Trigger (if photo exists) */}
-                {effectiveAvatarUrl && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      setAvatarUrl(null);
-                      setAvatarRemoved(true);
-                      const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-                      if (activeUid) {
-                        try {
-                          localStorage.removeItem(`fr8x_user_avatar_${activeUid}`);
-                          localStorage.removeItem('fr8x_user_avatar');
-                        } catch {}
-                      }
-                      updateUser({ avatarUrl: '' });
-                      if (activeUid) {
-                        try {
-                          await fetch('/api/user/profile', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                              'x-fr8x-user-uid': activeUid,
-                              'x-fr8x-session': activeUid,
-                            },
-                            body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
-                          });
-                          await profileService.updateProfile(activeUid, { avatarUrl: '' });
-                        } catch {}
-                      }
-                      toast('Profile photo removed successfully.');
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '-2px',
-                      left: '-2px',
-                      background: '#dc2626',
-                      color: '#fff',
-                      borderRadius: '50%',
-                      width: '22px',
-                      height: '22px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      boxShadow: 'var(--sh)',
-                      border: '1.5px solid #fff',
-                      zIndex: 5,
-                    }}
-                    title="Remove profile photo"
-                  >
-                    <Trash2 size={10} />
-                  </button>
-                )}
-
-                {/* Company Logo Badge — lower-left overlay */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    bottom: '-4px',
-                    left: '-14px',
-                    zIndex: 4,
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)',
                   }}
                 >
-                  <div style={{ position: 'relative' }}>
-                    {effectiveCompanyLogoUrl ? (
-                      <img
-                        src={effectiveCompanyLogoUrl}
-                        alt="Company Logo"
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '5px',
-                          objectFit: 'contain',
-                          background: '#fff',
-                          border: '1.5px solid var(--fr8x-outline)',
-                          padding: '1px',
-                        }}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          width: '30px',
-                          height: '30px',
-                          borderRadius: '5px',
-                          background: 'var(--fr8x-input)',
-                          border: '1.5px solid var(--fr8x-outline)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: 'var(--fr8x-text)',
-                        }}
-                      >
-                        <Building2 size={12} />
-                        <span style={{ fontSize: '6.5px', fontWeight: 800 }}>CO</span>
-                      </div>
-                    )}
-                    {/* Upload company logo trigger */}
-                    <label
+                  {effectiveAvatarUrl ? (
+                    <img
+                      src={effectiveAvatarUrl}
+                      alt="Profile"
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        display: 'block',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: '80px',
+                        height: '80px',
+                        fontSize: '22px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #1B2B4B, #47799E)',
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: '#fff',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {resolveDisplayName({ firstName, lastName, displayName: user.displayName, email: user.email }, 'U')
+                        .split(' ')
+                        .map((p: string) => p[0] || '')
+                        .join('')
+                        .substring(0, 2)
+                        .toUpperCase()}
+                    </div>
+                  )}
+
+                  {/* Golden Tick Badge */}
+                  {user.hasGoldenTick && (
+                    <div
                       style={{
                         position: 'absolute',
-                        bottom: '-3px',
-                        right: '-3px',
-                        background: 'var(--fr8x-outline)',
-                        color: '#fff',
-                        borderRadius: '50%',
-                        width: '14px',
-                        height: '14px',
-                        display: 'flex',
+                        top: '-5px',
+                        right: '-5px',
+                        zIndex: 3,
+                      }}
+                    >
+                      <GoldenTick size={18} title="FR8X Premium Verified" />
+                    </div>
+                  )}
+                </div>
+
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Profile Photo
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <label
+                    title="Upload profile photo"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #CBD5E1',
+                      background: '#F8FAFC',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#1E293B',
+                      fontFamily: 'Calibri, sans-serif',
+                    }}
+                  >
+                    <Camera size={11} /> {effectiveAvatarUrl ? 'Change' : 'Upload'}
+                    <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
+                  </label>
+                  {effectiveAvatarUrl && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setAvatarUrl(null);
+                        setAvatarRemoved(true);
+                        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+                        if (activeUid) {
+                          try {
+                            localStorage.removeItem(`fr8x_user_avatar_${activeUid}`);
+                            localStorage.removeItem('fr8x_user_avatar');
+                          } catch {}
+                        }
+                        updateUser({ avatarUrl: '' });
+                        if (activeUid) {
+                          try {
+                            await fetch('/api/user/profile', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'x-fr8x-user-uid': activeUid,
+                                'x-fr8x-session': activeUid,
+                              },
+                              body: JSON.stringify({ uid: activeUid, email: user.email, updates: { avatarUrl: '' } }),
+                            });
+                            await profileService.updateProfile(activeUid, { avatarUrl: '' });
+                          } catch {}
+                        }
+                        toast('Profile photo removed successfully.');
+                      }}
+                      title="Remove profile photo"
+                      style={{
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         cursor: 'pointer',
-                        border: '1px solid #fff',
+                        padding: '3px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #FECACA',
+                        background: '#FEF2F2',
+                        color: '#DC2626',
                       }}
-                      title="Upload company logo"
                     >
-                      <Upload size={7} />
-                      <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
-                    </label>
-                    {/* Remove company logo trigger (if logo exists) */}
-                    {effectiveCompanyLogoUrl && (
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setCompanyLogoUrl(null);
-                          setLogoRemoved(true);
-                          const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
-                          if (activeUid) {
-                            try {
-                              localStorage.removeItem(`fr8x_user_logo_${activeUid}`);
-                              localStorage.removeItem('fr8x_user_logo');
-                            } catch {}
-                          }
-                          updateUser({ companyLogoUrl: '' });
-                          if (activeUid) {
-                            try {
-                              await fetch('/api/user/profile', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                  'x-fr8x-user-uid': activeUid,
-                                  'x-fr8x-session': activeUid,
-                                },
-                                body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: '' } }),
-                              });
-                              await profileService.updateProfile(activeUid, { companyLogoUrl: '' });
-                            } catch {}
-                          }
-                          toast('Company logo removed successfully.');
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: '-4px',
-                          left: '-4px',
-                          background: '#dc2626',
-                          color: '#fff',
-                          borderRadius: '50%',
-                          width: '14px',
-                          height: '14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          border: '1px solid #fff',
-                          padding: 0,
-                          zIndex: 6,
-                        }}
-                        title="Remove company logo"
-                      >
-                        <Trash2 size={7} />
-                      </button>
-                    )}
-                  </div>
+                      <Trash2 size={11} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Media Box 2: Company Logo */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div
+                  style={{
+                    position: 'relative',
+                    width: '88px',
+                    height: '88px',
+                    borderRadius: '8px',
+                    border: '1.5px solid #E2E8F0',
+                    background: '#FAFBFD',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '8px',
+                    overflow: 'hidden',
+                    boxShadow: '0 2px 8px rgba(15, 23, 42, 0.05)',
+                  }}
+                >
+                  {effectiveCompanyLogoUrl ? (
+                    <img
+                      src={effectiveCompanyLogoUrl}
+                      alt="Company Logo"
+                      style={{
+                        maxWidth: '100%',
+                        maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        display: 'block',
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#64748B',
+                      }}
+                    >
+                      <Building2 size={28} color="#47799E" />
+                      <span style={{ fontSize: '9px', fontWeight: 800, marginTop: '2px', color: '#1B2B4B' }}>
+                        {company ? company.substring(0, 3).toUpperCase() : 'CO'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Company Logo
+                </span>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <label
+                    title="Upload company logo (PNG with transparency supported)"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      cursor: 'pointer',
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #CBD5E1',
+                      background: '#F8FAFC',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: '#1E293B',
+                      fontFamily: 'Calibri, sans-serif',
+                    }}
+                  >
+                    <Upload size={11} /> {effectiveCompanyLogoUrl ? 'Change' : 'Upload'}
+                    <input type="file" accept="image/*" onChange={handleCompanyLogoUpload} style={{ display: 'none' }} />
+                  </label>
+                  {effectiveCompanyLogoUrl && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setCompanyLogoUrl(null);
+                        setLogoRemoved(true);
+                        const activeUid = user.uid || (typeof window !== 'undefined' ? localStorage.getItem('fr8x_active_user_uid') : null);
+                        if (activeUid) {
+                          try {
+                            localStorage.removeItem(`fr8x_user_logo_${activeUid}`);
+                            localStorage.removeItem('fr8x_user_logo');
+                          } catch {}
+                        }
+                        updateUser({ companyLogoUrl: '' });
+                        if (activeUid) {
+                          try {
+                            await fetch('/api/user/profile', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                'x-fr8x-user-uid': activeUid,
+                                'x-fr8x-session': activeUid,
+                              },
+                              body: JSON.stringify({ uid: activeUid, email: user.email, updates: { companyLogoUrl: '' } }),
+                            });
+                            await profileService.updateProfile(activeUid, { companyLogoUrl: '' });
+                          } catch {}
+                        }
+                        toast('Company logo removed successfully.');
+                      }}
+                      title="Remove company logo"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        padding: '3px 6px',
+                        borderRadius: '4px',
+                        border: '1px solid #FECACA',
+                        background: '#FEF2F2',
+                        color: '#DC2626',
+                      }}
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

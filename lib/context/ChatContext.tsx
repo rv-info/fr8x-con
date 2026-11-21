@@ -18,12 +18,51 @@ interface ChatContextType {
   contacts: ChatContact[];
   allMessages: Record<string, ChatMessage[]>;
   totalUnreadCount: number;
-  openChatWith: (contactId: string, context?: ChatContact['contextRecord']) => void;
+  openChatWith: (contactId: string, context?: ChatContact['contextRecord'], contactDetails?: Partial<ChatContact>) => void;
   closeChatWindow: (contactId: string) => void;
   toggleMinimizeWindow: (contactId: string) => void;
   sendMessageTo: (contactId: string, text: string) => void;
   getContact: (contactId: string) => ChatContact | undefined;
   getMessagesFor: (contactId: string) => ChatMessage[];
+}
+
+function isRawUUIDOrId(val?: string): boolean {
+  if (!val) return false;
+  const s = val.trim().toLowerCase();
+  return (
+    s.startsWith('usr_') ||
+    s.startsWith('u-') ||
+    s.startsWith('comp_') ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ||
+    /^[0-9a-f]{20,}$/i.test(s) ||
+    (s.length > 20 && /^[a-z0-9_-]+$/i.test(s))
+  );
+}
+
+function resolveCleanIdentity(
+  contactId: string,
+  context?: ChatContact['contextRecord'],
+  providedDetails?: Partial<ChatContact>
+): { name: string; company: string; role: string; avatarUrl?: string } {
+  let name = providedDetails?.name && !isRawUUIDOrId(providedDetails.name) ? providedDetails.name : '';
+  let company = providedDetails?.company && !isRawUUIDOrId(providedDetails.company) ? providedDetails.company : 'Verified Logistics Provider';
+  let role = providedDetails?.role && !isRawUUIDOrId(providedDetails.role) ? providedDetails.role : 'Forwarding Specialist';
+
+  // Check context title (e.g., "Chat with Captain Vikram Singh")
+  if (!name && context?.title) {
+    const match = context.title.match(/Chat with\s+([^·|\n]+)/i);
+    if (match && match[1] && !isRawUUIDOrId(match[1])) {
+      name = match[1].trim();
+    } else if (!isRawUUIDOrId(context.title)) {
+      name = context.title.split('·')[0].trim();
+    }
+  }
+
+  if (!name || isRawUUIDOrId(name)) {
+    name = 'Verified Freight Partner';
+  }
+
+  return { name, company, role, avatarUrl: providedDetails?.avatarUrl };
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -56,7 +95,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         const parsed = JSON.parse(savedContacts);
         if (Array.isArray(parsed)) {
           const dummyIds = new Set(['sarah', 'kiran', 'ravi', 'priya']);
-          setContacts(parsed.filter((c: any) => !dummyIds.has(c.id)));
+          const sanitized = parsed
+            .filter((c: any) => !dummyIds.has(c.id))
+            .map((c: any) => {
+              if (isRawUUIDOrId(c.name) || !c.name) {
+                const clean = resolveCleanIdentity(c.id, c.contextRecord, c);
+                return { ...c, name: clean.name, company: clean.company, role: clean.role };
+              }
+              return c;
+            });
+          setContacts(sanitized);
         }
       }
 
@@ -126,30 +174,58 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     return allMessages[contactId] || [];
   };
 
-  const openChatWith = (contactId: string, context?: ChatContact['contextRecord']) => {
+  const openChatWith = (
+    contactId: string,
+    context?: ChatContact['contextRecord'],
+    contactDetails?: Partial<ChatContact>
+  ) => {
     let target = contacts.find((c) => c.id === contactId);
     let nextContacts: ChatContact[];
 
+    const sanitizedContext = context
+      ? {
+          ...context,
+          id: isRawUUIDOrId(context.id)
+            ? context.type
+              ? `${context.type.toUpperCase()}`
+              : 'TRADE-REF'
+            : context.id,
+        }
+      : undefined;
+
     if (!target) {
-      target = {
+      const clean = resolveCleanIdentity(contactId, sanitizedContext, contactDetails);
+      const newContact: ChatContact = {
         id: contactId,
-        name: contactId.charAt(0).toUpperCase() + contactId.slice(1),
-        role: 'Freight Professional',
-        company: 'Partner Logistics',
+        name: clean.name,
+        role: clean.role,
+        company: clean.company,
+        avatarUrl: clean.avatarUrl,
         location: 'Global',
         timezone: 'Asia/Kolkata',
         online: true,
         unreadCount: 0,
-        contextRecord: context,
+        contextRecord: sanitizedContext,
       };
-      nextContacts = [target, ...contacts];
+      nextContacts = [newContact, ...contacts];
     } else {
       nextContacts = contacts.map((c) => {
         if (c.id !== contactId) return c;
+        const clean = resolveCleanIdentity(contactId, sanitizedContext || c.contextRecord, {
+          name: c.name,
+          company: c.company,
+          role: c.role,
+          avatarUrl: c.avatarUrl,
+          ...contactDetails,
+        });
         return {
           ...c,
+          name: clean.name,
+          company: clean.company,
+          role: clean.role,
+          avatarUrl: clean.avatarUrl || c.avatarUrl,
           unreadCount: 0,
-          contextRecord: context || c.contextRecord,
+          contextRecord: sanitizedContext || c.contextRecord,
         };
       });
     }

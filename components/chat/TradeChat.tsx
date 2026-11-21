@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useChat } from '@/lib/context/ChatContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
@@ -14,6 +15,19 @@ import {
   ExternalLink,
   ShieldCheck,
 } from 'lucide-react';
+
+function isRawUUIDOrId(val?: string): boolean {
+  if (!val) return false;
+  const s = val.trim().toLowerCase();
+  return (
+    s.startsWith('usr_') ||
+    s.startsWith('u-') ||
+    s.startsWith('comp_') ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ||
+    /^[0-9a-f]{20,}$/i.test(s) ||
+    (s.length > 20 && /^[a-z0-9_-]+$/i.test(s))
+  );
+}
 
 interface SingleChatBoxProps {
   contactId: string;
@@ -61,10 +75,20 @@ function SingleChatBox({
 }: SingleChatBoxProps) {
   const { getContact, getMessagesFor, sendMessageTo } = useChat();
   const [inputText, setInputText] = useState('');
+  const [isMaximized, setIsMaximized] = useState(false);
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
   const contact = getContact(contactId);
   const messages = getMessagesFor(contactId);
+
+  const cleanName =
+    contact?.name && !isRawUUIDOrId(contact.name)
+      ? contact.name
+      : 'Verified Freight Partner';
+  const cleanCompany =
+    contact?.company && !isRawUUIDOrId(contact.company)
+      ? contact.company
+      : 'Verified Logistics Provider';
 
   useEffect(() => {
     if (!isMinimized && chatBodyRef.current) {
@@ -82,9 +106,10 @@ function SingleChatBox({
     sendMessageTo(contactId, txt);
   };
 
-  const initials = (contact?.name || 'Contact')
+  const initials = cleanName
     .split(' ')
     .map((p) => p[0])
+    .filter(Boolean)
     .join('')
     .substring(0, 2)
     .toUpperCase();
@@ -94,18 +119,18 @@ function SingleChatBox({
       <div
         className="minichattab"
         onClick={onMinimize}
-        title={`Restore chat with ${contact?.name || 'Contact'}`}
+        title={`Restore chat with ${cleanName}`}
       >
         <div className="avatar" style={{ width: '22px', height: '22px', padding: 0, overflow: 'hidden' }}>
           {(contact as any)?.avatarUrl ? (
-            <img src={(contact as any).avatarUrl} alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+            <img src={(contact as any).avatarUrl} alt={cleanName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '9px', fontWeight: 800 }}>
-              {(contact?.name || 'C').split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+              {initials}
             </div>
           )}
         </div>
-        <span className="name" style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{contact?.name || 'Chat'}</span>
+        <span className="name" style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 700 }}>{cleanName}</span>
         {contact?.hasGoldenTick && <GoldenTick />}
         <button
           onClick={(e) => {
@@ -122,27 +147,27 @@ function SingleChatBox({
   }
 
   return (
-    <div className="singlechatwindow">
+    <div className={`singlechatwindow ${isMaximized ? 'maximized' : ''}`}>
       {/* Header */}
       <div className="chathead" style={{ padding: '10px 14px', minHeight: '48px' }}>
         <div
           className="userinfo"
-          onClick={() => contact && onOpenProfile(contact.name)}
+          onClick={() => onOpenProfile(cleanName)}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 }}
           title="View profile"
         >
           <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden', flexShrink: 0 }}>
             {(contact as any)?.avatarUrl ? (
-              <img src={(contact as any).avatarUrl} alt={contact?.name || 'Contact'} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+              <img src={(contact as any).avatarUrl} alt={cleanName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
             ) : (
               <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '11px', fontWeight: 800 }}>
-                {(contact?.name || 'C').split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+                {initials}
               </div>
             )}
           </div>
           <div style={{ overflow: 'hidden', minWidth: 0, flex: 1 }}>
             <b style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: 'var(--fr8x-text, #1e293b)', fontWeight: 800, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              <span style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 800 }}>{contact?.name || 'Contact'}</span>
+              <span style={{ color: 'var(--fr8x-text, #1e293b)', fontWeight: 800 }}>{cleanName}</span>
               {contact?.hasGoldenTick && <GoldenTick />}
             </b>
             <small style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'var(--fr8x-muted, #475569)', fontWeight: 500, textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -159,28 +184,44 @@ function SingleChatBox({
                   : contact?.online
                   ? 'Active'
                   : 'Away'}{' '}
-                · {contact?.company}
+                · {cleanCompany}
               </span>
             </small>
           </div>
         </div>
 
-        <div className="ha" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div className="ha" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
           <button
-            onClick={() => contact && onOpenProfile(contact.name)}
+            onClick={onMinimize}
+            title="Minimize chat"
+            className="actionicon"
+            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Minus size={13} />
+          </button>
+          <button
+            onClick={() => setIsMaximized(!isMaximized)}
+            title={isMaximized ? 'Restore normal window' : 'Maximize window'}
+            className="actionicon"
+            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Maximize2 size={13} />
+          </button>
+          <button
+            onClick={() => onOpenProfile(cleanName)}
             title="Open Profile"
             className="actionicon"
-            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ width: '26px', height: '26px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
-            <ExternalLink size={14} />
+            <ExternalLink size={13} />
           </button>
           <button
             onClick={onClose}
             title="Close chat"
             className="actionicon"
-            style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px', color: '#0f172a' }}
+            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px', color: '#0f172a' }}
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>
@@ -188,10 +229,13 @@ function SingleChatBox({
       {/* Linked Freight Record Context Bar */}
       {contact?.contextRecord && (
         <div className="freightcontextbar">
-          <span>
-            Ref: <b>{contact.contextRecord.id}</b>
+          <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#1b2b4b' }}>
+            <ShieldCheck size={12} color="#1b2b4b" />
+            <span>Trade Context</span>
           </span>
-          <span className="conttitle">{contact.contextRecord.title}</span>
+          <span className="conttitle" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '240px', fontSize: '11px', color: '#475569' }}>
+            {contact.contextRecord.title || 'Direct Freight Discussion'}
+          </span>
         </div>
       )}
 
@@ -254,6 +298,7 @@ export function TradeChat() {
   const {
     isLauncherOpen,
     toggleLauncher,
+    setIsLauncherOpen,
     activeWindows,
     contacts,
     totalUnreadCount,
@@ -265,9 +310,30 @@ export function TradeChat() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProfileName, setSelectedProfileName] = useState<string | null>(null);
 
-  const filteredContacts = contacts.filter((c) =>
-    (c.name + ' ' + c.role + ' ' + c.company).toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const pathname = usePathname();
+  const prevPathRef = useRef(pathname);
+
+  // Route change listener: Auto-minimize open active windows and close launcher on navigation
+  useEffect(() => {
+    if (prevPathRef.current && prevPathRef.current !== pathname) {
+      if (isLauncherOpen) {
+        setIsLauncherOpen(false);
+      }
+      activeWindows.forEach((win) => {
+        if (!win.isMinimized) {
+          toggleMinimizeWindow(win.contactId);
+        }
+      });
+    }
+    prevPathRef.current = pathname;
+  }, [pathname, isLauncherOpen, activeWindows, setIsLauncherOpen, toggleMinimizeWindow]);
+
+  const filteredContacts = contacts.filter((c) => {
+    const cleanName = c.name && !isRawUUIDOrId(c.name) ? c.name : 'Verified Freight Partner';
+    const cleanRole = c.role && !isRawUUIDOrId(c.role) ? c.role : 'Forwarding Specialist';
+    const cleanCompany = c.company && !isRawUUIDOrId(c.company) ? c.company : 'Verified Logistics Provider';
+    return (cleanName + ' ' + cleanRole + ' ' + cleanCompany).toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <>
@@ -335,6 +401,11 @@ export function TradeChat() {
               </div>
             ) : (
               filteredContacts.map((c) => {
+                const displayName = c.name && !isRawUUIDOrId(c.name) ? c.name : 'Verified Freight Partner';
+                const displayRole = c.role && !isRawUUIDOrId(c.role) ? c.role : 'Forwarding Specialist';
+                const displayCompany = c.company && !isRawUUIDOrId(c.company) ? c.company : 'Verified Logistics Provider';
+                const initials = displayName.split(' ').map((p) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase();
+
                 return (
                   <div
                     key={c.id}
@@ -345,17 +416,17 @@ export function TradeChat() {
                   >
                     <div className="avatar" style={{ width: '28px', height: '28px', padding: 0, overflow: 'hidden' }}>
                       {(c as any).avatarUrl ? (
-                        <img src={(c as any).avatarUrl} alt={c.name} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
+                        <img src={(c as any).avatarUrl} alt={displayName} className="profile-img-avatar" style={{ width: '100%', height: '100%' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #1168d7, #099889)', color: '#ffffff', fontSize: '11px', fontWeight: 800 }}>
-                          {c.name.split(' ').map((p: string) => p[0]).filter(Boolean).join('').substring(0, 2).toUpperCase()}
+                          {initials}
                         </div>
                       )}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <b>
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {c.name}
+                          {displayName}
                         </span>
                         {c.hasGoldenTick && <GoldenTick />}
                       </b>
@@ -373,7 +444,7 @@ export function TradeChat() {
                             : c.online
                             ? 'Active'
                             : 'Away'}{' '}
-                          · {c.role} ({c.company})
+                          · {displayRole} ({displayCompany})
                         </span>
                       </small>
                       {c.contextRecord && (
@@ -388,7 +459,7 @@ export function TradeChat() {
                             marginTop: '3px',
                           }}
                         >
-                          Ref: {c.contextRecord.id}
+                          {c.contextRecord.title ? c.contextRecord.title.substring(0, 32) : 'Active Freight Context'}
                         </span>
                       )}
                     </div>

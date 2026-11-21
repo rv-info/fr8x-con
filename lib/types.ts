@@ -747,6 +747,7 @@ export interface ChatContact {
   presenceStatus?: PresenceStatus;
   unreadCount: number;
   hasGoldenTick?: boolean;
+  avatarUrl?: string;
   contextRecord?: {
     type: 'auction' | 'rate' | 'job' | 'company';
     id: string;

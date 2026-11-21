@@ -46,9 +46,17 @@ export async function compressImage(
           return;
         }
 
+        ctx.clearRect(0, 0, width, height);
         ctx.drawImage(img, 0, 0, width, height);
 
-        // WebP where supported, falling back to JPEG
+        // For PNG images (especially logos), strictly preserve PNG format and alpha channel transparency
+        if (file.type === 'image/png') {
+          const pngData = canvas.toDataURL('image/png');
+          resolve(pngData);
+          return;
+        }
+
+        // For other formats (JPEG/WebP), optimize with WebP fallback to JPEG
         try {
           const webpData = canvas.toDataURL('image/webp', quality);
           if (webpData.startsWith('data:image/webp')) {
@@ -57,8 +65,7 @@ export async function compressImage(
           }
         } catch {}
 
-        const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
-        const dataUrl = canvas.toDataURL(mime, quality);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
         resolve(dataUrl);
       };
       img.src = e.target?.result as string;

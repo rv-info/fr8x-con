@@ -13,9 +13,18 @@ import {
   resolveDisplayName,
 } from '@/lib/utils';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { NetworkStatusPill } from './NetworkStatusPill';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
+import { useChat } from '@/lib/context/ChatContext';
+import { useToast } from '@/lib/context/ToastContext';
+import {
+  getConnectionStatus,
+  sendConnectionRequest,
+  acceptConnectionRequest,
+  CONNECTIONS_CHANGED_EVENT,
+} from '@/lib/connections';
 
 import {
   BiGeoAlt as MapPin,
@@ -44,6 +53,17 @@ import {
   Anchor,
   Ship,
   Clock,
+  Building2,
+  UserPlus,
+  UserCheck,
+  MessageCircle,
+  Sparkles,
+  Loader2,
+  Plus,
+  ArrowRight,
+  CornerDownLeft,
+  Layers,
+  ChevronRight,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -121,21 +141,432 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
-  // Live search calculations
+  const router = useRouter();
+  const { toast } = useToast();
+  const { openChatWith } = useChat();
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [connectingUid, setConnectingUid] = useState<string | null>(null);
+  const [acceptingUid, setAcceptingUid] = useState<string | null>(null);
+  const [connRevision, setConnRevision] = useState(0);
+  const [remotePeople, setRemotePeople] = useState<any[]>([]);
+  const [remoteCompanies, setRemoteCompanies] = useState<any[]>([]);
+  const [isSearchingRemote, setIsSearchingRemote] = useState(false);
+
+  // Sync with connection changes across the app
+  useEffect(() => {
+    const handleConnChange = () => setConnRevision((v) => v + 1);
+    window.addEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
+    return () => window.removeEventListener(CONNECTIONS_CHANGED_EVENT, handleConnChange);
+  }, []);
+
+  // Debounced search for people & companies from server APIs
+  useEffect(() => {
+    const q = globalSearchQuery.trim();
+    if (q.length < 2) {
+      setRemotePeople([]);
+      setRemoteCompanies([]);
+      setIsSearchingRemote(false);
+      return;
+    }
+
+    let isMounted = true;
+    setIsSearchingRemote(true);
+    const timer = setTimeout(async () => {
+      try {
+        const [peopleRes, compRes] = await Promise.allSettled([
+          fetch(`/api/people/search?q=${encodeURIComponent(q)}&limit=10`),
+          fetch(`/api/companies/search?q=${encodeURIComponent(q)}`),
+        ]);
+
+        if (isMounted) {
+          if (peopleRes.status === 'fulfilled' && peopleRes.value.ok) {
+            const pData = await peopleRes.value.json();
+            if (pData.success && Array.isArray(pData.data)) {
+              setRemotePeople(pData.data);
+            }
+          }
+          if (compRes.status === 'fulfilled' && compRes.value.ok) {
+            const cData = await compRes.value.json();
+            if (cData.success && Array.isArray(cData.companies)) {
+              setRemoteCompanies(cData.companies);
+            }
+          }
+        }
+      } catch {
+      } finally {
+        if (isMounted) setIsSearchingRemote(false);
+      }
+    }, 250);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, [globalSearchQuery]);
+
+  const handleSendConnect = async (e: React.MouseEvent, targetPerson: any) => {
+    e.stopPropagation();
+    const targetUid = targetPerson.uid;
+    const targetName = resolveDisplayName(targetPerson);
+    setConnectingUid(targetUid);
+    try {
+      await sendConnectionRequest(user, targetPerson, "Hello, let's connect on FR8X network.");
+      toast(`Connection invitation sent to ${targetName}.`);
+      setConnRevision((v) => v + 1);
+    } catch (err: any) {
+      toast(err.message || 'Failed to send connection request.');
+    } finally {
+      setConnectingUid(null);
+    }
+  };
+
+  const handleAcceptRequest = async (e: React.MouseEvent, targetPerson: any) => {
+    e.stopPropagation();
+    const targetUid = targetPerson.uid;
+    const targetName = resolveDisplayName(targetPerson);
+    setAcceptingUid(targetUid);
+    try {
+      const ok = await acceptConnectionRequest('', user, targetUid);
+      if (ok) {
+        toast(`✓ Connected with ${targetName}!`);
+        setConnRevision((v) => v + 1);
+      } else {
+        toast('Failed to accept request.');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Error accepting request.');
+    } finally {
+      setAcceptingUid(null);
+    }
+  };
+
+  // Application Modules definition
+  const CORE_MODULES = [
+    { id: 'mod-feeds', name: 'Feeds & Discussions', desc: 'Trade updates, industry news & verified posts', href: '/feeds', icon: <Globe2 size={14} color="#1B2B4B" />, keywords: 'feeds posts discussions community updates' },
+    { id: 'mod-rates', name: 'Freight Rates & Rate Intelligence', desc: 'Ocean container spot rates, carriers & routing', href: '/rates', icon: <BarChart3 size={14} color="#0D9488" />, keywords: 'rates freight spot rates ocean intelligence 40hc 20dv shipping carrier pricing' },
+    { id: 'mod-auctions', name: 'Reverse Auctions', desc: 'Live container tender bidding & shipment RFQs', href: '/auctions', icon: <Gavel size={14} color="#1B2B4B" />, keywords: 'auctions reverse auction bidding rfq tender bid live room' },
+    { id: 'mod-create-auction', name: 'Post Reverse Auction', desc: 'Create a new container reverse auction tender', href: '/auctions/create', icon: <Plus size={14} color="#1B2B4B" />, keywords: 'create auction post tender new bid publish' },
+    { id: 'mod-network', name: 'Enterprise Logistics Directory & CRM', desc: 'Verified freight forwarders, carriers & partners', href: '/network', icon: <Users size={14} color="#2563EB" />, keywords: 'network directory crm contacts partners members people connections logistics directory' },
+    { id: 'mod-jobs', name: 'Trade Careers & Jobs', desc: 'Maritime & logistics employment opportunities', href: '/jobs', icon: <Briefcase size={14} color="#0891B2" />, keywords: 'jobs careers hiring vacancies employment logistics recruitment' },
+    { id: 'mod-nexus', name: 'Compliance & Blacklist', desc: 'Enterprise credibility, disputes & fraud prevention', href: '/nexus', icon: <ShieldCheck size={14} color="#D97706" />, keywords: 'nexus compliance blacklist credit risk dispute reputation' },
+    { id: 'mod-profile', name: 'Profile & Freight Passport', desc: 'Statutory registrations, licenses & company KYC', href: '/profile', icon: <UserIcon size={14} color="#1B2B4B" />, keywords: 'profile passport company kyc gstn pan identity account credentials my profile' },
+  ];
+
   const query = globalSearchQuery.trim().toLowerCase();
-  const matchedLocations = query.length >= 2 ? (masterLocations || []).filter((l) => l.unLocode.toLowerCase().includes(query) || l.name.toLowerCase().includes(query) || l.country.toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedCarriers = query.length >= 2 ? (masterCarriers || []).filter((c) => c.name.toLowerCase().includes(query) || c.scacCode.toLowerCase().includes(query) || c.type.toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedAuctions = query.length >= 2 ? auctions.filter((a) => a.title.toLowerCase().includes(query) || a.id.toLowerCase().includes(query) || a.shipment.pol.toLowerCase().includes(query) || a.shipment.pod.toLowerCase().includes(query) || a.shipment.commodity.toLowerCase().includes(query)).slice(0, 3) : [];
+
+  // 1. APPLICATION MODULES
+  const matchedModules = query.length >= 2
+    ? CORE_MODULES.filter((m) =>
+        m.name.toLowerCase().includes(query) ||
+        m.desc.toLowerCase().includes(query) ||
+        m.keywords.toLowerCase().includes(query)
+      ).slice(0, 3)
+    : [];
+
+  // 2. PEOPLE & PROFESSIONALS (allUsers + remotePeople)
+  const candidateUserMap = new Map<string, any>();
+  allUsers.forEach((u) => {
+    if (u && u.uid) candidateUserMap.set(u.uid, u);
+  });
+  remotePeople.forEach((p) => {
+    if (p && p.id && !candidateUserMap.has(p.id)) {
+      candidateUserMap.set(p.id, {
+        uid: p.id,
+        displayName: p.full_name || p.display_name,
+        company: p.company || p.company_name,
+        designation: p.headline || p.designation,
+        city: p.city || (p.location ? p.location.split(',')[0]?.trim() : ''),
+        country: p.country || (p.location ? p.location.split(',')[1]?.trim() : 'India'),
+        avatarUrl: p.avatar_url,
+        isVerified: p.is_verified,
+        hasGoldenTick: p.has_golden_tick,
+      });
+    }
+  });
+
+  const matchedPeopleRaw = query.length >= 2
+    ? Array.from(candidateUserMap.values()).filter((u) => {
+        const uUid = String(u.uid || u.id || '').trim().toLowerCase();
+        const myUid = String(user.uid || '').trim().toLowerCase();
+        const myEmail = String(user.email || '').trim().toLowerCase();
+        const uEmail = String(u.email || '').trim().toLowerCase();
+
+        // Never recommend or display the logged-in user's own profile in people search results
+        const isSelf = (uUid && uUid === myUid) || (uEmail && myEmail && uEmail === myEmail);
+        if (isSelf) return false;
+
+        const name = resolveDisplayName(u, '').toLowerCase();
+        const comp = String(u.company || u.company_name || '').toLowerCase();
+        const desig = String(u.designation || u.headline || '').toLowerCase();
+        const loc = `${u.city || ''} ${u.country || ''}`.toLowerCase();
+        const email = String(u.email || '').toLowerCase();
+
+        return (
+          name.includes(query) ||
+          comp.includes(query) ||
+          desig.includes(query) ||
+          loc.includes(query) ||
+          (email && email.includes(query))
+        );
+      })
+    : [];
+
+  const matchedConnections: any[] = [];
+  const matchedIncomingRequests: any[] = [];
+  const matchedPeople: any[] = [];
+
+  matchedPeopleRaw.forEach((person) => {
+    const status = getConnectionStatus(user.uid, person.uid);
+    if (status === 'connected') {
+      matchedConnections.push({ ...person, connectionStatus: status });
+    } else if (status === 'pending_received') {
+      matchedIncomingRequests.push({ ...person, connectionStatus: status });
+    } else {
+      matchedPeople.push({ ...person, connectionStatus: status });
+    }
+  });
+
+  const displayConnections = matchedConnections.slice(0, 3);
+  const displayIncoming = matchedIncomingRequests.slice(0, 3);
+  const displayPeople = matchedPeople.slice(0, 4);
+
+  // 3. COMPANIES & ORGANIZATIONS
+  const distinctCompanyMap = new Map<string, any>();
+  remoteCompanies.forEach((c) => {
+    const key = (c.legalName || c.name || '').trim().toLowerCase();
+    if (key && !distinctCompanyMap.has(key)) {
+      distinctCompanyMap.set(key, {
+        id: c.id,
+        name: c.legalName || c.tradeName || c.name,
+        location: c.locationLabel || [c.city, c.country || 'India'].filter(Boolean).join(', ') || 'India',
+        verified: c.verified || c.status === 'verified',
+        type: 'Freight Forwarding & Logistics Entity',
+      });
+    }
+  });
+
+  allUsers.forEach((u) => {
+    const compName = (u.company || u.companyName || '').trim();
+    const key = compName.toLowerCase();
+    if (key && key.length > 2 && !distinctCompanyMap.has(key)) {
+      distinctCompanyMap.set(key, {
+        id: `comp-${key.replace(/\s+/g, '-')}`,
+        name: compName,
+        location: [u.city, u.country || 'India'].filter(Boolean).join(', ') || 'India',
+        verified: Boolean(u.isVerified || (u as any).verified),
+        type: 'Logistics Enterprise Member',
+      });
+    }
+  });
+
+  (masterCarriers || []).forEach((c) => {
+    const key = c.name.trim().toLowerCase();
+    if (key && !distinctCompanyMap.has(key)) {
+      distinctCompanyMap.set(key, {
+        id: `carrier-${c.scacCode}`,
+        name: c.name,
+        location: `${c.country || 'Global'} · SCAC: ${c.scacCode}`,
+        verified: true,
+        type: `${c.type || 'Ocean'} Carrier Line (${c.alliance || 'Independent'})`,
+      });
+    }
+  });
+
+  const matchedCompanies = query.length >= 2
+    ? Array.from(distinctCompanyMap.values())
+        .filter((c) => c.name.toLowerCase().includes(query) || (c.location && c.location.toLowerCase().includes(query)))
+        .slice(0, 3)
+    : [];
+
+  // 4. FREIGHT RATES
   const allRates = [...rates, ...(myRates || [])];
-  const matchedRates = query.length >= 2 ? allRates.filter((r) => r.id.toLowerCase().includes(query) || r.carrier.toLowerCase().includes(query) || r.sp.toLowerCase().includes(query) || r.pol.toLowerCase().includes(query) || r.pod.toLowerCase().includes(query)).slice(0, 3) : [];
-  const matchedJobs = query.length >= 2 ? jobs.filter((j) => j.title.toLowerCase().includes(query) || j.company.toLowerCase().includes(query) || j.location.toLowerCase().includes(query)).slice(0, 2) : [];
-  const matchedPosts = query.length >= 2 ? posts.filter((p) => p.text.toLowerCase().includes(query) || p.author.toLowerCase().includes(query) || (p.authorCompany || '').toLowerCase().includes(query)).slice(0, 2) : [];
-  const matchedTopics = query.length >= 2 ? topics.filter((t) => t.title.toLowerCase().includes(query) || t.author.toLowerCase().includes(query) || t.category.toLowerCase().includes(query)).slice(0, 2) : [];
-  const matchedUsers = query.length >= 2 ? allUsers.filter((u) => resolveDisplayName(u).toLowerCase().includes(query) || u.company.toLowerCase().includes(query) || u.email.toLowerCase().includes(query)).slice(0, 2) : [];
+  const matchedRates = query.length >= 2
+    ? allRates
+        .filter((r) =>
+          (r.carrier && r.carrier.toLowerCase().includes(query)) ||
+          (r.sp && r.sp.toLowerCase().includes(query)) ||
+          (r.pol && r.pol.toLowerCase().includes(query)) ||
+          (r.pod && r.pod.toLowerCase().includes(query)) ||
+          (r.id && r.id.toLowerCase().includes(query))
+        )
+        .slice(0, 3)
+    : [];
 
-  const totalResultsCount = matchedLocations.length + matchedCarriers.length + matchedAuctions.length + matchedRates.length + matchedJobs.length + matchedPosts.length + matchedTopics.length + matchedUsers.length;
+  // 5. REVERSE AUCTIONS
+  const matchedAuctions = query.length >= 2
+    ? auctions
+        .filter((a) =>
+          (a.title && a.title.toLowerCase().includes(query)) ||
+          (a.id && a.id.toLowerCase().includes(query)) ||
+          (a.shipment?.pol && a.shipment.pol.toLowerCase().includes(query)) ||
+          (a.shipment?.pod && a.shipment.pod.toLowerCase().includes(query)) ||
+          (a.shipment?.commodity && a.shipment.commodity.toLowerCase().includes(query))
+        )
+        .slice(0, 3)
+    : [];
 
-  // Keyboard shortcut: Cmd/Ctrl+K for global search
+  // 6. JOBS
+  const matchedJobs = query.length >= 2
+    ? jobs
+        .filter((j) =>
+          (j.title && j.title.toLowerCase().includes(query)) ||
+          (j.company && j.company.toLowerCase().includes(query)) ||
+          (j.location && j.location.toLowerCase().includes(query))
+        )
+        .slice(0, 2)
+    : [];
+
+  // 7. FEEDS & TOPICS
+  const matchedPosts = query.length >= 2
+    ? posts
+        .filter((p) =>
+          (p.text && p.text.toLowerCase().includes(query)) ||
+          (p.author && p.author.toLowerCase().includes(query)) ||
+          (p.authorCompany && p.authorCompany.toLowerCase().includes(query))
+        )
+        .slice(0, 2)
+    : [];
+
+  // 8. PORTS & TERMINALS
+  const matchedLocations = query.length >= 2
+    ? (masterLocations || [])
+        .filter((l) =>
+          l.unLocode.toLowerCase().includes(query) ||
+          l.name.toLowerCase().includes(query) ||
+          l.country.toLowerCase().includes(query)
+        )
+        .slice(0, 3)
+    : [];
+
+  const totalResultsCount =
+    matchedModules.length +
+    displayIncoming.length +
+    displayConnections.length +
+    displayPeople.length +
+    matchedCompanies.length +
+    matchedRates.length +
+    matchedAuctions.length +
+    matchedJobs.length +
+    matchedPosts.length +
+    matchedLocations.length;
+
+  // Build flat items array for keyboard navigation
+  const flatResults: { id: string; select: () => void }[] = [];
+
+  matchedModules.forEach((m) => {
+    flatResults.push({
+      id: m.id,
+      select: () => {
+        router.push(m.href);
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  displayIncoming.forEach((p) => {
+    flatResults.push({
+      id: p.uid,
+      select: () => {
+        setPreviewPassportUid(p.uid);
+        setShowGlobalSearch(false);
+      },
+    });
+  });
+
+  displayConnections.forEach((p) => {
+    flatResults.push({
+      id: p.uid,
+      select: () => {
+        setPreviewPassportUid(p.uid);
+        setShowGlobalSearch(false);
+      },
+    });
+  });
+
+  displayPeople.forEach((p) => {
+    flatResults.push({
+      id: p.uid,
+      select: () => {
+        setPreviewPassportUid(p.uid);
+        setShowGlobalSearch(false);
+      },
+    });
+  });
+
+  matchedCompanies.forEach((c) => {
+    flatResults.push({
+      id: c.id,
+      select: () => {
+        router.push(`/network?company=${encodeURIComponent(c.name)}`);
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  matchedRates.forEach((r) => {
+    flatResults.push({
+      id: r.id,
+      select: () => {
+        router.push('/rates');
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  matchedAuctions.forEach((a) => {
+    flatResults.push({
+      id: a.id,
+      select: () => {
+        router.push(`/auctions/${a.id}`);
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  matchedJobs.forEach((j) => {
+    flatResults.push({
+      id: j.id,
+      select: () => {
+        router.push('/jobs');
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  matchedPosts.forEach((p) => {
+    flatResults.push({
+      id: p.id,
+      select: () => {
+        router.push('/feeds');
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  matchedLocations.forEach((l) => {
+    flatResults.push({
+      id: l.id,
+      select: () => {
+        router.push('/rates');
+        setShowGlobalSearch(false);
+        setGlobalSearchQuery('');
+      },
+    });
+  });
+
+  // Reset selected index when query changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [globalSearchQuery]);
+
+  // Keyboard shortcut & navigation handler
   useEffect(() => {
     if (showGlobalSearch) {
       loadGlobalSearchHistory();
@@ -154,19 +585,40 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setShowGlobalSearch(true);
         setTimeout(() => searchRef.current?.focus(), 50);
+        return;
       }
+
+      if (!showGlobalSearch) return;
+
       if (e.key === 'Escape') {
+        e.preventDefault();
         setShowGlobalSearch(false);
         setGlobalSearchQuery('');
+        return;
+      }
+
+      if (flatResults.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev < flatResults.length - 1 ? prev + 1 : 0));
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : flatResults.length - 1));
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (flatResults[selectedIndex]) {
+            flatResults[selectedIndex].select();
+          }
+        }
       }
     };
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
-  }, []);
+  }, [showGlobalSearch, flatResults, selectedIndex]);
 
   const categoryMap: Record<string, { icon: React.ReactNode; color: string }> = {
     network: { icon: <Users size={13} />, color: '#1B2B4B' },
@@ -179,45 +631,78 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
     subscription: { icon: <Users size={13} />, color: '#1B2B4B' },
   };
 
-  // Group notifications by category (including enterprise network connections)
   const categories = ['network', 'auctions', 'bids', 'chat', 'feeds', 'jobs', 'system'] as const;
 
-  // Quick search results
-  const quickSearchLinks = [
-    { label: 'Active Auctions', href: '/auctions', icon: <Gavel size={13} /> },
-    { label: 'Rate Intelligence', href: '/rates', icon: <BarChart3 size={13} /> },
-    { label: 'Nexus Community', href: '/nexus', icon: <Globe2 size={13} /> },
-    { label: 'Jobs Board', href: '/jobs', icon: <Briefcase size={13} /> },
-  ];
+  let runningItemIndex = 0;
 
   return (
     <>
-      {/* Global Search Modal */}
+      {/* Global Search Command Palette Modal */}
       {showGlobalSearch && (
-        <div className="global-search-overlay" onClick={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}>
+        <div
+          className="global-search-overlay"
+          onClick={() => {
+            setShowGlobalSearch(false);
+            setGlobalSearchQuery('');
+          }}
+        >
           <div className="global-search-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Search Input Header */}
             <div className="global-search-input-row">
-              <Search size={16} style={{ color: 'var(--mut)', flexShrink: 0 }} />
+              <Search size={18} style={{ color: '#47799E', flexShrink: 0 }} />
               <input
                 ref={searchRef}
                 type="text"
-                placeholder="Search people, companies, auctions, rates, jobs, posts…"
+                placeholder="Search professionals, companies, rates, auctions, jobs, topics…"
                 value={globalSearchQuery}
                 onChange={(e) => setGlobalSearchQuery(e.target.value)}
                 autoFocus
               />
-              <button onClick={() => { setShowGlobalSearch(false); setGlobalSearchQuery(''); }}>
-                <X size={15} />
+              {globalSearchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGlobalSearchQuery('');
+                    searchRef.current?.focus();
+                  }}
+                  title="Clear search"
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#64748B', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={15} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowGlobalSearch(false);
+                  setGlobalSearchQuery('');
+                }}
+                title="Close search (Esc)"
+                style={{
+                  background: '#F1F5F9',
+                  border: '1px solid #CBD5E1',
+                  borderRadius: '4px',
+                  padding: '2px 7px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  color: '#475569',
+                  cursor: 'pointer',
+                  fontFamily: 'monospace',
+                }}
+              >
+                ESC
               </button>
             </div>
 
+            {/* Search Results Body */}
             <div className="global-search-body">
               {globalSearchQuery.length < 2 ? (
                 <div>
+                  {/* Recent Searches */}
                   {globalSearchHistory.length > 0 && (
-                    <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid var(--border)' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px', padding: '0 4px' }}>
-                        <span className="gs-section-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div style={{ marginBottom: '14px', paddingBottom: '12px', borderBottom: '1px solid #F1F5F9' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 4px' }}>
+                        <span className="gs-section-label" style={{ margin: 0, border: 'none', padding: 0 }}>
                           <Clock size={11} /> Recent Searches
                         </span>
                         <button
@@ -228,8 +713,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             border: 'none',
                             cursor: 'pointer',
                             fontSize: '11px',
-                            color: '#12372A',
-                            fontWeight: 600,
+                            color: '#1B2B4B',
+                            fontWeight: 700,
                           }}
                         >
                           Clear all
@@ -243,27 +728,26 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             style={{
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '5px',
-                              padding: '3px 8px',
+                              gap: '6px',
+                              padding: '4px 9px',
                               borderRadius: '12px',
-                              background: 'var(--bg-faint)',
+                              background: '#F8FAFC',
                               fontSize: '11px',
-                              color: 'var(--ink)',
+                              color: '#1B2B4B',
                               cursor: 'pointer',
-                              border: '1px solid var(--border)',
+                              border: '1px solid #CBD5E1',
+                              fontWeight: 600,
                               userSelect: 'none',
                             }}
-                            className="hover:bg-slate-200"
                           >
                             <span>{item.query}</span>
                             <button
                               type="button"
                               onClick={(e) => removeGlobalHistoryItem(e, item.id)}
                               title="Remove from history"
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--mut)', display: 'flex' }}
-                              className="hover:text-red-500"
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#94A3B8', display: 'flex' }}
                             >
-                              <X size={10} />
+                              <X size={11} />
                             </button>
                           </span>
                         ))}
@@ -271,170 +755,474 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     </div>
                   )}
 
-                  <div className="gs-section-label">Quick Navigate</div>
-                  {quickSearchLinks.map((link) => (
-                    <Link key={link.href} href={link.href} className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                      <span className="gs-icon">{link.icon}</span>
-                      <span>{link.label}</span>
-                    </Link>
-                  ))}
-                  <div style={{ padding: '10px 14px', fontSize: '11px', color: 'var(--faint)', textAlign: 'center' }}>
-                    Type at least 2 characters to search live across all modules
+                  {/* Core Navigation Shortcuts */}
+                  <div className="gs-section">
+                    <div className="gs-section-label">
+                      <Layers size={11} /> Application Modules & Workspaces
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '6px' }}>
+                      {CORE_MODULES.slice(0, 6).map((mod) => (
+                        <Link
+                          key={mod.id}
+                          href={mod.href}
+                          className="gs-result-item"
+                          onClick={() => {
+                            setShowGlobalSearch(false);
+                            setGlobalSearchQuery('');
+                          }}
+                        >
+                          <span className="gs-icon">{mod.icon}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{mod.name}</div>
+                            <small style={{ color: '#64748B', fontSize: '10.5px' }}>{mod.desc}</small>
+                          </div>
+                          <ChevronRight size={13} color="#94A3B8" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px 14px 6px', fontSize: '11.5px', color: '#64748B', textAlign: 'center' }}>
+                    Type at least 2 characters to search across People, Companies, Rates, Auctions, Jobs & Discussions
                   </div>
                 </div>
               ) : totalResultsCount === 0 ? (
-                <div style={{ padding: '24px 14px', textAlign: 'center', color: 'var(--mut)', fontSize: '11px' }}>
-                  <Search size={22} style={{ display: 'block', margin: '0 auto 8px', opacity: 0.35 }} />
-                  No records matching &ldquo;{globalSearchQuery}&rdquo;
+                <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
+                  <Search size={26} style={{ display: 'block', margin: '0 auto 10px', opacity: 0.35, color: '#47799E' }} />
+                  <b style={{ color: '#1B2B4B', fontSize: '13px' }}>No records matching &ldquo;{globalSearchQuery}&rdquo;</b>
                   <br />
-                  <small style={{ fontSize: '11px', color: 'var(--faint)' }}>Try searching by UN/LOCODE (INNSA, NLRTM), commodity, carrier, or company</small>
+                  <small style={{ fontSize: '11.5px', color: '#64748B', display: 'block', marginTop: '4px' }}>
+                    Try searching by Person Name, Company, Port UN/LOCODE (INNSA, NLRTM), Ocean Carrier, or Job Title.
+                  </small>
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {matchedLocations.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Ports & Terminals ({matchedLocations.length})</div>
-                      {matchedLocations.map((l) => (
-                        <Link key={l.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ fontSize: '11px' }}>{getLocationTypeIcon(l.type)}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>
-                              {getLocationTypeIcon(l.type)} {l.unLocode} · {l.name}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  {/* CATEGORY 1: APPLICATION MODULES */}
+                  {matchedModules.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <Layers size={11} /> Application Modules ({matchedModules.length})
+                      </div>
+                      {matchedModules.map((m) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={m.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push(m.href);
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon">{m.icon}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{m.name}</div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>{m.desc}</small>
                             </div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
-                              {l.country} ({l.region}) · {l.type} · {Object.entries(l.capabilities).filter(([_, v]) => v).map(([k]) => k.replace('is', '')).join('/')}
-                            </small>
+                            <span className="gs-action-btn view">
+                              Open <ArrowRight size={10} />
+                            </span>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
-                  {matchedCarriers.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Ocean Carriers ({matchedCarriers.length})</div>
-                      {matchedCarriers.map((c) => (
-                        <Link key={c.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ fontSize: '11px' }}>{getCarrierTypeIcon(c.type)}</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>
-                              {getCarrierTypeIcon(c.type)} {c.name} ({c.scacCode} · {c.type})
+                  {/* CATEGORY 2: CONNECTION REQUESTS */}
+                  {displayIncoming.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label" style={{ color: '#15803D' }}>
+                        <UserPlus size={11} color="#15803D" /> Connection Requests ({displayIncoming.length})
+                      </div>
+                      {displayIncoming.map((p) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        const pName = resolveDisplayName(p);
+                        return (
+                          <div
+                            key={p.uid}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              setPreviewPassportUid(p.uid);
+                              setShowGlobalSearch(false);
+                            }}
+                          >
+                            <span className="gs-icon" style={{ background: '#DCFCE7', color: '#15803D' }}>
+                              <UserPlus size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>{pName}</span>
+                                {p.hasGoldenTick && <GoldenTick size={13} />}
+                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {p.designation} · {p.city}, {p.country}
+                              </small>
                             </div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
-                              {c.alliance} · Fleet: {c.fleetTEU || 'N/A'} · {c.country}
-                            </small>
+                            <button
+                              type="button"
+                              className="gs-action-btn accept"
+                              onClick={(e) => handleAcceptRequest(e, p)}
+                              disabled={acceptingUid === p.uid}
+                            >
+                              {acceptingUid === p.uid ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
+                              Accept Request
+                            </button>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
-                  {matchedAuctions.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Auctions ({matchedAuctions.length})</div>
-                      {matchedAuctions.map((a) => (
-                        <Link key={a.id} href={`/auctions/${a.id}`} className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#12372A' }}><Gavel size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{a.id} · {a.title}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{a.shipment.pol} → {a.shipment.pod} · Status: {a.status}</small>
+                  {/* CATEGORY 3: MY CONNECTIONS */}
+                  {displayConnections.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label" style={{ color: '#0284C7' }}>
+                        <UserCheck size={11} color="#0284C7" /> My Connections ({displayConnections.length})
+                      </div>
+                      {displayConnections.map((p) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        const pName = resolveDisplayName(p);
+                        return (
+                          <div
+                            key={p.uid}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              setPreviewPassportUid(p.uid);
+                              setShowGlobalSearch(false);
+                            }}
+                          >
+                            <span className="gs-icon" style={{ background: '#E0F2FE', color: '#0284C7' }}>
+                              <UserCheck size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>{pName}</span>
+                                {p.hasGoldenTick && <GoldenTick size={13} />}
+                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {p.designation} · {p.city}, {p.country}
+                              </small>
+                            </div>
+                            <button
+                              type="button"
+                              className="gs-action-btn connected"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openChatWith(p.uid, undefined, { name: pName, company: p.company });
+                                setShowGlobalSearch(false);
+                              }}
+                              title="Open direct trade conversation"
+                            >
+                              <MessageCircle size={11} /> Message
+                            </button>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
+                  {/* CATEGORY 4: PEOPLE & PROFESSIONALS */}
+                  {displayPeople.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <Users size={11} /> People & Professionals ({displayPeople.length})
+                      </div>
+                      {displayPeople.map((p) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        const pName = resolveDisplayName(p);
+                        return (
+                          <div
+                            key={p.uid}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              setPreviewPassportUid(p.uid);
+                              setShowGlobalSearch(false);
+                            }}
+                          >
+                            <span className="gs-icon">
+                              <UserIcon size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span>{pName}</span>
+                                {p.hasGoldenTick && <GoldenTick size={13} />}
+                                <span style={{ color: '#64748B', fontWeight: 500 }}>· {p.company}</span>
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {p.designation} · {p.city}, {p.country}
+                              </small>
+                            </div>
+                            {p.connectionStatus === 'pending_sent' ? (
+                              <span className="gs-action-btn pending">
+                                <Clock size={11} /> Pending
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                className="gs-action-btn connect"
+                                onClick={(e) => handleSendConnect(e, p)}
+                                disabled={connectingUid === p.uid}
+                              >
+                                {connectingUid === p.uid ? <Loader2 size={11} className="animate-spin" /> : <UserPlus size={11} />}
+                                Connect
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CATEGORY 5: COMPANIES & ORGANIZATIONS */}
+                  {matchedCompanies.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <Building2 size={11} /> Companies & Organizations ({matchedCompanies.length})
+                      </div>
+                      {matchedCompanies.map((c) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={c.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push(`/network?company=${encodeURIComponent(c.name)}`);
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ background: '#F8FAFC', color: '#1B2B4B' }}>
+                              <Building2 size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>{c.name}</div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {c.type} · 📍 {c.location}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">
+                              View Directory <ArrowRight size={10} />
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CATEGORY 6: FREIGHT RATES */}
                   {matchedRates.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Rates ({matchedRates.length})</div>
-                      {matchedRates.map((r) => (
-                        <Link key={r.id} href="/rates" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#12372A' }}><BarChart3 size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{r.carrier} ({r.sp}) · 40HC: ${r.h40} USD</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{r.pol} → {r.pod} · Valid till {r.valid}</small>
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <BarChart3 size={11} /> Freight Rates ({matchedRates.length})
+                      </div>
+                      {matchedRates.map((r) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={r.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push('/rates');
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ color: '#0D9488' }}>
+                              <BarChart3 size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                                {r.carrier} ({r.sp}) · 40HC: ${r.h40 || (r as any).rate40 || '—'} USD
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                POL: {r.pol} → POD: {r.pod} · Valid till: {r.valid || 'Spot Validity'}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">Rate Matrix</span>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
+                  {/* CATEGORY 7: REVERSE AUCTIONS */}
+                  {matchedAuctions.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <Gavel size={11} /> Reverse Auctions ({matchedAuctions.length})
+                      </div>
+                      {matchedAuctions.map((a) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={a.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push(`/auctions/${a.id}`);
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ color: '#1B2B4B' }}>
+                              <Gavel size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                                {a.id} · {a.title}
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {a.shipment?.pol} → {a.shipment?.pod} · Commodity: {a.shipment?.commodity || 'General Cargo'} · Status: {a.status}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">Live Room</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CATEGORY 8: JOBS & CAREERS */}
                   {matchedJobs.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Jobs ({matchedJobs.length})</div>
-                      {matchedJobs.map((j) => (
-                        <Link key={j.id} href="/jobs" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#12372A' }}><Briefcase size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{j.title} · {j.company}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{j.location} · {j.packageDetails}</small>
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <Briefcase size={11} /> Trade Careers & Jobs ({matchedJobs.length})
+                      </div>
+                      {matchedJobs.map((j) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={j.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push('/jobs');
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ color: '#0891B2' }}>
+                              <Briefcase size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                                {j.title} · {j.company}
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                📍 {j.location} · {j.packageDetails}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">View Job</span>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
-                  {matchedTopics.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Nexus Topics ({matchedTopics.length})</div>
-                      {matchedTopics.map((t) => (
-                        <Link key={t.id} href="/nexus" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#12372A' }}><Globe2 size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{t.title}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{t.category} · by {t.author}</small>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-
-                  {matchedUsers.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Network & Organizations ({matchedUsers.length})</div>
-                      {matchedUsers.map((u) => (
-                        <div
-                          key={u.uid}
-                          className="gs-result-item"
-                          style={{ cursor: 'pointer' }}
-                          onClick={() => {
-                            setShowGlobalSearch(false);
-                            setPreviewPassportUid(u.uid);
-                          }}
-                        >
-                          <span className="gs-icon" style={{ color: '#12372A' }}><Users size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{resolveDisplayName(u)} · {u.company}</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px' }}>{u.designation} · {u.city}, {u.country}</small>
-                          </div>
-                          <span className="badge blue" style={{ fontSize: '11px' }}>View Passport</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
+                  {/* CATEGORY 9: FEEDS & DISCUSSIONS */}
                   {matchedPosts.length > 0 && (
-                    <div>
-                      <div className="gs-section-label">Feed Posts ({matchedPosts.length})</div>
-                      {matchedPosts.map((p) => (
-                        <Link key={p.id} href="/feeds" className="gs-result-item" onClick={() => setShowGlobalSearch(false)}>
-                          <span className="gs-icon" style={{ color: '#12372A' }}><MessageSquare size={13} /></span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontWeight: 600, fontSize: '11px', color: 'var(--ink)' }}>{p.author} ({p.authorCompany})</div>
-                            <small style={{ color: 'var(--mut)', fontSize: '11px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.text}</small>
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <MessageSquare size={11} /> Feeds & Discussions ({matchedPosts.length})
+                      </div>
+                      {matchedPosts.map((p) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={p.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push('/feeds');
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ color: '#1B2B4B' }}>
+                              <MessageSquare size={14} />
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                                {p.author} ({p.authorCompany || 'Trade Member'})
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {p.text}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">Open Feed</span>
                           </div>
-                        </Link>
-                      ))}
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* CATEGORY 10: PORTS & TERMINALS */}
+                  {matchedLocations.length > 0 && (
+                    <div className="gs-section">
+                      <div className="gs-section-label">
+                        <MapPin size={11} /> Ports & Maritime Terminals ({matchedLocations.length})
+                      </div>
+                      {matchedLocations.map((l) => {
+                        const itemIdx = runningItemIndex++;
+                        const isSelected = selectedIndex === itemIdx;
+                        return (
+                          <div
+                            key={l.id}
+                            className={`gs-result-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              router.push('/rates');
+                              setShowGlobalSearch(false);
+                              setGlobalSearchQuery('');
+                            }}
+                          >
+                            <span className="gs-icon" style={{ fontSize: '11px' }}>
+                              {getLocationTypeIcon(l.type)}
+                            </span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>
+                                {l.unLocode} · {l.name}
+                              </div>
+                              <small style={{ color: '#64748B', fontSize: '11px' }}>
+                                {l.country} ({l.region}) · {l.type}
+                              </small>
+                            </div>
+                            <span className="gs-action-btn view">Port Rates</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               )}
             </div>
 
+            {/* Modal Keyboard Navigation Footer */}
             <div className="global-search-footer">
-              <span><kbd>↑↓</kbd> Navigate</span>
-              <span><kbd>↵</kbd> Open</span>
-              <span><kbd>Esc</kbd> Close</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+                <span><kbd>↵</kbd> Select</span>
+                <span><kbd>Esc</kbd> Close</span>
+              </div>
+              <div>
+                {isSearchingRemote ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#47799E' }}>
+                    <Loader2 size={11} className="animate-spin" /> Searching network…
+                  </span>
+                ) : (
+                  <span>
+                    {totalResultsCount > 0 ? `${totalResultsCount} result${totalResultsCount === 1 ? '' : 's'}` : ''}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
