@@ -13,7 +13,8 @@ import {
   resolveDisplayName,
 } from '@/lib/utils';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
+import { NavigationIcon } from '@/components/ui/NavigationIcon';
 import { NetworkStatusPill } from './NetworkStatusPill';
 import SearchableDropdown, { DropdownOption } from '@/components/ui/SearchableDropdown';
 import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
@@ -73,6 +74,7 @@ interface TopBarProps {
 }
 
 export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
+  const pathname = usePathname() || '/';
   const { user, allUsers, logout } = useAuth();
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates, convertAmount: convertAmountLive } = useCurrency();
   const { notifications, refreshNotifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
@@ -1242,13 +1244,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           title="FR8X Home"
         >
           <img
-            src="/ART/ICONS/app_icon_square.png"
+            src="/ART/LOGOS/logo_primary.svg"
             alt="FR8X"
             className="mobile-brand-icon-img"
+            onError={(e) => {
+              // Primary fallback /ART/LOGOS/logo_primary.png; legacy alias /FR8X ICON.png
+              (e.currentTarget as HTMLImageElement).src = '/ART/LOGOS/logo_primary.png';
+            }}
           />
         </Link>
 
-        <div className="crumb">
+        {/* Desktop Breadcrumbs (removed from mobile to save space) */}
+        <div className="crumb desktop-only">
           <span className="crumb-prefix">Workspace / </span><b>{activePageTitle}</b>
         </div>
 
@@ -1258,23 +1265,178 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           onClick={() => { setShowGlobalSearch(true); setTimeout(() => searchRef.current?.focus(), 50); }}
           title="Global Search (Ctrl+K)"
         >
-          <Search size={13} />
+          <NavigationIcon name="search" size={13} style={{ color: '#47799E', flexShrink: 0 }} />
           <span className="search-text">Search…</span>
-          <kbd className="search-kbd">⌘K</kbd>
+          <kbd className="search-kbd desktop-only">⌘K</kbd>
         </button>
 
-        <div className="topright">
-          {/* User Availability Status (Live / Away / 2G) */}
-          <NetworkStatusPill />
+        {/* Mobile Contextual POST/SUBMIT Action */}
+        <div className="mobile-only" style={{ marginLeft: 'auto', marginRight: '6px' }}>
+          {(() => {
+            if (pathname === '/auctions' || pathname.startsWith('/auctions/')) {
+              return (
+                <Link
+                  href="/auctions/create"
+                  className="mobile-action-pill"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: '#1B2B4B',
+                    color: '#FFFFFF',
+                    padding: '4px 9px',
+                    borderRadius: '14px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + Tender
+                </Link>
+              );
+            }
+            if (pathname === '/rates' || pathname.startsWith('/rates/')) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+                      b.textContent?.includes('Show Rates Editor') || b.textContent?.includes('Add New Rate')
+                    );
+                    if (btn) {
+                      btn.click();
+                      btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                  }}
+                  className="mobile-action-pill"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: '#1B2B4B',
+                    color: '#FFFFFF',
+                    padding: '4px 9px',
+                    borderRadius: '14px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + Rate
+                </button>
+              );
+            }
+            if (pathname.startsWith('/network') || pathname.startsWith('/people') || pathname.startsWith('/contacts')) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+                      b.textContent?.includes('Add Contact') || b.textContent?.includes('Add New Contact')
+                    );
+                    if (btn) {
+                      btn.click();
+                    }
+                  }}
+                  className="mobile-action-pill"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: '#1B2B4B',
+                    color: '#FFFFFF',
+                    padding: '4px 9px',
+                    borderRadius: '14px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + Contact
+                </button>
+              );
+            }
+            if (pathname.startsWith('/jobs')) {
+              return (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const btn = Array.from(document.querySelectorAll('button')).find((b) =>
+                      b.textContent?.includes('Post Job') || b.textContent?.includes('Post a Job')
+                    );
+                    if (btn) {
+                      btn.click();
+                    }
+                  }}
+                  className="mobile-action-pill"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    backgroundColor: '#1B2B4B',
+                    color: '#FFFFFF',
+                    padding: '4px 9px',
+                    borderRadius: '14px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    border: 'none',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  + Job
+                </button>
+              );
+            }
+            // Default feeds / general
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.querySelector('textarea, [contenteditable="true"]') as HTMLElement | null;
+                  if (el) {
+                    el.focus();
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  } else {
+                    router.push('/feeds');
+                  }
+                }}
+                className="mobile-action-pill"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  backgroundColor: '#1B2B4B',
+                  color: '#FFFFFF',
+                  padding: '4px 9px',
+                  borderRadius: '14px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  border: 'none',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                + Post
+              </button>
+            );
+          })()}
+        </div>
 
-          {/* Location Badge */}
-          <span className="country" title={`Location: ${user.city}, ${user.country}`}>
+        <div className="topright">
+          {/* User Availability Status (Live / Away / 2G) - Desktop */}
+          <div className="desktop-only">
+            <NetworkStatusPill />
+          </div>
+
+          {/* Location Badge - Desktop */}
+          <span className="country desktop-only" title={`Location: ${user.city}, ${user.country}`}>
             <MapPin size={13} style={{ color: 'var(--brand)' }} />
             <b className="country-name">{user.city}, {user.country}</b>
           </span>
 
-          {/* Currency Converter */}
-          <div style={{ position: 'relative' }}>
+          {/* Currency Converter - Desktop */}
+          <div className="desktop-only" style={{ position: 'relative' }}>
             <button
               className="currency-select"
               onClick={() => setShowCurrencyModal(!showCurrencyModal)}
@@ -1485,7 +1647,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               aria-label="View notifications"
               title="Notifications"
             >
-              <Bell size={15} />
+              <NavigationIcon name="notifications" filled={unreadCount > 0} size={15} style={{ color: unreadCount > 0 ? '#1B2B4B' : 'var(--fr8x-muted)' }} />
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -1684,9 +1846,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
             >
               <UserAvatar user={user} size={22} />
-              <span className="user-name-text">{user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}</span>
-              {user?.hasGoldenTick && <GoldenTick />}
-              <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron" />
+              <span className="user-name-text desktop-only">{user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}</span>
+              {user?.hasGoldenTick && <GoldenTick className="desktop-only" />}
+              <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron desktop-only" />
             </button>
 
             {showUserDropdown && (

@@ -2710,30 +2710,39 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   border-color: #E2E8F0 !important;
 }
 
-/* Active Navigation State: Pale Mint #EEF1F7 with Money Green #47799E Indicator */
-.nav a.on,
-.nav button.on,
-.mobile-nav-item.active,
-[aria-current="page"] {
+/* Active Navigation State: Desktop Sidebar Solid Navy Contrast */
+.side .nav a.on,
+.side .nav a[aria-current="page"],
+.side .nav button.on {
+  background-color: #1B2B4B !important;
+  background: #1B2B4B !important;
+  border: 1px solid #1B2B4B !important;
+  border-radius: 4px !important;
+  color: #FFFFFF !important;
+}
+
+.side .nav a.on svg,
+.side .nav a[aria-current="page"] svg,
+.side .nav button.on svg {
+  color: #FFFFFF !important;
+  fill: #FFFFFF !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Mobile Bottom Nav Active Item: Pill Styling */
+.mobile-nav-item.active {
   background-color: #EEF1F7 !important;
   background: #EEF1F7 !important;
   border: 1px solid #1B2B4B !important;
-  border-left: 3px solid #47799E !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
   color: #1B2B4B !important;
 }
 
-/* Navigation Icons: Money Green when active, Neutral Gray when inactive */
-.nav a.on svg,
-.nav button.on svg,
-.nav a[aria-current="page"] svg,
-.nav button[aria-current="page"] svg,
-.mobile-nav-item.active svg,
-[aria-current="page"] svg,
-.nav a.on .bi,
-.mobile-nav-item.active .bi {
-  color: #47799E !important;
-  fill: #47799E !important;
+.mobile-nav-item.active svg {
+  color: #1B2B4B !important;
+  fill: #1B2B4B !important;
   display: inline-block !important;
   visibility: visible !important;
   opacity: 1 !important;
@@ -2757,23 +2766,45 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   fill: #1B2B4B !important;
 }
 
+/* Mobile / Desktop Structural Separation Utilities */
+.mobile-only {
+  display: none !important;
+}
+
 /* Mobile Bottom Navigation - Strict Desktop/Mobile Separation */
 .mobile-bottom-nav {
   display: none !important;
 }
 
 @media (max-width: 900px) {
+  /* Remove desktop sidebar drawer completely on mobile screens */
+  .sidebar-wrapper {
+    display: none !important;
+  }
+
+  .mobile-sidebar-overlay {
+    display: none !important;
+  }
+
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
   .mobile-bottom-nav {
     display: block !important;
     position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    height: calc(52px + env(safe-area-inset-bottom, 0px)) !important;
+    height: calc(54px + env(safe-area-inset-bottom, 0px)) !important;
     padding-bottom: env(safe-area-inset-bottom, 0px) !important;
     background-color: #FFFFFF !important;
     border-top: 1px solid #E2E8F0 !important;
-    z-index: 100 !important;
+    z-index: 90 !important;
     box-shadow: 0 -2px 10px rgba(18, 55, 42, 0.05) !important;
   }
 
@@ -2782,7 +2813,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
     flex-direction: row !important;
     align-items: center !important;
     justify-content: space-around !important;
-    height: 52px !important;
+    height: 54px !important;
     max-width: 600px !important;
     margin: 0 auto !important;
     padding: 0 4px !important;
@@ -2794,7 +2825,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
     align-items: center !important;
     justify-content: center !important;
     flex: 1 !important;
-    min-width: 48px !important;
+    min-width: 44px !important;
     height: 100% !important;
     color: #4A5568 !important;
     text-decoration: none !important;
@@ -2803,7 +2834,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
     user-select: none !important;
     -webkit-tap-highlight-color: transparent !important;
     transition: all 0.15s ease !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
   }
 
   .mobile-nav-item:hover,
@@ -2814,9 +2845,9 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 
   .mobile-nav-item.active {
     color: #1B2B4B !important;
-    background-color: #EEF1F7 !important;
+    background-color: #EEF2F7 !important;
     border: 1px solid #1B2B4B !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
   }
 
   .mobile-nav-icon-wrapper {
@@ -2837,7 +2868,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   }
 
   .mobile-nav-label {
-    font-size: 13px !important;
+    font-size: 11px !important;
     font-weight: 600 !important;
     margin-top: 2px !important;
     letter-spacing: -0.01em !important;
@@ -2849,7 +2880,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   }
 
   .view {
-    padding-bottom: calc(68px + env(safe-area-inset-bottom, 16px)) !important;
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
   }
 }
 

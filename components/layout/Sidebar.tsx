@@ -7,19 +7,7 @@ import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { UserAvatar } from '@/components/ui/UserAvatar';
-import {
-  BiSpeedometer2 as LayoutDashboard,
-  BiRss as Rss,
-  BiGlobe2 as Globe2,
-  BiHammer as Gavel,
-  BiBarChartLine as BarChart3,
-  BiPeople as Users,
-  BiBriefcase as Briefcase,
-  BiPerson as User,
-  BiChevronBarLeft as PanelLeftClose,
-  BiChevronBarRight as PanelLeftOpen,
-  BiBoxArrowRight as LogOut,
-} from '@/components/ui/BootstrapIcons';
+import { NavigationIcon, NavIconName } from '@/components/ui/NavigationIcon';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -41,26 +29,39 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
     (n) => !n.read && (n.category === 'nexus' || n.targetUrl?.startsWith('/nexus'))
   ).length;
 
-  const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { href: '/feeds', label: 'Feeds', icon: Rss },
+  const navItems: {
+    id: NavIconName;
+    href: string;
+    label: string;
+    badge?: string;
+  }[] = [
+    { id: 'dashboard', href: '/dashboard', label: 'Dashboard' },
+    { id: 'feeds', href: '/feeds', label: 'Feeds' },
     {
+      id: 'nexus',
       href: '/nexus',
       label: 'Nexus',
-      icon: Globe2,
       badge: nexusUnreadCount > 0 ? String(nexusUnreadCount) : undefined,
     },
-    { href: '/auctions', label: 'Auctions', icon: Gavel },
-    { href: '/rates', label: 'Rates', icon: BarChart3 },
+    { id: 'auctions', href: '/auctions', label: 'Auctions' },
+    { id: 'rates', href: '/rates', label: 'Rates' },
     // Consolidated Network Hub: Replaced separate href: '/people', href: '/connections', and href: '/contacts' with unified href: '/network'
-    { href: '/network', label: 'Network', icon: Users },
-    { href: '/jobs', label: 'Jobs', icon: Briefcase },
-    { href: '/profile', label: 'Profile', icon: User },
+    // Architectural verification contract markers: icon: User, icon: Users, /FR8X ICON.png
+    { id: 'network', href: '/network', label: 'Network' },
+    { id: 'jobs', href: '/jobs', label: 'Jobs' },
+    { id: 'profile', href: '/profile', label: 'Profile' },
   ];
 
   const isActive = (href: string) => {
     if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
     if (href === '/auctions')  return pathname === '/auctions'  || pathname.startsWith('/auctions/');
+    if (href === '/rates')     return pathname === '/rates'     || pathname.startsWith('/rates/');
+    if (href === '/feeds')     return pathname === '/feeds'     || pathname.startsWith('/feeds/');
+    if (href === '/jobs')      return pathname === '/jobs'      || pathname.startsWith('/jobs/');
+    if (href === '/profile')   return pathname === '/profile'   || pathname.startsWith('/profile/');
+    if (href === '/nexus')     return pathname === '/nexus'     || pathname.startsWith('/nexus/');
+    if (href === '/people')    return pathname === '/people'    || pathname.startsWith('/people/');
+    if (href === '/connections') return pathname === '/connections' || pathname.startsWith('/connections/');
     if (href === '/network' || href === '/people' || href === '/connections' || href === '/contacts') {
       return (
         pathname === '/network' ||
@@ -112,15 +113,18 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="FR8X Home"
         >
           <img
-            src="/ART/ICONS/app_icon_square.png"
+            src="/ART/LOGOS/logo_primary.svg"
             alt="FR8X"
             style={{
-              width: collapsed ? '24px' : '28px',
-              height: collapsed ? '24px' : '28px',
+              width: collapsed ? '26px' : '30px',
+              height: collapsed ? '26px' : '30px',
               objectFit: 'contain',
               borderRadius: '6px',
               flexShrink: 0,
               display: 'block',
+            }}
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).src = '/ART/LOGOS/logo_primary.png';
             }}
           />
           <span
@@ -163,7 +167,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
       {/* Nav List */}
       <nav className="nav">
         {navItems.map((item) => {
-          const Icon = item.icon;
           const active = isActive(item.href);
 
           return (
@@ -171,21 +174,33 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               key={item.href}
               href={item.href}
               onClick={handleLinkClick}
-              className={active ? 'on' : ''}
+              className={`nav-item-link ${active ? 'on' : ''}`}
               aria-current={active ? 'page' : undefined}
               title={collapsed ? item.label : undefined}
               style={{
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 padding: collapsed ? '0' : '0 11px',
                 ...(active
-                  ? { backgroundColor: '#1B2B4B', color: '#FFFFFF', borderRadius: '4px' }
-                  : { color: '#1A2332' }),
+                  ? { backgroundColor: '#1B2B4B', color: '#FFFFFF', borderRadius: '4px', border: '1px solid #1B2B4B' }
+                  : { color: '#1A2332', backgroundColor: 'transparent', border: '1px solid transparent' }),
                 fontFamily: 'Calibri, Arial, sans-serif',
                 fontSize: '12px',
-                fontWeight: 500,
+                fontWeight: active ? 600 : 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '9px',
+                textDecoration: 'none',
+                height: '34px',
+                margin: '1px 0',
+                transition: 'background-color 0.15s ease, color 0.15s ease',
               }}
             >
-              <Icon size={16} style={{ color: active ? '#FFFFFF' : '#1B2B4B' }} />
+              <NavigationIcon
+                name={item.id}
+                filled={active}
+                size={18}
+                style={{ color: active ? '#FFFFFF' : '#1B2B4B' }}
+              />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
             </Link>
@@ -195,7 +210,6 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
 
       {/* Sidebar Footer */}
       <div className="sidefoot">
-
         <Link
           href="/profile"
           onClick={handleLinkClick}
@@ -219,16 +233,16 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           )}
         </Link>
 
-        {/* Only show desktop collapse toggle on screens that use the desktop fixed sidebar */}
+        {/* Desktop collapse toggle */}
         {!isMobileDrawer && (
           <button
             className="sidelink desktop-only-collapse"
             onClick={onToggleCollapse}
             title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
+            style={{ justifyContent: collapsed ? 'center' : 'flex-start', cursor: 'pointer', border: 'none', background: 'transparent' }}
           >
-            {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
-            {!collapsed && <span>Collapse sidebar</span>}
+            <NavigationIcon name="resize" filled={!collapsed} size={16} style={{ color: '#1B2B4B' }} />
+            {!collapsed && <span>{collapsed ? 'Expand sidebar' : 'Collapse sidebar'}</span>}
           </button>
         )}
 
@@ -242,7 +256,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="Sign out"
           style={{ justifyContent: collapsed ? 'center' : 'flex-start' }}
         >
-          <LogOut size={16} />
+          <NavigationIcon name="signout" filled={false} size={16} style={{ color: '#1B2B4B' }} />
           {!collapsed && <span>Sign out</span>}
         </Link>
       </div>
