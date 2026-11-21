@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <title>FR8X Enterprise Brand Logo</title>
+  <defs>
+    <linearGradient id="fr8x-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#002b66"/>
+      <stop offset="50%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="fr8x-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Badge -->
+  <rect width="512" height="512" rx="112" fill="#070d1e"/>
+  <rect x="8" y="8" width="496" height="496" rx="104" stroke="#1e293b" stroke-width="2"/>
+  <circle cx="256" cy="256" r="140" fill="url(#fr8x-glow)"/>
+  <!-- Infinity Loop Vector Path (Optimized & Zero-Origin-Weight) -->
+  <path d="M165 330 C120 330 84 294 84 256 C84 218 120 182 165 182 C210 182 245 230 256 256 C267 282 302 330 347 330 C392 330 428 294 428 256 C428 218 392 182 347 182 C302 182 267 230 256 256 C245 282 210 330 165 330 Z" 
+        stroke="url(#fr8x-grad)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <circle cx="256" cy="256" r="12" fill="#38bdf8"/>
+</svg>

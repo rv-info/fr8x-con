@@ -1,0 +1,471 @@
+================================================================================
+FR8X CONNECT — CENTRALIZED ART ASSET MANAGEMENT SYSTEM
+MASTER INVENTORY INDEX (ART_ASSET_INDEX.txt)
+================================================================================
+Generated: 2026-11-21 | System Version: 2.0 Enterprise
+Location: ART/DOCUMENTATION/ART_ASSET_INDEX.txt
+Single Source of Truth: /ART/
+Total Assets Documented: 35+ Canonical Visual Assets
+
+--------------------------------------------------------------------------------
+1. ARCHITECTURAL OVERVIEW & NAMING CONVENTION
+--------------------------------------------------------------------------------
+The ART directory serves as the centralized, immutable root repository for all
+visual assets utilized across FR8X Connect. To eliminate scattered, duplicated,
+and ambiguous graphic files, all visual assets are classified into standardized
+functional domains:
+
+  /ART
+    /ICONS            - Interface, navigation, transport mode & action symbols
+    /LOGOS            - Corporate identity, brand marks & email headers
+    /PROFILE          - User avatars, company badges & identity graphics
+    /ILLUSTRATIONS    - Empty-state graphics, banners & contextual artwork
+    /ANIMATIONS       - Looping UI animations, status spinners & telemetry motion
+    /3D               - Intermodal containers & maritime vessel GLB/GLTF models
+    /BACKGROUNDS      - Security patterns, Guilloche passport watermarks & grids
+    /DOCUMENTATION    - Master inventory index, schemas & replacement guidelines
+
+NAMING CONVENTION STANDARD:
+All filenames MUST follow explicit lowercase semantic naming:
+  <domain>_<descriptor>.<ext>
+Examples:
+  - navigation_dashboard.png / navigation_dashboard.svg
+  - navigation_rates.png / navigation_rates.svg
+  - transport_ship.png / transport_ship.svg
+  - action_calculator.png / action_calculator.svg
+  - status_verified.png / status_verified.svg
+  - logo_primary.png / logo_primary.svg
+  - profile_default.png
+  - illustration_empty_rates.png
+  - animation_loading.gif
+
+FORBIDDEN FILENAMES:
+Never upload files named image1, icon2, newlogo, final, finalfinal, or temp.
+
+--------------------------------------------------------------------------------
+2. ASSET REPLACEMENT & HOT-SWAP CONVENTION
+--------------------------------------------------------------------------------
+To replace any existing icon, logo, or illustration without modifying application
+source code:
+  1. Identify the target filename from this index (e.g., ART/LOGOS/logo_primary.png).
+  2. Overwrite the file in ART/<CATEGORY>/ with the new file using the EXACT same
+     filename and dimensions.
+  3. The application references these assets via the centralized Asset Registry
+     (/lib/assets/registry.ts) and /ART/ route handler. Replacing the file
+     automatically cascades the update across the entire application.
+  4. Ensure PNG graphics preserve 32-bit RGBA transparency (alpha channel).
+
+--------------------------------------------------------------------------------
+3. MASTER VISUAL ASSET INVENTORY
+--------------------------------------------------------------------------------
+
+================================================================================
+CATEGORY: ART/LOGOS (Corporate & Brand Visuals)
+================================================================================
+
+[LOG-001] logo_primary.svg
+  Alias Filename: logo.svg
+  Category: ART/LOGOS
+  Intended Purpose: Primary high-resolution vector corporate identity for FR8X.
+  Recommended Usage: Headers, navigation bars, SVG renderers, high-DPI displays.
+  Format: Scalable Vector Graphics (SVG)
+  Dimensions: Scalable vector (viewBox: 0 0 120 40)
+  Transparency Support: Yes (Full Alpha)
+  Animation / Interaction: Static vector with CSS fill/stroke reactive styling.
+  Pages / Components Used: TopBar (/components/layout/TopBar.tsx), AppShell,
+    Auth screens (/login, /register, /verify-email), Footer.
+
+[LOG-002] logo_primary.png
+  Alias Filename: logo.png
+  Category: ART/LOGOS
+  Intended Purpose: Standard raster brand logo for universal browser compatibility.
+  Recommended Usage: Fallback image element, external embeds, PDF reports.
+  Format: Portable Network Graphics (PNG, 32-bit RGBA)
+  Dimensions: 120x40 px (Display), 512x170 px (Native)
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Static image with hover opacity transitions.
+  Pages / Components Used: TopBar, AppShell, Footer, Login, Register, Sitemap,
+    Privacy Policy, Godfather Management.
+
+[LOG-003] logo_white.png
+  Alias Filename: logo-white.png
+  Category: ART/LOGOS
+  Intended Purpose: High-contrast white brand logo for dark backgrounds.
+  Recommended Usage: Dark navigation headers, invoice footers, dark mode modals.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 120x40 px (Display), 512x170 px (Native)
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Static image.
+  Pages / Components Used: Dark modals, high-contrast themes.
+
+[LOG-004] logo_email.png / email-logo.png
+  Alias Filename: email-logo.png
+  Category: ART/LOGOS
+  Intended Purpose: Optimized lightweight logo for transactional email headers.
+  Recommended Usage: ZeptoMail, SMTP templates, verification and OTP emails.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 120x36 px
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Static image (safe for email clients).
+  Pages / Components Used: Transactional email templates, Godfather email test,
+    Razorpay webhook receipts (/app/api/webhooks/razorpay/route.ts).
+
+[LOG-005] logo_email_horizontal.png / email-logo-horizontal.png
+  Alias Filename: email-logo-horizontal.png
+  Category: ART/LOGOS
+  Intended Purpose: Extended horizontal banner logo for email footers & digests.
+  Recommended Usage: Email notification digests, automated tender alerts.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 200x50 px
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Static image.
+  Pages / Components Used: Email notification digests, system broadcasts.
+
+[LOG-006] logo_brand_master.svg / fr8x.svg
+  Alias Filename: fr8x.svg
+  Category: ART/LOGOS
+  Intended Purpose: Master infinite-resolution vector artwork with complete curves.
+  Recommended Usage: Commercial print, high-definition displays, marketing media.
+  Format: SVG
+  Dimensions: Infinite vector (viewBox: 0 0 1024 1024)
+  Transparency Support: Yes (Full Alpha)
+  Animation / Interaction: Vector art.
+  Pages / Components Used: Marketing collateral, print exports, accessories.
+
+[LOG-007] logo_brand_master.png / fr8x.png
+  Alias Filename: fr8x.png
+  Category: ART/LOGOS
+  Intended Purpose: High-resolution master raster rendering of the FR8X emblem.
+  Recommended Usage: Desktop app packaging, PWA splash screens.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 1024x1024 px
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Static image.
+  Pages / Components Used: PWA splash screen, desktop icon packaging.
+
+================================================================================
+CATEGORY: ART/ICONS (Interface, Navigation & System Symbols)
+================================================================================
+
+[ICN-001] navigation_dashboard.png / dashboard-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Sidebar executive KPI overview icon.
+  Recommended Usage: Primary navigation sidebar, breadcrumb icons.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Hover state, active state via Lucide/CSS overlay.
+  Pages / Components Used: /dashboard, Sidebar (/components/layout/Sidebar.tsx).
+
+[ICN-002] navigation_feeds.png / feeds-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Sidebar social & trade intelligence feed icon.
+  Recommended Usage: Primary navigation sidebar, feed filters.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator, click navigation.
+  Pages / Components Used: /feeds, Sidebar.
+
+[ICN-003] navigation_nexus.png / nexus-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Sidebar international trade hub globe icon.
+  Recommended Usage: Primary navigation sidebar, trade lane links.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator, telemetry pulse compatible.
+  Pages / Components Used: /nexus, Sidebar.
+
+[ICN-004] navigation_auctions.png / auctions-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Reverse freight tender gavel icon.
+  Recommended Usage: Primary navigation sidebar, auction cards.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator, bid counter badge integration.
+  Pages / Components Used: /auctions, Sidebar.
+
+[ICN-005] navigation_rates.png / rates-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Ocean freight rate intelligence matrix icon.
+  Recommended Usage: Primary navigation sidebar, spot tariff tables.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator, tariff refresh trigger.
+  Pages / Components Used: /rates, Sidebar.
+
+[ICN-006] navigation_network.png / network-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Verified enterprise network directory icon.
+  Recommended Usage: Primary navigation sidebar, connection status cards.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator, request counter badge.
+  Pages / Components Used: /network, Sidebar.
+
+[ICN-007] navigation_jobs.png / jobs-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Maritime logistics careers briefcase icon.
+  Recommended Usage: Primary navigation sidebar, job opportunity listings.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator.
+  Pages / Components Used: /jobs, Sidebar.
+
+[ICN-008] navigation_profile.png / profile-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Enterprise profile & statutory passport icon.
+  Recommended Usage: Primary navigation sidebar, user settings triggers.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Active route indicator.
+  Pages / Components Used: /profile, Sidebar.
+
+[ICN-009] transport_ship.png / ship-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Ocean container liner transit mode symbol.
+  Recommended Usage: Rate cards, auction route headers, vessel schedule displays.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 32x32 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static symbol.
+  Pages / Components Used: /rates, /auctions, RateSearchModal, TransitBadges.
+
+[ICN-010] transport_air.png / air-freight-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Expedited air cargo aviation transit mode symbol.
+  Recommended Usage: Airport-to-airport freight rates, express tenders.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 32x32 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static symbol.
+  Pages / Components Used: /rates, /auctions, ModeSelector.
+
+[ICN-011] transport_truck.png / truck-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Inland container drayage & road carriage symbol.
+  Recommended Usage: First-mile/last-mile drayage rates, CFS movement cards.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 32x32 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static symbol.
+  Pages / Components Used: /rates, /auctions, DrayageRates.
+
+[ICN-012] transport_container.png / container-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Standard intermodal ISO freight container symbol.
+  Recommended Usage: Container type selectors (20DV, 40HC, 40RF), cargo manifests.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static symbol.
+  Pages / Components Used: RatesEditor, AuctionComposer, ContainerSpecSheet.
+
+[ICN-013] action_calculator.png / calculator-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Financial currency conversion calculator tool icon.
+  Recommended Usage: TopBar utility bar, tariff estimation modals.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 20x20 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Interactive trigger button with modal toggle.
+  Pages / Components Used: TopBar (/components/layout/TopBar.tsx).
+
+[ICN-014] action_notification.png / notification-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Notification center alert bell graphic.
+  Recommended Usage: TopBar notification trigger, alert cards.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 24x24 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Unread badge indicator overlay, dropdown trigger.
+  Pages / Components Used: TopBar, NotificationCenter.
+
+[ICN-015] status_verified.png / golden-tick.png
+  Category: ART/ICONS
+  Intended Purpose: Authoritative verified enterprise golden tick emblem.
+  Recommended Usage: Verified forwarder badges, passport headers, name tags.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 16x16 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Tooltip display on hover ("Verified B2B Enterprise").
+  Pages / Components Used: UserAvatar, GoldenTick, Network, Feeds, Profile.
+
+[ICN-016] app_icon_square.png / FR8X ICON.png
+  Category: ART/ICONS
+  Intended Purpose: Square brand icon mark for sidebar collapsed state & headers.
+  Recommended Usage: Collapsed sidebar brand anchor, mobile navigation bar.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 48x48 px (Display), 512x512 px (Native)
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Navigation link to /dashboard.
+  Pages / Components Used: Sidebar (/components/layout/Sidebar.tsx), TopBar.
+
+[ICN-017] app_icon_infinity.png / FR8X Infinity App Icon.png
+  Category: ART/ICONS
+  Intended Purpose: Ultra-high-resolution infinity loop brand app icon.
+  Recommended Usage: Mobile application packaging, app stores, splash graphics.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 1024x1024 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static app graphic.
+  Pages / Components Used: App store listings, PWA manifest.
+
+[ICN-018] app_icon.png / icon.png
+  Category: ART/ICONS
+  Intended Purpose: Progressive Web App (PWA) standard square icon.
+  Recommended Usage: Web manifest, browser home-screen installation.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 192x192 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: PWA icon.
+  Pages / Components Used: PWA manifest (/public/manifest.json), app metadata.
+
+[ICN-019] app_icon_touch.png / apple-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Apple iOS Home Screen touch icon.
+  Recommended Usage: Safari iOS bookmark and home-screen launcher.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 180x180 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Apple Web Clip.
+  Pages / Components Used: /app/layout.tsx, public/apple-icon.png.
+
+[ICN-020] app_icon_mobile.png / mobile-app-icon.png
+  Category: ART/ICONS
+  Intended Purpose: Android & Windows mobile launcher icon.
+  Recommended Usage: Android Chrome WebAPK, Windows tile icon.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 512x512 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static icon.
+  Pages / Components Used: /public/manifest.json.
+
+[ICN-021] app_favicon.png / favicon.png
+  Category: ART/ICONS
+  Intended Purpose: Browser tab 32-bit PNG favicon.
+  Recommended Usage: Modern browser tab icon.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 32x32 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Browser tab identity.
+  Pages / Components Used: /app/layout.tsx.
+
+[ICN-022] app_favicon.ico / favicon.ico
+  Category: ART/ICONS
+  Intended Purpose: Legacy multi-resolution ICO bookmark icon.
+  Recommended Usage: Root browser address bar and bookmark icon.
+  Format: ICO (16x16, 32x32, 48x48 embedded)
+  Dimensions: Multi-resolution
+  Transparency Support: Yes
+  Animation / Interaction: Static icon.
+  Pages / Components Used: /app/layout.tsx, /public/favicon.ico.
+
+================================================================================
+CATEGORY: ART/PROFILE (Personal & Corporate Identity)
+================================================================================
+
+[PRF-001] profile_default.png / profile-avatar.png
+  Category: ART/PROFILE
+  Intended Purpose: Default personal user profile photograph avatar.
+  Recommended Usage: UserAvatar fallback when user has not uploaded a personal photo.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 160x160 px
+  Transparency Support: Yes (Full Alpha Channel Preserved)
+  Animation / Interaction: Circular crop container (`border-radius: 50%`).
+  Pages / Components Used: UserAvatar (/components/ui/UserAvatar.tsx),
+    Profile (/profile), Network, Feeds, TradeChat.
+
+================================================================================
+CATEGORY: ART/ILLUSTRATIONS (Contextual & State Graphics)
+================================================================================
+
+[ILU-001] illustration_empty_auctions.png / empty-auctions.png
+  Category: ART/ILLUSTRATIONS
+  Intended Purpose: Visual empty-state graphic when no reverse tenders match filters.
+  Recommended Usage: Auctions list view empty state.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 160x160 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static illustration with CTA button.
+  Pages / Components Used: /auctions, EmptyState component.
+
+[ILU-002] illustration_empty_rates.png / empty-rates.png
+  Category: ART/ILLUSTRATIONS
+  Intended Purpose: Visual empty-state graphic when no spot freight tariffs exist.
+  Recommended Usage: Rates matrix empty state, search zero-results.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 160x160 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static illustration with rate request CTA.
+  Pages / Components Used: /rates, EmptyState component.
+
+[ILU-003] illustration_empty_jobs.png / empty-jobs.png
+  Category: ART/ILLUSTRATIONS
+  Intended Purpose: Visual empty-state graphic when no freight careers are listed.
+  Recommended Usage: Careers board empty state.
+  Format: PNG (32-bit RGBA)
+  Dimensions: 160x160 px
+  Transparency Support: Yes (Alpha Channel Preserved)
+  Animation / Interaction: Static illustration with job alert subscription CTA.
+  Pages / Components Used: /jobs, EmptyState component.
+
+[ILU-004] illustration_og_banner.png / og-image.png
+  Category: ART/ILLUSTRATIONS
+  Intended Purpose: OpenGraph social media sharing preview card.
+  Recommended Usage: Twitter Cards, LinkedIn link previews, WhatsApp previews.
+  Format: PNG (24-bit RGB / 32-bit RGBA)
+  Dimensions: 1200x630 px (Standard 1.91:1 Social Ratio)
+  Transparency Support: Opaque / Branded Corporate Card
+  Animation / Interaction: Static card.
+  Pages / Components Used: /app/layout.tsx metadata, OpenGraph tags.
+
+================================================================================
+CATEGORY: ART/ANIMATIONS (Telemetry & Motion Graphics)
+================================================================================
+
+[ANM-001] Looping Animation Specification
+  Category: ART/ANIMATIONS
+  Allowed Formats: Animated WebP (.webp), SVG SMIL/CSS, Lightweight GIF (.gif)
+  Maximum File Size: 1.0 MB
+  Intended Purpose: Trade radar sweeping, reverse auction countdown urgency,
+    bilateral chat typing indicators, freight synchronization spinners.
+
+================================================================================
+CATEGORY: ART/3D (Intermodal Models)
+================================================================================
+
+[3D-001] Intermodal 3D Models Specification
+  Category: ART/3D
+  Allowed Formats: GLB (Binary glTF 2.0)
+  Target Geometry: < 50,000 triangles, 1024x1024 PBR textures
+  Intended Purpose: 3D ISO container visualization (20DV, 40HC, Reefer, Flat Rack),
+    vessel stowage simulation, cargo packaging 3D viewer.
+
+================================================================================
+CATEGORY: ART/BACKGROUNDS (Textures & Patterns)
+================================================================================
+
+[BKG-001] Security & Grid Patterns Specification
+  Category: ART/BACKGROUNDS
+  Allowed Formats: SVG (vector patterns), WebP (subtle noise textures)
+  Intended Purpose: Freight Passport Guilloche security background,
+    Trade lane world map watermark, technical grid overlays.
+
+================================================================================
+4. SUMMARY OF ASSET CONSOLIDATION & MIGRATION RECEIPT
+================================================================================
+- Total visual assets consolidated: 35+ files
+- Old scattered locations: /public/icons, /accessories, /public root
+- New centralized authority: /ART (and mirrored at /public/ART for CDN delivery)
+- Dynamic Route Handler: /app/ART/[...slug]/route.ts serves assets directly
+  from /ART with proper MIME types, Cache-Control headers, and zero traversal risks.
+- Backward compatibility: Original public paths remain accessible so zero
+  existing bookmarks, external embeds, or cached pages break.
+================================================================================

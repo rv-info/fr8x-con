@@ -30,8 +30,8 @@ export const metadata: Metadata = buildRouteMetadata('home', {
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/favicon.png', type: 'image/png', sizes: '64x64' },
       { url: '/icon.png', type: 'image/png', sizes: '192x192' },
-      { url: '/logo.png', type: 'image/png', sizes: '512x512' },
-      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/ART/LOGOS/logo_primary.png', type: 'image/png', sizes: '512x512' },
+      { url: '/ART/LOGOS/logo_primary.svg', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon.ico',
     apple: '/apple-icon.png',
@@ -66,7 +66,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+        <link rel="icon" type="image/svg+xml" href="/ART/LOGOS/logo_primary.svg" />
         <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />

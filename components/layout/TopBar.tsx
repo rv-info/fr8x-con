@@ -1242,7 +1242,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           title="FR8X Home"
         >
           <img
-            src="/FR8X ICON.png"
+            src="/ART/ICONS/app_icon_square.png"
             alt="FR8X"
             className="mobile-brand-icon-img"
           />

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 import { getDbClient } from '@/lib/supabase/server';
 import { authenticateGodfatherOperator } from '@/lib/auth-guard';
 
@@ -69,7 +71,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         upsert: true,
       });
 
-    let publicUrl = `/icons/${safeAssetId}.${ext}`;
+    let publicUrl = `/ART/ICONS/${safeAssetId}.${ext}`;
     if (!storageError) {
       const { data: urlData } = supabase.storage
         .from('icons')
@@ -77,6 +79,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       if (urlData?.publicUrl) {
         publicUrl = urlData.publicUrl;
       }
+    }
+
+    // In local or node runtime, also persist directly to root ART repository
+    try {
+      const artCategory = safeAssetId.includes('logo') ? 'LOGOS' : safeAssetId.includes('empty') ? 'ILLUSTRATIONS' : 'ICONS';
+      const rootArtPath = path.join(process.cwd(), 'ART', artCategory, `${safeAssetId}.${ext}`);
+      const pubArtPath = path.join(process.cwd(), 'public', 'ART', artCategory, `${safeAssetId}.${ext}`);
+      fs.mkdirSync(path.dirname(rootArtPath), { recursive: true });
+      fs.mkdirSync(path.dirname(pubArtPath), { recursive: true });
+      fs.writeFileSync(rootArtPath, fileBuffer);
+      fs.writeFileSync(pubArtPath, fileBuffer);
+    } catch {
+      // Non-fatal if filesystem is restricted
     }
 
     // Record asset upload event in audit logs

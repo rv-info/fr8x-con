@@ -64,7 +64,7 @@ function LiveClockPanel() {
     >
       <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
         <img
-          src="/logo.png"
+          src="/ART/LOGOS/logo_primary.png"
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
@@ -547,7 +547,7 @@ export default function LoginPage() {
         >
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', margin: '0 auto 8px' }}>
             <img
-              src="/logo.png"
+              src="/ART/LOGOS/logo_primary.png"
               alt="FR8X"
               style={{
                 width: '32px',

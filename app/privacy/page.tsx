@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group text-decoration-none">
             <img
-              src="/logo.png"
+              src="/ART/LOGOS/logo_primary.png"
               alt="FR8X"
               className="w-8 h-8 object-contain"
             />

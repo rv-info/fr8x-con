@@ -112,7 +112,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           title="FR8X Home"
         >
           <img
-            src="/FR8X ICON.png"
+            src="/ART/ICONS/app_icon_square.png"
             alt="FR8X"
             style={{
               width: collapsed ? '24px' : '28px',

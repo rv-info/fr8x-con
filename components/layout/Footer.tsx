@@ -27,7 +27,7 @@ export function Footer() {
         {/* Brand Column */}
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <img src="/logo.png" alt="FR8X" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
+            <img src="/ART/LOGOS/logo_primary.png" alt="FR8X" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
             <span style={{ fontSize: '12px', fontWeight: 800, color: '#1B2B4B', letterSpacing: '0.04em' }}>
               FR8X CONNECT
             </span>

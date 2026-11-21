@@ -30,7 +30,7 @@ export function AssetImage({
   objectFit = 'contain',
 }: AssetImageProps) {
   const [hasError, setHasError] = useState(false);
-  const src = hasError ? '/logo.png' : getAssetPath(id, overridePath);
+  const src = hasError ? '/ART/LOGOS/logo_primary.png' : getAssetPath(id, overridePath);
 
   return (
     // eslint-disable-next-line @next/next/no-img-element

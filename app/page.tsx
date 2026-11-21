@@ -47,7 +47,7 @@ export default function RootPage() {
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
         <img
-          src="/logo.png"
+          src="/ART/LOGOS/logo_primary.png"
           alt="FR8X"
           style={{ width: '32px', height: '32px', objectFit: 'contain', display: 'block', margin: '0 auto' }}
         />

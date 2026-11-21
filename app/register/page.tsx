@@ -96,7 +96,7 @@ function LiveClockPanel() {
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
         <img
-          src="/logo.png"
+          src="/ART/LOGOS/logo_primary.png"
           alt="FR8X"
           style={{ width: '28px', height: '28px', objectFit: 'contain', display: 'block', margin: '0 auto 2px' }}
         />
@@ -1083,7 +1083,7 @@ export default function RegisterPage() {
             }}
           >
             <img
-              src="/logo.png"
+              src="/ART/LOGOS/logo_primary.png"
               alt="FR8X"
               style={{
                 width: '32px',

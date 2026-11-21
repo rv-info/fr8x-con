@@ -241,7 +241,7 @@ function VerifyEmailContent() {
             }}
           >
             <img
-              src="/logo.png"
+              src="/ART/LOGOS/logo_primary.png"
               alt="FR8X"
               style={{
                 width: '32px',

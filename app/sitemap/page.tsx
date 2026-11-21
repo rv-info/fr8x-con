@@ -75,7 +75,7 @@ export default function SitemapPage() {
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <img src="/logo.png" alt="FR8X" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+            <img src="/ART/LOGOS/logo_primary.png" alt="FR8X" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
             <span style={{ fontSize: '13px', fontWeight: 800, color: '#1B2B4B', letterSpacing: '0.04em' }}>
               FR8X
             </span>
