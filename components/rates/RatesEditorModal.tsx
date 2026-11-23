@@ -399,20 +399,9 @@ export function RatesEditorModal({
             type="button"
             onClick={handleClose}
             aria-label="Close Rates Editor"
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#64748B',
-              cursor: 'pointer',
-              padding: '6px',
-              borderRadius: '4px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'background-color 0.15s',
-            }}
+            className="close-red-box"
           >
-            <X size={18} />
+            <X size={15} />
           </button>
         </div>
 

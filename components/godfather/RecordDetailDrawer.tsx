@@ -32,7 +32,7 @@ export function RecordDetailDrawer({ record, onClose }: RecordDetailDrawerProps)
             <h2 className="gf-drawer-title">{record.title}</h2>
             <p className="gf-drawer-subtitle">{record.subtitle}</p>
           </div>
-          <button onClick={onClose} className="gf-modal-close-btn" aria-label="Close">
+          <button onClick={onClose} className="gf-modal-close-btn close-red-box" aria-label="Close">
             <X className="lucide w-5 h-5" />
           </button>
         </div>

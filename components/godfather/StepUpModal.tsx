@@ -35,7 +35,7 @@ export function StepUpModal() {
               <p className="gf-modal-subtitle">Con.FR8X.IN Super-Admin Privilege Elevation Protocol</p>
             </div>
           </div>
-          <button onClick={cancelStepUp} className="gf-modal-close-btn" aria-label="Cancel">
+          <button onClick={cancelStepUp} className="gf-modal-close-btn close-red-box" aria-label="Cancel">
             <X className="lucide w-4 h-4" />
           </button>
         </div>

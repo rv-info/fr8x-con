@@ -138,7 +138,7 @@ function SingleChatBox({
             e.stopPropagation();
             onClose();
           }}
-          className="closebtn"
+          className="closebtn close-red-box"
           title="Close chat"
         >
           <X size={13} />
@@ -217,10 +217,9 @@ function SingleChatBox({
           <button
             onClick={onClose}
             title="Close chat"
-            className="actionicon"
-            style={{ width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', borderRadius: '4px', color: '#0f172a' }}
+            className="close-red-box"
           >
-            <X size={15} />
+            <X size={14} />
           </button>
         </div>
       </div>

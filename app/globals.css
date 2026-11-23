@@ -2250,20 +2250,71 @@ textarea.input {
   background: #F8FAFD;
 }
 
-.close {
-  display: grid;
-  place-items: center;
-  width: 29px;
-  height: 29px;
-  border: 1px solid var(--fr8x-border, #E2E8F0);
-  border-radius: 4px;
-  background: #ffffff;
-  color: var(--mut);
-  transition: all 0.15s;
+/* ==========================================================================
+   INDICATIVE CLOSE BUTTON STANDARD: "X" IN A RED BOX
+   ========================================================================== */
+.close,
+.gf-modal-close-btn,
+.modalhead .close,
+.close-btn,
+.closebtn,
+.btn-close,
+.close-red-box {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  min-height: 26px !important;
+  padding: 0 !important;
+  border-radius: 5px !important;
+  background-color: #C0392B !important; /* Bold Indicative Red Box */
+  border: 1px solid #A93226 !important;
+  color: #FFFFFF !important; /* Crisp White X */
+  cursor: pointer !important;
+  box-shadow: 0 1px 3px rgba(192, 57, 43, 0.3) !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  user-select: none !important;
+  line-height: 1 !important;
+  flex-shrink: 0 !important;
 }
-.close:hover {
-  background: #f1f5f9;
-  color: var(--ink);
+
+.close:hover,
+.gf-modal-close-btn:hover,
+.modalhead .close:hover,
+.close-btn:hover,
+.btn-close:hover,
+.close-red-box:hover {
+  background-color: #A93226 !important;
+  border-color: #922B21 !important;
+  color: #FFFFFF !important;
+  transform: scale(1.06) !important;
+  box-shadow: 0 2px 6px rgba(192, 57, 43, 0.45) !important;
+}
+
+.close:active,
+.gf-modal-close-btn:active,
+.modalhead .close:active,
+.close-btn:active,
+.btn-close:active,
+.close-red-box:active {
+  background-color: #922B21 !important;
+  transform: translateY(1px) scale(0.98) !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+}
+
+.close svg,
+.gf-modal-close-btn svg,
+.modalhead .close svg,
+.close-btn svg,
+.btn-close svg,
+.close-red-box svg {
+  color: #FFFFFF !important;
+  stroke: #FFFFFF !important;
+  stroke-width: 2.2 !important;
+  width: 14px !important;
+  height: 14px !important;
 }
 
 /* Toast Container — Always in front of all dialogs and modals (z-index 100001 > modalbg 99999) */
@@ -3321,6 +3372,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 }
 
 /* Control Buttons Standard */
+.net-pill-btn,
 .top-location-btn,
 .currency-select,
 .user-top-btn,
@@ -3338,8 +3390,10 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   box-shadow: 0 1px 2px rgba(23, 43, 43, 0.04) !important;
   transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
   white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
+.net-pill-btn:hover,
 .top-location-btn:hover,
 .currency-select:hover,
 .user-top-btn:hover,
@@ -3349,6 +3403,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   color: #075B5B !important;
 }
 
+.net-pill-btn:active,
 .top-location-btn:active,
 .currency-select:active,
 .user-top-btn:active,
@@ -3366,6 +3421,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 }
 
 /* Dropdown Menu Anchoring Standard */
+.net-pill-popover,
 .location-dropdown-menu,
 .currency-converter-modal,
 .notifications-dropdown,
@@ -3382,6 +3438,20 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   color: #172B2B !important;
   font-family: 'Calibri Light', Calibri, Arial, sans-serif !important;
   font-size: 12px !important;
+}
+
+.net-pill-popover {
+  width: 230px !important;
+  left: 0 !important;
+  right: auto !important;
+}
+
+@media (max-width: 900px) {
+  .net-pill-popover {
+    left: auto !important;
+    right: 0 !important;
+    max-width: calc(100vw - 20px) !important;
+  }
 }
 
 .location-dropdown-menu {
@@ -3834,7 +3904,7 @@ th {
   background-color: #F8FAFD !important;
   color: #1B2B4B !important;
   line-height: 1.3 !important;
-  padding: 8px 12px !important;
+  padding: 6px 10px !important;
   border-bottom: 1px solid #CBD5E0 !important;
   text-align: left;
 }
@@ -3843,7 +3913,7 @@ td {
   background-color: #FFFFFF !important;
   color: #1B2B4B !important;
   line-height: 1.4 !important;
-  padding: 8px 12px !important;
+  padding: 6px 10px !important;
   border-bottom: 1px solid #EDF2F7 !important;
   vertical-align: middle;
 }

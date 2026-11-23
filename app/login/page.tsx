@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth, getOrCreateDeviceId } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
 import { isCorporateEmail } from '@/lib/utils';
-import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles, Eye, EyeOff, Calendar, Shield } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, Wifi, WifiOff, KeyRound, X, ShieldAlert, Clock, Info, ShieldCheck, Mail, CheckCircle2, Smartphone, Download, Zap, Sparkles, Eye, EyeOff, Calendar, Shield, RefreshCw } from 'lucide-react';
 
 // --- Password Strength Scorer (reused in reset modal) ---
 type StrengthLevel = 'empty' | 'too_weak' | 'weak' | 'fair' | 'strong' | 'very_strong';
@@ -114,6 +114,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginStage, setLoginStage] = useState<'idle' | 'verifying' | 'connecting' | 'success'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [sessionNotice, setSessionNotice] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
@@ -203,6 +204,17 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Prefetch destination route on mount for instantaneous transition
+  useEffect(() => {
+    try {
+      router.prefetch('/feeds');
+    } catch {}
+    return () => {
+      setIsLoading(false);
+      setLoginStage('idle');
+    };
+  }, [router]);
+
   // Restore remembered email on mount (password is never stored)
   useEffect(() => {
     try {
@@ -221,6 +233,7 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return; // Prevent duplicate login submissions while authentication is in progress
     setErrorMessage('');
     setIsBlocked(false);
 
@@ -237,9 +250,10 @@ export default function LoginPage() {
     }
 
     setIsLoading(true);
+    setLoginStage('verifying');
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 7000);
 
     let serverFailed = false;
     let res: Response | null = null;
@@ -265,9 +279,22 @@ export default function LoginPage() {
         try {
           const directRes = await loginWithCredentials(id, password, remember);
           if (directRes && directRes.success) {
+            setLoginStage('success');
             setIsLoading(false);
             toast('Logged in successfully via low-network secure connection.');
-            router.push('/feeds');
+            // Navigation safety watchdog: terminates loading animation if router transition hangs
+        const navigationWatchdog = setTimeout(() => {
+          setIsLoading(false);
+          setLoginStage('idle');
+        }, 5000);
+
+        try {
+          router.push('/feeds');
+        } catch {
+          clearTimeout(navigationWatchdog);
+          setIsLoading(false);
+          setLoginStage('idle');
+        }
             return;
           }
         } catch {
@@ -276,9 +303,9 @@ export default function LoginPage() {
       }
     }
 
-    setIsLoading(false);
-
     if (serverFailed || !res || !json) {
+      setIsLoading(false);
+      setLoginStage('idle');
       setErrorMessage('Unable to reach authentication server. Please check your network connection and retry.');
       return;
     }
@@ -286,6 +313,8 @@ export default function LoginPage() {
     if (res.ok && json.success) {
       // AUTH-01: Intercept first-login 2FA challenge
       if (json.firstLoginRequired) {
+        setIsLoading(false);
+        setLoginStage('idle');
         setFirstLoginChallengeToken(json.challengeToken || '');
         setFirstLoginMaskedEmail(json.maskedEmail || json.email || id);
         setFirstLoginOtp('');
@@ -296,9 +325,11 @@ export default function LoginPage() {
         return;
       }
 
+      setLoginStage('connecting');
       // Server authenticated — hand off verified profile to client session
       const loggedIn = login(id, remember, json, password);
       if (loggedIn) {
+        setLoginStage('success');
         // Record login incident into Godfather client audit ledger
         try {
           const existingAudit = JSON.parse(localStorage.getItem('fr8x_gf_audit_logs') || '[]');
@@ -337,11 +368,27 @@ export default function LoginPage() {
             }).catch(() => {});
           } catch {}
         }
-        router.push('/feeds');
+        // Navigation safety watchdog: terminates loading animation if router transition hangs
+        const navigationWatchdog = setTimeout(() => {
+          setIsLoading(false);
+          setLoginStage('idle');
+        }, 5000);
+
+        try {
+          router.push('/feeds');
+        } catch {
+          clearTimeout(navigationWatchdog);
+          setIsLoading(false);
+          setLoginStage('idle');
+        }
       } else {
+        setIsLoading(false);
+        setLoginStage('idle');
         setErrorMessage('Session initialization failed. Please try again.');
       }
     } else {
+      setIsLoading(false);
+      setLoginStage('idle');
       if (json.isPendingVerification) {
         setPendingVerificationEmail(json.email || (id.includes('@') ? id : null));
         setErrorMessage(json.error || 'Your account is pending email verification. Please check your email for your 15-minute verification link.');
@@ -398,7 +445,19 @@ export default function LoginPage() {
         const loggedIn = login(identifier.trim(), remember, data);
         if (loggedIn) {
           toast('First-time authentication verified! Welcome to FR8X Workspace.');
+          // Navigation safety watchdog: terminates loading animation if router transition hangs
+        const navigationWatchdog = setTimeout(() => {
+          setIsLoading(false);
+          setLoginStage('idle');
+        }, 5000);
+
+        try {
           router.push('/feeds');
+        } catch {
+          clearTimeout(navigationWatchdog);
+          setIsLoading(false);
+          setLoginStage('idle');
+        }
         } else {
           setFirstLoginError('Session initialization failed. Please try again.');
         }
@@ -766,11 +825,53 @@ export default function LoginPage() {
             <button
               type="submit"
               className="btn primary login-submit-btn"
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', minHeight: '40px' }}
               disabled={isLoading}
             >
-              {isLoading ? 'Authenticating…' : <><span>Sign in to Workspace</span> <ArrowRight size={15} /></>}
+              {isLoading ? (
+                <>
+                  <RefreshCw size={15} style={{ animation: 'spin 0.8s linear infinite' }} />
+                  <span>
+                    {loginStage === 'connecting'
+                      ? 'Connecting to Workspace…'
+                      : loginStage === 'success'
+                      ? 'Redirecting to Feeds…'
+                      : 'Verifying Credentials…'}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>Sign in to Workspace</span> <ArrowRight size={15} />
+                </>
+              )}
             </button>
+
+            {isLoading && (
+              <div
+                style={{
+                  marginTop: '10px',
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  background: '#E8F0ED',
+                  border: '1px solid #D5DEDA',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '11.5px',
+                  color: '#075B5B',
+                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                }}
+              >
+                <RefreshCw size={12} style={{ animation: 'spin 1s linear infinite', flexShrink: 0 }} />
+                <span>
+                  {loginStage === 'connecting'
+                    ? 'Credentials verified. Establishing encrypted workspace session…'
+                    : loginStage === 'success'
+                    ? 'Session verified! Opening your workspace…'
+                    : 'Authenticating with enterprise security gateway…'}
+                </span>
+              </div>
+            )}
 
             <div style={{ marginTop: '12px', textAlign: 'center', fontSize: '11px', color: '#64748b', lineHeight: 1.5 }}>
               By signing in, you confirm compliance with the{' '}
@@ -840,7 +941,7 @@ export default function LoginPage() {
                   setResetError('');
                   setResetStep('request');
                 }}
-                className="gf-modal-close-btn"
+                className="gf-modal-close-btn close-red-box"
               >
                 <X className="lucide w-4 h-4" />
               </button>
@@ -1116,7 +1217,7 @@ export default function LoginPage() {
                   setFirstLoginError('');
                   setFirstLoginOtp('');
                 }}
-                className="gf-modal-close-btn"
+                className="gf-modal-close-btn close-red-box"
               >
                 <X className="lucide w-4 h-4" />
               </button>

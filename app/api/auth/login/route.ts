@@ -58,72 +58,73 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. Authoritative Supabase Auth Verification with Server DBMS fallback
+    // 1. Authoritative verification: Fast-path local PBKDF2 check (< 50ms) then Supabase Auth
     let authSucceeded = false;
     let userId = '';
     let fallbackProfile: any = null;
     let supabaseSession: any = null;
     let authTimedOut = false;
 
-    const supabase = createClient();
-    try {
-      const authPromise = supabase.auth.signInWithPassword({
-        email: targetEmail,
-        password,
-      });
-      const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
-        setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 15000)
-      );
-      const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
-
-      if (!authError && authData?.user) {
+    // Fast-path: Check server security store first (local PBKDF2 verification, instantaneous < 50ms)
+    const secUser = serverSecurityStore.getUser(targetEmail) || serverSecurityStore.getUserByEmailOrUid(targetEmail);
+    if (secUser && secUser.passwordHash) {
+      const isMatch = verifyHashedPassword(password, secUser.passwordHash);
+      if (isMatch) {
         authSucceeded = true;
-        userId = authData.user.id;
-        supabaseSession = authData.session;
-      } else if (authError?.message === 'Auth timeout') {
-        authTimedOut = true;
+        userId = secUser.uid;
+        fallbackProfile = {
+          uid: secUser.uid,
+          email: secUser.email || targetEmail,
+          displayName: secUser.displayName || targetEmail.split('@')[0],
+          firstName: secUser.firstName || secUser.displayName?.split(' ')[0] || targetEmail.split('@')[0],
+          lastName: secUser.lastName || '',
+          company: secUser.company || secUser.companyName || 'Enterprise Logistics',
+          companyId: secUser.companyId || '',
+          role: secUser.role || 'user',
+          status: secUser.status || 'active',
+          mobile: secUser.mobile || secUser.phone || '',
+          phone: secUser.phone || secUser.mobile || '',
+          designation: secUser.designation || 'Logistics Manager',
+          plan: secUser.plan || 'trial',
+          hasGoldenTick: Boolean((secUser as any).hasGoldenTick || secUser.plan === 'premium'),
+          email_verified: Boolean(secUser.email_verified ?? true),
+          isVerified: Boolean((secUser as any).isVerified ?? true),
+          city: secUser.city || '',
+          state: secUser.state || '',
+          country: secUser.country || 'India',
+          formattedAddress: secUser.formattedAddress || secUser.address || '',
+          timezone: secUser.timezone || 'Asia/Kolkata',
+          avatarUrl: secUser.avatarUrl || '',
+          companyLogoUrl: secUser.companyLogoUrl || '',
+          experiences: (secUser as any).experiences || [],
+          educations: (secUser as any).educations || [],
+          certifications: (secUser as any).certifications || [],
+        };
       }
-    } catch {
-      // Continue to server store fallback
     }
 
-    // Fallback: Verify credentials against server security store (PBKDF2)
+    // Remote fallback: If not in local store, query Supabase with a snappy 3.5s timeout
     if (!authSucceeded) {
-      const secUser = serverSecurityStore.getUser(targetEmail) || serverSecurityStore.getUserByEmailOrUid(targetEmail);
-      if (secUser && secUser.passwordHash) {
-        const isMatch = verifyHashedPassword(password, secUser.passwordHash);
-        if (isMatch) {
+      const supabase = createClient();
+      try {
+        const authPromise = supabase.auth.signInWithPassword({
+          email: targetEmail,
+          password,
+        });
+        const timeoutPromise = new Promise<{ data: any; error: any }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error('Auth timeout') }), 3500)
+        );
+        const { data: authData, error: authError } = await Promise.race([authPromise, timeoutPromise]);
+
+        if (!authError && authData?.user) {
           authSucceeded = true;
-          userId = secUser.uid;
-          fallbackProfile = {
-            uid: secUser.uid,
-            email: secUser.email || targetEmail,
-            displayName: secUser.displayName || targetEmail.split('@')[0],
-            firstName: secUser.firstName || secUser.displayName?.split(' ')[0] || targetEmail.split('@')[0],
-            lastName: secUser.lastName || '',
-            company: secUser.company || secUser.companyName || 'Enterprise Logistics',
-            companyId: secUser.companyId || '',
-            role: secUser.role || 'user',
-            status: secUser.status || 'active',
-            mobile: secUser.mobile || secUser.phone || '',
-            phone: secUser.phone || secUser.mobile || '',
-            designation: secUser.designation || 'Logistics Manager',
-            plan: secUser.plan || 'trial',
-            hasGoldenTick: Boolean((secUser as any).hasGoldenTick || secUser.plan === 'premium'),
-            email_verified: Boolean(secUser.email_verified ?? true),
-            isVerified: Boolean((secUser as any).isVerified ?? true),
-            city: secUser.city || '',
-            state: secUser.state || '',
-            country: secUser.country || 'India',
-            formattedAddress: secUser.formattedAddress || secUser.address || '',
-            timezone: secUser.timezone || 'Asia/Kolkata',
-            avatarUrl: secUser.avatarUrl || '',
-            companyLogoUrl: secUser.companyLogoUrl || '',
-            experiences: (secUser as any).experiences || [],
-            educations: (secUser as any).educations || [],
-            certifications: (secUser as any).certifications || [],
-          };
+          userId = authData.user.id;
+          supabaseSession = authData.session;
+        } else if (authError?.message === 'Auth timeout') {
+          authTimedOut = true;
         }
+      } catch {
+        // Fall through to failure handling
       }
     }
 
@@ -171,6 +172,7 @@ export async function POST(req: NextRequest) {
     // 2. Authoritative PostgreSQL Profile Check (or server store profile)
     let profileRow: any = null;
     try {
+      const supabase = createClient();
       const profilePromise = supabase
         .from('profiles')
         .select('*')

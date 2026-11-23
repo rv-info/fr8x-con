@@ -66,7 +66,7 @@ export function ActionConfirmModal({
               </p>
             </div>
           </div>
-          <button type="button" onClick={handleDismiss} className="gf-modal-close-btn" aria-label="Close">
+          <button type="button" onClick={handleDismiss} className="gf-modal-close-btn close-red-box" aria-label="Close">
             <X className="lucide w-4 h-4" />
           </button>
         </div>

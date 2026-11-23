@@ -69,8 +69,8 @@ export function Modal({
           <b>{title}</b>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             {headerActions}
-            <button className="close" onClick={onClose} aria-label="Close modal">
-              <X size={16} />
+            <button className="close close-red-box" onClick={onClose} aria-label="Close modal" title="Close">
+              <X size={15} />
             </button>
           </div>
         </div>

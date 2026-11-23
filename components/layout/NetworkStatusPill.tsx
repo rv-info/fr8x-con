@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNetwork } from '@/lib/context/NetworkContext';
 import { presenceService } from '@/lib/presence/presenceService';
-import { ChevronDown, Check, WifiOff, RefreshCw } from 'lucide-react';
+import { ChevronDown, Check, WifiOff, RefreshCw, X } from 'lucide-react';
 
 export function NetworkStatusPill() {
   const { isOnline, tier, isSyncing, pendingCount, measuredLatency, isLowBandwidth } = useNetwork();
@@ -72,9 +72,10 @@ export function NetworkStatusPill() {
   const pillText = '#172B2B';
 
   return (
-    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={popoverRef}>
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', flexShrink: 0 }} ref={popoverRef}>
       <button
         type="button"
+        className="net-pill-btn"
         onClick={() => setIsOpen(!isOpen)}
         title={`Status: ${statusLabel}${isLowBandwidth ? ' · Data Saver Active' : ''} · Click to switch`}
         aria-expanded={isOpen}
@@ -82,16 +83,19 @@ export function NetworkStatusPill() {
         style={{
           display: 'inline-flex',
           alignItems: 'center',
-          gap: '5px',
+          justifyContent: 'center',
+          gap: '6px',
           padding: '0 8px',
           height: '30px',
+          minWidth: '76px',
+          flexShrink: 0,
           boxSizing: 'border-box',
           borderRadius: '6px',
           background: pillBg,
           border: `1px solid ${pillBorder}`,
           color: pillText,
           fontSize: '12px',
-          fontFamily: 'Calibri, Arial, sans-serif',
+          fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
           fontWeight: 600,
           cursor: 'pointer',
           transition: 'all 0.15s ease',
@@ -102,7 +106,7 @@ export function NetworkStatusPill() {
         {isSyncing ? (
           <RefreshCw size={11} className="spin-fast" style={{ color: pillText, flexShrink: 0 }} />
         ) : !isOnline ? (
-          <WifiOff size={11} style={{ color: '#4A5568', flexShrink: 0 }} />
+          <WifiOff size={11} style={{ color: '#66736F', flexShrink: 0 }} />
         ) : (
           <span
             style={{
@@ -116,64 +120,79 @@ export function NetworkStatusPill() {
             }}
           />
         )}
-        <span className="net-pill-text">{statusLabel}</span>
-        <ChevronDown size={11} style={{ color: '#64748B', flexShrink: 0 }} />
+        <span className="net-pill-text" style={{ flexShrink: 0, lineHeight: 1 }}>{statusLabel}</span>
+        <ChevronDown size={11} style={{ color: '#66736F', flexShrink: 0 }} />
       </button>
 
       {isOpen && (
         <div
+          className="net-pill-popover"
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            right: 0,
+            left: 0,
             width: '230px',
+            maxWidth: 'calc(100vw - 24px)',
             background: '#ffffff',
             borderRadius: '8px',
-            boxShadow: '0 10px 25px -5px rgba(18, 55, 42, 0.12), 0 8px 10px -6px rgba(18, 55, 42, 0.05)',
-            border: '1px solid #E2E8F0',
+            boxShadow: '0 10px 25px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
+            border: '1px solid #D5DEDA',
             zIndex: 1000,
             padding: '6px',
             fontSize: '12px',
-            fontFamily: 'Calibri, sans-serif',
+            fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
           }}
         >
           {/* Header with Connection Intelligence */}
           <div
             style={{
-              padding: '6px 8px 6px',
-              borderBottom: '1px solid #CBD5E0',
-              marginBottom: '4px',
+              padding: '6px 8px',
+              borderBottom: '1px solid #D5DEDA',
+              marginBottom: '6px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              background: '#E8F0ED',
+              borderRadius: '5px',
             }}
           >
             <span
               style={{
-                fontSize: '12px',
+                fontSize: '11px',
                 textTransform: 'uppercase',
                 fontWeight: 700,
-                color: '#1B2B4B',
+                color: '#172B2B',
                 letterSpacing: '0.04em',
               }}
             >
               Availability Status
             </span>
-            <span
-              style={{
-                fontSize: '12px',
-                color: !isOnline ? '#4A5568' : isLowBandwidth ? '#C07A00' : '#47799E',
-                fontWeight: 600,
-              }}
-            >
-              {!isOnline
-                ? '⚠️ Offline'
-                : isLowBandwidth
-                ? '⚡ 2G / Data Saver'
-                : tier === 'hyper'
-                ? '⚡ 4G / High-Speed'
-                : '3G / Adaptive'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span
+                style={{
+                  fontSize: '10.5px',
+                  color: !isOnline ? '#66736F' : isLowBandwidth ? '#B7791F' : '#075B5B',
+                  fontWeight: 600,
+                }}
+              >
+                {!isOnline
+                  ? 'Offline'
+                  : isLowBandwidth
+                  ? '⚡ 2G Saver'
+                  : tier === 'hyper'
+                  ? '⚡ High-Speed'
+                  : 'Adaptive'}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="close-red-box"
+                style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', borderRadius: '3px' }}
+                aria-label="Close status popover"
+              >
+                <X size={10} />
+              </button>
+            </div>
           </div>
 
           {/* Syncing or Offline notice if present */}
@@ -181,11 +200,11 @@ export function NetworkStatusPill() {
             <div
               style={{
                 padding: '6px 8px',
-                background: '#F8FAFD',
+                background: '#E8F0ED',
                 borderRadius: '6px',
-                border: '1px solid #E2E8F0',
-                fontSize: '12px',
-                color: '#1B2B4B',
+                border: '1px solid #D5DEDA',
+                fontSize: '11.5px',
+                color: '#172B2B',
                 marginBottom: '6px',
                 display: 'flex',
                 alignItems: 'center',
@@ -194,17 +213,17 @@ export function NetworkStatusPill() {
             >
               {isSyncing ? (
                 <>
-                  <RefreshCw size={12} className="spin-fast" style={{ color: '#47799E' }} />
-                  <span>Syncing pending edits to server...</span>
+                  <RefreshCw size={12} className="spin-fast" style={{ color: '#075B5B' }} />
+                  <span>Syncing pending edits...</span>
                 </>
               ) : !isOnline ? (
                 <>
-                  <WifiOff size={12} style={{ color: '#4A5568' }} />
-                  <span>Working offline · Changes queued</span>
+                  <WifiOff size={12} style={{ color: '#66736F' }} />
+                  <span>Offline mode · Edits queued</span>
                 </>
               ) : pendingCount > 0 ? (
                 <>
-                  <RefreshCw size={12} style={{ color: '#47799E' }} />
+                  <RefreshCw size={12} style={{ color: '#075B5B' }} />
                   <span>{pendingCount} offline changes saved</span>
                 </>
               ) : null}
@@ -224,14 +243,14 @@ export function NetworkStatusPill() {
               padding: '7px 9px',
               borderRadius: '6px',
               border: 'none',
-              background: effectiveStatus === 'active' ? '#EEF1F7' : 'transparent',
+              background: effectiveStatus === 'active' ? '#E8F0ED' : 'transparent',
               cursor: !isOnline ? 'not-allowed' : 'pointer',
               opacity: !isOnline ? 0.5 : 1,
               textAlign: 'left',
               transition: 'background 0.15s ease',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'active' && isOnline) (e.currentTarget.style.background = '#F4F8F5');
+              if (effectiveStatus !== 'active' && isOnline) (e.currentTarget.style.background = '#E8F0ED');
             }}
             onMouseLeave={(e) => {
               if (effectiveStatus !== 'active') (e.currentTarget.style.background = 'transparent');
@@ -243,17 +262,17 @@ export function NetworkStatusPill() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#47799E',
-                  boxShadow: '0 0 5px rgba(63, 166, 107, 0.4)',
+                  background: '#075B5B',
+                  boxShadow: '0 0 5px rgba(7, 91, 91, 0.4)',
                   flexShrink: 0,
                 }}
               />
               <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>Online</div>
-                <div style={{ fontSize: '12px', color: '#4A5568' }}>Online & available for trade</div>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Online</div>
+                <div style={{ fontSize: '11px', color: '#66736F' }}>Online & available for trade</div>
               </div>
             </div>
-            {effectiveStatus === 'active' && <Check size={14} style={{ color: '#47799E', flexShrink: 0 }} />}
+            {effectiveStatus === 'active' && <Check size={14} style={{ color: '#075B5B', flexShrink: 0 }} />}
           </button>
 
           {/* Away Option */}
@@ -269,7 +288,7 @@ export function NetworkStatusPill() {
               padding: '7px 9px',
               borderRadius: '6px',
               border: 'none',
-              background: effectiveStatus === 'away' ? '#FFFDF5' : 'transparent',
+              background: effectiveStatus === 'away' ? '#FEF3C7' : 'transparent',
               cursor: !isOnline ? 'not-allowed' : 'pointer',
               opacity: !isOnline ? 0.5 : 1,
               textAlign: 'left',
@@ -277,7 +296,7 @@ export function NetworkStatusPill() {
               marginTop: '2px',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'away' && isOnline) (e.currentTarget.style.background = '#F4F8F5');
+              if (effectiveStatus !== 'away' && isOnline) (e.currentTarget.style.background = '#E8F0ED');
             }}
             onMouseLeave={(e) => {
               if (effectiveStatus !== 'away') (e.currentTarget.style.background = 'transparent');
@@ -289,17 +308,17 @@ export function NetworkStatusPill() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#D97706',
+                  background: '#B7791F',
                   boxShadow: 'none',
                   flexShrink: 0,
                 }}
               />
               <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>Away</div>
-                <div style={{ fontSize: '12px', color: '#4A5568' }}>Stepped away · Offline to contacts</div>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Away</div>
+                <div style={{ fontSize: '11px', color: '#66736F' }}>Stepped away · Offline to contacts</div>
               </div>
             </div>
-            {effectiveStatus === 'away' && <Check size={14} style={{ color: '#D97706', flexShrink: 0 }} />}
+            {effectiveStatus === 'away' && <Check size={14} style={{ color: '#B7791F', flexShrink: 0 }} />}
           </button>
 
           {/* Offline Option */}
@@ -314,14 +333,14 @@ export function NetworkStatusPill() {
               padding: '7px 9px',
               borderRadius: '6px',
               border: 'none',
-              background: effectiveStatus === 'offline' ? '#F8FAFD' : 'transparent',
+              background: effectiveStatus === 'offline' ? '#E8F0ED' : 'transparent',
               cursor: 'pointer',
               textAlign: 'left',
               transition: 'background 0.15s ease',
               marginTop: '2px',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'offline') (e.currentTarget.style.background = '#F4F8F5');
+              if (effectiveStatus !== 'offline') (e.currentTarget.style.background = '#E8F0ED');
             }}
             onMouseLeave={(e) => {
               if (effectiveStatus !== 'offline') (e.currentTarget.style.background = 'transparent');
@@ -333,17 +352,17 @@ export function NetworkStatusPill() {
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#4A5568',
+                  background: '#66736F',
                   boxShadow: 'none',
                   flexShrink: 0,
                 }}
               />
               <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#1B2B4B' }}>Offline</div>
-                <div style={{ fontSize: '12px', color: '#4A5568' }}>Appear offline to network</div>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Offline</div>
+                <div style={{ fontSize: '11px', color: '#66736F' }}>Appear offline to network</div>
               </div>
             </div>
-            {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#4A5568', flexShrink: 0 }} />}
+            {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#66736F', flexShrink: 0 }} />}
           </button>
         </div>
       )}

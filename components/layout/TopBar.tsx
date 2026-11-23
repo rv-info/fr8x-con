@@ -734,20 +734,11 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   setShowGlobalSearch(false);
                   setGlobalSearchQuery('');
                 }}
+                className="close-red-box"
                 title="Close search (Esc)"
-                style={{
-                  background: '#F1F5F9',
-                  border: '1px solid #CBD5E1',
-                  borderRadius: '4px',
-                  padding: '2px 7px',
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#475569',
-                  cursor: 'pointer',
-                  fontFamily: 'monospace',
-                }}
+                aria-label="Close search"
               >
-                ESC
+                <X size={14} />
               </button>
             </div>
 
@@ -1510,8 +1501,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
 
         <div className="topright" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
-          {/* User Availability Status (Live / Away / 2G) - Desktop */}
-          <div className="desktop-only">
+          {/* User Availability Status (Live / Away / 2G) - Responsive Shared Component */}
+          <div className="top-availability-wrapper" style={{ position: 'relative', flexShrink: 0 }}>
             <NetworkStatusPill />
           </div>
 
@@ -1581,7 +1572,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   <button
                     type="button"
                     onClick={() => setShowLocationModal(false)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#66736F', padding: '2px' }}
+                    className="close-red-box"
+                    aria-label="Close location selector"
                   >
                     <X size={12} />
                   </button>
@@ -1700,7 +1692,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               >
                 <div className="conv-head">
                   <b>Currency Converter</b>
-                  <button onClick={() => setShowCurrencyModal(false)} className="close-btn">
+                  <button onClick={() => setShowCurrencyModal(false)} className="close-btn close-red-box">
                     <X size={13} />
                   </button>
                 </div>

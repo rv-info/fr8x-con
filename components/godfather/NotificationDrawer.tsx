@@ -67,7 +67,7 @@ export function NotificationDrawer({ isOpen, onClose }: NotificationDrawerProps)
             <h2 className="gf-drawer-title">Platform Alerts & Risk Feeds</h2>
             <p className="gf-drawer-subtitle">Real-time governance, payment, and KYC notifications</p>
           </div>
-          <button onClick={onClose} className="gf-modal-close-btn" aria-label="Close">
+          <button onClick={onClose} className="gf-modal-close-btn close-red-box" aria-label="Close">
             <X className="lucide w-5 h-5" />
           </button>
         </div>

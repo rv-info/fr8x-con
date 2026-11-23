@@ -73,7 +73,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             placeholder="Search records, companies, tax IDs, auctions, or type a command..."
             className="gf-command-input text-base"
           />
-          <button onClick={onClose} className="gf-modal-close-btn">
+          <button onClick={onClose} className="gf-modal-close-btn close-red-box">
             <X className="lucide w-4 h-4" />
           </button>
         </div>
