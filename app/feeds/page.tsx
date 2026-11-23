@@ -1425,8 +1425,15 @@ export default function FeedsPage() {
             <small style={{ color: 'var(--fr8x-muted)', fontSize: '11px', display: 'block', marginTop: '2px' }}>
               {user.designation}
             </small>
-            <small style={{ color: 'var(--fr8x-text)', fontSize: '11.5px', fontWeight: 700, display: 'block' }}>
-              {user.company}
+            <small style={{ color: 'var(--fr8x-text)', fontSize: '11.5px', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '2px' }}>
+              {user.companyLogoUrl && (
+                <img
+                  src={user.companyLogoUrl}
+                  alt={user.company || 'Company'}
+                  style={{ width: '15px', height: '15px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
+                />
+              )}
+              <span>{user.company}</span>
             </small>
             <div style={{ marginTop: '8px' }}>
               <LocalTimeBadge timezone={user.timezone} />
@@ -1512,15 +1519,15 @@ export default function FeedsPage() {
           </div>
           <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <Link href="/auctions/create" className="feed-shortcut-link">
-              <Gavel size={15} color="var(--brand)" />
+              <Gavel size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
               <span>Create Reverse Auction</span>
             </Link>
             <Link href="/rates" className="feed-shortcut-link">
-              <TrendingUp size={15} color="var(--teal)" />
+              <TrendingUp size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
               <span>Rate Intelligence</span>
             </Link>
             <Link href="/jobs" className="feed-shortcut-link">
-              <Briefcase size={15} color="#0891b2" />
+              <Briefcase size={15} style={{ color: '#0891b2', flexShrink: 0 }} />
               <span>Trade Careers</span>
             </Link>
             <button
@@ -1529,11 +1536,11 @@ export default function FeedsPage() {
               className="feed-shortcut-link"
               style={{ width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
             >
-              <Plus size={15} color="var(--brand)" />
+              <Plus size={15} style={{ color: '#075B5B', flexShrink: 0 }} />
               <span>Post a Job</span>
             </button>
             <Link href="/nexus" className="feed-shortcut-link">
-              <ShieldAlert size={15} color="#d97706" />
+              <ShieldAlert size={15} style={{ color: '#d97706', flexShrink: 0 }} />
               <span>Compliance & Blacklist</span>
             </Link>
           </div>

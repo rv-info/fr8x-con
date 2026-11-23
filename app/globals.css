@@ -3305,19 +3305,25 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   display: flex !important;
   align-items: center !important;
   gap: 8px !important;
-  padding: 7px 10px !important;
-  font-weight: 500 !important;
-  color: #1B2B4B !important;
-  border-radius: 4px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #172B2B !important;
+  border-radius: 6px !important;
   background-color: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #D5DEDA !important;
   text-decoration: none !important;
+  box-sizing: border-box !important;
   transition: all 0.15s ease !important;
 }
 
-.feed-shortcut-link:hover {
-  background-color: #EEF1F7 !important;
-  border-color: #1B2B4B !important;
+.feed-shortcut-link:hover,
+.feed-shortcut-link:focus {
+  background-color: #E8F0ED !important;
+  border-color: #075B5B !important;
+  color: #075B5B !important;
 }
 
 @media (max-width: 1200px) and (min-width: 901px) {
@@ -3487,7 +3493,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 
 .notifications-dropdown {
   right: 0 !important;
-  width: 360px !important;
+  width: 380px !important;
   max-width: calc(100vw - 20px) !important;
 }
 
@@ -3586,7 +3592,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
     max-height: calc(100vh - 120px) !important;
     border-radius: 10px !important;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
-    z-index: 1001 !important;
+    z-index: 1100 !important;
   }
 }
 

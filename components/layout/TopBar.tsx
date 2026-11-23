@@ -79,6 +79,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { currentCurrency, setCurrency, availableCurrencies, isLiveRates, lastUpdatedTime, refreshLiveRates, convertAmount: convertAmountLive } = useCurrency();
   const { notifications, refreshNotifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [selectedHub, setSelectedHub] = useState<string>('');
@@ -87,23 +88,32 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const [selectedNotifCategory, setSelectedNotifCategory] = useState<string | null>(null);
   const [isSyncingNotifs, setIsSyncingNotifs] = useState(false);
 
+  const networkRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const currencyRef = useRef<HTMLDivElement>(null);
   const locationRef = useRef<HTMLDivElement>(null);
 
-  // Auto-close open dropdown menus on route change
-  useEffect(() => {
+  const closeAllHeaderMenus = () => {
+    setShowNetworkModal(false);
+    setShowLocationModal(false);
+    setShowCurrencyModal(false);
     setShowNotifications(false);
     setShowUserDropdown(false);
-    setShowCurrencyModal(false);
-    setShowLocationModal(false);
+  };
+
+  // Auto-close open dropdown menus on route change
+  useEffect(() => {
+    closeAllHeaderMenus();
   }, [pathname]);
 
-  // Handle click outside and Escape key to close notifications and menus
+  // Handle click outside and Escape key to close notifications and menus with strict mutual exclusion
   useEffect(() => {
     const handlePointerDown = (e: MouseEvent | TouchEvent) => {
       const target = e.target as Node;
+      if (networkRef.current && !networkRef.current.contains(target)) {
+        setShowNetworkModal(false);
+      }
       if (notifRef.current && !notifRef.current.contains(target)) {
         setShowNotifications(false);
       }
@@ -120,10 +130,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setShowNotifications(false);
-        setShowUserDropdown(false);
-        setShowCurrencyModal(false);
-        setShowLocationModal(false);
+        closeAllHeaderMenus();
       }
     };
 
@@ -1501,9 +1508,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
 
         <div className="topright" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
-          {/* User Availability Status (Live / Away / 2G) - Responsive Shared Component */}
-          <div className="top-availability-wrapper" style={{ position: 'relative', flexShrink: 0 }}>
-            <NetworkStatusPill />
+          {/* User Availability Status - Responsive Shared Component with Mutual Exclusion */}
+          <div ref={networkRef} className="top-availability-wrapper" style={{ position: 'relative', flexShrink: 0 }}>
+            <NetworkStatusPill
+              isOpen={showNetworkModal}
+              onToggle={() => {
+                const next = !showNetworkModal;
+                closeAllHeaderMenus();
+                setShowNetworkModal(next);
+              }}
+              onClose={() => setShowNetworkModal(false)}
+            />
           </div>
 
           {/* Interactive Location Selector - Desktop */}
@@ -1513,10 +1528,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               className="top-location-btn"
               onClick={() => {
                 const next = !showLocationModal;
+                closeAllHeaderMenus();
                 setShowLocationModal(next);
-                setShowNotifications(false);
-                setShowUserDropdown(false);
-                setShowCurrencyModal(false);
               }}
               title={`Operating Location: ${selectedHub || `${user.city}, ${user.country}`}. Click to switch trade hub`}
               style={{
@@ -1548,11 +1561,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showLocationModal && (
               <>
                 <div
-                  className="dropdown-backdrop"
+                  className="dropdown-backdrop mobile-only"
                   onClick={() => setShowLocationModal(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
+                    top: '50px',
                     backgroundColor: 'rgba(23, 43, 43, 0.15)',
                     backdropFilter: 'blur(1px)',
                     zIndex: 1099,
@@ -1656,10 +1670,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               className="currency-select"
               onClick={() => {
                 const next = !showCurrencyModal;
+                closeAllHeaderMenus();
                 setShowCurrencyModal(next);
-                setShowNotifications(false);
-                setShowUserDropdown(false);
-                setShowLocationModal(false);
               }}
               title="Currency Converter & Workspace Currency"
               style={{
@@ -1689,11 +1701,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showCurrencyModal && (
               <>
                 <div
-                  className="dropdown-backdrop"
+                  className="dropdown-backdrop mobile-only"
                   onClick={() => setShowCurrencyModal(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
+                    top: '50px',
                     backgroundColor: 'rgba(23, 43, 43, 0.15)',
                     backdropFilter: 'blur(1px)',
                     zIndex: 1099,
@@ -1721,34 +1734,77 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 >
                   <div className="conv-head">
                     <b>Currency Converter</b>
-                    <button onClick={() => setShowCurrencyModal(false)} className="close-btn close-red-box sm">
+                    <button onClick={() => setShowCurrencyModal(false)} className="close-btn close-red-box sm" aria-label="Close currency converter" title="Close">
                       <X size={10} />
                     </button>
                   </div>
 
-                <div className="conv-body">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span className="badge green" style={{ fontSize: '11px', fontWeight: 700 }}>
-                      🟢 {isLiveRates ? 'LIVE INTERBANK FEED' : 'FOREX SYNCED'}
-                    </span>
-                    <span style={{ fontSize: '11px', color: 'var(--mut)' }}>{lastUpdatedTime}</span>
+                <div className="conv-body" style={{ padding: '12px' }}>
+                  {/* Live Feed Status Bar & Sync Control */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: '#F8FAF9', padding: '6px 8px', borderRadius: '5px', border: '1px solid #E8F0ED' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <span className="badge green" style={{ fontSize: '10.5px', fontWeight: 700, padding: '2px 6px' }}>
+                        🟢 {isLiveRates ? 'LIVE INTERBANK FEED' : 'FOREX SYNCED'}
+                      </span>
+                      <span style={{ fontSize: '10.5px', color: '#66736F' }}>{lastUpdatedTime}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => refreshLiveRates()}
+                      style={{
+                        fontSize: '10.5px',
+                        color: '#075B5B',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        background: 'none',
+                        border: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        padding: 0,
+                      }}
+                      title="Refresh interbank exchange rates"
+                    >
+                      <RefreshCw size={10} /> Sync
+                    </button>
                   </div>
 
+                  {/* Curated Quick Workspace Currency Shortcuts */}
                   <div style={{ marginBottom: '10px' }}>
-                    <small style={{ color: 'var(--mut)', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Workspace Active Currency
-                    </small>
-                    <div style={{ display: 'flex', gap: '4px', marginTop: '4px', flexWrap: 'wrap' }}>
-                      {Object.keys(availableCurrencies).map((code) => (
-                        <button
-                          key={code}
-                          className={`badge ${currentCurrency === code ? 'blue' : 'grey'}`}
-                          onClick={() => setCurrency(code)}
-                          style={{ cursor: 'pointer', border: 'none' }}
-                        >
-                          {code}
-                        </button>
-                      ))}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                      <small style={{ color: '#66736F', fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.03em' }}>
+                        Workspace Currency
+                      </small>
+                      <span style={{ fontSize: '10.5px', color: '#075B5B', fontWeight: 700 }}>
+                        Active: {currentCurrency}
+                      </span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '5px' }}>
+                      {['INR', 'USD', 'EUR', 'GBP', 'AED'].map((code) => {
+                        const isCur = currentCurrency === code;
+                        return (
+                          <button
+                            key={code}
+                            type="button"
+                            onClick={() => setCurrency(code)}
+                            title={`Set workspace active currency to ${code}`}
+                            style={{
+                              padding: '5px 0',
+                              fontSize: '11px',
+                              fontWeight: isCur ? 800 : 600,
+                              borderRadius: '5px',
+                              border: isCur ? '1.5px solid #075B5B' : '1px solid #D5DEDA',
+                              background: isCur ? '#075B5B' : '#FFFFFF',
+                              color: isCur ? '#FFFFFF' : '#172B2B',
+                              cursor: 'pointer',
+                              transition: 'all 0.15s ease',
+                              textAlign: 'center',
+                            }}
+                          >
+                            {code}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -1903,10 +1959,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               className="topicon"
               onClick={async () => {
                 const nextState = !showNotifications;
+                closeAllHeaderMenus();
                 setShowNotifications(nextState);
-                setShowUserDropdown(false);
-                setShowCurrencyModal(false);
-                setShowLocationModal(false);
                 if (nextState) {
                   setIsSyncingNotifs(true);
                   try {
@@ -1965,11 +2019,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {/* Mobile Backdrop to prevent background clicks and close on outside tap */}
             {showNotifications && (
               <div
-                className="dropdown-backdrop"
+                className="dropdown-backdrop mobile-only"
                 onClick={() => setShowNotifications(false)}
                 style={{
                   position: 'fixed',
                   inset: 0,
+                  top: '50px',
                   backgroundColor: 'rgba(23, 43, 43, 0.15)',
                   backdropFilter: 'blur(1px)',
                   zIndex: 1099,
@@ -1984,7 +2039,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   position: 'absolute',
                   top: 'calc(100% + 6px)',
                   right: 0,
-                  width: '360px',
+                  width: '380px',
                   maxWidth: 'calc(100vw - 20px)',
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #D5DEDA',
@@ -2102,19 +2157,20 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </div>
                 </div>
 
-                {/* Category tabs */}
+                {/* Category tabs: perfectly proportioned so all 5 categories fit on desktop without clipping */}
                 <div
                   className="notif-cats"
                   style={{
                     display: 'flex',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 12px',
+                    gap: '4px',
+                    padding: '6px 10px',
                     borderBottom: '1px solid #D5DEDA',
                     background: '#FFFFFF',
                     overflowX: 'auto',
                     whiteSpace: 'nowrap',
+                    scrollbarWidth: 'none',
                     WebkitOverflowScrolling: 'touch',
                   }}
                 >
@@ -2125,7 +2181,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '4px',
-                      padding: '3px 8px',
+                      padding: '3px 7px',
                       borderRadius: '12px',
                       background: selectedNotifCategory === null ? '#075B5B' : '#E8F0ED',
                       color: selectedNotifCategory === null ? '#FFFFFF' : '#172B2B',
@@ -2151,7 +2207,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px',
-                          padding: '3px 8px',
+                          padding: '3px 7px',
                           borderRadius: '12px',
                           background: isSelected ? '#075B5B' : '#E8F0ED',
                           color: isSelected ? '#FFFFFF' : '#172B2B',
@@ -2277,10 +2333,8 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               type="button"
               onClick={() => {
                 const nextState = !showUserDropdown;
+                closeAllHeaderMenus();
                 setShowUserDropdown(nextState);
-                setShowNotifications(false);
-                setShowCurrencyModal(false);
-                setShowLocationModal(false);
               }}
               className="user-top-btn"
               title={`Account: ${user?.displayName || 'User'}`}
@@ -2310,11 +2364,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showUserDropdown && (
               <>
                 <div
-                  className="dropdown-backdrop"
+                  className="dropdown-backdrop mobile-only"
                   onClick={() => setShowUserDropdown(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
+                    top: '50px',
                     backgroundColor: 'rgba(23, 43, 43, 0.15)',
                     backdropFilter: 'blur(1px)',
                     zIndex: 1099,
@@ -2354,8 +2409,15 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         <small style={{ fontSize: '11px', color: '#66736F', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {user.designation}
                         </small>
-                        <small style={{ fontSize: '11px', color: '#66736F', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user.company}
+                        <small style={{ fontSize: '11px', color: '#66736F', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user?.companyLogoUrl && (
+                            <img
+                              src={user.companyLogoUrl}
+                              alt={user.company || 'Company Logo'}
+                              style={{ width: '13px', height: '13px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
+                            />
+                          )}
+                          <span>{user.company}</span>
                         </small>
                         <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                           <span className="badge" style={{ fontSize: '10px', fontWeight: 800, background: '#075B5B', color: '#FFFFFF', padding: '1px 6px', borderRadius: '4px' }}>

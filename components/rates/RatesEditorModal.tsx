@@ -537,10 +537,6 @@ export function RatesEditorModal({
                   Instant Parsing
                 </span>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#66736F' }}>
-                <Cpu size={12} style={{ color: '#075B5B' }} />
-                <span>Self-Hosted Edge Model (1.85 MB)</span>
-              </div>
             </div>
 
             {/* Input Textarea */}

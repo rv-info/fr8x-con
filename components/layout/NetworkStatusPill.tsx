@@ -5,10 +5,28 @@ import { useNetwork } from '@/lib/context/NetworkContext';
 import { presenceService } from '@/lib/presence/presenceService';
 import { ChevronDown, Check, WifiOff, RefreshCw, X } from 'lucide-react';
 
-export function NetworkStatusPill() {
+export interface NetworkStatusPillProps {
+  isOpen?: boolean;
+  onToggle?: () => void;
+  onClose?: () => void;
+}
+
+export function NetworkStatusPill({ isOpen: controlledIsOpen, onToggle, onClose }: NetworkStatusPillProps = {}) {
   const { isOnline, tier, isSyncing, pendingCount, measuredLatency, isLowBandwidth } = useNetwork();
   const [presence, setPresence] = useState<'active' | 'away' | 'offline'>('active');
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+  const isOpen = controlledIsOpen !== undefined ? controlledIsOpen : internalIsOpen;
+
+  const toggleOpen = () => {
+    if (onToggle) onToggle();
+    else setInternalIsOpen(!internalIsOpen);
+  };
+
+  const closeOpen = () => {
+    if (onClose) onClose();
+    else setInternalIsOpen(false);
+  };
+
   const [alignRight, setAlignRight] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -44,12 +62,12 @@ export function NetworkStatusPill() {
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
+        closeOpen();
       }
     }
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
-        setIsOpen(false);
+        closeOpen();
       }
     }
     if (isOpen) {
@@ -60,12 +78,12 @@ export function NetworkStatusPill() {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   const handleSelectStatus = (newStatus: 'active' | 'away' | 'offline') => {
     setPresence(newStatus);
     presenceService.setStatus(newStatus);
-    setIsOpen(false);
+    closeOpen();
   };
 
   // Determine current display mode:
@@ -98,7 +116,7 @@ export function NetworkStatusPill() {
       <button
         type="button"
         className="net-pill-btn"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         title={`Status: ${statusLabel}${isLowBandwidth ? ' · Data Saver Active' : ''} · Click to switch`}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -146,14 +164,15 @@ export function NetworkStatusPill() {
         <ChevronDown size={11} style={{ color: '#66736F', flexShrink: 0 }} />
       </button>
 
-      {/* Screen Backdrop to prevent touch bleed-through and isolate dropdown */}
+      {/* Screen Backdrop for mobile modal containment (does not block header controls) */}
       {isOpen && (
         <div
-          className="net-pill-backdrop"
-          onClick={() => setIsOpen(false)}
+          className="net-pill-backdrop mobile-only"
+          onClick={closeOpen}
           style={{
             position: 'fixed',
             inset: 0,
+            top: '50px',
             backgroundColor: 'rgba(23, 43, 43, 0.15)',
             backdropFilter: 'blur(1px)',
             zIndex: 1099,
@@ -185,10 +204,10 @@ export function NetworkStatusPill() {
             boxSizing: 'border-box',
           }}
         >
-          {/* Header with Connection Intelligence */}
+          {/* Header: Clean title & spacious Red X close button (No unsupported speed claims) */}
           <div
             style={{
-              padding: '6px 8px',
+              padding: '6px 10px',
               borderBottom: '1px solid #D5DEDA',
               marginBottom: '6px',
               display: 'flex',
@@ -210,32 +229,15 @@ export function NetworkStatusPill() {
             >
               Availability Status
             </span>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <span
-                style={{
-                  fontSize: '10.5px',
-                  color: !isOnline ? '#66736F' : isLowBandwidth ? '#B7791F' : '#075B5B',
-                  fontWeight: 600,
-                }}
-              >
-                {!isOnline
-                  ? 'Offline'
-                  : isLowBandwidth
-                  ? '⚡ 2G Saver'
-                  : tier === 'hyper'
-                  ? '⚡ 4G / High-Speed'
-                  : '⚡ 4G / High-Speed'}
-              </span>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="close-red-box sm"
-                aria-label="Close status popover"
-                title="Close"
-              >
-                <X size={10} />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={closeOpen}
+              className="close-red-box sm"
+              aria-label="Close status popover"
+              title="Close"
+            >
+              <X size={10} />
+            </button>
           </div>
 
           {/* Syncing or Offline notice if present */}
