@@ -53,23 +53,23 @@ export function NetworkStatusPill() {
 
   const dotColor =
     !isOnline
-      ? '#4A5568'
+      ? '#66736F'
       : effectiveStatus === 'active'
-      ? '#47799E'
+      ? '#075B5B'
       : effectiveStatus === 'away'
-      ? '#D97706'
-      : '#4A5568';
+      ? '#B7791F'
+      : '#66736F';
 
   const dotGlow =
     effectiveStatus === 'active' && isOnline
-      ? '0 0 6px rgba(63, 166, 107, 0.45)'
+      ? '0 0 6px rgba(7, 91, 91, 0.45)'
       : 'none';
 
-  const pillBg = '#F7F6F2';
+  const pillBg = '#FFFFFF';
 
-  const pillBorder = '#0A0A0A';
+  const pillBorder = '#D5DEDA';
 
-  const pillText = '#0A0A0A';
+  const pillText = '#172B2B';
 
   return (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={popoverRef}>
