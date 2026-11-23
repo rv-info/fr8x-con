@@ -65,11 +65,11 @@ export function NetworkStatusPill() {
       ? '0 0 6px rgba(63, 166, 107, 0.45)'
       : 'none';
 
-  const pillBg = '#FFFFFF';
+  const pillBg = '#F7F6F2';
 
-  const pillBorder = '#CBD5E0';
+  const pillBorder = '#0A0A0A';
 
-  const pillText = '#1B2B4B';
+  const pillText = '#0A0A0A';
 
   return (
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={popoverRef}>

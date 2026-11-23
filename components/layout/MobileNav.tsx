@@ -266,14 +266,14 @@ export function MobileNav() {
             className="mobile-sheet-content"
             onClick={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#F7F6F2',
               borderTopLeftRadius: '16px',
               borderTopRightRadius: '16px',
               padding: '12px 14px calc(66px + env(safe-area-inset-bottom, 8px))',
               boxShadow: '0 -8px 30px rgba(0, 0, 0, 0.15)',
               maxHeight: '76vh',
               overflowY: 'auto',
-              borderTop: '1px solid #E2E8F0',
+              borderTop: '1px solid #D5D0C7',
             }}
           >
             {/* Sheet Drag / Grab Handle */}
@@ -420,10 +420,10 @@ export function MobileNav() {
                       gap: '3px',
                       padding: '10px 11px',
                       borderRadius: '8px',
-                      border: isSelected ? '1.5px solid #1B2B4B' : '1px solid #E2E8F0',
-                      backgroundColor: isSelected ? '#EEF2F7' : '#F8FAFC',
+                      border: isSelected ? '1.5px solid #0A0A0A' : '1px solid #D5D0C7',
+                      backgroundColor: isSelected ? '#0A0A0A' : '#FFFFFF',
                       textDecoration: 'none',
-                      color: '#1B2B4B',
+                      color: isSelected ? '#FFFFFF' : '#0A0A0A',
                       fontFamily: 'Calibri, Arial, sans-serif',
                       transition: 'all 0.15s ease',
                       position: 'relative',
@@ -435,7 +435,7 @@ export function MobileNav() {
                           name={item.icon}
                           filled={isSelected}
                           size={18}
-                          style={{ color: '#1B2B4B', flexShrink: 0 }}
+                          style={{ color: isSelected ? '#FFFFFF' : '#0A0A0A', flexShrink: 0 }}
                         />
                         <span
                           style={{
@@ -498,8 +498,8 @@ export function MobileNav() {
           right: 0,
           height: 'calc(54px + env(safe-area-inset-bottom, 0px))',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          backgroundColor: '#FFFFFF',
-          borderTop: '1px solid #E2E8F0',
+          backgroundColor: '#F7F6F2',
+          borderTop: '1px solid #D5D0C7',
           zIndex: 90,
           boxShadow: '0 -2px 10px rgba(0, 0, 0, 0.05)',
         }}
@@ -538,9 +538,9 @@ export function MobileNav() {
                   textDecoration: 'none',
                   borderRadius: '6px',
                   padding: '2px 1px',
-                  backgroundColor: active ? '#EEF2F7' : 'transparent',
-                  border: active ? '1px solid #1B2B4B' : '1px solid transparent',
-                  color: active ? '#1B2B4B' : '#4A5568',
+                  backgroundColor: active ? '#0A0A0A' : 'transparent',
+                  border: active ? '1px solid #0A0A0A' : '1px solid transparent',
+                  color: active ? '#FFFFFF' : '#0A0A0A',
                   transition: 'all 0.15s ease',
                   userSelect: 'none',
                   WebkitTapHighlightColor: 'transparent',
@@ -551,7 +551,7 @@ export function MobileNav() {
                     name={item.id}
                     filled={active}
                     size={18}
-                    style={{ color: active ? '#1B2B4B' : '#4A5568' }}
+                    style={{ color: active ? '#FFFFFF' : '#0A0A0A' }}
                   />
                 </div>
                 <span
@@ -586,12 +586,12 @@ export function MobileNav() {
               flex: 1,
               minWidth: '46px',
               height: '46px',
-              background: isMoreTabActive ? '#EEF2F7' : 'transparent',
-              border: isMoreTabActive ? '1px solid #1B2B4B' : '1px solid transparent',
+              background: isMoreTabActive ? '#0A0A0A' : 'transparent',
+              border: isMoreTabActive ? '1px solid #0A0A0A' : '1px solid transparent',
               borderRadius: '6px',
               padding: '2px 1px',
               cursor: 'pointer',
-              color: isMoreTabActive ? '#1B2B4B' : '#4A5568',
+              color: isMoreTabActive ? '#FFFFFF' : '#0A0A0A',
               transition: 'all 0.15s ease',
               userSelect: 'none',
               WebkitTapHighlightColor: 'transparent',
@@ -602,7 +602,7 @@ export function MobileNav() {
                 name="resize"
                 filled={isMoreTabActive}
                 size={18}
-                style={{ color: isMoreTabActive ? '#1B2B4B' : '#4A5568' }}
+                style={{ color: isMoreTabActive ? '#FFFFFF' : '#0A0A0A' }}
               />
             </div>
             <span

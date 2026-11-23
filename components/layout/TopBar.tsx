@@ -1289,40 +1289,72 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
         </div>
       )}
 
-      <header className="top" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', fontFamily: 'Calibri, Arial, sans-serif', fontSize: '12px' }}>
-        {/* Mobile FR8X brand icon linked to homepage */}
-        <Link
-          href="/"
-          className="mobile-brand-icon-link"
-          aria-label="FR8X Home"
-          title="FR8X Home"
-        >
-          <img
-            src="/ART/LOGOS/logo_primary.svg"
-            alt="FR8X"
-            className="mobile-brand-icon-img"
-            onError={(e) => {
-              // Primary fallback /ART/LOGOS/logo_primary.png; legacy alias /FR8X ICON.png
-              (e.currentTarget as HTMLImageElement).src = '/ART/LOGOS/logo_primary.png';
+      <header className="top" style={{ backgroundColor: '#FFFFFF', borderBottom: '1px solid #E2E8F0', fontFamily: 'Calibri, Arial, sans-serif', fontSize: '12px', height: '48px', boxSizing: 'border-box' }}>
+        {/* Left Section: Logo, Breadcrumbs, Global Search */}
+        <div className="top-left-section" style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flexShrink: 1 }}>
+          {/* FR8X Application Logo - Visible on Desktop and Mobile */}
+          <Link
+            href="/"
+            className="brand-logo-link mobile-brand-icon-link"
+            aria-label="FR8X Home"
+            title="FR8X Enterprise Network"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              textDecoration: 'none',
+              flexShrink: 0,
             }}
-          />
-        </Link>
+          >
+            <img
+              src="/ART/LOGOS/logo_primary.svg"
+              alt="FR8X"
+              style={{ width: '24px', height: '24px', objectFit: 'contain' }}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/ART/LOGOS/logo_primary.png';
+                // Fallback alias: /FR8X ICON.png
+              }}
+            />
+            <b className="desktop-only" style={{ fontSize: '13px', fontWeight: 900, color: '#1B2B4B', letterSpacing: '0.04em' }}>
+              FR8X
+            </b>
+          </Link>
 
-        {/* Desktop Breadcrumbs (removed from mobile to save space) */}
-        <div className="crumb desktop-only">
-          <span className="crumb-prefix">Workspace / </span><b>{activePageTitle}</b>
+          {/* Vertical Separator - Desktop */}
+          <div className="desktop-only" style={{ width: '1px', height: '18px', background: '#E2E8F0', flexShrink: 0 }} />
+
+          {/* Desktop Breadcrumbs */}
+          <div className="crumb desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#64748B', whiteSpace: 'nowrap', minWidth: 0 }}>
+            <span className="crumb-prefix" style={{ color: '#94A3B8' }}>Workspace / </span>
+            <b style={{ color: '#1B2B4B', fontWeight: 700 }}>{activePageTitle}</b>
+          </div>
+
+          {/* Global Search Trigger */}
+          <button
+            className="global-search-trigger"
+            onClick={() => { setShowGlobalSearch(true); setTimeout(() => searchRef.current?.focus(), 50); }}
+            title="Global Search (Ctrl+K)"
+            style={{
+              height: '30px',
+              padding: '0 10px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: '#F8FAFD',
+              border: '1px solid #CBD5E0',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#64748B',
+              boxSizing: 'border-box',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            <NavigationIcon name="search" size={13} style={{ color: '#47799E', flexShrink: 0 }} />
+            <span className="search-text">Search…</span>
+            <kbd className="search-kbd desktop-only" style={{ marginLeft: '6px', fontSize: '10px', background: '#FFFFFF', border: '1px solid #CBD5E0', borderRadius: '3px', padding: '1px 4px', color: '#64748B' }}>⌘K</kbd>
+          </button>
         </div>
-
-        {/* Global Search Trigger */}
-        <button
-          className="global-search-trigger"
-          onClick={() => { setShowGlobalSearch(true); setTimeout(() => searchRef.current?.focus(), 50); }}
-          title="Global Search (Ctrl+K)"
-        >
-          <NavigationIcon name="search" size={13} style={{ color: '#47799E', flexShrink: 0 }} />
-          <span className="search-text">Search…</span>
-          <kbd className="search-kbd desktop-only">⌘K</kbd>
-        </button>
 
         {/* Mobile Contextual POST/SUBMIT Action */}
         <div className="mobile-only" style={{ marginLeft: 'auto', marginRight: '6px' }}>
@@ -1477,32 +1509,195 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           })()}
         </div>
 
-        <div className="topright">
+        <div className="topright" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, marginLeft: 'auto' }}>
           {/* User Availability Status (Live / Away / 2G) - Desktop */}
           <div className="desktop-only">
             <NetworkStatusPill />
           </div>
 
-          {/* Location Badge - Desktop */}
-          <span className="country desktop-only" title={`Location: ${user.city}, ${user.country}`}>
-            <MapPin size={13} style={{ color: 'var(--brand)' }} />
-            <b className="country-name">{user.city}, {user.country}</b>
-          </span>
+          {/* Interactive Location Selector - Desktop */}
+          <div ref={locationRef} className="desktop-only" style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="top-location-btn"
+              onClick={() => {
+                const next = !showLocationModal;
+                setShowLocationModal(next);
+                setShowNotifications(false);
+                setShowUserDropdown(false);
+                setShowCurrencyModal(false);
+              }}
+              title={`Operating Location: ${selectedHub || `${user.city}, ${user.country}`}. Click to switch trade hub`}
+              style={{
+                height: '30px',
+                padding: '0 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: '#FFFFFF',
+                border: '1px solid #CBD5E0',
+                borderRadius: '6px',
+                color: '#1B2B4B',
+                fontSize: '12px',
+                fontFamily: 'Calibri, Arial, sans-serif',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <MapPin size={13} style={{ color: '#47799E', flexShrink: 0 }} />
+              <span className="country-name" style={{ maxWidth: '170px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {selectedHub || `${user.city}, ${user.country}`}
+              </span>
+              <ChevronDown size={11} style={{ color: '#64748B', flexShrink: 0 }} />
+            </button>
+
+            {showLocationModal && (
+              <div
+                className="location-dropdown-menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '280px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1.5px solid #CBD5E0',
+                  borderRadius: '8px',
+                  boxShadow: '0 12px 28px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                  color: '#1B2B4B',
+                  fontFamily: 'Calibri, Arial, sans-serif',
+                  fontSize: '12px',
+                }}
+              >
+                <div style={{ padding: '10px 12px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFD', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <MapPin size={13} style={{ color: '#47799E' }} />
+                    <b style={{ fontSize: '12px', color: '#1B2B4B' }}>Trade Gateways & Operating Hubs</b>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowLocationModal(false)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748B', padding: '2px' }}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+                <div style={{ padding: '8px 12px', background: '#F0F9FF', borderBottom: '1px solid #BAE6FD', fontSize: '11px', color: '#0369A1' }}>
+                  Active Hub: <b>{selectedHub || `${user.city}, ${user.country}`}</b>
+                </div>
+                <div style={{ maxHeight: '240px', overflowY: 'auto', padding: '4px 0' }}>
+                  {[
+                    { city: 'Gurugram', region: 'NCR Hub', country: 'India', code: 'DEL-ICD' },
+                    { city: 'Mumbai', region: 'Nhava Sheva (JNPT)', country: 'India', code: 'INNSA' },
+                    { city: 'Mundra', region: 'Kutch Gateway', country: 'India', code: 'INMUN' },
+                    { city: 'Chennai', region: 'Coromandel Hub', country: 'India', code: 'INMAA' },
+                    { city: 'Kolkata', region: 'Eastern Gateway', country: 'India', code: 'INCCU' },
+                    { city: 'Pipavav', region: 'Gujarat Maritime', country: 'India', code: 'INPAV' },
+                    { city: 'Tuticorin', region: 'V.O.C. Port', country: 'India', code: 'INTUT' },
+                    { city: 'Dubai', region: 'Jebel Ali Port', country: 'UAE', code: 'AEJEA' },
+                    { city: 'Singapore', region: 'Jurong Gateway', country: 'Singapore', code: 'SGSIN' },
+                  ].map((hub) => {
+                    const label = `${hub.city} (${hub.region}), ${hub.country}`;
+                    const isCurrent = (selectedHub || `${user.city}, ${user.country}`) === label || (!selectedHub && hub.city === user.city);
+                    return (
+                      <button
+                        key={hub.code}
+                        type="button"
+                        onClick={() => {
+                          setSelectedHub(label);
+                          setShowLocationModal(false);
+                          toast(`Operating gateway switched to ${hub.city} [${hub.code}].`);
+                        }}
+                        style={{
+                          width: '100%',
+                          textAlign: 'left',
+                          padding: '7px 12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          background: isCurrent ? '#F1F5F9' : '#FFFFFF',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '11.5px',
+                          color: '#1B2B4B',
+                          transition: 'background-color 0.1s ease',
+                        }}
+                      >
+                        <div>
+                          <b style={{ color: '#0F172A', display: 'block' }}>{hub.city} · {hub.region}</b>
+                          <span style={{ fontSize: '10.5px', color: '#64748B' }}>{hub.country} · Gateway {hub.code}</span>
+                        </div>
+                        {isCurrent && <Check size={13} style={{ color: '#16A34A', flexShrink: 0 }} />}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ padding: '6px 12px', borderTop: '1px solid #E2E8F0', background: '#F8FAFD', textAlign: 'center' }}>
+                  <span style={{ fontSize: '10.5px', color: '#64748B' }}>Auto-synced with user freight passport</span>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Currency Converter - Desktop */}
           <div ref={currencyRef} className="desktop-only" style={{ position: 'relative' }}>
             <button
               className="currency-select"
-              onClick={() => setShowCurrencyModal(!showCurrencyModal)}
+              onClick={() => {
+                const next = !showCurrencyModal;
+                setShowCurrencyModal(next);
+                setShowNotifications(false);
+                setShowUserDropdown(false);
+                setShowLocationModal(false);
+              }}
               title="Currency Converter & Workspace Currency"
+              style={{
+                height: '30px',
+                padding: '0 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                background: '#FFFFFF',
+                border: '1px solid #CBD5E0',
+                borderRadius: '6px',
+                color: '#1B2B4B',
+                fontSize: '12px',
+                fontFamily: 'Calibri, Arial, sans-serif',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
             >
-              <Calculator size={13} />
+              <Calculator size={13} style={{ color: '#47799E', flexShrink: 0 }} />
               <span className="currency-label">CR · {currentCurrency}</span>
-              <ChevronDown size={11} className="currency-chevron" />
+              <ChevronDown size={11} className="currency-chevron" style={{ color: '#64748B', flexShrink: 0 }} />
             </button>
 
             {showCurrencyModal && (
-              <div className="currency-converter-modal">
+              <div
+                className="currency-converter-modal"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '340px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1.5px solid #CBD5E0',
+                  borderRadius: '8px',
+                  boxShadow: '0 12px 28px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                  color: '#1B2B4B',
+                  fontFamily: 'Calibri, Arial, sans-serif',
+                  fontSize: '12px',
+                }}
+              >
                 <div className="conv-head">
                   <b>Currency Converter</b>
                   <button onClick={() => setShowCurrencyModal(false)} className="close-btn">
@@ -1689,6 +1884,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 setShowNotifications(nextState);
                 setShowUserDropdown(false);
                 setShowCurrencyModal(false);
+                setShowLocationModal(false);
                 if (nextState) {
                   setIsSyncingNotifs(true);
                   try {
@@ -1700,20 +1896,36 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
               }}
               aria-label="View notifications"
               title="Notifications"
+              style={{
+                height: '30px',
+                width: '32px',
+                padding: 0,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: showNotifications ? '#F1F5F9' : '#FFFFFF',
+                border: showNotifications ? '1.5px solid #1B2B4B' : '1px solid #CBD5E0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                position: 'relative',
+                boxSizing: 'border-box',
+                transition: 'all 0.15s ease',
+              }}
             >
-              <NavigationIcon name="notifications" filled={unreadCount > 0} size={15} style={{ color: unreadCount > 0 ? '#1B2B4B' : 'var(--fr8x-muted)' }} />
+              <NavigationIcon name="notifications" filled={unreadCount > 0} size={15} style={{ color: unreadCount > 0 ? '#1B2B4B' : '#64748B' }} />
               {unreadCount > 0 && (
                 <span
                   style={{
                     position: 'absolute',
-                    top: '-2px',
+                    top: '-3px',
                     right: '-3px',
-                    minWidth: '16px',
-                    height: '16px',
-                    padding: '0 4px',
+                    minWidth: '15px',
+                    height: '15px',
+                    padding: '0 3px',
                     borderRadius: '8px',
-                    background: '#E53E3E', color: '#ffffff',
-                    fontSize: '11px',
+                    background: '#DC2626',
+                    color: '#ffffff',
+                    fontSize: '10px',
                     fontWeight: 800,
                     display: 'flex',
                     alignItems: 'center',
@@ -1744,30 +1956,59 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             )}
 
             {showNotifications && (
-              <div className="notifications-dropdown">
-                <div className="notif-header">
+              <div
+                className="notifications-dropdown"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '360px',
+                  maxWidth: 'calc(100vw - 24px)',
+                  backgroundColor: '#FFFFFF',
+                  border: '1.5px solid #CBD5E0',
+                  borderRadius: '8px',
+                  boxShadow: '0 12px 28px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                  color: '#1B2B4B',
+                  fontFamily: 'Calibri, Arial, sans-serif',
+                  fontSize: '12px',
+                }}
+              >
+                <div
+                  className="notif-header"
+                  style={{
+                    padding: '10px 14px',
+                    borderBottom: '1px solid #E2E8F0',
+                    background: '#F8FAFD',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <b style={{ fontSize: '11px' }}>Notifications</b>
+                    <b style={{ fontSize: '13px', color: '#1B2B4B' }}>Notifications</b>
                     <span
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
-                        fontSize: '11px',
-                        color: '#12372A', background: '#E8F7EF',
-                        border: '1px solid #B7DCC7',
+                        fontSize: '10px',
+                        color: '#15803D',
+                        background: '#DCFCE7',
+                        border: '1px solid #86EFAC',
                         padding: '1px 6px',
                         borderRadius: '10px',
                         fontWeight: 700,
                       }}
-                      title="Direct PostgreSQL Realtime & Database Connection Active"
+                      title="Direct PostgreSQL Realtime Connection Active"
                     >
                       <span
                         style={{
                           width: '5px',
                           height: '5px',
                           borderRadius: '50%',
-                          background: '#1B2B4B',
+                          background: '#16A34A',
                           display: 'inline-block',
                           animation: 'pulse 1.8s infinite',
                         }}
@@ -1792,7 +2033,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         alignItems: 'center',
                         gap: '3px',
                         fontSize: '11px',
-                        color: 'var(--brand)',
+                        color: '#47799E',
                         fontWeight: 600,
                         background: 'none',
                         border: 'none',
@@ -1811,7 +2052,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <button
                         onClick={() => markAllNotificationsRead()}
                         title="Mark all as read"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--brand)', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#47799E', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <CheckCheck size={12} /> All Read
                       </button>
@@ -1820,7 +2061,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       <button
                         onClick={() => clearAllNotifications()}
                         title="Clear all notifications"
-                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#12372A', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#64748B', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}
                       >
                         <Trash2 size={12} /> Clear All
                       </button>
@@ -1829,30 +2070,120 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 </div>
 
                 {/* Category tabs */}
-                <div className="notif-cats">
+                <div
+                  className="notif-cats"
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderBottom: '1px solid #E2E8F0',
+                    background: '#FFFFFF',
+                    overflowX: 'auto',
+                    whiteSpace: 'nowrap',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setSelectedNotifCategory(null)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '3px 8px',
+                      borderRadius: '12px',
+                      background: selectedNotifCategory === null ? '#1B2B4B' : '#F1F5F9',
+                      color: selectedNotifCategory === null ? '#FFFFFF' : '#334155',
+                      border: selectedNotifCategory === null ? '1px solid #1B2B4B' : '1px solid #E2E8F0',
+                      fontSize: '11px',
+                      fontWeight: selectedNotifCategory === null ? 700 : 500,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                      lineHeight: 1,
+                    }}
+                  >
+                    All ({notifications.length})
+                  </button>
                   {categories.map((cat) => {
                     const count = notifications.filter((n) => n.category === cat && !n.read).length;
+                    const isSelected = selectedNotifCategory === cat;
                     return (
-                      <div key={cat} className="notif-cat-pill" title={cat.charAt(0).toUpperCase() + cat.slice(1)}>
-                        <span style={{ color: categoryMap[cat]?.color }}>{categoryMap[cat]?.icon}</span>
-                        {count > 0 && <span className="notif-cat-count">{count}</span>}
-                      </div>
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedNotifCategory(isSelected ? null : cat)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '3px 8px',
+                          borderRadius: '12px',
+                          background: isSelected ? '#1B2B4B' : '#F1F5F9',
+                          color: isSelected ? '#FFFFFF' : '#334155',
+                          border: isSelected ? '1px solid #1B2B4B' : '1px solid #E2E8F0',
+                          fontSize: '11px',
+                          fontWeight: isSelected ? 700 : 500,
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          textTransform: 'capitalize',
+                          lineHeight: 1,
+                        }}
+                        title={cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      >
+                        <span style={{ display: 'flex', alignItems: 'center', color: isSelected ? '#FFFFFF' : categoryMap[cat]?.color }}>
+                          {categoryMap[cat]?.icon}
+                        </span>
+                        <span>{cat}</span>
+                        {count > 0 && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              background: isSelected ? '#FFFFFF' : '#1B2B4B',
+                              color: isSelected ? '#1B2B4B' : '#FFFFFF',
+                              borderRadius: '8px',
+                              padding: '0 4px',
+                              minWidth: '14px',
+                              textAlign: 'center',
+                              lineHeight: '14px',
+                            }}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
                     );
                   })}
                 </div>
 
-                <div style={{ maxHeight: '320px', overflowY: 'auto' }}>
-                  {notifications.length === 0 ? (
-                    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--mut)', fontSize: '11px' }}>
-                      No notifications yet
-                    </div>
-                  ) : (
-                    notifications.slice(0, 10).map((n) => (
+                <div style={{ maxHeight: '320px', overflowY: 'auto', background: '#FFFFFF' }}>
+                  {(() => {
+                    const displayed = selectedNotifCategory
+                      ? notifications.filter((n) => n.category === selectedNotifCategory)
+                      : notifications;
+
+                    if (displayed.length === 0) {
+                      return (
+                        <div style={{ padding: '36px 16px', textAlign: 'center', color: '#64748B', background: '#FFFFFF' }}>
+                          <Bell size={24} color="#94A3B8" style={{ margin: '0 auto 8px', display: 'block' }} />
+                          <b style={{ color: '#1E293B', fontSize: '13px', display: 'block', marginBottom: '2px' }}>
+                            {selectedNotifCategory ? `No ${selectedNotifCategory} notifications` : 'No notifications yet'}
+                          </b>
+                          <span style={{ fontSize: '11.5px', color: '#64748B' }}>
+                            You&apos;re completely up to date with tenders, rates, and messages.
+                          </span>
+                        </div>
+                      );
+                    }
+
+                    return displayed.slice(0, 10).map((n) => (
                       <div
                         key={n.id}
                         className={`notif-item ${!n.read ? 'unread' : ''}`}
                         onClick={() => markNotificationRead(n.id)}
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', padding: '10px 14px', borderBottom: '1px solid #F1F5F9', background: !n.read ? '#F0F7FF' : '#FFFFFF', transition: 'background-color 0.15s ease' }}
                       >
                         <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                           <span style={{ color: categoryMap[n.category]?.color, flexShrink: 0, marginTop: '2px' }}>
@@ -1890,15 +2221,15 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           </button>
                         </div>
                       </div>
-                    ))
-                  )}
+                    ));
+                  })()}
                 </div>
 
-                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid var(--border)', background: 'var(--bg-faint)' }}>
+                <div style={{ padding: '8px', textAlign: 'center', borderTop: '1px solid #E2E8F0', background: '#F8FAFD' }}>
                   <Link
                     href="/notifications"
                     onClick={() => setShowNotifications(false)}
-                    style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600, textDecoration: 'none' }}
+                    style={{ fontSize: '11.5px', color: '#47799E', fontWeight: 700, textDecoration: 'none' }}
                   >
                     Open Notification Center →
                   </Link>
@@ -1907,36 +2238,79 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             )}
           </div>
 
-          {/* User Dropdown */}
+          {/* User Profile Dropdown */}
           <div ref={userDropdownRef} style={{ position: 'relative' }}>
             <button
-              onClick={() => { setShowUserDropdown(!showUserDropdown); setShowNotifications(false); setShowCurrencyModal(false); }}
+              type="button"
+              onClick={() => {
+                const nextState = !showUserDropdown;
+                setShowUserDropdown(nextState);
+                setShowNotifications(false);
+                setShowCurrencyModal(false);
+                setShowLocationModal(false);
+              }}
               className="user-top-btn"
-              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              title={`Account: ${user?.displayName || 'User'}`}
+              style={{
+                height: '30px',
+                padding: '0 8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: showUserDropdown ? '#F1F5F9' : '#FFFFFF',
+                border: showUserDropdown ? '1.5px solid #1B2B4B' : '1px solid #CBD5E0',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                boxSizing: 'border-box',
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease',
+              }}
             >
-              <UserAvatar user={user} size={22} />
-              <span className="user-name-text desktop-only">{user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}</span>
-              {user?.hasGoldenTick && <GoldenTick className="desktop-only" />}
-              <ChevronDown size={13} style={{ color: 'var(--mut)' }} className="user-chevron desktop-only" />
+              <UserAvatar user={user} size={20} />
+              <span className="user-name-text desktop-only" style={{ fontSize: '12px', fontWeight: 600, color: '#1B2B4B' }}>
+                {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
+              </span>
+              {user?.hasGoldenTick && <GoldenTick className="desktop-only" size={12} />}
+              <ChevronDown size={11} style={{ color: '#64748B' }} className="user-chevron desktop-only" />
             </button>
 
             {showUserDropdown && (
-              <div className="user-dropdown-menu" style={{ width: '250px', padding: '0', background: '#ffffff', border: '1px solid #E2E8F0' }}>
+              <div
+                className="user-dropdown-menu"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  right: 0,
+                  width: '260px',
+                  backgroundColor: '#FFFFFF',
+                  border: '1.5px solid #CBD5E0',
+                  borderRadius: '8px',
+                  boxShadow: '0 12px 28px -5px rgba(15, 23, 42, 0.18), 0 8px 10px -6px rgba(15, 23, 42, 0.08)',
+                  zIndex: 1000,
+                  overflow: 'hidden',
+                  color: '#1B2B4B',
+                  fontFamily: 'Calibri, Arial, sans-serif',
+                  fontSize: '12px',
+                  padding: 0,
+                }}
+              >
                 <div style={{ padding: '12px 14px', borderBottom: '1px solid #E2E8F0', background: '#F8FAFD', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <UserAvatar user={user} size={40} />
+                  <UserAvatar user={user} size={36} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <b style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: 'var(--fr8x-text)' }}>
-                      {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
-                      {user?.hasGoldenTick && <GoldenTick size={13} />}
+                    <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: '#1B2B4B' }}>
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
+                      </span>
+                      {user?.hasGoldenTick && <GoldenTick size={12} />}
                     </b>
-                    <small style={{ fontSize: '11px', color: 'var(--fr8x-text)', display: 'block', fontWeight: 600, marginTop: '2px' }}>
+                    <small style={{ fontSize: '11px', color: '#4A5568', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.designation}
                     </small>
-                    <small style={{ fontSize: '11px', color: 'var(--fr8x-muted)', display: 'block' }}>
+                    <small style={{ fontSize: '11px', color: '#64748B', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {user.company}
                     </small>
                     <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span className="badge" style={{ fontSize: '11px', fontWeight: 700 }}>
+                      <span className="badge" style={{ fontSize: '10px', fontWeight: 800, background: '#1B2B4B', color: '#FFFFFF', padding: '1px 6px', borderRadius: '4px' }}>
                         {user.plan.toUpperCase()} PLAN
                       </span>
                     </div>
@@ -1948,9 +2322,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#1B2B4B', textDecoration: 'none', borderRadius: '4px' }}
                   >
-                    <UserIcon size={14} />
+                    <UserIcon size={14} style={{ color: '#47799E' }} />
                     <span>Freight Passport & Profile</span>
                   </Link>
 
@@ -1958,9 +2332,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/profile"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#1B2B4B', textDecoration: 'none', borderRadius: '4px' }}
                   >
-                    <ShieldCheck size={14} />
+                    <ShieldCheck size={14} style={{ color: '#16A34A' }} />
                     <span>KYC & Accreditations</span>
                   </Link>
 
@@ -1968,13 +2342,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     href="/dashboard"
                     onClick={() => setShowUserDropdown(false)}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '11px' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#1B2B4B', textDecoration: 'none', borderRadius: '4px' }}
                   >
-                    <Settings size={14} />
+                    <Settings size={14} style={{ color: '#64748B' }} />
                     <span>Workspace Preferences</span>
                   </Link>
 
-                  <div style={{ borderTop: '1px solid var(--line-light)', margin: '4px 0' }} />
+                  <div style={{ borderTop: '1px solid #E2E8F0', margin: '4px 0' }} />
 
                   <Link
                     href="/login"
@@ -1983,7 +2357,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                       logout();
                     }}
                     className="user-switch-item"
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#1B2B4B', fontFamily: 'Calibri, Arial, sans-serif' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', fontSize: '12px', color: '#DC2626', textDecoration: 'none', borderRadius: '4px', fontWeight: 600 }}
                   >
                     <LogOut size={14} />
                     <span>Sign Out</span>

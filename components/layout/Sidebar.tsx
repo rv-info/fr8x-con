@@ -86,7 +86,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   return (
     <aside
       className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}
-      style={{ backgroundColor: '#EEF2F7', borderRight: '1px solid #E2E8F0' }}
+      style={{ backgroundColor: '#F7F6F2', borderRight: '1px solid #D5D0C7' }}
     >
       {/* Brand Header */}
       <div
@@ -95,8 +95,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           justifyContent: collapsed ? 'center' : 'space-between',
           padding: collapsed ? '4px 0 10px' : '4px 6px 10px',
           alignItems: 'center',
-          backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #E2E8F0',
+          backgroundColor: '#F7F6F2',
+          borderBottom: '1px solid #D5D0C7',
         }}
       >
         <Link
@@ -132,7 +132,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               fontSize: '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#1B2B4B',
+              color: '#0A0A0A',
               lineHeight: 1,
               textTransform: 'uppercase',
               fontFamily: 'Calibri, Arial, sans-serif',
@@ -181,8 +181,8 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 padding: collapsed ? '0' : '0 11px',
                 ...(active
-                  ? { backgroundColor: '#1B2B4B', color: '#FFFFFF', borderRadius: '4px', border: '1px solid #1B2B4B' }
-                  : { color: '#1A2332', backgroundColor: 'transparent', border: '1px solid transparent' }),
+                  ? { backgroundColor: '#0A0A0A', color: '#FFFFFF', borderRadius: '4px', border: '1px solid #0A0A0A' }
+                  : { color: '#0A0A0A', backgroundColor: 'transparent', border: '1px solid transparent' }),
                 fontFamily: 'Calibri, Arial, sans-serif',
                 fontSize: '12px',
                 fontWeight: active ? 600 : 500,
@@ -199,7 +199,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 name={item.id}
                 filled={active}
                 size={18}
-                style={{ color: active ? '#FFFFFF' : '#1B2B4B' }}
+                style={{ color: active ? '#FFFFFF' : '#0A0A0A' }}
               />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}
