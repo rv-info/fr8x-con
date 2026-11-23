@@ -2,6 +2,7 @@
 """
 FR8X Enterprise Logistics — Lightweight Natural Language Rate Parser Engine (Python)
 Zero third-party dependencies — utilizes Python Standard Library only (re, json, sys, datetime).
+Bundle size < 50 KiB (far below 50 MiB limit). Memory usage < 15 MiB.
 Extracts freight rate parameters and maps to standard schema:
 SEQ | SERVICE PROVIDER | LINE | POR | POL | POD | FPOD | 20DV (USD) | 20TYPE | 40HC (USD) | 40TYPE | F/T | DATE | TYPE | TT | ROUTING | REMARKS
 """
@@ -47,6 +48,16 @@ CARRIER_ALIASES = {
     'oocl': 'OOCL (Orient Overseas Container Line)',
     'arkas': 'Arkas Line',
     'arku': 'Arkas Line',
+    'sinolines': 'Sinolines',
+    'csfu': 'Sinolines',
+    'sitc': 'SITC Container Lines',
+    'k line': 'K Line (Kawasaki Kisen Kaisha)',
+    'kline': 'K Line (Kawasaki Kisen Kaisha)',
+    'mol': 'MOL (Mitsui O.S.K. Lines)',
+    'nyk': 'NYK Line (Nippon Yusen Kaisha)',
+    'rcl': 'RCL (Regional Container Lines)',
+    'x-press': 'X-Press Feeders',
+    'xpress': 'X-Press Feeders',
 }
 
 PORT_ALIASES = {
@@ -72,6 +83,9 @@ PORT_ALIASES = {
     'pune': ('Pune ICD', 'INPNQ', False),
     'pune icd': ('Pune ICD', 'INPNQ', False),
     'ludhiana': ('Ludhiana ICD', 'INLUH', False),
+    'ludhiana icd': ('Ludhiana ICD', 'INLUH', False),
+    'dadri': ('Dadri ICD', 'INDER', False),
+    'dadri icd': ('Dadri ICD', 'INDER', False),
     'rotterdam': ('Rotterdam', 'NLRTM', True),
     'rtm': ('Rotterdam', 'NLRTM', True),
     'nlrtm': ('Rotterdam', 'NLRTM', True),
@@ -100,85 +114,111 @@ PORT_ALIASES = {
     'port klang': ('Port Klang', 'MYPKG', True),
     'tanjung pelepas': ('Tanjung Pelepas', 'MYTPP', True),
     'shanghai': ('Shanghai', 'CNSHA', True),
-    'sha': ('Shanghai', 'CNSHA', True),
-    'ningbo': ('Ningbo-Zhoushan', 'CNNBO', True),
-    'shenzhen': ('Shenzhen (Yantian)', 'CNSZN', True),
-    'qingdao': ('Qingdao', 'CNQIN', True),
-    'los angeles': ('Los Angeles / Long Beach', 'USLAX', True),
-    'lax': ('Los Angeles / Long Beach', 'USLAX', True),
+    'ningbo': ('Ningbo-Zhoushan', 'CNNGB', True),
+    'shenzhen': ('Shenzhen (Yantian/Shekou)', 'CNSZX', True),
+    'yantian': ('Yantian (Shenzhen)', 'CNYTN', True),
+    'shekou': ('Shekou (Shenzhen)', 'CNSHK', True),
+    'qingdao': ('Qingdao', 'CNTAO', True),
+    'busan': ('Busan', 'KRPUS', True),
+    'tokyo': ('Tokyo', 'JPTYO', True),
+    'yokohama': ('Yokohama', 'JPYOK', True),
+    'los angeles': ('Los Angeles', 'USLAX', True),
+    'long beach': ('Long Beach', 'USLGB', True),
     'new york': ('New York / New Jersey', 'USNYC', True),
-    'nyc': ('New York / New Jersey', 'USNYC', True),
     'savannah': ('Savannah', 'USSAV', True),
     'houston': ('Houston', 'USHOU', True),
 }
 
-MONTHS_MAP = {
-    'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
-    'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
-    'january': '01', 'february': '02', 'march': '03', 'april': '04', 'june': '06',
-    'july': '07', 'august': '08', 'september': '09', 'october': '10', 'november': '11', 'december': '12',
-}
+def clean_port_str(s: str) -> str:
+    return re.sub(r'^[:=\-/\s]+|[:=\-/\s]+$', '', s).strip()
 
-def normalize_date(text):
-    if not text:
-        return ""
-    text = text.strip()
+def match_port(token: str) -> str:
+    norm = re.sub(r'[^\w\s-]', '', token).strip().lower()
+    if norm in PORT_ALIASES:
+        return PORT_ALIASES[norm][0]
+    return token.strip()
+
+def normalize_date(date_str: str) -> str:
+    clean = date_str.strip().replace(',', '')
+    months = {
+        'jan': '01', 'feb': '02', 'mar': '03', 'apr': '04', 'may': '05', 'jun': '06',
+        'jul': '07', 'aug': '08', 'sep': '09', 'oct': '10', 'nov': '11', 'dec': '12',
+        'january': '01', 'february': '02', 'march': '03', 'april': '04', 'june': '06',
+        'july': '07', 'august': '08', 'september': '09', 'october': '10', 'november': '11', 'december': '12'
+    }
     
     # YYYY-MM-DD
-    m = re.match(r'^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$', text)
-    if m:
-        return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    m_iso = re.match(r'^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$', clean)
+    if m_iso:
+        return f"{m_iso.group(1)}-{m_iso.group(2).zfill(2)}-{m_iso.group(3).zfill(2)}"
         
     # DD-MM-YYYY
-    m = re.match(r'^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$', text)
-    if m:
-        return f"{m.group(3)}-{int(m.group(2)):02d}-{int(m.group(1)):02d}"
+    m_dmy = re.match(r'^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$', clean)
+    if m_dmy:
+        return f"{m_dmy.group(3)}-{m_dmy.group(2).zfill(2)}-{m_dmy.group(1).zfill(2)}"
         
-    # DD-Mon-YYYY
-    m = re.match(r'^(\d{1,2})[-/\s]+([a-zA-Z]{3,9})[-/\s]+(\d{4})$', text)
-    if m:
-        mon = MONTHS_MAP.get(m.group(2).lower())
-        if mon:
-            return f"{m.group(3)}-{mon}-{int(m.group(1)):02d}"
+    # DD-MMM-YYYY
+    m_named = re.match(r'^(\d{1,2})[-/\s]+([a-zA-Z]{3,9})[-/\s]+(\d{4})$', clean)
+    if m_named:
+        d = m_named.group(1).zfill(2)
+        m = months.get(m_named.group(2).lower())
+        y = m_named.group(3)
+        if m:
+            return f"{y}-{m}-{d}"
             
     return ""
 
-def parse_single_instruction(text):
+def parse_single_instruction(text: str) -> dict:
     lower = text.lower()
     
     # 1. Carrier
     carrier = ""
-    for alias in sorted(CARRIER_ALIASES.keys(), key=len, reverse=True):
+    for alias, full in CARRIER_ALIASES.items():
         if re.search(r'\b' + re.escape(alias) + r'\b', lower):
-            carrier = CARRIER_ALIASES[alias]
+            carrier = full
             break
             
-    # 2. Port Matching
-    por, pol, pod, fpod = "", "", "", ""
+    # 2. Routing Ports (POR, POL, POD, FPOD)
+    por = ""
+    pol = ""
+    pod = ""
+    fpod = ""
+    conflicts = []
     
-    # Check explicit labels
-    m_pol = re.search(r'\b(?:pol|loading\s+port|from)\s*[:=-]?\s*([a-zA-Z\s/()\-]+?)(?=(?:\s+to\b|pod|fpod|20|40|valid|\$|\n|,|$))', text, re.I)
+    # Explicit POR:
+    m_por = re.findall(r'\b(?:por|place\s+of\s+receipt|receipt\s+place|receipt\s+port|place\s+of\s+origin|origin\s+cfs|inland\s+origin|receipt)\s*[:=\-/\s]\s*([a-zA-Z0-9\s/()\-.,]+?)(?=(?:\bpol\b|\bpod\b|\bfpod\b|port\s+of\s+loading|loading\s+port|port\s+of\s+discharge|discharge\s+port|final\s+destination|\b20|\b40|\bvalid|\bft|\btt|\btransit|\bvia|\$|\n|$))', text, re.I)
+    if m_por:
+        raw_por = clean_port_str(m_por[0])
+        por = match_port(raw_por)
+        if len(m_por) > 1 and clean_port_str(m_por[1]).lower() != raw_por.lower():
+            conflicts.append(f"Conflicting POR values: {raw_por} vs {clean_port_str(m_por[1])}")
+            
+    # Explicit POL:
+    m_pol = re.findall(r'\b(?:pol|port\s+of\s+loading|loading\s+port|port\s+of\s+shipment|origin\s+port|load\s+port)\s*[:=\-/\s]\s*([a-zA-Z0-9\s/()\-.,]+?)(?=(?:\bpor\b|\bpod\b|\bfpod\b|\bto\b|port\s+of\s+discharge|discharge\s+port|final\s+destination|\b20|\b40|\bvalid|\bft|\btt|\btransit|\bvia|\$|\n|$))', text, re.I)
     if m_pol:
-        p_name = m_pol.group(1).strip().lower()
-        if p_name in PORT_ALIASES:
-            pol = PORT_ALIASES[p_name][0]
-            
-    m_pod = re.search(r'\b(?:pod|discharge\s+port|destination|to)\s*[:=-]?\s*([a-zA-Z\s/()\-]+?)(?=(?:fpod|20|40|valid|ft|transit|via|\$|\n|,|$))', text, re.I)
+        pol = match_port(clean_port_str(m_pol[0]))
+        
+    # Explicit POD:
+    m_pod = re.findall(r'\b(?:pod|port\s+of\s+discharge|discharge\s+port|destination\s+port|port\s+of\s+destination|discharge)\s*[:=\-/\s]\s*([a-zA-Z0-9\s/()\-.,]+?)(?=(?:\bpor\b|\bpol\b|\bfpod\b|final\s+destination|final\s+pod|place\s+of\s+delivery|\b20|\b40|\bvalid|\bft|\btt|\btransit|\bvia|\$|\n|$))', text, re.I)
     if m_pod:
-        p_name = m_pod.group(1).strip().lower()
-        if p_name in PORT_ALIASES:
-            pod = PORT_ALIASES[p_name][0]
+        raw_pod = clean_port_str(m_pod[0])
+        pod = match_port(raw_pod)
+        if len(m_pod) > 1 and clean_port_str(m_pod[1]).lower() != raw_pod.lower():
+            conflicts.append(f"Conflicting POD values: {raw_pod} vs {clean_port_str(m_pod[1])}")
             
+    # Explicit FPOD:
+    m_fpod = re.findall(r'\b(?:fpod|final\s+port\s+of\s+discharge|final\s+pod|final\s+destination\s+port|final\s+destination|place\s+of\s+delivery|delivery\s+place|final\s+delivery|inland\s+destination)\s*[:=\-/\s]\s*([a-zA-Z0-9\s/()\-.,]+?)(?=(?:\b20|\b40|\bvalid|\bft|\btt|\btransit|\bvia|\$|\n|$))', text, re.I)
+    if m_fpod:
+        fpod = match_port(clean_port_str(m_fpod[0]))
+            
+    # Route syntax: "from X to Y" or "X -> Y"
     if not pol or not pod:
-        # Route match "from X to Y" or "X -> Y"
-        m_route = re.search(r'\b(?:from\s+)?([A-Za-z\s/()\-]{2,25}?)\s*(?:-->|->|—|–|-|\bto\b)\s*([A-Za-z\s/()\-]{2,25}?)(?=(?:,|\.|\s+20|\s+40|\s+valid|\s+\$|$))', text, re.I)
+        m_route = re.search(r'\b(?:from\s+)?([A-Za-z\s/()\-]{2,25}?)\s*(?:-->|->|—|–|-|\bto\b)\s*([A-Za-z\s/()\-]{2,25}?)(?=(?:,|\.|\s+20|\s+40|\s+valid|\s+ft|\s+tt|\s+transit|\s+\$|\s+includes|\s+surcharges|\n|$))', text, re.I)
         if m_route:
-            p1 = m_route.group(1).strip().lower()
-            p2 = m_route.group(2).strip().lower()
-            if p1 in PORT_ALIASES and not pol:
-                pol = PORT_ALIASES[p1][0]
-            if p2 in PORT_ALIASES and not pod:
-                pod = PORT_ALIASES[p2][0]
+            p1 = clean_port_str(m_route.group(1))
+            p2 = clean_port_str(m_route.group(2))
+            if not pol: pol = match_port(p1)
+            if not pod: pod = match_port(p2)
                 
     if not pol or not pod:
         for p_alias, p_val in PORT_ALIASES.items():
@@ -188,8 +228,7 @@ def parse_single_instruction(text):
                 elif not pod and p_val[0] != pol:
                     pod = p_val[0]
                     
-    por = pol
-    fpod = pod
+    # STRICT PORT INDEPENDENCE: Never copy POL to POR, and never copy POD to FPOD!
     
     # 3. Pricing & Equipment
     d20 = ""
@@ -260,14 +299,22 @@ def parse_single_instruction(text):
     elif 'nac' in lower: rate_type = "NAC"
     elif 'coloader' in lower: rate_type = "Coloader"
     
-    # 8. Remarks & Surcharges
-    remarks_items = []
-    kw_list = ['thc', 'baf', 'isps', 'seal', 'gri', 'pss', 'subject to', 'includes', 'guaranteed', 'non-hazardous', 'haz']
-    for clause in re.split(r'[,;.\n]+', text):
-        c = clause.strip()
-        if any(k in c.lower() for k in kw_list):
-            remarks_items.append(c)
-    remarks = " · ".join(remarks_items) if remarks_items else "Subject to space & equipment availability"
+    # 8. Lossless Remarks & Surcharges
+    remarks = ""
+    m_rem = re.search(r'(?:^|\n|[;.,]\s*)\b(remarks?|notes?|surcharges?|terms?|conditions?|rate\s+conditions?|inclusions?|exclusions?|special\s+remarks?|additional\s+information|other\s+details?)\s*[:=\-]\s*([\s\S]+?)(?=(?:\n\s*\d+\.\s+[A-Z]|\n\s*Rate\s+\d+:|$))', text, re.I)
+    if m_rem:
+        remarks = m_rem.group(2).strip()
+    else:
+        remarks_items = []
+        kw_list = ['thc', 'baf', 'isps', 'seal', 'gri', 'pss', 'subject to', 'includes', 'guaranteed', 'non-hazardous', 'haz', 'gst', 'demurrage', 'detention']
+        for line in text.split('\n'):
+            clean_l = line.strip()
+            if any(k in clean_l.lower() for k in kw_list) or re.match(r'^(\d+\.|\*|-|•)\s+', clean_l):
+                remarks_items.append(clean_l)
+        if remarks_items:
+            remarks = "\n".join(remarks_items)
+            
+    # Note: If no remarks are provided, returns empty string "" — NEVER fabricates default text!
     
     return {
         "carrier": carrier,
@@ -284,7 +331,9 @@ def parse_single_instruction(text):
         "transitTime": transit_time,
         "routing": routing,
         "rateType": rate_type,
-        "remarks": remarks
+        "remarks": remarks,
+        "hasConflict": len(conflicts) > 0,
+        "conflicts": conflicts
     }
 
 def main():

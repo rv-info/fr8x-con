@@ -226,6 +226,8 @@ export interface RateRow {
   ft:             number | null;       // Free Time days
   validity:       string;              // DATE stored as ISO string
   transit_time:   string | null;
+  remarks?:       string | null;       // Lossless multiline commercial remarks/surcharges
+  remark?:        string | null;       // Legacy compatibility alias for remarks
   owner_uid:      string | null;       // UUID → auth.users
   created_by:     string | null;       // UUID → auth.users
   is_owner:       boolean | null;

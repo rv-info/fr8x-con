@@ -709,6 +709,7 @@ export interface RateItem {
   rateType?: string;
   route: string;
   remark: string;
+  remarks?: string;
   ownerUid?: string;
   isOwner?: boolean;
   isSelfPosted?: boolean;

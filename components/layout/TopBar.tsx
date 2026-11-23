@@ -1548,13 +1548,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showLocationModal && (
               <>
                 <div
-                  className="mobile-backdrop mobile-only"
+                  className="dropdown-backdrop"
                   onClick={() => setShowLocationModal(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
-                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
-                    backdropFilter: 'blur(2px)',
+                    backgroundColor: 'rgba(23, 43, 43, 0.15)',
+                    backdropFilter: 'blur(1px)',
                     zIndex: 1099,
                   }}
                 />
@@ -1689,13 +1689,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showCurrencyModal && (
               <>
                 <div
-                  className="mobile-backdrop mobile-only"
+                  className="dropdown-backdrop"
                   onClick={() => setShowCurrencyModal(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
-                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
-                    backdropFilter: 'blur(2px)',
+                    backgroundColor: 'rgba(23, 43, 43, 0.15)',
+                    backdropFilter: 'blur(1px)',
                     zIndex: 1099,
                   }}
                 />
@@ -1965,13 +1965,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {/* Mobile Backdrop to prevent background clicks and close on outside tap */}
             {showNotifications && (
               <div
-                className="notif-backdrop mobile-only"
+                className="dropdown-backdrop"
                 onClick={() => setShowNotifications(false)}
                 style={{
                   position: 'fixed',
                   inset: 0,
-                  backgroundColor: 'rgba(23, 43, 43, 0.25)',
-                  backdropFilter: 'blur(2px)',
+                  backgroundColor: 'rgba(23, 43, 43, 0.15)',
+                  backdropFilter: 'blur(1px)',
                   zIndex: 1099,
                 }}
               />
@@ -2310,13 +2310,13 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             {showUserDropdown && (
               <>
                 <div
-                  className="mobile-backdrop mobile-only"
+                  className="dropdown-backdrop"
                   onClick={() => setShowUserDropdown(false)}
                   style={{
                     position: 'fixed',
                     inset: 0,
-                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
-                    backdropFilter: 'blur(2px)',
+                    backgroundColor: 'rgba(23, 43, 43, 0.15)',
+                    backdropFilter: 'blur(1px)',
                     zIndex: 1099,
                   }}
                 />

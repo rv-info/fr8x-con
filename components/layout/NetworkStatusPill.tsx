@@ -30,8 +30,9 @@ export function NetworkStatusPill() {
   useEffect(() => {
     if (isOpen && popoverRef.current) {
       const rect = popoverRef.current.getBoundingClientRect();
-      // If button is located close to the right edge (< 250px space), align popover to right
-      if (typeof window !== 'undefined' && window.innerWidth - rect.left < 250) {
+      const popoverWidth = 250;
+      // If anchoring to the left would push popover past the right edge, anchor to the right
+      if (typeof window !== 'undefined' && rect.left + popoverWidth > window.innerWidth - 12) {
         setAlignRight(true);
       } else {
         setAlignRight(false);
@@ -39,17 +40,26 @@ export function NetworkStatusPill() {
     }
   }, [isOpen]);
 
-  // Close popover on outside click
+  // Close popover on outside click and Escape key
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
     }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen]);
 
   const handleSelectStatus = (newStatus: 'active' | 'away' | 'offline') => {
@@ -80,9 +90,7 @@ export function NetworkStatusPill() {
       : 'none';
 
   const pillBg = '#FFFFFF';
-
   const pillBorder = '#D5DEDA';
-
   const pillText = '#172B2B';
 
   return (
@@ -138,16 +146,16 @@ export function NetworkStatusPill() {
         <ChevronDown size={11} style={{ color: '#66736F', flexShrink: 0 }} />
       </button>
 
-      {/* Mobile / Screen Backdrop to prevent touch bleed-through */}
+      {/* Screen Backdrop to prevent touch bleed-through and isolate dropdown */}
       {isOpen && (
         <div
-          className="net-pill-backdrop mobile-only"
+          className="net-pill-backdrop"
           onClick={() => setIsOpen(false)}
           style={{
             position: 'fixed',
             inset: 0,
-            backgroundColor: 'rgba(23, 43, 43, 0.25)',
-            backdropFilter: 'blur(2px)',
+            backgroundColor: 'rgba(23, 43, 43, 0.15)',
+            backdropFilter: 'blur(1px)',
             zIndex: 1099,
           }}
         />
@@ -161,8 +169,11 @@ export function NetworkStatusPill() {
             top: 'calc(100% + 6px)',
             left: alignRight ? 'auto' : 0,
             right: alignRight ? 0 : 'auto',
-            width: '240px',
+            width: '250px',
+            minWidth: '240px',
             maxWidth: 'calc(100vw - 20px)',
+            display: 'flex',
+            flexDirection: 'column',
             backgroundColor: '#FFFFFF',
             borderRadius: '8px',
             boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
@@ -185,6 +196,7 @@ export function NetworkStatusPill() {
               justifyContent: 'space-between',
               background: '#E8F0ED',
               borderRadius: '5px',
+              flexShrink: 0,
             }}
           >
             <span
@@ -211,14 +223,15 @@ export function NetworkStatusPill() {
                   : isLowBandwidth
                   ? '⚡ 2G Saver'
                   : tier === 'hyper'
-                  ? '⚡ High-Speed'
-                  : 'Adaptive'}
+                  ? '⚡ 4G / High-Speed'
+                  : '⚡ 4G / High-Speed'}
               </span>
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
                 className="close-red-box sm"
                 aria-label="Close status popover"
+                title="Close"
               >
                 <X size={10} />
               </button>
@@ -239,6 +252,7 @@ export function NetworkStatusPill() {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
+                flexShrink: 0,
               }}
             >
               {isSyncing ? (
@@ -260,170 +274,185 @@ export function NetworkStatusPill() {
             </div>
           )}
 
-          {/* Online Option */}
-          <button
-            type="button"
-            onClick={() => handleSelectStatus('active')}
-            disabled={!isOnline}
+          {/* Options Container: Enforced Strict Vertical Layout */}
+          <div
             style={{
-              width: '100%',
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 10px',
-              borderRadius: '6px',
-              border: effectiveStatus === 'active' ? '1px solid #075B5B' : '1px solid #E8F0ED',
-              background: effectiveStatus === 'active' ? '#E8F0ED' : '#FFFFFF',
-              cursor: !isOnline ? 'not-allowed' : 'pointer',
-              opacity: !isOnline ? 0.5 : 1,
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
+              flexDirection: 'column',
+              gap: '4px',
+              width: '100%',
               boxSizing: 'border-box',
-              minHeight: '44px',
-            }}
-            onMouseEnter={(e) => {
-              if (effectiveStatus !== 'active' && isOnline) {
-                e.currentTarget.style.background = '#F4F8F6';
-                e.currentTarget.style.borderColor = '#075B5B';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (effectiveStatus !== 'active') {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = '#E8F0ED';
-              }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#075B5B',
-                  boxShadow: '0 0 5px rgba(7, 91, 91, 0.4)',
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Online</div>
-                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
-                  Available for trade & direct RFQs
+            {/* 1. Online Option */}
+            <button
+              type="button"
+              className="net-status-option-btn"
+              onClick={() => handleSelectStatus('active')}
+              disabled={!isOnline}
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border: effectiveStatus === 'active' ? '1px solid #075B5B' : '1px solid #E8F0ED',
+                background: effectiveStatus === 'active' ? '#E8F0ED' : '#FFFFFF',
+                cursor: !isOnline ? 'not-allowed' : 'pointer',
+                opacity: !isOnline ? 0.5 : 1,
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+                minHeight: '44px',
+              }}
+              onMouseEnter={(e) => {
+                if (effectiveStatus !== 'active' && isOnline) {
+                  e.currentTarget.style.background = '#F4F8F6';
+                  e.currentTarget.style.borderColor = '#075B5B';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (effectiveStatus !== 'active') {
+                  e.currentTarget.style.background = '#FFFFFF';
+                  e.currentTarget.style.borderColor = '#E8F0ED';
+                }
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#075B5B',
+                    boxShadow: '0 0 5px rgba(7, 91, 91, 0.4)',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Online</div>
+                  <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                    Online & available for trade
+                  </div>
                 </div>
               </div>
-            </div>
-            {effectiveStatus === 'active' && <Check size={14} style={{ color: '#075B5B', flexShrink: 0, marginLeft: '6px' }} />}
-          </button>
+              {effectiveStatus === 'active' && <Check size={14} style={{ color: '#075B5B', flexShrink: 0, marginLeft: '6px' }} />}
+            </button>
 
-          {/* Away Option */}
-          <button
-            type="button"
-            onClick={() => handleSelectStatus('away')}
-            disabled={!isOnline}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 10px',
-              borderRadius: '6px',
-              border: effectiveStatus === 'away' ? '1px solid #B7791F' : '1px solid #E8F0ED',
-              background: effectiveStatus === 'away' ? '#FEF3C7' : '#FFFFFF',
-              cursor: !isOnline ? 'not-allowed' : 'pointer',
-              opacity: !isOnline ? 0.5 : 1,
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              marginTop: '4px',
-              boxSizing: 'border-box',
-              minHeight: '44px',
-            }}
-            onMouseEnter={(e) => {
-              if (effectiveStatus !== 'away' && isOnline) {
-                e.currentTarget.style.background = '#F4F8F6';
-                e.currentTarget.style.borderColor = '#B7791F';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (effectiveStatus !== 'away') {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = '#E8F0ED';
-              }
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#B7791F',
-                  boxShadow: 'none',
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Away</div>
-                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
-                  Stepped away · Offline to contacts
+            {/* 2. Away Option */}
+            <button
+              type="button"
+              className="net-status-option-btn"
+              onClick={() => handleSelectStatus('away')}
+              disabled={!isOnline}
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border: effectiveStatus === 'away' ? '1px solid #B7791F' : '1px solid #E8F0ED',
+                background: effectiveStatus === 'away' ? '#FEF3C7' : '#FFFFFF',
+                cursor: !isOnline ? 'not-allowed' : 'pointer',
+                opacity: !isOnline ? 0.5 : 1,
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+                minHeight: '44px',
+              }}
+              onMouseEnter={(e) => {
+                if (effectiveStatus !== 'away' && isOnline) {
+                  e.currentTarget.style.background = '#F4F8F6';
+                  e.currentTarget.style.borderColor = '#B7791F';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (effectiveStatus !== 'away') {
+                  e.currentTarget.style.background = '#FFFFFF';
+                  e.currentTarget.style.borderColor = '#E8F0ED';
+                }
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#B7791F',
+                    boxShadow: 'none',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Away</div>
+                  <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                    Temporarily away
+                  </div>
                 </div>
               </div>
-            </div>
-            {effectiveStatus === 'away' && <Check size={14} style={{ color: '#B7791F', flexShrink: 0, marginLeft: '6px' }} />}
-          </button>
+              {effectiveStatus === 'away' && <Check size={14} style={{ color: '#B7791F', flexShrink: 0, marginLeft: '6px' }} />}
+            </button>
 
-          {/* Offline Option */}
-          <button
-            type="button"
-            onClick={() => handleSelectStatus('offline')}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '8px 10px',
-              borderRadius: '6px',
-              border: effectiveStatus === 'offline' ? '1px solid #66736F' : '1px solid #E8F0ED',
-              background: effectiveStatus === 'offline' ? '#E8F0ED' : '#FFFFFF',
-              cursor: 'pointer',
-              textAlign: 'left',
-              transition: 'all 0.15s ease',
-              marginTop: '4px',
-              boxSizing: 'border-box',
-              minHeight: '44px',
-            }}
-            onMouseEnter={(e) => {
-              if (effectiveStatus !== 'offline') {
-                e.currentTarget.style.background = '#F4F8F6';
-                e.currentTarget.style.borderColor = '#66736F';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (effectiveStatus !== 'offline') {
-                e.currentTarget.style.background = '#FFFFFF';
-                e.currentTarget.style.borderColor = '#E8F0ED';
-              }
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
-              <span
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: '#66736F',
-                  boxShadow: 'none',
-                  flexShrink: 0,
-                }}
-              />
-              <div style={{ minWidth: 0, flex: 1 }}>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Offline</div>
-                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
-                  Appear offline to network
+            {/* 3. Appear Offline Option */}
+            <button
+              type="button"
+              className="net-status-option-btn"
+              onClick={() => handleSelectStatus('offline')}
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 10px',
+                borderRadius: '6px',
+                border: effectiveStatus === 'offline' ? '1px solid #66736F' : '1px solid #E8F0ED',
+                background: effectiveStatus === 'offline' ? '#E8F0ED' : '#FFFFFF',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.15s ease',
+                boxSizing: 'border-box',
+                minHeight: '44px',
+              }}
+              onMouseEnter={(e) => {
+                if (effectiveStatus !== 'offline') {
+                  e.currentTarget.style.background = '#F4F8F6';
+                  e.currentTarget.style.borderColor = '#66736F';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (effectiveStatus !== 'offline') {
+                  e.currentTarget.style.background = '#FFFFFF';
+                  e.currentTarget.style.borderColor = '#E8F0ED';
+                }
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
+                <span
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: '#66736F',
+                    boxShadow: 'none',
+                    flexShrink: 0,
+                  }}
+                />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Appear Offline</div>
+                  <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                    Appear offline to network
+                  </div>
                 </div>
               </div>
-            </div>
-            {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#66736F', flexShrink: 0, marginLeft: '6px' }} />}
-          </button>
+              {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#66736F', flexShrink: 0, marginLeft: '6px' }} />}
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -3456,8 +3456,21 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 }
 
 .net-pill-popover {
-  width: 240px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 250px !important;
+  min-width: 240px !important;
   max-width: calc(100vw - 20px) !important;
+  padding: 8px !important;
+}
+
+.net-pill-popover .net-status-option-btn {
+  width: 100% !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  box-sizing: border-box !important;
 }
 
 .location-dropdown-menu {

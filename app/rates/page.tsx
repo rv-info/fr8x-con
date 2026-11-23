@@ -204,10 +204,10 @@ SEQ Number       : ${seq}
 Service Provider : ${r.sp}
 Ocean Carrier    : ${r.carrier}
 Routing Mode     : ${r.route || 'Direct EP-X Service'}
-Place of Receipt : ${r.por || r.pol}
+Place of Receipt : ${r.por || '—'}
 Port of Loading  : ${r.pol}
 Port of Discharge: ${r.pod}
-Final Delivery   : ${r.fpod || r.pod}
+Final Delivery   : ${r.fpod || '—'}
 Transit Time     : ${r.tt || '28 days'}
 Free Time Terms  : ${freeTimeTerms}
 -------------------------------------------------------
@@ -216,7 +216,7 @@ US $${r.d20.toLocaleString()}/${d20TypeStr} & US $${r.h40.toLocaleString()}/${h4
 -------------------------------------------------------
 Validity Date    : ${r.valid}
 Rate Category    : ${r.rateType || 'Spot Contract'}
-Remarks & Terms  : ${r.remark || ''}
+Remarks & Terms  : ${r.remarks || r.remark || 'None'}
 =======================================================`;
   };
 
@@ -428,10 +428,10 @@ Remarks & Terms  : ${r.remark || ''}
     }
     addMyRate({
       carrier: carrier.trim(),
-      por: (por || pol).trim(),
+      por: por.trim(),
       pol: pol.trim(),
       pod: pod.trim(),
-      fpod: (fpod || pod).trim(),
+      fpod: fpod.trim(),
       d20: Number(d20),
       d20Type: d20Type || '20DV',
       h40: Number(h40),
@@ -442,6 +442,7 @@ Remarks & Terms  : ${r.remark || ''}
       rateType: rateType || 'Direct Spot',
       route: routing.trim() || 'Direct Ocean Service',
       remark: remarks.trim(),
+      remarks: remarks.trim(),
     });
     setEditingRateId(null);
     toast('Rate duplicated and saved as new distinct i-Rate.');
@@ -475,10 +476,10 @@ Remarks & Terms  : ${r.remark || ''}
 
     const payload = {
       carrier: carrier.trim(),
-      por: (por || pol).trim(),
+      por: por.trim(),
       pol: pol.trim(),
       pod: pod.trim(),
-      fpod: (fpod || pod).trim(),
+      fpod: fpod.trim(),
       d20: Number(d20),
       d20Type: d20Type || '20DV',
       h40: Number(h40),
@@ -489,6 +490,7 @@ Remarks & Terms  : ${r.remark || ''}
       rateType: rateType || 'Direct Spot',
       route: routing.trim() || 'Direct Ocean Service',
       remark: remarks.trim(),
+      remarks: remarks.trim(),
     };
 
     if (editingRateId) {
@@ -554,10 +556,10 @@ Remarks & Terms  : ${r.remark || ''}
         rows.push({
           sp: sp || user.company,
           carrier: cCarrier || 'Maersk',
-          por: cPor || cPol,
-          pol: cPol,
-          pod: cPod,
-          fpod: cFpod || cPod,
+          por: cPor ? cPor.trim() : '',
+          pol: cPol.trim(),
+          pod: cPod.trim(),
+          fpod: cFpod ? cFpod.trim() : '',
           d20: Number(cD20) || 1500,
           d20Type: cD20Type || 'Dry Standard',
           h40: Number(cH40) || 2300,
@@ -567,7 +569,8 @@ Remarks & Terms  : ${r.remark || ''}
           rateType: cRateType || 'Direct Spot',
           tt: cTt || '28 days',
           route: cRoute || 'Direct EP-X',
-          remark: cRemarks || 'Bulk uploaded verified contract',
+          remark: cRemarks || '',
+          remarks: cRemarks || '',
         });
       }
 
@@ -658,7 +661,7 @@ Remarks & Terms  : ${r.remark || ''}
               <div className="grid g4" style={{ padding: '10px 12px', gap: '8px', background: '#fff' }}>
                 <div style={{ fontSize: '11px' }}>
                   <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Place of Receipt (POR)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.por || selectedRateDetail.pol}</b>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.por || '—'}</b>
                 </div>
                 <div style={{ fontSize: '11px' }}>
                   <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Port of Loading (POL)</span>
@@ -670,7 +673,7 @@ Remarks & Terms  : ${r.remark || ''}
                 </div>
                 <div style={{ fontSize: '11px' }}>
                   <span style={{ color: 'var(--mut)', fontSize: '10px', display: 'block' }}>Final Place of Delivery (FPOD)</span>
-                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.fpod || selectedRateDetail.pod}</b>
+                  <b style={{ color: 'var(--ink)' }}>{selectedRateDetail.fpod || '—'}</b>
                 </div>
               </div>
             </div>
@@ -697,8 +700,8 @@ Remarks & Terms  : ${r.remark || ''}
             {/* Surcharges & Remarks */}
             <div style={{ padding: '9px 12px', background: '#eff6ff', borderRadius: '7px', border: '1px solid #bfdbfe', fontSize: '11px' }}>
               <b style={{ color: 'var(--brand)' }}>Operational Remarks & Surcharges:</b>
-              <p style={{ margin: '2px 0 0', color: 'var(--ink)' }}>
-                {selectedRateDetail.remark || 'Standard carrier terms apply. Rates valid subject to vessel space allocation.'}
+              <p style={{ margin: '2px 0 0', color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.4 }}>
+                {selectedRateDetail.remarks || selectedRateDetail.remark || 'No additional operational remarks.'}
               </p>
             </div>
 
@@ -1934,7 +1937,7 @@ Remarks & Terms  : ${r.remark || ''}
                         <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                             <span>🗺️</span>
-                            <span>{rate.por || rate.pol}</span>
+                            <span>{rate.por || '—'}</span>
                           </span>
                         </td>
                         <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
@@ -1952,7 +1955,7 @@ Remarks & Terms  : ${r.remark || ''}
                         <td style={{ padding: '6px 6px', fontSize: '11.5px' }}>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
                             <span>🗺️</span>
-                            <span>{rate.fpod || rate.pod}</span>
+                            <span>{rate.fpod || '—'}</span>
                           </span>
                         </td>
                         <td style={{ padding: '6px 6px', textAlign: 'right', fontWeight: 700, color: 'var(--brand)', fontSize: '12.5px' }}>${rate.d20.toLocaleString()}</td>
@@ -1968,7 +1971,9 @@ Remarks & Terms  : ${r.remark || ''}
                         </td>
                         <td style={{ padding: '6px 6px', textAlign: 'right', fontSize: '11.5px' }}>{rate.tt}</td>
                         <td style={{ padding: '6px 6px', fontSize: '11.5px', maxWidth: '135px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.route}>{rate.route}</td>
-                        <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.remark}>{rate.remark}</td>
+                        <td style={{ padding: '6px 6px', fontSize: '11px', color: 'var(--mut)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={rate.remarks || rate.remark || ''}>
+                          {rate.remarks || rate.remark || '—'}
+                        </td>
                         <td className="rates-sticky-action-col" style={{ padding: '6px 6px', background: isCompared ? '#eff6ff' : idx % 2 === 0 ? '#ffffff' : '#f7f9fd' }}>
                           <div style={{ display: 'flex', gap: '3px', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
                             <button className="btn secondary sm" style={{ padding: '3px 5px' }} onClick={(e) => { e.stopPropagation(); setSelectedRateDetail(rate); }} title="View Rate Detail">
@@ -2266,9 +2271,9 @@ Remarks & Terms  : ${r.remark || ''}
                     {/* Port Route Corridor */}
                     <div className="mobile-rate-corridor">
                       <div className="mobile-rate-route-line">
-                        <div className="mobile-rate-port" title={rate.por || rate.pol}>
-                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>ORIGIN</small>
-                          <span>{rate.pol.split('(')[0].trim()}</span>
+                        <div className="mobile-rate-port" title={rate.por ? `POR: ${rate.por} · POL: ${rate.pol}` : `POL: ${rate.pol}`}>
+                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>{rate.por ? 'POR / POL' : 'ORIGIN'}</small>
+                          <span>{rate.por ? `${rate.por} (${rate.pol.split('(')[0].trim()})` : rate.pol.split('(')[0].trim()}</span>
                         </div>
 
                         <div className="mobile-rate-arrow-track">
@@ -2279,9 +2284,9 @@ Remarks & Terms  : ${r.remark || ''}
                           </div>
                         </div>
 
-                        <div className="mobile-rate-port mobile-rate-port-dest" title={rate.fpod || rate.pod}>
-                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>DESTINATION</small>
-                          <span>{rate.pod.split('(')[0].trim()}</span>
+                        <div className="mobile-rate-port mobile-rate-port-dest" title={rate.fpod ? `POD: ${rate.pod} · FPOD: ${rate.fpod}` : `POD: ${rate.pod}`}>
+                          <small style={{ display: 'block', fontSize: '9px', color: '#64748b', fontWeight: 600 }}>{rate.fpod ? 'POD / FPOD' : 'DESTINATION'}</small>
+                          <span>{rate.fpod ? `${rate.pod.split('(')[0].trim()} (${rate.fpod})` : rate.pod.split('(')[0].trim()}</span>
                         </div>
                       </div>
 

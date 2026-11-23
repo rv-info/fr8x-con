@@ -293,10 +293,10 @@ export function RatesEditorModal({
 
     return {
       carrier: carrier.trim(),
-      por: (por || pol).trim(),
+      por: por.trim(),
       pol: pol.trim(),
       pod: pod.trim(),
-      fpod: (fpod || pod).trim(),
+      fpod: fpod.trim(),
       d20: Number(d20),
       d20Type: d20Type || '20DV',
       h40: Number(h40),

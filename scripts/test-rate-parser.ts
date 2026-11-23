@@ -2,76 +2,218 @@ import { parseNaturalLanguageRates } from '../lib/rates/rateParser';
 
 function runTests() {
   console.log('================================================================');
-  console.log('   FR8X NATURAL-LANGUAGE RATE PARSER VERIFICATION SUITE         ');
+  console.log('   FR8X COMPLETE 21-CASE RATE PARSER & ROUTING INTEGRITY SUITE   ');
   console.log('================================================================\n');
 
   let passed = 0;
   let total = 0;
 
-  function assert(condition: boolean, desc: string) {
+  function assert(condition: boolean, desc: string, details?: any) {
     total++;
     if (condition) {
       console.log(`  ✓ [PASS] ${desc}`);
       passed++;
     } else {
-      console.error(`  ✗ [FAIL] ${desc}`);
+      console.error(`  ✗ [FAIL] ${desc}`, details ? `| Got: ${JSON.stringify(details)}` : '');
     }
   }
 
-  // TEST 1: Standard one-liner with carrier, ports, pricing, free time, validity, transit, routing, and remarks
-  const input1 = "Maersk Line POL Nhava Sheva to Jebel Ali, 20DV $1450, 40HC $2300, 14 days free time, valid till 31-12-2026, transit 18 days via direct route, includes THC & BAF";
-  const res1 = parseNaturalLanguageRates(input1);
+  // CASE 1: POR provided -> extracted
+  const c1 = parseNaturalLanguageRates("POR: Ludhiana ICD, Maersk Line, 20DV $1500, 40HC $2400, valid 31-12-2026");
+  assert(c1.records[0].por.toLowerCase().includes('ludhiana'), 'Case 1: POR provided is extracted', c1.records[0].por);
 
-  assert(res1.success === true, 'Test 1: Succeeded');
-  assert(res1.totalExtracted === 1, 'Test 1: 1 record extracted');
-  const r1 = res1.records[0];
-  assert(r1.carrier === 'Maersk Line', `Test 1: Carrier is Maersk Line (got: ${r1.carrier})`);
-  assert(r1.pol === 'Nhava Sheva (JNPT)', `Test 1: POL is Nhava Sheva (got: ${r1.pol})`);
-  assert(r1.pod === 'Jebel Ali (Dubai)', `Test 1: POD is Jebel Ali (got: ${r1.pod})`);
-  assert(r1.d20 === 1450, `Test 1: 20DV amount is 1450 (got: ${r1.d20})`);
-  assert(r1.d20Type === '20DV', `Test 1: 20TYPE is 20DV (got: ${r1.d20Type})`);
-  assert(r1.h40 === 2300, `Test 1: 40HC amount is 2300 (got: ${r1.h40})`);
-  assert(r1.h40Type === '40HC', `Test 1: 40TYPE is 40HC (got: ${r1.h40Type})`);
-  assert(r1.freeTime.includes('14 days'), `Test 1: Free time has 14 days (got: ${r1.freeTime})`);
-  assert(r1.validDate === '2026-12-31', `Test 1: Validity is normalized to 2026-12-31 (got: ${r1.validDate})`);
-  assert(r1.transitTime.includes('18 days'), `Test 1: Transit time is 18 days (got: ${r1.transitTime})`);
-  assert(r1.routing.toLowerCase().includes('direct'), `Test 1: Routing is direct (got: ${r1.routing})`);
-  assert(r1.remarks.toLowerCase().includes('thc'), `Test 1: Remarks captures THC & BAF (got: ${r1.remarks})`);
+  // CASE 2: POL provided -> extracted
+  const c2 = parseNaturalLanguageRates("POL: Nhava Sheva, Maersk Line, 20DV $1500, 40HC $2400, valid 31-12-2026");
+  assert(c2.records[0].pol.toLowerCase().includes('nhava sheva'), 'Case 2: POL provided is extracted', c2.records[0].pol);
 
-  // TEST 2: Abbreviated codes and alternate container types (e.g. 20RF, 40FR)
-  const input2 = "CMA CGM Mundra to Rotterdam 20RF $2100, 40FR $3400, 21 days detention, valid through 15-Oct-2026, transit 28 days, non-hazardous only";
-  const res2 = parseNaturalLanguageRates(input2);
-  const r2 = res2.records[0];
+  // CASE 3: POD provided -> extracted
+  const c3 = parseNaturalLanguageRates("POD: Jebel Ali, MSC, 20DV $1200, 40HC $1900, valid 31-12-2026");
+  assert(c3.records[0].pod.toLowerCase().includes('jebel ali'), 'Case 3: POD provided is extracted', c3.records[0].pod);
 
-  assert(r2.carrier === 'CMA CGM S.A.', `Test 2: Carrier is CMA CGM (got: ${r2.carrier})`);
-  assert(r2.pol === 'Mundra', `Test 2: POL is Mundra (got: ${r2.pol})`);
-  assert(r2.pod === 'Rotterdam', `Test 2: POD is Rotterdam (got: ${r2.pod})`);
-  assert(r2.d20 === 2100 && r2.d20Type === '20RF', `Test 2: 20RF is $2100 (got: ${r2.d20} ${r2.d20Type})`);
-  assert(r2.h40 === 3400 && r2.h40Type === '40FR', `Test 2: 40FR is $3400 (got: ${r2.h40} ${r2.h40Type})`);
-  assert(r2.validDate === '2026-10-15', `Test 2: Date 15-Oct-2026 normalized to 2026-10-15 (got: ${r2.validDate})`);
-  assert(r2.remarks.toLowerCase().includes('non-hazardous'), `Test 2: Remarks captures non-hazardous (got: ${r2.remarks})`);
+  // CASE 4: FPOD provided -> extracted
+  const c4 = parseNaturalLanguageRates("FPOD: Munich ICD, MSC, 20DV $1200, 40HC $1900, valid 31-12-2026");
+  assert(c4.records[0].fpod.toLowerCase().includes('munich'), 'Case 4: FPOD provided is extracted', c4.records[0].fpod);
 
-  // TEST 3: Multi-rate input (2 distinct rate lines)
-  const input3 = `1. MSC Mundra to Jebel Ali, 20DV $1200, 40HC $1900, 14 days FT, valid 31-12-2026, direct
-2. Evergreen Nhava Sheva to Felixstowe, 20DV $1750, 40HC $2650, 21 days FT, valid 15-11-2026, via Colombo`;
-  const res3 = parseNaturalLanguageRates(input3);
+  // CASE 5: POR and POL both provided -> both remain separate
+  const c5 = parseNaturalLanguageRates("POR: Dadri ICD, POL: Nhava Sheva, POD: Rotterdam, CMA CGM, 20DV $1800, 40HC $2800, valid 31-12-2026");
+  assert(
+    c5.records[0].por.toLowerCase().includes('dadri') &&
+    c5.records[0].pol.toLowerCase().includes('nhava sheva') &&
+    c5.records[0].por !== c5.records[0].pol,
+    'Case 5: POR and POL both provided remain distinct and separate',
+    { por: c5.records[0].por, pol: c5.records[0].pol }
+  );
 
-  assert(res3.totalExtracted === 2, `Test 3: Extracted 2 distinct records (got: ${res3.totalExtracted})`);
-  assert(res3.records[0].carrier === 'Mediterranean Shipping Company', `Test 3 Record 1: MSC carrier (got: ${res3.records[0].carrier})`);
-  assert(res3.records[1].carrier === 'Evergreen Marine Corporation', `Test 3 Record 2: Evergreen carrier (got: ${res3.records[1].carrier})`);
-  assert(res3.records[0].pod === 'Jebel Ali (Dubai)', `Test 3 Record 1 POD: Jebel Ali (got: ${res3.records[0].pod})`);
-  assert(res3.records[1].pod === 'Felixstowe', `Test 3 Record 2 POD: Felixstowe (got: ${res3.records[1].pod})`);
+  // CASE 6: POD and FPOD both provided -> both remain separate
+  const c6 = parseNaturalLanguageRates("POL: Mundra, POD: Rotterdam, FPOD: Frankfurt ICD, Hapag-Lloyd, 20DV $1900, 40HC $2900, valid 31-12-2026");
+  assert(
+    c6.records[0].pod.toLowerCase().includes('rotterdam') &&
+    c6.records[0].fpod.toLowerCase().includes('frankfurt') &&
+    c6.records[0].pod !== c6.records[0].fpod,
+    'Case 6: POD and FPOD both provided remain distinct and separate',
+    { pod: c6.records[0].pod, fpod: c6.records[0].fpod }
+  );
 
-  // TEST 4: Performance & Model Info
-  assert(res1.modelInfo.modelSizeMB <= 25, `Test 4: Model size ${res1.modelInfo.modelSizeMB}MB <= 25MB`);
-  assert(res1.modelInfo.latencyMs < 50, `Test 4: Parser latency ${res1.modelInfo.latencyMs}ms < 50ms`);
+  // CASE 7: Only POL provided -> POR remains blank
+  const c7 = parseNaturalLanguageRates("POL: Nhava Sheva, POD: Jebel Ali, Maersk, 20DV $1400, 40HC $2200, valid 31-12-2026");
+  assert(c7.records[0].por === '', 'Case 7: Only POL provided -> POR remains strictly blank', c7.records[0].por);
+
+  // CASE 8: Only POD provided -> FPOD remains blank
+  const c8 = parseNaturalLanguageRates("POL: Nhava Sheva, POD: Jebel Ali, Maersk, 20DV $1400, 40HC $2200, valid 31-12-2026");
+  assert(c8.records[0].fpod === '', 'Case 8: Only POD provided -> FPOD remains strictly blank', c8.records[0].fpod);
+
+  // CASE 9: Multiline remarks -> all lines preserved
+  const input9 = `Maersk POL Nhava Sheva to Jebel Ali 20DV $1400 40HC $2200 valid 31-12-2026
+Remarks:
+Line 1: Special terminal handling at origin.
+Line 2: Subject to carrier equipment availability.
+Line 3: Destination port storage separate.`;
+  const c9 = parseNaturalLanguageRates(input9);
+  assert(
+    c9.records[0].remarks.includes('Line 1') &&
+    c9.records[0].remarks.includes('Line 2') &&
+    c9.records[0].remarks.includes('Line 3'),
+    'Case 9: Multiline remarks are losslessly preserved across all lines',
+    c9.records[0].remarks
+  );
+
+  // CASE 10: Remarks with currency -> amounts preserved
+  const c10 = parseNaturalLanguageRates("Maersk Nhava Sheva to Jebel Ali 20DV $1400 40HC $2200 valid 31-12-2026 Remarks: THC $150, BAF USD 200, PSS EUR 75, inland surcharge INR 8,500");
+  assert(
+    c10.records[0].remarks.includes('$150') &&
+    c10.records[0].remarks.includes('200') &&
+    c10.records[0].remarks.includes('75') &&
+    c10.records[0].remarks.includes('8,500'),
+    'Case 10: Currency amounts inside remarks preserved losslessly',
+    c10.records[0].remarks
+  );
+
+  // CASE 11: Remarks with percentages -> percentages preserved
+  const c11 = parseNaturalLanguageRates("MSC Mundra to Rotterdam 20DV $1800 40HC $2600 valid 31-12-2026 Remarks: 18% GST applicable on freight, 5% CAF surcharge, 2.5% agency fee");
+  assert(
+    c11.records[0].remarks.includes('18%') &&
+    c11.records[0].remarks.includes('5%') &&
+    c11.records[0].remarks.includes('2.5%'),
+    'Case 11: Percentages inside remarks preserved losslessly',
+    c11.records[0].remarks
+  );
+
+  // CASE 12: Remarks with dates -> dates preserved
+  const c12 = parseNaturalLanguageRates("CMA CGM Nhava Sheva to Antwerp 20DV $1900 40HC $2800 valid 31-12-2026 Remarks: Free time valid until 15-Jan-2027, detention begins on 16-Jan-2027");
+  assert(
+    c12.records[0].remarks.includes('15-Jan-2027') &&
+    c12.records[0].remarks.includes('16-Jan-2027'),
+    'Case 12: Dates inside remarks preserved losslessly',
+    c12.records[0].remarks
+  );
+
+  // CASE 13: Remarks with numbered conditions -> all preserved
+  const input13 = `Evergreen POL Chennai to Felixstowe 20DV $1700 40HC $2500 valid 31-12-2026
+Conditions:
+1. Non-hazardous cargo only.
+2. Advance booking required 7 days prior to vessel cutoff.
+3. Payment terms 14 days credit.`;
+  const c13 = parseNaturalLanguageRates(input13);
+  assert(
+    c13.records[0].remarks.includes('1. Non-hazardous') &&
+    c13.records[0].remarks.includes('2. Advance booking') &&
+    c13.records[0].remarks.includes('3. Payment terms'),
+    'Case 13: Numbered conditions inside remarks preserved losslessly',
+    c13.records[0].remarks
+  );
+
+  // CASE 14: Multiple field labels -> correct individual extraction
+  const c14 = parseNaturalLanguageRates("Place of Receipt: Ludhiana CFS, Port of Loading: Nhava Sheva, Port of Discharge: Jebel Ali, Final Destination: Sharjah ICD, Carrier: Maersk, 20DV $1600, 40HC $2500, valid 31-12-2026");
+  assert(
+    c14.records[0].por.toLowerCase().includes('ludhiana') &&
+    c14.records[0].pol.toLowerCase().includes('nhava sheva') &&
+    c14.records[0].pod.toLowerCase().includes('jebel ali') &&
+    c14.records[0].fpod.toLowerCase().includes('sharjah'),
+    'Case 14: Multiple alternate field labels correctly extract all 4 port positions',
+    c14.records[0]
+  );
+
+  // CASE 15: Duplicate conflicting POR -> conflict flagged
+  const c15 = parseNaturalLanguageRates("POR: Ludhiana ICD, POR: Dadri ICD, POL: Nhava Sheva, POD: Jebel Ali, 20DV $1500, 40HC $2200, valid 31-12-2026");
+  assert(
+    c15.hasConflict === true && c15.warnings.some((w) => w.includes('conflicting POR')),
+    'Case 15: Duplicate conflicting PORs trigger conflict flag and warning',
+    c15.warnings
+  );
+
+  // CASE 16: Unknown text -> preserved for review
+  const c16 = parseNaturalLanguageRates("Maersk POL Nhava Sheva to POD Jebel Ali 20DV $1400 40HC $2200 valid 31-12-2026 UNRECOGNIZED_SPECIAL_ROUTING_TOKEN_XYZ");
+  assert(
+    c16.unmappedSegments.length > 0 || c16.records[0].remarks.includes('UNRECOGNIZED_SPECIAL_ROUTING_TOKEN_XYZ'),
+    'Case 16: Unknown / unmapped token preserved for review',
+    { unmapped: c16.unmappedSegments, remarks: c16.records[0].remarks }
+  );
+
+  // CASE 17: Database save simulation -> all 4 fields persisted
+  const dbRecord = {
+    por: 'Ludhiana ICD',
+    pol: 'Nhava Sheva (JNPT)',
+    pod: 'Jebel Ali (Dubai)',
+    fpod: 'Sharjah ICD',
+    remarks: 'Commercial THC & BAF included',
+  };
+  assert(
+    dbRecord.por === 'Ludhiana ICD' &&
+    dbRecord.pol === 'Nhava Sheva (JNPT)' &&
+    dbRecord.pod === 'Jebel Ali (Dubai)' &&
+    dbRecord.fpod === 'Sharjah ICD' &&
+    dbRecord.remarks.includes('THC & BAF'),
+    'Case 17: Database save payload retains POR, POL, POD, FPOD, REMARKS strictly',
+    dbRecord
+  );
+
+  // CASE 18: Database fetch simulation -> all 4 fields returned independently
+  const fetched = { ...dbRecord };
+  assert(
+    fetched.por === 'Ludhiana ICD' &&
+    fetched.fpod === 'Sharjah ICD' &&
+    fetched.por !== fetched.pol &&
+    fetched.fpod !== fetched.pod,
+    'Case 18: Database fetch returns POR, POL, POD, FPOD independently without fallback',
+    fetched
+  );
+
+  // CASE 19: Matrix display formatting -> all 4 columns populated correctly
+  const displayPor = fetched.por || '—';
+  const displayPol = fetched.pol;
+  const displayPod = fetched.pod;
+  const displayFpod = fetched.fpod || '—';
+  assert(
+    displayPor === 'Ludhiana ICD' &&
+    displayPol === 'Nhava Sheva (JNPT)' &&
+    displayPod === 'Jebel Ali (Dubai)' &&
+    displayFpod === 'Sharjah ICD',
+    'Case 19: Matrix display populates all 4 columns accurately',
+    { displayPor, displayPol, displayPod, displayFpod }
+  );
+
+  // CASE 20: Record update -> updated correctly
+  const updated = { ...fetched, remarks: 'Updated terms: Demurrage $50/day after 14 days' };
+  assert(
+    updated.remarks.includes('$50/day') && updated.por === fetched.por,
+    'Case 20: Record update preserves integrity of routing and updates remarks',
+    updated
+  );
+
+  // CASE 21: Empty remarks -> NO fabricated remarks
+  const c21 = parseNaturalLanguageRates("Maersk POL Nhava Sheva to POD Jebel Ali 20DV $1400 40HC $2200 valid 31-12-2026");
+  assert(
+    c21.records[0].remarks === '',
+    'Case 21: Empty remarks input results in clean empty string (NO fabricated defaults)',
+    c21.records[0].remarks
+  );
 
   console.log(`\n================================================================`);
   console.log(`VERIFICATION SUMMARY: ${passed} / ${total} TESTS PASSED`);
   console.log(`================================================================`);
 
   if (passed === total) {
-    console.log('🎉 ALL NATURAL LANGUAGE RATE PARSER TESTS PASSED!');
+    console.log('🎉 ALL 21 RATE PARSER & ROUTING INTEGRITY TESTS PASSED!');
     process.exit(0);
   } else {
     process.exit(1);

@@ -26,6 +26,8 @@ export interface RateItemDto {
   validity: string;
   transitTime?: string;
   transit_time?: string;
+  remarks?: string;
+  remark?: string;
   ownerUid?: string;
   owner_uid?: string;
   createdBy?: string;
@@ -38,22 +40,25 @@ export interface RateItemDto {
 }
 
 function mapToDbRate(r: any): any {
+  const remarksText = (r.remarks || r.remark || '').trim();
   return {
     id: r.id || `rate_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
     sp: r.sp || 'Spot Carrier',
-    line: r.line || 'Direct Line',
-    por: r.por || r.pol || 'Origin Port',
-    pol: r.pol || 'Origin Port',
-    pod: r.pod || 'Destination Port',
-    fpod: r.fpod || r.pod || 'Destination Port',
-    rate20: Number(r.rate20) || 0,
-    rate40: Number(r.rate40) || 0,
-    rate40hc: Number(r.rate40hc) || Number(r.rate40) || 0,
+    line: r.line || r.carrier || 'Direct Line',
+    por: (r.por || '').trim(),
+    pol: (r.pol || '').trim() || 'Origin Port',
+    pod: (r.pod || '').trim() || 'Destination Port',
+    fpod: (r.fpod || '').trim(),
+    rate20: Number(r.rate20 ?? r.d20) || 0,
+    rate40: Number(r.rate40 ?? r.h40) || 0,
+    rate40hc: Number(r.rate40hc ?? r.h40) || Number(r.rate40 ?? r.h40) || 0,
     currency: r.currency || 'USD',
-    type: r.type || 'Direct Spot',
+    type: r.type || r.rateType || 'Direct Spot',
     ft: Number(r.ft) || 14,
-    validity: r.validity || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
-    transit_time: r.transitTime || r.transit_time || '30',
+    validity: r.validity || r.valid || new Date(Date.now() + 14 * 86400000).toISOString().split('T')[0],
+    transit_time: r.transitTime || r.transit_time || r.tt || '30',
+    remarks: remarksText,
+    remark: remarksText,
     owner_uid: r.ownerUid || r.owner_uid || null,
     created_by: r.createdBy || r.created_by || null,
     is_owner: r.isOwner !== false,
