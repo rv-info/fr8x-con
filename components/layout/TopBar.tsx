@@ -1546,24 +1546,38 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showLocationModal && (
-              <div
-                className="location-dropdown-menu"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  right: 0,
-                  width: '280px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D5DEDA',
-                  borderRadius: '8px',
-                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
-                  zIndex: 1000,
-                  overflow: 'hidden',
-                  color: '#172B2B',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
-                  fontSize: '12px',
-                }}
-              >
+              <>
+                <div
+                  className="mobile-backdrop mobile-only"
+                  onClick={() => setShowLocationModal(false)}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
+                    backdropFilter: 'blur(2px)',
+                    zIndex: 1099,
+                  }}
+                />
+                <div
+                  className="location-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    width: '280px',
+                    maxWidth: 'calc(100vw - 20px)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    borderRadius: '8px',
+                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    zIndex: 1100,
+                    overflow: 'hidden',
+                    color: '#172B2B',
+                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    fontSize: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                >
                 <div style={{ padding: '10px 12px', borderBottom: '1px solid #D5DEDA', background: '#E8F0ED', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <MapPin size={13} style={{ color: '#075B5B' }} />
@@ -1632,6 +1646,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   <span style={{ fontSize: '10.5px', color: '#66736F' }}>Auto-synced with user freight passport</span>
                 </div>
               </div>
+              </>
             )}
           </div>
 
@@ -1672,30 +1687,44 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showCurrencyModal && (
-              <div
-                className="currency-converter-modal"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  right: 0,
-                  width: '340px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D5DEDA',
-                  borderRadius: '8px',
-                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
-                  zIndex: 1000,
-                  overflow: 'hidden',
-                  color: '#172B2B',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
-                  fontSize: '12px',
-                }}
-              >
-                <div className="conv-head">
-                  <b>Currency Converter</b>
-                  <button onClick={() => setShowCurrencyModal(false)} className="close-btn close-red-box">
-                    <X size={13} />
-                  </button>
-                </div>
+              <>
+                <div
+                  className="mobile-backdrop mobile-only"
+                  onClick={() => setShowCurrencyModal(false)}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
+                    backdropFilter: 'blur(2px)',
+                    zIndex: 1099,
+                  }}
+                />
+                <div
+                  className="currency-converter-modal"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    width: '340px',
+                    maxWidth: 'calc(100vw - 20px)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    borderRadius: '8px',
+                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    zIndex: 1100,
+                    overflow: 'hidden',
+                    color: '#172B2B',
+                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    fontSize: '12px',
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div className="conv-head">
+                    <b>Currency Converter</b>
+                    <button onClick={() => setShowCurrencyModal(false)} className="close-btn close-red-box sm">
+                      <X size={10} />
+                    </button>
+                  </div>
 
                 <div className="conv-body">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
@@ -1864,6 +1893,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </div>
                 </div>
               </div>
+              </>
             )}
           </div>
 
@@ -1940,9 +1970,9 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 style={{
                   position: 'fixed',
                   inset: 0,
-                  backgroundColor: 'rgba(23, 43, 43, 0.35)',
+                  backgroundColor: 'rgba(23, 43, 43, 0.25)',
                   backdropFilter: 'blur(2px)',
-                  zIndex: 998,
+                  zIndex: 1099,
                 }}
               />
             )}
@@ -1955,16 +1985,17 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   top: 'calc(100% + 6px)',
                   right: 0,
                   width: '360px',
-                  maxWidth: 'calc(100vw - 24px)',
+                  maxWidth: 'calc(100vw - 20px)',
                   backgroundColor: '#FFFFFF',
                   border: '1px solid #D5DEDA',
                   borderRadius: '8px',
-                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
-                  zIndex: 1000,
+                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                  zIndex: 1100,
                   overflow: 'hidden',
                   color: '#172B2B',
                   fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                   fontSize: '12px',
+                  boxSizing: 'border-box',
                 }}
               >
                 <div
@@ -2058,6 +2089,16 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         <Trash2 size={12} /> Clear All
                       </button>
                     )}
+                    <button
+                      type="button"
+                      onClick={() => setShowNotifications(false)}
+                      className="close-red-box sm"
+                      aria-label="Close notifications"
+                      title="Close notifications"
+                      style={{ marginLeft: '4px' }}
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
                 </div>
 
@@ -2267,47 +2308,73 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             </button>
 
             {showUserDropdown && (
-              <div
-                className="user-dropdown-menu"
-                style={{
-                  position: 'absolute',
-                  top: 'calc(100% + 6px)',
-                  right: 0,
-                  width: '260px',
-                  backgroundColor: '#FFFFFF',
-                  border: '1px solid #D5DEDA',
-                  borderRadius: '8px',
-                  boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
-                  zIndex: 1000,
-                  overflow: 'hidden',
-                  color: '#172B2B',
-                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
-                  fontSize: '12px',
-                  padding: 0,
-                }}
-              >
-                <div style={{ padding: '12px 14px', borderBottom: '1px solid #D5DEDA', background: '#E8F0ED', display: 'flex', gap: '10px', alignItems: 'center' }}>
-                  <UserAvatar user={user} size={36} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: '#172B2B' }}>
-                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
-                      </span>
-                      {user?.hasGoldenTick && <GoldenTick size={12} />}
-                    </b>
-                    <small style={{ fontSize: '11px', color: '#66736F', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {user.designation}
-                    </small>
-                    <small style={{ fontSize: '11px', color: '#66736F', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {user.company}
-                    </small>
-                    <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                      <span className="badge" style={{ fontSize: '10px', fontWeight: 800, background: '#075B5B', color: '#FFFFFF', padding: '1px 6px', borderRadius: '4px' }}>
-                        {user.plan.toUpperCase()} PLAN
-                      </span>
+              <>
+                <div
+                  className="mobile-backdrop mobile-only"
+                  onClick={() => setShowUserDropdown(false)}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    backgroundColor: 'rgba(23, 43, 43, 0.25)',
+                    backdropFilter: 'blur(2px)',
+                    zIndex: 1099,
+                  }}
+                />
+                <div
+                  className="user-dropdown-menu"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    right: 0,
+                    width: '260px',
+                    maxWidth: 'calc(100vw - 20px)',
+                    backgroundColor: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    borderRadius: '8px',
+                    boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
+                    zIndex: 1100,
+                    overflow: 'hidden',
+                    color: '#172B2B',
+                    fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                    fontSize: '12px',
+                    padding: 0,
+                    boxSizing: 'border-box',
+                  }}
+                >
+                  <div style={{ padding: '12px 14px', borderBottom: '1px solid #D5DEDA', background: '#E8F0ED', display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', minWidth: 0, flex: 1 }}>
+                      <UserAvatar user={user} size={36} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <b style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px', color: '#172B2B' }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {user?.displayName || `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || 'User'}
+                          </span>
+                          {user?.hasGoldenTick && <GoldenTick size={12} />}
+                        </b>
+                        <small style={{ fontSize: '11px', color: '#66736F', display: 'block', fontWeight: 600, marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user.designation}
+                        </small>
+                        <small style={{ fontSize: '11px', color: '#66736F', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {user.company}
+                        </small>
+                        <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                          <span className="badge" style={{ fontSize: '10px', fontWeight: 800, background: '#075B5B', color: '#FFFFFF', padding: '1px 6px', borderRadius: '4px' }}>
+                            {user.plan.toUpperCase()} PLAN
+                          </span>
+                        </div>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowUserDropdown(false)}
+                      className="close-red-box sm"
+                      aria-label="Close user profile menu"
+                      title="Close"
+                      style={{ alignSelf: 'flex-start' }}
+                    >
+                      <X size={10} />
+                    </button>
                   </div>
-                </div>
 
                 <div style={{ padding: '6px' }}>
                   <Link
@@ -2356,6 +2423,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </Link>
                 </div>
               </div>
+              </>
             )}
           </div>
         </div>

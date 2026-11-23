@@ -1,0 +1,43 @@
+{
+  "modelName": "fr8x-rate-ner-int8",
+  "version": "1.4.0",
+  "architecture": "Quantized-BiLSTM-CRF-Freight-NER",
+  "task": "freight-rate-semantic-slot-filling",
+  "framework": "EdgeWasm / ONNX INT8 Quantized",
+  "parameters": 485000,
+  "quantization": "INT8",
+  "maxSequenceLength": 512,
+  "supportedLabels": [
+    "O",
+    "B-CARRIER", "I-CARRIER",
+    "B-SERVICE_PROVIDER", "I-SERVICE_PROVIDER",
+    "B-POR", "I-POR",
+    "B-POL", "I-POL",
+    "B-POD", "I-POD",
+    "B-FPOD", "I-FPOD",
+    "B-PRICE_20DV", "I-PRICE_20DV",
+    "B-TYPE_20", "I-TYPE_20",
+    "B-PRICE_40HC", "I-PRICE_40HC",
+    "B-TYPE_40", "I-TYPE_40",
+    "B-FREE_TIME", "I-FREE_TIME",
+    "B-VALID_DATE", "I-VALID_DATE",
+    "B-RATE_TYPE", "I-RATE_TYPE",
+    "B-TRANSIT_TIME", "I-TRANSIT_TIME",
+    "B-ROUTING", "I-ROUTING",
+    "B-REMARKS", "I-REMARKS"
+  ],
+  "vocabularySize": 12480,
+  "license": "Apache-2.0",
+  "storageBackend": "Cloudflare R2 / Immutable Sharded Asset",
+  "weightsShards": [
+    "weights_shard_0.bin",
+    "weights_shard_1.bin",
+    "weights_shard_2.bin"
+  ],
+  "shardSizeBytes": 614400,
+  "totalModelSizeBytes": 1843200,
+  "modelSizeMB": 1.76,
+  "checksumSha256": "8f3b92c4e7a1d6052fbc94018a3628e945c7193b21840ef90a16723c4a27bc19",
+  "cachingStrategy": "immutable-cache-first",
+  "lazyLoaded": true
+}

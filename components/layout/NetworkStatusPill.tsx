@@ -9,6 +9,7 @@ export function NetworkStatusPill() {
   const { isOnline, tier, isSyncing, pendingCount, measuredLatency, isLowBandwidth } = useNetwork();
   const [presence, setPresence] = useState<'active' | 'away' | 'offline'>('active');
   const [isOpen, setIsOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
 
   // Subscribe to real-time presence service
@@ -24,6 +25,19 @@ export function NetworkStatusPill() {
     });
     return unsubscribe;
   }, []);
+
+  // Viewport collision awareness: determine if popover should anchor left or right
+  useEffect(() => {
+    if (isOpen && popoverRef.current) {
+      const rect = popoverRef.current.getBoundingClientRect();
+      // If button is located close to the right edge (< 250px space), align popover to right
+      if (typeof window !== 'undefined' && window.innerWidth - rect.left < 250) {
+        setAlignRight(true);
+      } else {
+        setAlignRight(false);
+      }
+    }
+  }, [isOpen]);
 
   // Close popover on outside click
   useEffect(() => {
@@ -124,23 +138,40 @@ export function NetworkStatusPill() {
         <ChevronDown size={11} style={{ color: '#66736F', flexShrink: 0 }} />
       </button>
 
+      {/* Mobile / Screen Backdrop to prevent touch bleed-through */}
+      {isOpen && (
+        <div
+          className="net-pill-backdrop mobile-only"
+          onClick={() => setIsOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(23, 43, 43, 0.25)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 1099,
+          }}
+        />
+      )}
+
       {isOpen && (
         <div
           className="net-pill-popover"
           style={{
             position: 'absolute',
             top: 'calc(100% + 6px)',
-            left: 0,
-            width: '230px',
-            maxWidth: 'calc(100vw - 24px)',
-            background: '#ffffff',
+            left: alignRight ? 'auto' : 0,
+            right: alignRight ? 0 : 'auto',
+            width: '240px',
+            maxWidth: 'calc(100vw - 20px)',
+            backgroundColor: '#FFFFFF',
             borderRadius: '8px',
-            boxShadow: '0 10px 25px -5px rgba(23, 43, 43, 0.14), 0 8px 10px -6px rgba(23, 43, 43, 0.06)',
+            boxShadow: '0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10)',
             border: '1px solid #D5DEDA',
-            zIndex: 1000,
-            padding: '6px',
+            zIndex: 1100,
+            padding: '8px',
             fontSize: '12px',
             fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+            boxSizing: 'border-box',
           }}
         >
           {/* Header with Connection Intelligence */}
@@ -186,8 +217,7 @@ export function NetworkStatusPill() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="close-red-box"
-                style={{ width: '18px', height: '18px', minWidth: '18px', minHeight: '18px', borderRadius: '3px' }}
+                className="close-red-box sm"
                 aria-label="Close status popover"
               >
                 <X size={10} />
@@ -240,23 +270,31 @@ export function NetworkStatusPill() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '7px 9px',
+              padding: '8px 10px',
               borderRadius: '6px',
-              border: 'none',
-              background: effectiveStatus === 'active' ? '#E8F0ED' : 'transparent',
+              border: effectiveStatus === 'active' ? '1px solid #075B5B' : '1px solid #E8F0ED',
+              background: effectiveStatus === 'active' ? '#E8F0ED' : '#FFFFFF',
               cursor: !isOnline ? 'not-allowed' : 'pointer',
               opacity: !isOnline ? 0.5 : 1,
               textAlign: 'left',
-              transition: 'background 0.15s ease',
+              transition: 'all 0.15s ease',
+              boxSizing: 'border-box',
+              minHeight: '44px',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'active' && isOnline) (e.currentTarget.style.background = '#E8F0ED');
+              if (effectiveStatus !== 'active' && isOnline) {
+                e.currentTarget.style.background = '#F4F8F6';
+                e.currentTarget.style.borderColor = '#075B5B';
+              }
             }}
             onMouseLeave={(e) => {
-              if (effectiveStatus !== 'active') (e.currentTarget.style.background = 'transparent');
+              if (effectiveStatus !== 'active') {
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = '#E8F0ED';
+              }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
               <span
                 style={{
                   width: '8px',
@@ -267,12 +305,14 @@ export function NetworkStatusPill() {
                   flexShrink: 0,
                 }}
               />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Online</div>
-                <div style={{ fontSize: '11px', color: '#66736F' }}>Online & available for trade</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Online</div>
+                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                  Available for trade & direct RFQs
+                </div>
               </div>
             </div>
-            {effectiveStatus === 'active' && <Check size={14} style={{ color: '#075B5B', flexShrink: 0 }} />}
+            {effectiveStatus === 'active' && <Check size={14} style={{ color: '#075B5B', flexShrink: 0, marginLeft: '6px' }} />}
           </button>
 
           {/* Away Option */}
@@ -285,24 +325,32 @@ export function NetworkStatusPill() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '7px 9px',
+              padding: '8px 10px',
               borderRadius: '6px',
-              border: 'none',
-              background: effectiveStatus === 'away' ? '#FEF3C7' : 'transparent',
+              border: effectiveStatus === 'away' ? '1px solid #B7791F' : '1px solid #E8F0ED',
+              background: effectiveStatus === 'away' ? '#FEF3C7' : '#FFFFFF',
               cursor: !isOnline ? 'not-allowed' : 'pointer',
               opacity: !isOnline ? 0.5 : 1,
               textAlign: 'left',
-              transition: 'background 0.15s ease',
-              marginTop: '2px',
+              transition: 'all 0.15s ease',
+              marginTop: '4px',
+              boxSizing: 'border-box',
+              minHeight: '44px',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'away' && isOnline) (e.currentTarget.style.background = '#E8F0ED');
+              if (effectiveStatus !== 'away' && isOnline) {
+                e.currentTarget.style.background = '#F4F8F6';
+                e.currentTarget.style.borderColor = '#B7791F';
+              }
             }}
             onMouseLeave={(e) => {
-              if (effectiveStatus !== 'away') (e.currentTarget.style.background = 'transparent');
+              if (effectiveStatus !== 'away') {
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = '#E8F0ED';
+              }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
               <span
                 style={{
                   width: '8px',
@@ -313,12 +361,14 @@ export function NetworkStatusPill() {
                   flexShrink: 0,
                 }}
               />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Away</div>
-                <div style={{ fontSize: '11px', color: '#66736F' }}>Stepped away · Offline to contacts</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Away</div>
+                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                  Stepped away · Offline to contacts
+                </div>
               </div>
             </div>
-            {effectiveStatus === 'away' && <Check size={14} style={{ color: '#B7791F', flexShrink: 0 }} />}
+            {effectiveStatus === 'away' && <Check size={14} style={{ color: '#B7791F', flexShrink: 0, marginLeft: '6px' }} />}
           </button>
 
           {/* Offline Option */}
@@ -330,23 +380,31 @@ export function NetworkStatusPill() {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              padding: '7px 9px',
+              padding: '8px 10px',
               borderRadius: '6px',
-              border: 'none',
-              background: effectiveStatus === 'offline' ? '#E8F0ED' : 'transparent',
+              border: effectiveStatus === 'offline' ? '1px solid #66736F' : '1px solid #E8F0ED',
+              background: effectiveStatus === 'offline' ? '#E8F0ED' : '#FFFFFF',
               cursor: 'pointer',
               textAlign: 'left',
-              transition: 'background 0.15s ease',
-              marginTop: '2px',
+              transition: 'all 0.15s ease',
+              marginTop: '4px',
+              boxSizing: 'border-box',
+              minHeight: '44px',
             }}
             onMouseEnter={(e) => {
-              if (effectiveStatus !== 'offline') (e.currentTarget.style.background = '#E8F0ED');
+              if (effectiveStatus !== 'offline') {
+                e.currentTarget.style.background = '#F4F8F6';
+                e.currentTarget.style.borderColor = '#66736F';
+              }
             }}
             onMouseLeave={(e) => {
-              if (effectiveStatus !== 'offline') (e.currentTarget.style.background = 'transparent');
+              if (effectiveStatus !== 'offline') {
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.borderColor = '#E8F0ED';
+              }
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0, flex: 1 }}>
               <span
                 style={{
                   width: '8px',
@@ -357,12 +415,14 @@ export function NetworkStatusPill() {
                   flexShrink: 0,
                 }}
               />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B' }}>Offline</div>
-                <div style={{ fontSize: '11px', color: '#66736F' }}>Appear offline to network</div>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: '12px', color: '#172B2B', lineHeight: 1.2 }}>Offline</div>
+                <div style={{ fontSize: '11px', color: '#66736F', lineHeight: 1.25, whiteSpace: 'normal', wordBreak: 'break-word', marginTop: '2px' }}>
+                  Appear offline to network
+                </div>
               </div>
             </div>
-            {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#66736F', flexShrink: 0 }} />}
+            {effectiveStatus === 'offline' && <Check size={14} style={{ color: '#66736F', flexShrink: 0, marginLeft: '6px' }} />}
           </button>
         </div>
       )}

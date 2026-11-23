@@ -14,10 +14,16 @@ import {
   Clock,
   Compass,
   FileText,
+  Sparkles,
+  Zap,
+  Check,
+  Layers,
+  Cpu,
 } from 'lucide-react';
 import { PortSearch, CarrierSearch } from '@/components/ui/PortSearch';
 import SearchableDropdown from '@/components/ui/SearchableDropdown';
 import { useToast } from '@/lib/context/ToastContext';
+import { parseNaturalLanguageRates, ParsedRateResult } from '@/lib/rates/rateParser';
 
 export interface RateFormData {
   carrier: string;
@@ -111,6 +117,71 @@ export function RatesEditorModal({
   const [remarks, setRemarks] = useState(initialData?.remarks || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // AI Natural-Language Rate Entry State
+  const [aiInput, setAiInput] = useState('');
+  const [isAiParsing, setIsAiParsing] = useState(false);
+  const [parsedResults, setParsedResults] = useState<ParsedRateResult | null>(null);
+  const [activeRecordIndex, setActiveRecordIndex] = useState(0);
+
+  const populateFormFromParsed = (r: RateFormData) => {
+    if (r.carrier) setCarrier(r.carrier);
+    if (r.por) setPor(r.por);
+    if (r.pol) setPol(r.pol);
+    if (r.pod) setPod(r.pod);
+    if (r.fpod) setFpod(r.fpod);
+    if (r.d20 !== undefined && r.d20 !== '') setD20(r.d20);
+    if (r.d20Type) setD20Type(r.d20Type);
+    if (r.h40 !== undefined && r.h40 !== '') setH40(r.h40);
+    if (r.h40Type) setH40Type(r.h40Type);
+    if (r.freeTime) setFreeTime(r.freeTime);
+    if (r.validDate) setValidDate(r.validDate);
+    if (r.transitTime) setTransitTime(r.transitTime);
+    if (r.routing) setRouting(r.routing);
+    if (r.rateType) setRateType(r.rateType);
+    if (r.remarks) setRemarks(r.remarks);
+  };
+
+  const handleAutoExtract = (textOverride?: string) => {
+    const textToProcess = (textOverride !== undefined ? textOverride : aiInput).trim();
+    if (!textToProcess) {
+      toast('Please enter a natural-language freight rate instruction to extract.');
+      return;
+    }
+    setIsAiParsing(true);
+    try {
+      const result = parseNaturalLanguageRates(textToProcess);
+      setParsedResults(result);
+      if (result.success && result.records.length > 0) {
+        setActiveRecordIndex(0);
+        populateFormFromParsed(result.records[0]);
+        if (result.records.length > 1) {
+          toast(`Extracted ${result.records.length} rate instructions! Loaded Rate 1 into editor.`);
+        } else {
+          toast('Rate instruction successfully parsed and populated into editor!');
+        }
+      } else {
+        toast('Could not reliably extract rate fields. Please verify format.');
+      }
+    } catch (err: any) {
+      toast(err.message || 'Rate parsing error');
+    } finally {
+      setIsAiParsing(false);
+    }
+  };
+
+  const handleSelectMultiRate = (index: number) => {
+    if (!parsedResults || !parsedResults.records[index]) return;
+    setActiveRecordIndex(index);
+    populateFormFromParsed(parsedResults.records[index]);
+    toast(`Loaded Rate ${index + 1} of ${parsedResults.records.length} into editor.`);
+  };
+
+  const handleClearAi = () => {
+    setAiInput('');
+    setParsedResults(null);
+    setActiveRecordIndex(0);
+  };
+
   const prevOpenRef = React.useRef(isOpen);
   const prevEditingIdRef = React.useRef(editingRateId);
 
@@ -186,6 +257,9 @@ export function RatesEditorModal({
     setRouting('');
     setRateType('Direct Spot');
     setRemarks('');
+    setAiInput('');
+    setParsedResults(null);
+    setActiveRecordIndex(0);
     if (showToast) {
       toast('Form reset to clean state.');
     }
@@ -416,6 +490,282 @@ export function RatesEditorModal({
             gap: '14px',
           }}
         >
+          {/* AI Natural-Language Rate Entry Panel */}
+          <div
+            className="ai-rate-entry-card"
+            style={{
+              backgroundColor: '#FFFFFF',
+              border: '1px solid #D5DEDA',
+              borderRadius: '8px',
+              padding: '12px 14px',
+              boxShadow: '0 1px 3px rgba(23, 43, 43, 0.04)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #E8F0ED', paddingBottom: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '24px',
+                    height: '24px',
+                    borderRadius: '5px',
+                    backgroundColor: '#E8F0ED',
+                    color: '#075B5B',
+                  }}
+                >
+                  <Sparkles size={14} />
+                </span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#172B2B', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                  AI Natural-Language Rate Entry
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    backgroundColor: '#E8F0ED',
+                    color: '#075B5B',
+                    border: '1px solid #D5DEDA',
+                  }}
+                >
+                  Instant Parsing
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#66736F' }}>
+                <Cpu size={12} style={{ color: '#075B5B' }} />
+                <span>Self-Hosted Edge Model (1.85 MB)</span>
+              </div>
+            </div>
+
+            {/* Input Textarea */}
+            <div style={{ position: 'relative' }}>
+              <textarea
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                placeholder="Type or paste rate instruction in ordinary language... e.g., 'Maersk Line POL Nhava Sheva to Jebel Ali, 20DV $1450, 40HC $2300, 14 days free time, valid till 31-12-2026, transit 18 days via direct route, includes THC & BAF'"
+                style={{
+                  width: '100%',
+                  minHeight: '52px',
+                  height: '52px',
+                  padding: '8px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #D5DEDA',
+                  backgroundColor: '#FFFFFF',
+                  color: '#172B2B',
+                  fontSize: '12px',
+                  fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
+                  lineHeight: '1.4',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  outline: 'none',
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                    e.preventDefault();
+                    handleAutoExtract();
+                  }
+                }}
+              />
+            </div>
+
+            {/* Quick Sample Prompts & Actions */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '11px', color: '#66736F', fontWeight: 600 }}>Quick Samples:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sample = 'Maersk Line POL Nhava Sheva to Jebel Ali, 20DV $1450, 40HC $2300, 14 days free time, valid till 31-12-2026, transit 18 days via direct route, includes THC & BAF';
+                    setAiInput(sample);
+                    handleAutoExtract(sample);
+                  }}
+                  style={{
+                    fontSize: '10.5px',
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    backgroundColor: '#FAFBFD',
+                    border: '1px solid #D5DEDA',
+                    color: '#075B5B',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Spot Rate (Single)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sample = 'CMA CGM Mundra to Rotterdam 20RF $2100, 40FR $3400, 21 days detention, valid through 15-Oct-2026, transit 28 days, non-hazardous only';
+                    setAiInput(sample);
+                    handleAutoExtract(sample);
+                  }}
+                  style={{
+                    fontSize: '10.5px',
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    backgroundColor: '#FAFBFD',
+                    border: '1px solid #D5DEDA',
+                    color: '#075B5B',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Special Equipment (Reefer/FR)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sample = '1. MSC Mundra to Jebel Ali, 20DV $1200, 40HC $1900, 14 days FT, valid 31-12-2026, direct\n2. Evergreen Nhava Sheva to Felixstowe, 20DV $1750, 40HC $2650, 21 days FT, valid 15-11-2026, via Colombo';
+                    setAiInput(sample);
+                    handleAutoExtract(sample);
+                  }}
+                  style={{
+                    fontSize: '10.5px',
+                    padding: '2px 7px',
+                    borderRadius: '4px',
+                    backgroundColor: '#FAFBFD',
+                    border: '1px solid #D5DEDA',
+                    color: '#075B5B',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                  }}
+                >
+                  Multi-Rate (2 Routes)
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {aiInput && (
+                  <button
+                    type="button"
+                    onClick={handleClearAi}
+                    style={{
+                      height: '28px',
+                      padding: '0 8px',
+                      fontSize: '11px',
+                      borderRadius: '5px',
+                      border: '1px solid #D5DEDA',
+                      backgroundColor: '#FFFFFF',
+                      color: '#66736F',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Clear
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => handleAutoExtract()}
+                  disabled={isAiParsing}
+                  style={{
+                    height: '28px',
+                    padding: '0 12px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '11.5px',
+                    fontWeight: 700,
+                    borderRadius: '5px',
+                    border: 'none',
+                    backgroundColor: '#075B5B',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    boxShadow: '0 1px 2px rgba(7, 91, 91, 0.2)',
+                  }}
+                >
+                  <Zap size={13} />
+                  <span>{isAiParsing ? 'Extracting…' : 'Extract & Populate'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Multi-Rate Selection Tabs when > 1 rate extracted */}
+            {parsedResults && parsedResults.records.length > 1 && (
+              <div
+                style={{
+                  marginTop: '4px',
+                  padding: '8px 10px',
+                  backgroundColor: '#E8F0ED',
+                  borderRadius: '6px',
+                  border: '1px solid #D5DEDA',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 700, color: '#075B5B' }}>
+                  <Layers size={13} />
+                  <span>{parsedResults.records.length} Rates Detected:</span>
+                </div>
+                {parsedResults.records.map((rec, idx) => {
+                  const isSelected = activeRecordIndex === idx;
+                  const label = `Rate ${idx + 1}: ${rec.carrier || 'Carrier'} (${rec.pol || 'POL'} → ${rec.pod || 'POD'})`;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSelectMultiRate(idx)}
+                      style={{
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: isSelected ? 700 : 500,
+                        backgroundColor: isSelected ? '#075B5B' : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#172B2B',
+                        border: `1px solid ${isSelected ? '#075B5B' : '#D5DEDA'}`,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Feedback / Validation Status */}
+            {parsedResults && (
+              <div
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '5px',
+                  backgroundColor: parsedResults.missingFields.length > 0 ? '#FFFBEB' : '#F0FDF4',
+                  border: `1px solid ${parsedResults.missingFields.length > 0 ? '#FDE68A' : '#BBF7D0'}`,
+                  fontSize: '11px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '6px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {parsedResults.missingFields.length > 0 ? (
+                    <AlertCircle size={13} color="#D97706" style={{ flexShrink: 0 }} />
+                  ) : (
+                    <CheckCircle2 size={13} color="#16A34A" style={{ flexShrink: 0 }} />
+                  )}
+                  <span style={{ color: parsedResults.missingFields.length > 0 ? '#92400E' : '#166534' }}>
+                    {parsedResults.missingFields.length > 0
+                      ? `Partially extracted (${parsedResults.confidence}% match). Missing: ${parsedResults.missingFields.join(', ')}. Please verify in the fields below.`
+                      : `Successfully mapped all rate fields with ${parsedResults.confidence}% confidence! Review populated fields below and click SAVE RATE.`}
+                  </span>
+                </div>
+                <span style={{ color: '#66736F', fontSize: '10.5px' }}>
+                  Latency: {parsedResults.modelInfo.latencyMs}ms
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Two-Column Responsive Grid on Desktop */}
           <div
             className="rates-editor-grid"

@@ -2317,6 +2317,21 @@ textarea.input {
   height: 14px !important;
 }
 
+.close-red-box.sm {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  border-radius: 3px !important;
+  padding: 0 !important;
+}
+
+.close-red-box.sm svg {
+  width: 10px !important;
+  height: 10px !important;
+  stroke-width: 2.4 !important;
+}
+
 /* Toast Container — Always in front of all dialogs and modals (z-index 100001 > modalbg 99999) */
 .toastbox {
   position: fixed;
@@ -3344,7 +3359,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   border-bottom: 1px solid #D5DEDA !important;
   position: sticky !important;
   top: 0 !important;
-  z-index: 100 !important;
+  z-index: 1000 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -3428,47 +3443,45 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 .user-dropdown-menu {
   position: absolute !important;
   top: calc(100% + 6px) !important;
-  right: 0 !important;
   background-color: #FFFFFF !important;
   border: 1px solid #D5DEDA !important;
   border-radius: 8px !important;
-  box-shadow: 0 10px 25px -5px rgba(23, 43, 43, 0.12), 0 8px 10px -6px rgba(23, 43, 43, 0.05) !important;
-  z-index: 1000 !important;
+  box-shadow: 0 12px 28px -5px rgba(23, 43, 43, 0.18), 0 8px 12px -6px rgba(23, 43, 43, 0.10) !important;
+  z-index: 1100 !important;
   overflow: hidden !important;
   color: #172B2B !important;
   font-family: 'Calibri Light', Calibri, Arial, sans-serif !important;
   font-size: 12px !important;
+  box-sizing: border-box !important;
 }
 
 .net-pill-popover {
-  width: 230px !important;
-  left: 0 !important;
-  right: auto !important;
-}
-
-@media (max-width: 900px) {
-  .net-pill-popover {
-    left: auto !important;
-    right: 0 !important;
-    max-width: calc(100vw - 20px) !important;
-  }
+  width: 240px !important;
+  max-width: calc(100vw - 20px) !important;
 }
 
 .location-dropdown-menu {
+  right: 0 !important;
   width: 280px !important;
+  max-width: calc(100vw - 20px) !important;
 }
 
 .currency-converter-modal {
+  right: 0 !important;
   width: 340px !important;
+  max-width: calc(100vw - 20px) !important;
 }
 
 .notifications-dropdown {
+  right: 0 !important;
   width: 360px !important;
-  max-width: calc(100vw - 24px) !important;
+  max-width: calc(100vw - 20px) !important;
 }
 
 .user-dropdown-menu {
+  right: 0 !important;
   width: 260px !important;
+  max-width: calc(100vw - 20px) !important;
   padding: 0 !important;
 }
 
