@@ -127,20 +127,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // A specific-bidder auction is an invitation-only tender.  The invitation
+    // A specific-bidder auction is an invitation-only tender. The invitation
     // list is persisted on the auction instead of trusting UI state.
     if ((auction.auction_type || '').toLowerCase() === 'specific bidder') {
       const selectedBidders = Array.isArray((auction as any).selected_bidders)
         ? (auction as any).selected_bidders
+        : Array.isArray((auction as any).selectedBidders)
+        ? (auction as any).selectedBidders
         : [];
-      const isInvited = selectedBidders.some((bidder: any) =>
-        [bidder?.id, bidder?.uid, bidder?.userId, bidder?.user_id]
-          .filter(Boolean)
-          .some((id) => String(id) === callerUid)
-      );
+      const isInvited = selectedBidders.some((bidder: any) => {
+        const bId = String(bidder?.id || bidder?.uid || bidder?.userId || bidder?.user_id || '');
+        const bComp = String(bidder?.company || bidder?.company_name || '').trim().toLowerCase();
+        return (bId && bId === callerUid) || (bidderCompany && bComp && bidderCompany === bComp);
+      });
       if (!isInvited) {
         return NextResponse.json(
-          { success: false, error: 'Forbidden: This is an invitation-only auction.' },
+          { success: false, error: 'Forbidden: This is an invitation-only reverse auction. Your organisation is not on the invited bidder list.' },
           { status: 403 }
         );
       }
@@ -163,8 +165,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Acquire distributed lock on auction and bidder to handle concurrent bids & prevent race conditions
-    lockKey = `${auctionId}:${callerUid}`;
+    // Acquire distributed lock on auction to handle concurrent bids & prevent race conditions during ranking recalculation
+    lockKey = `auction_bid_lock:${auctionId}`;
     const acquired = await redis.acquireLock('auction_bid', lockKey, 10);
     if (!acquired) {
       return NextResponse.json(
@@ -195,12 +197,14 @@ export async function POST(req: NextRequest) {
         auction_id: auctionId,
         bidder_uid: callerUid,
         bidder_name: (sessionAuth.user as any)?.displayName || callerEmail,
-        bidder_company: (sessionAuth.user as any)?.company || sessionAuth.user?.companyId || '',
+        bidder_company: bidderCompany || (sessionAuth.user as any)?.company || sessionAuth.user?.companyId || '',
         amount: bidAmount,
         grand_total_usd: bidAmount,
         currency: bid.currency || 'USD',
         charges: bid.charges || [],
         notes: bid.notes || '',
+        status: 'active',
+        created_at: new Date().toISOString(),
       })
       .select()
       .single();
@@ -209,14 +213,98 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: bidError.message }, { status: 500 });
     }
 
-    // Increment bids_submitted_count
+    // Query all active bids for this auction to calculate deterministic server ranks
+    const { data: allAuctionBids } = await supabase
+      .from('auction_bids')
+      .select('id, amount, grand_total_usd, bidder_uid, bidder_name, bidder_company, created_at')
+      .eq('auction_id', auctionId)
+      .eq('status', 'active');
+
+    // Sort by evaluated price ascending (lowest price = Rank 1 in reverse auction)
+    // Tie breaker: earliest created_at ascending, then deterministic id ascending
+    const sortedBids = (allAuctionBids || []).slice().sort((a: any, b: any) => {
+      const priceA = Number(a.grand_total_usd || a.amount || 0);
+      const priceB = Number(b.grand_total_usd || b.amount || 0);
+      if (priceA !== priceB) return priceA - priceB;
+      const timeA = new Date(a.created_at || 0).getTime();
+      const timeB = new Date(b.created_at || 0).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      return String(a.id).localeCompare(String(b.id));
+    });
+
+    let callerRank = 1;
+    const ranksMap: Record<string, number> = {};
+
+    for (let i = 0; i < sortedBids.length; i++) {
+      const bItem = sortedBids[i];
+      const rankVal = i + 1;
+      ranksMap[bItem.bidder_uid] = rankVal;
+      if (bItem.id === bid.id) {
+        callerRank = rankVal;
+      }
+      await supabase
+        .from('auction_bids')
+        .update({ rank: rankVal })
+        .eq('id', bItem.id);
+    }
+
+    const leadingBid = sortedBids[0];
+    const leadingAmount = leadingBid ? Number(leadingBid.grand_total_usd || leadingBid.amount || 0) : bidAmount;
+
+    // Check Anti-Sniping (Auto-Extension): if active bid arrives within final 2 minutes, extend by 3 minutes
+    let newEndDateTime: string | null = null;
+    const rules = (auction.rules || {}) as any;
+    if (rules.autoExtension && auction.end_date_time) {
+      const nowMs = Date.now();
+      const closeMs = new Date(auction.end_date_time).getTime();
+      const timeRemainingMs = closeMs - nowMs;
+      if (timeRemainingMs > 0 && timeRemainingMs <= 120000) {
+        newEndDateTime = new Date(closeMs + 180000).toISOString();
+      }
+    }
+
+    // Update auction metadata
+    const auctionUpdatePayload: any = {
+      bids_submitted_count: sortedBids.length,
+      rank: `#1: $${leadingAmount.toFixed(2)} USD`,
+      updated_at: new Date().toISOString(),
+    };
+    if (newEndDateTime) {
+      auctionUpdatePayload.end_date_time = newEndDateTime;
+    }
+
     await supabase
       .from('auctions')
-      .update({
-        bids_submitted_count: (auction.bids_submitted_count || 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
+      .update(auctionUpdatePayload)
       .eq('id', auctionId);
+
+    // Broadcast Realtime Event to channel `auction_${auctionId}`
+    const serverTimestamp = new Date().toISOString();
+    try {
+      const channel = supabase.channel(`auction_${auctionId}`);
+      await channel.send({
+        type: 'broadcast',
+        event: 'AUCTION_BID_UPDATE',
+        payload: {
+          auctionId,
+          bidId: bid.id,
+          bidderUid: callerUid,
+          bidAmount,
+          rank: callerRank,
+          leadingAmount,
+          bidsCount: sortedBids.length,
+          serverTimestamp,
+          newEndDateTime,
+          ranksMap,
+          anonymizedLabel: (rules.bidderAnonymity || rules.hideCompetitorNames)
+            ? `Bidder #${callerRank}`
+            : (sessionAuth.user as any)?.company || 'Verified Forwarder',
+        },
+      });
+      supabase.removeChannel(channel);
+    } catch (realtimeErr) {
+      console.warn('[Realtime Broadcast] Non-blocking broadcast notice:', realtimeErr);
+    }
 
     // Insert audit log
     await supabase.from('audit_logs').insert({
@@ -227,14 +315,22 @@ export async function POST(req: NextRequest) {
       details: {
         auctionId,
         bidAmount,
+        rank: callerRank,
+        antiSnipingExtended: Boolean(newEndDateTime),
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Bid accepted and recorded in Supabase PostgreSQL.',
+      message: 'Bid accepted, authoritative rank computed, and broadcast live.',
       bidId: bid.id,
       auctionId,
+      rank: callerRank,
+      leadingAmount,
+      isRank1: callerRank === 1,
+      bidsCount: sortedBids.length,
+      serverTimestamp,
+      newEndDateTime,
     });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });

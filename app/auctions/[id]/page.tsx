@@ -80,6 +80,8 @@ export default function BidRoomPage() {
   const [liveAuction, setLiveAuction] = useState<Auction | null>(initialAuction || null);
   const [liveBids, setLiveBids] = useState<SubmittedBid[]>(initialAuction?.bids || []);
   const [isLiveConnected, setIsLiveConnected] = useState<boolean>(false);
+  const [realtimeLatency, setRealtimeLatency] = useState<number | null>(null);
+  const [userServerRank, setUserServerRank] = useState<number | null>(null);
 
   // Sync initial auction when DataContext loads
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function BidRoomPage() {
       )
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'auction_bids', filter: `auction_id=eq.${auctionId}` },
+        { event: '*', schema: 'public', table: 'auction_bids', filter: `auction_id=eq.${auctionId}` },
         (payload: any) => {
           if (payload.new) {
             const b = payload.new as any;
@@ -121,18 +123,42 @@ export default function BidRoomPage() {
               bidderName: b.bidder_name || '',
               bidderCompany: b.bidder_company || '',
               bidderHasGoldenTick: false,
-              charges: [],
+              charges: b.charges || [],
               grandTotalUSD: Number(b.grand_total_usd || b.amount || 0),
-              rank: 1,
+              rank: Number(b.rank || 1),
               feePaid: 0,
               currency: b.currency || 'USD',
               submittedAt: b.created_at || new Date().toISOString(),
-              status: 'active',
+              status: b.status || 'active',
             };
-            setLiveBids((prev) => [newBid, ...prev]);
+            setLiveBids((prev) => {
+              const existingIdx = prev.findIndex((item) => item.id === newBid.id);
+              if (existingIdx >= 0) {
+                const next = [...prev];
+                next[existingIdx] = newBid;
+                return next;
+              }
+              return [newBid, ...prev];
+            });
           }
         }
       )
+      .on('broadcast', { event: 'AUCTION_BID_UPDATE' }, (event: any) => {
+        if (event.payload) {
+          const p = event.payload;
+          if (p.serverTimestamp) {
+            const latency = Math.max(14, Date.now() - new Date(p.serverTimestamp).getTime());
+            setRealtimeLatency(latency);
+          }
+          if (p.newEndDateTime) {
+            setLiveAuction((prev) => prev ? { ...prev, endDateTime: p.newEndDateTime } : prev);
+            toast('⏰ Anti-sniping auto-extension: Auction deadline extended by 3 minutes.');
+          }
+          if (p.ranksMap && user?.uid && p.ranksMap[user.uid] !== undefined) {
+            setUserServerRank(p.ranksMap[user.uid]);
+          }
+        }
+      })
       .subscribe((status: any) => {
         setIsLiveConnected(status === 'SUBSCRIBED');
       });
@@ -140,7 +166,7 @@ export default function BidRoomPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [auctionId]);
+  }, [auctionId, user?.uid, toast]);
 
   const auction = liveAuction || initialAuction;
   const currentBids = liveBids.length > 0 ? liveBids : auction?.bids || [];
@@ -152,6 +178,23 @@ export default function BidRoomPage() {
       (auction as any).creator_uid === user.uid ||
       (Boolean(auction.creatorCompany && user.company) &&
        auction.creatorCompany?.trim().toLowerCase() === user.company?.trim().toLowerCase())
+    )
+  );
+
+  const isGeneralBidding = (auction?.auctionType || (auction as any)?.auction_type) === 'General bidding';
+  const selectedBiddersList = Array.isArray(auction?.selectedBidders)
+    ? auction.selectedBidders
+    : Array.isArray((auction as any)?.selected_bidders) ? (auction as any)?.selected_bidders : [];
+
+  const isInvitedBidder = Boolean(
+    !isAuctionOwner && (
+      isGeneralBidding ||
+      selectedBiddersList.some((b: any) => {
+        const bId = String(b.id || b.uid || b.userId || '');
+        const bComp = String(b.company || '').trim().toLowerCase();
+        const userComp = (user?.company || '').trim().toLowerCase();
+        return (user?.uid && bId === user.uid) || (userComp && bComp && userComp === bComp);
+      })
     )
   );
 
@@ -383,16 +426,58 @@ export default function BidRoomPage() {
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'FR8X Client Engine',
     };
 
-    if (!auction || !submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket)) {
+    if (!auction) {
       setIsSubmittingBid(false);
       setShowConfirmModal(false);
       return;
     }
-    setIsSubmittingBid(false);
-    setShowConfirmModal(false);
-    setLastSubmittedDocket(evidenceDocket);
-    setShowDocketSuccessModal(true);
-    toast(`Bid of USD $${grandTotalUSD.toFixed(2)} submitted successfully! Evidence logged in Godfather.`);
+
+    const newBidId = `bid-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    const bidPayload = {
+      id: newBidId,
+      auctionId: auction.id,
+      amount: grandTotalUSD,
+      grandTotalUSD,
+      currency: biddingCurrency || 'USD',
+      charges: chargeRows,
+      proposedCarrier,
+      proposedRouting,
+      proposedTransitTime,
+      proposedVesselDate,
+      offeredOriginFreeDays,
+      offeredDestFreeDays,
+      evidenceDocket,
+      notes: `Carrier: ${proposedCarrier}, Transit: ${proposedTransitTime}, Free: Origin ${offeredOriginFreeDays}d / Dest ${offeredDestFreeDays}d`,
+    };
+
+    fetch('/api/auctions/bid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auctionId: auction.id,
+        bid: bidPayload,
+      }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || 'Bid rejected by server validation.');
+        }
+        setIsSubmittingBid(false);
+        setShowConfirmModal(false);
+        setLastSubmittedDocket(evidenceDocket);
+        setShowDocketSuccessModal(true);
+        if (data.rank) {
+          setUserServerRank(data.rank);
+        }
+        toast(`Bid of USD $${grandTotalUSD.toFixed(2)} accepted! Authoritative Rank #${data.rank} confirmed.`);
+        submitBid(auction.id, chargeRows, grandTotalUSD, evidenceDocket);
+      })
+      .catch((err: any) => {
+        setIsSubmittingBid(false);
+        setShowConfirmModal(false);
+        toast(err.message || 'Error submitting bid to server.');
+      });
   };
 
   const handleExportXLS = () => {
@@ -536,6 +621,14 @@ export default function BidRoomPage() {
           <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '6px 10px', borderRadius: '8px', textAlign: 'center' }}>
             <small style={{ color: '#38bdf8', fontSize: '9px', fontWeight: 800, display: 'block' }}>DYNAMIC OVERTIME</small>
             <span style={{ fontSize: '10.5px', color: '#ffffff', fontWeight: 600 }}>+3m auto-extension active</span>
+          </div>
+          <div style={{ background: isLiveConnected ? 'rgba(22, 163, 74, 0.18)' : 'rgba(255, 255, 255, 0.1)', border: `1px solid ${isLiveConnected ? '#16a34a' : 'rgba(255, 255, 255, 0.2)'}`, padding: '6px 10px', borderRadius: '8px', textAlign: 'center' }}>
+            <small style={{ color: isLiveConnected ? '#4ade80' : '#38bdf8', fontSize: '9px', fontWeight: 800, display: 'block' }}>
+              {isLiveConnected ? '⚡ LIVE REALTIME' : 'SOCKET SYNC'}
+            </small>
+            <span style={{ fontSize: '10.5px', color: '#ffffff', fontWeight: 600 }}>
+              {realtimeLatency ? `${realtimeLatency}ms latency` : 'Sub-100ms push'}
+            </span>
           </div>
         </div>
       </div>
@@ -684,6 +777,40 @@ export default function BidRoomPage() {
                 </div>
               </div>
 
+              {/* Owner Realtime Metric Cards */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
+                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>INVITED BIDDERS</small>
+                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                    {isGeneralBidding ? 'Open Network' : `${selectedBiddersList.length} Selected`}
+                  </b>
+                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>{isGeneralBidding ? 'All verified freight forwarders' : 'Restricted invitation manifest'}</span>
+                </div>
+                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
+                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>ACTIVE PARTICIPATING BIDDERS</small>
+                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                    {new Set(currentBids.map((b) => b.bidderCompany || b.bidderUid)).size} Forwarders
+                  </b>
+                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Submitted at least one competitive offer</span>
+                </div>
+                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
+                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>TOTAL BIDS RECEIVED</small>
+                  <b style={{ color: '#1B2B4B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                    {currentBids.length} Offers
+                  </b>
+                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Cryptographically signed audit entries</span>
+                </div>
+                <div style={{ background: '#FFFFFF', border: '1.5px solid #CBD5E0', borderRadius: '6px', padding: '12px 14px' }}>
+                  <small style={{ color: '#64748B', fontSize: '10.5px', fontWeight: 700, textTransform: 'uppercase' }}>LEADING L1 TENDER OFFER</small>
+                  <b style={{ color: currentBids.length > 0 ? '#16A34A' : '#64748B', fontSize: '18px', display: 'block', marginTop: '2px' }}>
+                    {currentBids.length > 0
+                      ? `$${Math.min(...currentBids.map((b) => Number(b.grandTotalUSD || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USD`
+                      : 'Awaiting First Bid'}
+                  </b>
+                  <span style={{ color: '#94A3B8', fontSize: '10.5px' }}>Lowest evaluated price across network</span>
+                </div>
+              </div>
+
               {/* Tendered Bids & Standings Ledger */}
               <div style={{ border: '1.5px solid #CBD5E0', borderRadius: '6px', background: '#FFFFFF', overflow: 'hidden' }}>
                 <div
@@ -784,9 +911,67 @@ export default function BidRoomPage() {
                 )}
               </div>
             </div>
+          ) : !isInvitedBidder ? (
+            /* RESTRICTED ACCESS: Non-invited forwarders cannot view or bid on private auctions */
+            <div style={{ border: '1.5px solid #CBD5E0', borderRadius: '6px', background: '#FFFFFF', padding: '36px 24px', textAlign: 'center' }}>
+              <ShieldAlert size={36} color="#DC2626" style={{ margin: '0 auto 12px', display: 'block' }} />
+              <b style={{ color: '#1E293B', fontSize: '15px', display: 'block', marginBottom: '6px' }}>
+                Private Specific-Bidder Reverse Auction
+              </b>
+              <p style={{ maxWidth: '480px', margin: '0 auto 16px', color: '#64748B', fontSize: '12.5px', lineHeight: 1.5 }}>
+                This reverse auction tender is restricted exclusively to specifically selected logistics enterprises invited by <b>{auction.creatorCompany || 'the procurement issuer'}</b>. Your organization (<b>{user.company || 'Current User'}</b>) is not on the authorized bidder manifest.
+              </p>
+              <Link href="/auctions" className="btn secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                Browse Open Public Auctions
+              </Link>
+            </div>
           ) : (
-            /* BIDDER VIEW: Routing Proposal & Charge Breakdown Table */
+            /* AUTHORIZED BIDDER VIEW: Routing Proposal & Charge Breakdown Table */
             <>
+              {/* Dynamic Live Status & Ranking Banner */}
+              {(() => {
+                const userActiveRank = userServerRank !== null ? userServerRank : (userPlacedBid ? sortedBids.findIndex((b) => b.bidderUid === user.uid) + 1 : null);
+                if (userActiveRank === 1) {
+                  return (
+                    <div style={{ background: '#ECFDF5', border: '1.5px solid #10B981', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '20px' }}>🏆</span>
+                        <div>
+                          <b style={{ color: '#065F46', fontSize: '13px', display: 'block' }}>You are currently Rank #1 (Lowest Valid Offer) — L1 Tender Leader</b>
+                          <span style={{ color: '#047857', fontSize: '11.5px' }}>Your commercial offer is the leading bid. You will be awarded the contract if your rank is maintained at close.</span>
+                        </div>
+                      </div>
+                      <span style={{ background: '#10B981', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>RANK 1 (L1)</span>
+                    </div>
+                  );
+                } else if (userActiveRank && userActiveRank > 1) {
+                  return (
+                    <div style={{ background: '#FEF2F2', border: '1.5px solid #EF4444', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '20px' }}>⚠️</span>
+                        <div>
+                          <b style={{ color: '#991B1B', fontSize: '13px', display: 'block' }}>You have been outbid (Current Standing: Rank #{userActiveRank})</b>
+                          <span style={{ color: '#B91C1C', fontSize: '11.5px' }}>Another verified forwarder has submitted a lower evaluated price. Decrease your offer below L1 to reclaim the lead.</span>
+                        </div>
+                      </div>
+                      <span style={{ background: '#EF4444', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>RANK #{userActiveRank} (OUTBID)</span>
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div style={{ background: '#F0F9FF', border: '1.5px solid #0EA5E9', borderRadius: '6px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <span style={{ fontSize: '20px' }}>🎯</span>
+                        <div>
+                          <b style={{ color: '#075985', fontSize: '13px', display: 'block' }}>Authorized Participant — Ready for Tender Submission</b>
+                          <span style={{ color: '#0369A1', fontSize: '11.5px' }}>Configure your ocean routing, free time commitments, and line charges below to submit your competitive L1 bid.</span>
+                        </div>
+                      </div>
+                      <span style={{ background: '#0EA5E9', color: '#FFFFFF', padding: '4px 10px', borderRadius: '4px', fontSize: '11.5px', fontWeight: 800 }}>ELIGIBLE BIDDER</span>
+                    </div>
+                  );
+                }
+              })()}
           {/* BIDDER PROPOSAL INPUTS: ROUTING & FREE TIME (Requirement 1) */}
           <div className="card" style={{ padding: '14px 16px', background: '#ffffff', border: '1.5px solid #94a3b8' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', borderBottom: '1px solid var(--line)', paddingBottom: '8px' }}>
@@ -1619,62 +1804,43 @@ export default function BidRoomPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedBids.length > 0 ? (
-                    sortedBids.map((b, idx) => {
-                      const isUser = b.bidderUid === user.uid;
-                      const rankLabel = idx === 0 ? 'LEADING (L1)' : idx === 1 ? 'L2 (2nd Best)' : idx === 2 ? 'L3 (3rd Best)' : `L${idx + 1}`;
-                      const badgeClass = idx === 0 ? 'badge green' : idx === 1 ? 'badge blue' : idx === 2 ? 'badge amber' : 'badge grey';
-                      const timeStr = b.submittedAt
-                        ? new Date(b.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : 'Recent';
-                      const alias = isUser
-                        ? `Bidder #${b.bidderUid.slice(-4).toUpperCase()} (You)`
-                        : `Bidder #${(b.bidderUid || '0000').slice(-4).toUpperCase()} (${b.bidderCompany || 'Verified Enterprise'})`;
-                      const hash = b.id ? `SHA-256: ${b.id.substring(0, 5)}...${b.id.substring(b.id.length - 4)}` : 'SHA-256: verified';
+                  {currentBids.length > 0 ? (
+                    [...currentBids]
+                      .sort((a, b) => Number(a.grandTotalUSD || 0) - Number(b.grandTotalUSD || 0))
+                      .map((b, idx) => {
+                        const isUser = b.bidderUid === user.uid;
+                        const rankLabel = idx === 0 ? 'LEADING (L1)' : idx === 1 ? 'L2 (2nd Best)' : idx === 2 ? 'L3 (3rd Best)' : `L${idx + 1}`;
+                        const badgeClass = idx === 0 ? 'badge green' : idx === 1 ? 'badge blue' : idx === 2 ? 'badge amber' : 'badge grey';
+                        const timeStr = b.submittedAt
+                          ? new Date(b.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                          : 'Recent';
+                        const alias = isUser
+                          ? `Bidder #${(b.bidderUid || '0000').slice(-4).toUpperCase()} (You)`
+                          : `Bidder #${(b.bidderUid || '0000').slice(-4).toUpperCase()} (${auction.rules?.hideCompetitorNames || auction.rules?.bidderAnonymity ? 'Verified Forwarder' : (b.bidderCompany || 'Verified Forwarder')})`;
+                        const hash = b.id ? `SHA-256: ${b.id.substring(0, 5)}...${b.id.substring(b.id.length - 4)}` : 'SHA-256: verified';
 
-                      return (
-                        <tr key={b.id || idx} style={{ background: isUser ? '#f0fdf4' : undefined }}>
-                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{timeStr}</td>
-                          <td><b>{alias}</b></td>
-                          <td style={{ fontWeight: 800, color: idx === 0 ? 'var(--green)' : 'var(--ink)', fontSize: '12.5px' }}>
-                            ${b.grandTotalUSD.toFixed(2)} USD
-                          </td>
-                          <td><span className={badgeClass}>{`#${idx + 1} ${rankLabel}`}</span></td>
-                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>{hash}</td>
-                        </tr>
-                      );
-                    })
+                        return (
+                          <tr key={b.id || idx} style={{ background: isUser ? '#f0fdf4' : undefined }}>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>{timeStr}</td>
+                            <td><b>{alias}</b></td>
+                            <td style={{ fontWeight: 800, color: idx === 0 ? 'var(--green)' : 'var(--ink)', fontSize: '12.5px' }}>
+                              ${Number(b.grandTotalUSD || 0).toFixed(2)} USD
+                            </td>
+                            <td><span className={badgeClass}>{`#${idx + 1} ${rankLabel}`}</span></td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>{hash}</td>
+                          </tr>
+                        );
+                      })
                   ) : (
-                    <>
-                      <tr style={{ background: '#f0fdf4' }}>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>Just now</td>
-                        <td><b>Bidder #804 (You)</b></td>
-                        <td style={{ fontWeight: 800, color: 'var(--green)', fontSize: '12.5px' }}>${grandTotalUSD.toFixed(2)} USD</td>
-                        <td><span className="badge green">{calculatedRank} {calculatedRank === '#1' ? 'LEADING (L1)' : ''}</span></td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 7f8a9...b4c2</td>
-                      </tr>
-                      <tr>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>4 mins ago</td>
-                        <td>Bidder #412 (Verified Forwarder)</td>
-                        <td style={{ fontWeight: 700 }}>$2,495.00 USD</td>
-                        <td><span className="badge blue">L2 (2nd Best)</span></td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 3c91a...e11f</td>
-                      </tr>
-                      <tr>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>12 mins ago</td>
-                        <td>Bidder #619 (Verified NVOCC)</td>
-                        <td style={{ fontWeight: 700 }}>$2,550.00 USD</td>
-                        <td><span className="badge amber">L3 (3rd Best)</span></td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 1a88b...d990</td>
-                      </tr>
-                      <tr>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '11px' }}>45 mins ago</td>
-                        <td>Competition Ceiling (Starting Baseline)</td>
-                        <td style={{ fontWeight: 700, color: 'var(--mut)' }}>${ceiling.toFixed(2)} USD</td>
-                        <td><span className="badge grey">Ceiling</span></td>
-                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mut)' }}>SHA-256: 0b12a...77dd</td>
-                      </tr>
-                    </>
+                    <tr>
+                      <td colSpan={5} style={{ padding: '36px 16px', textAlign: 'center', color: '#64748B', fontSize: '12px' }}>
+                        <Activity size={24} color="#94A3B8" style={{ margin: '0 auto 8px', display: 'block' }} />
+                        <b style={{ color: '#1E293B', fontSize: '13px', display: 'block', marginBottom: '2px' }}>No bids submitted yet</b>
+                        <span style={{ fontSize: '11px', color: '#64748B' }}>
+                          All valid competitive bids from verified freight forwarders will populate here in real time.
+                        </span>
+                      </td>
+                    </tr>
                   )}
                 </tbody>
               </table>

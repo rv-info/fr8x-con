@@ -80,9 +80,63 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
   const { notifications, refreshNotifications, markNotificationRead, markAllNotificationsRead, clearNotification, clearAllNotifications, auctions, rates, myRates, jobs, posts, topics, masterLocations, masterCarriers } = useData();
 
   const [showCurrencyModal, setShowCurrencyModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [selectedHub, setSelectedHub] = useState<string>('');
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [selectedNotifCategory, setSelectedNotifCategory] = useState<string | null>(null);
   const [isSyncingNotifs, setIsSyncingNotifs] = useState(false);
+
+  const notifRef = useRef<HTMLDivElement>(null);
+  const userDropdownRef = useRef<HTMLDivElement>(null);
+  const currencyRef = useRef<HTMLDivElement>(null);
+  const locationRef = useRef<HTMLDivElement>(null);
+
+  // Auto-close open dropdown menus on route change
+  useEffect(() => {
+    setShowNotifications(false);
+    setShowUserDropdown(false);
+    setShowCurrencyModal(false);
+    setShowLocationModal(false);
+  }, [pathname]);
+
+  // Handle click outside and Escape key to close notifications and menus
+  useEffect(() => {
+    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
+      const target = e.target as Node;
+      if (notifRef.current && !notifRef.current.contains(target)) {
+        setShowNotifications(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(target)) {
+        setShowUserDropdown(false);
+      }
+      if (currencyRef.current && !currencyRef.current.contains(target)) {
+        setShowCurrencyModal(false);
+      }
+      if (locationRef.current && !locationRef.current.contains(target)) {
+        setShowLocationModal(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowNotifications(false);
+        setShowUserDropdown(false);
+        setShowCurrencyModal(false);
+        setShowLocationModal(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
   const [showGlobalSearch, setShowGlobalSearch] = useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = useState('');
   const [previewPassportUid, setPreviewPassportUid] = useState<string | null>(null);
@@ -1436,7 +1490,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           </span>
 
           {/* Currency Converter - Desktop */}
-          <div className="desktop-only" style={{ position: 'relative' }}>
+          <div ref={currencyRef} className="desktop-only" style={{ position: 'relative' }}>
             <button
               className="currency-select"
               onClick={() => setShowCurrencyModal(!showCurrencyModal)}
@@ -1627,7 +1681,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           </div>
 
           {/* Notifications Hub */}
-          <div style={{ position: 'relative' }}>
+          <div ref={notifRef} style={{ position: 'relative' }}>
             <button
               className="topicon"
               onClick={async () => {
@@ -1673,6 +1727,21 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                 </span>
               )}
             </button>
+
+            {/* Mobile Backdrop to prevent background clicks and close on outside tap */}
+            {showNotifications && (
+              <div
+                className="notif-backdrop mobile-only"
+                onClick={() => setShowNotifications(false)}
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  backgroundColor: 'rgba(15, 23, 42, 0.35)',
+                  backdropFilter: 'blur(2px)',
+                  zIndex: 998,
+                }}
+              />
+            )}
 
             {showNotifications && (
               <div className="notifications-dropdown">
@@ -1839,7 +1908,7 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           </div>
 
           {/* User Dropdown */}
-          <div style={{ position: 'relative' }}>
+          <div ref={userDropdownRef} style={{ position: 'relative' }}>
             <button
               onClick={() => { setShowUserDropdown(!showUserDropdown); setShowNotifications(false); setShowCurrencyModal(false); }}
               className="user-top-btn"

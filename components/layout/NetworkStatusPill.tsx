@@ -67,7 +67,7 @@ export function NetworkStatusPill() {
 
   const pillBg = '#FFFFFF';
 
-  const pillBorder = '#E2E8F0';
+  const pillBorder = '#CBD5E0';
 
   const pillText = '#1B2B4B';
 
@@ -83,16 +83,20 @@ export function NetworkStatusPill() {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '5px',
-          padding: '3px 8px',
-          borderRadius: '999px',
+          padding: '0 8px',
+          height: '30px',
+          boxSizing: 'border-box',
+          borderRadius: '6px',
           background: pillBg,
           border: `1px solid ${pillBorder}`,
           color: pillText,
           fontSize: '12px',
-          fontWeight: 700,
+          fontFamily: 'Calibri, Arial, sans-serif',
+          fontWeight: 600,
           cursor: 'pointer',
           transition: 'all 0.15s ease',
           lineHeight: 1,
+          whiteSpace: 'nowrap',
         }}
       >
         {isSyncing ? (
@@ -113,7 +117,7 @@ export function NetworkStatusPill() {
           />
         )}
         <span className="net-pill-text">{statusLabel}</span>
-        <ChevronDown size={10} style={{ opacity: 0.65 }} />
+        <ChevronDown size={11} style={{ color: '#64748B', flexShrink: 0 }} />
       </button>
 
       {isOpen && (

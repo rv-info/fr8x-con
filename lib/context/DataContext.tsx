@@ -2269,8 +2269,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
       toast(`Bid limit reached: you may submit up to ${bidLimit} offer${bidLimit === 1 ? '' : 's'} for this auction.`);
       return false;
     }
-    const ceiling = targetAuction?.competitionCeiling || 2720;
-    const rank = grandTotalUSD <= ceiling ? 1 : 2;
+    // Reverse auction server-authoritative rank calculation: lowest evaluated price is L1
+    const existingBids = targetAuction.bids || [];
+    const allBidsSorted = [...existingBids, { grandTotalUSD }]
+      .sort((a, b) => Number(a.grandTotalUSD || 0) - Number(b.grandTotalUSD || 0));
+    const calculatedRank = allBidsSorted.findIndex((b) => b.grandTotalUSD === grandTotalUSD) + 1;
+    const rank = calculatedRank > 0 ? calculatedRank : 1;
 
     const evidenceDocket: BidEvidenceDocket = {
       docketRef: evidenceMetadata?.docketRef || `FR8X-EVID-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,

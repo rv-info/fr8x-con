@@ -2882,6 +2882,42 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
   .view {
     padding-bottom: calc(76px + env(safe-area-inset-bottom, 16px)) !important;
   }
+
+  .mobile-sheet-overlay {
+    animation: fadeInOverlay 0.15s ease-out !important;
+  }
+
+  .mobile-sheet-content {
+    animation: slideUpMobile 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+}
+
+.mobile-sheet-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-sheet-overlay {
+    display: flex !important;
+  }
+}
+
+@keyframes slideUpMobile {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ==========================================================================
@@ -3145,10 +3181,120 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
     gap: 12px !important;
   }
   .feed-left-rail {
-    position: static !important;
+    display: none !important;
   }
   .feed-right-rail {
     display: none !important;
+  }
+}
+
+/* ==========================================================================
+   TOPBAR NOTIFICATIONS DROPDOWN & REALTIME HUB STYLES
+   ========================================================================== */
+.notifications-dropdown {
+  position: absolute !important;
+  top: calc(100% + 8px) !important;
+  right: 0 !important;
+  width: 360px !important;
+  max-width: calc(100vw - 24px) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--fr8x-outline, #E2E8F0) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  z-index: 1000 !important;
+  overflow: hidden !important;
+  color: var(--fr8x-text, #1B2B4B) !important;
+}
+
+.notif-header {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--fr8x-outline, #E2E8F0) !important;
+  background: #F8FAFD !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.notif-cats {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid var(--fr8x-outline, #E2E8F0) !important;
+  background: #ffffff !important;
+  overflow-x: auto !important;
+  white-space: nowrap !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+.notif-cat-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 4px 8px !important;
+  border-radius: 12px !important;
+  background: #F1F5F9 !important;
+  border: 1px solid #E2E8F0 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  user-select: none !important;
+  transition: all 0.15s ease !important;
+}
+
+.notif-cat-pill:hover {
+  background: #E2E8F0 !important;
+  border-color: #CBD5E1 !important;
+}
+
+.notif-cat-count {
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  background: var(--brand, #1B2B4B) !important;
+  color: #ffffff !important;
+  border-radius: 8px !important;
+  padding: 0 4px !important;
+  min-width: 14px !important;
+  text-align: center !important;
+  line-height: 14px !important;
+}
+
+.notif-item {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid #F1F5F9 !important;
+  transition: background-color 0.15s ease !important;
+}
+
+.notif-item:hover {
+  background-color: #F8FAFC !important;
+}
+
+.notif-item.unread {
+  background-color: #F0F7FF !important;
+}
+
+.notif-unread-dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background-color: #2563EB !important;
+  flex-shrink: 0 !important;
+  margin-top: 5px !important;
+}
+
+@media (max-width: 640px) {
+  .notifications-dropdown {
+    position: fixed !important;
+    top: 54px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: calc(100vh - 120px) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.1) !important;
+    z-index: 1001 !important;
   }
 }
 

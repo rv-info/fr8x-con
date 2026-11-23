@@ -1411,8 +1411,8 @@ export default function FeedsPage() {
         />
       )}
 
-      {/* LEFT COLUMN: Identity & Quick Shortcuts */}
-      <aside className="feed-left-rail">
+      {/* LEFT COLUMN: Identity & Quick Shortcuts (Desktop-only to prevent cluttering mobile feed sequence) */}
+      <aside className="feed-left-rail desktop-only">
         <div className="card" style={{ marginBottom: '12px', border: '1px solid var(--fr8x-outline)' }}>
           <div style={{ padding: '16px 14px', textAlign: 'center', borderBottom: '1px solid var(--fr8x-outline)', background: 'var(--fr8x-background)' }}>
             <div style={{ margin: '0 auto 10px', display: 'flex', justifyContent: 'center' }}>

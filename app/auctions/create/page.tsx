@@ -177,20 +177,33 @@ export default function CreateReverseAuctionPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data && Array.isArray(data.members)) {
-          const registeredCandidates: VerifiedBidderCandidate[] = data.members.map((m: any) => ({
-            id: m.uid,
-            name: m.displayName || m.company,
-            role: m.designation || 'Forwarding Specialist',
-            company: m.company,
-            location: m.formattedAddress || `${m.city || ''}, ${m.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
-            timezone: m.timezone || 'Asia/Kolkata',
-            hasGoldenTick: Boolean(m.hasGoldenTick),
-          }));
+          const registeredCandidates: VerifiedBidderCandidate[] = data.members
+            .filter((m: any) => {
+              // STRICT CREATOR EXCLUSION: Exclude auction creator user ID and owning company
+              if (user?.uid && (m.uid === user.uid || m.id === user.uid)) return false;
+              if (
+                user?.company &&
+                m.company &&
+                m.company.trim().toLowerCase() === user.company.trim().toLowerCase()
+              ) {
+                return false;
+              }
+              return true;
+            })
+            .map((m: any) => ({
+              id: m.uid,
+              name: m.displayName || m.company,
+              role: m.designation || 'Forwarding Specialist',
+              company: m.company,
+              location: m.formattedAddress || `${m.city || ''}, ${m.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
+              timezone: m.timezone || 'Asia/Kolkata',
+              hasGoldenTick: Boolean(m.hasGoldenTick),
+            }));
           setAvailableBidders(registeredCandidates);
         }
       })
       .catch(() => {});
-  }, [user?.uid]);
+  }, [user?.uid, user?.company]);
 
   // MSDS Modal & Data State (Requirement 3)
   const [showMsdsModal, setShowMsdsModal] = useState(false);
@@ -405,6 +418,15 @@ export default function CreateReverseAuctionPage() {
 
   // Bidder Management Handlers
   const toggleAssignBidder = (bidderId: string) => {
+    // Strict self-exclusion check: creator and company members cannot participate as bidders
+    const candidate = availableBidders.find((b) => b.id === bidderId);
+    if (
+      bidderId === user?.uid ||
+      (candidate && user?.company && candidate.company.trim().toLowerCase() === user.company.trim().toLowerCase())
+    ) {
+      toast('Auction owner cannot participate in its own auction.');
+      return;
+    }
     setAssignedBidders((prev) => {
       const next = new Set(prev);
       if (next.has(bidderId)) next.delete(bidderId);
@@ -446,7 +468,9 @@ export default function CreateReverseAuctionPage() {
     }
 
     const selectedBiddersData = availableBidders.filter((b) =>
-      assignedBidders.has(b.id)
+      assignedBidders.has(b.id) &&
+      b.id !== user?.uid &&
+      (!user?.company || !b.company || b.company.trim().toLowerCase() !== user.company.trim().toLowerCase())
     );
 
     const draftAuctionId = addAuction({
@@ -526,7 +550,9 @@ export default function CreateReverseAuctionPage() {
     }
 
     const selectedBiddersData = availableBidders.filter((b) =>
-      assignedBidders.has(b.id)
+      assignedBidders.has(b.id) &&
+      b.id !== user?.uid &&
+      (!user?.company || !b.company || b.company.trim().toLowerCase() !== user.company.trim().toLowerCase())
     );
 
     const planPrice = PLANS.find((p) => p.id === selectedPlan)?.price || 999;
@@ -1670,8 +1696,13 @@ export default function CreateReverseAuctionPage() {
                         onChange={(e) => {
                           const grp = savedBidderGroups.find(g => g.id === e.target.value);
                           if (grp) {
-                            setAssignedBidders(new Set(grp.bidders.map((b: any) => b.id)));
-                            toast(`Loaded group "${grp.name}" (${grp.bidders.length} bidders).`);
+                            const validBidders = grp.bidders.filter(
+                              (b: any) =>
+                                b.id !== user?.uid &&
+                                (!user?.company || !b.company || b.company.trim().toLowerCase() !== user.company.trim().toLowerCase())
+                            );
+                            setAssignedBidders(new Set(validBidders.map((b: any) => b.id)));
+                            toast(`Loaded group "${grp.name}" (${validBidders.length} external bidders).`);
                           }
                         }}
                         defaultValue=""
@@ -1696,59 +1727,103 @@ export default function CreateReverseAuctionPage() {
                     />
                   </div>
 
-                  {/* Bidder List */}
-                  <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                    {availableBidders
-                      .filter((b) => {
-                        if (!bidderSearchQuery.trim()) return true;
-                        const q = bidderSearchQuery.toLowerCase();
-                        return (
-                          b.name.toLowerCase().includes(q) ||
-                          b.company.toLowerCase().includes(q) ||
-                          b.location.toLowerCase().includes(q)
-                        );
-                      })
-                      .map((b) => {
-                        const isAssigned = assignedBidders.has(b.id);
-                        const isBlocked = blockedBidders.has(b.id);
+                  {/* Bidder List with Creator Exclusion & Notice */}
+                  <div style={{ maxHeight: '220px', overflowY: 'auto' }}>
+                    {(() => {
+                      const trimmedQ = bidderSearchQuery.trim().toLowerCase();
+                      const isOwnerSearch = Boolean(
+                        trimmedQ && (
+                          (user?.company && (trimmedQ.includes(user.company.toLowerCase()) || user.company.toLowerCase().includes(trimmedQ))) ||
+                          (user?.displayName && (trimmedQ.includes(user.displayName.toLowerCase()) || user.displayName.toLowerCase().includes(trimmedQ)))
+                        )
+                      );
 
+                      const eligibleBidders = availableBidders.filter((b) => {
+                        // Hard exclusion: creator user ID and creator company
+                        if (b.id === user?.uid) return false;
+                        if (user?.company && b.company && b.company.trim().toLowerCase() === user.company.trim().toLowerCase()) return false;
+                        if (!trimmedQ) return true;
                         return (
-                          <div
-                            key={b.id}
-                            className="record"
-                            style={{ padding: '6px 4px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                          >
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <ProfileLink name={b.name} company={b.company} hasGoldenTick={b.hasGoldenTick} />
-                              </div>
-                              <small style={{ fontSize: '10px', color: 'var(--mut)', display: 'block' }}>
-                                {b.role} · {b.company}
-                              </small>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <label className="check" style={{ fontSize: '11px', margin: 0 }}>
-                                <input
-                                  type="checkbox"
-                                  checked={isAssigned}
-                                  disabled={isBlocked}
-                                  onChange={() => toggleAssignBidder(b.id)}
-                                />
-                                Assign
-                              </label>
-                              <button
-                                type="button"
-                                className={`btn sm ${isBlocked ? 'secondary' : 'danger'}`}
-                                style={{ padding: '1px 6px', fontSize: '10px' }}
-                                onClick={() => toggleBlockBidder(b.id)}
-                                title={isBlocked ? 'Unblock bidder' : 'Block bidder from this auction'}
-                              >
-                                {isBlocked ? 'Unblock' : 'Block'}
-                              </button>
-                            </div>
-                          </div>
+                          b.name.toLowerCase().includes(trimmedQ) ||
+                          b.company.toLowerCase().includes(trimmedQ) ||
+                          b.location.toLowerCase().includes(trimmedQ)
                         );
-                      })}
+                      });
+
+                      return (
+                        <>
+                          {isOwnerSearch && (
+                            <div
+                              style={{
+                                padding: '8px 10px',
+                                marginBottom: '8px',
+                                borderRadius: '4px',
+                                backgroundColor: '#FEF2F2',
+                                border: '1px solid #FECACA',
+                                color: '#991B1B',
+                                fontSize: '11px',
+                                lineHeight: '1.4',
+                              }}
+                            >
+                              <div style={{ fontWeight: 800, marginBottom: '2px' }}>
+                                ⚠️ Auction owner cannot participate in its own auction.
+                              </div>
+                              <span style={{ fontSize: '10.5px' }}>
+                                You and your organisation ({user?.company || 'owning company'}) are excluded from the bidder list under reverse auction anti-collusion rules.
+                              </span>
+                            </div>
+                          )}
+
+                          {eligibleBidders.length === 0 && !isOwnerSearch && (
+                            <div style={{ padding: '16px', textAlign: 'center', fontSize: '11px', color: 'var(--mut)' }}>
+                              No eligible freight forwarders found matching current query.
+                            </div>
+                          )}
+
+                          {eligibleBidders.map((b) => {
+                            const isAssigned = assignedBidders.has(b.id);
+                            const isBlocked = blockedBidders.has(b.id);
+
+                            return (
+                              <div
+                                key={b.id}
+                                className="record"
+                                style={{ padding: '6px 4px', borderBottom: '1px solid #edf2f7', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                              >
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <ProfileLink name={b.name} company={b.company} hasGoldenTick={b.hasGoldenTick} />
+                                  </div>
+                                  <small style={{ fontSize: '10px', color: 'var(--mut)', display: 'block' }}>
+                                    {b.role} · {b.company}
+                                  </small>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <label className="check" style={{ fontSize: '11px', margin: 0 }}>
+                                    <input
+                                      type="checkbox"
+                                      checked={isAssigned}
+                                      disabled={isBlocked}
+                                      onChange={() => toggleAssignBidder(b.id)}
+                                    />
+                                    Assign
+                                  </label>
+                                  <button
+                                    type="button"
+                                    className={`btn sm ${isBlocked ? 'secondary' : 'danger'}`}
+                                    style={{ padding: '1px 6px', fontSize: '10px' }}
+                                    onClick={() => toggleBlockBidder(b.id)}
+                                    title={isBlocked ? 'Unblock bidder' : 'Block bidder from this auction'}
+                                  >
+                                    {isBlocked ? 'Unblock' : 'Block'}
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </>
+                      );
+                    })()}
                   </div>
 
                   {/* Save current selection as Bidder Group */}

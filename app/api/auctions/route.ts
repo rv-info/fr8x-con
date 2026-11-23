@@ -102,6 +102,44 @@ export async function POST(req: NextRequest) {
       body.creatorUid = callerUid;
     }
 
+    // Server-enforced creator and owning company exclusion from selected_bidders
+    const creatorUid = String(body.creatorUid || callerUid || '');
+    const creatorCompany = String(
+      body.creatorCompany ||
+      (userAuth.user as any)?.company ||
+      userAuth.user?.companyId ||
+      ''
+    ).trim().toLowerCase();
+
+    const rawSelected = Array.isArray(body.selectedBidders)
+      ? body.selectedBidders
+      : Array.isArray(body.selected_bidders)
+      ? body.selected_bidders
+      : [];
+
+    const seenBidderIds = new Set<string>();
+    const sanitizedSelectedBidders: any[] = [];
+
+    for (const b of rawSelected) {
+      if (!b) continue;
+      const bId = String(b.id || b.uid || b.userId || b.user_id || '').trim();
+      const bComp = String(b.company || b.company_name || b.companyName || '').trim().toLowerCase();
+
+      // Exclude auction creator user ID and owning company accounts
+      if (bId && bId === creatorUid) continue;
+      if (creatorCompany && bComp && creatorCompany === bComp) continue;
+
+      // Deduplicate multiple invitations
+      const dedupeKey = bId || bComp;
+      if (dedupeKey && seenBidderIds.has(dedupeKey)) continue;
+      if (dedupeKey) seenBidderIds.add(dedupeKey);
+
+      sanitizedSelectedBidders.push(b);
+    }
+
+    body.selectedBidders = sanitizedSelectedBidders;
+    body.selected_bidders = sanitizedSelectedBidders;
+
     const todayStr = new Date().toISOString().slice(0, 10);
     // Disallow back-dated bidding
     if (body.startDate && body.startDate < todayStr) {

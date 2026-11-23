@@ -1,71 +1,148 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { NavigationIcon, NavIconName } from '@/components/ui/NavigationIcon';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
 
+interface SecondaryModuleItem {
+  id: string;
+  name: string;
+  subtitle: string;
+  href: string;
+  icon: NavIconName;
+  badge?: number | string;
+  action?: () => void;
+  active: boolean;
+  isDestructive?: boolean;
+}
+
 export function MobileNav() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { notifications } = useData();
   const [showMoreSheet, setShowMoreSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Close sheet on route change
+  // Synchronize client-side search query string safely without triggering hydration mismatch or router suspense
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setSearchQuery(window.location.search || '');
+    }
+  }, [pathname]);
+
+  // Nexus unread notifications count
+  const nexusUnreadCount = useMemo(() => {
+    return (notifications || []).filter(
+      (n) => !n.read && (n.category === 'nexus' || n.targetUrl?.startsWith('/nexus'))
+    ).length;
+  }, [notifications]);
+
+  // Overall unread notifications count
+  const totalUnreadCount = useMemo(() => {
+    return (notifications || []).filter((n) => !n.read).length;
+  }, [notifications]);
+
+  // Safe handler to close the More sheet and clean up browser history state if synthetic popstate was pushed
+  const closeMoreSheet = useCallback(() => {
+    setShowMoreSheet(false);
+    if (typeof window !== 'undefined' && window.history.state?.fr8xMoreSheetOpen) {
+      window.history.back();
+    }
+  }, []);
+
+  const openMoreSheet = useCallback(() => {
+    setShowMoreSheet(true);
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ fr8xMoreSheetOpen: true }, '');
+    }
+  }, []);
+
+  const toggleMoreSheet = useCallback(() => {
+    if (showMoreSheet) {
+      closeMoreSheet();
+    } else {
+      openMoreSheet();
+    }
+  }, [showMoreSheet, closeMoreSheet, openMoreSheet]);
+
+  // Handle Android Back button (popstate) and Escape key
+  useEffect(() => {
+    if (!showMoreSheet) return;
+
+    const handlePopState = () => {
+      setShowMoreSheet(false);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeMoreSheet();
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showMoreSheet, closeMoreSheet]);
+
+  // Auto-close sheet when route changes
   useEffect(() => {
     setShowMoreSheet(false);
   }, [pathname]);
 
-  // Nexus unread notifications count
-  const nexusUnreadCount = (notifications || []).filter(
-    (n) => !n.read && (n.category === 'nexus' || n.targetUrl?.startsWith('/nexus'))
-  ).length;
+  // Primary navigation item active checker
+  const isPrimaryActive = useCallback(
+    (href: string) => {
+      if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
+      if (href === '/feeds') return pathname === '/feeds' || pathname.startsWith('/feeds/');
+      if (href === '/rates') return pathname === '/rates' || pathname.startsWith('/rates/');
+      if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
+      if (href === '/network') {
+        // Active on network hub UNLESS user navigated to the CRM tab which is surfaced under More
+        const isCrmTab = searchQuery.includes('tab=crm');
+        return (
+          (pathname === '/network' && !isCrmTab) ||
+          pathname.startsWith('/network/') ||
+          pathname === '/people' ||
+          pathname.startsWith('/people/') ||
+          pathname === '/connections' ||
+          pathname.startsWith('/connections/')
+        );
+      }
+      return pathname === href;
+    },
+    [pathname, searchQuery]
+  );
 
-  const isActive = (href: string) => {
-    if (href === '/dashboard') return pathname === '/dashboard' || pathname === '/';
-    if (href === '/auctions') return pathname === '/auctions' || pathname.startsWith('/auctions/');
-    if (href === '/rates') return pathname === '/rates' || pathname.startsWith('/rates/');
-    if (href === '/feeds') return pathname === '/feeds' || pathname.startsWith('/feeds/');
-    if (href === '/jobs') return pathname === '/jobs' || pathname.startsWith('/jobs/');
-    if (href === '/profile') return pathname === '/profile' || pathname.startsWith('/profile/');
-    if (href === '/nexus') return pathname === '/nexus' || pathname.startsWith('/nexus/');
-    if (href === '/network' || href === '/people' || href === '/connections' || href === '/contacts') {
-      return (
-        pathname === '/network' ||
-        pathname.startsWith('/network/') ||
-        pathname === '/people' ||
-        pathname.startsWith('/people/') ||
-        pathname === '/connections' ||
-        pathname.startsWith('/connections/') ||
-        pathname === '/contacts' ||
-        pathname.startsWith('/contacts/')
-      );
-    }
-    return pathname === href;
-  };
+  // Secondary module active state detection
+  const isProfileActive = pathname === '/profile' && !searchQuery.includes('tab=privacy');
+  const isJobsActive = pathname === '/jobs' || pathname.startsWith('/jobs/');
+  const isNexusActive = pathname === '/nexus' && !searchQuery.includes('tab=blacklist');
+  const isCrmActive = pathname === '/contacts' || pathname.startsWith('/contacts/') || (pathname === '/network' && searchQuery.includes('tab=crm'));
+  const isComplianceActive = pathname === '/nexus' && searchQuery.includes('tab=blacklist');
+  const isPrivacyActive = pathname === '/privacy' || pathname.startsWith('/privacy/') || (pathname === '/profile' && searchQuery.includes('tab=privacy'));
+  const isNotifsActive = pathname === '/notifications' || pathname.startsWith('/notifications/');
+  const isGodfatherActive = pathname.startsWith('/godfather');
 
-  // Determine dynamic state for 6th item (More vs active sub-route)
-  const isProfileActive = isActive('/profile');
-  const isJobsActive = isActive('/jobs');
-  const isNexusActive = isActive('/nexus');
+  // MORE bottom tab is active if sheet is open OR if currently on any secondary module
+  const isMoreTabActive =
+    showMoreSheet ||
+    isProfileActive ||
+    isJobsActive ||
+    isNexusActive ||
+    isCrmActive ||
+    isComplianceActive ||
+    isPrivacyActive ||
+    isNotifsActive ||
+    isGodfatherActive;
 
-  let moreTabConfig: { id: NavIconName; label: string; href?: string; isRoute: boolean; active: boolean } = {
-    id: 'resize',
-    label: 'More',
-    isRoute: false,
-    active: showMoreSheet,
-  };
-
-  if (isProfileActive) {
-    moreTabConfig = { id: 'profile', label: 'Profile', href: '/profile', isRoute: true, active: true };
-  } else if (isJobsActive) {
-    moreTabConfig = { id: 'jobs', label: 'Jobs', href: '/jobs', isRoute: true, active: true };
-  } else if (isNexusActive) {
-    moreTabConfig = { id: 'nexus', label: 'Nexus', href: '/nexus', isRoute: true, active: true };
-  }
-
+  // The 5 mandatory primary mobile destinations
   const primaryNavItems: { id: NavIconName; href: string; label: string }[] = [
     { id: 'dashboard', href: '/dashboard', label: 'Home' },
     { id: 'feeds', href: '/feeds', label: 'Feeds' },
@@ -74,46 +151,172 @@ export function MobileNav() {
     { id: 'network', href: '/network', label: 'Network' },
   ];
 
+  // Secondary modules accessible inside MORE
+  const secondaryModules: SecondaryModuleItem[] = [
+    {
+      id: 'profile',
+      name: 'Profile & Passport',
+      subtitle: 'Statutory KYC, GSTN & passport',
+      href: '/profile',
+      icon: 'profile',
+      active: isProfileActive,
+    },
+    {
+      id: 'jobs',
+      name: 'Jobs & Careers',
+      subtitle: 'Freight careers & recruitment',
+      href: '/jobs',
+      icon: 'jobs',
+      active: isJobsActive,
+    },
+    {
+      id: 'nexus',
+      name: 'Nexus Intelligence',
+      subtitle: 'Trade trust & verified desk',
+      href: '/nexus',
+      icon: 'nexus',
+      badge: nexusUnreadCount > 0 ? nexusUnreadCount : undefined,
+      active: isNexusActive,
+    },
+    {
+      id: 'crm',
+      name: 'Contacts & CRM',
+      subtitle: 'Logistics CRM & trade partners',
+      href: '/network?tab=crm',
+      icon: 'network',
+      active: isCrmActive,
+    },
+    {
+      id: 'compliance',
+      name: 'Compliance & Blacklist',
+      subtitle: 'Fraud watch, defaulters & risk',
+      href: '/nexus?tab=blacklist',
+      icon: 'shield',
+      active: isComplianceActive,
+    },
+    {
+      id: 'privacy',
+      name: 'Privacy & Governance',
+      subtitle: 'Data governance & audit trail',
+      href: '/profile?tab=privacy',
+      icon: 'audit',
+      active: isPrivacyActive,
+    },
+    {
+      id: 'notifications',
+      name: 'Notifications Hub',
+      subtitle: 'Real-time alerts & updates',
+      href: '/notifications',
+      icon: 'notifications',
+      badge: totalUnreadCount > 0 ? totalUnreadCount : undefined,
+      active: isNotifsActive,
+    },
+  ];
+
+  // Role-based authorization for administrative controls
+  if (user?.role === 'super_admin' || user?.role === 'moderator' || (user as any)?.is_godfather) {
+    secondaryModules.push({
+      id: 'godfather',
+      name: 'Godfather Console',
+      subtitle: 'Super-admin platform controls',
+      href: '/godfather',
+      icon: 'shield',
+      active: isGodfatherActive,
+    });
+  }
+
+  // Append Sign Out as destructive final option
+  secondaryModules.push({
+    id: 'signout',
+    name: 'Sign Out',
+    subtitle: 'End current session safely',
+    href: '/login',
+    icon: 'signout',
+    active: false,
+    isDestructive: true,
+    action: () => {
+      logout();
+    },
+  });
+
   return (
     <>
-      {/* Mobile More Drawer / Sheet */}
+      {/* Mobile More Drawer / Bottom Sheet */}
       {showMoreSheet && (
         <div
           className="mobile-sheet-overlay"
-          onClick={() => setShowMoreSheet(false)}
+          onClick={closeMoreSheet}
+          aria-modal="true"
+          role="dialog"
+          aria-label="More navigation modules"
           style={{
             position: 'fixed',
             inset: 0,
             backgroundColor: 'rgba(15, 23, 42, 0.45)',
             backdropFilter: 'blur(3px)',
-            zIndex: 95,
+            WebkitBackdropFilter: 'blur(3px)',
+            zIndex: 100,
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-end',
           }}
         >
           <div
+            id="mobile-more-sheet"
             className="mobile-sheet-content"
             onClick={(e) => e.stopPropagation()}
             style={{
               backgroundColor: '#FFFFFF',
               borderTopLeftRadius: '16px',
               borderTopRightRadius: '16px',
-              padding: '16px 16px calc(70px + env(safe-area-inset-bottom, 0px))',
-              boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.15)',
-              maxHeight: '75vh',
+              padding: '12px 14px calc(66px + env(safe-area-inset-bottom, 8px))',
+              boxShadow: '0 -8px 30px rgba(0, 0, 0, 0.15)',
+              maxHeight: '76vh',
               overflowY: 'auto',
+              borderTop: '1px solid #E2E8F0',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            {/* Sheet Drag / Grab Handle */}
+            <div
+              style={{
+                width: '36px',
+                height: '4px',
+                backgroundColor: '#CBD5E1',
+                borderRadius: '2px',
+                margin: '0 auto 10px',
+              }}
+            />
+
+            {/* Header: Title and Close button */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '12px',
+                paddingBottom: '8px',
+                borderBottom: '1px solid #F1F5F9',
+              }}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#1B2B4B', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Additional Modules
+                <NavigationIcon name="resize" filled={true} size={15} style={{ color: '#1B2B4B' }} />
+                <span
+                  style={{
+                    fontSize: '12.5px',
+                    fontFamily: 'Calibri, Arial, sans-serif',
+                    fontWeight: 800,
+                    color: '#1B2B4B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  More Modules
                 </span>
               </div>
               <button
                 type="button"
-                onClick={() => setShowMoreSheet(false)}
+                onClick={closeMoreSheet}
+                aria-label="Close More menu"
                 style={{
                   background: '#F1F5F9',
                   border: 'none',
@@ -126,119 +329,164 @@ export function MobileNav() {
                   cursor: 'pointer',
                   color: '#64748B',
                   fontWeight: 'bold',
+                  fontSize: '12px',
+                  transition: 'background-color 0.15s ease',
                 }}
               >
                 ✕
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              {/* Profile Card */}
-              <Link
-                href="/profile"
-                onClick={() => setShowMoreSheet(false)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: isProfileActive ? '1.5px solid #1B2B4B' : '1px solid #E2E8F0',
-                  backgroundColor: isProfileActive ? '#EEF2F7' : '#F8FAFC',
-                  textDecoration: 'none',
-                  color: '#1B2B4B',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <NavigationIcon name="profile" filled={isProfileActive} size={20} style={{ color: '#1B2B4B' }} />
-                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Profile & Passport</span>
-                </div>
-                <span style={{ fontSize: '10px', color: '#64748B' }}>Statutory KYC, GSTN & profile</span>
-              </Link>
+            {/* Organized 2-Column Grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gap: '8px',
+              }}
+            >
+              {secondaryModules.map((item) => {
+                const isSelected = item.active;
 
-              {/* Nexus Card */}
-              <Link
-                href="/nexus"
-                onClick={() => setShowMoreSheet(false)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: isNexusActive ? '1.5px solid #1B2B4B' : '1px solid #E2E8F0',
-                  backgroundColor: isNexusActive ? '#EEF2F7' : '#F8FAFC',
-                  textDecoration: 'none',
-                  color: '#1B2B4B',
-                  position: 'relative',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <NavigationIcon name="nexus" filled={isNexusActive} size={20} style={{ color: '#1B2B4B' }} />
-                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Nexus Compliance</span>
-                  {nexusUnreadCount > 0 && (
-                    <span style={{ backgroundColor: '#EF4444', color: '#FFF', fontSize: '9px', fontWeight: 800, padding: '1px 5px', borderRadius: '10px', marginLeft: 'auto' }}>
-                      {nexusUnreadCount}
+                if (item.action) {
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        closeMoreSheet();
+                        item.action?.();
+                      }}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        textAlign: 'left',
+                        gap: '3px',
+                        padding: '10px 11px',
+                        borderRadius: '8px',
+                        border: item.isDestructive ? '1px solid #FECACA' : '1px solid #E2E8F0',
+                        backgroundColor: item.isDestructive ? '#FEF2F2' : '#F8FAFC',
+                        color: item.isDestructive ? '#DC2626' : '#1B2B4B',
+                        cursor: 'pointer',
+                        fontFamily: 'Calibri, Arial, sans-serif',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0 }}>
+                          <NavigationIcon
+                            name={item.icon}
+                            filled={false}
+                            size={18}
+                            style={{ color: item.isDestructive ? '#DC2626' : '#1B2B4B', flexShrink: 0 }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {item.name}
+                          </span>
+                        </div>
+                      </div>
+                      <span
+                        style={{
+                          fontSize: '9.5px',
+                          color: item.isDestructive ? '#991B1B' : '#64748B',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          marginTop: '2px',
+                        }}
+                      >
+                        {item.subtitle}
+                      </span>
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => setShowMoreSheet(false)}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '3px',
+                      padding: '10px 11px',
+                      borderRadius: '8px',
+                      border: isSelected ? '1.5px solid #1B2B4B' : '1px solid #E2E8F0',
+                      backgroundColor: isSelected ? '#EEF2F7' : '#F8FAFC',
+                      textDecoration: 'none',
+                      color: '#1B2B4B',
+                      fontFamily: 'Calibri, Arial, sans-serif',
+                      transition: 'all 0.15s ease',
+                      position: 'relative',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', minWidth: 0 }}>
+                        <NavigationIcon
+                          name={item.icon}
+                          filled={isSelected}
+                          size={18}
+                          style={{ color: '#1B2B4B', flexShrink: 0 }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '11.5px',
+                            fontWeight: isSelected ? 800 : 700,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {item.name}
+                        </span>
+                      </div>
+                      {item.badge !== undefined && (
+                        <span
+                          style={{
+                            backgroundColor: '#EF4444',
+                            color: '#FFF',
+                            fontSize: '9px',
+                            fontWeight: 800,
+                            padding: '1px 5px',
+                            borderRadius: '10px',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {item.badge}
+                        </span>
+                      )}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: '9.5px',
+                        color: isSelected ? '#1B2B4B' : '#64748B',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        marginTop: '2px',
+                        fontWeight: isSelected ? 600 : 400,
+                      }}
+                    >
+                      {item.subtitle}
                     </span>
-                  )}
-                </div>
-                <span style={{ fontSize: '10px', color: '#64748B' }}>Fraud & credit risk protection</span>
-              </Link>
-
-              {/* Jobs Card */}
-              <Link
-                href="/jobs"
-                onClick={() => setShowMoreSheet(false)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: isJobsActive ? '1.5px solid #1B2B4B' : '1px solid #E2E8F0',
-                  backgroundColor: isJobsActive ? '#EEF2F7' : '#F8FAFC',
-                  textDecoration: 'none',
-                  color: '#1B2B4B',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <NavigationIcon name="jobs" filled={isJobsActive} size={20} style={{ color: '#1B2B4B' }} />
-                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Jobs & Careers</span>
-                </div>
-                <span style={{ fontSize: '10px', color: '#64748B' }}>Freight industry hiring</span>
-              </Link>
-
-              {/* Sign Out Card */}
-              <Link
-                href="/login"
-                onClick={() => {
-                  setShowMoreSheet(false);
-                  logout();
-                }}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  padding: '12px',
-                  borderRadius: '8px',
-                  border: '1px solid #E2E8F0',
-                  backgroundColor: '#FFF5F5',
-                  textDecoration: 'none',
-                  color: '#DC2626',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <NavigationIcon name="signout" filled={false} size={20} style={{ color: '#DC2626' }} />
-                  <span style={{ fontSize: '12px', fontWeight: 700 }}>Sign Out</span>
-                </div>
-                <span style={{ fontSize: '10px', color: '#991B1B' }}>End current session</span>
-              </Link>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Fixed Bottom Navigation Bar */}
+      {/* Fixed Bottom Navigation Bar (5 Primary Items + 1 Unified More Button) */}
       <nav
         className="mobile-bottom-nav"
         role="navigation"
@@ -269,9 +517,9 @@ export function MobileNav() {
             padding: '0 4px',
           }}
         >
-          {/* Primary Nav Items */}
+          {/* Primary Nav Items (5 Constant Destinations) */}
           {primaryNavItems.map((item) => {
-            const active = isActive(item.href);
+            const active = isPrimaryActive(item.href);
 
             return (
               <Link
@@ -322,99 +570,54 @@ export function MobileNav() {
             );
           })}
 
-          {/* 6th Tab: More / Contextual Active Item */}
-          {moreTabConfig.isRoute && moreTabConfig.href ? (
-            <Link
-              href={moreTabConfig.href}
-              className="mobile-nav-item active"
-              aria-current="page"
+          {/* 6th Destination: MORE Button (Toggles Secondary Modules Bottom Sheet) */}
+          <button
+            type="button"
+            onClick={toggleMoreSheet}
+            className={`mobile-nav-item ${isMoreTabActive ? 'active' : ''}`}
+            aria-label="More navigation modules"
+            aria-expanded={showMoreSheet}
+            aria-controls="mobile-more-sheet"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flex: 1,
+              minWidth: '46px',
+              height: '46px',
+              background: isMoreTabActive ? '#EEF2F7' : 'transparent',
+              border: isMoreTabActive ? '1px solid #1B2B4B' : '1px solid transparent',
+              borderRadius: '6px',
+              padding: '2px 1px',
+              cursor: 'pointer',
+              color: isMoreTabActive ? '#1B2B4B' : '#4A5568',
+              transition: 'all 0.15s ease',
+              userSelect: 'none',
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '22px' }}>
+              <NavigationIcon
+                name="resize"
+                filled={isMoreTabActive}
+                size={18}
+                style={{ color: isMoreTabActive ? '#1B2B4B' : '#4A5568' }}
+              />
+            </div>
+            <span
               style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                minWidth: '46px',
-                height: '46px',
-                textDecoration: 'none',
-                borderRadius: '6px',
-                padding: '2px 1px',
-                backgroundColor: '#EEF2F7',
-                border: '1px solid #1B2B4B',
-                color: '#1B2B4B',
-                transition: 'all 0.15s ease',
-                userSelect: 'none',
-                WebkitTapHighlightColor: 'transparent',
+                fontSize: '11px',
+                fontFamily: 'Calibri, Arial, sans-serif',
+                fontWeight: isMoreTabActive ? 700 : 500,
+                marginTop: '2px',
+                lineHeight: 1,
+                letterSpacing: '-0.01em',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '22px' }}>
-                <NavigationIcon
-                  name={moreTabConfig.id}
-                  filled={true}
-                  size={18}
-                  style={{ color: '#1B2B4B' }}
-                />
-              </div>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontFamily: 'Calibri, Arial, sans-serif',
-                  fontWeight: 700,
-                  marginTop: '2px',
-                  lineHeight: 1,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {moreTabConfig.label}
-              </span>
-            </Link>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowMoreSheet(!showMoreSheet)}
-              className={`mobile-nav-item ${moreTabConfig.active ? 'active' : ''}`}
-              aria-label="More navigation modules"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                minWidth: '46px',
-                height: '46px',
-                background: moreTabConfig.active ? '#EEF2F7' : 'transparent',
-                border: moreTabConfig.active ? '1px solid #1B2B4B' : '1px solid transparent',
-                borderRadius: '6px',
-                padding: '2px 1px',
-                cursor: 'pointer',
-                color: moreTabConfig.active ? '#1B2B4B' : '#4A5568',
-                transition: 'all 0.15s ease',
-                userSelect: 'none',
-                WebkitTapHighlightColor: 'transparent',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '22px' }}>
-                <NavigationIcon
-                  name={moreTabConfig.id}
-                  filled={moreTabConfig.active}
-                  size={18}
-                  style={{ color: moreTabConfig.active ? '#1B2B4B' : '#4A5568' }}
-                />
-              </div>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontFamily: 'Calibri, Arial, sans-serif',
-                  fontWeight: moreTabConfig.active ? 700 : 500,
-                  marginTop: '2px',
-                  lineHeight: 1,
-                  letterSpacing: '-0.01em',
-                }}
-              >
-                {moreTabConfig.label}
-              </span>
-            </button>
-          )}
+              More
+            </span>
+          </button>
         </div>
       </nav>
     </>
