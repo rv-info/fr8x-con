@@ -2157,21 +2157,18 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                   </div>
                 </div>
 
-                {/* Category tabs: perfectly proportioned so all 5 categories fit on desktop without clipping */}
+                {/* Category navigation: Responsive compact 4-column grid (zero horizontal overflow, no clipping) */}
                 <div
                   className="notif-cats"
                   style={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(4, 1fr)',
                     gap: '4px',
-                    padding: '6px 10px',
+                    padding: '8px 10px',
                     borderBottom: '1px solid #D5DEDA',
                     background: '#FFFFFF',
-                    overflowX: 'auto',
-                    whiteSpace: 'nowrap',
-                    scrollbarWidth: 'none',
-                    WebkitOverflowScrolling: 'touch',
+                    boxSizing: 'border-box',
+                    width: '100%',
                   }}
                 >
                   <button
@@ -2180,20 +2177,25 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
+                      justifyContent: 'center',
                       gap: '4px',
-                      padding: '3px 7px',
-                      borderRadius: '12px',
+                      padding: '4px 6px',
+                      borderRadius: '5px',
                       background: selectedNotifCategory === null ? '#075B5B' : '#E8F0ED',
                       color: selectedNotifCategory === null ? '#FFFFFF' : '#172B2B',
                       border: selectedNotifCategory === null ? '1px solid #075B5B' : '1px solid #D5DEDA',
                       fontSize: '11px',
-                      fontWeight: selectedNotifCategory === null ? 700 : 500,
+                      fontWeight: selectedNotifCategory === null ? 700 : 600,
                       cursor: 'pointer',
-                      flexShrink: 0,
                       lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                      boxSizing: 'border-box',
+                      minHeight: '26px',
                     }}
                   >
-                    All ({notifications.length})
+                    <span>All ({notifications.length})</span>
                   </button>
                   {categories.map((cat) => {
                     const count = notifications.filter((n) => n.category === cat && !n.read).length;
@@ -2206,37 +2208,43 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '4px',
-                          padding: '3px 7px',
-                          borderRadius: '12px',
+                          justifyContent: 'center',
+                          gap: '3px',
+                          padding: '4px 6px',
+                          borderRadius: '5px',
                           background: isSelected ? '#075B5B' : '#E8F0ED',
                           color: isSelected ? '#FFFFFF' : '#172B2B',
                           border: isSelected ? '1px solid #075B5B' : '1px solid #D5DEDA',
                           fontSize: '11px',
-                          fontWeight: isSelected ? 700 : 500,
+                          fontWeight: isSelected ? 700 : 600,
                           cursor: 'pointer',
-                          flexShrink: 0,
-                          textTransform: 'capitalize',
                           lineHeight: 1,
+                          textTransform: 'capitalize',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          boxSizing: 'border-box',
+                          minHeight: '26px',
                         }}
                         title={cat.charAt(0).toUpperCase() + cat.slice(1)}
                       >
-                        <span style={{ display: 'flex', alignItems: 'center', color: isSelected ? '#FFFFFF' : '#075B5B' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', color: isSelected ? '#FFFFFF' : '#075B5B', flexShrink: 0 }}>
                           {categoryMap[cat]?.icon}
                         </span>
-                        <span>{cat}</span>
+                        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{cat}</span>
                         {count > 0 && (
                           <span
                             style={{
-                              fontSize: '10px',
+                              fontSize: '9.5px',
                               fontWeight: 800,
                               background: isSelected ? '#FFFFFF' : '#075B5B',
                               color: isSelected ? '#075B5B' : '#FFFFFF',
                               borderRadius: '8px',
                               padding: '0 4px',
-                              minWidth: '14px',
+                              minWidth: '13px',
                               textAlign: 'center',
-                              lineHeight: '14px',
+                              lineHeight: '13px',
+                              flexShrink: 0,
                             }}
                           >
                             {count}
@@ -2420,8 +2428,23 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           <span>{user.company}</span>
                         </small>
                         <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <span className="badge" style={{ fontSize: '10px', fontWeight: 800, background: '#075B5B', color: '#FFFFFF', padding: '1px 6px', borderRadius: '4px' }}>
-                            {user.plan.toUpperCase()} PLAN
+                          <span
+                            className="user-plan-badge"
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              background: '#E8F0ED',
+                              color: '#075B5B',
+                              border: '1px solid #B8D5C8',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              letterSpacing: '0.04em',
+                              textTransform: 'uppercase',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            {(user?.plan || 'ENTERPRISE').toUpperCase()} PLAN
                           </span>
                         </div>
                       </div>

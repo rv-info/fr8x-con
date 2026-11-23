@@ -2,21 +2,22 @@
 
 /**
  * components/posts/RichPostEditor.tsx
- * Professional Rich Text Editor for FR8X Feed Posts.
+ * Professional Rich Text & Structured Table Editor for FR8X Feed Posts.
  * 
  * Capabilities:
  * - Bold, italic, underline, strikethrough
  * - Headings (H1, H2, H3) and size control
- * - Bulleted & numbered lists
- * - Blockquotes
+ * - Bulleted & numbered lists, blockquotes
  * - Safe hyperlinks with protocol validation
- * - Insertable, editable tables with customizable rows and columns
+ * - Genuine interactive structured table editor with editable individual cell <input>s
+ * - Live row & column controls: ➕ Add Row, 🗑️ Delete Row, ➕ Add Col, ➖ Delete Col, 🧹 Clear Cells, ❌ Remove Table
+ * - Two-way markdown table synchronization with responsive mobile horizontal scrolling
  * - Undo / Redo history stack with keyboard shortcuts (Ctrl+Z, Ctrl+Y)
  * - Clear formatting
  * - Live preview matching the published post output across desktop & mobile
  */
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import {
   Bold,
   Italic,
@@ -37,11 +38,123 @@ import {
   Edit3,
   Plus,
   Trash2,
+  Minus,
+  RotateCcw,
   X,
   Check,
 } from 'lucide-react';
 import { parseRichText } from '@/lib/utils';
 import { sanitizeRichTextPost } from '@/lib/security/input-validation';
+
+export interface ParsedTableData {
+  before: string;
+  headers: string[];
+  rows: string[][];
+  after: string;
+}
+
+/**
+ * Robust markdown table parser: extracts text before the table,
+ * structured headers, structured rows, and text after the table.
+ */
+export function parseMarkdownTableFromPost(text: string): ParsedTableData | null {
+  if (!text || !text.includes('|')) return null;
+
+  const lines = text.split('\n');
+  let headerIndex = -1;
+  let separatorIndex = -1;
+
+  for (let i = 0; i < lines.length - 1; i++) {
+    const line = lines[i].trim();
+    const nextLine = lines[i + 1].trim();
+
+    // Line has pipes and is followed by a separator line like | :--- | :--- |
+    if (line.includes('|') && (line.startsWith('|') || line.endsWith('|'))) {
+      if (nextLine.includes('|') && /^\s*\|?\s*:?-+:?\s*(\|?\s*:?-+:?\s*)+\|?\s*$/.test(nextLine)) {
+        headerIndex = i;
+        separatorIndex = i + 1;
+        break;
+      }
+    }
+  }
+
+  if (headerIndex === -1) return null;
+
+  const splitCells = (line: string): string[] => {
+    let raw = line.trim();
+    if (raw.startsWith('|')) raw = raw.slice(1);
+    if (raw.endsWith('|')) raw = raw.slice(0, -1);
+    return raw.split('|').map((c) => c.trim());
+  };
+
+  const headers = splitCells(lines[headerIndex]);
+  if (headers.length < 2) return null;
+
+  let currentIndex = separatorIndex + 1;
+  const dataRows: string[][] = [];
+
+  while (currentIndex < lines.length) {
+    const line = lines[currentIndex].trim();
+    if (!line || !line.includes('|')) break;
+    const cells = splitCells(line);
+    while (cells.length < headers.length) cells.push('');
+    dataRows.push(cells.slice(0, headers.length));
+    currentIndex++;
+  }
+
+  const tableEnd = currentIndex;
+  const before = lines.slice(0, headerIndex).join('\n');
+  const after = lines.slice(tableEnd).join('\n');
+
+  return {
+    before,
+    headers,
+    rows: dataRows.length > 0 ? dataRows : [headers.map(() => '')],
+    after,
+  };
+}
+
+/**
+ * Serializes headers and 2D row array into standard CommonMark/GFM markdown table.
+ */
+export function serializeMarkdownTable(headers: string[], rows: string[][]): string {
+  if (!headers || headers.length === 0) return '';
+  const cleanHeaders = headers.map((h) => (h || '').trim() || 'Column');
+  const headerLine = '| ' + cleanHeaders.join(' | ') + ' |';
+  const sepLine = '| ' + cleanHeaders.map(() => ':---').join(' | ') + ' |';
+  const rowLines = (rows.length > 0 ? rows : [cleanHeaders.map(() => '')]).map((row) => {
+    const padded = cleanHeaders.map((_, i) => (row[i] || '').trim());
+    return '| ' + padded.join(' | ') + ' |';
+  });
+  return [headerLine, sepLine, ...rowLines].join('\n');
+}
+
+/**
+ * Recombines before text, markdown table, and after text into a single markdown string.
+ */
+export function serializePostWithTable(
+  before: string,
+  headers: string[],
+  rows: string[][],
+  after: string
+): string {
+  const tableMd = serializeMarkdownTable(headers, rows);
+  const parts: string[] = [];
+  if (before && before.trim()) parts.push(before.trim());
+  if (tableMd.trim()) parts.push(tableMd.trim());
+  if (after && after.trim()) parts.push(after.trim());
+  return parts.join('\n\n');
+}
+
+/**
+ * Serializes post when table is removed.
+ */
+export function serializeWithoutTable(before: string, after: string): string {
+  const parts: string[] = [];
+  if (before && before.trim()) parts.push(before.trim());
+  if (after && after.trim()) parts.push(after.trim());
+  return parts.join('\n\n');
+}
 
 interface RichPostEditorProps {
   value: string;
@@ -61,6 +174,9 @@ export function RichPostEditor({
   disabled = false,
 }: RichPostEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaBeforeRef = useRef<HTMLTextAreaElement>(null);
+  const textareaAfterRef = useRef<HTMLTextAreaElement>(null);
+
   const [isPreview, setIsPreview] = useState(false);
   const [showTableModal, setShowTableModal] = useState(false);
   const [showLinkModal, setShowLinkModal] = useState(false);
@@ -70,10 +186,16 @@ export function RichPostEditor({
   const [linkUrl, setLinkUrl] = useState('');
   const [linkError, setLinkError] = useState('');
 
-  // Table modal state
+  // Table modal state (defaults tailored for logistics & freight)
   const [tableCols, setTableCols] = useState(3);
   const [tableRows, setTableRows] = useState(2);
-  const [colHeaders, setColHeaders] = useState(['Port / Terminal', 'Carrier / Line', 'Rate / Transit']);
+  const [colHeaders, setColHeaders] = useState<string[]>([
+    'Port / Terminal',
+    'Carrier / Line',
+    'Rate / Transit',
+    'Equipment / Validity',
+    'Remarks',
+  ]);
 
   // Undo / Redo History Stack
   const [history, setHistory] = useState<string[]>([value]);
@@ -113,10 +235,25 @@ export function RichPostEditor({
     }
   };
 
+  // Parse structured table from current markdown value
+  const parsedTable = parseMarkdownTableFromPost(value);
+
+  // Active textarea helper
+  const getActiveTextarea = () => {
+    if (parsedTable) {
+      if (document.activeElement === textareaAfterRef.current) return textareaAfterRef.current;
+      return textareaBeforeRef.current || textareaRef.current;
+    }
+    return textareaRef.current;
+  };
+
   // Helper to wrap or insert text at cursor selection
   const applyWrap = (before: string, after: string = '', defaultText: string = '') => {
-    const el = textareaRef.current;
-    if (!el) return;
+    const el = getActiveTextarea();
+    if (!el) {
+      handleTextChange((value ? value + '\n' : '') + before + defaultText + after);
+      return;
+    }
 
     const start = el.selectionStart;
     const end = el.selectionEnd;
@@ -130,7 +267,15 @@ export function RichPostEditor({
       after +
       currentVal.substring(end);
 
-    handleTextChange(nextVal);
+    if (parsedTable) {
+      if (el === textareaAfterRef.current) {
+        updateAfter(nextVal);
+      } else {
+        updateBefore(nextVal);
+      }
+    } else {
+      handleTextChange(nextVal);
+    }
 
     setTimeout(() => {
       el.focus();
@@ -140,8 +285,11 @@ export function RichPostEditor({
 
   // Helper to insert line prefix (e.g. for headings, lists, blockquotes)
   const applyLinePrefix = (prefix: string) => {
-    const el = textareaRef.current;
-    if (!el) return;
+    const el = getActiveTextarea();
+    if (!el) {
+      handleTextChange(prefix + value);
+      return;
+    }
 
     const start = el.selectionStart;
     const currentVal = el.value;
@@ -152,7 +300,15 @@ export function RichPostEditor({
       prefix +
       currentVal.substring(lineStart);
 
-    handleTextChange(nextVal);
+    if (parsedTable) {
+      if (el === textareaAfterRef.current) {
+        updateAfter(nextVal);
+      } else {
+        updateBefore(nextVal);
+      }
+    } else {
+      handleTextChange(nextVal);
+    }
 
     setTimeout(() => {
       el.focus();
@@ -162,7 +318,7 @@ export function RichPostEditor({
 
   // Clear formatting on selection
   const handleClearFormatting = () => {
-    const el = textareaRef.current;
+    const el = getActiveTextarea();
     if (!el) return;
 
     const start = el.selectionStart;
@@ -179,7 +335,15 @@ export function RichPostEditor({
       .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
 
     const nextVal = currentVal.substring(0, start) + selected + currentVal.substring(end);
-    handleTextChange(nextVal);
+    if (parsedTable) {
+      if (el === textareaAfterRef.current) {
+        updateAfter(nextVal);
+      } else {
+        updateBefore(nextVal);
+      }
+    } else {
+      handleTextChange(nextVal);
+    }
   };
 
   // Keyboard Shortcuts handler
@@ -207,7 +371,7 @@ export function RichPostEditor({
 
   // Open Link Modal
   const openLinkModal = () => {
-    const el = textareaRef.current;
+    const el = getActiveTextarea();
     const selected = el ? el.value.substring(el.selectionStart, el.selectionEnd) : '';
     setLinkText(selected || 'Click here');
     setLinkUrl('https://');
@@ -227,25 +391,108 @@ export function RichPostEditor({
     setShowLinkModal(false);
   };
 
-  // Insert Table
+  // ── Interactive Table Synchronizers ──────────────────────────────────────────
+  const updateBefore = (newBefore: string) => {
+    if (!parsedTable) return;
+    const next = serializePostWithTable(newBefore, parsedTable.headers, parsedTable.rows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const updateAfter = (newAfter: string) => {
+    if (!parsedTable) return;
+    const next = serializePostWithTable(parsedTable.before, parsedTable.headers, parsedTable.rows, newAfter);
+    handleTextChange(next);
+  };
+
+  const updateHeader = (colIndex: number, newTitle: string) => {
+    if (!parsedTable) return;
+    const nextHeaders = [...parsedTable.headers];
+    nextHeaders[colIndex] = newTitle;
+    const next = serializePostWithTable(parsedTable.before, nextHeaders, parsedTable.rows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const updateCell = (rowIndex: number, colIndex: number, newVal: string) => {
+    if (!parsedTable) return;
+    const nextRows = parsedTable.rows.map((row, rIdx) => {
+      if (rIdx !== rowIndex) return row;
+      const updatedRow = [...row];
+      updatedRow[colIndex] = newVal;
+      return updatedRow;
+    });
+    const next = serializePostWithTable(parsedTable.before, parsedTable.headers, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleAddRow = () => {
+    if (!parsedTable) return;
+    const newRow = parsedTable.headers.map(() => '');
+    const nextRows = [...parsedTable.rows, newRow];
+    const next = serializePostWithTable(parsedTable.before, parsedTable.headers, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleDeleteRow = (targetIndex?: number) => {
+    if (!parsedTable || parsedTable.rows.length <= 1) return;
+    let nextRows = [...parsedTable.rows];
+    if (typeof targetIndex === 'number') {
+      nextRows.splice(targetIndex, 1);
+    } else {
+      nextRows.pop();
+    }
+    const next = serializePostWithTable(parsedTable.before, parsedTable.headers, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleAddCol = () => {
+    if (!parsedTable || parsedTable.headers.length >= 5) return;
+    const newColNum = parsedTable.headers.length + 1;
+    const nextHeaders = [...parsedTable.headers, `Column ${newColNum}`];
+    const nextRows = parsedTable.rows.map((row) => [...row, '']);
+    const next = serializePostWithTable(parsedTable.before, nextHeaders, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleDeleteCol = () => {
+    if (!parsedTable || parsedTable.headers.length <= 2) return;
+    const nextHeaders = parsedTable.headers.slice(0, -1);
+    const nextRows = parsedTable.rows.map((row) => row.slice(0, -1));
+    const next = serializePostWithTable(parsedTable.before, nextHeaders, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleClearCells = () => {
+    if (!parsedTable) return;
+    const nextRows = parsedTable.rows.map((row) => row.map(() => ''));
+    const next = serializePostWithTable(parsedTable.before, parsedTable.headers, nextRows, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  const handleRemoveTable = () => {
+    if (!parsedTable) return;
+    const next = serializeWithoutTable(parsedTable.before, parsedTable.after);
+    handleTextChange(next);
+  };
+
+  // Insert Table confirmation from modal
   const handleInsertTable = () => {
-    let tableMd = '\n\n';
-    // Header row
     const headers = colHeaders.slice(0, tableCols);
     while (headers.length < tableCols) {
       headers.push(`Column ${headers.length + 1}`);
     }
-    tableMd += '| ' + headers.join(' | ') + ' |\n';
-    // Separator row
-    tableMd += '| ' + headers.map(() => ':---').join(' | ') + ' |\n';
-    // Data rows
-    for (let r = 0; r < tableRows; r++) {
-      const cells = headers.map((_, c) => `Data ${r + 1}-${c + 1}`);
-      tableMd += '| ' + cells.join(' | ') + ' |\n';
-    }
-    tableMd += '\n';
+    const initialRows = Array.from({ length: tableRows }, () =>
+      headers.map(() => '')
+    );
+    const tableMd = serializeMarkdownTable(headers, initialRows);
 
-    applyWrap(tableMd, '');
+    if (parsedTable) {
+      const next = serializePostWithTable(parsedTable.before, headers, initialRows, parsedTable.after);
+      handleTextChange(next);
+    } else {
+      const trimmed = value.trim();
+      const next = trimmed ? `${trimmed}\n\n${tableMd}` : tableMd;
+      handleTextChange(next);
+    }
     setShowTableModal(false);
   };
 
@@ -253,11 +500,12 @@ export function RichPostEditor({
     <div
       className="rich-post-editor-container"
       style={{
-        border: '1.5px solid var(--fr8x-outline, #cbd5e1)',
+        border: '1px solid #D5DEDA',
         borderRadius: '8px',
-        background: '#ffffff',
+        background: '#FFFFFF',
         overflow: 'hidden',
-        transition: 'border-color 0.15s ease',
+        boxShadow: '0 1px 3px rgba(23, 43, 43, 0.04)',
+        transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
       }}
     >
       {/* ── Toolbar ───────────────────────────────────────────────────────────── */}
@@ -266,10 +514,10 @@ export function RichPostEditor({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: '2px',
-          padding: '6px 8px',
-          background: '#f8fafc',
-          borderBottom: '1px solid #e2e8f0',
+          gap: '3px',
+          padding: '6px 10px',
+          background: '#F8FAF9',
+          borderBottom: '1px solid #E8F0ED',
           flexWrap: 'wrap',
           userSelect: 'none',
         }}
@@ -296,7 +544,7 @@ export function RichPostEditor({
           <Redo2 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
 
         {/* Text Styles */}
         <button
@@ -340,7 +588,7 @@ export function RichPostEditor({
           <Strikethrough size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
 
         {/* Headings */}
         <button
@@ -374,7 +622,7 @@ export function RichPostEditor({
           <Heading3 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
 
         {/* Lists & Quotes */}
         <button
@@ -408,7 +656,7 @@ export function RichPostEditor({
           <Quote size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#e2e8f0', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
 
         {/* Link & Table */}
         <button
@@ -425,9 +673,19 @@ export function RichPostEditor({
           type="button"
           onClick={() => setShowTableModal(true)}
           disabled={isPreview || disabled}
-          title="Insert Table"
+          title={parsedTable ? 'Edit Table Settings' : 'Insert Structured Table'}
           className="toolbar-btn"
-          style={{ padding: '5px', borderRadius: '4px', border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '3px' }}
+          style={{
+            padding: '4px 8px',
+            borderRadius: '4px',
+            border: parsedTable ? '1px solid #075B5B' : '1px solid transparent',
+            background: parsedTable ? '#E8F0ED' : 'transparent',
+            color: parsedTable ? '#075B5B' : '#172B2B',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+          }}
         >
           <TableIcon size={14} />
           <span style={{ fontSize: '11px', fontWeight: 600 }}>Table</span>
@@ -445,24 +703,25 @@ export function RichPostEditor({
           <Eraser size={14} />
         </button>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
           {/* Toggle Preview Button */}
           <button
             type="button"
             onClick={() => setIsPreview(!isPreview)}
-            title={isPreview ? 'Back to Editor' : 'Preview Post'}
+            title={isPreview ? 'Back to Editor' : 'Preview Post Output'}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
               gap: '4px',
-              padding: '3px 8px',
-              borderRadius: '4px',
+              padding: '4px 10px',
+              borderRadius: '5px',
               fontSize: '11px',
               fontWeight: 700,
-              background: isPreview ? '#1168d7' : '#e2e8f0',
-              color: isPreview ? '#ffffff' : '#334155',
-              border: 'none',
+              background: isPreview ? '#075B5B' : '#E8F0ED',
+              color: isPreview ? '#FFFFFF' : '#075B5B',
+              border: '1px solid #B8D5C8',
               cursor: 'pointer',
+              transition: 'all 0.15s ease',
             }}
           >
             {isPreview ? <Edit3 size={12} /> : <Eye size={12} />}
@@ -477,11 +736,12 @@ export function RichPostEditor({
           className="rich-editor-preview"
           style={{
             minHeight,
-            padding: '12px 14px',
-            fontSize: '13.5px',
-            lineHeight: 1.65,
-            color: '#0f172a',
-            background: '#ffffff',
+            padding: '14px 16px',
+            fontSize: '13px',
+            lineHeight: 1.6,
+            color: '#172B2B',
+            background: '#FFFFFF',
+            fontFamily: 'Calibri Light, Calibri, sans-serif',
           }}
         >
           {value.trim() ? (
@@ -490,12 +750,371 @@ export function RichPostEditor({
               dangerouslySetInnerHTML={{ __html: parseRichText(value) }}
             />
           ) : (
-            <span style={{ color: '#94a3b8', fontStyle: 'italic', fontSize: '12px' }}>
-              Nothing to preview. Enter text or tables above.
+            <span style={{ color: '#66736F', fontStyle: 'italic', fontSize: '12px' }}>
+              Nothing to preview. Enter text or insert tables using the toolbar above.
             </span>
           )}
         </div>
+      ) : parsedTable ? (
+        /* ── Structured Interactive Table + Surrounding Text Mode ──────────────── */
+        <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          {/* Top text before table */}
+          <textarea
+            ref={textareaBeforeRef}
+            value={parsedTable.before}
+            onChange={(e) => updateBefore(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={2}
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              minHeight: '44px',
+              padding: '6px 8px',
+              fontSize: '13px',
+              lineHeight: 1.5,
+              fontFamily: 'Calibri Light, Calibri, sans-serif',
+              border: '1px solid transparent',
+              outline: 'none',
+              resize: 'vertical',
+              color: '#172B2B',
+              background: 'transparent',
+              borderRadius: '4px',
+            }}
+          />
+
+          {/* ── The Genuine Editable Table Component ───────────────────────────── */}
+          <div
+            className="fr8x-interactive-table-card"
+            style={{
+              border: '1px solid #D5DEDA',
+              borderRadius: '8px',
+              background: '#FFFFFF',
+              boxShadow: '0 2px 6px rgba(23, 43, 43, 0.04)',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Table Control Header Bar */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: '#F1F5F3',
+                borderBottom: '1px solid #D5DEDA',
+                flexWrap: 'wrap',
+                gap: '8px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TableIcon size={14} color="#075B5B" />
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#075B5B' }}>
+                  Structured Rate / Commodity Table
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    background: '#E8F0ED',
+                    color: '#075B5B',
+                    border: '1px solid #B8D5C8',
+                    padding: '1px 6px',
+                    borderRadius: '4px',
+                  }}
+                >
+                  {parsedTable.headers.length} Cols × {parsedTable.rows.length} Rows
+                </span>
+              </div>
+
+              {/* Working Controls */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleAddRow}
+                  title="Add Row to table"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    color: '#172B2B',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Plus size={11} color="#075B5B" /> Add Row
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteRow()}
+                  disabled={parsedTable.rows.length <= 1}
+                  title="Delete bottom row"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    color: parsedTable.rows.length <= 1 ? '#94a3b8' : '#C0392B',
+                    cursor: parsedTable.rows.length <= 1 ? 'not-allowed' : 'pointer',
+                    opacity: parsedTable.rows.length <= 1 ? 0.5 : 1,
+                  }}
+                >
+                  <Trash2 size={11} /> Del Row
+                </button>
+                <button
+                  type="button"
+                  onClick={handleAddCol}
+                  disabled={parsedTable.headers.length >= 5}
+                  title="Add column (max 5)"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    color: '#172B2B',
+                    cursor: parsedTable.headers.length >= 5 ? 'not-allowed' : 'pointer',
+                    opacity: parsedTable.headers.length >= 5 ? 0.5 : 1,
+                  }}
+                >
+                  <Plus size={11} color="#075B5B" /> Add Col
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteCol}
+                  disabled={parsedTable.headers.length <= 2}
+                  title="Delete rightmost column (min 2)"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    color: parsedTable.headers.length <= 2 ? '#94a3b8' : '#C0392B',
+                    cursor: parsedTable.headers.length <= 2 ? 'not-allowed' : 'pointer',
+                    opacity: parsedTable.headers.length <= 2 ? 0.5 : 1,
+                  }}
+                >
+                  <Minus size={11} /> Del Col
+                </button>
+                <button
+                  type="button"
+                  onClick={handleClearCells}
+                  title="Clear all cell contents"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFFFFF',
+                    border: '1px solid #D5DEDA',
+                    color: '#66736F',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <RotateCcw size={11} /> Clear
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemoveTable}
+                  title="Remove this table completely"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    borderRadius: '4px',
+                    background: '#FFF5F5',
+                    border: '1px solid #FED7D7',
+                    color: '#C0392B',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <X size={11} /> Remove
+                </button>
+              </div>
+            </div>
+
+            {/* Responsive Table Scroll Container */}
+            <div
+              style={{
+                overflowX: 'auto',
+                WebkitOverflowScrolling: 'touch',
+                padding: '8px 10px',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            >
+              <table
+                style={{
+                  width: '100%',
+                  minWidth: '440px',
+                  borderCollapse: 'separate',
+                  borderSpacing: '4px',
+                }}
+              >
+                <thead>
+                  <tr>
+                    <th
+                      style={{
+                        width: '28px',
+                        fontSize: '10px',
+                        color: '#66736F',
+                        textAlign: 'center',
+                        fontWeight: 600,
+                        padding: '4px 0',
+                      }}
+                    >
+                      #
+                    </th>
+                    {parsedTable.headers.map((header, cIdx) => (
+                      <th key={cIdx} style={{ padding: '2px' }}>
+                        <input
+                          type="text"
+                          value={header}
+                          onChange={(e) => updateHeader(cIdx, e.target.value)}
+                          placeholder={`Header ${cIdx + 1}`}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '6px 8px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            color: '#075B5B',
+                            background: '#E8F0ED',
+                            border: '1px solid #B8D5C8',
+                            borderRadius: '4px',
+                            outline: 'none',
+                            fontFamily: 'Calibri, sans-serif',
+                          }}
+                        />
+                      </th>
+                    ))}
+                    <th style={{ width: '28px' }} />
+                  </tr>
+                </thead>
+                <tbody>
+                  {parsedTable.rows.map((row, rIdx) => (
+                    <tr key={rIdx}>
+                      <td
+                        style={{
+                          fontSize: '11px',
+                          color: '#66736F',
+                          textAlign: 'center',
+                          fontWeight: 500,
+                        }}
+                      >
+                        {rIdx + 1}
+                      </td>
+                      {row.map((cell, cIdx) => (
+                        <td key={cIdx} style={{ padding: '2px' }}>
+                          <input
+                            type="text"
+                            value={cell}
+                            onChange={(e) => updateCell(rIdx, cIdx, e.target.value)}
+                            placeholder="Enter data..."
+                            style={{
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              padding: '6px 8px',
+                              fontSize: '12px',
+                              color: '#172B2B',
+                              background: '#FFFFFF',
+                              border: '1px solid #D5DEDA',
+                              borderRadius: '4px',
+                              outline: 'none',
+                              fontFamily: 'Calibri Light, Calibri, sans-serif',
+                              transition: 'border-color 0.15s ease',
+                            }}
+                            onFocus={(e) => {
+                              e.currentTarget.style.borderColor = '#075B5B';
+                              e.currentTarget.style.boxShadow = '0 0 0 1px #075B5B';
+                            }}
+                            onBlur={(e) => {
+                              e.currentTarget.style.borderColor = '#D5DEDA';
+                              e.currentTarget.style.boxShadow = 'none';
+                            }}
+                          />
+                        </td>
+                      ))}
+                      <td style={{ textAlign: 'center', padding: '2px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRow(rIdx)}
+                          disabled={parsedTable.rows.length <= 1}
+                          title="Delete this row"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            padding: '4px',
+                            cursor: parsedTable.rows.length <= 1 ? 'default' : 'pointer',
+                            opacity: parsedTable.rows.length <= 1 ? 0.3 : 0.7,
+                            color: '#C0392B',
+                            borderRadius: '3px',
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Bottom text after table */}
+          <textarea
+            ref={textareaAfterRef}
+            value={parsedTable.after}
+            onChange={(e) => updateAfter(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Add concluding remarks, notes, or terms & conditions..."
+            disabled={disabled}
+            rows={2}
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              minHeight: '44px',
+              padding: '6px 8px',
+              fontSize: '13px',
+              lineHeight: 1.5,
+              fontFamily: 'Calibri Light, Calibri, sans-serif',
+              border: '1px solid transparent',
+              outline: 'none',
+              resize: 'vertical',
+              color: '#172B2B',
+              background: 'transparent',
+              borderRadius: '4px',
+            }}
+          />
+        </div>
       ) : (
+        /* ── Standard Textarea Mode (When no table in post) ────────────────────── */
         <textarea
           ref={textareaRef}
           value={value}
@@ -512,11 +1131,11 @@ export function RichPostEditor({
             padding: '10px 12px',
             fontSize: '13px',
             lineHeight: 1.5,
-            fontFamily: 'inherit',
+            fontFamily: 'Calibri Light, Calibri, sans-serif',
             border: 'none',
             outline: 'none',
             resize: 'vertical',
-            color: '#0f172a',
+            color: '#172B2B',
             background: 'transparent',
           }}
         />
@@ -528,7 +1147,9 @@ export function RichPostEditor({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999,
             display: 'grid',
             placeItems: 'center',
@@ -537,32 +1158,43 @@ export function RichPostEditor({
         >
           <div
             style={{
-              background: '#ffffff',
+              background: '#FFFFFF',
               borderRadius: '10px',
               padding: '20px',
               maxWidth: '400px',
               width: '100%',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-              border: '1px solid #cbd5e1',
+              boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
+              border: '1px solid #D5DEDA',
             }}
           >
-            <h4 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 12px', color: '#0f172a' }}>
-              Insert Hyperlink
-            </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B2B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Link2 size={16} color="#075B5B" /> Insert Hyperlink
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="close-red-box sm"
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
+
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
                   Link Text
                 </label>
                 <input
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D5DEDA', outline: 'none' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
                   Target URL (HTTPS or platform relative)
                 </label>
                 <input
@@ -573,10 +1205,10 @@ export function RichPostEditor({
                     setLinkError('');
                   }}
                   placeholder="https://example.com"
-                  style={{ width: '100%', padding: '8px 10px', fontSize: '12.5px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D5DEDA', outline: 'none' }}
                 />
                 {linkError && (
-                  <span style={{ fontSize: '10.5px', color: '#ef4444', display: 'block', marginTop: '3px' }}>
+                  <span style={{ fontSize: '10.5px', color: '#C0392B', display: 'block', marginTop: '3px' }}>
                     {linkError}
                   </span>
                 )}
@@ -587,14 +1219,14 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={() => setShowLinkModal(false)}
-                style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                style={{ padding: '6px 12px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#F1F5F3', border: '1px solid #D5DEDA', color: '#172B2B', cursor: 'pointer' }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleInsertLink}
-                style={{ padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: '#1168d7', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+                style={{ padding: '6px 14px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#075B5B', color: '#FFFFFF', border: 'none', cursor: 'pointer' }}
               >
                 Insert Link
               </button>
@@ -609,7 +1241,9 @@ export function RichPostEditor({
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(0,0,0,0.4)',
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
             zIndex: 99999,
             display: 'grid',
             placeItems: 'center',
@@ -618,38 +1252,59 @@ export function RichPostEditor({
         >
           <div
             style={{
-              background: '#ffffff',
+              background: '#FFFFFF',
               borderRadius: '10px',
               padding: '20px',
               maxWidth: '460px',
               width: '100%',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-              border: '1px solid #cbd5e1',
+              boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
+              border: '1px solid #D5DEDA',
             }}
           >
-            <h4 style={{ fontSize: '15px', fontWeight: 700, margin: '0 0 12px', color: '#0f172a' }}>
-              Insert Structured Rate / Commodity Table
-            </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B2B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <TableIcon size={16} color="#075B5B" /> Insert Structured Rate / Commodity Table
+              </h4>
+              <button
+                type="button"
+                onClick={() => setShowTableModal(false)}
+                className="close-red-box sm"
+                title="Close"
+              >
+                <X size={12} />
+              </button>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
                   Columns (2 to 5)
                 </label>
-                <input
-                  type="number"
-                  min={2}
-                  max={5}
-                  value={tableCols}
-                  onChange={(e) => {
-                    const c = Math.max(2, Math.min(5, parseInt(e.target.value) || 2));
-                    setTableCols(c);
-                  }}
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
-                />
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                  {[2, 3, 4, 5].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setTableCols(c)}
+                      style={{
+                        flex: 1,
+                        padding: '6px 0',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        borderRadius: '5px',
+                        border: tableCols === c ? '1.5px solid #075B5B' : '1px solid #D5DEDA',
+                        background: tableCols === c ? '#E8F0ED' : '#FFFFFF',
+                        color: tableCols === c ? '#075B5B' : '#172B2B',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
                   Data Rows (1 to 10)
                 </label>
                 <input
@@ -661,13 +1316,22 @@ export function RichPostEditor({
                     const r = Math.max(1, Math.min(10, parseInt(e.target.value) || 1));
                     setTableRows(r);
                   }}
-                  style={{ width: '100%', padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                  style={{
+                    width: '100%',
+                    padding: '6px 10px',
+                    fontSize: '12px',
+                    borderRadius: '5px',
+                    border: '1px solid #D5DEDA',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                    height: '32px',
+                  }}
                 />
               </div>
             </div>
 
-            <div style={{ marginBottom: '14px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#475569', display: 'block', marginBottom: '4px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '6px' }}>
                 Column Header Titles
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -682,7 +1346,14 @@ export function RichPostEditor({
                       setColHeaders(updated);
                     }}
                     placeholder={`Header ${i + 1}`}
-                    style={{ padding: '6px 10px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                    style={{
+                      padding: '6px 10px',
+                      fontSize: '12px',
+                      borderRadius: '5px',
+                      border: '1px solid #D5DEDA',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
                   />
                 ))}
               </div>
@@ -692,16 +1363,37 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={() => setShowTableModal(false)}
-                style={{ padding: '6px 12px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: '#f1f5f9', border: '1px solid #cbd5e1', cursor: 'pointer' }}
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: '5px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  background: '#F1F5F3',
+                  border: '1px solid #D5DEDA',
+                  color: '#172B2B',
+                  cursor: 'pointer',
+                }}
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleInsertTable}
-                style={{ padding: '6px 14px', borderRadius: '6px', fontSize: '12px', fontWeight: 600, background: '#1168d7', color: '#ffffff', border: 'none', cursor: 'pointer' }}
+                style={{
+                  padding: '6px 16px',
+                  borderRadius: '5px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  background: '#075B5B',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
               >
-                Insert Table into Post
+                <Check size={13} /> Insert Table into Post
               </button>
             </div>
           </div>
