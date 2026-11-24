@@ -149,7 +149,7 @@
   /* ==========================================================================
      GLOBAL VISUAL IDENTITY - SEA GRASS GREY & RAVEN TEAL PALETTE
      ========================================================================== */
-  --color-sea-grass: #E4EBE8;        /* Main application background */
+  --color-sea-grass: #F4F6F8;        /* Main application background */
   --color-raven-teal: #075B5B;       /* Primary brand accent & active states */
   --color-dark-text: #172B2B;        /* Secondary dark text / headings */
   --color-pure-white: #FFFFFF;       /* Card & modal backgrounds */
@@ -161,12 +161,12 @@
   --color-deep-green: #075B5B;
   --color-money-green: #075B5B;
   --color-pale-mint: #E8F0ED;
-  --color-off-white: #E4EBE8;
+  --color-off-white: #F4F6F8;
   --color-neutral-gray: #66736F;
 
   /* Semantic Color Application */
-  --color-background: #E4EBE8;
-  --color-page-bg: #E4EBE8;
+  --color-background: #F4F6F8;
+  --color-page-bg: #F4F6F8;
   --color-surface: #FFFFFF;
   --color-card-bg: #FFFFFF;
   --color-table-bg: #FFFFFF;
@@ -3475,7 +3475,7 @@ small, .secondary-text, .meta-text, .caption, .helper-text,
 /* ==========================================================================
    ENTERPRISE UNIFIED GLOBAL HEADER & TOPBAR DESIGN SYSTEM
    - Standardized Header Height: 48px
-   - Background: Pure White #FFFFFF / Canvas: Sea Grass Grey #E4EBE8
+   - Background: Pure White #FFFFFF / Canvas: Neutral Faded Gray #F4F6F8
    - Raven Teal Accents: #075B5B
    - Border Radius: 6px
    - Typography: Calibri Light, Calibri, sans-serif (12px, #172B2B)
@@ -5106,7 +5106,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    - 25% Material Design Component States & Subtle Elevation
    - 13% Bento Information Architecture & Grouping
    - 2% Restrained Neumorphic Depth & Tactile Feedback
-   - Palette: Sea Grass Grey (#E4EBE8) | Raven Teal (#075B5B) | Pure White (#FFFFFF)
+   - Palette: Neutral Canvas (#F4F6F8) | Raven Teal (#075B5B) | Pure White (#FFFFFF)
    ========================================================================== */
 
 /* Universal Canvas Background */
@@ -5131,7 +5131,7 @@ main,
 .nexus-page,
 #root,
 #__next {
-  background-color: #E4EBE8 !important;
+  background-color: var(--fr8x-canvas, #F4F6F8) !important;
   color: #172B2B !important;
   font-family: 'Calibri Light', Calibri, sans-serif !important;
 }
