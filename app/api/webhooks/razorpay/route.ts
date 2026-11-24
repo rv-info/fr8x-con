@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { serverSecurityStore } from '@/lib/server-auth-store';
 import { saveTransaction } from '@/lib/db/transactions';
 import { updateUser } from '@/lib/db/users';
+import { saveJob } from '@/lib/db/jobs';
 import { EmailService } from '@/lib/email-service';
 
 /**
@@ -110,9 +111,28 @@ export async function POST(req: NextRequest) {
       console.error('[Razorpay Webhook] Failed to persist transaction in Supabase PostgreSQL:', dbmsErr.message);
     }
 
-    // 2. Automatic User Plan Entitlement Provisioning (Finding PAY-02)
+    // 2. Automatic User Plan Entitlement Provisioning or Job Activation
     const isPaymentSuccessful = event === 'payment.captured' || event === 'order.paid' || status === 'captured';
     if (isPaymentSuccessful) {
+      if (itemType === 'job' || notes.itemType === 'job') {
+        const targetJobId = notes.jobId || notes.itemId;
+        if (targetJobId) {
+          try {
+            await saveJob({
+              id: targetJobId,
+              status: 'active',
+              payment_status: 'paid',
+              paid_amount: amount,
+              payment_reference: paymentId,
+              updated_at: new Date().toISOString(),
+            });
+            console.info(`[Razorpay Webhook] Successfully activated job ${targetJobId}`);
+          } catch (jobErr: any) {
+            console.warn(`[Razorpay Webhook] Could not update job ${targetJobId}:`, jobErr.message);
+          }
+        }
+      }
+
       const userIdentifier = userId || userEmail;
       if (userIdentifier && planId) {
         try {

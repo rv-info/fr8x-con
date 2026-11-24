@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useData } from '@/lib/context/DataContext';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -66,6 +66,7 @@ import {
   HelpCircle,
   Globe2,
   Loader2,
+  Maximize2,
 } from 'lucide-react';
 import {
   getConnectedUserIds,
@@ -688,6 +689,19 @@ export default function FeedsPage() {
   // Booked Ads Storage (Slot 1 and Slot 2)
   const [bookedSlot1, setBookedSlot1] = useState<BookedAd | null>(null);
   const [bookedSlot2, setBookedSlot2] = useState<BookedAd | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && lightboxImage) {
+        setLightboxImage(null);
+      }
+    };
+    if (lightboxImage) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxImage]);
 
   const adCost = adCampaignDuration === '2days' ? 1000 : 5000;
 
@@ -2797,153 +2811,290 @@ export default function FeedsPage() {
       {/* RIGHT COLUMN: Jobs & Interactive "YOUR AD HERE" Booking Space */}
       <aside className="feed-right-rail">
         {/* Active Jobs Card */}
-        <div className="card side-card">
-          <div className="side-card-header">
-            <b>Trade Careers & Jobs</b>
+        <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px' }}>
+          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid var(--line-light)' }}>
+            <b style={{ fontSize: '13px', color: 'var(--ink)' }}>Trade Careers &amp; Jobs</b>
             <div style={{ display: 'flex', gap: '4px' }}>
               <button
                 className="btn primary sm"
-                style={{ padding: '2px 8px', fontSize: '10px' }}
+                style={{ padding: '2px 8px', fontSize: '10px', fontWeight: 700 }}
                 onClick={() => setShowJobCreateModal(true)}
               >
                 + Post
               </button>
-              <Link href="/jobs" className="btn secondary sm">
+              <Link href="/jobs" className="btn secondary sm" style={{ padding: '2px 8px', fontSize: '10px' }}>
                 View All
               </Link>
             </div>
           </div>
-          <div className="job-list">
-            {jobs.slice(0, 3).map((job) => (
-              <div
-                key={job.id}
-                className="job-item"
-                onClick={() => setSelectedJobModal(job)}
-                style={{ cursor: 'pointer' }}
+
+          {jobs.length === 0 ? (
+            <div style={{ padding: '16px 12px', textAlign: 'center', background: '#f8fafc', borderRadius: '0 0 8px 8px' }}>
+              <Briefcase size={22} style={{ color: 'var(--brand)', margin: '0 auto 6px', opacity: 0.8 }} />
+              <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 10px', lineHeight: 1.4 }}>
+                Looking for logistics talent? Post your open roles across the FR8X network.
+              </p>
+              <button
+                type="button"
+                className="btn primary sm"
+                style={{ fontSize: '11px', padding: '4px 12px', fontWeight: 700 }}
+                onClick={() => setShowJobCreateModal(true)}
               >
-                <div className="job-top">
-                  <b className="job-title">{job.title}</b>
+                + Post a Job
+              </button>
+            </div>
+          ) : (
+            <div className="job-list" style={{ display: 'flex', flexDirection: 'column' }}>
+              {jobs.slice(0, 3).map((job) => (
+                <div
+                  key={job.id}
+                  className="job-item"
+                  onClick={() => setSelectedJobModal(job)}
+                  style={{ cursor: 'pointer', padding: '10px 12px', borderBottom: '1px solid var(--line-light)' }}
+                >
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <UserAvatar name={job.postedBy} companyName={job.company} size={28} showCompanyLogo={true} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <b className="job-title" style={{ fontSize: '12px', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{job.title}</b>
+                      <span className="job-company" style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600 }}>{job.company}</span>
+                    </div>
+                  </div>
+                  <div className="job-meta" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10.5px', color: 'var(--mut)', marginTop: '4px' }}>
+                    <MapPin size={10} /> <span>{job.location}</span> · <span>{job.employmentType}</span>
+                  </div>
+                  <div className="job-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                    <span className="job-pkg" style={{ fontSize: '11px', color: 'var(--green)', fontWeight: 700 }}>{job.packageDetails || 'Competitive'}</span>
+                    <button className="btn secondary sm" style={{ padding: '2px 8px', fontSize: '10px' }}>
+                      Details
+                    </button>
+                  </div>
                 </div>
-                <span className="job-company">{job.company}</span>
-                <div className="job-meta">
-                  <span>{job.location}</span> · <span>{job.employmentType}</span>
-                </div>
-                <div className="job-footer">
-                  <span className="job-pkg">{job.packageDetails}</span>
-                  <button className="btn secondary sm" style={{ padding: '2px 8px', fontSize: '10px' }}>
-                    Details
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Slot 1: YOUR AD HERE */}
-        <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)' }}>
-          {bookedSlot1 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: '12px', color: 'var(--brand)' }}>{bookedSlot1.businessName}</b>
-                <span className="badge amber" style={{ fontSize: '8px' }}>SPONSORED</span>
+        {/* Slot 1: Booked Sponsor Ad */}
+        {bookedSlot1 && (
+          <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <UserAvatar name={bookedSlot1.businessName} companyName={bookedSlot1.businessName} size={30} showCompanyLogo={true} />
+                <b style={{ fontSize: '12px', color: 'var(--brand)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {bookedSlot1.businessName}
+                </b>
               </div>
-              <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>{bookedSlot1.headline}</b>
-              {bookedSlot1.description && (
-                <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: 0 }}>
-                  {bookedSlot1.description}
-                </p>
-              )}
-              {bookedSlot1.creativeUrl && (
+              <span className="badge amber" style={{ fontSize: '8.5px', letterSpacing: '0.04em' }}>SPONSORED</span>
+            </div>
+
+            <b style={{ fontSize: '12.5px', color: 'var(--ink)', lineHeight: 1.3 }}>{bookedSlot1.headline}</b>
+            {bookedSlot1.description && (
+              <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: 0, lineHeight: 1.45 }}>
+                {bookedSlot1.description}
+              </p>
+            )}
+
+            {bookedSlot1.creativeUrl && (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxHeight: '240px',
+                  background: 'rgba(0, 0, 0, 0.03)',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <img
                   src={bookedSlot1.creativeUrl}
-                  alt="Ad Creative"
-                  style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '6px' }}
+                  alt={bookedSlot1.headline}
+                  style={{
+                    width: '100%',
+                    maxHeight: '240px',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setLightboxImage(bookedSlot1.creativeUrl || null)}
+                  className="btn secondary sm"
+                  style={{
+                    position: 'absolute',
+                    bottom: '6px',
+                    right: '6px',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                  title="View full-resolution creative"
+                >
+                  <Maximize2 size={11} /> Zoom
+                </button>
+              </div>
+            )}
+
+            {/* 3 Configurable Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+              {bookedSlot1.destUrl && (
+                <a
+                  href={bookedSlot1.destUrl.startsWith('http') ? bookedSlot1.destUrl : `https://${bookedSlot1.destUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn primary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700 }}
+                >
+                  <ExternalLink size={12} /> Visit Website
+                </a>
               )}
-              <a
-                href={bookedSlot1.destUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn primary sm"
-                style={{ width: '100%', justifyContent: 'center', marginTop: '4px' }}
-              >
-                Visit Sponsor <ExternalLink size={11} />
-              </a>
+              {bookedSlot1.contactEmail && (
+                <a
+                  href={`mailto:${bookedSlot1.contactEmail}?subject=${encodeURIComponent(`Inquiry regarding FR8X sponsored showcase: ${bookedSlot1.headline}`)}`}
+                  className="btn secondary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11px', fontWeight: 600 }}
+                >
+                  <Mail size={12} /> Contact Sponsor
+                </a>
+              )}
+              {bookedSlot1.creativeUrl && (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11px' }}
+                  onClick={() => setLightboxImage(bookedSlot1.creativeUrl || null)}
+                >
+                  <Maximize2 size={11} /> View Full Creative
+                </button>
+              )}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '16px 12px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
-                Promote your business with us
-              </h3>
-              <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Advertise your company · Reach more customers · Grow your business
+          </div>
+        )}
+
+        {/* Slot 2: Booked Sponsor Ad */}
+        {bookedSlot2 && (
+          <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                <UserAvatar name={bookedSlot2.businessName} companyName={bookedSlot2.businessName} size={30} showCompanyLogo={true} />
+                <b style={{ fontSize: '12px', color: 'var(--brand)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {bookedSlot2.businessName}
+                </b>
+              </div>
+              <span className="badge amber" style={{ fontSize: '8.5px', letterSpacing: '0.04em' }}>SPONSORED</span>
+            </div>
+
+            <b style={{ fontSize: '12.5px', color: 'var(--ink)', lineHeight: 1.3 }}>{bookedSlot2.headline}</b>
+            {bookedSlot2.description && (
+              <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: 0, lineHeight: 1.45 }}>
+                {bookedSlot2.description}
               </p>
-              <button
-                className="btn primary sm"
-                style={{ width: '100%', justifyContent: 'center', height: '32px' }}
-                onClick={() => {
-                  setActiveAdSlot(1);
-                  setShowBookAdModal(true);
+            )}
+
+            {bookedSlot2.creativeUrl && (
+              <div
+                style={{
+                  position: 'relative',
+                  width: '100%',
+                  maxHeight: '240px',
+                  background: 'rgba(0, 0, 0, 0.03)',
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                Book ad space
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Slot 2: YOUR AD HERE */}
-        <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)' }}>
-          {bookedSlot2 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <b style={{ fontSize: '12px', color: 'var(--brand)' }}>{bookedSlot2.businessName}</b>
-                <span className="badge amber" style={{ fontSize: '8px' }}>SPONSORED</span>
-              </div>
-              <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>{bookedSlot2.headline}</b>
-              {bookedSlot2.description && (
-                <p style={{ fontSize: '11px', color: 'var(--ink-secondary)', margin: 0 }}>
-                  {bookedSlot2.description}
-                </p>
-              )}
-              {bookedSlot2.creativeUrl && (
                 <img
                   src={bookedSlot2.creativeUrl}
-                  alt="Ad Creative"
-                  style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '6px' }}
+                  alt={bookedSlot2.headline}
+                  style={{
+                    width: '100%',
+                    maxHeight: '240px',
+                    objectFit: 'contain',
+                    display: 'block',
+                  }}
                 />
+                <button
+                  type="button"
+                  onClick={() => setLightboxImage(bookedSlot2.creativeUrl || null)}
+                  className="btn secondary sm"
+                  style={{
+                    position: 'absolute',
+                    bottom: '6px',
+                    right: '6px',
+                    padding: '2px 6px',
+                    fontSize: '10px',
+                    background: 'rgba(255, 255, 255, 0.92)',
+                    backdropFilter: 'blur(4px)',
+                  }}
+                  title="View full-resolution creative"
+                >
+                  <Maximize2 size={11} /> Zoom
+                </button>
+              </div>
+            )}
+
+            {/* 3 Configurable Action Buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+              {bookedSlot2.destUrl && (
+                <a
+                  href={bookedSlot2.destUrl.startsWith('http') ? bookedSlot2.destUrl : `https://${bookedSlot2.destUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn primary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11.5px', fontWeight: 700 }}
+                >
+                  <ExternalLink size={12} /> Visit Website
+                </a>
               )}
-              <a
-                href={bookedSlot2.destUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn primary sm"
-                style={{ width: '100%', justifyContent: 'center', marginTop: '4px' }}
-              >
-                Visit Sponsor <ExternalLink size={11} />
-              </a>
+              {bookedSlot2.contactEmail && (
+                <a
+                  href={`mailto:${bookedSlot2.contactEmail}?subject=${encodeURIComponent(`Inquiry regarding FR8X sponsored showcase: ${bookedSlot2.headline}`)}`}
+                  className="btn secondary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11px', fontWeight: 600 }}
+                >
+                  <Mail size={12} /> Contact Sponsor
+                </a>
+              )}
+              {bookedSlot2.creativeUrl && (
+                <button
+                  type="button"
+                  className="btn secondary sm"
+                  style={{ width: '100%', justifyContent: 'center', gap: '6px', fontSize: '11px' }}
+                  onClick={() => setLightboxImage(bookedSlot2.creativeUrl || null)}
+                >
+                  <Maximize2 size={11} /> View Full Creative
+                </button>
+              )}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '16px 12px' }}>
-              <h3 style={{ fontSize: '14px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
-                Promote your business with us
-              </h3>
-              <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
-                Advertise your company · Reach more customers · Grow your business
-              </p>
-              <button
-                className="btn primary sm"
-                style={{ width: '100%', justifyContent: 'center', height: '32px' }}
-                onClick={() => {
-                  setActiveAdSlot(2);
-                  setShowBookAdModal(true);
-                }}
-              >
-                Book ad space
-              </button>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Unified Single Sponsor Ad Booking Card (Never duplicate identical placeholder cards) */}
+        {!bookedSlot1 && !bookedSlot2 && (
+          <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px', textAlign: 'center', padding: '16px 14px' }}>
+            <h3 style={{ fontSize: '13.5px', fontWeight: 800, margin: '0 0 6px', color: 'var(--ink)' }}>
+              Promote your business with us
+            </h3>
+            <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: '0 0 12px', lineHeight: 1.45 }}>
+              Advertise your company · Reach verified logistics leaders · Grow your trade network
+            </p>
+            <button
+              className="btn primary sm"
+              style={{ width: '100%', justifyContent: 'center', height: '32px', fontWeight: 700 }}
+              onClick={() => {
+                setActiveAdSlot(1);
+                setShowBookAdModal(true);
+              }}
+            >
+              Book ad space (from ₹1,000)
+            </button>
+          </div>
+        )}
       </aside>
 
       {/* 4. Send Post to Contact Selection Modal (Requirement 4) */}
@@ -3920,6 +4071,62 @@ export default function FeedsPage() {
             </div>
           </div>
         </Modal>
+      )}
+
+      {/* Ad Creative Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="lightbox-overlay"
+          onClick={() => setLightboxImage(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'relative',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              background: '#ffffff',
+              borderRadius: '10px',
+              padding: '12px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="close-red-box sm"
+              style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}
+              title="Close full creative preview (Esc)"
+            >
+              <X size={12} />
+            </button>
+            <img
+              src={lightboxImage}
+              alt="Full resolution promotional creative"
+              style={{
+                maxWidth: '85vw',
+                maxHeight: '80vh',
+                objectFit: 'contain',
+                borderRadius: '6px',
+                display: 'block',
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

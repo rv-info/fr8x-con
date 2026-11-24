@@ -42,6 +42,7 @@ import {
   X,
   Sparkles,
   Share2,
+  Pencil,
 } from 'lucide-react';
 import {
   formatNumber,
@@ -1409,11 +1410,24 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
 
               <button
                 type="button"
-                className="btn secondary sm"
+                className="btn primary sm"
                 style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '6px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                 onClick={() => {
                   setEditingRateId(null);
                   handleClearForm(false);
+                  setShowRatesEditorModal(true);
+                }}
+                title="Create a new rate posting"
+              >
+                <Plus size={12} />
+                <span>+ Add New Rate</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn secondary sm"
+                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '4px', marginLeft: '4px', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                onClick={() => {
                   setShowRatesEditorModal(true);
                 }}
                 title="Open Rates Editor modal to create or edit rates"
@@ -1810,8 +1824,9 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                             className="btn primary sm"
                             style={{ fontSize: '12px', padding: '6px 14px', borderRadius: '5px' }}
                             onClick={() => {
-                              setEditorVisible(true);
-                              window.scrollTo({ top: 320, behavior: 'smooth' });
+                              setEditingRateId(null);
+                              handleClearForm(false);
+                              setShowRatesEditorModal(true);
                             }}
                           >
                             <Plus size={13} /> Add New Rate
@@ -1878,7 +1893,6 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                           setRateType(rate.rateType || 'Direct Spot');
                           setRemarks(rate.remark || '');
                           setEditingRateId(rate.id);
-                          if (!editorVisible) setEditorVisible(true);
                         }}
                       >
                         <td style={{ textAlign: 'center', padding: '6px 4px', whiteSpace: 'nowrap' }}>
@@ -2012,6 +2026,39 @@ Remarks & Terms  : ${r.remarks || r.remark || 'None'}
                             >
                               <History size={12} />
                             </button>
+                            {isOwner && (
+                              <button
+                                type="button"
+                                className="btn secondary sm"
+                                style={{
+                                  padding: '3px 5px',
+                                  cursor: 'pointer',
+                                }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCarrier(rate.carrier);
+                                  setPor(rate.por || '');
+                                  setPol(rate.pol);
+                                  setPod(rate.pod);
+                                  setFpod(rate.fpod || '');
+                                  setD20(rate.d20);
+                                  setD20Type(rate.d20Type || '20DV');
+                                  setH40(rate.h40);
+                                  setH40Type(rate.h40Type || '40HC');
+                                  setFreeTime(rate.ft || '');
+                                  setValidDate(rate.valid || '');
+                                  setTransitTime(rate.tt || '');
+                                  setRouting(rate.route || '');
+                                  setRateType(rate.rateType || 'Direct Spot');
+                                  setRemarks(rate.remark || '');
+                                  setEditingRateId(rate.id);
+                                  setShowRatesEditorModal(true);
+                                }}
+                                title="Edit this rate in Rates Editor"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                            )}
                             {isOwner && (
                               <button
                                 type="button"

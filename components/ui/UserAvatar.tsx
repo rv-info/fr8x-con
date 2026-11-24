@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { GoldenTick } from '@/components/ui/GoldenTick';
+import { Building2 } from 'lucide-react';
 
 export interface UserAvatarProps {
   /** Optional user or member object from which avatar, logo, and name can be extracted */
@@ -129,6 +130,13 @@ export function UserAvatar({
         user.logoUrl ||
         null;
       if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+
+      if (typeof window !== 'undefined' && user.uid) {
+        try {
+          const stored = localStorage.getItem(`fr8x_user_logo_${user.uid}`) || localStorage.getItem('fr8x_user_logo');
+          if (stored && stored.trim()) return stored.trim();
+        } catch {}
+      }
     }
     return null;
   }, [explicitCompanyLogoUrl, user, showCompanyLogo]);
@@ -232,7 +240,7 @@ export function UserAvatar({
       </div>
 
       {/* ── 2. OVERLAPPING SQUARE COMPANY LOGO AT BOTTOM-RIGHT ── */}
-      {resolvedCompanyLogoUrl && !logoError && (
+      {showCompanyLogo && diameter >= 24 && (
         <div
           className="fr8x-avatar-company-logo"
           title={companyName ? `Organization: ${companyName}` : 'Associated Organization'}
@@ -255,18 +263,38 @@ export function UserAvatar({
             padding: '1px',
           }}
         >
-          <img
-            src={resolvedCompanyLogoUrl}
-            alt={companyName || 'Company Logo'}
-            onError={() => setLogoError(true)}
-            style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              background: 'transparent',
-            }}
-          />
+          {resolvedCompanyLogoUrl && !logoError ? (
+            <img
+              src={resolvedCompanyLogoUrl}
+              alt={companyName || 'Company Logo'}
+              onError={() => setLogoError(true)}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                background: 'transparent',
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#E8F0ED',
+                borderRadius: `${Math.max(1, logoBorderRadius - 1)}px`,
+              }}
+              title={companyName || 'Organization'}
+            >
+              <Building2
+                size={Math.max(7, Math.round(logoSize * 0.65))}
+                style={{ color: '#075B5B' }}
+              />
+            </div>
+          )}
         </div>
       )}
 

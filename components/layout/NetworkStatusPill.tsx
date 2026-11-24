@@ -225,9 +225,17 @@ export function NetworkStatusPill({ isOpen: controlledIsOpen, onToggle, onClose 
                 fontWeight: 700,
                 color: '#172B2B',
                 letterSpacing: '0.04em',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
               }}
             >
-              Availability Status
+              <span>Availability Status</span>
+              {isOnline && (
+                <span style={{ fontSize: '10px', color: '#075B5B', fontWeight: 600, textTransform: 'none', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  ⚡ High-Speed
+                </span>
+              )}
             </span>
             <button
               type="button"

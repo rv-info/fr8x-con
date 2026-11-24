@@ -2418,14 +2418,16 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                           {user.designation}
                         </small>
                         <small style={{ fontSize: '11px', color: '#66736F', display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {user?.companyLogoUrl && (
+                          {user?.companyLogoUrl ? (
                             <img
                               src={user.companyLogoUrl}
                               alt={user.company || 'Company Logo'}
                               style={{ width: '13px', height: '13px', objectFit: 'contain', background: 'transparent', flexShrink: 0 }}
                             />
+                          ) : (
+                            <Building2 size={12} style={{ color: '#075B5B', flexShrink: 0 }} />
                           )}
-                          <span>{user.company}</span>
+                          <span>{user.company || 'Enterprise Logistics'}</span>
                         </small>
                         <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'center' }}>
                           <span
@@ -2445,6 +2447,22 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
                             }}
                           >
                             {(user?.plan || 'ENTERPRISE').toUpperCase()} PLAN
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              fontWeight: 700,
+                              background: '#E8F5E9',
+                              color: '#15803D',
+                              border: '1px solid #C8E6C9',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                            }}
+                          >
+                            <ShieldCheck size={10} /> VERIFIED
                           </span>
                         </div>
                       </div>

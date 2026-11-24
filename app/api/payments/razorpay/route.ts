@@ -9,6 +9,20 @@ const PLAN_CATALOG: Record<string, { amountINR: number; title: string }> = {
   enterprise: { amountINR: 9999, title: 'Enterprise Custom Plan' },
 };
 
+const JOB_CATALOG: Record<string, { amountINR: number; title: string; durationDays: number }> = {
+  '2': { amountINR: 300, title: 'Job Listing - 2 Days (Min)', durationDays: 2 },
+  '7': { amountINR: 1200, title: 'Job Listing - 7 Days', durationDays: 7 },
+  '15': { amountINR: 2640, title: 'Job Listing - 15 Days', durationDays: 15 },
+  '30': { amountINR: 5340, title: 'Job Listing - 30 Days', durationDays: 30 },
+};
+
+const AD_CATALOG: Record<string, { amountINR: number; title: string; durationDays: number }> = {
+  '2days': { amountINR: 1000, title: 'Sponsored Ad - 2 Days', durationDays: 2 },
+  '2': { amountINR: 1000, title: 'Sponsored Ad - 2 Days', durationDays: 2 },
+  '10days': { amountINR: 5000, title: 'Sponsored Ad - 10 Days', durationDays: 10 },
+  '10': { amountINR: 5000, title: 'Sponsored Ad - 10 Days', durationDays: 10 },
+};
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const action = searchParams.get('action');
@@ -61,7 +75,18 @@ export async function POST(req: NextRequest) {
     let authoritativeTitle = 'FR8X Plan';
 
     const normalizedPlan = String(planId || body.itemTitle || '').toLowerCase().trim();
-    if (PLAN_CATALOG[normalizedPlan]) {
+
+    if (itemType === 'job') {
+      const durationKey = String(body.durationDays || body.duration || planId || '2').toLowerCase().replace('days', '').trim();
+      const matched = JOB_CATALOG[durationKey] || JOB_CATALOG['2'];
+      authoritativeAmount = matched.amountINR;
+      authoritativeTitle = body.itemTitle || matched.title;
+    } else if (itemType === 'ad') {
+      const durationKey = String(body.durationDays || body.duration || planId || '2days').toLowerCase().trim();
+      const matched = AD_CATALOG[durationKey] || AD_CATALOG['2days'];
+      authoritativeAmount = matched.amountINR;
+      authoritativeTitle = body.itemTitle || matched.title;
+    } else if (PLAN_CATALOG[normalizedPlan]) {
       authoritativeAmount = PLAN_CATALOG[normalizedPlan].amountINR;
       authoritativeTitle = PLAN_CATALOG[normalizedPlan].title;
     } else if (typeof body.amount === 'number' && gfAuth.authenticated) {

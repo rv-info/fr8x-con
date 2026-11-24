@@ -204,6 +204,16 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Auto-redirect if already authenticated (prevents forced manual refresh / flash)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const activeUid = localStorage.getItem('fr8x_active_user_uid') || localStorage.getItem('fr8x_user_uid');
+      if (activeUid && (auth?.isAuthenticated || document.cookie.includes('fr8x_session='))) {
+        router.replace('/feeds');
+      }
+    }
+  }, [auth?.isAuthenticated, router]);
+
   // Prefetch destination route on mount for instantaneous transition
   useEffect(() => {
     try {
@@ -282,19 +292,17 @@ export default function LoginPage() {
             setLoginStage('success');
             setIsLoading(false);
             toast('Logged in successfully via low-network secure connection.');
-            // Navigation safety watchdog: terminates loading animation if router transition hangs
-        const navigationWatchdog = setTimeout(() => {
-          setIsLoading(false);
-          setLoginStage('idle');
-        }, 5000);
 
-        try {
-          router.push('/feeds');
-        } catch {
-          clearTimeout(navigationWatchdog);
-          setIsLoading(false);
-          setLoginStage('idle');
-        }
+            try {
+              router.refresh();
+              router.push('/feeds');
+            } catch {}
+
+            setTimeout(() => {
+              if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+                window.location.assign('/feeds');
+              }
+            }, 500);
             return;
           }
         } catch {
@@ -368,19 +376,23 @@ export default function LoginPage() {
             }).catch(() => {});
           } catch {}
         }
-        // Navigation safety watchdog: terminates loading animation if router transition hangs
+        // Seamless immediate navigation with server revalidation
+        try {
+          router.refresh();
+          router.push('/feeds');
+        } catch {}
+
+        // Fallback guarantee: if client router navigation stalls, navigate directly
+        const redirectFallback = setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+            window.location.assign('/feeds');
+          }
+        }, 500);
+
         const navigationWatchdog = setTimeout(() => {
           setIsLoading(false);
           setLoginStage('idle');
-        }, 5000);
-
-        try {
-          router.push('/feeds');
-        } catch {
-          clearTimeout(navigationWatchdog);
-          setIsLoading(false);
-          setLoginStage('idle');
-        }
+        }, 3000);
       } else {
         setIsLoading(false);
         setLoginStage('idle');
@@ -445,19 +457,23 @@ export default function LoginPage() {
         const loggedIn = login(identifier.trim(), remember, data);
         if (loggedIn) {
           toast('First-time authentication verified! Welcome to FR8X Workspace.');
-          // Navigation safety watchdog: terminates loading animation if router transition hangs
+          // Seamless immediate navigation with server revalidation
+        try {
+          router.refresh();
+          router.push('/feeds');
+        } catch {}
+
+        // Fallback guarantee: if client router navigation stalls, navigate directly
+        const redirectFallback = setTimeout(() => {
+          if (typeof window !== 'undefined' && window.location.pathname === '/login') {
+            window.location.assign('/feeds');
+          }
+        }, 500);
+
         const navigationWatchdog = setTimeout(() => {
           setIsLoading(false);
           setLoginStage('idle');
-        }, 5000);
-
-        try {
-          router.push('/feeds');
-        } catch {
-          clearTimeout(navigationWatchdog);
-          setIsLoading(false);
-          setLoginStage('idle');
-        }
+        }, 3000);
         } else {
           setFirstLoginError('Session initialization failed. Please try again.');
         }

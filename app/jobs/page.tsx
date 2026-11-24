@@ -31,9 +31,33 @@ import {
   CheckCircle2,
   AlertTriangle,
   ShieldCheck,
+  Send,
+  FileText,
+  Phone,
+  UserCheck,
+  Eye,
+  Check,
 } from 'lucide-react';
+import { UserAvatar } from '@/components/ui/UserAvatar';
 import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { getStoredPlatformConfig, isFeatureFreeForUser } from '@/lib/platform-config';
+
+export interface JobApplication {
+  id: string;
+  jobId: string;
+  jobTitle: string;
+  companyName: string;
+  candidateUid: string;
+  candidateName: string;
+  candidateEmail: string;
+  candidatePhone: string;
+  experience: string;
+  currentRole?: string;
+  resumeUrl?: string;
+  coverNote?: string;
+  status: 'Under Review' | 'Shortlisted' | 'Interview Scheduled' | 'Rejected' | 'Hired';
+  appliedAt: string;
+}
 
 export default function JobsPage() {
   const { jobs, addJob, deleteJob, isHydrated } = useData();
@@ -49,6 +73,97 @@ export default function JobsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPaymentCheckout, setShowPaymentCheckout] = useState(false);
   const [pendingJobData, setPendingJobData] = useState<any>(null);
+
+  // Application and Recruiter management state
+  const [jobApplications, setJobApplications] = useState<JobApplication[]>([]);
+  const [applyingJob, setApplyingJob] = useState<JobPost | null>(null);
+  const [managingJobApps, setManagingJobApps] = useState<JobPost | null>(null);
+
+  // Application form fields
+  const [appName, setAppName] = useState('');
+  const [appEmail, setAppEmail] = useState('');
+  const [appPhone, setAppPhone] = useState('');
+  const [appExp, setAppExp] = useState('3–5 yrs experience');
+  const [appRole, setAppRole] = useState('');
+  const [appResume, setAppResume] = useState('');
+  const [appNote, setAppNote] = useState('');
+  const [isSubmittingApp, setIsSubmittingApp] = useState(false);
+
+  // Load applications from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('fr8x_job_applications');
+      if (stored) {
+        setJobApplications(JSON.parse(stored));
+      }
+    } catch {}
+  }, []);
+
+  const openApplyModal = (job: JobPost) => {
+    setApplyingJob(job);
+    setAppName(user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || '');
+    setAppEmail(user.email || '');
+    setAppPhone((user as any).phone || '');
+    setAppRole(user.designation || '');
+    setAppResume('');
+    setAppNote('');
+  };
+
+  const handleApplySubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!applyingJob) return;
+
+    if (!appName.trim() || !appEmail.trim() || !appPhone.trim()) {
+      toast('Please enter your full name, email, and contact phone number.');
+      return;
+    }
+
+    // Duplicate application check
+    const isDuplicate = jobApplications.some(
+      (a) => a.jobId === applyingJob.id && (a.candidateUid === user.uid || a.candidateEmail.toLowerCase() === appEmail.trim().toLowerCase())
+    );
+    if (isDuplicate) {
+      toast('⚠️ You have already submitted an application for this position.');
+      return;
+    }
+
+    setIsSubmittingApp(true);
+    const newApp: JobApplication = {
+      id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      jobId: applyingJob.id,
+      jobTitle: applyingJob.title,
+      companyName: applyingJob.company,
+      candidateUid: user.uid,
+      candidateName: appName.trim(),
+      candidateEmail: appEmail.trim(),
+      candidatePhone: appPhone.trim(),
+      experience: appExp.trim(),
+      currentRole: appRole.trim(),
+      resumeUrl: appResume.trim() || undefined,
+      coverNote: appNote.trim(),
+      status: 'Under Review',
+      appliedAt: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    };
+
+    const next = [newApp, ...jobApplications];
+    setJobApplications(next);
+    try {
+      localStorage.setItem('fr8x_job_applications', JSON.stringify(next));
+    } catch {}
+
+    setIsSubmittingApp(false);
+    setApplyingJob(null);
+    toast(`🎉 Application successfully submitted to ${applyingJob.company}! The recruiter will review your profile.`);
+  };
+
+  const handleUpdateAppStatus = (appId: string, newStatus: JobApplication['status']) => {
+    const next = jobApplications.map((a) => (a.id === appId ? { ...a, status: newStatus } : a));
+    setJobApplications(next);
+    try {
+      localStorage.setItem('fr8x_job_applications', JSON.stringify(next));
+    } catch {}
+    toast(`Candidate application status updated to '${newStatus}'.`);
+  };
 
   // Job create form state
   const [newTitle, setNewTitle] = useState('');
@@ -167,17 +282,24 @@ export default function JobsPage() {
           isOpen={!!selectedJob}
           onClose={() => setSelectedJob(null)}
           title={selectedJob.title}
+          maxWidth="640px"
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Header */}
             <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-              <div className="cologo" style={{ width: 44, height: 44, borderRadius: 10, fontSize: 14 }}>
-                {selectedJob.company.substring(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>{selectedJob.title}</h2>
+              <UserAvatar
+                name={selectedJob.postedBy}
+                companyName={selectedJob.company}
+                size={48}
+                showCompanyLogo={true}
+              />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>{selectedJob.title}</h2>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                  <span style={{ color: 'var(--brand)', fontSize: '12px', fontWeight: 600 }}>{selectedJob.company}</span>
+                  <span style={{ color: 'var(--brand)', fontSize: '12.5px', fontWeight: 700 }}>{selectedJob.company}</span>
+                  <span className="badge green" style={{ fontSize: '9px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <ShieldCheck size={10} /> Verified Company
+                  </span>
                   <span style={{ color: 'var(--mut)' }}>·</span>
                   <span style={{ fontSize: '11.5px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px' }}>
                     <MapPin size={11} /> {selectedJob.location}
@@ -263,6 +385,256 @@ export default function JobsPage() {
                 </div>
               )}
             </div>
+
+            {/* Controlled Action Workflow: Apply Now / Recruiter Manage */}
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--line)', paddingTop: '14px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Users size={14} style={{ color: 'var(--brand)' }} />
+                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
+                  {jobApplications.filter((a) => a.jobId === selectedJob.id).length} Candidate Application{jobApplications.filter((a) => a.jobId === selectedJob.id).length === 1 ? '' : 's'}
+                </span>
+              </div>
+
+              {selectedJob.posterUid === user.uid ? (
+                <button
+                  type="button"
+                  className="btn primary sm"
+                  onClick={() => {
+                    const job = selectedJob;
+                    setSelectedJob(null);
+                    setManagingJobApps(job);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                >
+                  <UserCheck size={13} /> Manage Applications ({jobApplications.filter((a) => a.jobId === selectedJob.id).length})
+                </button>
+              ) : jobApplications.some((a) => a.jobId === selectedJob.id && (a.candidateUid === user.uid || a.candidateEmail.toLowerCase() === (user.email || '').toLowerCase())) ? (
+                <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#065f46', fontSize: '12px', fontWeight: 600 }}>
+                  <CheckCircle2 size={14} color="#059669" />
+                  <span>Application Submitted &amp; Under Review</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="btn primary"
+                  onClick={() => {
+                    const job = selectedJob;
+                    setSelectedJob(null);
+                    openApplyModal(job);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 20px', fontWeight: 700 }}
+                >
+                  <Send size={13} />
+                  <span>APPLY NOW</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Candidate Apply Now Modal */}
+      {applyingJob && (
+        <Modal
+          isOpen={!!applyingJob}
+          onClose={() => setApplyingJob(null)}
+          title={`Apply for ${applyingJob.title}`}
+          maxWidth="560px"
+        >
+          <form onSubmit={handleApplySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ background: '#f8fafc', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <UserAvatar name={applyingJob.postedBy} companyName={applyingJob.company} size={36} showCompanyLogo={true} />
+              <div>
+                <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>{applyingJob.title}</b>
+                <small style={{ fontSize: '11px', color: 'var(--mut)' }}>{applyingJob.company} · {applyingJob.location}</small>
+              </div>
+            </div>
+
+            <div className="grid g2">
+              <div className="field">
+                <label>Full Name <span className="req">*</span></label>
+                <input
+                  className="input"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="e.g. Rajat Kumar Rai"
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>Corporate / Contact Email <span className="req">*</span></label>
+                <input
+                  className="input"
+                  type="email"
+                  value={appEmail}
+                  onChange={(e) => setAppEmail(e.target.value)}
+                  placeholder="candidate@company.com"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid g2">
+              <div className="field">
+                <label>Contact Phone <span className="req">*</span></label>
+                <input
+                  className="input"
+                  value={appPhone}
+                  onChange={(e) => setAppPhone(e.target.value)}
+                  placeholder="+91 9876543210"
+                  required
+                />
+              </div>
+              <div className="field">
+                <label>Total Experience</label>
+                <input
+                  className="input"
+                  value={appExp}
+                  onChange={(e) => setAppExp(e.target.value)}
+                  placeholder="e.g. 5+ years"
+                />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Current Company &amp; Designation</label>
+              <input
+                className="input"
+                value={appRole}
+                onChange={(e) => setAppRole(e.target.value)}
+                placeholder="e.g. Senior Freight Forwarder at Blue Freight"
+              />
+            </div>
+
+            <div className="field">
+              <label>Resume / CV Link (or Portfolio URL)</label>
+              <input
+                className="input"
+                value={appResume}
+                onChange={(e) => setAppResume(e.target.value)}
+                placeholder="https://drive.google.com/your-resume or LinkedIn"
+              />
+            </div>
+
+            <div className="field">
+              <label>Cover Note for Recruiter</label>
+              <textarea
+                className="input"
+                rows={3}
+                value={appNote}
+                onChange={(e) => setAppNote(e.target.value)}
+                placeholder="Briefly highlight your logistics experience, trade lanes handled, and why you are a good fit…"
+              />
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
+              <button type="button" className="btn secondary" onClick={() => setApplyingJob(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn primary" disabled={isSubmittingApp}>
+                <Send size={13} />
+                <span>Submit Application</span>
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Recruiter Applications Management Modal */}
+      {managingJobApps && (
+        <Modal
+          isOpen={!!managingJobApps}
+          onClose={() => setManagingJobApps(null)}
+          title={`Candidate Applications · ${managingJobApps.title}`}
+          maxWidth="680px"
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--line)' }}>
+              <div>
+                <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>{managingJobApps.title}</b>
+                <small style={{ fontSize: '11px', color: 'var(--mut)' }}>Posted by your organization on {managingJobApps.postedDate}</small>
+              </div>
+              <span className="badge blue" style={{ fontSize: '11px' }}>
+                {jobApplications.filter((a) => a.jobId === managingJobApps.id).length} Applicants
+              </span>
+            </div>
+
+            {jobApplications.filter((a) => a.jobId === managingJobApps.id).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--mut)' }}>
+                <Users size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
+                <p style={{ fontSize: '13px', margin: 0, fontWeight: 600 }}>No applications submitted yet.</p>
+                <small style={{ fontSize: '11.5px' }}>Your job opening is actively broadcast to freight network members.</small>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '420px', overflowY: 'auto' }}>
+                {jobApplications.filter((a) => a.jobId === managingJobApps.id).map((app) => (
+                  <div
+                    key={app.id}
+                    style={{
+                      border: '1px solid var(--line)',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      background: '#ffffff',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <UserAvatar name={app.candidateName} size={34} showCompanyLogo={false} />
+                        <div>
+                          <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>{app.candidateName}</b>
+                          <small style={{ fontSize: '11px', color: 'var(--mut)' }}>{app.currentRole || 'Logistics Candidate'} · Exp: {app.experience}</small>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <select
+                          className="input"
+                          style={{ fontSize: '11px', padding: '3px 8px', height: '28px' }}
+                          value={app.status}
+                          onChange={(e) => handleUpdateAppStatus(app.id, e.target.value as any)}
+                        >
+                          <option value="Under Review">Under Review</option>
+                          <option value="Shortlisted">Shortlisted</option>
+                          <option value="Interview Scheduled">Interview Scheduled</option>
+                          <option value="Hired">Hired</option>
+                          <option value="Rejected">Rejected</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {app.coverNote && (
+                      <p style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', margin: 0, background: '#f8fafc', padding: '6px 10px', borderRadius: '5px' }}>
+                        "{app.coverNote}"
+                      </p>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '6px', fontSize: '11px', color: 'var(--mut)', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <a href={`mailto:${app.candidateEmail}`} style={{ color: 'var(--brand)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px', fontWeight: 600 }}>
+                          <Mail size={11} /> {app.candidateEmail}
+                        </a>
+                        <a href={`tel:${app.candidatePhone}`} style={{ color: 'var(--ink-secondary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <Phone size={11} /> {app.candidatePhone}
+                        </a>
+                      </div>
+                      {app.resumeUrl && (
+                        <a
+                          href={app.resumeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn secondary sm"
+                          style={{ padding: '2px 8px', fontSize: '10.5px' }}
+                        >
+                          <FileText size={11} /> View Resume
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -470,24 +842,30 @@ export default function JobsPage() {
           {filteredJobs.map((job) => (
             <div key={job.id} className="job-card">
               <div className="job-card-head">
-                <div className="cologo" style={{ width: 38, height: 38, borderRadius: 9, fontSize: 12, flexShrink: 0 }}>
-                  {job.company.substring(0, 2).toUpperCase()}
-                </div>
+                <UserAvatar
+                  name={job.postedBy}
+                  companyName={job.company}
+                  size={42}
+                  showCompanyLogo={true}
+                />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <b className="job-card-title">{job.title}</b>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600 }}>{job.company}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--brand)', fontWeight: 700 }}>{job.company}</span>
+                    <span className="badge green" style={{ fontSize: '8.5px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <ShieldCheck size={9} /> Verified
+                    </span>
                     {job.posterUid === user.uid && (
                       <span className="badge blue" style={{ fontSize: '8.5px' }}>My Post</span>
                     )}
                     {job.posterUid === user.uid && job.paymentStatus === 'pending_verification' && (
                       <span className="badge amber" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <Clock size={9} /> Pending Godfather Verification {job.paymentReference ? `· UTR ${job.paymentReference}` : ''}
+                        <Clock size={9} /> Pending Verification {job.paymentReference ? `· ${job.paymentReference}` : ''}
                       </span>
                     )}
                     {job.posterUid === user.uid && job.paymentStatus === 'paid' && (
                       <span className="badge green" style={{ fontSize: '8.5px', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <CheckCircle2 size={9} /> Paid & Verified (₹{job.paidAmount || 300})
+                        <CheckCircle2 size={9} /> Paid &amp; Active (₹{job.paidAmount || 300})
                       </span>
                     )}
                     {job.posterUid === user.uid && job.paymentStatus === 'waived_promotional' && (
@@ -545,16 +923,38 @@ export default function JobsPage() {
                 );
               })()}
 
-              <div className="job-card-footer">
-                <small style={{ color: 'var(--faint)', fontSize: '10px' }}>
-                  <Clock size={10} /> Posted {job.postedDate}
-                </small>
-                <button
-                  className="btn secondary sm"
-                  onClick={() => setSelectedJob(job)}
-                >
-                  View Details <ChevronRight size={12} />
-                </button>
+              <div className="job-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light, #edf2f7)', paddingTop: '8px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <small style={{ color: 'var(--mut)', fontSize: '10.5px' }}>
+                    Posted {job.postedDate}
+                  </small>
+                  {jobApplications.filter((a) => a.jobId === job.id).length > 0 && (
+                    <small style={{ color: 'var(--brand)', fontSize: '10px', fontWeight: 600 }}>
+                      {jobApplications.filter((a) => a.jobId === job.id).length} applicant{jobApplications.filter((a) => a.jobId === job.id).length === 1 ? '' : 's'}
+                    </small>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  {job.posterUid === user.uid && (
+                    <button
+                      type="button"
+                      className="btn secondary sm"
+                      style={{ padding: '3px 8px', fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => setManagingJobApps(job)}
+                      title="Manage candidate applications"
+                    >
+                      <Users size={11} /> Apps ({jobApplications.filter((a) => a.jobId === job.id).length})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    className="btn primary sm"
+                    style={{ fontWeight: 700, padding: '4px 12px', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11.5px' }}
+                    onClick={() => setSelectedJob(job)}
+                  >
+                    <Eye size={12} /> SHOW JOB
+                  </button>
+                </div>
               </div>
             </div>
           ))}
