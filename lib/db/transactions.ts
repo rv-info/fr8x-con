@@ -46,6 +46,11 @@ export async function getTransactionById(id: string): Promise<TransactionRow | n
   return data;
 }
 
+export async function getTransactionByOrderId(orderId: string): Promise<TransactionRow | null> {
+  const txs = await getTransactions({ orderId });
+  return txs[0] || null;
+}
+
 export async function saveTransaction(tx: any): Promise<TransactionRow> {
   const supabase = getDbClient();
   const payload = {

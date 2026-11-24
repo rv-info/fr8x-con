@@ -10,6 +10,7 @@ import { ProfilePreviewModal } from '@/components/ui/ProfilePreviewModal';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { NexusTopic, CompanyReview, BlacklistCase, PostReport } from '@/lib/types';
+import { NexusRichTextEditor, SafeHtmlContent } from '@/components/nexus/NexusRichTextEditor';
 import {
   MessagesSquare,
   Star,
@@ -927,13 +928,10 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
                   <div className="field" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <label style={{ fontSize: '11.5px', fontWeight: 700 }}>Discussion Body &amp; Trade Details</label>
-                    <textarea
-                      className="input"
+                    <NexusRichTextEditor
                       value={editTopicBody}
-                      onChange={(e) => setEditTopicBody(e.target.value)}
-                      rows={12}
-                      required
-                      style={{ flex: 1, minHeight: '220px', resize: 'vertical', fontSize: '13.5px', lineHeight: 1.6 }}
+                      onChange={setEditTopicBody}
+                      minHeight="220px"
                     />
                   </div>
 
@@ -983,8 +981,8 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
                     {selectedTopic.title}
                   </h3>
 
-                  <div style={{ flex: 1, whiteSpace: 'pre-wrap', color: 'var(--ink-secondary)', fontSize: '14px' }}>
-                    {selectedTopic.text}
+                  <div style={{ flex: 1, color: 'var(--ink-secondary)', fontSize: '14px' }}>
+                    <SafeHtmlContent html={selectedTopic.text} />
                   </div>
 
                   {/* Reactions & Report row */}
@@ -1198,14 +1196,11 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
               <label style={{ fontWeight: 700, fontSize: '12px' }}>
                 Discussion Context, Port Logistics &amp; Inquiries <span className="req">*</span>
               </label>
-              <textarea
-                className="input"
-                rows={isNewTopicFullScreen ? 15 : 6}
-                placeholder="Provide trade context, port specifics, regulatory issues or rate data points to initiate professional dialogue..."
+              <NexusRichTextEditor
                 value={newTopicBody}
-                onChange={(e) => setNewTopicBody(e.target.value)}
-                required
-                style={{ flex: 1, resize: 'vertical', fontSize: '13.5px', lineHeight: 1.6 }}
+                onChange={setNewTopicBody}
+                placeholder="Provide trade context, port specifics, regulatory issues or rate data points to initiate professional dialogue..."
+                minHeight={isNewTopicFullScreen ? '320px' : '220px'}
               />
             </div>
 
@@ -1621,7 +1616,7 @@ Review this topic in FR8X Nexus Moderation Board. If it violates FR8X Terms of S
 
                   <b style={{ fontSize: '15px', color: 'var(--ink)', lineHeight: 1.4 }}>{topic.title}</b>
                   <p style={{ fontSize: '13px', color: 'var(--ink-secondary)', margin: '2px 0 6px', lineHeight: 1.6 }}>
-                    {topic.text}
+                    {topic.text ? topic.text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : ''}
                   </p>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '12px', marginTop: 'auto' }}>

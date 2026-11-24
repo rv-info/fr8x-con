@@ -10,6 +10,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
 import { JobCreateModal } from '@/components/jobs/JobCreateModal';
+import { JobDetailsModal } from '@/components/jobs/JobDetailsModal';
 import { JobPost } from '@/lib/types';
 import {
   Briefcase,
@@ -277,190 +278,26 @@ export default function JobsPage() {
 
   return (
     <div>
-      {/* Job Detail Modal */}
+      {/* Job Detail Modal with Phase 2.4 Contact Actions */}
       {selectedJob && (
-        <Modal
+        <JobDetailsModal
           isOpen={!!selectedJob}
           onClose={() => setSelectedJob(null)}
-          title={selectedJob.title}
-          maxWidth="640px"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Header */}
-            <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-              <UserAvatar
-                name={selectedJob.postedBy}
-                companyName={selectedJob.company}
-                size={48}
-                showCompanyLogo={true}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>{selectedJob.title}</h2>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px', flexWrap: 'wrap' }}>
-                  <span style={{ color: 'var(--brand)', fontSize: '12.5px', fontWeight: 700 }}>{selectedJob.company}</span>
-                  <span className="badge green" style={{ fontSize: '9px', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                    <ShieldCheck size={10} /> Verified Company
-                  </span>
-                  <span style={{ color: 'var(--mut)' }}>·</span>
-                  <span style={{ fontSize: '11.5px', color: 'var(--mut)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    <MapPin size={11} /> {selectedJob.location}
-                  </span>
-                </div>
-                <div style={{ display: 'flex', gap: '6px', marginTop: '6px', flexWrap: 'wrap' }}>
-                  <span className="badge blue">{selectedJob.employmentType}</span>
-                  <span className="badge grey">{selectedJob.experience}</span>
-                  {selectedJob.closingDate && (
-                    <span className="badge amber" style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <Clock size={10} /> Closes {selectedJob.closingDate}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Package */}
-            {selectedJob.packageDetails && (
-              <div style={{ background: '#e7f7ed', border: '1px solid #bbf7d0', borderRadius: 8, padding: '10px 12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <DollarSign size={14} style={{ color: 'var(--green)' }} />
-                  <b style={{ fontSize: '13px', color: 'var(--green)' }}>{selectedJob.packageDetails}</b>
-                </div>
-              </div>
-            )}
-
-            {/* Skills */}
-            {(() => {
-              const sList = Array.isArray(selectedJob.skills)
-                ? selectedJob.skills
-                : typeof selectedJob.skills === 'string'
-                  ? (selectedJob.skills as string).split(',').map((s) => s.trim()).filter(Boolean)
-                  : [];
-              if (sList.length === 0) return null;
-              return (
-                <div>
-                  <b style={{ display: 'block', fontSize: '10.5px', color: 'var(--mut)', textTransform: 'uppercase', marginBottom: '6px' }}>Required Skills</b>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                    {sList.map((s) => (
-                      <span key={s} className="badge grey">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Sections */}
-            {[
-              { label: 'Requirements', value: selectedJob.requirements },
-              { label: 'Responsibilities', value: selectedJob.responsibilities },
-              { label: 'Qualifications', value: selectedJob.qualifications },
-            ].filter((s) => s.value).map((section) => (
-              <div key={section.label}>
-                <b style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--ink)', marginBottom: '6px' }}>{section.label}</b>
-                <p style={{ fontSize: '12px', color: 'var(--ink-secondary)', lineHeight: '1.6', whiteSpace: 'pre-line' }}>
-                  {section.value}
-                </p>
-              </div>
-            ))}
-
-            {/* Recruiter Contact Channels & Application Information (Mandatory Directive) */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: 8, padding: '12px' }}>
-              <b style={{ fontSize: '11px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
-                <Mail size={12} /> Recruiter &amp; Application Channels
-              </b>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
-                  <div>
-                    <b style={{ fontSize: '12.5px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      {selectedJob.postedBy}
-                    </b>
-                    <small style={{ color: '#526174', fontSize: '11px' }}>
-                      {selectedJob.company} · {selectedJob.postedDate}
-                    </small>
-                  </div>
-                  {selectedJob.posterEmail && (
-                    <a
-                      href={`mailto:${selectedJob.posterEmail}?subject=${encodeURIComponent(`Application for ${selectedJob.title} - ${user.displayName || 'Candidate'}`)}&body=${encodeURIComponent(`Dear Hiring Team at ${selectedJob.company},\n\nI am applying for the ${selectedJob.title} position on FR8X.\n\nApplicant: ${user.displayName}\nEmail: ${user.email}\nPhone: ${user.mobile || ''}\nCompany: ${user.company || ''}\n\nBest regards,\n${user.displayName}`)}`}
-                      className="btn secondary sm"
-                      style={{ fontSize: '11px', height: '28px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                    >
-                      <Mail size={12} /> Apply via Email
-                    </a>
-                  )}
-                </div>
-
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#172B45', flexWrap: 'wrap' }}>
-                  <span style={{ color: '#526174' }}>Primary Email:</span>
-                  <a href={`mailto:${selectedJob.posterEmail || 'recruiter@company.com'}`} style={{ color: '#075B5B', fontWeight: 600, textDecoration: 'none' }}>
-                    {selectedJob.posterEmail || 'recruiter@company.com'}
-                  </a>
-                  {selectedJob.contactPhone && (
-                    <>
-                      <span style={{ color: '#D9E0E8' }}>|</span>
-                      <span style={{ color: '#526174' }}>Phone:</span>
-                      <span style={{ fontWeight: 600 }}>{selectedJob.contactPhone}</span>
-                      {selectedJob.hasWhatsApp && <span className="badge green" style={{ fontSize: '7.5px', padding: '1px 4px' }}>WHATSAPP</span>}
-                    </>
-                  )}
-                </div>
-
-                {selectedJob.applicationInstructions && (
-                  <div style={{ background: '#F4F6F8', padding: '8px 10px', borderRadius: '4px', fontSize: '11px', color: '#526174', marginTop: '2px' }}>
-                    <b style={{ color: '#172B45' }}>Application Instructions:</b> {selectedJob.applicationInstructions}
-                  </div>
-                )}
-              </div>
-              {selectedJob.posterTimezone && (
-                <div style={{ marginTop: '8px' }}>
-                  <LocalTimeBadge timezone={selectedJob.posterTimezone} />
-                </div>
-              )}
-            </div>
-
-            {/* Controlled Action Workflow: Apply Now / Recruiter Manage */}
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid var(--line)', paddingTop: '14px', marginTop: '6px', flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <Users size={14} style={{ color: 'var(--brand)' }} />
-                <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>
-                  {jobApplications.filter((a) => a.jobId === selectedJob.id).length} Candidate Application{jobApplications.filter((a) => a.jobId === selectedJob.id).length === 1 ? '' : 's'}
-                </span>
-              </div>
-
-              {selectedJob.posterUid === user.uid ? (
-                <button
-                  type="button"
-                  className="btn primary sm"
-                  onClick={() => {
-                    const job = selectedJob;
-                    setSelectedJob(null);
-                    setManagingJobApps(job);
-                  }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                >
-                  <UserCheck size={13} /> Manage Applications ({jobApplications.filter((a) => a.jobId === selectedJob.id).length})
-                </button>
-              ) : jobApplications.some((a) => a.jobId === selectedJob.id && (a.candidateUid === user.uid || a.candidateEmail.toLowerCase() === (user.email || '').toLowerCase())) ? (
-                <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: '6px', padding: '6px 12px', display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#065f46', fontSize: '12px', fontWeight: 600 }}>
-                  <CheckCircle2 size={14} color="#059669" />
-                  <span>Application Submitted &amp; Under Review</span>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  className="btn primary"
-                  onClick={() => {
-                    const job = selectedJob;
-                    setSelectedJob(null);
-                    openApplyModal(job);
-                  }}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 20px', fontWeight: 700 }}
-                >
-                  <Send size={13} />
-                  <span>APPLY NOW</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </Modal>
+          job={selectedJob}
+          hasApplied={jobApplications.some(
+            (a) =>
+              a.jobId === selectedJob.id &&
+              (a.candidateUid === user.uid ||
+                a.candidateEmail.toLowerCase() === (user.email || '').toLowerCase())
+          )}
+          applicationCount={jobApplications.filter((a) => a.jobId === selectedJob.id).length}
+          onManageApplications={(job) => {
+            setManagingJobApps(job);
+          }}
+          onApply={(job) => {
+            openApplyModal(job);
+          }}
+        />
       )}
 
       {/* Candidate Apply Now Modal */}

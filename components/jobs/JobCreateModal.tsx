@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useData } from '@/lib/context/DataContext';
-import { useToast } from '@/components/ui/Toast';
+import { useToast } from '@/lib/context/ToastContext';
 import { PaymentCheckoutModal } from '@/components/ui/PaymentCheckoutModal';
 import { AiJobSuggestions } from '@/components/ai/AiJobSuggestions';
 
@@ -54,15 +54,22 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
     user.city ? `${user.city}, India · On-site` : 'Gurugram (Sikanderpur), India · On-site'
   );
   const [employmentType, setEmploymentType] = useState('Full-time');
+  const [category, setCategory] = useState('Ocean Freight & Liner Operations');
+  const [vacancies, setVacancies] = useState('1');
   const [experience, setExperience] = useState('3–5 yrs experience');
   const [packageDetails, setPackageDetails] = useState('');
   const [closingDate, setClosingDate] = useState('');
   const [skills, setSkills] = useState('');
+  const [description, setDescription] = useState('');
   const [requirements, setRequirements] = useState('');
   const [responsibilities, setResponsibilities] = useState('');
   const [qualifications, setQualifications] = useState('');
 
   // Contact & Application Channels (Critical Requirement)
+  const [contactPerson, setContactPerson] = useState(user.displayName || '');
+  const [contactDesignation, setContactDesignation] = useState(user.designation || 'Head of Talent Acquisition');
+  const [companyWebsite, setCompanyWebsite] = useState('https://');
+  const [whatsappNumber, setWhatsappNumber] = useState(user.mobile || user.phone || '');
   const [primaryEmail, setPrimaryEmail] = useState(user.email || '');
   const [contactPhone, setContactPhone] = useState(user.mobile || user.phone || '');
   const [hasWhatsApp, setHasWhatsApp] = useState(true);
@@ -120,12 +127,16 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
       toast('Please enter a job title.');
       return;
     }
-    if (!requirements.trim()) {
-      toast('Please enter the core requirements.');
+    if (!requirements.trim() && !description.trim()) {
+      toast('Please enter the core requirements or job description.');
       return;
     }
     if (!primaryEmail.trim() || !primaryEmail.includes('@')) {
-      toast('Please enter a valid primary recruiter email address.');
+      toast('Please enter a valid official company / recruiter email address.');
+      return;
+    }
+    if (!contactPhone.trim() && !whatsappNumber.trim()) {
+      toast('Please provide at least one valid telephone or WhatsApp contact number.');
       return;
     }
 
@@ -135,6 +146,8 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
       companyId: user.companyId || null,
       location: location.trim() || 'Pan-India',
       employmentType,
+      category,
+      vacancies: parseInt(vacancies, 10) || 1,
       experience: experience.trim(),
       packageDetails: packageDetails.trim() || 'Competitive',
       closingDate: closingDate || undefined,
@@ -142,18 +155,23 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
-      requirements: requirements.trim(),
+      description: description.trim() || requirements.trim(),
+      requirements: requirements.trim() || description.trim(),
       responsibilities: responsibilities.trim() || undefined,
       qualifications: qualifications.trim() || undefined,
 
-      // Contact channels
+      // Employer Contact Details (Mandatory)
+      contactPerson: contactPerson.trim() || user.displayName || 'Hiring Lead',
+      contactDesignation: contactDesignation.trim() || user.designation || 'Talent Acquisition',
       posterEmail: primaryEmail.trim(),
+      companyWebsite: companyWebsite.trim() && companyWebsite !== 'https://' ? companyWebsite.trim() : undefined,
       contactEmails: [
-        { email: primaryEmail.trim(), label: 'Primary Recruiter', isPrimary: true },
+        { email: primaryEmail.trim(), label: 'Official Company Email', isPrimary: true },
         ...additionalEmails.map((ae) => ({ email: ae.email, label: ae.label, isPrimary: false })),
       ],
       contactPhone: contactPhone.trim(),
-      hasWhatsApp,
+      whatsappNumber: whatsappNumber.trim() || (hasWhatsApp ? contactPhone.trim() : ''),
+      hasWhatsApp: Boolean(hasWhatsApp || whatsappNumber.trim()),
       applicationInstructions: applicationInstructions.trim(),
       applicationMethod,
 
@@ -292,7 +310,45 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               </div>
             </div>
 
-            {/* Row 2: Location & Employment Type */}
+            {/* Row 2: Category & Vacancies */}
+            <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                  Job Category / Department <span style={{ color: '#DC2626' }}>*</span>
+                </label>
+                <select
+                  className="input"
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 8px' }}
+                >
+                  <option value="Ocean Freight & Liner Operations">Ocean Freight & Liner Operations</option>
+                  <option value="Air Cargo & Charter Operations">Air Cargo & Charter Operations</option>
+                  <option value="Customs Brokerage & Port Clearance">Customs Brokerage & Port Clearance</option>
+                  <option value="Surface Transport & Fleet Management">Surface Transport & Fleet Management</option>
+                  <option value="Warehousing & 3PL Logistics">Warehousing & 3PL Logistics</option>
+                  <option value="Freight Procurement & Reverse Auctions">Freight Procurement & Reverse Auctions</option>
+                  <option value="Commercial Trade Sales & Key Accounts">Commercial Trade Sales & Key Accounts</option>
+                  <option value="Logistics Finance, Billing & Compliance">Logistics Finance, Billing & Compliance</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                  Number of Vacancies
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="50"
+                  className="input"
+                  value={vacancies}
+                  onChange={(e) => setVacancies(e.target.value)}
+                  style={{ width: '100%', height: '34px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Location & Employment Type */}
             <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '12px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
@@ -381,7 +437,22 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               </div>
             </div>
 
-            {/* Row 5: Requirements */}
+            {/* Row 5: Job Description */}
+            <div>
+              <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
+                Job Description
+              </label>
+              <textarea
+                className="input"
+                rows={3}
+                placeholder="Comprehensive overview of the role, team context, and objectives..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                style={{ width: '100%', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '8px 10px', resize: 'vertical' }}
+              />
+            </div>
+
+            {/* Row 6: Requirements */}
             <div>
               <label style={{ display: 'block', fontSize: '11.5px', fontWeight: 600, color: '#172B45', marginBottom: '4px' }}>
                 Requirements <span style={{ color: '#DC2626' }}>*</span>
@@ -430,31 +501,64 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               />
             </div>
 
-            {/* Row 8: Recruiter Contact & Application Channels (Critical Directive) */}
+            {/* Row 8: Employer Contact Information (Mandatory Section) */}
             <div
               style={{
                 backgroundColor: '#FFFFFF',
                 border: '1px solid #D9E0E8',
                 borderRadius: '8px',
-                padding: '12px 14px',
+                padding: '14px 16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '10px',
+                gap: '12px',
+                boxShadow: '2px 2px 8px rgba(0,0,0,0.03)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <b style={{ fontSize: '12px', color: '#075B5B', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <Mail size={13} /> Recruiter Contact &amp; Application Channels
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #D9E0E8', paddingBottom: '6px' }}>
+                <b style={{ fontSize: '12.5px', color: '#075B5B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Mail size={14} /> Employer Contact Information
                 </b>
                 <span style={{ fontSize: '10.5px', color: '#526174' }}>
-                  Receives applications &amp; candidate communication
+                  Mandatory for application routing &amp; applicant verification
                 </span>
               </div>
 
+              {/* Contact Person Name & Designation */}
               <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
-                    Primary Recruiter Email <span style={{ color: '#DC2626' }}>*</span>
+                    Contact Person Name <span style={{ color: '#DC2626' }}>*</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={contactPerson}
+                    onChange={(e) => setContactPerson(e.target.value)}
+                    placeholder="e.g. Rajat Kumar / Lead Recruiter"
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                    Designation
+                  </label>
+                  <input
+                    type="text"
+                    className="input"
+                    value={contactDesignation}
+                    onChange={(e) => setContactDesignation(e.target.value)}
+                    placeholder="e.g. Head of Talent Acquisition"
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Official Email & Company Website */}
+              <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                    Official Company Email Address <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <input
                     type="email"
@@ -468,7 +572,24 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
-                    Contact Phone Number (Optional)
+                    Company Website
+                  </label>
+                  <input
+                    type="url"
+                    className="input"
+                    value={companyWebsite}
+                    onChange={(e) => setCompanyWebsite(e.target.value)}
+                    placeholder="https://company.com"
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Phone & WhatsApp Number */}
+              <div className="grid g2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                    Contact Phone Number <span style={{ color: '#DC2626' }}>*</span>
                   </label>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <input
@@ -478,6 +599,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                       onChange={(e) => setContactPhone(e.target.value)}
                       placeholder="+91 98765 43210"
                       style={{ flex: 1, height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                      required
                     />
                     <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#172B45', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                       <input
@@ -485,9 +607,22 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                         checked={hasWhatsApp}
                         onChange={(e) => setHasWhatsApp(e.target.checked)}
                       />
-                      WhatsApp
+                      Same on WhatsApp
                     </label>
                   </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#172B45', marginBottom: '3px' }}>
+                    Dedicated WhatsApp Number (International format)
+                  </label>
+                  <input
+                    type="tel"
+                    className="input"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    placeholder="+919876543210 (country code + number)"
+                    style={{ width: '100%', height: '32px', fontSize: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '6px', padding: '0 10px' }}
+                  />
                 </div>
               </div>
 
@@ -705,31 +840,43 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 })}
               </div>
 
-              {/* Auto-renew row & Total Payable */}
+              {/* Pricing Summary Box (Phase 3 Directive) */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                   borderTop: '1px solid #D9E0E8',
-                  paddingTop: '10px',
-                  marginTop: '4px',
+                  paddingTop: '12px',
+                  marginTop: '6px',
+                  backgroundColor: '#F8FAFC',
+                  padding: '10px 14px',
+                  borderRadius: '6px',
+                  border: '1px solid #D9E0E8',
                 }}
               >
-                <label style={{ fontSize: '11.5px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={autoRenew}
-                    onChange={(e) => setAutoRenew(e.target.checked)}
-                  />
-                  Auto-renew listing at ₹180/day thereafter till revoked
-                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <span style={{ fontSize: '11px', color: '#526174' }}>
+                    Job Listing Package: <strong>₹{totalCost.toLocaleString('en-IN')}</strong>
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#526174' }}>
+                    Duration: <strong>{durationDays} Days</strong>
+                  </span>
+                  <label style={{ fontSize: '11px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer', marginTop: '2px' }}>
+                    <input
+                      type="checkbox"
+                      checked={autoRenew}
+                      onChange={(e) => setAutoRenew(e.target.checked)}
+                    />
+                    Auto-renew listing at ₹180/day thereafter
+                  </label>
+                </div>
                 <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10px', color: '#526174', display: 'block', fontWeight: 600 }}>
+                  <span style={{ fontSize: '10.5px', color: '#526174', display: 'block', fontWeight: 600 }}>
                     TOTAL PAYABLE
                   </span>
-                  <b style={{ fontSize: '16px', color: '#075B5B' }}>
-                    {isFreeWaiver ? '₹0 (Free Waiver)' : `₹${totalCost.toLocaleString('en-IN')}`}
+                  <b style={{ fontSize: '18px', color: '#075B5B' }}>
+                    {isFreeWaiver ? '₹0 (Promotional Waiver)' : `₹${totalCost.toLocaleString('en-IN')}`}
                   </b>
                 </div>
               </div>
@@ -758,6 +905,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   fontSize: '12px',
                   fontWeight: 600,
                   cursor: 'pointer',
+                  boxShadow: '1px 1px 3px rgba(0,0,0,0.04)',
                 }}
               >
                 Cancel
@@ -766,7 +914,8 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                 type="submit"
                 style={{
                   height: '34px',
-                  padding: '0 20px',
+                  minWidth: '100px',
+                  padding: '0 24px',
                   backgroundColor: '#075B5B',
                   color: '#FFFFFF',
                   border: '1px solid #075B5B',
@@ -774,12 +923,11 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  boxShadow: '0 1px 2px rgba(7, 91, 91, 0.2)',
+                  boxShadow: '0 2px 5px rgba(7, 91, 91, 0.25), inset 0 1px 0 rgba(255,255,255,0.3)',
+                  letterSpacing: '0.04em',
                 }}
               >
-                {isFreeWaiver
-                  ? 'Post Job (Free Waiver Applied)'
-                  : `Pay ₹${totalCost.toLocaleString('en-IN')} & Post Job`}
+                {isFreeWaiver ? 'POST JOB' : 'PAY'}
               </button>
             </div>
           </form>
@@ -800,7 +948,7 @@ export function JobCreateModal({ isOpen, onClose, onSuccess }: JobCreateModalPro
               paymentStatus: details.paymentStatus,
               paidAmount: details.paidAmount,
               paymentMethod: details.paymentMethod,
-              paymentReference: details.transactionId,
+              paymentReference: details.paymentReference,
               paymentVerifiedAt: details.paymentStatus === 'paid' ? new Date().toISOString() : undefined,
             });
             setShowCheckout(false);

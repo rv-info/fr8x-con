@@ -20,6 +20,8 @@ import { RichPostEditor } from '@/components/posts/RichPostEditor';
 import { sanitizeRichTextPost } from '@/lib/security/input-validation';
 import Image from 'next/image';
 import { JobCreateModal } from '@/components/jobs/JobCreateModal';
+import { JobDetailsModal } from '@/components/jobs/JobDetailsModal';
+import { AdBookingModal } from '@/components/ads/AdBookingModal';
 import { FeedPost, JobPost, PostType, FeedSurface } from '@/lib/types';
 import { feedRankingEngine } from '@/lib/ranking/engine';
 import {
@@ -1151,197 +1153,35 @@ export default function FeedsPage() {
         onOpenProfile={(name) => setSelectedProfileName(name)}
       />
 
-      {/* Book Advertisement Space Modal */}
+      {/* Book Advertisement Space & Creative Editor Modal (Phase 4 & Phase 5) */}
       {showBookAdModal && (
-        <Modal
+        <AdBookingModal
           isOpen={showBookAdModal}
           onClose={() => setShowBookAdModal(false)}
-          title="Book advertisement space"
-          maxWidth="640px"
-        >
-          <form onSubmit={handleBookAdSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div className="field">
-              <label>Business name <span className="req">*</span></label>
-              <input
-                className="input"
-                placeholder="e.g. Your Enterprise Logistics Co."
-                value={adBusinessName}
-                onChange={(e) => setAdBusinessName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>Contact Email <span className="req">*</span></label>
-                <input
-                  className="input"
-                  type="email"
-                  placeholder="e.g. contact@yourcompany.com"
-                  value={adContactEmail}
-                  onChange={(e) => setAdContactEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="field">
-                <label style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Direct Phone / WhatsApp</span>
-                  <label style={{ fontSize: '10px', display: 'flex', alignItems: 'center', gap: '3px', cursor: 'pointer', color: '#16a34a', fontWeight: 600 }}>
-                    <input
-                      type="checkbox"
-                      checked={adIsWhatsApp}
-                      onChange={(e) => setAdIsWhatsApp(e.target.checked)}
-                    />
-                    WhatsApp
-                  </label>
-                </label>
-                <input
-                  className="input"
-                  placeholder="e.g. +91 9876543210"
-                  value={adContactPhone}
-                  onChange={(e) => setAdContactPhone(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="field">
-              <label>Ad headline <span className="req">*</span></label>
-              <input
-                className="input"
-                placeholder="e.g. Reliable FCL rates, Asia–Europe"
-                value={adHeadline}
-                onChange={(e) => setAdHeadline(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="field">
-              <label>Ad description</label>
-              <textarea
-                className="input"
-                rows={2}
-                placeholder="Short promotional message shown with your creative…"
-                value={adDescription}
-                onChange={(e) => setAdDescription(e.target.value)}
-              />
-            </div>
-
-            <div className="grid g2">
-              <div className="field">
-                <label>Destination Website URL</label>
-                <input
-                  className="input"
-                  placeholder="https://yourcompany.com"
-                  value={adDestUrl}
-                  onChange={(e) => setAdDestUrl(e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label>Action Buttons Layout</label>
-                <select
-                  className="input"
-                  value={adButtonLayout}
-                  onChange={(e) => setAdButtonLayout(e.target.value as any)}
-                >
-                  <option value="horizontal">Bottom Horizontal (3-Button Bar)</option>
-                  <option value="vertical">Vertical Stack (Full Width)</option>
-                  <option value="overlay">Image Overlay (Floating Glass)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Creative Upload Dropzone */}
-            <div className="field">
-              <label>Ad creative — PNG or GIF · exactly 237 × 299 px <span className="req">*</span></label>
-              <div
-                style={{
-                  border: '2px dashed #cbd5e1',
-                  borderRadius: '10px',
-                  padding: '16px',
-                  textAlign: 'center',
-                  background: '#f8fafc',
-                  position: 'relative',
-                  cursor: 'pointer',
-                }}
-              >
-                <input
-                  type="file"
-                  accept="image/png, image/gif, image/jpeg"
-                  onChange={handleCreativeUpload}
-                  style={{
-                    opacity: 0,
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    cursor: 'pointer',
-                  }}
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
-                  <Upload size={22} color="var(--brand)" />
-                  <b style={{ fontSize: '12.5px', color: 'var(--ink)' }}>Upload creative</b>
-                  <small style={{ color: 'var(--mut)', fontSize: '11px' }}>237 × 299 px · PNG / GIF</small>
-                  <span style={{ fontSize: '11px', color: adCreativeName ? 'var(--green)' : 'var(--faint)', fontWeight: 600 }}>
-                    {adCreativeName ? `✓ ${adCreativeName}` : 'No file chosen'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Campaign Duration Selection */}
-            <div className="field">
-              <label>Campaign duration <span className="req">*</span></label>
-              <div className="grid g2" style={{ gap: '10px' }}>
-                <div
-                  onClick={() => setAdCampaignDuration('2days')}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: adCampaignDuration === '2days' ? '2px solid var(--brand)' : '1px solid var(--line)',
-                    background: adCampaignDuration === '2days' ? '#f0f7ff' : '#ffffff',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                  }}
-                >
-                  <b style={{ fontSize: '15px', color: 'var(--brand)', display: 'block' }}>₹1,000</b>
-                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>2 days</span>
-                </div>
-
-                <div
-                  onClick={() => setAdCampaignDuration('10days')}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: adCampaignDuration === '10days' ? '2px solid var(--brand)' : '1px solid var(--line)',
-                    background: adCampaignDuration === '10days' ? '#f0f7ff' : '#ffffff',
-                    cursor: 'pointer',
-                    textAlign: 'center',
-                  }}
-                >
-                  <b style={{ fontSize: '15px', color: 'var(--brand)', display: 'block' }}>₹5,000</b>
-                  <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600 }}>10 days</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Total Payable Summary */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid var(--line)' }}>
-              <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>Total payable (INR)</span>
-              <b style={{ fontSize: '18px', color: 'var(--brand)' }}>₹{adCost.toLocaleString('en-IN')}</b>
-            </div>
-
-            {/* Buttons */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowBookAdModal(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn primary">
-                Pay & publish ad
-              </button>
-            </div>
-          </form>
-        </Modal>
+          onSuccess={(ad) => {
+            const mappedBookedAd: BookedAd = {
+              id: ad.id,
+              businessName: ad.businessName,
+              contactEmail: ad.contactEmail,
+              contactPhone: ad.contactPhone,
+              isWhatsApp: Boolean(ad.whatsappNumber),
+              headline: ad.headline,
+              description: ad.description,
+              destUrl: ad.destUrl,
+              creativeUrl: ad.creativeUrl,
+              duration: ad.duration,
+              cost: ad.costINR,
+              buttonLayout: ad.buttonLayout,
+              paymentStatus: ad.paymentStatus,
+              paymentReference: ad.paymentReference,
+            };
+            if (activeAdSlot === 1) {
+              setBookedSlot1(mappedBookedAd);
+            } else {
+              setBookedSlot2(mappedBookedAd);
+            }
+          }}
+        />
       )}
 
       {/* Report Modal */}
@@ -1389,135 +1229,23 @@ export default function FeedsPage() {
         </Modal>
       )}
 
-      {/* Job Details Modal */}
+      {/* Job Details Modal with Phase 2.4 Contact Channels */}
       {selectedJobModal && (
-        <Modal
+        <JobDetailsModal
           isOpen={Boolean(selectedJobModal)}
           onClose={() => setSelectedJobModal(null)}
-          title={selectedJobModal.title}
-          maxWidth="640px"
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {/* Header with Company Logo & Identity */}
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
-              <UserAvatar
-                name={selectedJobModal.postedBy}
-                companyName={selectedJobModal.company}
-                size={48}
-                showCompanyLogo={true}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <b style={{ fontSize: '15px', color: 'var(--ink)', display: 'block' }}>{selectedJobModal.title}</b>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '12.5px', color: 'var(--brand)', fontWeight: 700 }}>{selectedJobModal.company}</span>
-                  <span className="badge green" style={{ fontSize: '8.5px', padding: '1px 5px' }}>VERIFIED RECRUITER</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: 'var(--mut)', marginTop: '4px' }}>
-                  <span><MapPin size={11} style={{ verticalAlign: '-1px' }} /> {selectedJobModal.location}</span>
-                  <span>·</span>
-                  <span><Briefcase size={11} style={{ verticalAlign: '-1px' }} /> {selectedJobModal.employmentType}</span>
-                  {selectedJobModal.experience && <span>· Exp: {selectedJobModal.experience}</span>}
-                </div>
-              </div>
-              {selectedJobModal.packageDetails && (
-                <span className="badge green" style={{ fontSize: '11px', fontWeight: 700 }}>{selectedJobModal.packageDetails}</span>
-              )}
-            </div>
-
-            {/* Read-Only Requirements */}
-            <div style={{ padding: '12px', background: '#f8fafc', border: '1px solid var(--line-light)', borderRadius: '8px', fontSize: '12px' }}>
-              <b style={{ color: 'var(--ink)', fontSize: '11.5px' }}>Job Requirements:</b>
-              <p style={{ margin: '6px 0 0', color: 'var(--ink-secondary)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-                {selectedJobModal.requirements}
-              </p>
-            </div>
-
-            {/* Read-Only Responsibilities */}
-            {selectedJobModal.responsibilities && (
-              <div style={{ padding: '12px', background: '#f8fafc', border: '1px solid var(--line-light)', borderRadius: '8px', fontSize: '12px' }}>
-                <b style={{ color: 'var(--ink)', fontSize: '11.5px' }}>Key Responsibilities:</b>
-                <p style={{ margin: '6px 0 0', color: 'var(--ink-secondary)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-                  {selectedJobModal.responsibilities}
-                </p>
-              </div>
-            )}
-
-            {/* Read-Only Qualifications */}
-            {selectedJobModal.qualifications && (
-              <div style={{ padding: '12px', background: '#f8fafc', border: '1px solid var(--line-light)', borderRadius: '8px', fontSize: '12px' }}>
-                <b style={{ color: 'var(--ink)', fontSize: '11.5px' }}>Qualifications &amp; Experience:</b>
-                <p style={{ margin: '6px 0 0', color: 'var(--ink-secondary)', whiteSpace: 'pre-line', lineHeight: 1.5 }}>
-                  {selectedJobModal.qualifications}
-                </p>
-              </div>
-            )}
-
-            {/* Recruiter Contact Channels & Application Instructions (Mandatory Directive) */}
-            <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', fontSize: '12px' }}>
-              <b style={{ color: '#075B5B', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <Mail size={12} /> Contact &amp; Application Channels:
-              </b>
-              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: '#526174' }}>Recruiter Email:</span>
-                  <a
-                    href={`mailto:${selectedJobModal.posterEmail || 'recruiter@company.com'}?subject=${encodeURIComponent(`Application: ${selectedJobModal.title} - ${user.displayName || 'Applicant'}`)}`}
-                    style={{ fontSize: '11.5px', color: '#075B5B', fontWeight: 600, textDecoration: 'none' }}
-                  >
-                    {selectedJobModal.posterEmail || 'recruiter@company.com'}
-                  </a>
-                </div>
-                {selectedJobModal.contactPhone && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', color: '#526174' }}>Contact Phone:</span>
-                    <span style={{ fontSize: '11.5px', color: '#172B45', fontWeight: 600 }}>{selectedJobModal.contactPhone}</span>
-                    {selectedJobModal.hasWhatsApp && (
-                      <span className="badge green" style={{ fontSize: '8px', padding: '1px 5px' }}>WHATSAPP VERIFIED</span>
-                    )}
-                  </div>
-                )}
-                {selectedJobModal.applicationInstructions && (
-                  <div style={{ marginTop: '4px', fontSize: '11px', color: '#526174', background: '#F4F6F8', padding: '6px 8px', borderRadius: '4px' }}>
-                    <b>Instructions:</b> {selectedJobModal.applicationInstructions}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Recruiter Details & Application Action */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #D9E0E8', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ fontSize: '11px', color: '#526174' }}>
-                Posted by <b>{selectedJobModal.postedBy}</b> on {selectedJobModal.postedDate}
-              </div>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  className="btn secondary sm"
-                  onClick={() => {
-                    openChatWith(selectedJobModal.posterUid || 'u-sarah', {
-                      type: 'job',
-                      id: selectedJobModal.id,
-                      title: selectedJobModal.title,
-                    });
-                    setSelectedJobModal(null);
-                  }}
-                >
-                  <MessageCircle size={12} /> Contact Recruiter
-                </button>
-                <a
-                  href={`mailto:${selectedJobModal.posterEmail || 'recruiter@company.com'}?subject=${encodeURIComponent(`Application for ${selectedJobModal.title} - ${user.displayName || 'Candidate'}`)}&body=${encodeURIComponent(`Dear Hiring Team at ${selectedJobModal.company},\n\nI am writing to express my interest in the ${selectedJobModal.title} position posted on FR8X.\n\nApplicant: ${user.displayName}\nEmail: ${user.email}\nPhone: ${user.mobile || ''}\nCompany: ${user.company || ''}\nDesignation: ${user.designation || ''}\n\nPlease find my credentials and application profile details linked on FR8X.\n\nBest regards,\n${user.displayName}`)}`}
-                  className="btn primary sm"
-                  style={{ fontWeight: 700, padding: '6px 14px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                  onClick={() => {
-                    toast(`Opening email application to ${selectedJobModal.posterEmail || 'recruiter@company.com'}`);
-                  }}
-                >
-                  <Send size={12} /> APPLY FOR THIS JOB
-                </a>
-              </div>
-            </div>
-          </div>
-        </Modal>
+          job={selectedJobModal}
+          onApply={(job) => {
+            const email = job.posterEmail || 'recruiter@company.com';
+            const mailto = `mailto:${email}?subject=${encodeURIComponent(
+              `Application for ${job.title} - ${user.displayName || 'Candidate'}`
+            )}&body=${encodeURIComponent(
+              `Dear Hiring Team at ${job.company},\n\nI am applying for the ${job.title} position on FR8X.\n\nApplicant: ${user.displayName}\nEmail: ${user.email}\nPhone: ${user.mobile || ''}\nCompany: ${user.company || ''}\n\nBest regards,\n${user.displayName}`
+            )}`;
+            window.location.href = mailto;
+            toast(`Opening direct recruiter email application to ${email}`);
+          }}
+        />
       )}
 
       {/* Full Advertisement Preview Modal */}
