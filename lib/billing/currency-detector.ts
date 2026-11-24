@@ -99,7 +99,6 @@ export function detectCountryFromHeaders(headers: Headers | Record<string, strin
 
   const candidateCountry =
     getHeader('cf-ipcountry') ||
-    getHeader('x-vercel-ip-country') ||
     getHeader('x-country-code') ||
     getHeader('x-forwarded-country') ||
     'IN';

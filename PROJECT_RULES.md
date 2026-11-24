@@ -311,28 +311,22 @@ Before "Done"    → Empirical proof captured
 
 ---
 
-## Asset & Deployment Fair-Use Rule (CRITICAL)
+## Asset & Deployment Fair-Use Rule
 
 **Zero Heavy Binary Assets in Web Origin (`public/`)**:
 - **NEVER** commit `.apk`, `.zip`, `.tar.gz`, `.dmg`, `.exe`, or files > 1 MB into `public/`.
 - All downloadable artifacts/installers **MUST** be hosted on external cloud storage (Google Drive, GitHub Releases, Cloudflare R2).
-- Vercel paused this project previously due to `.apk` files being crawled by bots. A **one-time courtesy unblock** was granted by Vercel with a 30-day 3x limit multiplier. A second violation will lead to permanent suspension.
-- See full post-mortem: [`docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md`](docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md).
 
 ---
 
-## Mandatory Vercel Resource Protection Policy (CRITICAL & ENFORCED)
+## Production Reliability & Quality Standards
 
-**Zero Unbounded Compute, Functions, Queries, or Polling**:
-- **NO FEATURE, CODE CHANGE, API ENDPOINT, DATABASE QUERY, BACKGROUND JOB, OR THIRD-PARTY INTEGRATION MAY BE DEPLOYED IF IT INTRODUCES UNBOUNDED RESOURCE CONSUMPTION OR BYPASSES ESTABLISHED RESOURCE PROTECTION CONTROLS.**
-- All coding agents and engineers **MUST** follow: [`VERCEL_RESOURCE_PROTECTION_POLICY.md`](VERCEL_RESOURCE_PROTECTION_POLICY.md).
-- **Hard Boundaries**:
-  1. Every database query must specify `.limit()` (maximum 50 default). Never run full-table scans.
-  2. Every API route must declare `export const maxDuration = 10;`.
-  3. No client-side polling interval $< 60,000 \text{ ms}$ for API requests. Zero periodic pings to dynamic routes.
-  4. Static routes must have CDN `Cache-Control` headers and avoid uncached `force-dynamic`.
-  5. Never weaken or bypass RLS, rate limiting, or authentication.
-- Verification Suite: `npx -y tsx scripts/verify-vercel-resource-protection.ts`.
+**Resource Boundedness & Security**:
+1. Every database query should specify sensible `.limit()` bounds (default 50). Avoid full-table scans.
+2. Avoid aggressive client-side polling intervals to dynamic routes. Prefer Supabase Realtime subscriptions.
+3. Keep static datasets cached appropriately with CDN `Cache-Control` headers.
+4. Never weaken or bypass RLS, rate limiting, or authentication.
+5. All verification test suites in `scripts/` must pass cleanly (`npm test`).
 
 ---
 

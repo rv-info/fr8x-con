@@ -3,27 +3,19 @@
 
 > **APPLICABILITY**: All AI Coding Agents (Antigravity, Claude, Copilot, Cursor, Gemini, OpenAI, etc.)  
 > **CANONICAL RULESET**: [`PROJECT_RULES.md`](PROJECT_RULES.md)  
-> **RESOURCE DEFENSE POLICY**: [`VERCEL_RESOURCE_PROTECTION_POLICY.md`](VERCEL_RESOURCE_PROTECTION_POLICY.md)  
-> **BANDWIDTH POLICY**: [`docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md`](docs/VERCEL_BANDWIDTH_FAIR_USE_POLICY.md)  
 
 ---
 
-## 1. MANDATORY VERCEL RESOURCE PROTECTION DIRECTIVE
+## 1. ENGINEERING & OPERATING DIRECTIVES
 
-Before implementing, refactoring, or deploying any feature, API endpoint, database query, background job, or third-party integration, **every coding agent MUST read and strictly adhere to:**
-
-👉 **[`/VERCEL_RESOURCE_PROTECTION_POLICY.md`](VERCEL_RESOURCE_PROTECTION_POLICY.md)**
-
-### Non-Negotiable Core Rule:
-**NO FEATURE, CODE CHANGE, API ENDPOINT, DATABASE QUERY, BACKGROUND JOB, OR THIRD-PARTY INTEGRATION MAY BE DEPLOYED IF IT INTRODUCES UNBOUNDED RESOURCE CONSUMPTION OR BYPASSES ESTABLISHED RESOURCE PROTECTION CONTROLS.**
+Before implementing, refactoring, or deploying any feature, API endpoint, database query, background job, or third-party integration, every coding agent must adhere to the project standards:
 
 ### Essential Agent Rules:
-1. **Never perform unbounded database queries**: Every Supabase / PostgreSQL query must have an explicit `.limit()` (maximum 50 default). Never call `SELECT *` across entire tables (`jobs`, `rates`, `presence`, `auctions`, `posts`, `profiles`).
-2. **Never add client polling under 60 seconds**: Never use `setInterval` with delays $< 60,000 \text{ ms}$ to fetch API endpoints. For connectivity checks, use `navigator.onLine`. For real-time updates, use Supabase Realtime push subscriptions.
-3. **Never commit heavy binaries**: Never place `.apk`, `.zip`, `.dmg`, `.exe`, or files $> 1 \text{ MB}$ in `public/`.
-4. **Always declare `maxDuration`**: Every API route must declare `export const maxDuration = 10;`.
-5. **Always cache static API responses**: Never add `export const dynamic = 'force-dynamic'` to routes returning static datasets without CDN `Cache-Control` headers.
-6. **Never disable security controls**: Never disable Supabase RLS, loosen rate limits, or bypass authentication to make builds or tests pass.
+1. **Bounded Database Queries**: Ensure Supabase / PostgreSQL queries use sensible bounds and pagination (`.limit(50)` default). Avoid unbounded full-table scans across high-volume tables.
+2. **Efficient Client Communication**: Prefer Supabase Realtime push subscriptions or user-driven refreshes over aggressive client polling.
+3. **Clean Web Origin Assets**: Keep large binaries and downloadable installers off the web origin (`public/`), using external cloud storage (e.g. Google Drive, Cloudflare R2, GitHub Releases).
+4. **Security Controls**: Never disable Supabase RLS, loosen rate limits, or bypass authentication to make builds or tests pass.
+5. **Quality & Test Gates**: Ensure all architectural verification tests in `scripts/` pass without regressions (`npm test`).
 
 ---
 

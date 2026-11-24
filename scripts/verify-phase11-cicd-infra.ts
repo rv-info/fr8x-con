@@ -80,8 +80,8 @@ async function runTests() {
     assert(compose.includes('condition: service_healthy'), 'App service depends on redis service_healthy condition');
   }
 
-  // TEST SUITE 5: Vercel Edge CSP & Security Synchronization (CICD-05)
-  console.log('\n─── TEST SUITE 5: Vercel Edge CSP & Security Synchronization (CICD-05) ───');
+  // TEST SUITE 5: Edge CSP & Security Synchronization (CICD-05)
+  console.log('\n─── TEST SUITE 5: Edge CSP & Security Synchronization (CICD-05) ───');
   const vercelPath = path.join(rootDir, 'vercel.json');
   assert(fs.existsSync(vercelPath), 'vercel.json exists in repository');
 
