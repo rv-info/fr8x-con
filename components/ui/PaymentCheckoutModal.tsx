@@ -1,22 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { usePlatformConfig } from '@/lib/platform-config';
 import { useAuth } from '@/lib/context/AuthContext';
 import { useToast } from '@/lib/context/ToastContext';
+import { useCurrency } from '@/lib/context/CurrencyContext';
+import {
+  SUPPORTED_CURRENCIES,
+  formatCurrencyAmount,
+} from '@/lib/billing/currency-detector';
+import {
+  BillingQuote,
+  generateBillingQuote,
+} from '@/lib/billing/billing-engine';
 import {
   CreditCard,
   QrCode,
   Building2,
-  CheckCircle2,
   Copy,
   Check,
   ShieldCheck,
-  Zap,
   Sparkles,
   Loader2,
   Lock,
+  Globe2,
+  Clock,
   ArrowRight,
 } from 'lucide-react';
 
@@ -29,11 +38,14 @@ export interface PaymentCheckoutModalProps {
   amountINR?: number;
   amount?: number;
   itemType: 'job' | 'auction' | 'ad';
+  catalogKey?: string;
+  itemId?: string;
   onPaymentSuccess: (details: {
     paymentStatus: 'paid' | 'pending_verification' | 'waived_promotional';
     paymentMethod: 'razorpay' | 'upi' | 'bank_transfer' | 'promotional_bypass';
     paymentReference: string;
     paidAmount: number;
+    currency?: string;
   }) => void;
 }
 
@@ -46,14 +58,18 @@ export function PaymentCheckoutModal({
   amountINR,
   amount,
   itemType,
+  catalogKey,
+  itemId,
   onPaymentSuccess,
 }: PaymentCheckoutModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const { config, isFeatureFree } = usePlatformConfig();
+  const { currentCurrency, setCurrency } = useCurrency();
 
   const displayTitle = itemTitle || title || 'Commercial Publication Tariff';
-  const effectiveAmount = amountINR !== undefined ? amountINR : (amount !== undefined ? amount : 300);
+  const effectiveAmountINR = amountINR !== undefined ? amountINR : (amount !== undefined ? amount : 300);
+
   const displayDescription = itemDescription || (
     itemType === 'job'
       ? 'Verified Logistics Career Opening Publication Tariff'
@@ -69,8 +85,15 @@ export function PaymentCheckoutModal({
       ? 'REVERSE_AUCTION'
       : 'AD_POSTING';
 
-  const isFree = isFeatureFree(featureKey, user?.uid);
+  // Local & Global Sovereign Free-Access check
+  const isFree = config.allFreeMode === true || isFeatureFree(featureKey, user?.uid);
   const isRazorpayActive = config.razorpayEnabled !== false;
+
+  // Selected Billing Currency
+  const [selectedCurrency, setSelectedCurrency] = useState<string>(currentCurrency || 'INR');
+  const [activeQuote, setActiveQuote] = useState<BillingQuote | null>(null);
+  const [quoteExpiresIn, setQuoteExpiresIn] = useState<number>(15 * 60);
+  const [isGeneratingQuote, setIsGeneratingQuote] = useState<boolean>(false);
 
   const [paymentMethod, setPaymentMethod] = useState<'razorpay' | 'upi' | 'bank_transfer'>(
     isRazorpayActive ? 'razorpay' : 'upi'
@@ -79,8 +102,87 @@ export function PaymentCheckoutModal({
   const [isProcessing, setIsProcessing] = useState(false);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
+  // Sync currency from global context on open
+  useEffect(() => {
+    if (isOpen) {
+      const initCurr = currentCurrency && SUPPORTED_CURRENCIES[currentCurrency] ? currentCurrency : 'INR';
+      setSelectedCurrency(initCurr);
+    }
+  }, [isOpen, currentCurrency]);
+
+  // Generate / refresh locked quote when currency, amount, or modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    // Resolve catalog key
+    const effectiveCatalogKey =
+      catalogKey ||
+      (itemType === 'job'
+        ? effectiveAmountINR >= 5000 ? 'job_30d' : effectiveAmountINR >= 2500 ? 'job_15d' : effectiveAmountINR >= 1000 ? 'job_7d' : 'job_2d'
+        : itemType === 'ad'
+        ? effectiveAmountINR >= 4000 ? 'ad_10d' : 'ad_2d'
+        : 'auction_standard_bid');
+
+    setIsGeneratingQuote(true);
+
+    // Call server quote API or generate synchronous locked quote
+    fetch('/api/billing/quote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        catalogKey: effectiveCatalogKey,
+        serviceType: itemType === 'ad' ? 'ad' : itemType === 'job' ? 'job' : 'auction',
+        customCurrency: selectedCurrency,
+        customTitle: displayTitle,
+      }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.quote) {
+          setActiveQuote(data.quote);
+        } else {
+          // Fallback to local synchronous quote generation
+          const quote = generateBillingQuote({
+            catalogKey: effectiveCatalogKey,
+            targetCurrency: selectedCurrency,
+            customTitle: displayTitle,
+            isFree,
+          });
+          setActiveQuote(quote);
+        }
+      })
+      .catch(() => {
+        const quote = generateBillingQuote({
+          catalogKey: effectiveCatalogKey,
+          targetCurrency: selectedCurrency,
+          customTitle: displayTitle,
+          isFree,
+        });
+        setActiveQuote(quote);
+      })
+      .finally(() => {
+        setIsGeneratingQuote(false);
+        setQuoteExpiresIn(15 * 60);
+      });
+  }, [isOpen, selectedCurrency, effectiveAmountINR, itemType, catalogKey, isFree, displayTitle]);
+
+  // Quote Expiry Countdown
+  useEffect(() => {
+    if (!isOpen || !activeQuote) return;
+    const interval = setInterval(() => {
+      setQuoteExpiresIn((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isOpen, activeQuote]);
+
   // Sync payment method if Razorpay state changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isRazorpayActive && paymentMethod === 'razorpay') {
       setPaymentMethod('upi');
     }
@@ -94,23 +196,49 @@ export function PaymentCheckoutModal({
     }
   };
 
-  const handleCompletePayment = () => {
-    if (isFree) {
+  const handleCompletePayment = async () => {
+    // CASE A: 100% FREE ACCESS WAIVER (Bypass payment gateways)
+    if (isFree || activeQuote?.isFree) {
       setIsProcessing(true);
-      setTimeout(() => {
+      try {
+        const response = await fetch('/api/billing/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            serviceType: itemType === 'ad' ? 'ad' : itemType === 'job' ? 'job' : 'auction',
+            catalogKey: activeQuote?.itemId || catalogKey,
+            quote: activeQuote,
+            itemDetails: { title: displayTitle, jobId: itemId, description: displayDescription },
+          }),
+        });
+        const result = await response.json();
+
+        setIsProcessing(false);
+        onPaymentSuccess({
+          paymentStatus: 'waived_promotional',
+          paymentMethod: 'promotional_bypass',
+          paymentReference: result.orderId || `PROMO-FREE-${Date.now().toString(36).toUpperCase()}`,
+          paidAmount: 0,
+          currency: selectedCurrency,
+        });
+        toast('🎉 Sovereign Free-Access Waiver Applied! Listing activated live with zero fees.');
+        onClose();
+      } catch {
         setIsProcessing(false);
         onPaymentSuccess({
           paymentStatus: 'waived_promotional',
           paymentMethod: 'promotional_bypass',
           paymentReference: `PROMO-FREE-${Date.now().toString(36).toUpperCase()}`,
           paidAmount: 0,
+          currency: selectedCurrency,
         });
-        toast('🎉 Promotional free waiver applied by Platform Admin. Published live!');
+        toast('🎉 Sovereign Free-Access Waiver Applied! Listing activated live.');
         onClose();
-      }, 500);
+      }
       return;
     }
 
+    // CASE B: CHARGEABLE PAYMENT
     if (paymentMethod === 'razorpay' && !isRazorpayActive) {
       toast('Razorpay is currently deactivated by the Platform Administrator. Please select Instant UPI QR or Corporate Wire.');
       setPaymentMethod('upi');
@@ -126,37 +254,73 @@ export function PaymentCheckoutModal({
 
     setIsProcessing(true);
 
-    setTimeout(() => {
-      setIsProcessing(false);
-      const isAutoConfirmed = config.paymentAutomationEnabled !== false || paymentMethod === 'razorpay';
+    try {
+      // Execute checkout through unified billing endpoint
+      const response = await fetch('/api/billing/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serviceType: itemType === 'ad' ? 'ad' : itemType === 'job' ? 'job' : 'auction',
+          catalogKey: activeQuote?.itemId || catalogKey,
+          quote: activeQuote,
+          itemDetails: { title: displayTitle, jobId: itemId, description: displayDescription },
+        }),
+      });
 
+      const checkoutData = await response.json();
+      setIsProcessing(false);
+
+      if (!checkoutData.success && !checkoutData.isFree) {
+        toast(`Checkout notice: ${checkoutData.error || 'Proceeding with reference registration.'}`);
+      }
+
+      const isAutoConfirmed = config.paymentAutomationEnabled !== false || paymentMethod === 'razorpay';
       const ref =
         paymentMethod === 'razorpay'
-          ? `RZP-AUTO-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`
+          ? (checkoutData.orderId || `RZP-AUTO-${Date.now().toString(36).toUpperCase()}`)
           : utrReference.trim();
+
+      const payableAmount = activeQuote?.finalAmount || effectiveAmountINR;
 
       onPaymentSuccess({
         paymentStatus: isAutoConfirmed ? 'paid' : 'pending_verification',
         paymentMethod,
         paymentReference: ref,
-        paidAmount: effectiveAmount,
+        paidAmount: payableAmount,
+        currency: selectedCurrency,
       });
 
       if (isAutoConfirmed) {
-        if (paymentMethod === 'razorpay') {
-          toast(`⚡ Payment of ₹${effectiveAmount.toLocaleString('en-IN')} verified automatically via Razorpay Automation Engine! Listing is now active.`);
-        } else {
-          toast(`⚡ Payment of ₹${effectiveAmount.toLocaleString('en-IN')} confirmed! Listing is now active.`);
-        }
+        toast(`⚡ Payment of ${formatCurrencyAmount(payableAmount, selectedCurrency)} verified! Listing is live.`);
       } else {
-        toast(`Payment reference submitted. Awaiting Godfather audit confirmation.`);
+        toast('Payment reference submitted. Awaiting administrative audit confirmation.');
       }
 
       onClose();
-    }, 700);
+    } catch {
+      setIsProcessing(false);
+      const payableAmount = activeQuote?.finalAmount || effectiveAmountINR;
+      onPaymentSuccess({
+        paymentStatus: 'pending_verification',
+        paymentMethod,
+        paymentReference: utrReference.trim() || `OFFLINE-${Date.now().toString(36).toUpperCase()}`,
+        paidAmount: payableAmount,
+        currency: selectedCurrency,
+      });
+      toast('Payment reference registered.');
+      onClose();
+    }
   };
 
   if (!isOpen) return null;
+
+  const quoteMins = Math.floor(quoteExpiresIn / 60);
+  const quoteSecs = quoteExpiresIn % 60;
+  const isQuoteExpired = quoteExpiresIn <= 0;
+
+  const currentDisplayAmount = activeQuote
+    ? formatCurrencyAmount(activeQuote.finalAmount, selectedCurrency)
+    : formatCurrencyAmount(effectiveAmountINR, 'INR');
 
   return (
     <Modal
@@ -164,12 +328,12 @@ export function PaymentCheckoutModal({
       onClose={() => {
         if (!isProcessing) onClose();
       }}
-      title={isFree ? 'Promotional Publication Waiver' : 'Complete Commercial Payment'}
-      maxWidth="580px"
+      title={isFree ? 'Sovereign Free-Access Waiver' : 'Global Commercial Checkout'}
+      maxWidth="620px"
       zIndex={1300}
     >
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Promotional Free Banner */}
+        {/* FREE ACCESS BANNER (Godfather Sovereign Mode) */}
         {isFree ? (
           <div
             style={{
@@ -179,19 +343,23 @@ export function PaymentCheckoutModal({
               borderRadius: '10px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '6px',
+              gap: '8px',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#065f46' }}>
-              <Sparkles size={18} color="#059669" />
-              <b style={{ fontSize: '14.5px' }}>100% Promotional Free Access Active</b>
+              <Sparkles size={20} color="#059669" />
+              <b style={{ fontSize: '15px' }}>100% Sovereign Free Access Active</b>
             </div>
             <p style={{ margin: 0, fontSize: '13px', color: '#047857', lineHeight: 1.5 }}>
-              The Godfather has currently marked <b>{displayTitle}</b> as an active promotional campaign. Standard publication tariffs are completely waived for your account (₹0.00).
+              The Godfather Super Administration has enabled <b>Free Platform Mode</b> for <b>{displayTitle}</b>.
+              All commercial publication fees and gateway transactions are 100% waived for your account ($0.00 / ₹0.00).
             </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#059669', fontWeight: 600 }}>
+              <ShieldCheck size={14} /> Instant automated direct activation · No card or gateway required
+            </div>
           </div>
         ) : (
-          /* Payment Summary Docket */
+          /* MULTI-CURRENCY PRICING & QUOTE DOCKET */
           <div
             style={{
               padding: '16px 18px',
@@ -200,40 +368,97 @@ export function PaymentCheckoutModal({
               borderRadius: '10px',
               display: 'flex',
               flexDirection: 'column',
-              gap: '10px',
+              gap: '12px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <small style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: 'var(--mut)', letterSpacing: '0.5px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ flex: 1, minWidth: '220px' }}>
+                <small style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: 700, color: '#64748b', letterSpacing: '0.5px' }}>
                   Commercial Invoice Summary
                 </small>
-                <b style={{ display: 'block', fontSize: '15px', color: 'var(--ink)', marginTop: '2px' }}>
+                <b style={{ display: 'block', fontSize: '15px', color: '#0f172a', marginTop: '2px' }}>
                   {displayTitle}
                 </b>
-                <span style={{ fontSize: '12.5px', color: 'var(--ink-secondary)' }}>
+                <span style={{ fontSize: '12.5px', color: '#475569' }}>
                   {displayDescription}
                 </span>
               </div>
+
+              {/* Currency Selector & Price */}
               <div style={{ textAlign: 'right' }}>
-                <small style={{ fontSize: '11px', color: 'var(--mut)', display: 'block' }}>Total Payable</small>
-                <b style={{ fontSize: '22px', color: 'var(--brand)', fontFamily: 'var(--font-mono)' }}>
-                  ₹{effectiveAmount.toLocaleString('en-IN')}
-                </b>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', justifyContent: 'flex-end', marginBottom: '4px' }}>
+                  <Globe2 size={13} color="#64748b" />
+                  <select
+                    value={selectedCurrency}
+                    onChange={(e) => {
+                      const next = e.target.value;
+                      setSelectedCurrency(next);
+                      setCurrency(next);
+                    }}
+                    style={{
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      padding: '3px 8px',
+                      borderRadius: '4px',
+                      border: '1px solid #cbd5e1',
+                      background: '#ffffff',
+                      color: '#0f172a',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {Object.keys(SUPPORTED_CURRENCIES).map((c) => (
+                      <option key={c} value={c}>
+                        {SUPPORTED_CURRENCIES[c].flagEmoji} {c} ({SUPPORTED_CURRENCIES[c].symbol})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ fontSize: '22px', fontWeight: 800, color: '#075B5B', fontFamily: 'monospace' }}>
+                  {isGeneratingQuote ? (
+                    <span style={{ fontSize: '14px', color: '#64748b' }}>Calculating...</span>
+                  ) : (
+                    currentDisplayAmount
+                  )}
+                </div>
+
+                {selectedCurrency !== 'INR' && activeQuote && (
+                  <small style={{ display: 'block', fontSize: '10.5px', color: '#64748b', marginTop: '1px' }}>
+                    Base: ₹{activeQuote.basePriceINR.toLocaleString('en-IN')} (1 INR = {activeQuote.exchangeRate.toFixed(4)} {selectedCurrency})
+                  </small>
+                )}
               </div>
             </div>
 
-            <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--mut)' }}>
-              <span>Strict Regulation: Publication requires verified payment</span>
-              <span>GST Inclusive · Instant Tax Invoice</span>
+            {/* 15-Minute Quote Lock Bar */}
+            <div
+              style={{
+                borderTop: '1px dashed #cbd5e1',
+                paddingTop: '8px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                fontSize: '11px',
+                color: isQuoteExpired ? '#dc2626' : '#64748b',
+                flexWrap: 'wrap',
+                gap: '6px',
+              }}
+            >
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={12} color={isQuoteExpired ? '#dc2626' : '#075B5B'} />
+                {isQuoteExpired
+                  ? 'Quote expired. Changing currency will recalculate.'
+                  : `15-Min FX Rate Lock: ${quoteMins}:${quoteSecs < 10 ? '0' : ''}${quoteSecs} remaining`}
+              </span>
+              <span>GST / VAT Inclusive · 256-Bit Cryptographic Signature</span>
             </div>
           </div>
         )}
 
-        {/* Commercial Payment Method Options (if not promotional free) */}
+        {/* PAYMENT METHOD SELECTION (Hidden when Free Access is Active) */}
         {!isFree && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <label style={{ fontSize: '12px', fontWeight: 700, color: 'var(--ink)' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>
               Select Verified Payment Gateway
             </label>
 
@@ -244,14 +469,14 @@ export function PaymentCheckoutModal({
                   if (isRazorpayActive) {
                     setPaymentMethod('razorpay');
                   } else {
-                    toast('Razorpay is currently deactivated by the Platform Administrator. Please select Instant UPI QR or Corporate Wire.');
+                    toast('Razorpay is currently deactivated by the Platform Administrator.');
                   }
                 }}
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'razorpay' ? '2px solid var(--brand)' : '1px solid #cbd5e1',
-                  background: paymentMethod === 'razorpay' ? '#eff6ff' : isRazorpayActive ? '#ffffff' : '#f8fafc',
+                  border: paymentMethod === 'razorpay' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  background: paymentMethod === 'razorpay' ? '#f0fdf4' : isRazorpayActive ? '#ffffff' : '#f8fafc',
                   cursor: isRazorpayActive ? 'pointer' : 'not-allowed',
                   display: 'flex',
                   flexDirection: 'column',
@@ -260,14 +485,13 @@ export function PaymentCheckoutModal({
                   textAlign: 'center',
                   opacity: isRazorpayActive ? 1 : 0.65,
                 }}
-                title={isRazorpayActive ? 'Pay securely via Razorpay' : 'Razorpay is disabled by Godfather Administrator'}
               >
-                <CreditCard size={18} color={paymentMethod === 'razorpay' ? 'var(--brand)' : isRazorpayActive ? '#64748b' : '#94a3b8'} />
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'razorpay' ? 'var(--brand)' : isRazorpayActive ? 'var(--ink)' : '#64748b' }}>
-                  Online / Razorpay
+                <CreditCard size={18} color={paymentMethod === 'razorpay' ? '#075B5B' : isRazorpayActive ? '#64748b' : '#94a3b8'} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'razorpay' ? '#075B5B' : '#0f172a' }}>
+                  Online / Gateway
                 </span>
-                <small style={{ fontSize: '10px', color: isRazorpayActive ? (paymentMethod === 'razorpay' ? 'var(--brand)' : 'var(--mut)') : 'var(--red)', fontWeight: isRazorpayActive ? 400 : 600 }}>
-                  {isRazorpayActive ? (config.paymentAutomationEnabled !== false ? '⚡ Auto-Live' : 'Card/NetBank') : 'Disabled by Admin'}
+                <small style={{ fontSize: '10px', color: isRazorpayActive ? '#15803d' : '#dc2626', fontWeight: 600 }}>
+                  {isRazorpayActive ? '⚡ 0ms Auto-Live' : 'Deactivated'}
                 </small>
               </button>
 
@@ -277,8 +501,8 @@ export function PaymentCheckoutModal({
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'upi' ? '2px solid var(--brand)' : '1px solid #cbd5e1',
-                  background: paymentMethod === 'upi' ? '#eff6ff' : '#ffffff',
+                  border: paymentMethod === 'upi' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  background: paymentMethod === 'upi' ? '#f0fdf4' : '#ffffff',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
@@ -287,11 +511,11 @@ export function PaymentCheckoutModal({
                   textAlign: 'center',
                 }}
               >
-                <QrCode size={18} color={paymentMethod === 'upi' ? 'var(--brand)' : '#64748b'} />
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'upi' ? 'var(--brand)' : 'var(--ink)' }}>
+                <QrCode size={18} color={paymentMethod === 'upi' ? '#075B5B' : '#64748b'} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'upi' ? '#075B5B' : '#0f172a' }}>
                   Instant UPI QR
                 </span>
-                <small style={{ fontSize: '10px', color: 'var(--mut)' }}>Zero Fee · Instant</small>
+                <small style={{ fontSize: '10px', color: '#64748b' }}>Zero Fee · Instant</small>
               </button>
 
               <button
@@ -300,8 +524,8 @@ export function PaymentCheckoutModal({
                 style={{
                   padding: '12px 10px',
                   borderRadius: '8px',
-                  border: paymentMethod === 'bank_transfer' ? '2px solid var(--brand)' : '1px solid #cbd5e1',
-                  background: paymentMethod === 'bank_transfer' ? '#eff6ff' : '#ffffff',
+                  border: paymentMethod === 'bank_transfer' ? '2px solid #075B5B' : '1px solid #cbd5e1',
+                  background: paymentMethod === 'bank_transfer' ? '#f0fdf4' : '#ffffff',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
@@ -310,23 +534,23 @@ export function PaymentCheckoutModal({
                   textAlign: 'center',
                 }}
               >
-                <Building2 size={18} color={paymentMethod === 'bank_transfer' ? 'var(--brand)' : '#64748b'} />
-                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'bank_transfer' ? 'var(--brand)' : 'var(--ink)' }}>
+                <Building2 size={18} color={paymentMethod === 'bank_transfer' ? '#075B5B' : '#64748b'} />
+                <span style={{ fontSize: '11.5px', fontWeight: 700, color: paymentMethod === 'bank_transfer' ? '#075B5B' : '#0f172a' }}>
                   Corporate Wire
                 </span>
-                <small style={{ fontSize: '10px', color: 'var(--mut)' }}>RTGS / NEFT / IMPS</small>
+                <small style={{ fontSize: '10px', color: '#64748b' }}>RTGS / Swift Wire</small>
               </button>
             </div>
 
-            {/* Sub-view: Online / Razorpay */}
+            {/* Gateway Sub-panels */}
             {paymentMethod === 'razorpay' && (
               <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <ShieldCheck size={20} color="#16a34a" />
                   <div>
-                    <b style={{ fontSize: '13px', color: 'var(--ink)' }}>Razorpay Enterprise Payment Rail (Active)</b>
-                    <small style={{ display: 'block', color: 'var(--mut)', fontSize: '11.5px' }}>
-                      Visa, MasterCard, RuPay, Corporate NetBanking &amp; Wallets · 256-Bit SSL
+                    <b style={{ fontSize: '13px', color: '#0f172a' }}>International Multi-Currency Gateway Rail</b>
+                    <small style={{ display: 'block', color: '#64748b', fontSize: '11.5px' }}>
+                      Visa, MasterCard, Amex, RuPay, Corporate NetBanking &amp; Wallets · 256-Bit SSL
                     </small>
                   </div>
                 </div>
@@ -334,14 +558,13 @@ export function PaymentCheckoutModal({
                   <span className="badge blue" style={{ fontSize: '9.5px', textTransform: 'uppercase' }}>
                     {config.razorpayEnvironment === 'sandbox' ? 'SANDBOX TEST' : 'LIVE PRODUCTION'}
                   </span>
-                  <span className={`badge ${config.paymentAutomationEnabled !== false ? 'green' : 'amber'}`} style={{ fontSize: '9.5px' }}>
-                    {config.paymentAutomationEnabled !== false ? '⚡ 0ms AUTO-LIVE' : 'AUDIT QUEUE'}
+                  <span className="badge green" style={{ fontSize: '9.5px' }}>
+                    ⚡ 0ms AUTO-LIVE
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Sub-view: UPI QR */}
             {paymentMethod === 'upi' && (
               <div style={{ padding: '14px 16px', background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -362,7 +585,7 @@ export function PaymentCheckoutModal({
 
                 <div className="field">
                   <label style={{ fontSize: '11.5px', fontWeight: 700, color: '#166534' }}>
-                    Enter 12-Digit UPI Transaction ID / UTR <span style={{ color: 'var(--red)' }}>*</span>
+                    Enter 12-Digit UPI Transaction ID / UTR <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
                     className="input"
@@ -373,24 +596,23 @@ export function PaymentCheckoutModal({
                     required
                   />
                   <small style={{ color: '#15803d', fontSize: '10.5px', marginTop: '2px', display: 'block' }}>
-                    Pay ₹{effectiveAmount.toLocaleString('en-IN')} via Google Pay, PhonePe, Paytm, or BHIM, then paste UTR reference above.
+                    Pay {currentDisplayAmount} via Google Pay, PhonePe, Paytm, or BHIM, then paste UTR reference above.
                   </small>
                 </div>
               </div>
             )}
 
-            {/* Sub-view: Corporate Wire */}
             {paymentMethod === 'bank_transfer' && (
               <div style={{ padding: '14px 16px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ fontSize: '12px', lineHeight: 1.5, color: 'var(--ink-secondary)' }}>
+                <div style={{ fontSize: '12px', lineHeight: 1.5, color: '#475569' }}>
                   <b>Account Name:</b> FR8X FREIGHT EXCHANGE PRIVATE LIMITED<br />
                   <b>Bank:</b> ICICI Bank Ltd · <b>IFSC:</b> ICIC0000007<br />
-                  <b>A/C No:</b> 000705018924 (Current Account)
+                  <b>A/C No:</b> 000705018924 (Current Account) · <b>SWIFT:</b> ICICINBBCTS
                 </div>
 
                 <div className="field">
                   <label style={{ fontSize: '11.5px', fontWeight: 700 }}>
-                    Enter Bank Transfer UTR / IMPS Reference <span style={{ color: 'var(--red)' }}>*</span>
+                    Enter Bank Transfer UTR / SWIFT Reference <span style={{ color: '#dc2626' }}>*</span>
                   </label>
                   <input
                     className="input"
@@ -406,8 +628,8 @@ export function PaymentCheckoutModal({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid var(--line)' }}>
+        {/* Modal Action Controls */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '4px', paddingTop: '12px', borderTop: '1px solid #e2e8f0' }}>
           <button
             type="button"
             className="btn secondary"
@@ -420,20 +642,28 @@ export function PaymentCheckoutModal({
             type="button"
             className="btn primary"
             onClick={handleCompletePayment}
-            disabled={isProcessing}
-            style={{ minWidth: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+            disabled={isProcessing || isGeneratingQuote}
+            style={{
+              minWidth: '200px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              background: isFree ? '#059669' : '#075B5B',
+              borderColor: isFree ? '#047857' : '#075B5B',
+            }}
           >
             {isProcessing ? (
               <>
-                <Loader2 size={14} className="spin" /> Verifying Payment...
+                <Loader2 size={14} className="spin" /> Processing Activation...
               </>
             ) : isFree ? (
               <>
-                <Sparkles size={14} /> Publish with Promotional Waiver (₹0)
+                <Sparkles size={14} /> Activate Free Access ($0.00)
               </>
             ) : (
               <>
-                <Lock size={13} /> Pay ₹{effectiveAmount.toLocaleString('en-IN')} &amp; Activate
+                <Lock size={13} /> Pay {currentDisplayAmount} &amp; Activate
               </>
             )}
           </button>

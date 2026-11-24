@@ -308,6 +308,24 @@ export function usePlatformConfig() {
     window.addEventListener('fr8x_platform_config_updated', handleUpdate);
     window.addEventListener('storage', handleUpdate);
 
+    // Query server billing mode to keep client in sync with server-authoritative state
+    fetch('/api/billing/config')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data?.success && data?.config) {
+          const serverIsFree = data.config.globalBillingMode === 'FREE';
+          setConfig((prev) => {
+            if (prev.allFreeMode !== serverIsFree) {
+              const updated = { ...prev, allFreeMode: serverIsFree };
+              saveStoredPlatformConfig(updated);
+              return updated;
+            }
+            return prev;
+          });
+        }
+      })
+      .catch(() => {});
+
     return () => {
       window.removeEventListener('fr8x_platform_config_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
@@ -482,6 +500,18 @@ export function usePlatformConfig() {
 
     setConfig(nextConfig);
     saveStoredPlatformConfig(nextConfig);
+
+    // Sync to server-authoritative billing engine
+    if (typeof window !== 'undefined') {
+      fetch('/api/billing/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          globalBillingMode: enabled ? 'FREE' : 'PAID',
+          reason: `Godfather Sovereign Switch toggled: ${enabled ? 'ALL-FREE' : 'PAID'}`,
+        }),
+      }).catch(() => {});
+    }
   };
 
   return {

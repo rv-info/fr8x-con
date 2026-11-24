@@ -303,7 +303,15 @@ export function evaluateEntitlement(params: {
   }
 
   // 5. SERVICE-SPECIFIC POLICY TOGGLE
-  const servicePolicy = inMemoryConfig.servicePolicies[params.serviceType];
+  const serviceKeyMap: Record<ChargeableServiceType, keyof ServicePolicyMap> = {
+    subscription: 'subscription',
+    job: 'jobs',
+    ad: 'advertising',
+    auction: 'auctions',
+    registration: 'registration',
+  };
+  const policyKey = serviceKeyMap[params.serviceType] || 'subscription';
+  const servicePolicy = inMemoryConfig.servicePolicies[policyKey];
   if (servicePolicy === 'free') {
     return {
       isFree: true,

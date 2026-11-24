@@ -1,0 +1,177 @@
+{
+  "globalBillingMode": "PAID",
+  "superAdminPersonalFreeAccess": true,
+  "servicePolicies": {
+    "subscription": "paid",
+    "jobs": "paid",
+    "advertising": "paid",
+    "auctions": "paid",
+    "registration": "free"
+  },
+  "userOverrides": [
+    {
+      "targetId": "user_vip_999",
+      "targetType": "user",
+      "targetName": "VIP Partner Logistics",
+      "status": "free",
+      "duration": "permanent",
+      "reason": "Sovereign Strategic Partner Grant",
+      "grantedBy": "tech@fr8x.in",
+      "grantedAt": "2026-11-24T05:21:50.723Z"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "blog_1795497710748_l34ll",
+      "operatorId": "admin_godfather",
+      "operatorEmail": "tech@fr8x.in",
+      "timestamp": "2026-11-24T05:21:50.748Z",
+      "action": "SET_GLOBAL_BILLING_MODE_PAID",
+      "previousState": {
+        "globalBillingMode": "FREE",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "free",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "newState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "reason": "Reversing Global Free Mode to restore commercial tariffs"
+    },
+    {
+      "id": "blog_1795497710740_fd844",
+      "operatorId": "admin_godfather",
+      "operatorEmail": "tech@fr8x.in",
+      "timestamp": "2026-11-24T05:21:50.740Z",
+      "action": "SET_GLOBAL_BILLING_MODE_FREE",
+      "previousState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "free",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "newState": {
+        "globalBillingMode": "FREE",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "free",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "reason": "National Logistics Day Sovereign Free Access"
+    },
+    {
+      "id": "blog_1795497710730_6ky6r",
+      "operatorId": "admin_godfather",
+      "operatorEmail": "tech@fr8x.in",
+      "timestamp": "2026-11-24T05:21:50.730Z",
+      "action": "UPDATE_SERVICE_POLICIES",
+      "previousState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "newState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "free",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "reason": "Free Job Posting Campaign Active"
+    },
+    {
+      "id": "blog_1795497710723_hz7bj",
+      "operatorId": "admin_godfather",
+      "operatorEmail": "tech@fr8x.in",
+      "timestamp": "2026-11-24T05:21:50.723Z",
+      "action": "ADD_USER_OVERRIDE_user_vip_999",
+      "previousState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "newState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "reason": "Grant VIP user override"
+    },
+    {
+      "id": "blog_1795497710722_dapry",
+      "operatorId": "admin_godfather",
+      "operatorEmail": "tech@fr8x.in",
+      "timestamp": "2026-11-24T05:21:50.722Z",
+      "action": "SET_GLOBAL_BILLING_MODE_PAID",
+      "previousState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "newState": {
+        "globalBillingMode": "PAID",
+        "servicePolicies": {
+          "subscription": "paid",
+          "jobs": "paid",
+          "advertising": "paid",
+          "auctions": "paid",
+          "registration": "free"
+        },
+        "superAdminPersonalFreeAccess": true
+      },
+      "reason": "Initial baseline test state"
+    }
+  ],
+  "updatedAt": "2026-11-24T05:21:50.748Z",
+  "updatedBy": "tech@fr8x.in"
+}
