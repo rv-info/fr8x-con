@@ -86,7 +86,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
   return (
     <aside
       className={`side ${collapsed ? 'is-collapsed' : ''} ${isMobileDrawer ? 'mobile-drawer-side' : ''}`}
-      style={{ backgroundColor: '#FFFFFF', borderRight: '1px solid #D5DEDA' }}
+      style={{ backgroundColor: '#FFFFFF', borderRight: '1px solid #D9E0E8' }}
     >
       {/* Brand Header */}
       <div
@@ -96,7 +96,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
           padding: collapsed ? '4px 0 10px' : '4px 6px 10px',
           alignItems: 'center',
           backgroundColor: '#FFFFFF',
-          borderBottom: '1px solid #D5DEDA',
+          borderBottom: '1px solid #D9E0E8',
         }}
       >
         <Link
@@ -182,7 +182,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 padding: collapsed ? '0' : '0 11px',
                 ...(active
                   ? { backgroundColor: '#075B5B', color: '#FFFFFF', borderRadius: '6px', border: '1px solid #075B5B', boxShadow: '0 1px 3px rgba(7, 91, 91, 0.25)' }
-                  : { color: '#172B2B', backgroundColor: 'transparent', border: '1px solid transparent' }),
+                  : { color: '#172B45', backgroundColor: 'transparent', border: '1px solid transparent' }),
                 fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                 fontSize: '12px',
                 fontWeight: active ? 600 : 400,
@@ -199,7 +199,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
                 name={item.id}
                 filled={active}
                 size={18}
-                style={{ color: active ? '#FFFFFF' : '#172B2B' }}
+                style={{ color: active ? '#FFFFFF' : '#172B45' }}
               />
               {!collapsed && <span>{item.label}</span>}
               {!collapsed && item.badge && <em>{item.badge}</em>}

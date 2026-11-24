@@ -1319,12 +1319,12 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
           </Link>
 
           {/* Vertical Separator - Desktop */}
-          <div className="desktop-only" style={{ width: '1px', height: '18px', background: '#D5DEDA', flexShrink: 0 }} />
+          <div className="desktop-only" style={{ width: '1px', height: '18px', background: '#D9E0E8', flexShrink: 0 }} />
 
           {/* Desktop Breadcrumbs */}
-          <div className="crumb desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#66736F', whiteSpace: 'nowrap', minWidth: 0 }}>
-            <span className="crumb-prefix" style={{ color: '#66736F' }}>Workspace / </span>
-            <b style={{ color: '#172B2B', fontWeight: 700 }}>{activePageTitle}</b>
+          <div className="crumb desktop-only" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#526174', whiteSpace: 'nowrap', minWidth: 0 }}>
+            <span className="crumb-prefix" style={{ color: '#526174' }}>Workspace / </span>
+            <b style={{ color: '#172B45', fontWeight: 700 }}>{activePageTitle}</b>
           </div>
 
           {/* Global Search Trigger */}
@@ -1333,24 +1333,29 @@ export function TopBar({ activePageTitle, onMobileMenuClick }: TopBarProps) {
             onClick={() => { setShowGlobalSearch(true); setTimeout(() => searchRef.current?.focus(), 50); }}
             title="Global Search (Ctrl+K)"
             style={{
-              height: '30px',
+              height: '32px',
+              minWidth: '180px',
               padding: '0 10px',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
+              justifyContent: 'space-between',
+              gap: '8px',
               background: '#FFFFFF',
-              border: '1px solid #D5DEDA',
+              border: '1px solid #D9E0E8',
               borderRadius: '6px',
               cursor: 'pointer',
               fontSize: '12px',
-              color: '#66736F',
+              color: '#526174',
               boxSizing: 'border-box',
               whiteSpace: 'nowrap',
+              transition: 'border-color 0.15s ease, box-shadow 0.15s ease',
             }}
           >
-            <NavigationIcon name="search" size={13} style={{ color: '#075B5B', flexShrink: 0 }} />
-            <span className="search-text">Search…</span>
-            <kbd className="search-kbd desktop-only" style={{ marginLeft: '6px', fontSize: '10px', background: '#E8F0ED', border: '1px solid #D5DEDA', borderRadius: '3px', padding: '1px 4px', color: '#172B2B' }}>⌘K</kbd>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <NavigationIcon name="search" size={13} style={{ color: '#526174', flexShrink: 0 }} />
+              <span className="search-text" style={{ color: '#526174' }}>Search…</span>
+            </div>
+            <kbd className="search-kbd desktop-only" style={{ fontSize: '10px', fontWeight: 600, background: '#F4F6F8', border: '1px solid #D9E0E8', borderRadius: '4px', padding: '2px 5px', color: '#526174', lineHeight: 1 }}>Ctrl+K</kbd>
           </button>
         </div>
 

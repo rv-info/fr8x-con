@@ -19,6 +19,7 @@ import { parseRichText } from '@/lib/utils';
 import { RichPostEditor } from '@/components/posts/RichPostEditor';
 import { sanitizeRichTextPost } from '@/lib/security/input-validation';
 import Image from 'next/image';
+import { JobCreateModal } from '@/components/jobs/JobCreateModal';
 import { FeedPost, JobPost, PostType, FeedSurface } from '@/lib/types';
 import { feedRankingEngine } from '@/lib/ranking/engine';
 import {
@@ -1451,9 +1452,41 @@ export default function FeedsPage() {
               </div>
             )}
 
+            {/* Recruiter Contact Channels & Application Instructions (Mandatory Directive) */}
+            <div style={{ padding: '12px', background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: '8px', fontSize: '12px' }}>
+              <b style={{ color: '#075B5B', fontSize: '11.5px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <Mail size={12} /> Contact &amp; Application Channels:
+              </b>
+              <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: '#526174' }}>Recruiter Email:</span>
+                  <a
+                    href={`mailto:${selectedJobModal.posterEmail || 'recruiter@company.com'}?subject=${encodeURIComponent(`Application: ${selectedJobModal.title} - ${user.displayName || 'Applicant'}`)}`}
+                    style={{ fontSize: '11.5px', color: '#075B5B', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    {selectedJobModal.posterEmail || 'recruiter@company.com'}
+                  </a>
+                </div>
+                {selectedJobModal.contactPhone && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', color: '#526174' }}>Contact Phone:</span>
+                    <span style={{ fontSize: '11.5px', color: '#172B45', fontWeight: 600 }}>{selectedJobModal.contactPhone}</span>
+                    {selectedJobModal.hasWhatsApp && (
+                      <span className="badge green" style={{ fontSize: '8px', padding: '1px 5px' }}>WHATSAPP VERIFIED</span>
+                    )}
+                  </div>
+                )}
+                {selectedJobModal.applicationInstructions && (
+                  <div style={{ marginTop: '4px', fontSize: '11px', color: '#526174', background: '#F4F6F8', padding: '6px 8px', borderRadius: '4px' }}>
+                    <b>Instructions:</b> {selectedJobModal.applicationInstructions}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Recruiter Details & Application Action */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line)', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
-              <div style={{ fontSize: '11px', color: 'var(--mut)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #D9E0E8', paddingTop: '12px', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ fontSize: '11px', color: '#526174' }}>
                 Posted by <b>{selectedJobModal.postedBy}</b> on {selectedJobModal.postedDate}
               </div>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -1471,14 +1504,16 @@ export default function FeedsPage() {
                 >
                   <MessageCircle size={12} /> Contact Recruiter
                 </button>
-                <Link
-                  href="/jobs"
+                <a
+                  href={`mailto:${selectedJobModal.posterEmail || 'recruiter@company.com'}?subject=${encodeURIComponent(`Application for ${selectedJobModal.title} - ${user.displayName || 'Candidate'}`)}&body=${encodeURIComponent(`Dear Hiring Team at ${selectedJobModal.company},\n\nI am writing to express my interest in the ${selectedJobModal.title} position posted on FR8X.\n\nApplicant: ${user.displayName}\nEmail: ${user.email}\nPhone: ${user.mobile || ''}\nCompany: ${user.company || ''}\nDesignation: ${user.designation || ''}\n\nPlease find my credentials and application profile details linked on FR8X.\n\nBest regards,\n${user.displayName}`)}`}
                   className="btn primary sm"
-                  style={{ fontWeight: 700, padding: '6px 14px', textDecoration: 'none' }}
-                  onClick={() => setSelectedJobModal(null)}
+                  style={{ fontWeight: 700, padding: '6px 14px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                  onClick={() => {
+                    toast(`Opening email application to ${selectedJobModal.posterEmail || 'recruiter@company.com'}`);
+                  }}
                 >
                   <Send size={12} /> APPLY FOR THIS JOB
-                </Link>
+                </a>
               </div>
             </div>
           </div>
@@ -1561,158 +1596,11 @@ export default function FeedsPage() {
         </Modal>
       )}
 
-      {/* Post a Job Opportunity Modal with Transparent Payment Pricing */}
-      {showJobCreateModal && (
-        <Modal
-          isOpen={showJobCreateModal}
-          onClose={() => setShowJobCreateModal(false)}
-          title="Post a Trade Career Opportunity"
-          maxWidth="680px"
-        >
-          <form onSubmit={handleCreateJob} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="grid g2">
-              <div className="field">
-                <label>Job Title <span className="req">*</span></label>
-                <input
-                  className="input"
-                  placeholder="e.g. Ocean Freight Procurement Manager"
-                  value={newJobTitle}
-                  onChange={(e) => setNewJobTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="field">
-                <label>Hiring Company</label>
-                <input
-                  className="input"
-                  value={newJobCompany}
-                  onChange={(e) => setNewJobCompany(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="grid g3">
-              <div className="field">
-                <label>Location</label>
-                <input
-                  className="input"
-                  value={newJobLocation}
-                  onChange={(e) => setNewJobLocation(e.target.value)}
-                />
-              </div>
-              <div className="field">
-                <label>Employment Type</label>
-                <select
-                  className="input"
-                  value={newJobType}
-                  onChange={(e) => setNewJobType(e.target.value)}
-                >
-                  <option>Full-time</option>
-                  <option>Part-time</option>
-                  <option>Contract</option>
-                  <option>Freelance</option>
-                </select>
-              </div>
-              <div className="field">
-                <label>Experience Level</label>
-                <input
-                  className="input"
-                  placeholder="e.g. 3–5 yrs"
-                  value={newJobExp}
-                  onChange={(e) => setNewJobExp(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="field">
-              <label>Compensation / Package</label>
-              <input
-                className="input"
-                placeholder="e.g. ₹12–18 LPA or Negotiable"
-                value={newJobPkg}
-                onChange={(e) => setNewJobPkg(e.target.value)}
-              />
-            </div>
-
-            <div className="field">
-              <label>Core Requirements <span className="req">*</span></label>
-              <textarea
-                className="input"
-                rows={3}
-                placeholder="List container shipping experience, lane knowledge, ERP tools…"
-                value={newJobReq}
-                onChange={(e) => setNewJobReq(e.target.value)}
-                required
-              />
-              {/* AI Suggestion Chips — All Categories as tabs */}
-              <div style={{ marginTop: '8px' }}>
-                <AiJobSuggestions onAppend={(text) => setNewJobReq((prev) => (prev ? prev + '\n' + text : text))} />
-              </div>
-            </div>
-
-            {/* Transparent Job Posting Fee & Duration Matrix */}
-            <div style={{ background: '#f8fafc', border: '1px solid #c8e0fe', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <b style={{ fontSize: '12px', color: 'var(--brand)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <DollarSign size={13} /> Job Listing Tariff & Duration
-                </b>
-                <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
-                  ₹300 for 2 days · ₹180/day thereafter
-                </span>
-              </div>
-
-              <div className="grid g4" style={{ gap: '8px' }}>
-                {[
-                  { days: 2, label: '2 Days (Min)', cost: 300 },
-                  { days: 7, label: '7 Days', cost: 1200 },
-                  { days: 15, label: '15 Days', cost: 2640 },
-                  { days: 30, label: '30 Days', cost: 5340 },
-                ].map((tier) => (
-                  <div
-                    key={tier.days}
-                    onClick={() => setJobDurationDays(tier.days)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: jobDurationDays === tier.days ? '2px solid var(--brand)' : '1px solid var(--line)',
-                      background: jobDurationDays === tier.days ? '#eef6ff' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>₹{tier.cost.toLocaleString('en-IN')}</b>
-                    <small style={{ fontSize: '10px', color: 'var(--mut)' }}>{tier.label}</small>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '8px' }}>
-                <label style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={autoRenewJob}
-                    onChange={(e) => setAutoRenewJob(e.target.checked)}
-                  />
-                  Auto-renew listing at ₹180/day thereafter till revoked
-                </label>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--mut)', display: 'block' }}>TOTAL PAYABLE</span>
-                  <b style={{ fontSize: '16px', color: 'var(--brand)' }}>₹{currentJobCost.toLocaleString('en-IN')}</b>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowJobCreateModal(false)}>
-                Cancel
-              </button>
-              <button type="submit" className="btn primary">
-                Pay ₹{currentJobCost.toLocaleString('en-IN')} &amp; Post Job
-              </button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      {/* Post a Job Opportunity Modal with Comprehensive Contact & Application Workflow */}
+      <JobCreateModal
+        isOpen={showJobCreateModal}
+        onClose={() => setShowJobCreateModal(false)}
+      />
 
       {/* Feed Job Payment Checkout Modal */}
       {showFeedJobCheckout && pendingFeedJobData && (
@@ -3159,18 +3047,48 @@ export default function FeedsPage() {
       <aside className="feed-right-rail">
         {/* Active Jobs Card */}
         <div className="card side-card" style={{ background: '#ffffff', border: '1px solid var(--line)', borderRadius: '8px' }}>
-          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid var(--line-light)' }}>
-            <b style={{ fontSize: '13px', color: 'var(--ink)' }}>Trade Careers &amp; Jobs</b>
-            <div style={{ display: 'flex', gap: '4px' }}>
+          <div className="side-card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', borderBottom: '1px solid #D9E0E8', background: '#FFFFFF' }}>
+            <b style={{ fontSize: '13px', color: '#172B45', fontWeight: 700 }}>Trade Careers &amp; Jobs</b>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
               <button
-                className="btn primary sm"
-                style={{ padding: '2px 8px', fontSize: '10px', fontWeight: 700 }}
+                type="button"
+                style={{
+                  height: '28px',
+                  padding: '0 10px',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  backgroundColor: '#075B5B',
+                  color: '#FFFFFF',
+                  border: '1px solid #075B5B',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 1px 2px rgba(7, 91, 91, 0.2)',
+                }}
                 onClick={() => setShowJobCreateModal(true)}
               >
-                + Post
+                + POST JOB
               </button>
-              <Link href="/jobs" className="btn secondary sm" style={{ padding: '2px 8px', fontSize: '10px' }}>
-                View All
+              <Link
+                href="/jobs"
+                style={{
+                  height: '28px',
+                  padding: '0 10px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backgroundColor: '#FFFFFF',
+                  color: '#172B45',
+                  border: '1px solid #D9E0E8',
+                  borderRadius: '4px',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                VIEW ALL
               </Link>
             </div>
           </div>

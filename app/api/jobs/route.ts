@@ -3,6 +3,7 @@ import { getJobs, saveJob, deleteJob } from '@/lib/db/jobs';
 import { authenticateUserSession, authenticateGodfatherOperator } from '@/lib/auth-guard';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 10;
 
 export async function GET(req: NextRequest) {
   const userAuth = authenticateUserSession(req, { allowUnverified: true });

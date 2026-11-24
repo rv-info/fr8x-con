@@ -9,6 +9,7 @@ import { SkeletonScreen } from '@/components/ui/SkeletonScreen';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { GoldenTick } from '@/components/ui/GoldenTick';
 import { LocalTimeBadge } from '@/components/ui/LocalTimeBadge';
+import { JobCreateModal } from '@/components/jobs/JobCreateModal';
 import { JobPost } from '@/lib/types';
 import {
   Briefcase,
@@ -361,26 +362,55 @@ export default function JobsPage() {
               </div>
             ))}
 
-            {/* Posted by */}
-            <div style={{ background: '#f8fafc', border: '1px solid var(--line)', borderRadius: 8, padding: '12px' }}>
-              <b style={{ fontSize: '11px', color: 'var(--mut)', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Posted By</b>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between' }}>
-                <div>
-                  <b style={{ fontSize: '12.5px', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    {selectedJob.postedBy}
-                  </b>
-                  <small style={{ color: 'var(--mut)', fontSize: '11px' }}>
-                    {selectedJob.company} · {selectedJob.postedDate}
-                  </small>
+            {/* Recruiter Contact Channels & Application Information (Mandatory Directive) */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #D9E0E8', borderRadius: 8, padding: '12px' }}>
+              <b style={{ fontSize: '11px', color: '#075B5B', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                <Mail size={12} /> Recruiter &amp; Application Channels
+              </b>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+                  <div>
+                    <b style={{ fontSize: '12.5px', color: '#172B45', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {selectedJob.postedBy}
+                    </b>
+                    <small style={{ color: '#526174', fontSize: '11px' }}>
+                      {selectedJob.company} · {selectedJob.postedDate}
+                    </small>
+                  </div>
+                  {selectedJob.posterEmail && (
+                    <a
+                      href={`mailto:${selectedJob.posterEmail}?subject=${encodeURIComponent(`Application for ${selectedJob.title} - ${user.displayName || 'Candidate'}`)}&body=${encodeURIComponent(`Dear Hiring Team at ${selectedJob.company},\n\nI am applying for the ${selectedJob.title} position on FR8X.\n\nApplicant: ${user.displayName}\nEmail: ${user.email}\nPhone: ${user.mobile || ''}\nCompany: ${user.company || ''}\n\nBest regards,\n${user.displayName}`)}`}
+                      className="btn secondary sm"
+                      style={{ fontSize: '11px', height: '28px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <Mail size={12} /> Apply via Email
+                    </a>
+                  )}
                 </div>
-                {selectedJob.showEmailPublicly && selectedJob.posterEmail && (
-                  <a href={`mailto:${selectedJob.posterEmail}`} className="btn secondary sm">
-                    <Mail size={12} /> Apply via Email
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: '#172B45', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#526174' }}>Primary Email:</span>
+                  <a href={`mailto:${selectedJob.posterEmail || 'recruiter@company.com'}`} style={{ color: '#075B5B', fontWeight: 600, textDecoration: 'none' }}>
+                    {selectedJob.posterEmail || 'recruiter@company.com'}
                   </a>
+                  {selectedJob.contactPhone && (
+                    <>
+                      <span style={{ color: '#D9E0E8' }}>|</span>
+                      <span style={{ color: '#526174' }}>Phone:</span>
+                      <span style={{ fontWeight: 600 }}>{selectedJob.contactPhone}</span>
+                      {selectedJob.hasWhatsApp && <span className="badge green" style={{ fontSize: '7.5px', padding: '1px 4px' }}>WHATSAPP</span>}
+                    </>
+                  )}
+                </div>
+
+                {selectedJob.applicationInstructions && (
+                  <div style={{ background: '#F4F6F8', padding: '8px 10px', borderRadius: '4px', fontSize: '11px', color: '#526174', marginTop: '2px' }}>
+                    <b style={{ color: '#172B45' }}>Application Instructions:</b> {selectedJob.applicationInstructions}
+                  </div>
                 )}
               </div>
               {selectedJob.posterTimezone && (
-                <div style={{ marginTop: '6px' }}>
+                <div style={{ marginTop: '8px' }}>
                   <LocalTimeBadge timezone={selectedJob.posterTimezone} />
                 </div>
               )}
@@ -639,124 +669,11 @@ export default function JobsPage() {
         </Modal>
       )}
 
-      {/* Create Job Modal */}
-      {showCreateModal && (
-        <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title="Post a Job Opportunity">
-          <form onSubmit={handleCreateJob} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div className="grid g2">
-              <div className="field">
-                <label>Job Title <span className="req">*</span></label>
-                <input className="input" value={newTitle} onChange={(e) => setNewTitle(e.target.value)} placeholder="e.g. Senior Freight Analyst" />
-              </div>
-              <div className="field">
-                <label>Company</label>
-                <input className="input" value={newCompany} onChange={(e) => setNewCompany(e.target.value)} />
-              </div>
-            </div>
-            <div className="grid g2">
-              <div className="field">
-                <label>Location</label>
-                <input className="input" value={newLocation} onChange={(e) => setNewLocation(e.target.value)} />
-              </div>
-              <div className="field">
-                <label>Employment Type</label>
-                <select className="input" value={newType} onChange={(e) => setNewType(e.target.value)}>
-                  {jobTypes.map((t) => <option key={t}>{t}</option>)}
-                </select>
-              </div>
-            </div>
-            <div className="grid g2">
-              <div className="field">
-                <label>Experience</label>
-                <input className="input" value={newExp} onChange={(e) => setNewExp(e.target.value)} placeholder="e.g. 3–5 yrs experience" />
-              </div>
-              <div className="field">
-                <label>Package / Compensation</label>
-                <input className="input" value={newPkg} onChange={(e) => setNewPkg(e.target.value)} placeholder="e.g. ₹10–15 LPA" />
-              </div>
-            </div>
-            <div className="grid g2">
-              <div className="field">
-                <label>Closing Date</label>
-                <input className="input" type="date" value={newClosing} onChange={(e) => setNewClosing(e.target.value)} />
-              </div>
-              <div className="field">
-                <label>Skills (comma-separated)</label>
-                <input className="input" value={newSkills} onChange={(e) => setNewSkills(e.target.value)} placeholder="FCL, Carrier Negotiations, INCOTERMS" />
-              </div>
-            </div>
-            <div className="field">
-              <label>Requirements <span className="req">*</span></label>
-              <textarea className="input" value={newReq} onChange={(e) => setNewReq(e.target.value)} placeholder="Key skills, tools, and experience required…" rows={3} />
-            </div>
-            <div className="field">
-              <label>Responsibilities</label>
-              <textarea className="input" value={newResp} onChange={(e) => setNewResp(e.target.value)} placeholder="Day-to-day responsibilities…" rows={3} />
-            </div>
-            <div className="field">
-              <label>Qualifications</label>
-              <textarea className="input" value={newQual} onChange={(e) => setNewQual(e.target.value)} placeholder="Educational background, certifications…" rows={2} />
-            </div>
-
-            {/* Transparent Job Posting Fee & Duration Matrix */}
-            <div style={{ background: '#f8fafc', border: '1px solid #c8e0fe', borderRadius: '8px', padding: '12px 14px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <b style={{ fontSize: '12px', color: 'var(--brand)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <DollarSign size={13} /> Job Listing Tariff & Duration
-                </b>
-                <span style={{ fontSize: '11px', color: 'var(--mut)' }}>
-                  ₹300 for 2 days · ₹180/day thereafter
-                </span>
-              </div>
-
-              <div className="grid g4" style={{ gap: '8px' }}>
-                {[
-                  { days: 2, label: '2 Days (Min)', cost: 300 },
-                  { days: 7, label: '7 Days', cost: 1200 },
-                  { days: 15, label: '15 Days', cost: 2640 },
-                  { days: 30, label: '30 Days', cost: 5340 },
-                ].map((tier) => (
-                  <div
-                    key={tier.days}
-                    onClick={() => setJobDurationDays(tier.days)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: '6px',
-                      border: jobDurationDays === tier.days ? '2px solid var(--brand)' : '1px solid var(--line)',
-                      background: jobDurationDays === tier.days ? '#eef6ff' : '#ffffff',
-                      cursor: 'pointer',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <b style={{ fontSize: '13px', color: 'var(--ink)', display: 'block' }}>₹{tier.cost.toLocaleString('en-IN')}</b>
-                    <small style={{ fontSize: '10px', color: 'var(--mut)' }}>{tier.label}</small>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--line-light)', paddingTop: '8px' }}>
-                <label style={{ fontSize: '11.5px', color: 'var(--ink-secondary)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={autoRenewJob}
-                    onChange={(e) => setAutoRenewJob(e.target.checked)}
-                  />
-                  Auto-renew listing at ₹180/day thereafter till revoked
-                </label>
-                <div style={{ textAlign: 'right' }}>
-                  <span style={{ fontSize: '10px', color: 'var(--mut)', display: 'block' }}>TOTAL PAYABLE</span>
-                  <b style={{ fontSize: '16px', color: 'var(--brand)' }}>₹{currentJobCost.toLocaleString('en-IN')}</b>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginTop: '6px' }}>
-              <button type="button" className="btn secondary" onClick={() => setShowCreateModal(false)}>Cancel</button>
-              <button type="submit" className="btn primary">Pay ₹{currentJobCost.toLocaleString('en-IN')} & Post Job</button>
-            </div>
-          </form>
-        </Modal>
-      )}
+      {/* Create Job Modal with Mandatory Contact & Application Channels */}
+      <JobCreateModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
 
       {/* Header */}
       <div className="head">

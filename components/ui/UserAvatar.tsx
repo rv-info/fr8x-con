@@ -37,6 +37,18 @@ export interface UserAvatarProps {
   title?: string;
 }
 
+function getCompanyMonogram(company: string): string {
+  const clean = company.replace(/\b(Pvt|Ltd|Private|Limited|Corp|Inc|LLC|LLP|Co|SA|GmbH)\b/gi, '').trim();
+  const parts = clean.split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  if (parts.length === 1 && parts[0].length >= 2) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return (parts[0]?.[0] || 'C').toUpperCase();
+}
+
 /**
  * Global Profile Picture & Company Logo Standard Component
  *
@@ -246,43 +258,74 @@ export function UserAvatar({
       </div>
 
       {/* ── 2. OVERLAPPING SQUARE COMPANY LOGO AT BOTTOM-RIGHT ── */}
-      {/* Cleanly omitted when no company logo exists to prevent empty stray square boxes */}
-      {showCompanyLogo && diameter >= 24 && resolvedCompanyLogoUrl && !logoError && (
-        <div
-          className="fr8x-avatar-company-logo"
-          title={companyName ? `Organization: ${companyName}` : 'Associated Organization'}
-          style={{
-            position: 'absolute',
-            bottom: `-${overlapOffset}px`,
-            right: `-${overlapOffset}px`,
-            width: `${logoSize}px`,
-            height: `${logoSize}px`,
-            borderRadius: `${logoBorderRadius}px`,
-            background: 'transparent',
-            border: `${logoBorderWidth}px solid #FFFFFF`,
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.22), 0 0 1px rgba(0, 0, 0, 0.15)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            overflow: 'hidden',
-            boxSizing: 'border-box',
-            zIndex: 2,
-            padding: '1px',
-          }}
-        >
-          <img
-            src={resolvedCompanyLogoUrl}
-            alt={companyName || 'Company Logo'}
-            onError={() => setLogoError(true)}
+      {showCompanyLogo && diameter >= 24 && (
+        resolvedCompanyLogoUrl && !logoError ? (
+          <div
+            className="fr8x-avatar-company-logo"
+            title={companyName ? `Organization: ${companyName}` : 'Associated Organization'}
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'contain',
-              display: 'block',
-              background: 'transparent',
+              position: 'absolute',
+              bottom: `-${overlapOffset}px`,
+              right: `-${overlapOffset}px`,
+              width: `${logoSize}px`,
+              height: `${logoSize}px`,
+              borderRadius: `${logoBorderRadius}px`,
+              background: '#FFFFFF',
+              border: `${logoBorderWidth}px solid #FFFFFF`,
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.22), 0 0 1px rgba(0, 0, 0, 0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              zIndex: 2,
+              padding: '1px',
             }}
-          />
-        </div>
+          >
+            <img
+              src={resolvedCompanyLogoUrl}
+              alt={companyName || 'Company Logo'}
+              onError={() => setLogoError(true)}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+                background: 'transparent',
+              }}
+            />
+          </div>
+        ) : companyName ? (
+          <div
+            className="fr8x-avatar-company-badge"
+            title={`Organization: ${companyName}`}
+            style={{
+              position: 'absolute',
+              bottom: `-${overlapOffset}px`,
+              right: `-${overlapOffset}px`,
+              width: `${logoSize}px`,
+              height: `${logoSize}px`,
+              borderRadius: `${logoBorderRadius}px`,
+              background: '#075B5B',
+              border: `${logoBorderWidth}px solid #FFFFFF`,
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.25)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              boxSizing: 'border-box',
+              zIndex: 2,
+              color: '#FFFFFF',
+              fontWeight: 800,
+              fontSize: `${Math.max(7, Math.round(logoSize * 0.44))}px`,
+              lineHeight: 1,
+              fontFamily: 'Calibri, Arial, sans-serif',
+              textTransform: 'uppercase',
+            }}
+          >
+            {getCompanyMonogram(companyName)}
+          </div>
+        ) : null
       )}
 
       {/* ── 3. GOLDEN TICK BADGE (TOP-RIGHT) ── */}
