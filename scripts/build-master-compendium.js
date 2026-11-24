@@ -21,7 +21,7 @@ const {
   ShadingType,
 } = docx;
 
-console.log('Building Exhaustive FR8X Master Marketing & Business Intelligence Compendium...\n');
+console.log('Building Exhaustive FR8X Master Marketing & Business Intelligence Compendium in Best Mode Alignment...\n');
 
 const assetsDir = path.join(__dirname, '..', 'marketing', '02_VISUAL_ASSETS');
 const outputDir = path.join(__dirname, '..', 'marketing', '03_MASTER_BOOK');
@@ -51,7 +51,7 @@ function p(text, opts = {}) {
       if (part.startsWith('**') && part.endsWith('**')) {
         return new TextRun({
           text: part.slice(2, -2),
-          size: opts.size || 22,
+          size: opts.size || 22, // 11pt
           font: 'Arial',
           color: opts.color || '1E293B',
           bold: true,
@@ -78,9 +78,9 @@ function p(text, opts = {}) {
   }
 
   return new Paragraph({
-    alignment: opts.align || AlignmentType.LEFT,
+    alignment: opts.align || (opts.bullet ? AlignmentType.LEFT : AlignmentType.JUSTIFIED),
     spacing: {
-      before: opts.before !== undefined ? opts.before : 120,
+      before: opts.before !== undefined ? opts.before : 100,
       after: opts.after !== undefined ? opts.after : 120,
       line: opts.line || 276, // 1.15 line spacing
     },
@@ -92,13 +92,13 @@ function p(text, opts = {}) {
 function h1(title) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_1,
-    spacing: { before: 400, after: 180 },
+    spacing: { before: 450, after: 180 },
     children: [
       new TextRun({
         text: title,
         font: 'Arial',
         bold: true,
-        size: 36, // 18pt
+        size: 34, // 17pt
         color: COLOR_BRAND,
       }),
     ],
@@ -108,13 +108,13 @@ function h1(title) {
 function h2(title) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_2,
-    spacing: { before: 300, after: 140 },
+    spacing: { before: 320, after: 140 },
     children: [
       new TextRun({
         text: title,
         font: 'Arial',
         bold: true,
-        size: 28, // 14pt
+        size: 26, // 13pt
         color: COLOR_SECONDARY,
       }),
     ],
@@ -124,13 +124,13 @@ function h2(title) {
 function h3(title) {
   return new Paragraph({
     heading: HeadingLevel.HEADING_3,
-    spacing: { before: 200, after: 100 },
+    spacing: { before: 220, after: 100 },
     children: [
       new TextRun({
         text: title,
         font: 'Arial',
         bold: true,
-        size: 24, // 12pt
+        size: 22, // 11pt
         color: COLOR_ACCENT,
       }),
     ],
@@ -166,6 +166,7 @@ function callout(title, bodyText, color = COLOR_BRAND) {
               }),
               new Paragraph({
                 spacing: { before: 80 },
+                alignment: AlignmentType.JUSTIFIED,
                 children: [
                   new TextRun({
                     text: bodyText,
@@ -187,7 +188,7 @@ function embedImage(fileName, caption, width = 540, height = 300) {
   const imgPath = path.join(assetsDir, fileName);
   if (!fs.existsSync(imgPath)) {
     console.warn(`Image not found: ${imgPath}`);
-    return [p(`[Figure: ${caption}]`, { italics: true, color: COLOR_MUTED })];
+    return [p(`[Figure: ${caption}]`, { italics: true, color: COLOR_MUTED, align: AlignmentType.CENTER })];
   }
   const imgBuffer = fs.readFileSync(imgPath);
   return [
@@ -239,6 +240,7 @@ function createTable(headers, rows) {
               margins: { top: 120, bottom: 120, left: 140, right: 140 },
               children: [
                 new Paragraph({
+                  alignment: AlignmentType.LEFT,
                   children: [
                     new TextRun({
                       text: h,
@@ -266,6 +268,7 @@ function createTable(headers, rows) {
                   margins: { top: 100, bottom: 100, left: 140, right: 140 },
                   children: [
                     new Paragraph({
+                      alignment: AlignmentType.LEFT,
                       children: [
                         new TextRun({
                           text: cell,
@@ -291,7 +294,6 @@ function readMarkdown(filePath) {
   return '';
 }
 
-// Convert a markdown text block into docx elements
 function parseMarkdownToDocx(mdText) {
   const elements = [];
   const lines = mdText.split('\n');
@@ -337,6 +339,11 @@ function parseMarkdownToDocx(mdText) {
       continue;
     }
 
+    // Skip code block fences or convert simple comments
+    if (line.startsWith('```')) {
+      continue;
+    }
+
     if (line.startsWith('# ')) {
       elements.push(h1(line.replace(/^#\s+/, '')));
     } else if (line.startsWith('## ')) {
@@ -344,7 +351,7 @@ function parseMarkdownToDocx(mdText) {
     } else if (line.startsWith('### ')) {
       elements.push(h3(line.replace(/^###\s+/, '')));
     } else if (line.startsWith('> ')) {
-      elements.push(callout('Operational Note', line.replace(/^>\s+/, ''), COLOR_BRAND));
+      elements.push(callout('Operational Directive', line.replace(/^>\s+/, ''), COLOR_BRAND));
     } else if (line.startsWith('- ') || line.startsWith('* ')) {
       elements.push(p(line.replace(/^[-*]\s+/, ''), { bullet: true }));
     } else if (/^\d+\.\s+/.test(line)) {
@@ -362,7 +369,7 @@ async function buildMasterBook() {
   const children = [];
 
   // ----------------------------------------------------
-  // COVER PAGE
+  // COVER PAGE (Front Matter)
   // ----------------------------------------------------
   children.push(
     new Paragraph({ spacing: { before: 1800, after: 300 } }),
@@ -380,10 +387,10 @@ async function buildMasterBook() {
     }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { before: 160, after: 600 },
+      spacing: { before: 160, after: 500 },
       children: [
         new TextRun({
-          text: 'The Complete Master Guide to Modern B2B Freight Forwarding Architecture,\nDigital Exchange Operations, International Marketing, and Venture Growth',
+          text: 'The Authoritative Master Guide to Global B2B Freight Forwarding Architecture,\nDigital Exchange Operations, International Marketing, and Venture Growth',
           font: 'Arial',
           size: 26, // 13pt
           color: COLOR_MUTED,
@@ -391,7 +398,7 @@ async function buildMasterBook() {
       ],
     }),
     ...embedImage('diagram-fr8x-system-architecture.png', 'FR8X Central Exchange System Architecture', 520, 290),
-    new Paragraph({ spacing: { before: 1200, after: 120 } }),
+    new Paragraph({ spacing: { before: 1000, after: 120 } }),
     new Paragraph({
       alignment: AlignmentType.CENTER,
       children: [
@@ -448,57 +455,68 @@ async function buildMasterBook() {
   );
 
   // ----------------------------------------------------
-  // DETAILED TABLE OF CONTENTS
+  // DETAILED CHRONOLOGICAL TABLE OF CONTENTS
   // ----------------------------------------------------
   children.push(
-    h1('DETAILED MASTER TABLE OF CONTENTS'),
-    p('The compendium is organized into 9 specialized volumes comprising 37 comprehensive chapters:'),
-    p('• VOLUME 1: THE GLOBAL FREIGHT FORWARDING INDUSTRY (FOUNDATIONS & STRUCTURE)', { bold: true }),
-    p('  - Chapter 1: Anatomy of Maritime, Air, and Multimodal Freight Forwarding', { bullet: true }),
-    p('  - Chapter 2: The Core Actors: Forwarders, NVOCCs, Carriers, CHAs & Shippers', { bullet: true }),
-    p('  - Chapter 3: Commercial Tariffs: Ocean BAS, OTHC, DTHC, Demurrage & Detention', { bullet: true }),
-    p('  - Chapter 4: Structural Crises Facing Small & Mid-Market Freight Forwarders', { bullet: true }),
-    p('• VOLUME 2: FR8X PRODUCT INTELLIGENCE & COMPLETE OPERATIONAL ENCYCLOPEDIA', { bold: true }),
-    p('  - Chapter 5: Global Header & Availability Status Popover Architecture', { bullet: true }),
-    p('  - Chapter 6: B2B Freight Intelligence Feed & Structured Table Editor', { bullet: true }),
-    p('  - Chapter 7: Multimodal Rate Intelligence Matrix & Unified Lane Editor', { bullet: true }),
-    p('  - Chapter 8: Reverse Container Tender Auctions & Spot Bidding Rooms', { bullet: true }),
-    p('  - Chapter 9: Trade Careers & Logistics Talent Recruitment Board', { bullet: true }),
-    p('  - Chapter 10: Enterprise Directory, Freight Passport™ & Nexus Compliance', { bullet: true }),
-    p('  - Chapter 11: Multi-Currency Billing Engine & Sovereign Free-Access Control', { bullet: true }),
-    p('• VOLUME 3: STRATEGIC ADOPTION FRAMEWORKS FOR FREIGHT FORWARDERS', { bold: true }),
-    p('  - Chapter 12: The Small Independent Forwarder Playbook (1–15 Employees)', { bullet: true }),
-    p('  - Chapter 13: The Mid-Market Logistics Enterprise Playbook (16–100 Employees)', { bullet: true }),
-    p('  - Chapter 14: The Global Enterprise & Carrier Playbook (100+ Employees)', { bullet: true }),
-    p('  - Chapter 15: What FR8X Is vs. What It Is Not (Truth-in-Tech Boundaries)', { bullet: true }),
-    p('• VOLUME 4: INTERNATIONAL MARKETING FUNDAMENTALS & CHANNEL STRATEGY', { bold: true }),
-    p('  - Chapter 16: Marketing Principles for Specialized Freight Forwarding Tech', { bullet: true }),
-    p('  - Chapter 17: Customer Personas: Founders, Operations, Agents & Recruiters', { bullet: true }),
-    p('  - Chapter 18: B2B Channel Ranking Matrix (WhatsApp, LinkedIn, Networks)', { bullet: true }),
-    p('  - Chapter 19: Low-Budget Founder Execution vs. High-Budget Scale Strategy', { bullet: true }),
-    p('• VOLUME 5: 90-DAY & 180-DAY EXECUTION CALENDARS & TRACKING TEMPLATES', { bold: true }),
-    p('  - Chapter 20: 90-Day Week-by-Week Operational Publishing Schedule', { bullet: true }),
-    p('  - Chapter 21: 180-Day Global Expansion & Association Integration Roadmap', { bullet: true }),
-    p('  - Chapter 22: Lead Tracking Sheets, KPI Scorecards & Conversion Metrics', { bullet: true }),
-    p('• VOLUME 6: TURN-KEY READY-TO-PUBLISH MARKETING CONTENT LIBRARY', { bold: true }),
-    p('  - Chapter 23: Direct 1-on-1 Outreach Scripts (WhatsApp & SMS)', { bullet: true }),
-    p('  - Chapter 24: LinkedIn Thought Leadership, Carousel & Problem Posts', { bullet: true }),
-    p('  - Chapter 25: 4-Touch Cold Email Outbound Sequences', { bullet: true }),
-    p('  - Chapter 26: 60-Second Video Demonstration & Educational Scripts', { bullet: true }),
-    p('  - Chapter 27: Customer Onboarding, Product Announcements & PR Releases', { bullet: true }),
-    p('• VOLUME 7: INTERNATIONAL CUSTOMER ACQUISITION & SALES SCRIPTS', { bullet: true }),
-    p('  - Chapter 28: The 5-Step Consultative Freight Sales Methodology', { bullet: true }),
-    p('  - Chapter 29: Spoken Pitches: 30-Second, 1-Minute, 3-Minute & 5-Minute Demos', { bullet: true }),
-    p('  - Chapter 30: Realistic Customer Sales Dialogue & Discovery Analysis', { bullet: true }),
-    p('  - Chapter 31: Comprehensive Objection Handling & Value Defenses', { bullet: true }),
-    p('• VOLUME 8: ANGEL INVESTOR & VENTURE CAPITAL PRESENTATION HANDBOOK', { bold: true }),
-    p('  - Chapter 32: Macro Investment Thesis & Market Opportunity ($200B+ TAM)', { bullet: true }),
-    p('  - Chapter 33: Multi-Stream Monetization Model & Defensible Unit Economics', { bullet: true }),
-    p('  - Chapter 34: 3-Year Illustrative Financial Modeling Framework', { bullet: true }),
-    p('  - Chapter 35: Investor Presentation Script & Tough Q&A Defense', { bullet: true }),
-    p('• VOLUME 9: REFERENCE COMPENDIUM, INDUSTRY GLOSSARY & EVIDENCE REGISTER', { bold: true }),
-    p('  - Chapter 36: 100+ Essential Maritime Terms & INCOTERMS 2020 Definitions', { bullet: true }),
-    p('  - Chapter 37: Master Feature Evidence Register & Repository Code Links', { bullet: true }),
+    h1('DETAILED CHRONOLOGICAL MASTER TABLE OF CONTENTS'),
+    p(
+      'The compendium is structured in an end-to-end chronological journey of commercial understanding, system architecture, user adoption, market promotion, sales acquisition, venture financing, and technical reference:'
+    ),
+    p('• STAGE 1: THE FOUNDATIONAL REALITY (THE MARKET & THE PROBLEM)', { bold: true }),
+    p('  - Volume 1: The Global Freight Forwarding Industry (Foundations & Structure)', { bullet: true }),
+    p('    · Chapter 1: Anatomy of Maritime, Air, and Multimodal Freight Forwarding', { bullet: true }),
+    p('    · Chapter 2: The Core Actors: Forwarders, NVOCCs, Carriers, CHAs & Shippers', { bullet: true }),
+    p('    · Chapter 3: Commercial Tariffs: Ocean BAS, OTHC, DTHC, Demurrage & Detention', { bullet: true }),
+    p('    · Chapter 4: Structural Crises Facing Small & Mid-Market Freight Forwarders', { bullet: true }),
+    p('• STAGE 2: THE DIGITAL SOLUTION & PRODUCT SPECIFICATION (WHAT WE BUILT)', { bold: true }),
+    p('  - Volume 2: FR8X Product Intelligence & Complete Operational Encyclopedia', { bullet: true }),
+    p('    · Chapter 5: Global Header & Availability Status Popover Architecture', { bullet: true }),
+    p('    · Chapter 6: B2B Freight Intelligence Feed & Structured Table Editor', { bullet: true }),
+    p('    · Chapter 7: Multimodal Rate Intelligence Matrix & Unified Lane Editor', { bullet: true }),
+    p('    · Chapter 8: Reverse Container Tender Auctions & Spot Bidding Rooms', { bullet: true }),
+    p('    · Chapter 9: Trade Careers & Logistics Talent Recruitment Board', { bullet: true }),
+    p('    · Chapter 10: Enterprise Directory, Freight Passport™ & Nexus Compliance', { bullet: true }),
+    p('    · Chapter 11: Multi-Currency Billing Engine & Sovereign Free-Access Control', { bullet: true }),
+    p('• STAGE 3: CUSTOMER ADOPTION & IMPLEMENTATION ROADMAP (HOW USERS USE IT)', { bold: true }),
+    p('  - Volume 3: Strategic Adoption Frameworks for Freight Forwarders', { bullet: true }),
+    p('    · Chapter 12: The Small Independent Forwarder Playbook (1–15 Employees)', { bullet: true }),
+    p('    · Chapter 13: The Mid-Market Logistics Enterprise Playbook (16–100 Employees)', { bullet: true }),
+    p('    · Chapter 14: The Global Enterprise & Carrier Playbook (100+ Employees)', { bullet: true }),
+    p('    · Chapter 15: What FR8X Is vs. What It Is Not (Truth-in-Tech Boundaries)', { bullet: true }),
+    p('• STAGE 4: GO-TO-MARKET & MARKETING STRATEGY (HOW TO ATTRACT PROSPECTS)', { bold: true }),
+    p('  - Volume 4: International Marketing Fundamentals & Channel Strategy', { bullet: true }),
+    p('    · Chapter 16: Marketing Principles for Specialized Freight Forwarding Tech', { bullet: true }),
+    p('    · Chapter 17: Customer Personas: Founders, Operations, Agents & Recruiters', { bullet: true }),
+    p('    · Chapter 18: B2B Channel Ranking Matrix (WhatsApp, LinkedIn, Networks)', { bullet: true }),
+    p('    · Chapter 19: Low-Budget Founder Execution vs. High-Budget Scale Strategy', { bullet: true }),
+    p('• STAGE 5: EXECUTION TIMELINE & CHRONOLOGICAL CALENDARS (DAY-BY-DAY EXECUTION)', { bold: true }),
+    p('  - Volume 5: 90-Day & 180-Day Chronological Execution Calendars', { bullet: true }),
+    p('    · Chapter 20: 90-Day Week-by-Week Operational Publishing Schedule', { bullet: true }),
+    p('    · Chapter 21: 180-Day Global Expansion & Association Integration Roadmap', { bullet: true }),
+    p('    · Chapter 22: Lead Tracking Sheets, KPI Scorecards & Conversion Metrics', { bullet: true }),
+    p('• STAGE 6: COPYWRITING & ASSET REPOSITORY (WHAT TO SAY & PUBLISH)', { bold: true }),
+    p('  - Volume 6: Turn-Key Ready-to-Publish Marketing Content Library', { bullet: true }),
+    p('    · Chapter 23: Direct 1-on-1 Outreach Scripts (WhatsApp & SMS)', { bullet: true }),
+    p('    · Chapter 24: LinkedIn Thought Leadership, Carousel & Problem Posts', { bullet: true }),
+    p('    · Chapter 25: 4-Touch Cold Email Outbound Sequences', { bullet: true }),
+    p('    · Chapter 26: 60-Second Video Demonstration & Educational Scripts', { bullet: true }),
+    p('    · Chapter 27: Customer Onboarding, Product Announcements & PR Releases', { bullet: true }),
+    p('• STAGE 7: SALES METHODOLOGY, PITCHES & CONVERSION (HOW TO CLOSE CUSTOMERS)', { bold: true }),
+    p('  - Volume 7: International Customer Acquisition & Sales Scripts', { bullet: true }),
+    p('    · Chapter 28: The 5-Step Consultative Freight Sales Methodology', { bullet: true }),
+    p('    · Chapter 29: Spoken Pitches: 30-Second, 1-Minute, 3-Minute & 5-Minute Demos', { bullet: true }),
+    p('    · Chapter 30: Realistic Customer Sales Dialogue & Discovery Analysis', { bullet: true }),
+    p('    · Chapter 31: Comprehensive Objection Handling & Value Defenses', { bullet: true }),
+    p('• STAGE 8: FINANCING, UNIT ECONOMICS & INVESTOR UNDERWRITING (HOW TO FUND IT)', { bold: true }),
+    p('  - Volume 8: Angel Investor & Venture Capital Presentation Handbook', { bullet: true }),
+    p('    · Chapter 32: Macro Investment Thesis & Market Opportunity ($200B+ TAM)', { bullet: true }),
+    p('    · Chapter 33: Multi-Stream Monetization Model & Defensible Unit Economics', { bullet: true }),
+    p('    · Chapter 34: 3-Year Illustrative Financial Modeling Framework', { bullet: true }),
+    p('    · Chapter 35: Investor Presentation Script & Tough Q&A Defense', { bullet: true }),
+    p('• STAGE 9: REFERENCE COMPENDIUM & AUDIT TRAIL (THE CANONICAL REFERENCE)', { bold: true }),
+    p('  - Volume 9: Technical & Maritime Reference Compendium', { bullet: true }),
+    p('    · Chapter 36: 100+ Essential Maritime Terms & INCOTERMS 2020 Definitions', { bullet: true }),
+    p('    · Chapter 37: Master Feature Evidence Register & Repository Code Links', { bullet: true }),
     new Paragraph({ children: [new PageBreak()] })
   );
 
@@ -552,93 +570,108 @@ async function buildMasterBook() {
 
   // ----------------------------------------------------
   // VOLUME 2: PRODUCT INTELLIGENCE & COMPLETE ENCYCLOPEDIA
+  // Ingests both FR8X_PRODUCT_INTELLIGENCE_MANIFESTO.md and 01_PRODUCT_FEATURE_ENCYCLOPEDIA.md
   // ----------------------------------------------------
   children.push(
     h1('VOLUME 2: FR8X PRODUCT INTELLIGENCE & COMPLETE OPERATIONAL ENCYCLOPEDIA'),
     p(
-      'This volume provides an exhaustive, screen-by-screen, module-by-module operational manual of every capability built and verified into FR8X.'
+      'This volume provides an exhaustive, screen-by-screen, module-by-module operational manual and architectural specification of every capability built and verified into FR8X.'
     ),
-    ...embedImage('verified-profile-dropdown-desktop.png', 'Global Header, Profile Dropdown, and Verified Statutory Credentials', 540, 270),
-    h2('Chapter 5: Global Header & Availability Status Popover Architecture'),
-    p(
-      'The top navigation header functions as the nerve center of the FR8X operating system. It features four synchronized micro-services:'
-    ),
-    p('1. **Network Status Pill (`NetworkStatusPill.tsx`)**: Anchored with intelligent edge-collision detection. Allows operators to switch between Online (available for trade RFQs), Away, and Offline states. It actively monitors client network conditions, displaying high-speed 4G status or throttling telemetry on low-bandwidth connections.', { bullet: true }),
-    p('2. **Active Logistics Trading Hub Selector**: Allows operators to calibrate their physical shipping gateway (Nhava Sheva, Delhi NCR, Chennai, Singapore, Dubai).', { bullet: true }),
-    p('3. **Multi-Currency Converter Popover**: Real-time ECB interbank feed conversion, curated 5-currency shortcuts (INR, USD, EUR, GBP, AED), interactive calculator with 120+ ISO 4217 currencies, and reciprocal rate display.', { bullet: true }),
-    p('4. **User Identity & Verified Freight Passport Dropdown**: Displays user full name, designation, verified company badge or logo, active subscription plan, and statutory accreditation status.', { bullet: true }),
-    ...embedImage('verified-notifications-desktop.png', 'Interactive Global Notification Center Popover with Category Tabs', 540, 270),
-    h2('Chapter 6: B2B Freight Intelligence Feed & Structured Table Editor'),
+    ...embedImage('verified-profile-dropdown-desktop.png', 'Global Header, Profile Dropdown, and Verified Statutory Credentials', 540, 270)
+  );
+
+  const productManifestoContent = readMarkdown(path.join(productIntelDir, 'FR8X_PRODUCT_INTELLIGENCE_MANIFESTO.md'));
+  if (productManifestoContent) {
+    children.push(...parseMarkdownToDocx(productManifestoContent));
+  }
+
+  children.push(
     ...embedImage('verified-table-modal.png', 'Structured Rate & Commodity Table Insertion Configuration Dialog', 540, 270),
-    p(
-      'Located at `/feeds`, the Trade Intelligence Feed enables forwarders to broadcast operational advisories, port congestion notices, blank sailings, and spot equipment availability. The rich-text editor features an embedded Structured Table Editor modal allowing forwarders to configure 2 to 5 columns and 1 to 10 rows with editable column headers (Port/Terminal, Line, Rate, Validity). Every table cell is individually editable in real time, formatting rates in crisp monospaced fonts.'
-    ),
     ...embedImage('verified-table-preview.png', 'Embedded Structured Rate Table Rendered in Live B2B Feed Post', 540, 270),
-    h2('Chapter 7: Multimodal Rate Intelligence Matrix & Unified Lane Editor'),
-    p(
-      'Located at `/rates`, this module provides instant spot benchmarking across Ocean FCL, LCL, and Air Freight routes. Forwarders filter by POL, POD, Equipment (`20GP`, `40HC`, `Reefer`), Shipping Line, and Validity. Clicking `+ Add New Rate` or row double-click launches the `RatesEditorModal.tsx`, where forwarders input Base Freight, Origin THC, Destination THC, and Documentation Fees, saving directly to Supabase PostgreSQL.'
-    ),
-    h2('Chapter 8: Reverse Container Tender Auctions & Spot Bidding Rooms'),
-    ...embedImage('diagram-reverse-auction-lifecycle.png', 'Step-by-Step Reverse Container Tender Lifecycle', 540, 300),
-    p(
-      'The reverse auction engine (`/auctions`, `/auctions/create`, `/auctions/[id]`) allows forwarders and cargo owners to tender 10 to 500 TEUs in a live digital room. Bidders compete under an automated countdown timer with decremental bidding rules. Bidder identities are masked to prevent collusion. Winning bidders are bound by an enforceable 48-hour container slot lock.'
-    ),
-    h2('Chapter 9: Trade Careers & Logistics Talent Recruitment Board'),
-    p(
-      'Located at `/jobs`, this module solves the talent crisis in logistics. Requisitions display verified corporate logos, designations, salary brackets, and specialized freight skill tags. Employers manage candidate applications through an interactive pipeline status manager (*Under Review* → *Shortlisted* → *Interview* → *Hired*). Listings are priced transparently at ₹300 (2 days), ₹1,200 (7 days), ₹2,640 (15 days), and ₹5,340 (30 days)—over 10x cheaper than generic job boards.'
-    ),
-    h2('Chapter 10: Enterprise Directory, Freight Passport™ & Nexus Compliance'),
-    p(
-      'Located at `/network` and `/nexus`, these modules protect forwarders from counterparty insolvency. The Freight Passport modal displays statutory registrations: Indian GSTN, PAN, Multimodal Transport Operator (MTO) license, IATA cargo agent code, and FMC OTI license. Nexus maintains a searchable ledger of unresolved freight defaults and container abandonment incidents.'
-    ),
-    h2('Chapter 11: Multi-Currency Billing Engine & Sovereign Free Access'),
-    ...embedImage('diagram-investor-unit-economics.png', 'FR8X Multi-Stream Monetization & Central Billing Architecture', 540, 300),
-    p(
-      'Located in `lib/billing/`, the central billing engine coordinates all chargeable operations across subscriptions, jobs, ads, and auction fees. It auto-detects user currency via edge headers (`cf-ipcountry`), enforces zero-drift minor units (e.g. JPY 0 decimals, KWD 3 decimals, INR/USD 2 decimals), and locks quotes for 15 minutes with HMAC-SHA256 signatures. The Godfather Sovereign Free-Access Engine provides a master global switch (`PAID` vs `FREE`), user overrides, and immutable audit logs.'
-    ),
+    ...embedImage('diagram-reverse-auction-lifecycle.png', 'Step-by-Step Reverse Container Tender Lifecycle', 540, 300)
+  );
+
+  const productEncyclopediaContent = readMarkdown(path.join(handbooksDir, '01_PRODUCT_FEATURE_ENCYCLOPEDIA.md'));
+  if (productEncyclopediaContent) {
+    children.push(...parseMarkdownToDocx(productEncyclopediaContent));
+  }
+
+  children.push(
+    ...embedImage('verified-notifications-desktop.png', 'Interactive Global Notification Center Popover with Category Tabs', 540, 270),
     new Paragraph({ children: [new PageBreak()] })
   );
 
   // ----------------------------------------------------
-  // INGESTION OF STRATEGIC HANDBOOKS (VOLUMES 3 TO 9)
+  // CHRONOLOGICAL INGESTION OF REMAINING VOLUMES (3 TO 9)
   // ----------------------------------------------------
-  const handbookFiles = [
-    { vol: 'VOLUME 3: STRATEGIC ADOPTION FRAMEWORKS FOR FREIGHT FORWARDERS', file: '02_FREIGHT_FORWARDER_ADOPTION_GUIDE.md', diag: null },
-    { vol: 'VOLUME 4: INTERNATIONAL MARKETING FUNDAMENTALS & CHANNEL STRATEGY', file: '03_INTERNATIONAL_MARKETING_STRATEGY.md', diag: 'diagram-marketing-channel-ranking.png' },
-    { vol: 'VOLUME 5: 90-DAY & 180-DAY EXECUTION CALENDARS & TRACKING TEMPLATES', file: '04_90_AND_180_DAY_PUBLISHING_CALENDARS.md', diag: 'diagram-sales-conversion-funnel.png' },
-    { vol: 'VOLUME 6: TURN-KEY READY-TO-PUBLISH MARKETING CONTENT LIBRARY', file: '05_READY_TO_PUBLISH_CONTENT_LIBRARY.md', diag: null },
-    { vol: 'VOLUME 7: INTERNATIONAL CUSTOMER ACQUISITION & SALES SCRIPTS', file: '06_INTERNATIONAL_CUSTOMER_ACQUISITION_PLAYBOOK.md', diag: null },
-    { vol: 'VOLUME 7 (PART B): PITCH SCRIPTS & LIVE PRODUCT DEMO VERBATIM', file: '07_INTERNATIONAL_SALES_PITCH_SCRIPTS.md', diag: null },
-    { vol: 'VOLUME 8: ANGEL INVESTOR & VENTURE CAPITAL HANDBOOK', file: '08_ANGEL_INVESTOR_AND_VC_HANDBOOK.md', diag: 'diagram-investor-unit-economics.png' },
-    { vol: 'VOLUME 9: MARITIME TERMINOLOGY & INCOTERMS 2020 GLOSSARY', file: '09_FREIGHT_FORWARDING_TERMINOLOGY_GLOSSARY.md', diag: null },
-    { vol: 'VOLUME 9 (PART B): MASTER FEATURE EVIDENCE REGISTER & CODE AUDIT', file: path.join('..', '01_PRODUCT_INTELLIGENCE', 'FEATURE_EVIDENCE_REGISTER.md'), diag: null },
+  const chronologicalVolumes = [
+    {
+      volTitle: 'VOLUME 3: STRATEGIC ADOPTION FRAMEWORKS FOR FREIGHT FORWARDERS',
+      file: path.join(handbooksDir, '02_FREIGHT_FORWARDER_ADOPTION_GUIDE.md'),
+      diagram: null,
+    },
+    {
+      volTitle: 'VOLUME 4: INTERNATIONAL MARKETING FUNDAMENTALS & CHANNEL STRATEGY',
+      file: path.join(handbooksDir, '03_INTERNATIONAL_MARKETING_STRATEGY.md'),
+      diagram: 'diagram-marketing-channel-ranking.png',
+    },
+    {
+      volTitle: 'VOLUME 5: 90-DAY & 180-DAY CHRONOLOGICAL EXECUTION CALENDARS & TRACKING TEMPLATES',
+      file: path.join(handbooksDir, '04_90_AND_180_DAY_PUBLISHING_CALENDARS.md'),
+      diagram: 'diagram-sales-conversion-funnel.png',
+    },
+    {
+      volTitle: 'VOLUME 6: TURN-KEY READY-TO-PUBLISH MARKETING CONTENT LIBRARY',
+      file: path.join(handbooksDir, '05_READY_TO_PUBLISH_CONTENT_LIBRARY.md'),
+      diagram: null,
+    },
+    {
+      volTitle: 'VOLUME 7: INTERNATIONAL CUSTOMER ACQUISITION PLAYBOOK & CONSULTATIVE SALES SCRIPTS',
+      file: path.join(handbooksDir, '06_INTERNATIONAL_CUSTOMER_ACQUISITION_PLAYBOOK.md'),
+      diagram: null,
+    },
+    {
+      volTitle: 'VOLUME 7 (PART B): SPOKEN PITCHES, ELEVATOR SCRIPTS & 5-MINUTE LIVE PRODUCT DEMOS',
+      file: path.join(handbooksDir, '07_INTERNATIONAL_SALES_PITCH_SCRIPTS.md'),
+      diagram: null,
+    },
+    {
+      volTitle: 'VOLUME 8: ANGEL INVESTOR & VENTURE CAPITAL PRESENTATION HANDBOOK',
+      file: path.join(handbooksDir, '08_ANGEL_INVESTOR_AND_VC_HANDBOOK.md'),
+      diagram: 'diagram-investor-unit-economics.png',
+    },
+    {
+      volTitle: 'VOLUME 9: MARITIME TERMINOLOGY & INCOTERMS 2020 GLOSSARY',
+      file: path.join(handbooksDir, '09_FREIGHT_FORWARDING_TERMINOLOGY_GLOSSARY.md'),
+      diagram: null,
+    },
+    {
+      volTitle: 'VOLUME 9 (PART B): MASTER FEATURE EVIDENCE REGISTER & CODEBASE AUDIT MATRIX',
+      file: path.join(productIntelDir, 'FEATURE_EVIDENCE_REGISTER.md'),
+      diagram: null,
+    },
   ];
 
-  for (const h of handbookFiles) {
-    const filePath = h.file.startsWith('..')
-      ? path.join(__dirname, '..', 'marketing', h.file)
-      : path.join(handbooksDir, h.file);
-
-    const mdContent = readMarkdown(filePath);
+  for (const v of chronologicalVolumes) {
+    const mdContent = readMarkdown(v.file);
     if (mdContent) {
-      children.push(h1(h.vol));
-      if (h.diag) {
-        children.push(...embedImage(h.diag, h.vol, 540, 300));
+      children.push(h1(v.volTitle));
+      if (v.diagram) {
+        children.push(...embedImage(v.diagram, v.volTitle, 540, 300));
       }
-      const parsedElements = parseMarkdownToDocx(mdContent);
-      children.push(...parsedElements);
+      children.push(...parseMarkdownToDocx(mdContent));
       children.push(new Paragraph({ children: [new PageBreak()] }));
     }
   }
 
-  // Construct Final Document
+  // Document Assembly with Consistent Typography, Running Headers and Footers
   const doc = new Document({
     styles: {
       default: {
         document: {
           run: {
             font: 'Arial',
-            size: 22,
+            size: 22, // 11pt
             color: '1E293B',
           },
         },
@@ -649,7 +682,7 @@ async function buildMasterBook() {
         properties: {
           page: {
             margin: {
-              top: 1440,
+              top: 1440,    // 1 inch margins
               bottom: 1440,
               left: 1440,
               right: 1440,
@@ -730,6 +763,11 @@ async function buildMasterBook() {
       stdio: 'inherit',
     });
     console.log(`✓ Master PDF successfully generated: ${pdfPath}`);
+
+    // Also copy to root of marketing/ folder for immediate user convenience
+    const rootMarketingPdf = path.join(__dirname, '..', 'marketing', 'FR8X_GLOBAL_MARKETING_AND_BUSINESS_INTELLIGENCE_COMPENDIUM.pdf');
+    fs.copyFileSync(pdfPath, rootMarketingPdf);
+    console.log(`✓ Copied directly to marketing root: ${rootMarketingPdf}`);
   } catch (err) {
     console.error('PDF conversion error:', err);
   }
