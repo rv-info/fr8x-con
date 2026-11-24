@@ -500,7 +500,7 @@ export function RichPostEditor({
     <div
       className="rich-post-editor-container"
       style={{
-        border: '1px solid #D5DEDA',
+        border: '1px solid #D9E0E8',
         borderRadius: '8px',
         background: '#FFFFFF',
         overflow: 'hidden',
@@ -517,7 +517,7 @@ export function RichPostEditor({
           gap: '3px',
           padding: '6px 10px',
           background: '#F8FAF9',
-          borderBottom: '1px solid #E8F0ED',
+          borderBottom: '1px solid #F4F6F8',
           flexWrap: 'wrap',
           userSelect: 'none',
         }}
@@ -544,7 +544,7 @@ export function RichPostEditor({
           <Redo2 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
 
         {/* Text Styles */}
         <button
@@ -588,7 +588,7 @@ export function RichPostEditor({
           <Strikethrough size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
 
         {/* Headings */}
         <button
@@ -622,7 +622,7 @@ export function RichPostEditor({
           <Heading3 size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
 
         {/* Lists & Quotes */}
         <button
@@ -656,7 +656,7 @@ export function RichPostEditor({
           <Quote size={14} />
         </button>
 
-        <span style={{ width: '1px', height: '18px', background: '#D5DEDA', margin: '0 4px' }} />
+        <span style={{ width: '1px', height: '18px', background: '#D9E0E8', margin: '0 4px' }} />
 
         {/* Link & Table */}
         <button
@@ -679,8 +679,8 @@ export function RichPostEditor({
             padding: '4px 8px',
             borderRadius: '4px',
             border: parsedTable ? '1px solid #075B5B' : '1px solid transparent',
-            background: parsedTable ? '#E8F0ED' : 'transparent',
-            color: parsedTable ? '#075B5B' : '#172B2B',
+            background: parsedTable ? '#F4F6F8' : 'transparent',
+            color: parsedTable ? '#075B5B' : '#172B45',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
@@ -717,7 +717,7 @@ export function RichPostEditor({
               borderRadius: '5px',
               fontSize: '11px',
               fontWeight: 700,
-              background: isPreview ? '#075B5B' : '#E8F0ED',
+              background: isPreview ? '#075B5B' : '#F4F6F8',
               color: isPreview ? '#FFFFFF' : '#075B5B',
               border: '1px solid #B8D5C8',
               cursor: 'pointer',
@@ -739,7 +739,7 @@ export function RichPostEditor({
             padding: '14px 16px',
             fontSize: '13px',
             lineHeight: 1.6,
-            color: '#172B2B',
+            color: '#172B45',
             background: '#FFFFFF',
             fontFamily: 'Calibri Light, Calibri, sans-serif',
           }}
@@ -750,7 +750,7 @@ export function RichPostEditor({
               dangerouslySetInnerHTML={{ __html: parseRichText(value) }}
             />
           ) : (
-            <span style={{ color: '#66736F', fontStyle: 'italic', fontSize: '12px' }}>
+            <span style={{ color: '#526174', fontStyle: 'italic', fontSize: '12px' }}>
               Nothing to preview. Enter text or insert tables using the toolbar above.
             </span>
           )}
@@ -778,7 +778,7 @@ export function RichPostEditor({
               border: '1px solid transparent',
               outline: 'none',
               resize: 'vertical',
-              color: '#172B2B',
+              color: '#172B45',
               background: 'transparent',
               borderRadius: '4px',
             }}
@@ -788,7 +788,7 @@ export function RichPostEditor({
           <div
             className="fr8x-interactive-table-card"
             style={{
-              border: '1px solid #D5DEDA',
+              border: '1px solid #D9E0E8',
               borderRadius: '8px',
               background: '#FFFFFF',
               boxShadow: '0 2px 6px rgba(23, 43, 43, 0.04)',
@@ -803,7 +803,7 @@ export function RichPostEditor({
                 justifyContent: 'space-between',
                 padding: '8px 12px',
                 background: '#F1F5F3',
-                borderBottom: '1px solid #D5DEDA',
+                borderBottom: '1px solid #D9E0E8',
                 flexWrap: 'wrap',
                 gap: '8px',
               }}
@@ -817,7 +817,7 @@ export function RichPostEditor({
                   style={{
                     fontSize: '10px',
                     fontWeight: 700,
-                    background: '#E8F0ED',
+                    background: '#F4F6F8',
                     color: '#075B5B',
                     border: '1px solid #B8D5C8',
                     padding: '1px 6px',
@@ -843,8 +843,8 @@ export function RichPostEditor({
                     fontWeight: 600,
                     borderRadius: '4px',
                     background: '#FFFFFF',
-                    border: '1px solid #D5DEDA',
-                    color: '#172B2B',
+                    border: '1px solid #D9E0E8',
+                    color: '#172B45',
                     cursor: 'pointer',
                   }}
                 >
@@ -864,7 +864,7 @@ export function RichPostEditor({
                     fontWeight: 600,
                     borderRadius: '4px',
                     background: '#FFFFFF',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     color: parsedTable.rows.length <= 1 ? '#94a3b8' : '#C0392B',
                     cursor: parsedTable.rows.length <= 1 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.rows.length <= 1 ? 0.5 : 1,
@@ -886,8 +886,8 @@ export function RichPostEditor({
                     fontWeight: 600,
                     borderRadius: '4px',
                     background: '#FFFFFF',
-                    border: '1px solid #D5DEDA',
-                    color: '#172B2B',
+                    border: '1px solid #D9E0E8',
+                    color: '#172B45',
                     cursor: parsedTable.headers.length >= 5 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.headers.length >= 5 ? 0.5 : 1,
                   }}
@@ -908,7 +908,7 @@ export function RichPostEditor({
                     fontWeight: 600,
                     borderRadius: '4px',
                     background: '#FFFFFF',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     color: parsedTable.headers.length <= 2 ? '#94a3b8' : '#C0392B',
                     cursor: parsedTable.headers.length <= 2 ? 'not-allowed' : 'pointer',
                     opacity: parsedTable.headers.length <= 2 ? 0.5 : 1,
@@ -929,8 +929,8 @@ export function RichPostEditor({
                     fontWeight: 600,
                     borderRadius: '4px',
                     background: '#FFFFFF',
-                    border: '1px solid #D5DEDA',
-                    color: '#66736F',
+                    border: '1px solid #D9E0E8',
+                    color: '#526174',
                     cursor: 'pointer',
                   }}
                 >
@@ -983,7 +983,7 @@ export function RichPostEditor({
                       style={{
                         width: '28px',
                         fontSize: '10px',
-                        color: '#66736F',
+                        color: '#526174',
                         textAlign: 'center',
                         fontWeight: 600,
                         padding: '4px 0',
@@ -1005,7 +1005,7 @@ export function RichPostEditor({
                             fontSize: '11.5px',
                             fontWeight: 700,
                             color: '#075B5B',
-                            background: '#E8F0ED',
+                            background: '#F4F6F8',
                             border: '1px solid #B8D5C8',
                             borderRadius: '4px',
                             outline: 'none',
@@ -1023,7 +1023,7 @@ export function RichPostEditor({
                       <td
                         style={{
                           fontSize: '11px',
-                          color: '#66736F',
+                          color: '#526174',
                           textAlign: 'center',
                           fontWeight: 500,
                         }}
@@ -1042,9 +1042,9 @@ export function RichPostEditor({
                               boxSizing: 'border-box',
                               padding: '6px 8px',
                               fontSize: '12px',
-                              color: '#172B2B',
+                              color: '#172B45',
                               background: '#FFFFFF',
-                              border: '1px solid #D5DEDA',
+                              border: '1px solid #D9E0E8',
                               borderRadius: '4px',
                               outline: 'none',
                               fontFamily: 'Calibri Light, Calibri, sans-serif',
@@ -1055,7 +1055,7 @@ export function RichPostEditor({
                               e.currentTarget.style.boxShadow = '0 0 0 1px #075B5B';
                             }}
                             onBlur={(e) => {
-                              e.currentTarget.style.borderColor = '#D5DEDA';
+                              e.currentTarget.style.borderColor = '#D9E0E8';
                               e.currentTarget.style.boxShadow = 'none';
                             }}
                           />
@@ -1107,7 +1107,7 @@ export function RichPostEditor({
               border: '1px solid transparent',
               outline: 'none',
               resize: 'vertical',
-              color: '#172B2B',
+              color: '#172B45',
               background: 'transparent',
               borderRadius: '4px',
             }}
@@ -1135,7 +1135,7 @@ export function RichPostEditor({
             border: 'none',
             outline: 'none',
             resize: 'vertical',
-            color: '#172B2B',
+            color: '#172B45',
             background: 'transparent',
           }}
         />
@@ -1164,11 +1164,11 @@ export function RichPostEditor({
               maxWidth: '400px',
               width: '100%',
               boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
-              border: '1px solid #D5DEDA',
+              border: '1px solid #D9E0E8',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B2B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B45', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Link2 size={16} color="#075B5B" /> Insert Hyperlink
               </h4>
               <button
@@ -1183,18 +1183,18 @@ export function RichPostEditor({
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
                   Link Text
                 </label>
                 <input
                   type="text"
                   value={linkText}
                   onChange={(e) => setLinkText(e.target.value)}
-                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D5DEDA', outline: 'none' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D9E0E8', outline: 'none' }}
                 />
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
                   Target URL (HTTPS or platform relative)
                 </label>
                 <input
@@ -1205,7 +1205,7 @@ export function RichPostEditor({
                     setLinkError('');
                   }}
                   placeholder="https://example.com"
-                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D5DEDA', outline: 'none' }}
+                  style={{ width: '100%', padding: '7px 10px', fontSize: '12px', borderRadius: '5px', border: '1px solid #D9E0E8', outline: 'none' }}
                 />
                 {linkError && (
                   <span style={{ fontSize: '10.5px', color: '#C0392B', display: 'block', marginTop: '3px' }}>
@@ -1219,7 +1219,7 @@ export function RichPostEditor({
               <button
                 type="button"
                 onClick={() => setShowLinkModal(false)}
-                style={{ padding: '6px 12px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#F1F5F3', border: '1px solid #D5DEDA', color: '#172B2B', cursor: 'pointer' }}
+                style={{ padding: '6px 12px', borderRadius: '5px', fontSize: '12px', fontWeight: 600, background: '#F1F5F3', border: '1px solid #D9E0E8', color: '#172B45', cursor: 'pointer' }}
               >
                 Cancel
               </button>
@@ -1258,11 +1258,11 @@ export function RichPostEditor({
               maxWidth: '460px',
               width: '100%',
               boxShadow: '0 20px 40px rgba(23, 43, 43, 0.2)',
-              border: '1px solid #D5DEDA',
+              border: '1px solid #D9E0E8',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B2B', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, margin: 0, color: '#172B45', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <TableIcon size={16} color="#075B5B" /> Insert Structured Rate / Commodity Table
               </h4>
               <button
@@ -1277,7 +1277,7 @@ export function RichPostEditor({
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
                   Columns (2 to 5)
                 </label>
                 <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
@@ -1292,9 +1292,9 @@ export function RichPostEditor({
                         fontSize: '12px',
                         fontWeight: 700,
                         borderRadius: '5px',
-                        border: tableCols === c ? '1.5px solid #075B5B' : '1px solid #D5DEDA',
-                        background: tableCols === c ? '#E8F0ED' : '#FFFFFF',
-                        color: tableCols === c ? '#075B5B' : '#172B2B',
+                        border: tableCols === c ? '1.5px solid #075B5B' : '1px solid #D9E0E8',
+                        background: tableCols === c ? '#F4F6F8' : '#FFFFFF',
+                        color: tableCols === c ? '#075B5B' : '#172B45',
                         cursor: 'pointer',
                       }}
                     >
@@ -1304,7 +1304,7 @@ export function RichPostEditor({
                 </div>
               </div>
               <div>
-                <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '4px' }}>
+                <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '4px' }}>
                   Data Rows (1 to 10)
                 </label>
                 <input
@@ -1321,7 +1321,7 @@ export function RichPostEditor({
                     padding: '6px 10px',
                     fontSize: '12px',
                     borderRadius: '5px',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     outline: 'none',
                     boxSizing: 'border-box',
                     height: '32px',
@@ -1331,7 +1331,7 @@ export function RichPostEditor({
             </div>
 
             <div style={{ marginBottom: '16px' }}>
-              <label style={{ fontSize: '11px', fontWeight: 600, color: '#66736F', display: 'block', marginBottom: '6px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 600, color: '#526174', display: 'block', marginBottom: '6px' }}>
                 Column Header Titles
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -1350,7 +1350,7 @@ export function RichPostEditor({
                       padding: '6px 10px',
                       fontSize: '12px',
                       borderRadius: '5px',
-                      border: '1px solid #D5DEDA',
+                      border: '1px solid #D9E0E8',
                       outline: 'none',
                       boxSizing: 'border-box',
                     }}
@@ -1369,8 +1369,8 @@ export function RichPostEditor({
                   fontSize: '12px',
                   fontWeight: 600,
                   background: '#F1F5F3',
-                  border: '1px solid #D5DEDA',
-                  color: '#172B2B',
+                  border: '1px solid #D9E0E8',
+                  color: '#172B45',
                   cursor: 'pointer',
                 }}
               >

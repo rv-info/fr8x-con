@@ -499,7 +499,7 @@ export function RatesEditorModal({
             className="ai-rate-entry-card"
             style={{
               backgroundColor: '#FFFFFF',
-              border: '1px solid #D5DEDA',
+              border: '1px solid #D9E0E8',
               borderRadius: '8px',
               padding: '12px 14px',
               boxShadow: '0 1px 3px rgba(23, 43, 43, 0.04)',
@@ -508,7 +508,7 @@ export function RatesEditorModal({
               gap: '10px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #E8F0ED', paddingBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #F4F6F8', paddingBottom: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span
                   style={{
@@ -518,13 +518,13 @@ export function RatesEditorModal({
                     width: '24px',
                     height: '24px',
                     borderRadius: '5px',
-                    backgroundColor: '#E8F0ED',
+                    backgroundColor: '#F4F6F8',
                     color: '#075B5B',
                   }}
                 >
                   <Sparkles size={14} />
                 </span>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: '#172B2B', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#172B45', letterSpacing: '0.03em', textTransform: 'uppercase' }}>
                   AI Natural-Language Rate Entry
                 </span>
                 <span
@@ -533,9 +533,9 @@ export function RatesEditorModal({
                     fontWeight: 700,
                     padding: '2px 6px',
                     borderRadius: '4px',
-                    backgroundColor: '#E8F0ED',
+                    backgroundColor: '#F4F6F8',
                     color: '#075B5B',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                   }}
                 >
                   Instant Parsing
@@ -555,9 +555,9 @@ export function RatesEditorModal({
                   height: '52px',
                   padding: '8px 10px',
                   borderRadius: '6px',
-                  border: '1px solid #D5DEDA',
+                  border: '1px solid #D9E0E8',
                   backgroundColor: '#FFFFFF',
-                  color: '#172B2B',
+                  color: '#172B45',
                   fontSize: '12px',
                   fontFamily: "'Calibri Light', Calibri, Arial, sans-serif",
                   lineHeight: '1.4',
@@ -577,7 +577,7 @@ export function RatesEditorModal({
             {/* Quick Sample Prompts & Actions */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '11px', color: '#66736F', fontWeight: 600 }}>Quick Samples:</span>
+                <span style={{ fontSize: '11px', color: '#526174', fontWeight: 600 }}>Quick Samples:</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -590,7 +590,7 @@ export function RatesEditorModal({
                     padding: '2px 7px',
                     borderRadius: '4px',
                     backgroundColor: '#FAFBFD',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     color: '#075B5B',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -610,7 +610,7 @@ export function RatesEditorModal({
                     padding: '2px 7px',
                     borderRadius: '4px',
                     backgroundColor: '#FAFBFD',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     color: '#075B5B',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -630,7 +630,7 @@ export function RatesEditorModal({
                     padding: '2px 7px',
                     borderRadius: '4px',
                     backgroundColor: '#FAFBFD',
-                    border: '1px solid #D5DEDA',
+                    border: '1px solid #D9E0E8',
                     color: '#075B5B',
                     cursor: 'pointer',
                     fontWeight: 600,
@@ -650,9 +650,9 @@ export function RatesEditorModal({
                       padding: '0 8px',
                       fontSize: '11px',
                       borderRadius: '5px',
-                      border: '1px solid #D5DEDA',
+                      border: '1px solid #D9E0E8',
                       backgroundColor: '#FFFFFF',
-                      color: '#66736F',
+                      color: '#526174',
                       cursor: 'pointer',
                     }}
                   >
@@ -691,9 +691,9 @@ export function RatesEditorModal({
                 style={{
                   marginTop: '4px',
                   padding: '8px 10px',
-                  backgroundColor: '#E8F0ED',
+                  backgroundColor: '#F4F6F8',
                   borderRadius: '6px',
-                  border: '1px solid #D5DEDA',
+                  border: '1px solid #D9E0E8',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
@@ -718,8 +718,8 @@ export function RatesEditorModal({
                         fontSize: '11px',
                         fontWeight: isSelected ? 700 : 500,
                         backgroundColor: isSelected ? '#075B5B' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#172B2B',
-                        border: `1px solid ${isSelected ? '#075B5B' : '#D5DEDA'}`,
+                        color: isSelected ? '#FFFFFF' : '#172B45',
+                        border: `1px solid ${isSelected ? '#075B5B' : '#D9E0E8'}`,
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
@@ -759,7 +759,7 @@ export function RatesEditorModal({
                       : `Successfully mapped all rate fields with ${parsedResults.confidence}% confidence! Review populated fields below and click SAVE RATE.`}
                   </span>
                 </div>
-                <span style={{ color: '#66736F', fontSize: '10.5px' }}>
+                <span style={{ color: '#526174', fontSize: '10.5px' }}>
                   Latency: {parsedResults.modelInfo.latencyMs}ms
                 </span>
               </div>

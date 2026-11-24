@@ -132,7 +132,7 @@ export function Sidebar({ isCollapsed, onToggleCollapse, onCloseMobile, isMobile
               fontSize: '12px',
               fontWeight: 'bold',
               letterSpacing: '0.04em',
-              color: '#172B2B',
+              color: '#172B45',
               lineHeight: 1,
               textTransform: 'uppercase',
               fontFamily: 'Calibri, Arial, sans-serif',
